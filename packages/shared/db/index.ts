@@ -128,6 +128,7 @@ export type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
+  SportEventLink,
   SportEventProviderSummary,
   SportEventAutoReleaseCandidate,
   SportEventReleaseFacts,

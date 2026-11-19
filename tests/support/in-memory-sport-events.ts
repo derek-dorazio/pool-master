@@ -39,7 +39,7 @@ import type {
   TierProfileRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, isClutchCardLeague, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
@@ -219,6 +219,11 @@ export class InMemorySportEvents {
       )),
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.eventSyncProviderId !== null),
+      findEventSyncedWithClutchCards: async () => {
+        const synced = this.sportLeagues.filter((row) => row.isActive && row.eventSyncProviderId !== null);
+        const syncedIds = new Set(synced.map((row) => row.id));
+        return [...synced, ...this.sportLeagues.filter((row) => row.isActive && isClutchCardLeague(row) && row.parentSportLeagueId !== null && syncedIds.has(row.parentSportLeagueId))];
+      },
       create: async (input) => {
         const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
@@ -299,6 +304,7 @@ export class InMemorySportEvents {
     return {
       findById: async (id) => this.events.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
+      findLinks: async (ids) => this.events.filter((row) => ids.includes(row.id)).map((row) => ({ id: row.id, name: row.name, sportLeagueId: row.sportLeagueId, providerId: row.providerId })),
       findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
       findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
       // No sport filter: every event is golf while Sport has one member.

@@ -84,6 +84,11 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
+  /**
+   * The event-synced leagues, as `findEventSynced` reads them, and each active Clutch Card league
+   * whose parent is one of them (#1881), whose events its parent's sync creates. In one query.
+   */
+  findEventSyncedWithClutchCards(): Promise<SportLeague[]>;
   create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
@@ -214,10 +219,15 @@ export interface SportEventAutoReleaseCandidate {
   autoReleaseDaysBeforeStart: number;
 }
 
+/** An event's identity and what names it, read without the rest of the row. */
+export type SportEventLink = { id: string; name: string; sportLeagueId: string; providerId: string };
+
 export interface SportEventRepository {
   findById(id: string): Promise<SportEvent | null>;
   /** The events with these ids, in no particular order; an unknown id is left out. */
   findByIds(ids: readonly string[]): Promise<SportEvent[]>;
+  /** The events with these ids, id, name, sport league and provider only, in one read; an unknown id is left out. */
+  findLinks(ids: readonly string[]): Promise<SportEventLink[]>;
   /** The event a provider knows by this identity, if one is linked to it. */
   findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
   /** The events a provider knows by any of these identities, in one read (#1253). */

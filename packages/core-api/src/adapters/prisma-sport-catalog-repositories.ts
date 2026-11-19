@@ -23,6 +23,7 @@ import type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
+  SportEventLink,
   SportEventProviderSummary,
   SportEventAutoReleaseCandidate,
   SportEventReleaseFacts,
@@ -60,7 +61,7 @@ import type {
   SportEventTier,
   SportLeague,
 } from '@poolmaster/shared/domain';
-import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
+import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, ScoringFamily, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -70,6 +71,9 @@ import { toRaceResult } from './prisma-race-repositories';
 import { toStatLine } from './prisma-stat-line-repositories';
 
 type Db = PrismaClient;
+
+/** An active sport league whose events a provider's sync creates (ADR 0011). */
+const EVENT_SYNCED_LEAGUE = { isActive: true, eventSyncProviderId: { not: null } } satisfies Prisma.SportLeagueWhereInput;
 
 export class PrismaSportRepository implements SportRepository {
   constructor(private readonly prisma: Db) {}
@@ -130,7 +134,20 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
 
   async findEventSynced(): Promise<SportLeague[]> {
     const rows = await this.prisma.sportLeague.findMany({
-      where: { isActive: true, eventSyncProviderId: { not: null } },
+      where: EVENT_SYNCED_LEAGUE,
+      orderBy: { name: 'asc' },
+    });
+    return rows.map(toSportLeague);
+  }
+
+  async findEventSyncedWithClutchCards(): Promise<SportLeague[]> {
+    const rows = await this.prisma.sportLeague.findMany({
+      where: {
+        OR: [
+          EVENT_SYNCED_LEAGUE,
+          { isActive: true, scoringFamily: ScoringFamily.COMPOSITE, parentSportLeague: EVENT_SYNCED_LEAGUE },
+        ],
+      },
       orderBy: { name: 'asc' },
     });
     return rows.map(toSportLeague);
@@ -217,6 +234,17 @@ export class PrismaSportEventRepository implements SportEventRepository {
       const rows = await this.prisma.sportEvent.findMany({ where: { id: { in: [...missing] } }, include: SPORT_EVENT_INCLUDE });
       return rows.map(toSportEvent);
     });
+  }
+
+  async findLinks(ids: readonly string[]): Promise<SportEventLink[]> {
+    if (!ids.length) {
+      return [];
+    }
+    const rows = await this.prisma.sportEvent.findMany({
+      where: { id: { in: [...ids] } },
+      select: { id: true, name: true, providerId: true, eventSeries: { select: { sportLeagueId: true } } },
+    });
+    return rows.map((row) => ({ id: row.id, name: row.name, sportLeagueId: row.eventSeries.sportLeagueId, providerId: row.providerId }));
   }
 
   async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {

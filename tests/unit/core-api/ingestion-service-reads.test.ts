@@ -12,7 +12,7 @@ import { memoizedRead, ReadMemoKey, runWithReadMemo } from '../../../packages/co
 import type { PrismaClient } from '@prisma/client';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
-import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
+import { ScoringFamily, Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
 import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
@@ -53,7 +53,7 @@ function service(
   const ingestion = new IngestionService({
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
-    sportLeagues: { findEventSynced: () => Promise.resolve([]) },
+    sportLeagues: { findEventSyncedWithClutchCards: () => Promise.resolve([]) },
     webhookProviderIds: [],
     jobHistory: { countByScope: () => Promise.resolve([]) },
     logger: fakeLogger(),
@@ -137,51 +137,56 @@ describe('IngestionService.listProviders', () => {
     const unpaced = fakeSportDataProvider({ providerId: 'mock', providerName: 'Mock' });
     const registry = registryWith(paced);
     registry.register(Sport.GOLF, unpaced, 'SECONDARY');
-    const findEventSynced = jest.fn().mockResolvedValue([
+    const nba = buildSportLeague({ name: 'NBA', eventSyncProviderId: 'balldontlie' });
+    const findEventSyncedWithClutchCards = jest.fn().mockResolvedValue([
       buildSportLeague({ name: 'PGA TOUR', eventSyncProviderId: 'balldontlie' }),
-      buildSportLeague({ name: 'NFL', eventSyncProviderId: 'balldontlie' }),
+      nba,
+      // A Clutch Card league is not a synced league of its own.
+      buildSportLeague({ name: 'NBA Clutch Card', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: nba.id }),
     ]);
 
-    const providers = await service({ registry, sportLeagues: { findEventSynced }, webhookProviderIds: ['balldontlie'] }).listProviders();
+    const providers = await service({ registry, sportLeagues: { findEventSyncedWithClutchCards }, webhookProviderIds: ['balldontlie'] }).listProviders();
 
-    expect(findEventSynced).toHaveBeenCalledTimes(1);
+    expect(findEventSyncedWithClutchCards).toHaveBeenCalledTimes(1);
     expect(providers).toEqual([
       expect.objectContaining({ providerId: 'balldontlie', requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 2 }),
       expect.objectContaining({ providerId: 'mock', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0 }),
     ]);
   });
 
-  it('counts each provider\'s rate-limited jobs of the last 24 hours: league jobs by the league\'s sync provider, event jobs by the event\'s provider', async () => {
+  it('counts each provider\'s rate-limited jobs of the last 24 hours: league jobs by the league\'s sync provider (a Clutch Card\'s by its parent\'s), event jobs by the event\'s provider', async () => {
     const registry = registryWith(fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }));
     registry.register(Sport.GOLF, fakeSportDataProvider({ providerId: 'mock', providerName: 'Mock' }), 'SECONDARY');
-    const nfl = buildSportLeague({ name: 'NFL', eventSyncProviderId: 'balldontlie' });
+    const nba = buildSportLeague({ name: 'NBA', eventSyncProviderId: 'balldontlie' });
+    // Listed before its parent, as the read's name order can put it.
+    const clutchCard = buildSportLeague({ name: 'A NBA Clutch Card', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: nba.id });
     const countByScope = jest.fn().mockResolvedValue([
-      { sportLeagueId: nfl.id, sportEventId: null, count: 2 },
+      { sportLeagueId: nba.id, sportEventId: null, count: 2 },
+      { sportLeagueId: clutchCard.id, sportEventId: null, count: 10 },
       { sportLeagueId: null, sportEventId: 'event-bdl', count: 3 },
       { sportLeagueId: null, sportEventId: 'event-mock', count: 1 },
-      // Neither scope, an unsynced league and an unlinked event count for no provider.
+      // Neither scope, an unsynced league and an event no longer there count for no provider.
       { sportLeagueId: null, sportEventId: null, count: 7 },
       { sportLeagueId: 'unsynced-league', sportEventId: null, count: 5 },
-      { sportLeagueId: null, sportEventId: 'event-unlinked', count: 4 },
+      { sportLeagueId: null, sportEventId: 'event-deleted', count: 4 },
     ]);
-    const findByIds = jest.fn().mockResolvedValue([
-      { id: 'event-bdl', providerId: 'balldontlie' } as SportEvent,
-      { id: 'event-mock', providerId: 'mock' } as SportEvent,
-      { id: 'event-unlinked', providerId: null },
+    const findLinks = jest.fn().mockResolvedValue([
+      { id: 'event-bdl', name: 'Masters', sportLeagueId: 'pga', providerId: 'balldontlie' },
+      { id: 'event-mock', name: 'Mock Open', sportLeagueId: 'pga', providerId: 'mock' },
     ]);
 
     const providers = await service({
       registry,
-      sportEvents: fakeSportEventRepo({ findByIds }),
-      sportLeagues: { findEventSynced: () => Promise.resolve([nfl]) },
+      sportEvents: fakeSportEventRepo({ findLinks }),
+      sportLeagues: { findEventSyncedWithClutchCards: () => Promise.resolve([clutchCard, nba]) },
       jobHistory: { countByScope },
       now: () => new Date('2026-11-19T12:00:00.000Z'),
     }).listProviders();
 
     expect(countByScope).toHaveBeenCalledWith({ errorType: 'RATE_LIMITED', since: new Date('2026-11-18T12:00:00.000Z') });
-    expect(findByIds).toHaveBeenCalledWith(['event-bdl', 'event-mock', 'event-unlinked']);
+    expect(findLinks).toHaveBeenCalledWith(['event-bdl', 'event-mock', 'event-deleted']);
     expect(providers).toEqual([
-      expect.objectContaining({ providerId: 'balldontlie', rateLimitedJobsLast24h: 5 }),
+      expect.objectContaining({ providerId: 'balldontlie', rateLimitedJobsLast24h: 15 }),
       expect.objectContaining({ providerId: 'mock', rateLimitedJobsLast24h: 1 }),
     ]);
   });

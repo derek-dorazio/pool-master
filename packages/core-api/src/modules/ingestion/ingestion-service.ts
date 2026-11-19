@@ -26,6 +26,7 @@ import {
   type JobStart,
   type Sport,
   SportEventSyncScope,
+  isClutchCardLeague,
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
 } from '@poolmaster/shared/domain';
@@ -172,7 +173,7 @@ export interface IngestionServiceDependencies {
   participantMappings: ParticipantProviderMappingRepository;
   syncRuns: ProviderSyncRunRepository;
   /** The synced sport leagues, counted per provider on the provider list. */
-  sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
+  sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
   /** The providers whose webhooks are on (`readWebhookProviderIds`). */
   webhookProviderIds: readonly string[];
   /** Background jobs that hit a provider's rate limit, counted per provider on the provider list. */
@@ -192,7 +193,7 @@ export class IngestionService {
   private readonly sportEvents: SportEventRepository;
   private readonly participantMappings: ParticipantProviderMappingRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
-  private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
+  private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
   private readonly webhookProviderIds: ReadonlySet<string>;
   private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   private readonly now: () => Date;
@@ -327,7 +328,7 @@ export class IngestionService {
     const providers = this.registry.getAllProviders();
     const [eventSummaries, syncedLeagues, rateLimited] = await Promise.all([
       this.sportEvents.summarizeByProviders(providers.map((provider) => provider.providerId)),
-      this.sportLeagues.findEventSynced(),
+      this.sportLeagues.findEventSyncedWithClutchCards(),
       this.jobHistory.countByScope({ errorType: JobErrorType.RATE_LIMITED, since: new Date(this.now().getTime() - DAY_MS) }),
     ]);
     const syncedLeagueCounts = new Map<string, number>();
@@ -336,6 +337,14 @@ export class IngestionService {
       if (league.eventSyncProviderId) {
         syncedLeagueCounts.set(league.eventSyncProviderId, (syncedLeagueCounts.get(league.eventSyncProviderId) ?? 0) + 1);
         leagueProviders.set(league.id, league.eventSyncProviderId);
+      }
+    }
+    // A Clutch Card league's jobs belong to its parent's provider, whose sync creates its events;
+    // it is not a synced league of its own.
+    for (const league of syncedLeagues) {
+      const parentProviderId = league.parentSportLeagueId === null ? undefined : leagueProviders.get(league.parentSportLeagueId);
+      if (!league.eventSyncProviderId && isClutchCardLeague(league) && parentProviderId) {
+        leagueProviders.set(league.id, parentProviderId);
       }
     }
     const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
@@ -365,16 +374,17 @@ export class IngestionService {
 
   /**
    * Job counts per provider (#1881): a sport league's own jobs belong to the provider that syncs
-   * the league, and an event's jobs to the provider the event is linked to, read in one more
-   * query for all such events. A job on neither, or on an unsynced league, counts for none.
+   * the league (a Clutch Card's, its parent's), and an event's jobs to the provider the event is
+   * linked to, read in one more query for all such events. A job on neither, on an unsynced
+   * league or on an event no longer there counts for none.
    */
   private async countPerProvider(
     scopes: readonly BackgroundJobScopeCount[],
     leagueProviders: ReadonlyMap<string, string>,
   ): Promise<Map<string, number>> {
     const eventIds = [...new Set(scopes.flatMap((scope) => (scope.sportEventId ? [scope.sportEventId] : [])))];
-    const events = await this.sportEvents.findByIds(eventIds);
-    const eventProviders = new Map(events.flatMap((event) => (event.providerId ? [[event.id, event.providerId] as const] : [])));
+    const links = await this.sportEvents.findLinks(eventIds);
+    const eventProviders = new Map(links.map((link) => [link.id, link.providerId]));
     const counts = new Map<string, number>();
     for (const scope of scopes) {
       const providerId = scope.sportEventId
