@@ -119,9 +119,11 @@ export { dismissAllToasts, dismissToast, showToast, type ToastMessage } from "./
 export { useMutationActionWorkflow, type MutationActionWorkflowResult } from "./mutation-action-workflow";
 export {
   DetailEditModal,
+  DialogSection,
   FormModal,
   PickerModal,
   ReadOnlyDetailModal,
+  type DetailAction,
 } from "./modal-templates";
 export { PublicInviteJoinPage } from "./page-templates";
 export { Tile } from "./tile";

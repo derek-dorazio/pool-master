@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import { Breadcrumbs, ToolsArea } from "@/features/shared/ui";
 import {
-  buildManageSubTabs,
   buildManageTabs,
   getManageBreadcrumbLabel,
   MANAGE_LANDING_PATH,
@@ -30,6 +29,10 @@ function buildBreadcrumbs(pathname: string, overrides: BreadcrumbOverrides) {
   const relevantSegments = segments.slice(manageIndex + 1);
   const underSport = relevantSegments[0] === "sports" && relevantSegments.length > 2;
   if (underSport && relevantSegments[2] === "leagues" && relevantSegments.length > 3 && relevantSegments[3] !== "new") {
+    return [];
+  }
+  // Customers' own tabs name the view, so its pages show no trail.
+  if (relevantSegments[0] === "customers") {
     return [];
   }
   return relevantSegments
@@ -81,14 +84,12 @@ export function RootAdminManageLayout() {
   );
 
   const breadcrumbs = buildBreadcrumbs(location.pathname, overrides);
-  const subTabs = buildManageSubTabs(location.pathname);
 
   return (
     <ManageBreadcrumbContext.Provider value={contextValue}>
       <ToolsArea
         back={{ label: "Exit Manage", testId: "root-admin-manage-exit", to: "/" }}
         eyebrow="Root admin"
-        subTabs={subTabs ?? undefined}
         tabs={buildManageTabs(location.pathname)}
         tabsLabel="Manage"
         testId="root-admin-manage-layout"

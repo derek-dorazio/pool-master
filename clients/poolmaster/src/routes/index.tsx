@@ -59,12 +59,11 @@ import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
 import { RootAdminSportsPage } from '@/features/root-admin/root-admin-sports-page';
 import { RootAdminProvidersPage } from '@/features/root-admin/root-admin-providers-page';
 import { RootAdminMapCompetitorPage } from '@/features/root-admin/root-admin-map-competitor-page';
-import { PRICING_PATH, PROVIDERS_PATH, SPORTS_PATH } from '@/features/root-admin/manage-navigation';
+import { CUSTOMER_LEAGUES_PATH, CUSTOMER_USERS_PATH, PRICING_PATH, PROVIDERS_PATH, SPORTS_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
-import { RootAdminManageLeaguesPage } from '@/features/root-admin/root-admin-manage-leagues-page';
-import { RootAdminManageUsersPage } from '@/features/root-admin/root-admin-manage-users-page';
+import { RootAdminCustomerLeaguesPage } from '@/features/root-admin/root-admin-customer-leagues-page';
+import { RootAdminCustomerUsersPage } from '@/features/root-admin/root-admin-customer-users-page';
 import { RootAdminProfilesPage } from '@/features/root-admin/root-admin-profiles-page';
-import { RootAdminUserPage } from '@/features/root-admin/root-admin-user-page';
 import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-event-sync-page';
 import { RootAdminNotificationsPage } from '@/features/root-admin/root-admin-notifications-page';
 import { RootAdminPricingPage } from '@/features/root-admin/root-admin-pricing-page';
@@ -91,6 +90,7 @@ import {
   LegacyLeagueContestsRedirect,
   LegacyLeagueEntriesRedirect,
   LegacyManageContestsRedirect,
+  LegacyManageUserRedirect,
 } from './legacy-redirects';
 import { CommissionerRouteGuard, MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
 
@@ -448,18 +448,13 @@ export const router = createBrowserRouter([
                     path: 'golf/*',
                     element: <LegacyGolfManageRedirect />,
                   },
-                  {
-                    path: 'leagues',
-                    element: <RootAdminManageLeaguesPage />,
-                  },
-                  {
-                    path: 'users',
-                    element: <RootAdminManageUsersPage />,
-                  },
-                  {
-                    path: 'users/:userId',
-                    element: <RootAdminUserPage />,
-                  },
+                  { path: 'customers', element: <Navigate replace to={CUSTOMER_LEAGUES_PATH} /> },
+                  { path: 'customers/leagues', element: <RootAdminCustomerLeaguesPage /> },
+                  { path: 'customers/users', element: <RootAdminCustomerUsersPage /> },
+                  // The Leagues and Users pages, and each user's page, became Customers (#1883).
+                  { path: 'leagues', element: <Navigate replace to={CUSTOMER_LEAGUES_PATH} /> },
+                  { path: 'users', element: <Navigate replace to={CUSTOMER_USERS_PATH} /> },
+                  { path: 'users/:userId', element: <LegacyManageUserRedirect /> },
                   {
                     path: 'plans',
                     element: <RootAdminPlansPage />,

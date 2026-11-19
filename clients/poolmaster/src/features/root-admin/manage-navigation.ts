@@ -62,6 +62,15 @@ export const SETTINGS_PATH = '/manage/settings';
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
 
+/** Customers (#1883): every league and every user on the platform, a tab each. */
+export const CUSTOMERS_PATH = '/manage/customers';
+export const CUSTOMER_LEAGUES_PATH = `${CUSTOMERS_PATH}/leagues`;
+export const CUSTOMER_USERS_PATH = `${CUSTOMERS_PATH}/users`;
+
+/** The search parameters that open one league's or one user's dialog on its tab. */
+export const CUSTOMER_LEAGUE_PARAM = 'league';
+export const CUSTOMER_USER_PARAM = 'user';
+
 /** What each plan costs and what expanding a contest costs on it (#1886). */
 export const PRICING_PATH = '/manage/pricing';
 
@@ -80,7 +89,7 @@ const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
     to: PROVIDERS_PATH,
     paths: [PROVIDERS_PATH, '/manage/sync/run-event-sync', '/manage/sync/unmapped-participants'],
   },
-  { key: 'customers', title: 'Customers', to: '/manage/leagues', paths: ['/manage/leagues', '/manage/users'] },
+  { key: 'customers', title: 'Customers', to: CUSTOMER_LEAGUES_PATH, paths: [CUSTOMERS_PATH] },
   { key: 'plans', title: 'Plans', to: '/manage/plans', paths: ['/manage/plans'] },
   { key: 'pricing', title: 'Pricing', to: PRICING_PATH, paths: [PRICING_PATH] },
 ];
@@ -88,11 +97,9 @@ const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
 /** Where `/manage` itself lands: Sports, every sport league in one grid. */
 export const MANAGE_LANDING_PATH = SPORTS_PATH;
 
-/** How long a server-searched Manage list waits after the last key before it asks (#1180). */
-export const SEARCH_DEBOUNCE_MS = 300;
-
+/** One user, opened in their dialog on Customers › Users (#1883). */
 export function buildManageUserPath(userId: string) {
-  return `/manage/users/${userId}`;
+  return `${CUSTOMER_USERS_PATH}?${new URLSearchParams({ [CUSTOMER_USER_PARAM]: userId }).toString()}`;
 }
 
 export const PLANS_PATH = '/manage/plans';
@@ -126,20 +133,6 @@ export function buildManageTabs(pathname: string): PageLinkTab[] {
     testId: `root-admin-manage-menu-${section.key}`,
     to: section.to,
   }));
-}
-
-/** Manage's second row, null where a tool has none: under Customers, Leagues and Users. */
-export function buildManageSubTabs(pathname: string): { label: string; items: PageLinkTab[] } | null {
-  if (isAtOrUnder(pathname, '/manage/leagues') || isAtOrUnder(pathname, '/manage/users')) {
-    return {
-      label: 'Customers',
-      items: [
-        { isActive: isAtOrUnder(pathname, '/manage/leagues'), label: 'Leagues', testId: 'root-admin-manage-menu-leagues', to: '/manage/leagues' },
-        { isActive: isAtOrUnder(pathname, '/manage/users'), label: 'Users', testId: 'root-admin-manage-menu-users', to: '/manage/users' },
-      ],
-    };
-  }
-  return null;
 }
 
 const STATIC_BREADCRUMB_LABELS: Record<string, string> = {

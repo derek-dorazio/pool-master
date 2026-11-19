@@ -1,8 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Button, InlineError, Select } from '@/features/shared/ui';
+import { PREVIEW_EXTEND_MONTHS, previewExtendMonthsLabel } from './preview-extend-months';
 
-/** How far a root admin can extend a gifted plan, in months from today (#986). */
-const EXTEND_MONTHS = [1, 3, 6, 12] as const;
 
 /**
  * "Extend free Premium" (#986), for a root admin: one league's gift on its settings page, or every
@@ -25,7 +24,7 @@ export function ExtendGiftForm({
   result?: ReactNode;
   testId: string;
 }) {
-  const [months, setMonths] = useState<number>(EXTEND_MONTHS[0]);
+  const [months, setMonths] = useState<number>(PREVIEW_EXTEND_MONTHS[0]);
   return (
     <form
       className="space-y-2"
@@ -45,9 +44,9 @@ export function ExtendGiftForm({
           onChange={(event) => setMonths(Number(event.target.value))}
           value={months}
         >
-          {EXTEND_MONTHS.map((option) => (
+          {PREVIEW_EXTEND_MONTHS.map((option) => (
             <option key={option} value={option}>
-              {option === 1 ? '1 month from today' : `${option} months from today`}
+              {previewExtendMonthsLabel(option)}
             </option>
           ))}
         </Select>

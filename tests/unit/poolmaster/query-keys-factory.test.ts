@@ -77,12 +77,7 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
       'user-detail',
       'user-1',
     ]);
-    expect(QueryKeys.rootAdmin.manageUsersSearch('jam')).toEqual([
-      'poolmaster',
-      'root-admin',
-      'manage-users',
-      'jam',
-    ]);
+    expect(QueryKeys.rootAdmin.users).toEqual(['poolmaster', 'root-admin', 'users']);
   });
 
   it('keeps a league\'s finished contests and finished years under its contest list key, so invalidating the list refreshes them too', () => {
