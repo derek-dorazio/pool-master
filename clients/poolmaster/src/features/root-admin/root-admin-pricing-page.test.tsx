@@ -327,4 +327,37 @@ describe('RootAdminPricingPage', () => {
     expect(screen.queryByTestId('root-admin-payments-dialog')).not.toBeInTheDocument();
     expect(mocks.updateSettingsGroup).not.toHaveBeenCalled();
   });
+
+  it('switches payments that are on back off, naming an admin it cannot find as unknown, and saves only that', async () => {
+    const on = { ...billingGroup({ ...BILLING, paymentsEnabled: true }), updatedBy: null };
+    seed({ billing: on });
+    mocks.updateSettingsGroup.mockResolvedValue({ data: billingGroup() });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-pricing-payments-state')).toHaveTextContent('Payments on');
+    await userEvent.click(screen.getByTestId('root-admin-pricing-payments'));
+    expect(await screen.findByTestId('root-admin-payments-dialog-payments')).toHaveTextContent('On');
+    expect(screen.getByTestId('root-admin-payments-dialog-last-changed')).toHaveTextContent('an unknown admin on');
+    await userEvent.click(screen.getByTestId('root-admin-payments-dialog-edit'));
+    await userEvent.selectOptions(screen.getByTestId('root-admin-payments-dialog-payments-input'), 'off');
+    await userEvent.click(screen.getByTestId('root-admin-payments-dialog-save'));
+
+    await waitFor(() => expect(mocks.updateSettingsGroup).toHaveBeenCalledTimes(1));
+    expect(savedValue()).toEqual({ ...BILLING, paymentsEnabled: false });
+  });
+
+  it('closes the plan dialog and the payments dialog on Escape', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-plan-price-PRO'));
+    await screen.findByTestId('root-admin-plan-price-dialog');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-plan-price-dialog')).not.toBeInTheDocument());
+
+    await userEvent.click(screen.getByTestId('root-admin-pricing-payments'));
+    await screen.findByTestId('root-admin-payments-dialog');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-payments-dialog')).not.toBeInTheDocument());
+  });
 });
