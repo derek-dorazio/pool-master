@@ -203,7 +203,8 @@ describe('League page', () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba');
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'NBA' })).toBeInTheDocument();
+    // The first render loads the page's modules, which is slow on a loaded runner.
+    expect(await screen.findByRole('heading', { level: 1, name: 'NBA' }, { timeout: 5_000 })).toBeInTheDocument();
     const facts = await screen.findByTestId('root-admin-league-facts');
     expect(within(facts).getByText('OK')).toBeInTheDocument();
     expect(within(facts).getByText('BALLDONTLIE')).toBeInTheDocument();
