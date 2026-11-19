@@ -23,6 +23,7 @@ import {
   SettingsGroupListSchema,
   SettingsGroupSchema,
   SportLeagueOverviewListResponseSchema,
+  SystemEmailListResponseSchema,
   UnmappedProviderParticipantListResponseSchema,
 } from '@poolmaster/shared/dto';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
@@ -491,6 +492,17 @@ describe('fixed-length root admin lists cost the same statements every time', ()
       call: () => get('/api/v1/platform/ingestion-schedule', rootAdmin),
       rowsShown: (response) => okBody(response, IngestionScheduleConfigSchema).scheduledSports.length,
       statements: 0,
+    });
+  });
+
+  it('GET the system emails: one row per email key, with the 30-day sends counted and dated in two grouped queries (#1870)', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    await expectFixedQueries({
+      route: 'GET /api/v1/platform/emails/',
+      fixedBy: 'the system email template keys',
+      call: () => get('/api/v1/platform/emails/', rootAdmin),
+      rowsShown: (response) => okBody(response, SystemEmailListResponseSchema).emails.length,
+      statements: 2,
     });
   });
 

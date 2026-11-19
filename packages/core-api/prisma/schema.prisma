@@ -1045,6 +1045,8 @@ model EmailMessage {
   @@index([entryId])
   @@index([leagueId])
   @@index([recipientUserId])
+  /// The Notifications page's sent counts and latest send per email (#1870).
+  @@index([templateKey, sentAt])
   @@map("email_messages")
 }
 

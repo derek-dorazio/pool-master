@@ -128,6 +128,7 @@ import {
 import { emailEventsModule } from './modules/email/email-events-routes';
 import { emailUnsubscribeModule } from './modules/email/email-unsubscribe-routes';
 import { emailTestModule } from './modules/email/email-test-routes';
+import { systemEmailModule } from './modules/email/system-email-routes';
 import {
   BackgroundJobQueue,
   BackgroundJobRetention,
@@ -165,7 +166,7 @@ export function buildApp() {
     readConfig: () => appSettings.get(PLAN_SETTINGS),
   });
   // One email outbox for the whole app; EMAIL_CONFIG and the league's plan decide on every email whether it is queued.
-  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest, retention: emailRetention } = createEmailOutbox({
+  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest, retention: emailRetention, systemEmails } = createEmailOutbox({
     prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     planEntitlements,
@@ -431,6 +432,7 @@ export function buildApp() {
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
+  app.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, leagueEventsSync });
   app.register(activityModule, {
     prefix: '/api/v1/activity',

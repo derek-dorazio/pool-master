@@ -21,6 +21,7 @@ import { EmailPreferencesService } from './email-preferences-service';
 import { EmailSender } from './email-sender';
 import { EmailService } from './email-service';
 import { EmailTestService } from './email-test-service';
+import { SystemEmailAdminService } from './system-email-admin-service';
 import { createMailDeliveryProvider, readApplicationBaseUrl, readMailDeliveryConfig } from './mail-delivery';
 import { UnsubscribeTokens } from './unsubscribe-tokens';
 
@@ -35,12 +36,14 @@ export interface EmailOutbox {
   test: EmailTestService;
   /** The nightly cleanup's step that deletes emails past their retention period. */
   retention: EmailMessageRetention;
+  /** The root admin's Notifications page: every email's recent sends, its latest send, a copy to the admin. */
+  systemEmails: SystemEmailAdminService;
 }
 
 export function createEmailOutbox(options: {
   prisma: PrismaClient;
   readConfig: () => EmailConfig;
-  planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;
+  planEntitlements: Pick<PlanEntitlementsService, 'forPlan' | 'featureStartsAt'>;
   env?: NodeJS.ProcessEnv;
   logger?: FastifyBaseLogger;
   /**
@@ -88,5 +91,12 @@ export function createEmailOutbox(options: {
   });
   const test = new EmailTestService({ email, sender: wakesSender ? sender : undefined, messages, users, environment: readAppEnv(options.env ?? process.env) });
   const retention = new EmailMessageRetention(messages);
-  return { email, sender, deliveryEvents, preferences, test, retention };
+  const systemEmails = new SystemEmailAdminService({
+    messages,
+    users,
+    email,
+    planEntitlements: options.planEntitlements,
+    readConfig: options.readConfig,
+  });
+  return { email, sender, deliveryEvents, preferences, test, retention, systemEmails };
 }
