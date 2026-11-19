@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { deleteUser, disableUser, enableUser, resetUserPassword, type CustomerUserDto } from '@/lib/api';
 import { MY_ACCOUNT_PATH } from '@/features/account/user-routing';
-import { Button, ConfirmDialog, Input, LinkButton, showToast, type DetailAction } from '@/features/shared/ui';
+import { Button, ConfirmDialog, Input, LinkButton, showToast, Text, type DetailAction } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -222,9 +222,9 @@ export function useCustomerUserActions({
         tone="danger"
       >
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Enter <span className="font-medium text-foreground">{user.email}</span> to confirm.
-          </p>
+          <Text as="p" tone="muted">
+            Enter <Text as="span" tone="default" variant="strong">{user.email}</Text> to confirm.
+          </Text>
           <Input
             aria-label="Account email"
             autoComplete="off"

@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { Text } from '@/features/shared/ui';
 import type { CustomerUserDto } from '@/lib/api';
 import { ActiveStatusBadge } from './active-status-badge';
 import { customerUserName, customerUserRole, customerUserStatus } from './customer-user-facts';
@@ -11,7 +12,7 @@ export const customerUserColumns = [
     id: 'name',
     header: 'Name',
     meta: { info: 'The user\'s first and last name.', type: { kind: 'text' } },
-    cell: ({ getValue }) => <span className="font-medium text-primary">{getValue()}</span>,
+    cell: ({ getValue }) => <Text tone="primary" variant="strong">{getValue()}</Text>,
   }),
   columnHelper.accessor('email', {
     header: 'Email',

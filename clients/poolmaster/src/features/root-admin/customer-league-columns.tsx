@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table';
+import { Text } from '@/features/shared/ui';
 import { LeaguePlanOrder, type LeaguePlan } from '@poolmaster/shared/domain';
 import type { CustomerLeagueDto } from '@/lib/api';
 import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
@@ -10,7 +11,7 @@ export const customerLeagueColumns = [
   columnHelper.accessor('name', {
     header: 'League',
     meta: { info: 'The league\'s name.', type: { kind: 'text' } },
-    cell: ({ getValue }) => <span className="font-medium text-primary">{getValue()}</span>,
+    cell: ({ getValue }) => <Text tone="primary" variant="strong">{getValue()}</Text>,
   }),
   columnHelper.accessor('leagueCode', {
     header: 'Code',
