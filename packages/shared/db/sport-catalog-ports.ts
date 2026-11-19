@@ -216,10 +216,15 @@ export interface SportEventAutoReleaseCandidate {
   autoReleaseDaysBeforeStart: number;
 }
 
+/** An event's identity and what names it, read without the rest of the row. */
+export type SportEventLink = { id: string; name: string; sportLeagueId: string; providerId: string };
+
 export interface SportEventRepository {
   findById(id: string): Promise<SportEvent | null>;
   /** The events with these ids, in no particular order; an unknown id is left out. */
   findByIds(ids: readonly string[]): Promise<SportEvent[]>;
+  /** The events with these ids, id, name, sport league and provider only, in one read; an unknown id is left out. */
+  findLinks(ids: readonly string[]): Promise<SportEventLink[]>;
   /** The event a provider knows by this identity, if one is linked to it. */
   findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
   /** The events a provider knows by any of these identities, in one read (#1253). */

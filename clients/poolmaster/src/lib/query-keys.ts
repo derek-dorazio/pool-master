@@ -303,6 +303,10 @@ export const QueryKeys = {
     settings: ['poolmaster', 'root-admin', 'settings'] as const,
     // One group, for a screen that edits or reads only it; under `settings`, so any save refreshes it.
     settingsGroup: (key: QueryKeyId) => ['poolmaster', 'root-admin', 'settings', key] as const,
+    // Every Activity read (#1887) sits under this prefix, so a queued job refreshes each grid.
+    activity: ['poolmaster', 'root-admin', 'activity'] as const,
+    activityWindow: (scope: QueryKeyId, from: string, to: string | null) =>
+      ['poolmaster', 'root-admin', 'activity', scope, from, to] as const,
     // Every system email (#1872), under `settings`, so an EMAIL_CONFIG save refreshes its On/Off status.
     systemEmails: ['poolmaster', 'root-admin', 'settings', 'system-emails'] as const,
     systemEmailLatestSend: (templateKey: QueryKeyId) =>

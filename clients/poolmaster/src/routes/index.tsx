@@ -68,7 +68,7 @@ import { RootAdminRunEventSyncPage } from '@/features/root-admin/root-admin-run-
 import { RootAdminNotificationsPage } from '@/features/root-admin/root-admin-notifications-page';
 import { RootAdminPricingPage } from '@/features/root-admin/root-admin-pricing-page';
 import { RootAdminPlansPage } from '@/features/root-admin/root-admin-plans-page';
-import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
+import { RootAdminActivityPage } from '@/features/root-admin/root-admin-activity-page';
 import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamEditPage } from '@/features/teams/my-team-edit-page';
@@ -90,6 +90,7 @@ import {
   LegacyLeagueContestsRedirect,
   LegacyLeagueEntriesRedirect,
   LegacyManageContestsRedirect,
+  LegacyManageSyncRedirect,
   LegacyManageUserRedirect,
 } from './legacy-redirects';
 import { CommissionerRouteGuard, MemberRouteGuard, RootAdminRouteGuard } from './route-guards';
@@ -460,20 +461,13 @@ export const router = createBrowserRouter([
                     element: <RootAdminPlansPage />,
                   },
                   {
-                    path: 'sync',
-                    element: <RootAdminSyncDashboardPage />,
+                    path: 'activity',
+                    element: <RootAdminActivityPage />,
                   },
                   {
-                    path: 'sync/run-event-sync',
-                    element: <RootAdminRunEventSyncPage />,
-                  },
-                  {
-                    path: 'sync/unmapped-participants',
-                    element: <RootAdminUnmappedParticipantsPage />,
-                  },
-                  {
-                    path: 'sync/unmapped-participants/map',
-                    element: <RootAdminMapCompetitorPage />,
+                    // The sync run history page became Activity, and its tools moved under Providers (#1887).
+                    path: 'sync/*',
+                    element: <LegacyManageSyncRedirect />,
                   },
                   {
                     path: 'notifications',
@@ -492,6 +486,18 @@ export const router = createBrowserRouter([
                   {
                     path: 'providers',
                     element: <RootAdminProvidersPage />,
+                  },
+                  {
+                    path: 'providers/run-event-sync',
+                    element: <RootAdminRunEventSyncPage />,
+                  },
+                  {
+                    path: 'providers/unmapped-participants',
+                    element: <RootAdminUnmappedParticipantsPage />,
+                  },
+                  {
+                    path: 'providers/unmapped-participants/map',
+                    element: <RootAdminMapCompetitorPage />,
                   },
                   {
                     path: 'pricing',

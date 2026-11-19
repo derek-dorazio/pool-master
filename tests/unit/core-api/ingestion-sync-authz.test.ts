@@ -64,6 +64,7 @@ async function buildIngestionSyncApp() {
     ingestionService: providerService as unknown as IngestionService,
     providerRegistry: {} as unknown as ProviderRegistry,
     leagueEventsSync: { syncNow: jest.fn() },
+    activity: { present: jest.fn() },
   });
   await app.ready();
 

@@ -20,7 +20,7 @@ import {
   buildLeagueTeamPastContestsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { buildManageUserPath, buildSportPath } from '@/features/root-admin/manage-navigation';
+import { ACTIVITY_PATH, buildManageUserPath, buildSportPath, LEGACY_SYNC_PATH, PROVIDERS_PATH } from '@/features/root-admin/manage-navigation';
 
 export function LegacyJoinInviteRedirect() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
@@ -125,6 +125,17 @@ export function LegacyGolfManageRedirect() {
 export function LegacyEditLeagueRedirect() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   return <Navigate replace to={buildLeagueAdminEditPath(leagueCode)} />;
+}
+
+/**
+ * The sync run history page at /manage/sync became Activity, and its Run event sync and Unmapped
+ * participants pages moved under Providers (#1887): an old link opens where its page went,
+ * keeping its query, such as the competitor a map link names.
+ */
+export function LegacyManageSyncRedirect() {
+  const { pathname, search } = useLocation();
+  const rest = pathname.slice(LEGACY_SYNC_PATH.length).replace(/\/$/, '');
+  return <Navigate replace to={rest === '' ? ACTIVITY_PATH : `${PROVIDERS_PATH}${rest}${search}`} />;
 }
 
 /** A user's old Manage page now opens their dialog on Customers › Users (#1883). */

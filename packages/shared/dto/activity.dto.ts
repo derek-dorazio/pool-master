@@ -20,6 +20,14 @@ export const ActivityJobDtoSchema = z.object({
   status: BackgroundJobStatusSchema,
   sportLeagueId: z.uuid().nullable().describe('The sport league a whole-league job is about, such as its events sync; null for a job on one event.'),
   sportEventId: z.uuid().nullable().describe('The event the job is about; null when it is about none.'),
+  sportLeague: z.object({
+    id: z.uuid(),
+    name: z.string(),
+  }).nullable().describe('The sport league the job is about, for display: its own league, or for a job on an event, the event\'s league. Null when it is about neither.'),
+  sportEvent: z.object({
+    id: z.uuid(),
+    name: z.string(),
+  }).nullable().describe('The event the job is about, for display; null when it is about none.'),
   attempts: z.number().int().describe('Tries so far, counting one in progress.'),
   runAt: DateTimeSchema.describe('When it is or was due: first queued, or retried after a failed try.'),
   createdAt: DateTimeSchema.describe('When it was queued.'),
