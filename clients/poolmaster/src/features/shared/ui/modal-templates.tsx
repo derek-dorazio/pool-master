@@ -12,7 +12,6 @@ import { Modal } from "./modal";
 import { SectionRow, SectionRows } from "./section-card";
 import { ServerErrorBar } from "./server-error";
 import { StatusBadge } from "./status-badge";
-import { Text } from "./text";
 
 type BaseModalTemplateProps = {
   description?: ReactNode;
@@ -113,8 +112,8 @@ export type DetailAction = {
 /** A titled part of a dialog's body, such as Details or Actions: a small caption over its content. */
 export function DialogSection({ children, testId, title }: { children: ReactNode; testId?: string; title: string }) {
   return (
-    <section className="space-y-2" data-testid={testId}>
-      <h3><Text as="span" variant="label">{title}</Text></h3>
+    <section aria-label={title} className="space-y-2" data-testid={testId}>
+      <Eyebrow tone="muted">{title}</Eyebrow>
       {children}
     </section>
   );

@@ -1,21 +1,22 @@
-import { useState } from 'react';
 import { DataGrid, PageHeader, QueryState, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { CustomerLeagueDialog } from './customer-league-dialog';
 import { customerLeagueColumns } from './customer-league-columns';
 import { CustomersPageTabs } from './customers-page-tabs';
+import { CUSTOMER_LEAGUE_PARAM } from './manage-navigation';
+import { useDialogSearchParam } from './use-dialog-search-param';
 import { ExtendPreviewsButton } from './extend-previews-dialog';
 import { useCustomerLeaguesQuery } from './use-customers-query';
 
 /**
  * /manage/customers/leagues (#1883): every league on the platform in one grid, filtered from its
- * headers, each row opening its dialog. Root admin, desktop only.
+ * headers, each row opening its dialog, named in the address (?league=). Root admin, desktop only.
  */
 export function RootAdminCustomerLeaguesPage() {
   const leaguesQuery = useCustomerLeaguesQuery();
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useDialogSearchParam(CUSTOMER_LEAGUE_PARAM);
   // poolmaster-allow-list-lookup: the dialog's league, found in the rows the grid already holds
-  const openLeague = leaguesQuery.data?.find((league) => league.id === openId);
+  const openLeague = openId === null ? undefined : leaguesQuery.data?.find((league) => league.id === openId);
 
   return (
     <section className="space-y-6" data-testid="root-admin-customer-leagues-page">

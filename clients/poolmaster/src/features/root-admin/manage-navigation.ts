@@ -67,7 +67,8 @@ export const CUSTOMERS_PATH = '/manage/customers';
 export const CUSTOMER_LEAGUES_PATH = `${CUSTOMERS_PATH}/leagues`;
 export const CUSTOMER_USERS_PATH = `${CUSTOMERS_PATH}/users`;
 
-/** The search parameter that opens one user's dialog on the Users tab. */
+/** The search parameters that open one league's or one user's dialog on its tab. */
+export const CUSTOMER_LEAGUE_PARAM = 'league';
 export const CUSTOMER_USER_PARAM = 'user';
 
 /** What each plan costs and what expanding a contest costs on it (#1886). */

@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { setUserRootAdmin, updateUserProfile, type CustomerUserDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
-import { DateDisplay, DetailEditModal, FormField, Input, Select, showToast } from '@/features/shared/ui';
+import { ConfirmDialog, DateDisplay, DetailEditModal, FormField, Input, Select, showToast } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { refreshAfterWrite, useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { ActiveStatusBadge } from './active-status-badge';
 import { useCustomerUserActions } from './customer-user-actions';
@@ -18,6 +19,7 @@ import {
   type CustomerUserFormValues,
 } from './customer-user-edit';
 import { customerUserName, customerUserRole, customerUserStatus } from './customer-user-facts';
+import { PartialSaveError, runSaveSteps, type SaveStep } from './save-steps';
 
 const TEST_ID = 'root-admin-customer-user-dialog';
 
@@ -28,7 +30,10 @@ const TEST_ID = 'root-admin-customer-user-dialog';
 export function CustomerUserDialog({ onClose, user }: { onClose: () => void; user: CustomerUserDto }) {
   const auth = useAuth();
   const isSelf = auth.user?.id === user.id;
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+  // A save that grants or removes root admin waits here for its own confirm.
+  const [roleChange, setRoleChange] = useState<CustomerUserChange | null>(null);
   const name = customerUserName(user);
   const form = useForm<CustomerUserFormValues>({
     resolver: zodResolver(customerUserFormSchema),
@@ -38,16 +43,26 @@ export function CustomerUserDialog({ onClose, user }: { onClose: () => void; use
   const { actions, dialogs, temporaryPassword } = useCustomerUserActions({ isSelf, onDeleted: onClose, user });
 
   const saveMutation = useInvalidatingMutation({
-    mutationFn: async (change: CustomerUserChange) => {
-      if (change.name !== null) {
-        // The profile write takes the email too; the account's own is sent unchanged.
-        const response = await updateUserProfile({ path: { userId: user.id }, body: { email: user.email, ...change.name } });
-        if (!response.data?.user) throwApiError(response.error, 'Profile update response is missing the user.');
+    mutationFn: ({ isRootAdmin, name: newName }: CustomerUserChange) => {
+      const steps: SaveStep[] = [];
+      if (newName !== null) {
+        steps.push({ what: 'name', run: async () => {
+          // The profile write takes the email too; the account's own is sent unchanged.
+          const response = await updateUserProfile({ path: { userId: user.id }, body: { email: user.email, ...newName } });
+          if (!response.data?.user) throwApiError(response.error, 'Profile update response is missing the user.');
+        } });
       }
-      if (change.isRootAdmin !== null) {
-        const response = await setUserRootAdmin({ path: { userId: user.id }, body: { isRootAdmin: change.isRootAdmin } });
-        if (!response.data?.success) throwApiError(response.error, 'Role change response is missing success confirmation.');
+      if (isRootAdmin !== null) {
+        steps.push({ what: 'role', run: async () => {
+          const response = await setUserRootAdmin({ path: { userId: user.id }, body: { isRootAdmin } });
+          if (!response.data?.success) throwApiError(response.error, 'Role change response is missing success confirmation.');
+        } });
       }
+      return runSaveSteps(steps);
+    },
+    // A half-applied save still changed the user, so the grid reads them again.
+    onError: (error) => {
+      if (error instanceof PartialSaveError) void refreshAfterWrite(queryClient, [QueryKeys.rootAdmin.users, QueryKeys.users.detail(user.id)]);
     },
     onSuccess: () => {
       showToast({ title: `Saved ${name}`, tone: 'success' });
@@ -97,7 +112,11 @@ export function CustomerUserDialog({ onClose, user }: { onClose: () => void; use
           setMode('edit');
         }}
         onOpenChange={(open) => (open ? undefined : onClose())}
-        onSave={() => void form.handleSubmit((values) => saveMutation.mutate(customerUserChange(user, values)))()}
+        onSave={() => void form.handleSubmit((values) => {
+          const change = customerUserChange(user, values);
+          if (change.isRootAdmin === null) saveMutation.mutate(change);
+          else setRoleChange(change);
+        })()}
         open
         pendingLabel="Saving..."
         saveLabel="Save"
@@ -121,6 +140,23 @@ export function CustomerUserDialog({ onClose, user }: { onClose: () => void; use
         </div>
       </DetailEditModal>
       {dialogs}
+      <ConfirmDialog
+        confirmLabel={roleChange?.isRootAdmin === true ? 'Make root admin' : 'Remove root admin'}
+        confirmTestId={`${TEST_ID}-submit-role`}
+        description={roleChange?.isRootAdmin === true
+          ? 'Root admins can use every Manage page: every league, user and sport.'
+          : 'They lose the Manage pages and are signed out everywhere.'}
+        onCancel={() => setRoleChange(null)}
+        onConfirm={() => {
+          if (roleChange !== null) saveMutation.mutate(roleChange);
+          setRoleChange(null);
+        }}
+        onOpenChange={(next) => (next ? undefined : setRoleChange(null))}
+        open={roleChange !== null}
+        testId={`${TEST_ID}-role-confirm`}
+        title={roleChange?.isRootAdmin === true ? `Make ${name} a root admin?` : `Remove root admin from ${name}?`}
+        tone={roleChange?.isRootAdmin === true ? 'default' : 'danger'}
+      />
     </>
   );
 }

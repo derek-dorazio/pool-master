@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { LEAGUE_PLANS } from '@poolmaster/shared/domain';
@@ -8,16 +9,17 @@ import { buildLeaguePath } from '@/features/leagues/league-routing';
 import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 import { DateDisplay, DetailEditModal, FormField, LinkButton, Select, showToast } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { refreshAfterWrite, useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { PREVIEW_EXTEND_MONTHS, previewExtendMonthsLabel } from '@/features/plans/preview-extend-months';
 import {
   customerLeagueChange,
   customerLeagueFormSchema,
   customerLeagueFormValues,
-  PREVIEW_EXTEND_MONTHS,
   type CustomerLeagueChange,
   type CustomerLeagueFormValues,
 } from './customer-league-edit';
+import { PartialSaveError, runSaveSteps, type SaveStep } from './save-steps';
 
 /**
  * One league on Customers › Leagues (#1883): its Details, an Actions section that opens the league
@@ -25,6 +27,7 @@ import {
  * back to the view (rules/ux-rules.md §12 item 14).
  */
 export function CustomerLeagueDialog({ league, onClose }: { league: CustomerLeagueDto; onClose: () => void }) {
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const testId = 'root-admin-customer-league-dialog';
   const form = useForm<CustomerLeagueFormValues>({
@@ -34,15 +37,25 @@ export function CustomerLeagueDialog({ league, onClose }: { league: CustomerLeag
   });
 
   const saveMutation = useInvalidatingMutation({
-    mutationFn: async (change: CustomerLeagueChange) => {
-      if (change.plan !== null) {
-        const response = await updateLeaguePlan({ path: { id: league.id }, body: { plan: change.plan } });
-        if (!response.data) throwApiError(response.error, 'Plan change response is missing data.');
+    mutationFn: ({ extendMonths, plan }: CustomerLeagueChange) => {
+      const steps: SaveStep[] = [];
+      if (plan !== null) {
+        steps.push({ what: 'plan', run: async () => {
+          const response = await updateLeaguePlan({ path: { id: league.id }, body: { plan } });
+          if (!response.data) throwApiError(response.error, 'Plan change response is missing data.');
+        } });
       }
-      if (change.extendMonths !== null) {
-        const response = await extendLeaguePlanRenewal({ path: { id: league.id }, body: { months: change.extendMonths } });
-        if (!response.data) throwApiError(response.error, 'Preview extension response is missing data.');
+      if (extendMonths !== null) {
+        steps.push({ what: 'preview end', run: async () => {
+          const response = await extendLeaguePlanRenewal({ path: { id: league.id }, body: { months: extendMonths } });
+          if (!response.data) throwApiError(response.error, 'Preview extension response is missing data.');
+        } });
       }
+      return runSaveSteps(steps);
+    },
+    // A half-applied save still changed the league, so the grid reads it again.
+    onError: (error) => {
+      if (error instanceof PartialSaveError) void refreshAfterWrite(queryClient, [QueryKeys.rootAdmin.manageLeagues, QueryKeys.leagues.all]);
     },
     onSuccess: () => {
       showToast({ title: `Saved ${league.name}`, tone: 'success' });
@@ -118,7 +131,7 @@ export function CustomerLeagueDialog({ league, onClose }: { league: CustomerLeag
             <option value="">Keep as it is</option>
             {PREVIEW_EXTEND_MONTHS.map((months) => (
               <option key={months} value={String(months)}>
-                {months === 1 ? '1 month from today' : `${String(months)} months from today`}
+                {previewExtendMonthsLabel(months)}
               </option>
             ))}
           </Select>

@@ -1,4 +1,3 @@
-import { useSearchParams } from 'react-router';
 import { DataGrid, PageHeader, QueryState, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { CustomerUserDialog } from './customer-user-dialog';
@@ -6,6 +5,7 @@ import { customerUserColumns } from './customer-user-columns';
 import { CustomersPageTabs } from './customers-page-tabs';
 import { CUSTOMER_USER_PARAM } from './manage-navigation';
 import { useCustomerUsersQuery } from './use-customers-query';
+import { useDialogSearchParam } from './use-dialog-search-param';
 
 /**
  * /manage/customers/users (#1883): every user on the platform in one grid, filtered from its
@@ -14,19 +14,9 @@ import { useCustomerUsersQuery } from './use-customers-query';
  */
 export function RootAdminCustomerUsersPage() {
   const usersQuery = useCustomerUsersQuery();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const openId = searchParams.get(CUSTOMER_USER_PARAM);
+  const [openId, setOpenId] = useDialogSearchParam(CUSTOMER_USER_PARAM);
   // poolmaster-allow-list-lookup: the dialog's user, found in the rows the grid already holds
   const openUser = openId === null ? undefined : usersQuery.data?.find((user) => user.id === openId);
-
-  const setOpenId = (userId: string | null) => {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      if (userId === null) next.delete(CUSTOMER_USER_PARAM);
-      else next.set(CUSTOMER_USER_PARAM, userId);
-      return next;
-    }, { replace: true });
-  };
 
   return (
     <section className="space-y-6" data-testid="root-admin-customer-users-page">

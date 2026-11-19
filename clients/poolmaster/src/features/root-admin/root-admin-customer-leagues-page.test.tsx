@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CustomerLeagueDto } from '@/lib/api';
 import { Toaster } from '@/features/shared/ui';
@@ -41,12 +41,18 @@ const LEAGUES = [
   league({ id: 'league-2', leagueCode: 'FAMILY2', name: 'Family Picks', plan: 'FREE', owner: null, memberCount: 0, activeContestCount: 0, previewEndsAt: null }),
 ];
 
-function renderPage() {
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
+}
+
+function renderPage(entry = '/manage/customers/leagues') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/manage/customers/leagues']}>
+      <MemoryRouter initialEntries={[entry]}>
         <RootAdminCustomerLeaguesPage />
+        <LocationProbe />
         <Toaster />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -157,6 +163,34 @@ describe('RootAdminCustomerLeaguesPage', () => {
     expect(await screen.findByText(/That plan cannot be set\./)).toBeInTheDocument();
     expect(mocks.extendLeaguePlanRenewal).not.toHaveBeenCalled();
     expect(screen.getByTestId('root-admin-customer-league-dialog-save')).toBeInTheDocument();
+  });
+
+  it('says what was saved when the plan saves but the preview extension is refused, and reloads the leagues', async () => {
+    mocks.listCustomerLeagues.mockResolvedValue({ data: { leagues: LEAGUES } });
+    mocks.updateLeaguePlan.mockResolvedValue({ data: { league: {} } });
+    mocks.extendLeaguePlanRenewal.mockResolvedValue({ error: { error: { code: 'LEAGUE_NOT_FOUND', message: 'League was not found.' } } });
+    renderPage();
+
+    await openLeague('league-1');
+    fireEvent.click(screen.getByTestId('root-admin-customer-league-dialog-edit'));
+    fireEvent.change(screen.getByTestId('root-admin-customer-league-dialog-plan-input'), { target: { value: 'PREMIUM' } });
+    fireEvent.change(screen.getByTestId('root-admin-customer-league-dialog-extend-input'), { target: { value: '3' } });
+    await waitFor(() => expect(screen.getByTestId('root-admin-customer-league-dialog-save')).toBeEnabled());
+    fireEvent.click(screen.getByTestId('root-admin-customer-league-dialog-save'));
+
+    expect(await screen.findByText(/Saved the plan, but not the preview end: League was not found\./)).toBeInTheDocument();
+    await waitFor(() => expect(mocks.listCustomerLeagues).toHaveBeenCalledTimes(2));
+  });
+
+  it('opens the league named in the address, and Close drops it from the address', async () => {
+    mocks.listCustomerLeagues.mockResolvedValue({ data: { leagues: LEAGUES } });
+    renderPage('/manage/customers/leagues?league=league-2');
+
+    const dialog = within(await screen.findByTestId('root-admin-customer-league-dialog'));
+    expect(screen.getByTestId('root-admin-customer-league-dialog-code')).toHaveTextContent('FAMILY2');
+    fireEvent.click(dialog.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByTestId('root-admin-customer-league-dialog')).not.toBeInTheDocument());
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/manage\/customers\/leagues$/);
   });
 
   it('cancels an edit back to the view, unsaved, and Close closes the dialog', async () => {

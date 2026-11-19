@@ -310,6 +310,10 @@ describe('RootAdminCustomerUsersPage', () => {
     fireEvent.change(screen.getByTestId(`${DIALOG}-role-input`), { target: { value: 'ROOT_ADMIN' } });
     await waitFor(() => expect(screen.getByTestId(`${DIALOG}-save`)).toBeEnabled());
     fireEvent.click(screen.getByTestId(`${DIALOG}-save`));
+    // Granting root admin asks first; nothing is sent until it is confirmed.
+    expect(await screen.findByText('Make Target User a root admin?')).toBeInTheDocument();
+    expect(mocks.updateUserProfile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId(`${DIALOG}-submit-role`));
 
     await waitFor(() => expect(mocks.setUserRootAdmin).toHaveBeenCalledWith(expect.objectContaining({ path: { userId: 'user-2' }, body: { isRootAdmin: true } })));
     expect(mocks.updateUserProfile).toHaveBeenCalledWith(expect.objectContaining({
@@ -329,10 +333,62 @@ describe('RootAdminCustomerUsersPage', () => {
     fireEvent.change(screen.getByTestId(`${DIALOG}-role-input`), { target: { value: 'MEMBER' } });
     await waitFor(() => expect(screen.getByTestId(`${DIALOG}-save`)).toBeEnabled());
     fireEvent.click(screen.getByTestId(`${DIALOG}-save`));
+    expect(await screen.findByText('Remove root admin from Target User?')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(`${DIALOG}-submit-role`));
 
     expect(await screen.findByText(/The last root admin cannot be removed\./)).toBeInTheDocument();
     expect(mocks.updateUserProfile).not.toHaveBeenCalled();
     expect(screen.getByTestId(`${DIALOG}-save`)).toBeInTheDocument();
+  });
+
+  it('cancels a role change at its confirm, leaving the form unsaved and nothing sent', async () => {
+    seed();
+    renderPage();
+
+    await openUser();
+    fireEvent.click(screen.getByTestId(`${DIALOG}-edit`));
+    fireEvent.change(screen.getByTestId(`${DIALOG}-role-input`), { target: { value: 'ROOT_ADMIN' } });
+    await waitFor(() => expect(screen.getByTestId(`${DIALOG}-save`)).toBeEnabled());
+    fireEvent.click(screen.getByTestId(`${DIALOG}-save`));
+    fireEvent.click(within(await screen.findByTestId(`${DIALOG}-role-confirm`)).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId(`${DIALOG}-role-confirm`)).not.toBeInTheDocument());
+    expect(mocks.setUserRootAdmin).not.toHaveBeenCalled();
+    expect(screen.getByTestId(`${DIALOG}-save`)).toBeInTheDocument();
+  });
+
+  it('saves a name change without a role confirm', async () => {
+    seed();
+    mocks.updateUserProfile.mockResolvedValue({ data: { user: { ...SIGNED_IN_ADMIN, id: 'user-2' } } });
+    renderPage();
+
+    await openUser();
+    fireEvent.click(screen.getByTestId(`${DIALOG}-edit`));
+    fireEvent.change(screen.getByTestId(`${DIALOG}-last-name-input`), { target: { value: 'Usher' } });
+    await waitFor(() => expect(screen.getByTestId(`${DIALOG}-save`)).toBeEnabled());
+    fireEvent.click(screen.getByTestId(`${DIALOG}-save`));
+
+    await waitFor(() => expect(mocks.updateUserProfile).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId(`${DIALOG}-role-confirm`)).not.toBeInTheDocument();
+    expect(mocks.setUserRootAdmin).not.toHaveBeenCalled();
+  });
+
+  it('says what was saved when the name saves but the role change is refused, and reloads the users', async () => {
+    seed();
+    mocks.updateUserProfile.mockResolvedValue({ data: { user: { ...SIGNED_IN_ADMIN, id: 'user-2' } } });
+    mocks.setUserRootAdmin.mockResolvedValue({ error: { error: { code: 'ROOT_ADMIN_ACCESS_REQUIRED', message: 'Root admin access required' } } });
+    renderPage();
+
+    await openUser();
+    fireEvent.click(screen.getByTestId(`${DIALOG}-edit`));
+    fireEvent.change(screen.getByTestId(`${DIALOG}-first-name-input`), { target: { value: 'Tara' } });
+    fireEvent.change(screen.getByTestId(`${DIALOG}-role-input`), { target: { value: 'ROOT_ADMIN' } });
+    await waitFor(() => expect(screen.getByTestId(`${DIALOG}-save`)).toBeEnabled());
+    fireEvent.click(screen.getByTestId(`${DIALOG}-save`));
+    fireEvent.click(await screen.findByTestId(`${DIALOG}-submit-role`));
+
+    expect(await screen.findByText(/Saved the name, but not the role: Root admin access required/)).toBeInTheDocument();
+    await waitFor(() => expect(mocks.listCustomerUsers).toHaveBeenCalledTimes(2));
   });
 
   it('refuses to save an empty first name', async () => {

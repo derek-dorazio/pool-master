@@ -4,7 +4,7 @@ import { Button, ConfirmDialog, FormField, Select, formatDateDisplay, showToast,
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { PREVIEW_EXTEND_MONTHS } from './customer-league-edit';
+import { PREVIEW_EXTEND_MONTHS, previewExtendMonthsLabel } from '@/features/plans/preview-extend-months';
 
 const TEST_ID = 'root-admin-customers-extend-previews';
 
@@ -74,7 +74,7 @@ export function ExtendPreviewsButton() {
           <Select data-testid={`${TEST_ID}-months`} onChange={(event) => setMonths(Number(event.target.value))} value={months}>
             {PREVIEW_EXTEND_MONTHS.map((option) => (
               <option key={option} value={option}>
-                {option === 1 ? '1 month from today' : `${String(option)} months from today`}
+                {previewExtendMonthsLabel(option)}
               </option>
             ))}
           </Select>
