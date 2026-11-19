@@ -8,7 +8,6 @@ import {
   DetailEditModal,
   ErrorState,
   FormField,
-  HelpTip,
   Input,
   LoadingState,
   ReadOnlyDetailModal,
@@ -151,17 +150,7 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
   const facts: Fact[] = [
     { id: 'status', label: 'Status', value: sportLeague.isActive ? 'On' : 'Off', testId: 'root-admin-sport-league-settings-status' },
     providerLocked
-      ? {
-          id: 'provider',
-          label: (
-            <span className="inline-flex items-center gap-1.5">
-              Provider
-              <HelpTip label="About Provider" testId="root-admin-sport-league-settings-provider-help">{followsHelp}</HelpTip>
-            </span>
-          ),
-          value: followsText,
-          testId: 'root-admin-sport-league-settings-provider',
-        }
+      ? { id: 'provider', label: 'Provider', value: followsText, help: followsHelp, testId: 'root-admin-sport-league-settings-provider' }
       : { id: 'provider', label: 'Provider', value: sportLeague.eventSyncProviderId === null ? 'No provider' : providerName(sportLeague.eventSyncProviderId), testId: 'root-admin-sport-league-settings-provider' },
     { id: 'autoRelease', label: 'Auto release', value: autoReleaseText(sportLeague.autoReleaseDaysBeforeStart), testId: 'root-admin-sport-league-settings-auto-release' },
     { id: 'tierProfile', label: 'Tier profile', value: tierProfileName, testId: 'root-admin-sport-league-settings-tier-profile' },
