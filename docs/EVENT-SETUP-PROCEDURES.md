@@ -86,8 +86,9 @@ not match "WNBA Playoffs".
 
 ## 3. Check the rounds
 
-The *Rounds* grid on the Rounds and matches tab should show R1 to R4. Scores for a round with no round
-row are skipped, so add any that are missing with *Edit schedule*.
+The *Rounds* grid on the Rounds and matches tab should show R1 to R4; scores for a round with no
+round row are skipped. Open a round (⤢) to see its dates, and *Edit* in its dialog to move them on
+an event no feed syncs.
 
 ## 4. Load the field from the mock
 

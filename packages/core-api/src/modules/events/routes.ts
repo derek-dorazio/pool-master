@@ -47,7 +47,7 @@ export interface EventsModuleOptions {
    * Each admin write that changes what the event's contests' boards show writes their rebuild job
    * in its own transaction (#1466).
    */
-  leaderboards: Pick<LeaderboardRebuilds, 'forEvent'>;
+  leaderboards: Pick<LeaderboardRebuilds, 'forEvent' | 'eventsChanged'>;
   /**
    * The app's one set of event services, shared with the synced event creation sweep so both
    * write through the same instances; omitted, the module builds its own.
@@ -106,6 +106,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     eventLifecycle,
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,
+    leaderboards: opts.leaderboards,
     eventOverviews: new SportLeaguePageService({
       reader: new PrismaSportLeaguePageReader(prisma),
       schedule: opts.schedule,
@@ -473,6 +474,20 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SeedSportEventParticipantsResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.seedEventParticipants,
+  });
+
+  fastify.post('/:eventId/leaderboards/rebuild', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Settle an event\'s contests again',
+      description: 'Queues a rebuild of every leaderboard on the event\'s contests from the results stored now, and returns at once; '
+        + 'the job shows in Activity. Changes no result. For a rebuild that failed or never ran, or after a scoring fix. Root admin only.',
+      operationId: 'rebuildEventLeaderboards',
+      params: EVENT_PARAMS,
+      response: { ...NO_CONTENT, ...errors(401, 403, 404) },
+    },
+    handler: handler.rebuildEventLeaderboards,
   });
 
   fastify.post('/:eventId/participants/refresh', {

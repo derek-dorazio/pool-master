@@ -34693,6 +34693,41 @@ export type SeedEventParticipantsResponses = {
 
 export type SeedEventParticipantsResponse = SeedEventParticipantsResponses[keyof SeedEventParticipantsResponses];
 
+export type RebuildEventLeaderboardsData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/leaderboards/rebuild';
+};
+
+export type RebuildEventLeaderboardsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type RebuildEventLeaderboardsError = RebuildEventLeaderboardsErrors[keyof RebuildEventLeaderboardsErrors];
+
+export type RebuildEventLeaderboardsResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type RebuildEventLeaderboardsResponse = RebuildEventLeaderboardsResponses[keyof RebuildEventLeaderboardsResponses];
+
 export type RefreshEventParticipantsData = {
     body?: never;
     path: {

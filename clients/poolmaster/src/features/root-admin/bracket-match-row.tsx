@@ -11,22 +11,7 @@ import { type BracketContext, describePairing, describeSide, useMatchWrite } fro
 import { PairingEditor } from './bracket-pairing-editor';
 import { SpreadCell } from './bracket-spread-cell';
 import { TieResult } from './bracket-tie-result';
-
-const MATCH_STATUS_LABEL: Record<MatchStatus, string> = {
-  [MatchStatus.SCHEDULED]: 'Scheduled',
-  [MatchStatus.IN_PROGRESS]: 'In progress',
-  [MatchStatus.COMPLETED]: 'Final',
-  [MatchStatus.CANCELLED]: 'Cancelled',
-  [MatchStatus.POSTPONED]: 'Postponed',
-};
-
-const MATCH_STATUS_TONE: Record<MatchStatus, 'neutral' | 'active' | 'final' | 'warning'> = {
-  [MatchStatus.SCHEDULED]: 'neutral',
-  [MatchStatus.IN_PROGRESS]: 'active',
-  [MatchStatus.COMPLETED]: 'final',
-  [MatchStatus.CANCELLED]: 'warning',
-  [MatchStatus.POSTPONED]: 'warning',
-};
+import { MATCH_STATUS_LABEL, MATCH_STATUS_TONE } from './match-status';
 
 /**
  * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
