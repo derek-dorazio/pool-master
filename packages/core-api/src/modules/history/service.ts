@@ -134,6 +134,8 @@ export interface SquadCupView {
 export interface SquadYearView {
   squad: Squad;
   year: number;
+  /** True once the year has ended in US Eastern, whether or not the squad has a championship row. */
+  isOver: boolean;
   championship: SquadChampionshipView | null;
   cups: SquadCupView[];
 }
@@ -503,6 +505,7 @@ function squadYearFrom(squad: Squad, year: number, championship: ChampionshipYea
   return {
     squad,
     year,
+    isOver: championship.isOver,
     championship: standing === undefined ? null : {
       cupName: championship.cupName,
       isOver: championship.isOver,

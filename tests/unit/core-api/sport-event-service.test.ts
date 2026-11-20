@@ -890,6 +890,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
       eventLifecycle: lifecycle,
       scoreSource: stubInstance(EventScoreSourceService, {}),
       ingestion: stubInstance(IngestionService, {}),
+      leaderboards: new RecordingLeaderboardRebuilds(),
       eventOverviews: stubInstance(SportLeaguePageService, {}),
     });
     return { store, service, sportLeague, notice, handlers };
@@ -962,6 +963,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
       eventLifecycle: context.lifecycle,
       scoreSource: stubInstance(EventScoreSourceService, {}),
       ingestion: stubInstance(IngestionService, {}),
+      leaderboards: new RecordingLeaderboardRebuilds(),
       eventOverviews: stubInstance(SportLeaguePageService, {}),
     });
     const countContests = jest.spyOn(context.sportEvents, 'countContests');

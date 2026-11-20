@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -41,11 +41,13 @@ const {
   listSportLeaguesMock,
   listTierProfilesMock,
   mockLogger,
+  rebuildEventLeaderboardsMock,
   refreshEventParticipantsMock,
   releaseEventMock,
   submitEventSyncMock,
   transitionEventMock,
   updateEventMock,
+  updateEventRoundsMock,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockReturnValue(logger);
@@ -62,11 +64,13 @@ const {
     listSportLeaguesMock: vi.fn(),
     listTierProfilesMock: vi.fn(),
     mockLogger: logger,
+    rebuildEventLeaderboardsMock: vi.fn(),
     refreshEventParticipantsMock: vi.fn(),
     releaseEventMock: vi.fn(),
     submitEventSyncMock: vi.fn(),
     transitionEventMock: vi.fn(),
     updateEventMock: vi.fn(),
+    updateEventRoundsMock: vi.fn(),
   };
 });
 
@@ -82,11 +86,13 @@ bindApiMocks({
   listSportLeagueOverviews: listSportLeagueOverviewsMock,
   listSportLeagues: listSportLeaguesMock,
   listTierProfiles: listTierProfilesMock,
+  rebuildEventLeaderboards: rebuildEventLeaderboardsMock,
   refreshEventParticipants: refreshEventParticipantsMock,
   releaseEvent: releaseEventMock,
   submitEventSync: submitEventSyncMock,
   transitionEvent: transitionEventMock,
   updateEvent: updateEventMock,
+  updateEventRounds: updateEventRoundsMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -108,6 +114,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     startDate: '2026-05-07T12:00:00.000Z',
     endDate: '2026-05-10T22:00:00.000Z',
     status: 'SCHEDULED',
+    tiersLocked: true,
     rounds: 4,
     eventYear: 2026,
     sportLeagueId: 'league-1',
@@ -238,6 +245,7 @@ function renderEventPage(path: string, {
             <Route element={<Navigate replace to="../field" relative="path" />} path="edit" />
             <Route element={<Navigate replace to="../field" relative="path" />} path="tiers" />
             <Route element={<Navigate replace to="../rounds" relative="path" />} path="results" />
+            <Route element={<Navigate replace to="../rounds" relative="path" />} path="schedule" />
           </Route>
         </Routes>
         <LocationProbe />
@@ -300,6 +308,12 @@ describe('Event page header and tabs', () => {
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events/tour-1/rounds'), { timeout: 5_000 });
   });
 
+  it('sends the old schedule page link to Rounds and matches, where each round\'s dialog reschedules it', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/schedule');
+
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events/tour-1/rounds'), { timeout: 5_000 });
+  });
+
   it('sends the old tiers page link to Field, where tiers and prices now live', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/tiers');
 
@@ -316,7 +330,7 @@ describe('Event page header and tabs', () => {
 
   it('chips the event\'s sync health and its sync issues, leaving the release issue to the Release chip', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/field', {
-      event: tournament({ status: 'DRAFT', lastAutoReleaseCheck: { checkedAt: '2026-05-01T10:00:00.000Z', outcome: 'HELD', failedChecks: ['TIERS_ASSIGNED'] } }),
+      event: tournament({ status: 'DRAFT', tiersLocked: false, lastAutoReleaseCheck: { checkedAt: '2026-05-01T10:00:00.000Z', outcome: 'HELD', failedChecks: ['TIERS_ASSIGNED'] } }),
       overview: eventOverview({
         syncHealth: 'ERROR',
         issues: [
@@ -406,8 +420,7 @@ describe('Event page Rounds and matches tab', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('lists each round with its start, status, results and when it settled, with Edit schedule on an event no provider syncs', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/rounds');
+  function seedRounds() {
     listEventRoundsMock.mockResolvedValue({
       data: {
         rounds: [
@@ -416,20 +429,73 @@ describe('Event page Rounds and matches tab', () => {
         ],
       },
     });
+  }
+
+  async function openRound(roundNumber: number) {
+    const row = await screen.findByTestId(`root-admin-event-round-${String(roundNumber)}`, {}, { timeout: 5_000 });
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    return screen.findByTestId('root-admin-event-round-dialog');
+  }
+
+  it('lists each round with its start, status, results and when it settled, and the event\'s results tools on an event no provider syncs', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/rounds');
+    seedRounds();
 
     const roundOne = await screen.findByTestId('root-admin-event-round-1', {}, { timeout: 5_000 });
     expect(roundOne).toHaveTextContent('Completed');
     expect(roundOne).toHaveTextContent('70');
     expect(screen.getByTestId('root-admin-event-round-2')).toHaveTextContent('Scheduled');
-    expect(screen.getByTestId('root-admin-sport-event-rounds-edit')).toHaveAttribute('href', '/manage/sports/golf/events/tour-1/schedule');
+    expect(await screen.findByTestId('root-admin-golf-tournament-scores-page')).toBeInTheDocument();
   });
 
-  it('leaves Edit schedule off a synced event, whose rounds its provider keeps', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/rounds', { synced: true });
+  it('opens a round\'s dialog with its facts, and Edit reschedules that one round, a blank end cleared', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/rounds');
+    seedRounds();
+    updateEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
 
-    await screen.findByTestId('root-admin-event-rounds', {}, { timeout: 5_000 });
-    expect(await screen.findByText('No rounds yet.')).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-sport-event-rounds-edit')).not.toBeInTheDocument();
+    const dialog = await openRound(1);
+    expect(within(dialog).getByTestId('root-admin-event-round-dialog-status')).toHaveTextContent('Completed');
+    expect(within(dialog).getByTestId('root-admin-event-round-dialog-results')).toHaveTextContent('70');
+    expect(within(dialog).getByTestId('root-admin-event-round-dialog-ends')).toHaveTextContent('Not set');
+    await userEvent.click(within(dialog).getByTestId('root-admin-event-round-dialog-edit'));
+    fireEvent.change(screen.getByTestId('root-admin-event-round-dialog-edit-starts'), { target: { value: '2026-05-09T12:00' } });
+    await userEvent.click(screen.getByTestId('root-admin-event-round-dialog-save'));
+
+    await waitFor(() => expect(updateEventRoundsMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { eventId: 'tour-1' },
+      body: { rounds: [{ roundNumber: 1, scheduledDate: expect.stringMatching(/^2026-05-09T/) as string, scheduledEndAt: null }] },
+    })));
+    expect(await screen.findByTestId('root-admin-event-round-dialog-edit')).toBeInTheDocument();
+  });
+
+  it('offers Settle again on a round with results, which after its confirm queues one rebuild of the event\'s boards', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/rounds', { synced: true });
+    seedRounds();
+    rebuildEventLeaderboardsMock.mockResolvedValue({ data: undefined, response: new Response(null, { status: 204 }) });
+
+    const dialog = await openRound(1);
+    await userEvent.click(within(dialog).getByTestId('root-admin-event-round-dialog-settle-again'));
+    await userEvent.click(await screen.findByTestId('root-admin-event-round-dialog-settle-again-confirm'));
+
+    await waitFor(() => expect(rebuildEventLeaderboardsMock).toHaveBeenCalledWith({ path: { eventId: 'tour-1' } }));
+    expect(await screen.findByTestId('root-admin-event-round-dialog')).toBeInTheDocument();
+  });
+
+  it('offers no Settle again on a round with no results yet', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/rounds');
+    seedRounds();
+
+    const dialog = await openRound(2);
+    expect(within(dialog).queryByTestId('root-admin-event-round-dialog-settle-again')).not.toBeInTheDocument();
+  });
+
+  it('on a synced event offers no rescheduling and none of the results tools, whose results are the feed\'s', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/rounds', { synced: true });
+    seedRounds();
+
+    const dialog = await openRound(2);
+    expect(within(dialog).queryByTestId('root-admin-event-round-dialog-edit')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-tournament-scores-page')).not.toBeInTheDocument();
   });
 });
 
@@ -477,7 +543,7 @@ describe('Event page Release checks dialog', () => {
   });
 
   const draft = (overrides: Parameters<typeof tournament>[0] = {}) =>
-    tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], releaseChecks: passingReleaseChecks(), ...overrides });
+    tournament({ status: 'DRAFT', tiersLocked: false, allowedTransitions: ['CANCELLED'], releaseChecks: passingReleaseChecks(), ...overrides });
 
   async function openReleaseChecks() {
     await userEvent.click(await screen.findByTestId('root-admin-event-release-chip', {}, { timeout: 5_000 }));
@@ -596,7 +662,7 @@ describe('Event page ⚙ dialog', () => {
     expect(within(released).queryByTestId('root-admin-event-settings-dialog-edit-tiers')).not.toBeInTheDocument();
     unmount();
 
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ status: 'DRAFT', allowedTransitions: [] }) });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ status: 'DRAFT', tiersLocked: false, allowedTransitions: [] }) });
     const draft = await openSettings();
     await userEvent.click(await within(draft).findByTestId('root-admin-event-settings-dialog-edit-tiers'));
 

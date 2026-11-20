@@ -2343,6 +2343,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/leaderboards/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Settle an event's contests again
+         * @description Queues a rebuild of every leaderboard on the event's contests from the results stored now, and returns at once; the job shows in Activity. Changes no result. For a rebuild that failed or never ran, or after a scoring fix. Root admin only.
+         */
+        post: operations["rebuildEventLeaderboards"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/participants/refresh": {
         parameters: {
             query?: never;
@@ -11407,6 +11427,21 @@ export interface components {
             /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
             value: number;
         };
+        /** @description Whether one selection type can start a contest on the event now. */
+        SportEventContestOpeningDto: {
+            /**
+             * @description A way to pick that the event's sport league offers.
+             * @enum {string}
+             */
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+            /**
+             * @description OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself.
+             * @enum {string}
+             */
+            opening: "OPEN" | "NOT_YET" | "CLOSED";
+            /** @description For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type. */
+            startsAtRounds: number[];
+        };
         /** @description The last automatic release try of an event: when, its result, and the checks that held it. */
         SportEventAutoReleaseCheckDto: {
             /**
@@ -11507,6 +11542,23 @@ export interface components {
             readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
             /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
             contestEligible: boolean;
+            /** @description One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN. */
+            contestOpenings: {
+                /**
+                 * @description A way to pick that the event's sport league offers.
+                 * @enum {string}
+                 */
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                /**
+                 * @description OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself.
+                 * @enum {string}
+                 */
+                opening: "OPEN" | "NOT_YET" | "CLOSED";
+                /** @description For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type. */
+                startsAtRounds: number[];
+            }[];
+            /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+            tiersLocked: boolean;
             /**
              * Format: uuid
              * @description The recurring tournament (event series) this is one edition of — the event's only parent.
@@ -11758,6 +11810,23 @@ export interface components {
                 readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
                 /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
                 contestEligible: boolean;
+                /** @description One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN. */
+                contestOpenings: {
+                    /**
+                     * @description A way to pick that the event's sport league offers.
+                     * @enum {string}
+                     */
+                    selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                    /**
+                     * @description OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself.
+                     * @enum {string}
+                     */
+                    opening: "OPEN" | "NOT_YET" | "CLOSED";
+                    /** @description For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type. */
+                    startsAtRounds: number[];
+                }[];
+                /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+                tiersLocked: boolean;
                 /**
                  * Format: uuid
                  * @description The recurring tournament (event series) this is one edition of — the event's only parent.
@@ -12004,6 +12073,23 @@ export interface components {
                 readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
                 /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
                 contestEligible: boolean;
+                /** @description One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN. */
+                contestOpenings: {
+                    /**
+                     * @description A way to pick that the event's sport league offers.
+                     * @enum {string}
+                     */
+                    selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                    /**
+                     * @description OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself.
+                     * @enum {string}
+                     */
+                    opening: "OPEN" | "NOT_YET" | "CLOSED";
+                    /** @description For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type. */
+                    startsAtRounds: number[];
+                }[];
+                /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+                tiersLocked: boolean;
                 /**
                  * Format: uuid
                  * @description The recurring tournament (event series) this is one edition of — the event's only parent.
@@ -12311,6 +12397,23 @@ export interface components {
                 readinessReasons: ("EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED")[];
                 /** @description Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started. */
                 contestEligible: boolean;
+                /** @description One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN. */
+                contestOpenings: {
+                    /**
+                     * @description A way to pick that the event's sport league offers.
+                     * @enum {string}
+                     */
+                    selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                    /**
+                     * @description OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself.
+                     * @enum {string}
+                     */
+                    opening: "OPEN" | "NOT_YET" | "CLOSED";
+                    /** @description For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type. */
+                    startsAtRounds: number[];
+                }[];
+                /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+                tiersLocked: boolean;
                 /**
                  * Format: uuid
                  * @description The recurring tournament (event series) this is one edition of — the event's only parent.
@@ -23617,6 +23720,8 @@ export interface components {
             /** Format: uuid */
             squadId: string;
             year: number;
+            /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+            isOver: boolean;
             /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
             championship: {
                 /** @description The championship's name: "2026 Derek's Pool Cup". */
@@ -23720,6 +23825,8 @@ export interface components {
                 /** Format: uuid */
                 squadId: string;
                 year: number;
+                /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+                isOver: boolean;
                 /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
                 championship: {
                     /** @description The championship's name: "2026 Derek's Pool Cup". */
@@ -23896,6 +24003,8 @@ export interface components {
                 /** Format: uuid */
                 squadId: string;
                 year: number;
+                /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+                isOver: boolean;
                 /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
                 championship: {
                     /** @description The championship's name: "2026 Derek's Pool Cup". */
@@ -24039,6 +24148,8 @@ export interface components {
                     /** Format: uuid */
                     squadId: string;
                     year: number;
+                    /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+                    isOver: boolean;
                     /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
                     championship: {
                         /** @description The championship's name: "2026 Derek's Pool Cup". */
@@ -30309,7 +30420,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792). */
+            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_SQUARES_SINGLE_EVENT — a squares contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -33296,6 +33407,53 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    rebuildEventLeaderboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

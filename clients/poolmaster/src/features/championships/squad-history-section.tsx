@@ -14,7 +14,7 @@ import { championshipYearsOffered, parseChampionshipYearParam } from './champion
 import { SquadYearSection } from './squad-year-section';
 import { describeSquadTrophy, describeSquadYearLine, isChampionshipTrophy, squadYearsPlaced } from './squad-year-view';
 import { platesWonBy } from './perpetual-trophy-view';
-import { usePerpetualTrophiesQuery, useSquadHistoryQuery } from './use-championship-query';
+import { usePerpetualTrophiesQuery, useSquadHistoryQuery, useSquadYearQuery } from './use-championship-query';
 
 /**
  * A squad's results on its squad page (#872, mockup E): the year picked (`?year=`, the current one
@@ -41,6 +41,8 @@ export function SquadHistorySection({
   const currentYear = championshipYear(new Date());
   const year = hasPastYears ? parseChampionshipYearParam(searchParams.get('year') ?? undefined) ?? currentYear : currentYear;
   const historyQuery = useSquadHistoryQuery(hasShelf ? leagueId : '', squad.id);
+  // The year's own read (the section below shares it) says whether it is over; until it answers, the year alone.
+  const squadYear = useSquadYearQuery(leagueId, squad.id, year).data;
   const years = championshipYearsOffered([year, ...(hasPastYears ? historyQuery.data?.years ?? [] : []).map((row) => row.year)], [], currentYear);
   const chooseYear = (next: number) => {
     setSearchParams(next === currentYear ? {} : { year: String(next) }, { replace: true });
@@ -53,7 +55,7 @@ export function SquadHistorySection({
     <section className="space-y-6" data-testid="squad-history">
       <SectionCard
         bare
-        title={historyYearTitle({ year, isOver: year < currentYear })}
+        title={squadYear ? historyYearTitle(squadYear) : String(year)}
         trailing={<YearPicker onChange={chooseYear} testId="squad-history-year" value={year} years={years} />}
       >
         <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} mySquadId={viewer.mySquadId} squad={squad} year={year} />
@@ -108,7 +110,7 @@ export function SquadHistorySection({
             <SectionCard title="All years">
               <SectionRows testId="squad-history-years">
                 {placedYears.map((row) => {
-                  const line = describeSquadYearLine(row, currentYear);
+                  const line = describeSquadYearLine(row);
                   return (
                     <SectionRow
                       facts={line.detail}

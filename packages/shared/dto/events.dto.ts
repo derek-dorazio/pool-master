@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   AutoReleaseCheckOutcome,
+  ContestOpening,
   ContestStatus,
   EventPricingConfigSchema,
   EventTierConfigSchema,
@@ -13,6 +14,7 @@ import {
   ReleaseCheckKey,
   RoundStatus,
   ScoringFamily,
+  SelectionType,
   Sport,
   SportEventStatus,
   SportEventSyncScope,
@@ -92,6 +94,13 @@ export const SportEventParentDtoSchema = z.object({
 }).describe('The season event a Clutch Card event is rounds of.');
 export type SportEventParentDto = z.infer<typeof SportEventParentDtoSchema>;
 
+export const SportEventContestOpeningDtoSchema = z.object({
+  selectionType: z.enum(SelectionType).describe('A way to pick that the event\'s sport league offers.'),
+  opening: z.enum(ContestOpening).describe('OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game\'s kickoff; Create contest checks the chosen round or game itself.'),
+  startsAtRounds: z.array(z.number().int()).describe('For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type.'),
+}).describe('Whether one selection type can start a contest on the event now.');
+export type SportEventContestOpeningDto = z.infer<typeof SportEventContestOpeningDtoSchema>;
+
 /**
  * The canonical SportEvent — the row plus the three things every reader of an event
  * needs and the row does not store: how many participants are loaded, and whether the
@@ -119,6 +128,8 @@ export const SportEventDtoSchema = z.object({
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.'),
   contestEligible: z.boolean().describe('Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.'),
+  contestOpenings: z.array(SportEventContestOpeningDtoSchema).describe('One row per selection type the event\'s sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN.'),
+  tiersLocked: z.boolean().describe('Whether the event\'s tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED.'),
   eventSeriesId: z.uuid().describe('The recurring tournament (event series) this is one edition of — the event\'s only parent.'),
   eventYear: z.number().int().describe('The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year.'),
   sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
@@ -578,6 +589,7 @@ registerSchema('EventReadinessStatusDto', EventReadinessStatusDtoSchema);
 registerSchema('EventReadinessReasonDto', EventReadinessReasonDtoSchema);
 registerSchema('SportEventAdminCountsDto', SportEventAdminCountsDtoSchema);
 registerSchema('ReleaseCheckDto', ReleaseCheckDtoSchema);
+registerSchema('SportEventContestOpeningDto', SportEventContestOpeningDtoSchema);
 registerSchema('SportEventAutoReleaseCheckDto', SportEventAutoReleaseCheckDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);

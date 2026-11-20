@@ -9,7 +9,7 @@ import { EventFieldSeedAction } from './event-field-seed-action';
 import { useEventPage } from './event-page-context';
 import { EventSyncsCard } from './event-syncs-card';
 import { PriceAssignAction } from './price-assign-action';
-import { eventTiersLocked, sportEventHasScoreSync } from './sport-admin-utils';
+import { sportEventHasScoreSync } from './sport-admin-utils';
 import { TierAutoAssignActions } from './tier-auto-assign-actions';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
@@ -27,7 +27,7 @@ export function EventFieldTab() {
   const sportLeagueNoun = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const entries = useMemo(() => fieldQuery.data ?? [], [fieldQuery.data]);
   const existingParticipantIds = useMemo(() => new Set(entries.map((entry) => entry.participantId)), [entries]);
-  const locked = eventTiersLocked(event.status);
+  const locked = event.tiersLocked;
   const failedQuery = [fieldQuery, tiersQuery].find((query) => query.isError);
   const loaded = {
     data: fieldQuery.data && tiersQuery.data ? { field: fieldQuery.data, tiers: tiersQuery.data } : undefined,

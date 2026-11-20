@@ -70,6 +70,7 @@ import type {
   CupWeight,
   BackgroundJobOutcome,
   BackgroundJobRequest,
+  OneEventSelectionType,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
@@ -77,6 +78,7 @@ import {
   SelectionType,
   assertNever,
   canFillBudgetRoster,
+  coversOneEvent,
   eventSportDefinition,
   sportAllowsSelectionType,
   getTieredRosterSize,
@@ -88,9 +90,10 @@ import {
   PlanCap,
   survivorLivesOf,
   JobErrorType,
+  hasSportEventStarted,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
-import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
+import { evaluateEventOperationalState } from '../events/operational-timing';
 import { ContestCutoffKind, contestCutoff, type ContestCutoff, type EventTiming } from '../contests/entry-window';
 import { errorMessage } from '../../core/error-message';
 
@@ -178,6 +181,22 @@ export interface ContestManagementServiceDeps {
   contestOpened?: ContestOpenedNotice;
   now?: () => Date;
 }
+
+/** What the server says when a one-event contest is given more events, one line per such type. */
+const ONE_EVENT_REFUSALS: Readonly<Record<OneEventSelectionType, { message: string; code: ApiErrorCode }>> = {
+  [SelectionType.RANDOM_DRAW]: {
+    message: 'A random-draw contest covers one event: the draw deals that event\'s field.',
+    code: CONTEST_DRAW_SINGLE_EVENT,
+  },
+  [SelectionType.BRACKET]: {
+    message: 'A bracket contest covers one event: its knockout, picked to the final.',
+    code: CONTEST_BRACKET_SINGLE_EVENT,
+  },
+  [SelectionType.SQUARES]: {
+    message: 'A squares contest covers one event: it is played on one of its games.',
+    code: CONTEST_SQUARES_SINGLE_EVENT,
+  },
+};
 
 export class ContestManagementService {
   private readonly contestRepo: ContestRepository;
@@ -872,27 +891,12 @@ export class ContestManagementService {
    * event's games (#711).
    */
   private assertEventCountFitsSelectionType(selectionType: SelectionType, eventCount: number): void {
-    if (selectionType === SelectionType.RANDOM_DRAW && eventCount > 1) {
-      this.logger.warn({ selectionType, eventCount }, 'contest management events refused: a random draw covers one event');
-      throw new ContestManagementError(
-        'A random-draw contest covers one event: the draw deals that event\'s field.',
-        CONTEST_DRAW_SINGLE_EVENT,
-      );
+    if (!coversOneEvent(selectionType) || eventCount <= 1) {
+      return;
     }
-    if (selectionType === SelectionType.BRACKET && eventCount > 1) {
-      this.logger.warn({ selectionType, eventCount }, 'contest management events refused: a bracket covers one event');
-      throw new ContestManagementError(
-        'A bracket contest covers one event: its knockout, picked to the final.',
-        CONTEST_BRACKET_SINGLE_EVENT,
-      );
-    }
-    if (selectionType === SelectionType.SQUARES && eventCount > 1) {
-      this.logger.warn({ selectionType, eventCount }, 'contest management events refused: squares covers one event');
-      throw new ContestManagementError(
-        'A squares contest covers one event: it is played on one of its games.',
-        CONTEST_SQUARES_SINGLE_EVENT,
-      );
-    }
+    const refusal = ONE_EVENT_REFUSALS[selectionType];
+    this.logger.warn({ selectionType, eventCount }, 'contest management events refused: this selection type covers one event');
+    throw new ContestManagementError(refusal.message, refusal.code);
   }
 
   private async assertSportEventsContestEligible(

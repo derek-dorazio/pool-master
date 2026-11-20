@@ -19,8 +19,7 @@
  * change an entry, or the deal would no longer be the one every entry was given.
  */
 import type { Contest, ContestRules, ContestSelectionConfig } from '@poolmaster/shared/domain';
-import { ContestStatus, isMatchUnplayed, MatchStatus, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
-import { hasSportEventStarted } from '../events/operational-timing';
+import { ContestStatus, isMatchUnplayed, MatchStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished } from '@poolmaster/shared/domain';
 
 export type EventTiming = { status: SportEventStatus; startDate: Date };
 /** A game's timing: its status, its kickoff, and any period scores, which only a game under way has (#772). */
@@ -81,7 +80,7 @@ export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, gam
     case ContestCutoffKind.EVENT_START:
       return sportEvent;
     case ContestCutoffKind.ROUND_START: {
-      if (FINISHED_EVENT_STATUSES.includes(sportEvent.status)) {
+      if (isSportEventStatusFinished(sportEvent.status)) {
         return sportEvent;
       }
       const round = games.filter((game) => game.roundNumber === cutoff.roundNumber && game.status !== MatchStatus.CANCELLED);
@@ -94,7 +93,7 @@ export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, gam
       return { status, startDate };
     }
     case ContestCutoffKind.MATCH_START: {
-      if (FINISHED_EVENT_STATUSES.includes(sportEvent.status)) {
+      if (isSportEventStatusFinished(sportEvent.status)) {
         return sportEvent;
       }
       const game = games.find((candidate) => candidate.id === cutoff.sportEventMatchId);
@@ -118,9 +117,6 @@ export const PickWindow = {
   UNTIL_MATCH_START: 'UNTIL_MATCH_START',
 } as const;
 export type PickWindow = (typeof PickWindow)[keyof typeof PickWindow];
-
-/** Event statuses that finish an event: none of its games takes picks, and its contests settle (#743). */
-export const FINISHED_EVENT_STATUSES: readonly SportEventStatus[] = [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED];
 
 /** Contest statuses whose events take picks: OPEN, and ACTIVE while a later event is still to start. */
 const PICKING_STATUSES: readonly ContestStatus[] = [ContestStatus.OPEN, ContestStatus.ACTIVE];
@@ -224,7 +220,7 @@ export function areMatchPicksOpen(
       if (!PICKING_STATUSES.includes(contest.status) || contest.drawnAt !== undefined) {
         return false;
       }
-      return !FINISHED_EVENT_STATUSES.includes(sportEvent.status) && !hasRoundMatchStarted(match, sportEvent, openingRound, now);
+      return !isSportEventStatusFinished(sportEvent.status) && !hasRoundMatchStarted(match, sportEvent, openingRound, now);
   }
 }
 
@@ -249,7 +245,7 @@ export function areMatchPicksRevealed(
         return false;
       }
       return contest.status === ContestStatus.COMPLETED
-        || FINISHED_EVENT_STATUSES.includes(sportEvent.status)
+        || isSportEventStatusFinished(sportEvent.status)
         || hasRoundMatchStarted(match, sportEvent, openingRound, now);
   }
 }

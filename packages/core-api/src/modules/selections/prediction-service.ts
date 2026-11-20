@@ -55,6 +55,7 @@ import {
   type SportEventParticipant,
   survivorLivesOf,
   type SurvivorContestRules,
+  hasSportEventStarted,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
@@ -75,7 +76,6 @@ import { resolveContestScoringDefinition } from '../contests/contest-leaderboard
 import { areMatchPicksOpen, areMatchPicksRevealed, contestCutoff, cutoffTiming, openingRoundNumber, type EventTiming } from '../contests/entry-window';
 import { knockoutSeeds, withdrawnRowIds } from '../scoring-families/head-to-head/score-team';
 import { contestBracketGames, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
-import { hasSportEventStarted } from '../events/operational-timing';
 import { getPredictionEngine } from './prediction-engines/registry';
 import {
   PredictionIssueKind,

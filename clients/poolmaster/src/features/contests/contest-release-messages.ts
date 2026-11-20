@@ -2,8 +2,10 @@ import {
   CONTEST_BRACKET_SINGLE_EVENT,
   CONTEST_BUDGET_UNFILLABLE,
   CONTEST_DRAW_FIELD_OUT_OF_RANGE,
+  CONTEST_DRAW_SINGLE_EVENT,
   CONTEST_EVENT_NOT_A_BRACKET,
   CONTEST_EVENT_NOT_PRICED,
+  CONTEST_SQUARES_SINGLE_EVENT,
 } from '@poolmaster/shared/dto';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
@@ -24,6 +26,8 @@ export const CONTEST_RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
   [CONTEST_DRAW_FIELD_OUT_OF_RANGE]:
     'More scores count than the draw deals each entry. Lower Scores that count, or deal more per entry.',
   [CONTEST_BRACKET_SINGLE_EVENT]: 'A bracket contest covers one tournament, so it can’t take another event.',
+  [CONTEST_DRAW_SINGLE_EVENT]: 'A random draw deals one event’s field, so it can’t take another event.',
+  [CONTEST_SQUARES_SINGLE_EVENT]: 'A squares contest is played on one game, so it can’t take another event.',
   [CONTEST_EVENT_NOT_A_BRACKET]:
     'This event’s games can’t be filled in as a bracket yet: every team of the round the bracket starts at must be set, and every game must lead to one final.',
 };

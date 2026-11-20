@@ -277,6 +277,7 @@ describe('history mappers', () => {
   const yearWithChampionship: SquadYearView = {
     squad: eagles,
     year: 2026,
+    isOver: false,
     championship: {
       cupName: "Derek's Pool Cup",
       isOver: false,
@@ -293,6 +294,7 @@ describe('history mappers', () => {
     expect(toSquadYearDto(yearWithChampionship)).toMatchObject({
       squadId: 'squad-eagles',
       year: 2026,
+      isOver: false,
       championship: {
         name: "2026 Derek's Pool Cup",
         isOver: false,
@@ -315,7 +317,7 @@ describe('history mappers', () => {
   });
 
   it('gives a squad\'s year with no championship season a null championship', () => {
-    expect(toSquadYearDto({ ...yearWithChampionship, championship: null, cups: [] })).toMatchObject({ championship: null, cups: [] });
+    expect(toSquadYearDto({ ...yearWithChampionship, isOver: true, championship: null, cups: [] })).toMatchObject({ isOver: true, championship: null, cups: [] });
   });
 
   it('shelves a championship trophy by its championship name with no cup, and a cup trophy by its cup name and ids', () => {

@@ -1,4 +1,4 @@
-import { SportEventStatus, TournamentFormat, eventSportDefinition, countParticipants } from '@poolmaster/shared/domain';
+import { eventSportDefinition, countParticipants } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
 
 const HOUR_MS = 60 * 60_000;
@@ -31,32 +31,20 @@ export function formatStartsIn(startDate: string, now: Date = new Date()) {
 export type ContestReadinessCheck = { id: string; isMet: boolean; label: string };
 
 /**
- * Whether an event is a knockout under way that a second-chance bracket could still start on
- * (#721): released with its field loaded, and in progress, which is the only reason it is not
- * contest-ready. Whether its later round is still ahead with its teams decided is the server's to
- * say when the contest is created.
- */
-export function isKnockoutUnderWay(event: SportEventDto) {
-  return eventSportDefinition(event).tournamentFormat === TournamentFormat.MATCHES
-    && event.status === SportEventStatus.IN_PROGRESS
-    && event.readinessReasons.length > 0
-    && event.readinessReasons.every((reason) => reason === 'EVENT_STARTED');
-}
-
-/**
- * What must hold before a contest can open to its league: the event is released with its field
- * and tiers loaded, and it has not started. A second-chance bracket closes at its starting
- * round's first game instead (#721), so the event may be under way: `secondChanceRoundName` names
- * that round. These mirror the server's own checks, which still have the last word.
+ * What must hold before a contest can open to its league, as the API reports it on the event: it
+ * is released, its field is loaded, and it has not started. A second-chance bracket closes at its
+ * starting round's first game instead (#721), so the event may be under way:
+ * `secondChanceRoundName` names that round. The checks read the event's `readinessReasons`; the
+ * server, which works them out, still has the last word when the contest opens.
  */
 export function getContestReadinessChecks(
   event: SportEventDto,
   now: Date = new Date(),
   secondChanceRoundName: string | null = null,
 ): ContestReadinessCheck[] {
-  const isReleased = event.readinessStatus !== 'NOT_RELEASED';
-  const hasStarted = event.readinessStatus === 'EVENT_STARTED'
-    || new Date(event.startDate).getTime() <= now.getTime();
+  const isReleased = !event.readinessReasons.includes('EVENT_NOT_RELEASED');
+  const hasField = !event.readinessReasons.includes('FIELD_NOT_LOADED');
+  const hasStarted = event.readinessReasons.includes('EVENT_STARTED');
   const { participant } = eventSportDefinition(event).vocabulary;
   const golfers = countParticipants(event.loadedParticipantCount, participant);
   const tiers = `${event.tierCount} tier${event.tierCount === 1 ? '' : 's'}`;
@@ -69,10 +57,10 @@ export function getContestReadinessChecks(
     },
     {
       id: 'field',
-      isMet: event.loadedParticipantCount > 0 && event.tierCount > 0,
-      label: event.loadedParticipantCount > 0
-        ? `${golfers} in ${tiers}`
-        : `No ${participant.many} loaded yet`,
+      isMet: hasField,
+      label: !hasField
+        ? `No ${participant.many} loaded yet`
+        : event.tierCount > 0 ? `${golfers} in ${tiers}` : golfers,
     },
     hasStarted && secondChanceRoundName !== null
       ? { id: 'not-started', isMet: true, label: `Event under way · the bracket starts at the ${secondChanceRoundName}` }

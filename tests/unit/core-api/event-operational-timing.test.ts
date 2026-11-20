@@ -1,7 +1,4 @@
-import {
-  evaluateEventOperationalState,
-  hasSportEventStarted,
-} from '../../../packages/core-api/src/modules/events/operational-timing';
+import { evaluateEventOperationalState } from '../../../packages/core-api/src/modules/events/operational-timing';
 
 // #431 — readiness comes from the event's status and start time, not from release and
 // field-lock timestamps. `now` is always passed, so nothing here depends on today's date.
@@ -43,19 +40,5 @@ describe('event operational state', () => {
 
     expect(state.readinessReasons).toEqual(['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED', 'EVENT_STARTED']);
     expect(state.readinessStatus).toBe('EVENT_STARTED');
-  });
-});
-
-describe('hasSportEventStarted', () => {
-  it('is false for a scheduled or postponed event whose start is still ahead', () => {
-    expect(hasSportEventStarted({ status: 'SCHEDULED', startDate: beforeStart }, now)).toBe(false);
-    expect(hasSportEventStarted({ status: 'POSTPONED', startDate: beforeStart }, now)).toBe(false);
-  });
-
-  it('is true at the start time, and for an event in progress, completed or cancelled whatever its start', () => {
-    expect(hasSportEventStarted({ status: 'SCHEDULED', startDate: now }, now)).toBe(true);
-    expect(hasSportEventStarted({ status: 'IN_PROGRESS', startDate: beforeStart }, now)).toBe(true);
-    expect(hasSportEventStarted({ status: 'COMPLETED', startDate: beforeStart }, now)).toBe(true);
-    expect(hasSportEventStarted({ status: 'CANCELLED', startDate: beforeStart }, now)).toBe(true);
   });
 });

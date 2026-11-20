@@ -145,12 +145,12 @@ describe('YearReviewService', () => {
   }
 
   /** A squad with one active owner, its 2025 in the championship and cups. */
-  function owner(firstName: string, squadName: string, year: Omit<SquadYearView, 'squad' | 'year'>): { userId: string; squad: Squad } {
+  function owner(firstName: string, squadName: string, year: Omit<SquadYearView, 'squad' | 'year' | 'isOver'>): { userId: string; squad: Squad } {
     const user = world.addUser({ firstName, lastName: 'Owner' });
     world.addMember(league.id, user.id);
     const squad = world.addSquad(league.id, squadName);
     world.addSquadMember(squad.id, user.id);
-    squadYears.push({ squad, year: 2025, ...year });
+    squadYears.push({ squad, year: 2025, isOver: true, ...year });
     return { userId: user.id, squad };
   }
 
@@ -172,7 +172,7 @@ describe('YearReviewService', () => {
     countedFinish(2025);
     const commissioner = world.addUser({ firstName: 'Casey', lastName: 'Commish' });
     world.addMember(league.id, commissioner.id, { role: LeagueRole.COMMISSIONER });
-    const eaglesYear: Omit<SquadYearView, 'squad' | 'year'> = {
+    const eaglesYear: Omit<SquadYearView, 'squad' | 'year' | 'isOver'> = {
       championship: {
         cupName: 'Office League Cup',
         isOver: true,

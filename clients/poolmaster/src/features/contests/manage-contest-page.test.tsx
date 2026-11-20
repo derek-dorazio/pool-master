@@ -26,6 +26,7 @@ import {
   buildSelectionState,
   buildSportEvent,
   buildTier,
+  openingsUnderWay,
 } from './test/contest-admin-fixtures';
 
 const deleteContestMock = vi.fn();
@@ -643,6 +644,22 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
 
 describe('Commissioner tools › Contests › one contest › its events', () => {
   it.each([
+    ['squares', buildManagedContest({
+      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
+    })],
+    ['bracket', buildManagedContest({
+      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+    })],
+  ] as const)('offers no way to add or change events on a %s contest, since it covers one event', async (_label, managedContest) => {
+    primeMocks({ contest: buildContest({ selectionType: managedContest.configuration.selectionType }), managedContest });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-event-row')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
+  });
+
+  it.each([
     ['tiered', SelectionType.TIERED, buildManagedContest()],
     ['budget', SelectionType.BUDGET_PICK, buildManagedContest({
       configuration: {
@@ -940,6 +957,7 @@ const UNDER_WAY: Partial<SportEventDto> = {
   readinessStatus: 'EVENT_STARTED',
   readinessReasons: ['EVENT_STARTED'],
   contestEligible: false,
+  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: null, scoringFamily: null }, [2, 3, 4, 5]),
 };
 
 function bracketContest(overrides: Partial<ContestDto> = {}) {
