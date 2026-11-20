@@ -319,8 +319,8 @@ classes; this is what is specific to *this* codebase.
 ## 7. Reviewing for architectural fit
 
 Apply when the diff touches shared contracts, crosses a module boundary, changes
-infrastructure, builds web app UI, or departs from an active plan. Skip it otherwise — most slices sit inside
-one module and need none of this.
+infrastructure, builds web app UI, names a sport or league, or departs from an active
+plan. Skip it otherwise — most slices sit inside one module and need none of this.
 
 - **Plan alignment** — does the slice implement the decision its plan records, or has it
   quietly broadened? Scope creep is easiest to see against the plan, not the diff.
@@ -337,6 +337,10 @@ one module and need none of this.
 - **Second copies** — does this diff build a second copy of an existing component (a card,
   row, table, leaderboard or section with the same shape)? Name the original. See
   `react-ui-rules.md` §5 *Component Reuse Threshold*.
+- **One sport or league only** — does the plan or diff add a path, flag, column, screen or
+  ticket that serves one sport or league, or a check on a sport or league by name? Reject
+  it and ask for the global version. See `workflow-rules.md` §1 *One global solution, never
+  one sport's*.
 - **Deferred-work hygiene** — does the slice land `TODO` markers or partial implementations
   that should be tracked issues? See `architecture-rules.md` §4.
 
