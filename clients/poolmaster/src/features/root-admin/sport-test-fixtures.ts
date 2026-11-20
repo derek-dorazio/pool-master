@@ -40,6 +40,12 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     readinessStatus: 'NOT_RELEASED',
     readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
     contestEligible: false,
+    contestOpenings: [
+      { selectionType: 'TIERED', opening: 'NOT_YET', startsAtRounds: [] },
+      { selectionType: 'BUDGET_PICK', opening: 'NOT_YET', startsAtRounds: [] },
+      { selectionType: 'RANDOM_DRAW', opening: 'NOT_YET', startsAtRounds: [] },
+    ],
+    tiersLocked: false,
     eventSeriesId: 'event-series-1',
     eventYear: 2026,
     sportLeagueId: 'league-1',

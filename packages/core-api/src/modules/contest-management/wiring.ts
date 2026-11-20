@@ -13,7 +13,7 @@ import type {
   SportEventRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, eventSportDefinition, getDefaultTournamentFormatForSport, isSquaresRound } from '@poolmaster/shared/domain';
+import { MatchStatus, eventSportDefinition, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
@@ -31,7 +31,6 @@ import type { PlanEntitlementsService } from '../plans/plan-entitlements-service
 import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
-import { hasSportEventStarted } from '../events/operational-timing';
 import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
 import type { ContestOpeningReader } from './contest-opening';
 import { ContestManagementService, type ContestCreateSportEventReader, type ContestCreateSportEventState } from './service';

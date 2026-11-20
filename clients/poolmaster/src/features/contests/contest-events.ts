@@ -3,23 +3,17 @@
  * pick'em has a week per event. These read a contest's events and an entry's per-event status
  * the way the server's contest rules do.
  */
-import { ContestEntryStatus, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, SelectionType, hasSportEventStarted } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto } from '@/lib/api';
 
 export type ContestSportEvent = ContestDto['sportEvents'][number];
-
-const STARTED_STATUSES: readonly SportEventStatus[] = [
-  SportEventStatus.IN_PROGRESS,
-  SportEventStatus.COMPLETED,
-  SportEventStatus.CANCELLED,
-];
 
 /** Whether an event has started: its start time has passed, or its status says it is under way or over. */
 export function hasContestEventStarted(
   sportEvent: Pick<ContestSportEvent, 'status' | 'startDate'>,
   now: Date = new Date(),
 ): boolean {
-  return Date.parse(sportEvent.startDate) <= now.getTime() || STARTED_STATUSES.includes(sportEvent.status);
+  return hasSportEventStarted(sportEvent, now);
 }
 
 /**

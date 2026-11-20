@@ -24,7 +24,9 @@ import type {
   SportEventYearListResponse,
 } from '@poolmaster/shared/dto/events.dto';
 import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-interface';
+import { eventContestOpenings } from '../modules/contest-management/contest-opening';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
+import { areTiersAndPricesEditable } from '../modules/events/sport-event-tier-service';
 import type { ProviderEventYearImport, SportEventSummary } from '../modules/events/service';
 import type { SportEventRoundView } from '../modules/events/sport-event-round-service';
 
@@ -45,10 +47,12 @@ export function mapSportEventToDto({
   adminCounts,
   releaseChecks,
 }: SportEventSummary): SportEventDto {
+  const now = new Date();
   const operationalState = evaluateEventOperationalState({
     status: event.status,
     startDate: event.startDate,
     participantCount: loadedParticipantCount,
+    now,
   });
 
   return {
@@ -71,6 +75,8 @@ export function mapSportEventToDto({
     readinessStatus: operationalState.readinessStatus,
     readinessReasons: operationalState.readinessReasons,
     contestEligible: operationalState.contestEligible,
+    contestOpenings: eventContestOpenings({ ...event, loadedParticipantCount }, now),
+    tiersLocked: !areTiersAndPricesEditable(event),
     eventSeriesId: event.eventSeriesId,
     eventYear: event.eventYear,
     sportLeagueId: event.sportLeagueId,

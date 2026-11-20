@@ -51,6 +51,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   championshipYear,
+  hasSportEventStarted,
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
@@ -75,7 +76,6 @@ import type { PlanConfig } from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
 import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
-import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
 import { fieldReads } from './field-reads';
 import { InMemoryLeaderboardSnapshots } from './in-memory-leaderboard-snapshots';

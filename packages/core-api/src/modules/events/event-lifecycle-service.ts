@@ -27,9 +27,10 @@ import {
   SelectionType,
   SportEventStatus,
   isDeclaredSportEventTransition,
+  hasSportEventStarted,
+  isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, type EventTiming } from '../contests/entry-window';
-import { hasSportEventStarted } from './operational-timing';
 import { ContestEventChangeKind } from '../email';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import { contestReopenedEmailsJob, contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
@@ -183,7 +184,7 @@ export class EventLifecycleService {
     // An event that completes or is cancelled settles its contests in a background job written
     // with the status (#1448): an event can hold hundreds of contests, too many for the request.
     // A cancelled event counts for nothing, so it must not hold a contest open either (#743).
-    const finishing = input.toStatus === SportEventStatus.COMPLETED || input.toStatus === SportEventStatus.CANCELLED;
+    const finishing = isSportEventStatusFinished(input.toStatus);
     const now = new Date();
     const endDate = input.toStatus === SportEventStatus.COMPLETED && !before.endDate ? now : undefined;
     // A cancelled event has no end date of its own, and its start may still be ahead, so its
@@ -336,7 +337,7 @@ export class EventLifecycleService {
       throw new Error('Contest settlement is required to settle a finished event\'s contests');
     }
     const sportEvent = await this.sportEvents.findById(payload.sportEventId);
-    if (sportEvent?.status !== SportEventStatus.COMPLETED && sportEvent?.status !== SportEventStatus.CANCELLED) {
+    if (!sportEvent || !isSportEventStatusFinished(sportEvent.status)) {
       this.logger?.warn(
         { action: 'events.settleContests.skipped', data: { sportEventId: payload.sportEventId, status: sportEvent?.status ?? null } },
         'Skipped settling an event\'s contests because the event is gone or no longer finished',

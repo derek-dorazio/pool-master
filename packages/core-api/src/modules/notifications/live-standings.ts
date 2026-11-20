@@ -57,6 +57,7 @@ import {
   type League,
   type SportEvent,
   type User,
+  isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
 import type { ContestLeaderboardEntryRow } from '../../mappers/contests.mapper';
 import type { ContestService } from '../contests/service';
@@ -111,9 +112,6 @@ export interface LiveStandingsDeps extends LeagueMemberDeps {
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
 }
-
-/** Events that will not be played on: once finished, an event is either settled or counts for nothing. */
-const FINISHED_EVENT_STATUSES: readonly SportEventStatus[] = [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED];
 
 /** One standings email due for a contest: what it reports on, and how to read its board. */
 interface DueStandings {
@@ -351,7 +349,7 @@ export class LiveStandings implements DueNotifications {
     if (!last || !isDue(last.at)) return null;
     const latest = last.sportEvent;
     const next = contestEvents
-      .filter((sportEvent) => !settledAt.has(sportEvent.id) && !FINISHED_EVENT_STATUSES.includes(sportEvent.status))
+      .filter((sportEvent) => !settledAt.has(sportEvent.id) && !isSportEventStatusFinished(sportEvent.status))
       .sort((left, right) => left.startDate.getTime() - right.startDate.getTime())
       .at(0);
     return next ? { latest, next } : null;

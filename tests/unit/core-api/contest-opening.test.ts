@@ -3,11 +3,14 @@
  * open, not yet (unreleased, no field, a later-round bracket's teams unknown), or closed (past
  * the setup's cutoff).
  */
-import { SelectionType, SportEventStatus, Sport, TournamentFormat } from '@poolmaster/shared/domain';
+import { ContestOpening, ParticipantType, ScoringFamily, SelectionType, SportEventStatus, Sport, TournamentFormat } from '@poolmaster/shared/domain';
 import {
-  ContestOpening,
+  bracketStartRounds,
   contestOpening,
+  eventContestOpenings,
   type ContestOpeningReader,
+  type EventContestOpening,
+  type EventOpeningFacts,
 } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
 import type { ContestCreateSportEventState } from '../../../packages/core-api/src/modules/contest-management/service';
 
@@ -111,5 +114,72 @@ describe('contestOpening', () => {
       .toEqual(roundStart);
     expect((await contestOpening(reader(underWay, { squaresKickoff: kickoff }), 'event-1', SQUARES, NOW)).closesAt).toEqual(kickoff);
     expect(await contestOpening(reader(event({ startDate: EARLIER })), 'event-1', TIERED, NOW)).toEqual({ opening: ContestOpening.CLOSED, closesAt: null });
+  });
+});
+
+describe('bracketStartRounds', () => {
+  it('offers an event that has not started only the full bracket, since its later rounds have no teams yet', () => {
+    expect(bracketStartRounds(6, false)).toEqual([1]);
+  });
+
+  it('offers an event under way each later round up to the one before the final, and nothing on a two-round event', () => {
+    expect(bracketStartRounds(6, true)).toEqual([2, 3, 4, 5]);
+    expect(bracketStartRounds(3, true)).toEqual([2]);
+    expect(bracketStartRounds(2, true)).toEqual([]);
+  });
+
+  it('never offers a round past the most a knockout\'s points cover', () => {
+    expect(bracketStartRounds(12, true)).toEqual([2, 3, 4, 5, 6, 7, 8]);
+  });
+});
+
+describe('eventContestOpenings, the event list\'s openings per selection type (#1929)', () => {
+  function facts(overrides: Partial<EventOpeningFacts> = {}): EventOpeningFacts {
+    return { sport: Sport.BASKETBALL, status: SportEventStatus.SCHEDULED, startDate: LATER, rounds: 6, loadedParticipantCount: 64, ...overrides };
+  }
+  const byType = (rows: EventContestOpening[]) => Object.fromEntries(rows.map((row) => [row.selectionType, row])) as Record<SelectionType, EventContestOpening>;
+
+  it('opens every format basketball offers on a contest-ready event, a bracket at the full bracket only', () => {
+    const rows = eventContestOpenings(facts(), NOW);
+    expect(rows.map((row) => row.selectionType)).toEqual(['TIERED', 'BUDGET_PICK', 'RANDOM_DRAW', 'PICK_EM', 'BRACKET', 'SURVIVOR', 'SQUARES']);
+    expect(rows.every((row) => row.opening === ContestOpening.OPEN)).toBe(true);
+    expect(byType(rows).BRACKET.startsAtRounds).toEqual([1]);
+    expect(byType(rows).TIERED.startsAtRounds).toEqual([]);
+  });
+
+  it('is NOT_YET for every format while the event is a draft or has no field', () => {
+    for (const notReady of [facts({ status: SportEventStatus.DRAFT }), facts({ loadedParticipantCount: 0 })]) {
+      expect(eventContestOpenings(notReady, NOW).every((row) => row.opening === ContestOpening.NOT_YET)).toBe(true);
+    }
+  });
+
+  it('keeps a knockout under way open to a second-chance bracket from a later round and to squares, and closes every other format', () => {
+    const rows = byType(eventContestOpenings(facts({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER }), NOW));
+    expect(rows.BRACKET).toEqual({ selectionType: 'BRACKET', opening: 'OPEN', startsAtRounds: [2, 3, 4, 5] });
+    expect(rows.SQUARES.opening).toBe(ContestOpening.OPEN);
+    expect(rows.TIERED.opening).toBe(ContestOpening.CLOSED);
+    expect(rows.PICK_EM.opening).toBe(ContestOpening.CLOSED);
+  });
+
+  it('closes a bracket on a two-round knockout under way, which has no later round to start at', () => {
+    const rows = byType(eventContestOpenings(facts({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER, rounds: 2 }), NOW));
+    expect(rows.BRACKET).toEqual({ selectionType: 'BRACKET', opening: 'CLOSED', startsAtRounds: [] });
+  });
+
+  it('closes everything on a finished knockout, on a knockout whose start passed before it moved to in progress, and on a golf event under way', () => {
+    const closed = (rows: ReturnType<typeof eventContestOpenings>) => rows.every((row) => row.opening === ContestOpening.CLOSED);
+    expect(closed(eventContestOpenings(facts({ status: SportEventStatus.COMPLETED, startDate: EARLIER }), NOW))).toBe(true);
+    expect(closed(eventContestOpenings(facts({ startDate: EARLIER }), NOW))).toBe(true);
+    expect(closed(eventContestOpenings(facts({ sport: Sport.GOLF, status: SportEventStatus.IN_PROGRESS, startDate: EARLIER }), NOW))).toBe(true);
+  });
+
+  it('offers a stat pool event only its own definition\'s formats, with no bracket', () => {
+    const statPool = facts({ sport: Sport.BASEBALL, participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE });
+    expect(eventContestOpenings(statPool, NOW).map((row) => row.selectionType)).toEqual(['TIERED', 'BUDGET_PICK', 'RANDOM_DRAW']);
+  });
+
+  it('counts a bracket\'s rounds by the sport\'s default when the event sets none', () => {
+    const rows = byType(eventContestOpenings(facts({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER, rounds: null }), NOW));
+    expect(rows.BRACKET.startsAtRounds).toEqual([2, 3, 4, 5]);
   });
 });

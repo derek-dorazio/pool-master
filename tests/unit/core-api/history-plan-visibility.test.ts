@@ -17,7 +17,7 @@ const CHAMPIONSHIP_ROW = { cupName: 'Big Dawgs Cup' } as SquadChampionshipView;
 const CUP_ROW = { contestsCounted: 2 } as SquadCupView;
 
 function squadYear(year: number): SquadYearView {
-  return { squad: SQUAD, year, championship: CHAMPIONSHIP_ROW, cups: [CUP_ROW] };
+  return { squad: SQUAD, year, isOver: year < THIS_YEAR, championship: CHAMPIONSHIP_ROW, cups: [CUP_ROW] };
 }
 
 describe('squadYearInPlan', () => {
@@ -52,7 +52,7 @@ describe('squadHistoryInPlan', () => {
   it('leaves out the earlier years without PAST_YEARS, hides each year\'s rows the plan lacks, and keeps the medals', () => {
     const shown = squadHistoryInPlan(history, new Set([PlanFeature.TROPHY_SHELF]), NOW);
 
-    expect(shown.years).toEqual([{ squad: SQUAD, year: THIS_YEAR, championship: null, cups: [] }]);
+    expect(shown.years).toEqual([{ squad: SQUAD, year: THIS_YEAR, isOver: false, championship: null, cups: [] }]);
     expect(shown.medals).toEqual(history.medals);
   });
 });

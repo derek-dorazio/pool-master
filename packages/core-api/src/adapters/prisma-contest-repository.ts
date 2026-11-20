@@ -18,7 +18,7 @@ import type {
   ReleasedEdition,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport, FINISHED_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -79,7 +79,7 @@ export class PrismaContestRepository implements ContestRepository {
         NOT: {
           status: ContestStatus.DRAFT,
           OR: [
-            { sportEvents: { some: { sportEvent: { status: { in: [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED] } } } } },
+            { sportEvents: { some: { sportEvent: { status: { in: [...FINISHED_SPORT_EVENT_STATUSES] } } } } },
             {
               // Started as `hasSportEventStarted` has it: by its start date, or under way early.
               sportEvents: { some: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },

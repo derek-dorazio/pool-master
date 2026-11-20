@@ -77,11 +77,6 @@ export function sportEventStatusTone(status: SportEventDtoStatus): BadgeTone {
   return 'neutral';
 }
 
-/** Tiers and prices lock when the tournament is released (#431). */
-export function eventTiersLocked(status: SportEventDtoStatus): boolean {
-  return status !== 'DRAFT';
-}
-
 // --- Readiness (plans/124 §6.3 tournament list) ---
 //
 // SportEventDto's own `readinessStatus` answers whether contests can be built on the event;

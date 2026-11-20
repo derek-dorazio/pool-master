@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { openingsUnderWay, withEventOpenings } from '@/features/contests/test/contest-admin-fixtures';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { LeagueContestTypesPage } from './league-contest-types-page';
 
@@ -21,7 +22,7 @@ const { getLeagueByCodeMock, listContestConfigTemplatesMock, listEventsMock, lis
 bindApiMocks({
   getLeagueByCode: getLeagueByCodeMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
-  listEvents: listEventsMock,
+  listEvents: vi.fn(async (options: Record<string, unknown>) => withEventOpenings<unknown>(await (listEventsMock as (options: unknown) => unknown)(options)) as never),
   listSportLeagues: listSportLeaguesMock,
 });
 
@@ -357,6 +358,7 @@ describe('League › Contest types', () => {
     };
     const MARCH_MADNESS_UNDER_WAY = {
       ...MARCH_MADNESS, status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false,
+      contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: null, scoringFamily: null }, [2, 3, 4, 5]),
     };
 
     function primeBrackets(event: Record<string, unknown>) {

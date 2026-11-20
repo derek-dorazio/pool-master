@@ -29,7 +29,8 @@ import {
   Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
+import { bracketStartRoundOptions } from './bracket-start-round';
+import { bracketStartRoundsOf } from './contest-template-events';
 import { firstContestEvent } from './contest-events';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { ContestRulesFields } from './contest-rules-fields';
@@ -108,7 +109,7 @@ function EditContestForm({
   // later round, as a second-chance bracket (#721).
   const roundName = useEventRoundName(selectionType === SelectionType.BRACKET ? event : null);
   const bracketStartRounds = selectionType === SelectionType.BRACKET
-    ? bracketStartRoundOptions(bracketRoundCount(event), roundName, { isUnderWay: event.readinessReasons.includes('EVENT_STARTED') })
+    ? bracketStartRoundOptions(bracketStartRoundsOf(event), roundName)
     : [];
   const parseRules = (submitted: EditContestFormValues) => {
     const parsed = parseContestRules(submitted, selectionType, tierCount, participant);

@@ -64,12 +64,12 @@ export function squadYearsPlaced(years: SquadYearDto[]): SquadYearDto[] {
 }
 
 /** A year's line in the strip: its championship place, then each cup on show it placed in, with its trophy or place. */
-export function describeSquadYearLine(year: SquadYearDto, currentYear: number): { title: string; detail: string } {
+export function describeSquadYearLine(year: SquadYearDto): { title: string; detail: string } {
   const parts = [
     ...(year.championship && year.championship.standing.played > 0
       ? [`Championship ${formatPlace(year.championship.standing)} of ${year.championship.squadCount}`]
       : []),
     ...cupsPlacedOnShow(year.cups).map((cup) => `${cup.name} ${cup.standing.trophy === null ? formatPlace(cup.standing) : CUP_TROPHY_LABELS[cup.standing.trophy].toLowerCase()}`),
   ];
-  return { title: historyYearTitle({ year: year.year, isOver: year.year < currentYear }), detail: parts.join(' · ') };
+  return { title: historyYearTitle(year), detail: parts.join(' · ') };
 }

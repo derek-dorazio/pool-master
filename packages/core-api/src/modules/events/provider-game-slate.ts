@@ -12,6 +12,7 @@ import {
   SportEventStatus,
   type SportEvent,
   type SportEventMatch,
+  isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 import { reseededRounds, roundPlacementBlocker } from './bracket-reseed';
@@ -274,7 +275,7 @@ function skipReason(event: SportEvent | null): Extract<ProviderGameSlateOutcome,
   if (event === null) return 'NO_EVENT';
   if (!isProviderSyncedEvent(event)) return 'NOT_SYNCED';
   if (!eventPlaysMatches(event)) return 'PLAYS_NO_GAMES';
-  if (event.status === SportEventStatus.COMPLETED || event.status === SportEventStatus.CANCELLED) return 'FINISHED';
+  if (isSportEventStatusFinished(event.status)) return 'FINISHED';
   return null;
 }
 

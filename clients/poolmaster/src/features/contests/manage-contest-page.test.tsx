@@ -26,6 +26,7 @@ import {
   buildSelectionState,
   buildSportEvent,
   buildTier,
+  openingsUnderWay,
 } from './test/contest-admin-fixtures';
 
 const deleteContestMock = vi.fn();
@@ -940,6 +941,7 @@ const UNDER_WAY: Partial<SportEventDto> = {
   readinessStatus: 'EVENT_STARTED',
   readinessReasons: ['EVENT_STARTED'],
   contestEligible: false,
+  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: null, scoringFamily: null }, [2, 3, 4, 5]),
 };
 
 function bracketContest(overrides: Partial<ContestDto> = {}) {

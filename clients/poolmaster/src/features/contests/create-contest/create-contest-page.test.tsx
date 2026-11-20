@@ -9,6 +9,7 @@ import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { FormatIllustration } from '@/features/contest-types/illustrations';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CreateContestPage } from './create-contest-page';
+import { openingsUnderWay, withEventOpenings } from '../test/contest-admin-fixtures';
 
 /** The drawing How to Play shows for a format, to compare the preview's picture against. */
 function formatPictureMarkup(selectionType: SelectionType) {
@@ -61,7 +62,7 @@ bindApiMocks({
   getSportLeague: getSportLeagueMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEventParticipants: listEventParticipantsMock,
-  listEvents: listEventsMock,
+  listEvents: vi.fn(async (options: Record<string, unknown>) => withEventOpenings<unknown>(await (listEventsMock as (options: unknown) => unknown)(options)) as never),
   listSportLeagues: listSportLeaguesMock,
   listSportLeaguesUsed: listSportLeaguesUsedMock,
 });
@@ -308,6 +309,7 @@ const MARCH_MADNESS_UNDER_WAY = {
   readinessStatus: 'EVENT_STARTED',
   readinessReasons: ['EVENT_STARTED'],
   contestEligible: false,
+  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: null, scoringFamily: null }, [2, 3, 4, 5]),
   rounds: 6,
 } as const;
 
@@ -1661,6 +1663,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     readinessStatus: 'EVENT_STARTED',
     readinessReasons: ['EVENT_STARTED'],
     contestEligible: false,
+    contestOpenings: openingsUnderWay({ sport: 'AMERICAN_FOOTBALL', participantType: null, scoringFamily: null }, [2, 3]),
     tierCount: 0,
     rounds: 4,
     sportLeagueId: 'nfl',
