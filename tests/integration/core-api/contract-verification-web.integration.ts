@@ -443,6 +443,13 @@ describe('Contract verification (web)', () => {
         readinessStatus: 'PENDING_FIELD',
       });
       expect(event?.readinessReasons).toContain('FIELD_NOT_LOADED');
+      // The API, not the web, says which formats can start on the event and whether its tiers are locked (#1929).
+      expect(event?.contestOpenings.map((row) => [row.selectionType, row.opening])).toEqual([
+        ['TIERED', 'NOT_YET'],
+        ['BUDGET_PICK', 'NOT_YET'],
+        ['RANDOM_DRAW', 'NOT_YET'],
+      ]);
+      expect(event?.tiersLocked).toBe(true);
     } finally {
       await prisma.sportEvent.delete({ where: { id: eventId } });
     }

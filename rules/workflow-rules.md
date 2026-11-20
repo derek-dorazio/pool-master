@@ -233,6 +233,33 @@ historical references — `git show <sha>:.beads/issues.jsonl` recovers any reco
 open — and they are deliberately **not** rewritten. Every migrated issue names its original
 ID in its body, so searching the tracker for a `pool-master-` suffix resolves the mapping.
 
+### One global solution, never one sport's
+
+Every feature is designed and built as one global solution that works the same way for every
+sport and every sport league. Never plan, ticket or build something for a single sport or
+league: no "NBA-only" path, no "golf for now, the rest later", no flag or table that only one
+league fills in.
+
+- **More than one global path is fine.** Synced leagues and unsynced leagues are two
+  workflows, and each serves every league in its group. What a path is chosen by is a
+  property any league can have (a provider, a scoring family, a participant type), never a
+  league's or sport's name.
+- **A sport's real difference lives in its data or its adapter**, behind the shared seam: the
+  sport definition and scoring family (`architecture-rules.md` §4 *Sport extension*), a
+  provider adapter's reads, a profile or setup row. The flow around it stays one flow.
+- **Connecting one league first is allowed; designing for it alone is not.** A slice may
+  land a global path with one league connected, only when the code has no branch that only
+  that league takes and the work to connect every other league is already ticketed: issues
+  filed, each saying what that league needs, and linked from the plan and the PR. Untracked
+  follow-on work gets forgotten and misleads later slices, so without those tickets the slice
+  is not done.
+- **When an ask names one sport or league, design the global version** and say so in the
+  plan. If only a sport-specific shortcut fits the time, escalate to the owner rather than
+  build it.
+
+Plans and reviews reject sport- or league-specific special cases
+(`review-triggers.md` §7 *Reviewing for architectural fit*).
+
 ### Slice Execution Rules
 
 - Keep one execution slice per commit unless the user explicitly approves bundling multiple slices together.

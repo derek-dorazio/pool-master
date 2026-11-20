@@ -23245,6 +23245,49 @@
           }
         ]
       },
+      "SportEventContestOpeningDto": {
+        "type": "object",
+        "properties": {
+          "selectionType": {
+            "type": "string",
+            "enum": [
+              "TIERED",
+              "BUDGET_PICK",
+              "RANDOM_DRAW",
+              "PICK_EM",
+              "BRACKET",
+              "SURVIVOR",
+              "SQUARES"
+            ],
+            "description": "A way to pick that the event's sport league offers."
+          },
+          "opening": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "NOT_YET",
+              "CLOSED"
+            ],
+            "description": "OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself."
+          },
+          "startsAtRounds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type."
+          }
+        },
+        "required": [
+          "selectionType",
+          "opening",
+          "startsAtRounds"
+        ],
+        "additionalProperties": false,
+        "description": "Whether one selection type can start a contest on the event now."
+      },
       "SportEventAutoReleaseCheckDto": {
         "type": "object",
         "properties": {
@@ -23533,6 +23576,57 @@
           "contestEligible": {
             "type": "boolean",
             "description": "Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started."
+          },
+          "contestOpenings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "selectionType": {
+                  "type": "string",
+                  "enum": [
+                    "TIERED",
+                    "BUDGET_PICK",
+                    "RANDOM_DRAW",
+                    "PICK_EM",
+                    "BRACKET",
+                    "SURVIVOR",
+                    "SQUARES"
+                  ],
+                  "description": "A way to pick that the event's sport league offers."
+                },
+                "opening": {
+                  "type": "string",
+                  "enum": [
+                    "OPEN",
+                    "NOT_YET",
+                    "CLOSED"
+                  ],
+                  "description": "OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself."
+                },
+                "startsAtRounds": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "description": "For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type."
+                }
+              },
+              "required": [
+                "selectionType",
+                "opening",
+                "startsAtRounds"
+              ],
+              "additionalProperties": false,
+              "description": "Whether one selection type can start a contest on the event now."
+            },
+            "description": "One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN."
+          },
+          "tiersLocked": {
+            "type": "boolean",
+            "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
           },
           "eventSeriesId": {
             "type": "string",
@@ -23994,6 +24088,8 @@
           "readinessStatus",
           "readinessReasons",
           "contestEligible",
+          "contestOpenings",
+          "tiersLocked",
           "eventSeriesId",
           "eventYear",
           "sportLeagueId",
@@ -24320,6 +24416,57 @@
                 "contestEligible": {
                   "type": "boolean",
                   "description": "Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started."
+                },
+                "contestOpenings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "TIERED",
+                          "BUDGET_PICK",
+                          "RANDOM_DRAW",
+                          "PICK_EM",
+                          "BRACKET",
+                          "SURVIVOR",
+                          "SQUARES"
+                        ],
+                        "description": "A way to pick that the event's sport league offers."
+                      },
+                      "opening": {
+                        "type": "string",
+                        "enum": [
+                          "OPEN",
+                          "NOT_YET",
+                          "CLOSED"
+                        ],
+                        "description": "OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself."
+                      },
+                      "startsAtRounds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "description": "For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "opening",
+                      "startsAtRounds"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Whether one selection type can start a contest on the event now."
+                  },
+                  "description": "One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN."
+                },
+                "tiersLocked": {
+                  "type": "boolean",
+                  "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
                 },
                 "eventSeriesId": {
                   "type": "string",
@@ -24781,6 +24928,8 @@
                 "readinessStatus",
                 "readinessReasons",
                 "contestEligible",
+                "contestOpenings",
+                "tiersLocked",
                 "eventSeriesId",
                 "eventYear",
                 "sportLeagueId",
@@ -25094,6 +25243,57 @@
               "contestEligible": {
                 "type": "boolean",
                 "description": "Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started."
+              },
+              "contestOpenings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "selectionType": {
+                      "type": "string",
+                      "enum": [
+                        "TIERED",
+                        "BUDGET_PICK",
+                        "RANDOM_DRAW",
+                        "PICK_EM",
+                        "BRACKET",
+                        "SURVIVOR",
+                        "SQUARES"
+                      ],
+                      "description": "A way to pick that the event's sport league offers."
+                    },
+                    "opening": {
+                      "type": "string",
+                      "enum": [
+                        "OPEN",
+                        "NOT_YET",
+                        "CLOSED"
+                      ],
+                      "description": "OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself."
+                    },
+                    "startsAtRounds": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "description": "For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type."
+                    }
+                  },
+                  "required": [
+                    "selectionType",
+                    "opening",
+                    "startsAtRounds"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Whether one selection type can start a contest on the event now."
+                },
+                "description": "One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN."
+              },
+              "tiersLocked": {
+                "type": "boolean",
+                "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
               },
               "eventSeriesId": {
                 "type": "string",
@@ -25555,6 +25755,8 @@
               "readinessStatus",
               "readinessReasons",
               "contestEligible",
+              "contestOpenings",
+              "tiersLocked",
               "eventSeriesId",
               "eventYear",
               "sportLeagueId",
@@ -25996,6 +26198,57 @@
                 "contestEligible": {
                   "type": "boolean",
                   "description": "Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started."
+                },
+                "contestOpenings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "selectionType": {
+                        "type": "string",
+                        "enum": [
+                          "TIERED",
+                          "BUDGET_PICK",
+                          "RANDOM_DRAW",
+                          "PICK_EM",
+                          "BRACKET",
+                          "SURVIVOR",
+                          "SQUARES"
+                        ],
+                        "description": "A way to pick that the event's sport league offers."
+                      },
+                      "opening": {
+                        "type": "string",
+                        "enum": [
+                          "OPEN",
+                          "NOT_YET",
+                          "CLOSED"
+                        ],
+                        "description": "OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself."
+                      },
+                      "startsAtRounds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "description": "For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type."
+                      }
+                    },
+                    "required": [
+                      "selectionType",
+                      "opening",
+                      "startsAtRounds"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Whether one selection type can start a contest on the event now."
+                  },
+                  "description": "One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN."
+                },
+                "tiersLocked": {
+                  "type": "boolean",
+                  "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
                 },
                 "eventSeriesId": {
                   "type": "string",
@@ -26457,6 +26710,8 @@
                 "readinessStatus",
                 "readinessReasons",
                 "contestEligible",
+                "contestOpenings",
+                "tiersLocked",
                 "eventSeriesId",
                 "eventYear",
                 "sportLeagueId",
@@ -64856,6 +65111,10 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "isOver": {
+            "type": "boolean",
+            "description": "True once the year has ended in US Eastern: its places are final. False for the current year, \"so far\"."
+          },
           "championship": {
             "description": "Its championship row; null for an inactive squad that placed in nothing that year.",
             "type": [
@@ -65361,6 +65620,7 @@
         "required": [
           "squadId",
           "year",
+          "isOver",
           "championship",
           "cups"
         ],
@@ -65381,6 +65641,10 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
+              },
+              "isOver": {
+                "type": "boolean",
+                "description": "True once the year has ended in US Eastern: its places are final. False for the current year, \"so far\"."
               },
               "championship": {
                 "description": "Its championship row; null for an inactive squad that placed in nothing that year.",
@@ -65887,6 +66151,7 @@
             "required": [
               "squadId",
               "year",
+              "isOver",
               "championship",
               "cups"
             ],
@@ -66098,6 +66363,10 @@
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
+                },
+                "isOver": {
+                  "type": "boolean",
+                  "description": "True once the year has ended in US Eastern: its places are final. False for the current year, \"so far\"."
                 },
                 "championship": {
                   "description": "Its championship row; null for an inactive squad that placed in nothing that year.",
@@ -66604,6 +66873,7 @@
               "required": [
                 "squadId",
                 "year",
+                "isOver",
                 "championship",
                 "cups"
               ],
@@ -66736,6 +67006,10 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "isOver": {
+                      "type": "boolean",
+                      "description": "True once the year has ended in US Eastern: its places are final. False for the current year, \"so far\"."
                     },
                     "championship": {
                       "description": "Its championship row; null for an inactive squad that placed in nothing that year.",
@@ -67242,6 +67516,7 @@
                   "required": [
                     "squadId",
                     "year",
+                    "isOver",
                     "championship",
                     "cups"
                   ],

@@ -48,6 +48,7 @@ export function toSquadYearDto(view: SquadYearView): SquadYearDto {
   return {
     squadId: view.squad.id,
     year: view.year,
+    isOver: view.isOver,
     championship: championship === null ? null : {
       name: championshipName(view.year, championship.cupName),
       isOver: championship.isOver,

@@ -56,6 +56,25 @@ describe('SportEvent pricing on the wire (#93)', () => {
   });
 });
 
+describe('SportEvent contest openings and tier lock on the wire (#1929)', () => {
+  it('opens every format golf offers on a contest-ready event, and locks its tiers and prices since it is released', () => {
+    expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({
+      contestOpenings: [
+        { selectionType: 'TIERED', opening: 'OPEN', startsAtRounds: [] },
+        { selectionType: 'BUDGET_PICK', opening: 'OPEN', startsAtRounds: [] },
+        { selectionType: 'RANDOM_DRAW', opening: 'OPEN', startsAtRounds: [] },
+      ],
+      tiersLocked: true,
+    });
+  });
+
+  it('opens nothing yet on a draft, whose tiers and prices are still editable', () => {
+    const dto = mapSportEventToDto(summary(event({ status: 'DRAFT' }), 72));
+    expect(dto.tiersLocked).toBe(false);
+    expect(dto.contestOpenings.map((row) => row.opening)).toEqual(['NOT_YET', 'NOT_YET', 'NOT_YET']);
+  });
+});
+
 describe('SportEvent readiness on the wire', () => {
   it('is contest-eligible once released with a loaded field and before it starts', () => {
     expect(mapSportEventToDto(summary(event(), 72))).toMatchObject({

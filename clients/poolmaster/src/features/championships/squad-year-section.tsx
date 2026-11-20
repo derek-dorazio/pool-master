@@ -1,4 +1,3 @@
-import { championshipYear } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/features/leagues/league-routing';
@@ -37,7 +36,7 @@ export function SquadYearSection({
   const contestsQuery = useChampionshipContestsQuery(leagueId, year, filter);
   const championship = squadYearQuery.data?.championship ?? null;
   const cups = historyCupsOnShow(squadYearQuery.data?.cups ?? []);
-  const isOver = year < championshipYear(new Date());
+  const isOver = squadYearQuery.data?.isOver ?? false;
 
   return (
     <div className="space-y-4" data-testid="squad-year">

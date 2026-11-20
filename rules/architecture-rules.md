@@ -403,6 +403,7 @@ The rules that keep it that way:
   folders, is the bug this structure exists to prevent. `poolmaster/no-sport-branching`
   rejects it. Put the difference in the definition or the family. Finding one sport's row
   among several is a lookup (`findSportRow`), not a branch.
+  The design rule behind it is `workflow-rules.md` §1 *One global solution, never one sport's*.
 - **Every `switch` over a union or enum is exhaustive.** Name every member, or end in
   `default: assertNever(value)`. A bare `default` lets the next sport, family or live-score
   category fall through silently; `@typescript-eslint/switch-exhaustiveness-check` rejects it.

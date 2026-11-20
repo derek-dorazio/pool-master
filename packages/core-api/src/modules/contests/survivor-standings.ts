@@ -25,9 +25,10 @@ import {
   type SportEvent,
   type SportEventMatch,
   type TeamChoice,
+  hasSportEventStarted,
+  isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
-import { hasSportEventStarted } from '../events/operational-timing';
-import { FINISHED_EVENT_STATUSES, hasRoundMatchStarted } from './entry-window';
+import { hasRoundMatchStarted } from './entry-window';
 import { survivorRun, type SurvivorRun, type SurvivorWeek } from '../scoring-families/head-to-head/survivor';
 
 export interface SurvivorStandingsReadDeps {
@@ -120,7 +121,7 @@ export async function loadSurvivorWeeks(
       // A later round starts at its first game's kickoff; its games with no time yet wait on theirs (#785).
       started: roundNumber === firstRound
         ? hasSportEventStarted(event, now)
-        : FINISHED_EVENT_STATUSES.includes(event.status)
+        : isSportEventStatusFinished(event.status)
           || games.some((match) => match.roundNumber === roundNumber && match.status !== MatchStatus.CANCELLED && hasRoundMatchStarted(match, event, firstRound, now)),
       cancelled,
       games: games.filter((match) => match.roundNumber === roundNumber),

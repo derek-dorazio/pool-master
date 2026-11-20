@@ -11,18 +11,11 @@ import {
   type EventPageEdition,
   type EventPageOffer,
   type Sport,
+  NOT_OVER_SPORT_EVENT_STATUSES,
 } from '@poolmaster/shared/domain';
 import { mapContestConfigTemplate } from './prisma-contest-management-repositories';
 
 const PAGE_INCLUDE = { redirectTo: { select: { sport: true, slug: true } } } as const;
-
-/** The statuses of an edition that is not over: still to open, open, or under way. */
-const NOT_OVER_STATUSES: SportEventStatus[] = [
-  SportEventStatus.DRAFT,
-  SportEventStatus.SCHEDULED,
-  SportEventStatus.POSTPONED,
-  SportEventStatus.IN_PROGRESS,
-];
 
 function mapEventPage(row: {
   id: string;
@@ -94,7 +87,7 @@ export class PrismaEventPageRepository implements EventPageRepository {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         eventSeries: { OR: series.map(({ sportLeagueId, eventSeriesName }) => ({ sportLeagueId, name: eventSeriesName })) },
-        status: { in: NOT_OVER_STATUSES },
+        status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] },
       },
       select: {
         id: true, name: true, eventYear: true, startDate: true, endDate: true, status: true,

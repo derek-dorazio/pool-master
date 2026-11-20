@@ -6,6 +6,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { EventPageRepository } from '@poolmaster/shared/db';
 import {
+  ContestOpening,
   EventPageOfferState,
   SelectionType,
   type EventPage,
@@ -13,7 +14,7 @@ import {
   type EventPageOffer,
   type Sport,
 } from '@poolmaster/shared/domain';
-import { ContestOpening, type ContestOpeningSetup, type ContestOpeningWindow } from '../contest-management/contest-opening';
+import type { ContestOpeningSetup, ContestOpeningWindow } from '../contest-management/contest-opening';
 
 type EventPageLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn'>;
 

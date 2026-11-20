@@ -1,4 +1,4 @@
-import { SelectionType } from '@poolmaster/shared/domain';
+import { ContestOpening, SelectionType, eventSportDefinition } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   ContestEntryDto,
@@ -12,8 +12,69 @@ import type {
 /** Far enough ahead that "has not started" holds whatever day the suite runs. */
 export const FUTURE_START = '2099-04-09T12:40:00.000Z';
 
-export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEventDto {
+/**
+ * The API's contest openings for an event before it starts: every selection type its definition
+ * offers, OPEN when it is contest-ready and NOT_YET otherwise, a bracket at the full bracket only.
+ * A test of a knockout under way passes its own.
+ */
+export function openingsBeforeStart(
+  event: Pick<SportEventDto, 'sport' | 'participantType' | 'scoringFamily'>,
+  opening: ContestOpening = ContestOpening.OPEN,
+): SportEventDto['contestOpenings'] {
+  return eventSportDefinition(event).selectionTypes.map((selectionType) => ({
+    selectionType,
+    opening,
+    startsAtRounds: selectionType === SelectionType.BRACKET ? [1] : [],
+  }));
+}
+
+/**
+ * The API's contest openings for a knockout under way (#721, #711): a second-chance bracket from
+ * the rounds given and squares stay OPEN, every other selection type is CLOSED.
+ */
+export function openingsUnderWay(
+  event: Pick<SportEventDto, 'sport' | 'participantType' | 'scoringFamily'>,
+  bracketStartsAtRounds: number[],
+): SportEventDto['contestOpenings'] {
+  return eventSportDefinition(event).selectionTypes.map((selectionType) => {
+    if (selectionType === SelectionType.BRACKET) {
+      return {
+        selectionType,
+        opening: bracketStartsAtRounds.length > 0 ? ContestOpening.OPEN : ContestOpening.CLOSED,
+        startsAtRounds: bracketStartsAtRounds,
+      };
+    }
+    return { selectionType, opening: selectionType === SelectionType.SQUARES ? ContestOpening.OPEN : ContestOpening.CLOSED, startsAtRounds: [] };
+  });
+}
+
+type LooseEvent = { sport: SportEventDto['sport']; participantType?: SportEventDto['participantType']; scoringFamily?: SportEventDto['scoringFamily']; contestEligible?: boolean; contestOpenings?: unknown };
+
+/**
+ * A list-events answer with each event that names no openings given the ones an event before its
+ * start has: OPEN when contest-ready, else NOT_YET. Lets a page test's partial events stand in for
+ * the API's; a test of a knockout under way names its own with `openingsUnderWay`.
+ */
+export function withEventOpenings<T>(response: T): T {
+  const events = (response as { data?: { events?: LooseEvent[] } } | undefined)?.data?.events;
+  if (!events) return response;
   return {
+    ...(response as object),
+    data: {
+      ...(response as { data: object }).data,
+      events: events.map((event) => (event.contestOpenings !== undefined ? event : {
+        ...event,
+        contestOpenings: openingsBeforeStart(
+          { sport: event.sport, participantType: event.participantType ?? null, scoringFamily: event.scoringFamily ?? null },
+          event.contestEligible === false ? ContestOpening.NOT_YET : ContestOpening.OPEN,
+        ),
+      })),
+    },
+  } as T;
+}
+
+export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEventDto {
+  const event: Omit<SportEventDto, 'contestOpenings'> = {
     id: 'event-1',
     externalId: 'ext-event-1',
     providerId: 'manual-admin',
@@ -33,6 +94,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     readinessStatus: 'CONTEST_ELIGIBLE',
     readinessReasons: [],
     contestEligible: true,
+    tiersLocked: true,
     eventSeriesId: '00000000-0000-4000-8000-000000000001',
     eventYear: 2099,
     sportLeagueId: '00000000-0000-4000-8000-000000000002',
@@ -52,6 +114,11 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     createdAt: '2026-04-01T00:00:00.000Z',
     updatedAt: '2026-04-01T00:00:00.000Z',
     ...overrides,
+  };
+  return {
+    ...event,
+    contestOpenings: overrides.contestOpenings
+      ?? openingsBeforeStart(event, event.contestEligible ? ContestOpening.OPEN : ContestOpening.NOT_YET),
   };
 }
 

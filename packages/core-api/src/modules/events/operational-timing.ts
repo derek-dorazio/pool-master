@@ -1,4 +1,5 @@
 import {
+  hasSportEventStarted,
   SportEventStatus,
   type SportEventReadinessReason,
   type SportEventReadinessStatus,
@@ -8,22 +9,6 @@ export interface EventOperationalState {
   readinessStatus: SportEventReadinessStatus;
   readinessReasons: SportEventReadinessReason[];
   contestEligible: boolean;
-}
-
-/** Statuses an event reaches only once it has started (or been called off). */
-const STARTED_STATUSES: readonly SportEventStatus[] = [
-  SportEventStatus.IN_PROGRESS,
-  SportEventStatus.COMPLETED,
-  SportEventStatus.CANCELLED,
-];
-
-/**
- * Whether the event is past its contest cutoff: its start time has passed, or its status
- * says it has started or been called off. A contest can't be created or opened on it (#117,
- * #431).
- */
-export function hasSportEventStarted(event: { status: SportEventStatus; startDate: Date }, now: Date): boolean {
-  return event.startDate <= now || STARTED_STATUSES.includes(event.status);
 }
 
 /**

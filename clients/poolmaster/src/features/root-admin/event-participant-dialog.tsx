@@ -33,7 +33,6 @@ import {
   type ParticipantEditable,
   type ParticipantValues,
 } from './event-participant-form';
-import { eventTiersLocked } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
 import { fieldWriteKeys } from './use-sport-event';
 
@@ -65,7 +64,7 @@ export function EventParticipantDialog({
   const preferences = useDisplayPreferences();
   const { entry } = row;
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-  const editable: ParticipantEditable = { tierAndPrice: !eventTiersLocked(event.status), orderValues: !isSynced };
+  const editable: ParticipantEditable = { tierAndPrice: !event.tiersLocked, orderValues: !isSynced };
   const current = participantValuesOf(entry, tiers);
   const form = useForm<ParticipantValues>({ resolver: zodResolver(participantSchema), defaultValues: current, mode: 'onChange' });
   const dialog = useDetailEditDialog(form, current, onClose);

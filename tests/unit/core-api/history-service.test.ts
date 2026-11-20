@@ -430,12 +430,12 @@ describe('HistoryService squad year (#872)', () => {
     };
   }
 
-  function buildSquadYear(standings: ChampionshipStandingView[], cups: CupView[]) {
+  function buildSquadYear(standings: ChampionshipStandingView[], cups: CupView[], isOver = false) {
     const year: ChampionshipYearView = {
       leagueId: LEAGUE,
       year: 2026,
       cupName: 'Derek\'s Pool Cup',
-      isOver: false,
+      isOver,
       contestsCounted: 4,
       contestsToGo: 2,
       standings,
@@ -501,6 +501,11 @@ describe('HistoryService squad year (#872)', () => {
 
     expect(view.championship).toBeNull();
     expect(view.cups).toEqual([]);
+  });
+
+  it('says whether the year is over on the squad\'s year itself, so a squad with no championship row still reads as final or so far', async () => {
+    expect((await buildSquadYear([standing(EAGLES, 1, 2400, null)], [], true).service.getSquadYear(LEAGUE, 'bogeys', 2026)).isOver).toBe(true);
+    expect((await buildSquadYear([standing(EAGLES, 1, 2400, null)], []).service.getSquadYear(LEAGUE, 'bogeys', 2026)).isOver).toBe(false);
   });
 
   it('refuses a squad of another league with SQUAD_NOT_FOUND', async () => {

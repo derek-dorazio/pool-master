@@ -30,7 +30,7 @@ import { describeBudgetPricing } from './budget-pricing-format';
 import { buildEventPagePath } from '@/features/event-pages/event-page-paths';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { EventTiersDialog } from './event-tiers-dialog';
-import { eventTiersLocked, formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
+import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
 import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
 import { settingsRequestBody, settingsSchema, TIER_ORDER_LABELS, valuesOf, type SettingsValues } from './event-settings-form';
@@ -164,7 +164,7 @@ export function EventSettingsDialog({
         </LinkButton>
       ),
     }]),
-    ...(eventTiersLocked(event.status) || tiersQuery.data === undefined || fieldQuery.data === undefined ? [] : [{
+    ...(event.tiersLocked || tiersQuery.data === undefined || fieldQuery.data === undefined ? [] : [{
       id: 'tiers',
       name: 'Tiers',
       description: 'Override the tiers copied from the sport league\'s tier profile, for this event only.',
