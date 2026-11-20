@@ -352,7 +352,9 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     renderPage();
 
     // Both the Rounds grid and the scores panel read the schedule, and each says it failed.
-    expect(await screen.findAllByText('Round schedule offline')).toHaveLength(2);
+    // findAllByText resolves on the first match, before the second reader has failed, so wait
+    // for both.
+    await waitFor(() => expect(screen.getAllByText('Round schedule offline')).toHaveLength(2));
     // Rounds fall back to numbered options from tournament.rounds.
     expect(screen.getByRole('radio', { name: 'Round 1' })).toBeInTheDocument();
   });
