@@ -4,6 +4,7 @@ import {
   SelectionType,
   type SportNoun,
   countParticipants,
+  coversOneEvent,
   formatContestRules,
   formatEntriesPerTeam,
   formatSelectionTypeName,
@@ -43,7 +44,7 @@ import {
   SectionRows,
   Text,
 } from '@/features/shared/ui';
-import { coversOneEvent, firstContestEvent } from './contest-events';
+import { firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
 import { DeleteContestDialog } from './delete-contest-dialog';
@@ -174,8 +175,7 @@ export function ManageContestPage() {
   const bracketStartRoundName = contestSecondChanceRoundName(configuration, roundName);
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;
-  // Events can change until the contest is final; a random draw deals one event, once, and a
-  // bracket is one knockout.
+  // Events can change until the contest is final, unless its selection type covers one event.
   const canChangeEvents = league.isActive
     && contest.status !== ContestStatus.COMPLETED
     && !coversOneEvent(contest.selectionType);
