@@ -698,3 +698,123 @@ user list and `listLeagues`'s every-league scope (#1896); `listLeagues` reads on
 caller's own leagues. A new whole-platform read
 for a root admin grid follows the same three conditions: grouped queries, a scaling test,
 a rate limit.
+
+---
+
+## 17. Rules Live In The Model, Not In Code
+
+The same facts end up hard-coded across sync adapters, services and the web app, each copy
+plausible on its own: round tables per league, season rollover months in five readers, a
+date window that finds one league's playoff, ids built and parsed as strings, and one "is
+this a week of games?" guess in three copies. Every one had passed review. **A fact about a sport, a league, a season or an event is data. It
+lives in the model, is set once, and code reads it. Code holds behaviour, never a table of
+facts about particular leagues.**
+
+The sections below are prohibitions. Each names the smell to search for, because a reviewer
+reading a single hunk sees plausible code (`rules/review-triggers.md` §9 *Reviewing for
+hard-coded rules* is the review lens; the `scan-hard-coded-rules` skill sweeps the codebase
+for them).
+
+### Identify by key, never by position
+
+A row, a round, a phase or a slot is found by its id, its code or a stable key column, never
+by where it sits in an array or by counting.
+
+- **Smell:** `rounds[3]`, `rounds.length - 1` as "the final", `weeks.indexOf(week) + 1` as a
+  round number, "distance from the final", "the first event that started", an index into a
+  list returned by another call, a `Record<number, …>` keyed by round number that one league
+  fills in.
+- **Instead:** a key the model declares (`FINAL`, a slot key, a phase kind code) or a foreign
+  key. Order is a declared `orderIndex` column or enum order (§2 *Every enum declares its
+  order*), used to *sort*, never to *identify*.
+- Positions shift the moment a provider adds a round, a league adds a play-in or a season is
+  shorter; a key does not.
+
+### Never build or parse an id string
+
+An id is opaque. No code concatenates parts into one (`nfl-2026-week-5`,
+`…-postseason-round-4`) and no code takes one apart with `split`, a regex or `startsWith` to
+learn what it refers to.
+
+- **Smell:** a template literal or `join('-')` producing an id or scope key; `.split('-')`,
+  `.match(/…/)`, `startsWith` or `includes` applied to an id, a slug or a provider ref to
+  recover a year, a round, a league or a kind; a regex choosing which adapter or reader
+  handles an id.
+- **Instead:** each part is its own column or foreign key, and the row says what it is
+  (a season row, a phase row, a slot row, a provider mapping row). A provider's own
+  reference is stored as given in a `providerRef` column and only compared for equality.
+- A slug made for a URL is a display key: it is looked up, never parsed.
+
+### Never match on a name
+
+Code never identifies a sport, league, event, round, team or participant by a name, label or
+title string: not `=== 'Super Bowl'`, not `name.includes('Playoff')`, not a keyword list.
+Names are for people and change; ids and codes are for code.
+
+- **Smell:** comparing or searching a `name`, `title`, `label` or `displayName` field; a
+  constant list of names or keywords; joining two records because their names agree;
+  building a display name and later reading meaning back out of it.
+- **The one exception is a provider that offers nothing better.** When an external feed
+  identifies something only by its name (a stage called "Third Place", a season type by
+  word), the match lives in the adapter, as **data**: a mapping table or reference rows that
+  pair the provider's string with our key, maintained by migration. The adapter looks the
+  string up; it does not branch on it. A string that matches no row is a sync finding
+  (`WARNING` when the run can continue, `ERROR` when it cannot), never a silent default. Past
+  the adapter, everything is keyed.
+
+### Per-league facts are model rows, not code tables
+
+How many rounds a league plays, what each is called, how long a series is, which phases are
+synced, when its season rolls over, how many teams are seeded, where its regions are: these
+are properties of a league or season, so they are columns or rows on the league, season,
+phase or slot definitions (`rules/domain-model-concepts.md`). They are never a constant, a
+`Record<League, …>`, a `switch` on a league or a mapping file per league.
+
+- **Smell:** a constant or `Record` keyed by a league, sport or provider league code that
+  holds numbers, names, months or dates; one mapping file per league whose functions differ
+  only in their constants; a helper that takes a league and returns a number; a date window
+  ("between January and March") used to find one league's event; the same adapter function
+  copied per league with different literals.
+- **Instead:** add the property to the definition it describes and set it by migration
+  (`rules/architecture-rules.md` §6 *Reference data goes in a migration*); the shared code
+  reads it. Labels for keys and codes are mapped on screen (§2 *Closed Sets Are Enums*).
+- This is the data half of `rules/workflow-rules.md` §1 *One global solution, never one
+  sport's*: a league's difference is data any league can carry, never a path one league takes.
+  It extends the sport registry (`rules/architecture-rules.md` §4 *Sport extension*) to
+  leagues and seasons: what one sport shares is in its definition; what one league or season
+  owns is in the model.
+
+### One computation per fact
+
+A derived fact — the current season, whether an event is over, which round is the final,
+whether an event is a week of games or a bracket, how many events a contest may cover, which
+events can take a contest, whether tiers are locked — is worked out in **one** place. Either
+it is stored (set by the code that owns it, such as the sync) or it is computed by one
+shared function, and every consumer reads that.
+
+- **The web app never re-derives what the API knows.** When a screen needs a fact the
+  server decides, the API returns it as a field; the screen does not mirror the server's
+  rule. Two copies of a rule disagree sooner or later, and the screen then offers what the
+  server refuses (`rules/react-ui-rules.md` §3 *API Integration Rules*).
+- **A rule both sides must run lives in `packages/shared`** beside the type it describes
+  (status predicates beside the status enum, limits per selection type beside the selection
+  type), and both import it.
+- **Smell:** `new Date().getFullYear()` or a year worked out from today's date; a set of
+  statuses spelt inline (`[FINAL, CANCELLED].includes(…)`); a function whose body matches
+  another's under a different name; a web helper that restates a server check; a comment
+  saying "keep in sync with …".
+- This is `rules/architecture-rules.md` §4 *Service Topology* ("one code path per piece of
+  business logic") applied to facts and across the backend/web boundary.
+
+### What stays in code
+
+Parsing a provider's wire format inside its adapter (a golf score's `CUT`, `WD`, `DQ`, a
+hole-by-hole string) is behaviour, and stays code. So does a scoring family's computation.
+The test is: **would a new league, season or sport need this code edited to work?** If yes,
+the fact is in the wrong place.
+
+### Finding one is a ticket, not a footnote
+
+A reviewer or a scan that finds one of these names the model home it belongs in. Moving it
+in the same slice is preferred when the slice already touches that fact; otherwise it is a
+tracked issue linked from the PR, and the slice does not add a second copy (§15 *Residue*).

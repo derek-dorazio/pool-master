@@ -19,6 +19,7 @@ All agents working in this repo should:
 - **Defect-fix slices must include a failing test before the fix.** The slice must demonstrate that a test reproducing the defect fails on the broken code, then passes on the fixed code. See `rules/testing-rules.md` §3 *Defect Verification Protocol*.
 - **Every test name states the behavior and its expected outcome**, specifically enough that a reader knows what breaking it would mean. No issue, use-case, or business-rule ID is required — that requirement was struck. See `rules/testing-rules.md` §1A *Test Self-Documentation*.
 - **One global solution, never one sport's.** Never design or build for a single sport or league (no "NBA-only" path). Every feature works the same for all sports and leagues; there may be more than one global path (synced vs unsynced leagues), but each is global. Plans and reviews reject sport- or league-specific special cases. See `rules/workflow-rules.md` §1 *One global solution, never one sport's*.
+- **Rules live in the model, not in code.** Identify things by id, code or key, never by name or array position; never build or parse id strings; a fact about a particular sport, league or season is a model row or column, not a constant, `Record` or branch; every derived fact is computed once and read everywhere, so the web app reads what the API decides rather than re-deriving it. See `rules/domain-model-conventions-rules.md` §17 *Rules Live In The Model, Not In Code*.
 - Fix the real architecture and contract problems first; only adjust tests after the production behavior is correct.
 - Keep OpenAPI, shared DTOs, mappers, generated clients, and frontend/backend usage in sync.
 - Update the GitHub issue (status, comments) when working against an existing epic or slice. Plans are narrative only; they do not carry task tables (see `rules/workflow-rules.md` §1, `docs/adr/0002-plans-as-narrative-delete-after-epic-closes.md`, and `docs/adr/0006-github-issues-as-live-task-tracker.md`).
@@ -49,7 +50,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push*; a Terraform change also `workflow-rules.md` §6 *Applying Terraform* and the `apply-terraform` skill |
 | Lands a Dependabot PR, changes `.github/dependabot.yml`, or upgrades a dependency | the `dependency-updates` skill; `workflow-rules.md` §3 *Required Local Validation Before Push* |
 | Is iOS or Android work | `mobile-rules.md` — one React Native app with Expo, not built or scheduled |
-| Is a review of someone else's diff | `review-triggers.md` — §2 for what the author should have disclosed, §5 *Reviewing for performance cost* when the diff has a performance surface |
+| Is a review of someone else's diff | the `review-a-pr` skill; `review-triggers.md` — §2 for what the author should have disclosed, §5 *Reviewing for performance cost* when the diff has a performance surface, §9 *Reviewing for hard-coded rules* always |
 
 **Before any push**, `workflow-rules.md` §3 defines the required gate set, and
 `testing-rules.md` §3 says what a failing gate means for a test. Neither is optional
@@ -86,6 +87,8 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `run-local-stack` | Running the whole app in an agent's container with test data, for screenshots, phone-width reviews or the browser E2E suite |
 | `apply-terraform` | A change under `infrastructure/terraform` needs applying to an environment: the copy-paste steps the owner runs on their machine, and the post-check |
 | `dependency-updates` | The Monday dependency run, or a Dependabot security PR midweek: land each Dependabot PR through the gates, review and merge spacing, set aside an update that breaks, propose new major versions to the owner |
+| `review-a-pr` | Reviewing someone else's PR: read the plan and diff, apply the general pass and every lens the diff has a surface for, always the hard-coded-rules lens, and post the findings on the PR |
+| `scan-hard-coded-rules` | A periodic sweep of the whole codebase for hard-coded per-league facts, name and id-string matching, positional lookups and facts computed in more than one place, reported grouped with the model home for each |
 
 Each skill is a sequence and a set of traps. The authoritative policy stays in `rules/`,
 and skills cite it as `rules/<file>.md §N *Section Name*`. A skill must not point at a plan,
@@ -95,14 +98,15 @@ an issue, an ADR, or a source line number — all four disappear or drift, and
 
 ### Reviewing
 
-Review is one pass with up to four lenses, applied only when the diff has the matching
-surface:
+Review is one pass, sequenced by the `review-a-pr` skill, with lenses applied when the diff
+has the matching surface (the hard-coded-rules lens always applies to production source):
 
 - `/code-review` — correctness, the general pass
 - `review-triggers.md` §5 — performance cost
 - `review-triggers.md` §6 — security
 - `review-triggers.md` §7 — architectural fit
 - `review-triggers.md` §8 — UI conformance, for a diff that adds or changes a screen
+- `review-triggers.md` §9 — hard-coded rules, for **every** diff that touches production source
 
 `/security-review` covers general security classes; §6 covers what is specific to this
 codebase. What a PR must *disclose* is `review-triggers.md` §1–§4, which is a different
