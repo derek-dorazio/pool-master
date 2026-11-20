@@ -3,11 +3,12 @@
 Every PR body carries a **Review triggers** section under `<!-- review:triggers -->`. It
 names what this slice touched that warrants a closer read than a file list gives.
 
-This file covers both halves of that: **§1–§4 are what an author discloses**, and **§5–§7
-are what a reviewer looks for** on the three axes where a repo-specific checklist beats
-general judgement. None of them is a separate pass with its own vote — each is a lens
-applied during the ordinary review, used when the diff has that surface and skipped when it
-does not. Skipping is the common case and is not a gap.
+This file covers both halves of that: **§1–§4 are what an author discloses**, and **§5–§9
+are what a reviewer looks for** on the axes where a repo-specific checklist beats general
+judgement. None of them is a separate pass with its own vote — each is a lens applied during
+the ordinary review, used when the diff has that surface and skipped when it does not.
+Skipping is the common case and is not a gap — except for §9, which applies to every diff
+that touches production source.
 
 This exists because the repo owner reviews at file-list-and-changeset resolution. That
 altitude reliably catches scope creep, unexpected files, and structurally wrong changes. It
@@ -88,6 +89,10 @@ State the trigger and one line of context. If none apply, write `None.`
   That is a question the implementer knows the answer to and a reviewer can only infer.
 - A slice that **deviates from its plan** or widens beyond its stated scope.
 - Something the implementer **considered and deliberately did not fix**, with why.
+- A **name match, id-string parse, positional lookup or per-league constant** the slice adds
+  or keeps, with why the model could not carry it (usually: a provider gives nothing better,
+  and the string is mapped as data). See `domain-model-conventions-rules.md` §17 *Rules
+  Live In The Model, Not In Code*.
 
 ---
 
@@ -367,3 +372,48 @@ Apply when the diff adds or changes web app UI. Skip it for a diff with no scree
   use of a component marked retiring is a finding.
 - **No explainer text** — a sentence that says how something works sits behind the (?) help
   icon, not in the page body or in a `description` prop.
+
+## 9. Reviewing for hard-coded rules
+
+Apply to **every** diff that touches production source (`packages/**/src`,
+`packages/shared`, `clients/poolmaster/src`), backend and web alike. This lens exists because
+a scan in 2026-11 found dozens of these across merged code, every one of which had passed
+review: each hunk read as plausible on its own. The rule is `domain-model-conventions-rules.md`
+§17 *Rules Live In The Model, Not In Code*; this is how to see it in a diff.
+
+Read every added or changed line for these, and report each one found:
+
+1. **Name matching** — a comparison, `includes`, `startsWith`, regex or keyword list applied
+   to a `name`, `title`, `label` or display string; two records joined because their names
+   agree. Only a provider adapter may match a provider's string, and only through a mapping
+   table with a `WARNING`/`ERROR` finding for a miss.
+2. **Id strings built or parsed** — a template literal or `join` producing an id or scope
+   key; `split`, `match`, `replace`, `startsWith` or a regex on an id, slug or provider ref; a
+   regex that chooses an adapter, reader or handler.
+3. **Position as identity** — `[0]`, `[n]`, `.at(-1)`, `length - 1`, `indexOf(...) + 1` or a
+   counter used to say *which* round, phase, slot, match or event something is, rather than to
+   iterate. Sorting by a declared order is fine; picking by position is not.
+4. **Per-league or per-sport facts in code** — a constant, `Record`, `Map` or `switch` keyed by
+   a league, sport, provider league code or season that holds numbers, names, months, dates
+   or seed counts; a date window that finds one league's event; a new per-league mapping
+   file, or a function copied per league with different literals. Ask: would the next league
+   need this file edited? (`workflow-rules.md` §1 *One global solution, never one sport's*
+   rejects the path; this item rejects the data.)
+5. **A second computation of a fact** — the current year or season from today's date; a
+   status set spelt inline; a web helper restating a server rule or a value the API could
+   return; a function that matches another under a different name; a "keep in sync with"
+   comment. Search for the existing computation before accepting a new one, and name it in
+   the finding.
+
+For each finding, state **the model home it belongs in** (a column on a definition, a
+reference row, a mapping table, a field the API returns, one shared predicate) — "hard-coded"
+alone is not actionable. A finding the slice can fix by touching code it already changes is
+fixed before merge; one that needs a model change becomes a linked follow-up ticket, and the
+slice must not add a further copy of it (`domain-model-conventions-rules.md` §15 *Residue*).
+
+**Calibration.** A literal is not automatically a finding: a scoring family's arithmetic, a
+provider's wire format parsed inside its adapter, a UI label map from a code to its words, and
+test fixtures are all fine. The finding is a fact about a *particular* sport, league, season
+or event, or a fact derived a second time. When in doubt, report it with the question; a
+wrong-but-asked finding costs a reply, a missed one costs a redesign later.
+

@@ -20,6 +20,10 @@ canonical statement, which wins if this summary ever disagrees.
   context on it. `rules/architecture-rules.md` §5 *Project Structure and Layer Boundaries*.
 - **One code path per piece of business logic**, however many callers reach it.
   `rules/architecture-rules.md` §4 *Service Topology*.
+- **Facts live in the model; code reads them.** No matching on names, no building or
+  parsing id strings, no picking by array position, no per-league constant tables, and no
+  second computation of a fact the API or a shared helper already gives.
+  `rules/domain-model-conventions-rules.md` §17 *Rules Live In The Model, Not In Code*.
 - **A contract change regenerates the SDK in the same slice** — DTO, mapper, route schema,
   OpenAPI, generated client and its consumers move together. `rules/architecture-rules.md`
   §2 *Contract-First API Architecture*; the `add-endpoint` skill sequences it.
