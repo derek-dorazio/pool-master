@@ -376,9 +376,9 @@ Apply when the diff adds or changes web app UI. Skip it for a diff with no scree
 ## 9. Reviewing for hard-coded rules
 
 Apply to **every** diff that touches production source (`packages/**/src`,
-`packages/shared`, `clients/poolmaster/src`), backend and web alike. This lens exists because
-a scan in 2026-11 found dozens of these across merged code, every one of which had passed
-review: each hunk read as plausible on its own. The rule is `domain-model-conventions-rules.md`
+`packages/shared`, `clients/poolmaster/src`), backend and web alike. These patterns pass an ordinary read
+because each hunk is plausible on its own; the cost shows only when the copies are seen
+together, so the lens reads for the pattern rather than the hunk. The rule is `domain-model-conventions-rules.md`
 §17 *Rules Live In The Model, Not In Code*; this is how to see it in a diff.
 
 Read every added or changed line for these, and report each one found:

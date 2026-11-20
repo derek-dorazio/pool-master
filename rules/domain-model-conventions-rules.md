@@ -703,11 +703,10 @@ a rate limit.
 
 ## 17. Rules Live In The Model, Not In Code
 
-Set by the repo owner, 2026-11-20, after a scan for the league model redesign found the same
-facts hard-coded across sync adapters, services and the web app: round tables per league,
-season rollover months in five readers, a date window that finds one league's playoff, ids
-built and parsed as strings, and one "is this a week of games?" guess in three copies. Every
-one had passed review. **A fact about a sport, a league, a season or an event is data. It
+The same facts end up hard-coded across sync adapters, services and the web app, each copy
+plausible on its own: round tables per league, season rollover months in five readers, a
+date window that finds one league's playoff, ids built and parsed as strings, and one "is
+this a week of games?" guess in three copies. Every one had passed review. **A fact about a sport, a league, a season or an event is data. It
 lives in the model, is set once, and code reads it. Code holds behaviour, never a table of
 facts about particular leagues.**
 

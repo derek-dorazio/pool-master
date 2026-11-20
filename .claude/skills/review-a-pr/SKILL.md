@@ -54,7 +54,7 @@ search the added lines so nothing is skimmed past:
 ```bash
 git diff origin/main...HEAD -U0 -- 'packages/*/src' packages/shared clients/poolmaster/src \
   | grep '^+' | grep -v '^+++' \
-  | grep -nE "\.(name|title|label|displayName)\b.*(===|!==|includes\(|startsWith\(|endsWith\(|match\()|\.split\(|\.match\(|new RegExp|\.exec\(|\`[^\`]*\\\$\{[^}]*\}-|\[0\]|\.at\(-1\)|length - 1|indexOf\(.*\) \+ 1|getFullYear\(|getUTCFullYear\(|Record<[A-Za-z]*(League|Sport|Season)[A-Za-z]*,|keep in sync"
+  | grep -nE "\.(name|title|label|displayName)\b.*(===|!==|includes\(|startsWith\(|endsWith\(|match\()|\.split\(|\.match\(|new RegExp|\.exec\(|\`[^\`]*\\\$\{[^}]*\}-|\[0\]\??\.(id|key|round|status)|\.at\(-1\)|length - 1|indexOf\(.*\) \+ 1|getFullYear\(|getUTCFullYear\(|Record<[A-Za-z]*(League|Sport|Season)[A-Za-z]*,|keep in sync"
 ```
 
 A hit is a place to read, not a verdict; the calibration paragraph in §9 says what is fine.
