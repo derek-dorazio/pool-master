@@ -3,7 +3,7 @@
  * pick'em has a week per event. These read a contest's events and an entry's per-event status
  * the way the server's contest rules do.
  */
-import { ContestEntryStatus, SelectionType, hasSportEventStarted } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, hasSportEventStarted } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestEntryDto } from '@/lib/api';
 
 export type ContestSportEvent = ContestDto['sportEvents'][number];
@@ -14,14 +14,6 @@ export function hasContestEventStarted(
   now: Date = new Date(),
 ): boolean {
   return hasSportEventStarted(sportEvent, now);
-}
-
-/**
- * Whether a contest of this selection type covers exactly one event, so its events never change:
- * a random draw deals one event's field, and a bracket (#721) is one knockout picked to its final.
- */
-export function coversOneEvent(selectionType: SelectionType): boolean {
-  return selectionType === SelectionType.RANDOM_DRAW || selectionType === SelectionType.BRACKET;
 }
 
 /** The contest's first event: its start is when the contest stops taking new entries. */
