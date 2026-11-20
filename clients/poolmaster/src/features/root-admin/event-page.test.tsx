@@ -114,6 +114,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     startDate: '2026-05-07T12:00:00.000Z',
     endDate: '2026-05-10T22:00:00.000Z',
     status: 'SCHEDULED',
+    tiersLocked: true,
     rounds: 4,
     eventYear: 2026,
     sportLeagueId: 'league-1',
@@ -329,7 +330,7 @@ describe('Event page header and tabs', () => {
 
   it('chips the event\'s sync health and its sync issues, leaving the release issue to the Release chip', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/field', {
-      event: tournament({ status: 'DRAFT', lastAutoReleaseCheck: { checkedAt: '2026-05-01T10:00:00.000Z', outcome: 'HELD', failedChecks: ['TIERS_ASSIGNED'] } }),
+      event: tournament({ status: 'DRAFT', tiersLocked: false, lastAutoReleaseCheck: { checkedAt: '2026-05-01T10:00:00.000Z', outcome: 'HELD', failedChecks: ['TIERS_ASSIGNED'] } }),
       overview: eventOverview({
         syncHealth: 'ERROR',
         issues: [
@@ -542,7 +543,7 @@ describe('Event page Release checks dialog', () => {
   });
 
   const draft = (overrides: Parameters<typeof tournament>[0] = {}) =>
-    tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], releaseChecks: passingReleaseChecks(), ...overrides });
+    tournament({ status: 'DRAFT', tiersLocked: false, allowedTransitions: ['CANCELLED'], releaseChecks: passingReleaseChecks(), ...overrides });
 
   async function openReleaseChecks() {
     await userEvent.click(await screen.findByTestId('root-admin-event-release-chip', {}, { timeout: 5_000 }));
@@ -661,7 +662,7 @@ describe('Event page ⚙ dialog', () => {
     expect(within(released).queryByTestId('root-admin-event-settings-dialog-edit-tiers')).not.toBeInTheDocument();
     unmount();
 
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ status: 'DRAFT', allowedTransitions: [] }) });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ status: 'DRAFT', tiersLocked: false, allowedTransitions: [] }) });
     const draft = await openSettings();
     await userEvent.click(await within(draft).findByTestId('root-admin-event-settings-dialog-edit-tiers'));
 

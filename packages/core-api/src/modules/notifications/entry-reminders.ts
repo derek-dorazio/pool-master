@@ -59,6 +59,7 @@ import {
   type SportEvent,
   type SportEventMatch,
   type User,
+  hasSportEventStarted,
 } from '@poolmaster/shared/domain';
 import {
   ContestCutoffKind,
@@ -78,7 +79,6 @@ import {
   type EmailService,
   type EntryReminderStanding,
 } from '../email';
-import { hasSportEventStarted } from '../events/operational-timing';
 import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { contestBracketGames } from '../scoring-families/head-to-head/bracket-picks';

@@ -229,6 +229,7 @@ export function buildSquadYear(overrides: Partial<SquadYearDto> = {}): SquadYear
   return {
     squadId: 'team-1',
     year: 2026,
+    isOver: false,
     championship: buildSquadChampionship(),
     cups: [buildSquadCup()],
     ...overrides,
@@ -248,6 +249,7 @@ export function buildSquadHistory(overrides: Partial<SquadHistoryDto> = {}): Squ
       buildSquadYear({ championship: buildSquadChampionship({}, { played: 0 }), cups: [] }),
       buildSquadYear({
         year: 2025,
+        isOver: true,
         championship: buildSquadChampionship({ name: '2025 Derek\'s Pool Cup', isOver: true, squadCount: 12 }),
         cups: [buildSquadCup({ cupId: 'cup-nfl', sportLeagueId: 'nfl', name: '2025 NFL Cup', status: 'CROWNED' }, { trophy: 'CHAMPION' })],
       }),

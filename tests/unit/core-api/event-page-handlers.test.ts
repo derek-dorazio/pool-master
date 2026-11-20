@@ -5,8 +5,8 @@
  */
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { EventPageRepository } from '@poolmaster/shared/db';
-import { ContestFormat, SelectionType, Sport, type EventPage, type EventPageOffer } from '@poolmaster/shared/domain';
-import { ContestOpening, type ContestOpeningWindow } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
+import { ContestFormat, ContestOpening, SelectionType, Sport, type EventPage, type EventPageOffer } from '@poolmaster/shared/domain';
+import type { ContestOpeningWindow } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
 import { createEventPageHandlers } from '../../../packages/core-api/src/modules/event-pages/handler';
 import { EventPageService, type EventPageView } from '../../../packages/core-api/src/modules/event-pages/service';
 import { PUBLIC_CACHE_CONTROL } from '../../../packages/core-api/src/core/public-cache';

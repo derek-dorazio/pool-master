@@ -493,6 +493,50 @@ export const SportEventStatusOrder = explicitOrder<SportEventStatus>({
   [SportEventStatus.CANCELLED]: 5,
 });
 
+/** Statuses an event reaches only once it has started: under way, or over (finished or called off). */
+export const STARTED_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
+  SportEventStatus.IN_PROGRESS,
+  SportEventStatus.COMPLETED,
+  SportEventStatus.CANCELLED,
+];
+
+/** Statuses that finish an event: its results are in, or will never come. Nothing moves out of them. */
+export const FINISHED_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
+  SportEventStatus.COMPLETED,
+  SportEventStatus.CANCELLED,
+];
+
+/** Statuses of an event that is not over: still to release, to start, put off, or under way. */
+export const NOT_OVER_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = Object.values(SportEventStatus)
+  .filter((status) => !FINISHED_SPORT_EVENT_STATUSES.includes(status));
+
+/** Whether the status says the event has started: under way, finished or called off. */
+export function isSportEventStatusStarted(status: SportEventStatus): boolean {
+  return STARTED_SPORT_EVENT_STATUSES.includes(status);
+}
+
+/** Whether the status finishes the event: completed or cancelled. */
+export function isSportEventStatusFinished(status: SportEventStatus): boolean {
+  return FINISHED_SPORT_EVENT_STATUSES.includes(status);
+}
+
+/** Whether the event is not over yet: any status but completed or cancelled. */
+export function isSportEventStatusNotOver(status: SportEventStatus): boolean {
+  return !isSportEventStatusFinished(status);
+}
+
+/**
+ * Whether the event is past its contest cutoff: its start time has passed, or its status says it
+ * has started or been called off. The server and the web both ask this one question (#117, #431).
+ */
+export function hasSportEventStarted(
+  event: { status: SportEventStatus; startDate: Date | string },
+  now: Date,
+): boolean {
+  const startsAt = typeof event.startDate === 'string' ? Date.parse(event.startDate) : event.startDate.getTime();
+  return startsAt <= now.getTime() || isSportEventStatusStarted(event.status);
+}
+
 /**
  * The statuses an event can still take a contest in: released and not yet started (or moved), or a
  * knockout under way for a second-chance bracket or a squares game to come. A finished or called
@@ -504,6 +548,24 @@ export const OFFERABLE_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
   SportEventStatus.POSTPONED,
   SportEventStatus.IN_PROGRESS,
 ];
+
+/**
+ * Whether a contest of one setup can be created on an event (#1007, #1929). OPEN: Create contest
+ * would take it now. NOT_YET: the event is unreleased, its field not loaded, or a later-round
+ * bracket's teams not set. CLOSED: the contest's cutoff on the event has passed.
+ */
+export const ContestOpening = {
+  OPEN: 'OPEN',
+  NOT_YET: 'NOT_YET',
+  CLOSED: 'CLOSED',
+} as const;
+export type ContestOpening = (typeof ContestOpening)[keyof typeof ContestOpening];
+/** Open first, then still to open, then too late. */
+export const ContestOpeningOrder = explicitOrder<ContestOpening>({
+  [ContestOpening.OPEN]: 0,
+  [ContestOpening.NOT_YET]: 1,
+  [ContestOpening.CLOSED]: 2,
+});
 
 /**
  * Whether provider sync may touch a SportEvent — separate from providerId/externalId

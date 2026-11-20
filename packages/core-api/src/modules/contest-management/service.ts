@@ -90,9 +90,10 @@ import {
   PlanCap,
   survivorLivesOf,
   JobErrorType,
+  hasSportEventStarted,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
-import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
+import { evaluateEventOperationalState } from '../events/operational-timing';
 import { ContestCutoffKind, contestCutoff, type ContestCutoff, type EventTiming } from '../contests/entry-window';
 import { errorMessage } from '../../core/error-message';
 

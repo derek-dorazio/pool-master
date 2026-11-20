@@ -3,7 +3,7 @@
  * cancelled, and its last round or match should have ended more than OVERDUE_AFTER_MS ago. The Sports page's
  * overview and the League page's events read both judge it here, from the same facts.
  */
-import { Sport, SportEventStatus } from './enums';
+import { FINISHED_SPORT_EVENT_STATUSES, Sport, SportEventStatus } from './enums';
 
 /** How long after its expected end an event's missing results count as overdue: 4 hours (Derek, 2026-11-18). */
 export const OVERDUE_AFTER_MS = 4 * 60 * 60 * 1000;
@@ -34,8 +34,7 @@ export const SPORT_TYPICAL_PLAY_MS: Readonly<Record<Sport, number>> = {
  */
 export const NEVER_OVERDUE_STATUSES: readonly SportEventStatus[] = [
   SportEventStatus.DRAFT,
-  SportEventStatus.COMPLETED,
-  SportEventStatus.CANCELLED,
+  ...FINISHED_SPORT_EVENT_STATUSES,
 ];
 
 /** One round as scheduled, with the latest scheduled start of its matches. */

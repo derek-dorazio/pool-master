@@ -1,31 +1,26 @@
-import { SelectionType, eventSportDefinition, isTemplateOfferedOn, sportAllowsSelectionType } from '@poolmaster/shared/domain';
+import { ContestOpening, SelectionType, isTemplateOfferedOn } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
-import { bracketRoundCount, bracketStartRoundOptions, hasSecondChanceRound } from './bracket-start-round';
-import { isKnockoutUnderWay } from './contest-readiness';
 
-/**
- * The events a contest of this format can be created on: the contest-ready ones and, for a
- * bracket, a knockout under way with a later round to start a second-chance bracket at (#721).
- * A squares contest closes at its own game's kickoff, so an event under way still offers its
- * games to come (#711): the Super Bowl is the last game of the playoffs.
- */
-export function contestEventsFor(events: readonly SportEventDto[], selectionType: SelectionType) {
-  // An event offers only its own definition's formats: no bracket on a World Series stat pool (#936).
-  return events.filter((event) => sportAllowsSelectionType(eventSportDefinition(event), selectionType)
-    && (event.contestEligible
-      || (selectionType === SelectionType.BRACKET
-        && isKnockoutUnderWay(event)
-        && hasSecondChanceRound(bracketRoundCount(event)))
-      || (selectionType === SelectionType.SQUARES && isKnockoutUnderWay(event))));
+/** The API's word on whether a contest of this selection type can start on the event now (#1929). */
+function eventOpening(event: SportEventDto, selectionType: SelectionType) {
+  return event.contestOpenings.find((row) => row.selectionType === selectionType) ?? null;
 }
 
 /**
- * The rounds a bracket on an event can start at: the first before it starts, a later one once it
- * is under way (#721).
+ * The events a contest of this format can be created on: those the API says it opens on now. For
+ * a bracket or squares that includes a knockout under way (#721, #711), and an event offers only
+ * its own definition's formats (#936).
  */
-export function bracketStartRoundsOf(event: SportEventDto) {
-  return bracketStartRoundOptions(bracketRoundCount(event), String, { isUnderWay: !event.contestEligible })
-    .map((option) => option.roundNumber);
+export function contestEventsFor(events: readonly SportEventDto[], selectionType: SelectionType) {
+  return events.filter((event) => eventOpening(event, selectionType)?.opening === ContestOpening.OPEN);
+}
+
+/**
+ * The rounds a bracket on an event can start at, as the API gives them: the first before it
+ * starts, a later one once it is under way (#721).
+ */
+export function bracketStartRoundsOf(event: SportEventDto): readonly number[] {
+  return eventOpening(event, SelectionType.BRACKET)?.startsAtRounds ?? [];
 }
 
 /**

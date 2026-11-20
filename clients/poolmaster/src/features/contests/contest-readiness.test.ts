@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SportEventDto } from '@/lib/api';
-import { formatStartsIn, formatTimeUntil, getContestReadinessChecks, isKnockoutUnderWay } from './contest-readiness';
+import { formatStartsIn, formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
 import { buildSportEvent } from './test/contest-admin-fixtures';
 
 const NOW = new Date('2026-04-03T12:00:00.000Z');
@@ -28,44 +27,40 @@ describe('contest readiness', () => {
     ]);
   });
 
-  it('fails the start check once the event\'s start has passed, even before its status moves', () => {
-    const checks = getContestReadinessChecks(buildSportEvent({ startDate: '2026-04-02T12:00:00.000Z' }), NOW);
-    expect(checks.find((check) => check.id === 'not-started')).toEqual({
+  it('fails the start check when the API says the event has started, and does not judge the start time itself', () => {
+    const started = getContestReadinessChecks(buildSportEvent({ readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false }), NOW);
+    expect(started.find((check) => check.id === 'not-started')).toEqual({
       id: 'not-started',
       isMet: false,
       label: 'Event has started',
     });
+    // A start time already past with no EVENT_STARTED reason is the API's call, not the page's.
+    const pastStart = getContestReadinessChecks(buildSportEvent({ startDate: '2026-04-02T12:00:00.000Z' }), NOW);
+    expect(pastStart.find((check) => check.id === 'not-started')?.isMet).toBe(true);
   });
 
-  it('fails the field check for an event with no golfers or no tiers', () => {
-    const noGolfers = getContestReadinessChecks(buildSportEvent({ loadedParticipantCount: 0 }), NOW);
-    expect(noGolfers.find((check) => check.id === 'field')).toMatchObject({ isMet: false, label: 'No golfers loaded yet' });
-    const noTiers = getContestReadinessChecks(buildSportEvent({ tierCount: 0 }), NOW);
-    expect(noTiers.find((check) => check.id === 'field')?.isMet).toBe(false);
+  it('fails the release and field checks exactly when the API gives those reasons, and names no tiers on a field not yet tiered', () => {
+    const notReady = getContestReadinessChecks(buildSportEvent({
+      loadedParticipantCount: 0,
+      readinessStatus: 'NOT_RELEASED',
+      readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
+      contestEligible: false,
+    }), NOW);
+    expect(notReady.find((check) => check.id === 'released')).toEqual({ id: 'released', isMet: false, label: 'Event not released yet' });
+    expect(notReady.find((check) => check.id === 'field')).toMatchObject({ isMet: false, label: 'No golfers loaded yet' });
+    const ready = getContestReadinessChecks(buildSportEvent({ tierCount: 0 }), NOW);
+    expect(ready.find((check) => check.id === 'field')).toMatchObject({ isMet: true, label: '89 golfers' });
   });
 
   it('counts a second-chance bracket\'s event being under way as met, naming the round the bracket starts at', () => {
-    const started = buildSportEvent({ sport: 'BASKETBALL', status: 'IN_PROGRESS', startDate: '2026-04-02T12:00:00.000Z' });
+    const started = buildSportEvent({
+      sport: 'BASKETBALL', status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false,
+    });
     expect(getContestReadinessChecks(started, NOW, 'Sweet 16').find((check) => check.id === 'not-started')).toEqual({
       id: 'not-started',
       isMet: true,
       label: 'Event under way · the bracket starts at the Sweet 16',
     });
     expect(getContestReadinessChecks(started, NOW).find((check) => check.id === 'not-started')?.isMet).toBe(false);
-  });
-});
-
-describe('a knockout under way', () => {
-  const UNDER_WAY: Partial<SportEventDto> = { status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false };
-
-  it('is a knockout in progress whose only bar to a contest is that it has started', () => {
-    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL', ...UNDER_WAY }))).toBe(true);
-  });
-
-  it('is not a contest-ready knockout, a golf event in progress, or a knockout under way that was never released or has no field', () => {
-    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL' }))).toBe(false);
-    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'GOLF', ...UNDER_WAY }))).toBe(false);
-    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL', ...UNDER_WAY, readinessReasons: ['FIELD_NOT_LOADED', 'EVENT_STARTED'] }))).toBe(false);
-    expect(isKnockoutUnderWay(buildSportEvent({ sport: 'BASKETBALL', ...UNDER_WAY, status: 'COMPLETED' }))).toBe(false);
   });
 });

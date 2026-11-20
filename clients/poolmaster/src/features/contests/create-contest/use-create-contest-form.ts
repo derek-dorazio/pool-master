@@ -21,8 +21,8 @@ import { QueryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/features/auth/auth-context';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { useSportLeaguesUsed } from '@/features/plans/use-sport-leagues-used';
-import { bracketRoundCount, bracketStartRoundOptions } from '../bracket-start-round';
-import { canEventStartRules, contestEventsFor, contestEventsForTemplate } from '../contest-template-events';
+import { bracketStartRoundOptions } from '../bracket-start-round';
+import { bracketStartRoundsOf, canEventStartRules, contestEventsFor, contestEventsForTemplate } from '../contest-template-events';
 import {
   DEFAULT_CONTEST_RULES,
   defaultCountedScoresFor,
@@ -156,11 +156,10 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
       : []),
     [eventsQuery.data, requestedSportLeagueId, requestedTemplate],
   );
-  // A knockout under way takes only a second-chance bracket.
-  const isEventUnderWay = selectedEvent !== null && !selectedEvent.contestEligible;
+  // A knockout under way takes only a second-chance bracket: the API's rounds say which.
   const roundName = useEventRoundName(selectionType === SelectionType.BRACKET ? selectedEvent : null);
   const bracketStartRounds = selectionType === SelectionType.BRACKET && selectedEvent
-    ? bracketStartRoundOptions(bracketRoundCount(selectedEvent), roundName, { isUnderWay: isEventUnderWay })
+    ? bracketStartRoundOptions(bracketStartRoundsOf(selectedEvent), roundName)
     : [];
   // A squares contest's games: read once a squares contest's event is chosen.
   const [now] = useState(() => new Date());

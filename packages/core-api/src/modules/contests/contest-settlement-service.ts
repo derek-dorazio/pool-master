@@ -19,6 +19,7 @@ import {
   squaresWinners,
   type Contest,
   type SportEvent,
+  isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
 import { loadPickEmScoring, loadPickEmWeekStandings, PickEmRulesMissingError } from './pick-em-standings';
 import type { GamePickScoring } from '../scoring-families/head-to-head/game-picks';
@@ -42,7 +43,6 @@ import {
   loadMissedEventEntries,
   rankContestEvent,
 } from './contest-leaderboard-reads';
-import { FINISHED_EVENT_STATUSES } from './entry-window';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { ChampionshipService } from '../championship/service';
 import { readFinalStandings } from './final-standings';
@@ -77,7 +77,7 @@ const SETTLEABLE = Object.values(ContestStatus).filter((status) => !NOT_SETTLED.
 /*
  * A CANCELLED event counts as settled with no result for anyone (#743): it writes no standings
  * and adds nothing to any total, so a contest whose events are each completed or cancelled
- * (`FINISHED_EVENT_STATUSES`) settles on the completed ones. A contest whose every event is
+ * (`isSportEventStatusFinished`) settles on the completed ones. A contest whose every event is
  * cancelled completes with no standings.
  */
 
@@ -133,7 +133,7 @@ export class ContestSettlementService {
     input?: { completedAt?: Date; sportEvent?: SportEvent },
   ): Promise<ContestSettlementSummary> {
     const sportEvent = input?.sportEvent?.id === sportEventId ? input.sportEvent : await this.deps.sportEvents.findById(sportEventId);
-    if (!sportEvent || !FINISHED_EVENT_STATUSES.includes(sportEvent.status)) {
+    if (!sportEvent || !isSportEventStatusFinished(sportEvent.status)) {
       return {
         sportEventId,
         contestsSettled: 0,
@@ -594,7 +594,7 @@ export class ContestSettlementService {
   private async allEventsFinished(reads: SettlementReads, contest: Contest): Promise<boolean> {
     const events = await reads.sportEvents.findByIds(contest.sportEventIds);
     return events.length === contest.sportEventIds.length
-      && events.every((event) => FINISHED_EVENT_STATUSES.includes(event.status));
+      && events.every((event) => isSportEventStatusFinished(event.status));
   }
 
   /**

@@ -5,6 +5,7 @@
 import type { EventPageRepository } from '@poolmaster/shared/db';
 import {
   ContestFormat,
+  ContestOpening,
   EventPageOfferState,
   SelectionType,
   Sport,
@@ -13,7 +14,7 @@ import {
   type EventPageEdition,
   type EventPageOffer,
 } from '@poolmaster/shared/domain';
-import { ContestOpening, type ContestOpeningSetup } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
+import type { ContestOpeningSetup } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
 import { EventPageNotFoundError, EventPageService, eventPagesChangeAt } from '../../../packages/core-api/src/modules/event-pages/service';
 
 const STAMP = new Date('2026-10-01T00:00:00.000Z');

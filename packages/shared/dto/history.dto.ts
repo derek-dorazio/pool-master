@@ -111,6 +111,7 @@ export type SquadCupDto = z.infer<typeof SquadCupDtoSchema>;
 export const SquadYearDtoSchema = z.object({
   squadId: z.uuid(),
   year: z.number().int(),
+  isOver: z.boolean().describe('True once the year has ended in US Eastern: its places are final. False for the current year, "so far".'),
   championship: SquadChampionshipDtoSchema.nullable().describe('Its championship row; null for an inactive squad that placed in nothing that year.'),
   cups: z.array(SquadCupDtoSchema).describe('Every cup of the season the squad has a row in, by sports league name.'),
 }).describe('One squad\'s year: its championship row and its cup rows, the same rows the league pages show.');

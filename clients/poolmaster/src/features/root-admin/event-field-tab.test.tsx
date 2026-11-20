@@ -83,6 +83,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     startDate: '2026-07-16T08:00:00.000Z',
     endDate: '2026-07-19T20:00:00.000Z',
     status: 'SCHEDULED',
+    tiersLocked: true,
     rounds: 4,
     eventSeriesId: 'event-series-1',
     eventYear: 2026,
@@ -197,7 +198,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
   });
 
   it('offers no hand correction tools on a synced event (no seed, add or load), only automatic tiers and prices', async () => {
-    seed({ tournament: { syncScope: 'SCORES_ONLY', status: 'DRAFT' } });
+    seed({ tournament: { syncScope: 'SCORES_ONLY', status: 'DRAFT', tiersLocked: false } });
     renderPage({ isSynced: true });
 
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
@@ -296,7 +297,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
         fieldEntry(),
         fieldEntry({ id: 'sep-two', participantId: 'p-two', name: 'Second Tier', valuation: valuationFixture({ sportEventTierId: 'tier-2' }) }),
       ],
-      tournament: { status: 'DRAFT' },
+      tournament: { status: 'DRAFT', tiersLocked: false },
     });
     updateEventParticipantsMock.mockResolvedValue({ data: { participants: [fieldEntry()] } });
     renderPage();
@@ -334,7 +335,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
   });
 
   it('corrects only tier and price on a synced event, whose feed sets rank, odds and seed', async () => {
-    seed({ tournament: { status: 'DRAFT' } });
+    seed({ tournament: { status: 'DRAFT', tiersLocked: false } });
     renderPage({ isSynced: true });
 
     const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
