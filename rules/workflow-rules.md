@@ -247,9 +247,12 @@ league fills in.
 - **A sport's real difference lives in its data or its adapter**, behind the shared seam: the
   sport definition and scoring family (`architecture-rules.md` §4 *Sport extension*), a
   provider adapter's reads, a profile or setup row. The flow around it stays one flow.
-- **Building the first sport first is allowed; designing for it alone is not.** A slice may
-  land a global path with one sport wired up, when the plan names how the others join it and
-  the code has no branch that only that sport takes.
+- **Connecting one league first is allowed; designing for it alone is not.** A slice may
+  land a global path with one league connected, only when the code has no branch that only
+  that league takes and the work to connect every other league is already ticketed: issues
+  filed, each saying what that league needs, and linked from the plan and the PR. Untracked
+  follow-on work gets forgotten and misleads later slices, so without those tickets the slice
+  is not done.
 - **When an ask names one sport or league, design the global version** and say so in the
   plan. If only a sport-specific shortcut fits the time, escalate to the owner rather than
   build it.
