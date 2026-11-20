@@ -7,13 +7,12 @@
  */
 import {
   ContestOpening,
+  definitionPlaysMatches,
   eventSportDefinition,
-  getSportDefinition,
   hasSportEventStarted,
   KNOCKOUT_ROUND_VALUES_MAX_ROUNDS,
   SelectionType,
   SportEventStatus,
-  TournamentFormat,
   type SportLeagueEvent,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, type ContestCutoff } from '../contests/entry-window';
@@ -146,10 +145,10 @@ export function eventContestOpenings(event: EventOpeningFacts, now: Date): Event
     now,
   });
   const hasStarted = readinessReasons.includes('EVENT_STARTED');
-  const knockoutUnderWay = definition.tournamentFormat === TournamentFormat.MATCHES
+  const knockoutUnderWay = definitionPlaysMatches(definition)
     && event.status === SportEventStatus.IN_PROGRESS
     && readinessReasons.every((reason) => reason === 'EVENT_STARTED');
-  const roundCount = event.rounds ?? getSportDefinition(event.sport).defaultRounds;
+  const roundCount = event.rounds ?? definition.defaultRounds;
   return definition.selectionTypes.map((selectionType): EventContestOpening => {
     const startsAtRounds = selectionType === SelectionType.BRACKET ? bracketStartRounds(roundCount, hasStarted) : [];
     const opensUnderWay = knockoutUnderWay

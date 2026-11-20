@@ -39,7 +39,7 @@ describe('contest readiness', () => {
     expect(pastStart.find((check) => check.id === 'not-started')?.isMet).toBe(true);
   });
 
-  it('fails the release and field checks exactly when the API gives those reasons', () => {
+  it('fails the release and field checks exactly when the API gives those reasons, and names no tiers on a field not yet tiered', () => {
     const notReady = getContestReadinessChecks(buildSportEvent({
       loadedParticipantCount: 0,
       readinessStatus: 'NOT_RELEASED',
@@ -49,7 +49,7 @@ describe('contest readiness', () => {
     expect(notReady.find((check) => check.id === 'released')).toEqual({ id: 'released', isMet: false, label: 'Event not released yet' });
     expect(notReady.find((check) => check.id === 'field')).toMatchObject({ isMet: false, label: 'No golfers loaded yet' });
     const ready = getContestReadinessChecks(buildSportEvent({ tierCount: 0 }), NOW);
-    expect(ready.find((check) => check.id === 'field')).toMatchObject({ isMet: true, label: '89 golfers in 0 tiers' });
+    expect(ready.find((check) => check.id === 'field')).toMatchObject({ isMet: true, label: '89 golfers' });
   });
 
   it('counts a second-chance bracket\'s event being under way as met, naming the round the bracket starts at', () => {

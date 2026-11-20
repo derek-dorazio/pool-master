@@ -58,9 +58,9 @@ export function getContestReadinessChecks(
     {
       id: 'field',
       isMet: hasField,
-      label: hasField
-        ? `${golfers} in ${tiers}`
-        : `No ${participant.many} loaded yet`,
+      label: !hasField
+        ? `No ${participant.many} loaded yet`
+        : event.tierCount > 0 ? `${golfers} in ${tiers}` : golfers,
     },
     hasStarted && secondChanceRoundName !== null
       ? { id: 'not-started', isMet: true, label: `Event under way · the bracket starts at the ${secondChanceRoundName}` }
