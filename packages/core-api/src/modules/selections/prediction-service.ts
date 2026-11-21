@@ -89,8 +89,8 @@ import { selectionErrors, type SelectionError } from './selection-errors';
 import type { GamePicksReceiptNotice } from '../notifications/entry-receipts';
 import { loadSurvivorWeeks, survivorPicksByEntry, survivorWeeksOf } from '../contests/survivor-standings';
 import { survivorRun, survivorTeamsUsedInCycle } from '../scoring-families/head-to-head/survivor';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
-import { NO_JOBS_FOR_WRITE, type JobsForWrite } from '../background-jobs/background-job-queue';
+import type { JobsForWrite } from '../background-jobs/background-job-queue';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 
 export interface PredictionServiceDeps {
   contests: Pick<ContestRepository, 'findById'>;
@@ -106,11 +106,10 @@ export interface PredictionServiceDeps {
   /** Sends the entry's owners a receipt of a submitted week (#867); none sends nothing. */
   receipts?: GamePicksReceiptNotice;
   /**
-   * The contest's rebuild job, written with a week submitted or sent back to draft, so the
-   * contest's stored leaderboard (#1435), which lists the entries that submitted and each week's
-   * submitted flag, is rebuilt (#1466).
+   * What follows a week submitted or sent back to draft (#1946), collected before the write and
+   * written in its transaction: the contest's board rebuild among them (#1435, #1466).
    */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forContest'>;
+  domainEvents: Pick<DomainEvents, 'collect'>;
   /** Each sport's definition, for what its pools offer (tie picks, #792); the sport registry unless given. */
   sportDefinitionOf?: (sport: Sport) => SportDefinition;
   now?: () => Date;
@@ -454,9 +453,9 @@ export class PredictionService {
     }
 
     // Judged against the picks as they stand under the entry's lock (#1268), so a clear or a
-    // change that committed while this submit waited is judged too. The contest's board lists
-    // who submitted, so its rebuild job is written with the submit (#1466).
-    const rebuild = this.rebuild(context.contest.id);
+    // change that committed while this submit waited is judged too. What follows a submit (the
+    // board's rebuild, #1466) is written with it.
+    const followUps = await this.weekStatusChanged(context, ContestEntryStatus.DRAFT, ContestEntryStatus.SUBMITTED);
     const { written, week } = await this.deps.predictions.save({
       contestEntryId: context.entry.id,
       sportEventId: context.sportEvent.id,
@@ -473,7 +472,7 @@ export class PredictionService {
           );
           throw this.weekIssueError(current, issue);
         }
-        return { saves: [], clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED, jobs: rebuild.jobs };
+        return { saves: [], clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED, jobs: followUps.jobs };
       },
     });
     const submitted = this.withLockedWeek(context, week);
@@ -483,7 +482,7 @@ export class PredictionService {
       { action: 'prediction.submit.submitted', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventId: context.sportEvent.id } },
       'Submitted a contest entry\'s game picks for one event',
     );
-    rebuild.queued();
+    followUps.queued();
     // The receipt is sent from the week already loaded, not read again (#1201).
     await this.deps.receipts?.gamePicksSubmitted(view, { contest: submitted.contest, entry: submitted.entry, sportEvent: submitted.sportEvent });
     return view;
@@ -499,7 +498,9 @@ export class PredictionService {
     context: WeekContext,
     plan: (current: WeekContext) => WeekChange | null,
   ): Promise<{ after: WeekContext; written: ContestEntryMatchPredictionChange | null }> {
-    const rebuild = this.rebuild(context.contest.id);
+    // The one status a change can move a week to is back to DRAFT, so its follow-ups are collected
+    // before the write and written only if the week moves.
+    const followUps = await this.weekStatusChanged(context, ContestEntryStatus.SUBMITTED, ContestEntryStatus.DRAFT);
     const { written, week } = await this.deps.predictions.save({
       contestEntryId: context.entry.id,
       sportEventId: context.sportEvent.id,
@@ -518,8 +519,7 @@ export class PredictionService {
           }
           eventStatus = ContestEntryStatus.DRAFT;
         }
-        // A week that changes status changes the board, so the contest's rebuild rides with it.
-        return { saves: change.saves, clearedMatchIds: change.clearedMatchIds, eventStatus, tiebreakerValue: change.tiebreakerValue, jobs: eventStatus ? rebuild.jobs : [] };
+        return { saves: change.saves, clearedMatchIds: change.clearedMatchIds, eventStatus, tiebreakerValue: change.tiebreakerValue, jobs: eventStatus ? followUps.jobs : [] };
       },
     });
     if (written?.eventStatus === ContestEntryStatus.DRAFT) {
@@ -528,13 +528,23 @@ export class PredictionService {
         'Sent a submitted week back to draft after a change it no longer passes',
       );
     }
-    if (written?.eventStatus) rebuild.queued();
+    if (written?.eventStatus) followUps.queued();
     return { after: this.withLockedWeek(context, week), written };
   }
 
-  /** The job rebuilding the contest's boards, when leaderboards are wired to this service. */
-  private rebuild(contestId: string): JobsForWrite {
-    return this.deps.leaderboards?.forContest(contestId) ?? NO_JOBS_FOR_WRITE;
+  /**
+   * The follow-ups of the week's status moving `from` → `to`, for its write to carry (#1946). This
+   * is collected on every pick save, before the write knows whether the week moves, so the
+   * handlers of `CONTEST_ENTRY_EVENT_STATUS_CHANGED` must stay read-free: a read there would run
+   * on every save a member makes.
+   */
+  private weekStatusChanged(context: WeekContext, from: ContestEntryStatus, to: ContestEntryStatus): Promise<JobsForWrite> {
+    return this.deps.domainEvents.collect({
+      type: DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED,
+      contestEntryEvent: { contestId: context.contest.id, contestEntryId: context.entry.id, sportEventId: context.sportEvent.id },
+      from,
+      to,
+    });
   }
 
   /** The week loaded, with the entry's picks and its row for the event as read under its lock. */

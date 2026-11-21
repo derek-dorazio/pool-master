@@ -11,6 +11,7 @@
 import { releaseIntoTemplateContestsHandler } from '../contest-management/released-edition-job-requests';
 import {
   rebuildChangedResultsLeaderboardsHandler,
+  rebuildContestLeaderboardsHandler,
   rebuildDecidedGameLeaderboardsHandler,
   rebuildEventLeaderboardsHandler,
 } from '../contests/leaderboard-rebuild-job-requests';
@@ -30,4 +31,5 @@ export const DOMAIN_EVENT_HANDLERS = {
   [DomainEventType.SPORT_EVENT_RESCHEDULED]: [tellLeaguesEventRescheduledHandler],
   [DomainEventType.SPORT_EVENT_RESULTS_CHANGED]: [rebuildChangedResultsLeaderboardsHandler],
   [DomainEventType.GAME_DECIDED]: [settleDecidedGameContestsHandler, rebuildDecidedGameLeaderboardsHandler],
+  [DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED]: [rebuildContestLeaderboardsHandler],
 } as const satisfies DomainEventHandlerMap;

@@ -36,6 +36,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeParticipantContestScoringRuleRepo } from '../../support/repo-fakes';
+import { testDomainEvents } from '../../support/domain-events';
 
 const HOUR = 60 * 60 * 1000;
 /** The test's clock starts two hours before the bracket's first tip-off. */
@@ -88,6 +89,7 @@ function setup(options: { bracket?: SportEventMatch[]; seeds?: ReadonlyMap<strin
 
   let now = NOW;
   const service = new PredictionService({
+    domainEvents: testDomainEvents(),
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     scoringRules: fakeParticipantContestScoringRuleRepo({ findByContestConfiguration: jest.fn().mockResolvedValue(rules) }),

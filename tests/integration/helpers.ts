@@ -393,8 +393,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const profiles = createProfileServices(prisma, testApp.log);
   testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
-  testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
-  testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
+  testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, domainEvents });
+  testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements, domainEvents });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   const activity = new ActivityService({
     jobs: new PrismaBackgroundJobRepository(prisma),

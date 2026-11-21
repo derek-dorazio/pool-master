@@ -17,7 +17,7 @@
 import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
 import { SelectionType, type Contest, type SportEvent, type SportEventMatch } from '@poolmaster/shared/domain';
 import { readMillisecondsSetting } from '../../core/read-cache';
-import type { BackgroundJobQueue, JobsForWrite } from '../background-jobs/background-job-queue';
+import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from './leaderboard-rebuild-job-requests';
 
 /** Which leaderboard a stored board is: each contest has one, by how its entries pick. */
@@ -117,8 +117,6 @@ export interface LeaderboardChanges {
 export interface LeaderboardRebuilds {
   /** The fields or statuses of these events changed: their contests' boards are rebuilt soon. */
   eventsChanged(sportEventIds: readonly string[]): Promise<void>;
-  /** The job rebuilding one contest's boards, for a write that changes only that contest (#1466). */
-  forContest(contestId: string): JobsForWrite;
   /**
    * These contests' stored boards are no longer current: rebuild them soon (#1788). What a read
    * that computes boards without storing them asks, so they are stored for the reads after.
@@ -136,14 +134,6 @@ export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
 
   contestsChanged(contestIds: readonly string[]): Promise<void> {
     return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
-  }
-
-  forContest(contestId: string): JobsForWrite {
-    return this.forWrite(LeaderboardRebuildSubject.CONTEST, contestId);
-  }
-
-  private forWrite(subject: LeaderboardRebuildSubject, id: string): JobsForWrite {
-    return { jobs: [rebuildLeaderboardsJob(this.jobs, subject, id)], queued: () => this.jobs.queued() };
   }
 
   private async queue(subject: LeaderboardRebuildSubject, ids: readonly string[]): Promise<void> {

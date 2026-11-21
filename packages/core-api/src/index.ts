@@ -488,8 +488,8 @@ export function buildApp() {
   // =========================================================================
   // Draft module
   // =========================================================================
-  app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
-  app.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
+  app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, domainEvents });
+  app.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements, domainEvents });
 
   // =========================================================================
   // Lifecycle hooks
