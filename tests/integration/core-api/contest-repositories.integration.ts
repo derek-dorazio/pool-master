@@ -2028,7 +2028,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await runner.drain();
     await deliverQueuedEmail();
     expect(send).toHaveBeenCalledTimes(3);
-    await expect(prisma.backgroundJob.count()).resolves.toBe(1);
+    await expect(prisma.backgroundJob.count({ where: { type: 'CONTEST_STARTED_EMAILS' } })).resolves.toBe(1);
 
     // A retry of the job, after a try that queued the emails but was not marked done, finds
     // each one recorded and sends nothing twice.
@@ -2036,7 +2036,8 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await runner.drain();
     await deliverQueuedEmail();
     expect(send).toHaveBeenCalledTimes(3);
-    await expect(prisma.backgroundJob.findMany({ select: { status: true } })).resolves.toEqual([{ status: 'SUCCEEDED' }, { status: 'SUCCEEDED' }]);
+    await expect(prisma.backgroundJob.findMany({ where: { type: 'CONTEST_STARTED_EMAILS' }, select: { status: true } }))
+      .resolves.toEqual([{ status: 'SUCCEEDED' }, { status: 'SUCCEEDED' }]);
   });
 });
 
