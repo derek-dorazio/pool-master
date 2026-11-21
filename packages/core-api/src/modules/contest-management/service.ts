@@ -9,6 +9,7 @@ import type {
 import type { SportEventTierGroup, SportEventTierService } from '../events/sport-event-tier-service';
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { ReleasedEditionContests } from './released-edition-contests';
 import { addReleasedEditionToContestJob, type AddReleasedEditionToContestJobPayload } from './released-edition-job-requests';
 import type { CupService } from '../cups/service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
@@ -198,7 +199,7 @@ const ONE_EVENT_REFUSALS: Readonly<Record<OneEventSelectionType, { message: stri
   },
 };
 
-export class ContestManagementService {
+export class ContestManagementService implements ReleasedEditionContests {
   private readonly contestRepo: ContestRepository;
   private readonly contestConfigTemplateRepo: ContestConfigTemplateRepository;
   private readonly contestConfigurationRepo: ContestConfigurationRepository;

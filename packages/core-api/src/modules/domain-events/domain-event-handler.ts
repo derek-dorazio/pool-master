@@ -4,9 +4,10 @@
  * another module's write; the writer puts the jobs it collects in its own transaction.
  */
 
-import type { BackgroundJobRequest, BackgroundJobType, SportEvent } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, BackgroundJobType } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import type { SportEventChange, SportEventChangeContext } from '../notifications/contest-notices';
+import type { ReleasedEditionContests } from '../contest-management/released-edition-contests';
+import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import type { DomainEventOf, DomainEventType } from './domain-event';
 
 /**
@@ -16,20 +17,9 @@ import type { DomainEventOf, DomainEventType } from './domain-event';
 export interface DomainEventHandlerContext {
   queue: Pick<BackgroundJobQueue, 'request'>;
   /** The template contests a released edition joins (#714, #1318). */
-  releasedEditionContests: {
-    releasedEditionJobs(
-      sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
-      jobs: Pick<BackgroundJobQueue, 'request'>,
-    ): Promise<readonly BackgroundJobRequest[]>;
-  };
+  releasedEditionContests: ReleasedEditionContests;
   /** The contests told an event was postponed or moved (#1458, #1464). */
-  sportEventChanged: {
-    sportEventChangedJobs(
-      sportEvent: Pick<SportEvent, 'id' | 'startDate'>,
-      change: SportEventChange,
-      context?: SportEventChangeContext,
-    ): Promise<readonly BackgroundJobRequest[]>;
-  };
+  sportEventChanged: Pick<SportEventChangedNotice, 'sportEventChangedJobs'>;
 }
 
 export interface DomainEventHandler<T extends DomainEventType> {

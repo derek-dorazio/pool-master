@@ -14,7 +14,7 @@ import type { SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
 export const DomainEventType = {
   /** A sport event's status moved (`EventLifecycleService.applySportEventStatusTransition`). */
   SPORT_EVENT_STATUS_CHANGED: 'SPORT_EVENT_STATUS_CHANGED',
-  /** A released sport event's start moved, by an admin's edit that tells its leagues. */
+  /** A sport event's start moved, by an admin's edit that tells its leagues; each handler decides which statuses it acts on. */
   SPORT_EVENT_RESCHEDULED: 'SPORT_EVENT_RESCHEDULED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
