@@ -894,15 +894,13 @@ describe('mock contest feed provider event-first verification', () => {
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
     const settlement = createContestSettlementService(getAppPrisma());
-    const settleJobs = integrationBackgroundJobs();
+    // One queue and one runner over the job table, as the app has: two runners here would each
+    // claim the other's jobs and fail them as unexpected.
+    const backgroundJobs = integrationBackgroundJobs();
     const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
-      domainEvents: testDomainEvents({ queue: settleJobs.queue }),
-      jobs: settleJobs.queue,
+      domainEvents: testDomainEvents({ queue: backgroundJobs.queue }),
+      jobs: backgroundJobs.queue,
       contestSettlement: settlement,
-    });
-    // Completing the event queues the job that settles its contests (#1448); this runs it.
-    const settleRunner = settleJobs.runWith({
-      SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     });
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
@@ -919,7 +917,6 @@ describe('mock contest feed provider event-first verification', () => {
       displayName: 'Golf Live E2E Root Admin',
       isRootAdmin: true,
     });
-    const backgroundJobs = integrationBackgroundJobs();
     const providerService = new IngestionService({
       registry,
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
@@ -932,7 +929,11 @@ describe('mock contest feed provider event-first verification', () => {
       syncRunLedger,
       jobs: backgroundJobs.queue,
     });
-    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload, context) => providerService.runManualEventSync(payload, context) });
+    // Completing the event queues the job that settles its contests (#1448); this runs it.
+    const settleRunner = backgroundJobs.runWith({
+      MANUAL_EVENT_SYNC: (payload, context) => providerService.runManualEventSync(payload, context),
+      SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
+    });
 
     await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
 
