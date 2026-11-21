@@ -18,6 +18,7 @@ import {
   tellLeaguesEventPostponedHandler,
   tellLeaguesEventRescheduledHandler,
 } from '../notifications/contest-email-job-requests';
+import { syncGamesThenTierFieldHandler } from '../events/synced-field-follow-up-job';
 import { DomainEventType } from './domain-event';
 import type { DomainEventHandlerMap } from './domain-event-handler';
 
@@ -38,4 +39,5 @@ export const DOMAIN_EVENT_HANDLERS = {
     tellLeagueContestReopenedHandler,
     tellLeagueContestSettledHandler,
   ],
+  [DomainEventType.SPORT_EVENT_FIELD_SYNCED]: [syncGamesThenTierFieldHandler],
 } as const satisfies DomainEventHandlerMap;

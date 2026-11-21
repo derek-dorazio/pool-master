@@ -10,6 +10,7 @@
  */
 
 import type { ContestEntryStatus, ContestStatus, SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
+import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 
 export const DomainEventType = {
   /** A sport event's status moved (`EventLifecycleService.applySportEventStatusTransition`). */
@@ -23,6 +24,8 @@ export const DomainEventType = {
   CONTEST_ENTRY_EVENT_STATUS_CHANGED: 'CONTEST_ENTRY_EVENT_STATUS_CHANGED',
   /** A contest's status moved (`ContestLifecycle`), one event per contest a guarded write moves. */
   CONTEST_STATUS_CHANGED: 'CONTEST_STATUS_CHANGED',
+  /** A provider's field sync wrote a sport event's field (`IngestionPersistence.persistEventDetailWithDiagnostics`). */
+  SPORT_EVENT_FIELD_SYNCED: 'SPORT_EVENT_FIELD_SYNCED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
 
@@ -76,8 +79,21 @@ export interface ContestStatusChanged {
   startsAt?: Date;
 }
 
+export interface SportEventFieldSynced {
+  type: typeof DomainEventType.SPORT_EVENT_FIELD_SYNCED;
+  /** The event whose field was written, as the sync read it. */
+  sportEvent: Pick<SportEvent, 'id' | 'status'>;
+  /** The provider and its event id the field came from. */
+  providerId: string;
+  externalId: string;
+  /** The provider's games of the event that came with the field, when it listed any (ADR 0011, #1728). */
+  games?: readonly ProviderScheduledGame[];
+  /** A fixed-shape playoff's whole bracket, when the provider gave one. */
+  bracket?: readonly ProviderBracketMatch[];
+}
+
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | ContestEntryEventStatusChanged | ContestStatusChanged;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;
