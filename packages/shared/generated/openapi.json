@@ -71924,7 +71924,8 @@
               "REBUILD_LEADERBOARDS",
               "ADD_RELEASED_EDITION_TO_CONTEST",
               "SYNC_LEAGUE_EVENTS",
-              "RELEASE_SPORT_EVENT"
+              "RELEASE_SPORT_EVENT",
+              "SYNC_EVENT_GAMES_AND_TIERS"
             ],
             "description": "The job's handler. Its kind follows from it."
           },
@@ -72229,7 +72230,8 @@
                     "REBUILD_LEADERBOARDS",
                     "ADD_RELEASED_EDITION_TO_CONTEST",
                     "SYNC_LEAGUE_EVENTS",
-                    "RELEASE_SPORT_EVENT"
+                    "RELEASE_SPORT_EVENT",
+                    "SYNC_EVENT_GAMES_AND_TIERS"
                   ],
                   "description": "The job's handler. Its kind follows from it."
                 },
@@ -72493,7 +72495,8 @@
                   "REBUILD_LEADERBOARDS",
                   "ADD_RELEASED_EDITION_TO_CONTEST",
                   "SYNC_LEAGUE_EVENTS",
-                  "RELEASE_SPORT_EVENT"
+                  "RELEASE_SPORT_EVENT",
+                  "SYNC_EVENT_GAMES_AND_TIERS"
                 ],
                 "description": "The job's handler. Its kind follows from it."
               },
