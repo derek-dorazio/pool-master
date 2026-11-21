@@ -7,6 +7,7 @@ import {
   type ContestEntryEventStatusChanged,
   type DomainEventHandler,
   type DomainEventHandlerMap,
+  type SportEventFieldSynced,
   type SportEventRescheduled,
   type SportEventStatusChanged,
 } from '../../../packages/core-api/src/modules/domain-events';
@@ -92,6 +93,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
       ],
       SPORT_EVENT_RESCHEDULED: ['tell-leagues-event-rescheduled'],
       CONTEST_ENTRY_EVENT_STATUS_CHANGED: ['rebuild-contest-leaderboards'],
+      SPORT_EVENT_FIELD_SYNCED: ['sync-games-then-tier-field'],
     });
   });
 
@@ -205,6 +207,44 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
       start: TEST_JOB_START,
       dedupeKey: 'REBUILD_LEADERBOARDS:EVENT:sport-event-1',
     }]);
+  });
+});
+
+describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
+  const [follow] = DOMAIN_EVENT_HANDLERS.SPORT_EVENT_FIELD_SYNCED;
+  const KICKOFF = new Date('2026-09-13T17:00:00.000Z');
+  const fieldSynced = (status: SportEventStatus): SportEventFieldSynced => ({
+    type: DomainEventType.SPORT_EVENT_FIELD_SYNCED,
+    sportEvent: { id: 'sport-event-1', status },
+    providerId: 'balldontlie',
+    externalId: 'week-2',
+    games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF, isNeutralSite: false }],
+  });
+
+  it('queues one job per event that syncs the provider\'s games, then tiers and prices the field, with the games as their kickoffs\' instants', async () => {
+    expect(follow.when?.(fieldSynced(SportEventStatus.DRAFT))).toBe(true);
+    expect(await follow.jobs(fieldSynced(SportEventStatus.DRAFT), { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD })).toEqual([{
+      type: BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS,
+      payload: {
+        sportEventId: 'sport-event-1',
+        providerId: 'balldontlie',
+        externalId: 'week-2',
+        games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF.toISOString(), isNeutralSite: false }],
+      },
+      sportEventId: 'sport-event-1',
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: 'SYNC_EVENT_GAMES_AND_TIERS:sport-event-1',
+    }]);
+  });
+
+  it('follows a sync of every event still to be played, and of no finished or cancelled one', () => {
+    for (const status of [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED]) {
+      expect(follow.when?.(fieldSynced(status))).toBe(true);
+    }
+    for (const status of [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
+      expect(follow.when?.(fieldSynced(status))).toBe(false);
+    }
   });
 });
 
@@ -331,12 +371,13 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_RESCHEDULED` | `tell-leagues-event-rescheduled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `CONTEST_ENTRY_EVENT_STATUS_CHANGED` | `rebuild-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
+      '| `SPORT_EVENT_FIELD_SYNCED` | `sync-games-then-tier-field` | `SYNC_EVENT_GAMES_AND_TIERS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));
   });
 
   it('says so on purpose for an event type nothing follows', () => {
-    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [] };
+    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [] };
 
     expect(renderDomainEventTable(nothingFollows)).toContain('| `SPORT_EVENT_RESCHEDULED` | none | none |');
   });

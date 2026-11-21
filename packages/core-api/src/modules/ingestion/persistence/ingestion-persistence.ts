@@ -27,8 +27,9 @@ import type { EventDetailPersisted, UnlinkedRankedParticipant } from '../core/in
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
-import { NO_JOBS_FOR_WRITE } from '../../background-jobs/background-job-queue';
-import { backgroundJobsInsert } from '../../../adapters/prisma-background-job-repository';
+import { NO_JOBS_FOR_WRITE, type JobsForWrite } from '../../background-jobs/background-job-queue';
+import { backgroundJobsInsert, insertBackgroundJobs } from '../../../adapters/prisma-background-job-repository';
+import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { PublicReadPath } from '../../../core/public-cache';
 import { forgettingReads, ReadMemoKey } from '../../../core/request-read-memo';
 
@@ -44,7 +45,8 @@ export class IngestionPersistence {
    * is written (#1163). `cdn`: clears the public event pages once a field is written, since a
    * loaded field is what turns an offer from NOT_YET to OPEN (#1181). `leaderboards`: the event's
    * rebuild job, written with a field write that changes a row, so the event's contests' stored
-   * leaderboards are computed again (#1435, #1466).
+   * leaderboards are computed again (#1435, #1466). `domainEvents`: what follows a field sync, the
+   * event's games and then its tiers and prices (#1952), written with the field.
    */
   constructor(
     private readonly prisma: PrismaClient,
@@ -52,6 +54,7 @@ export class IngestionPersistence {
     private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
     private readonly cdn?: CdnInvalidator,
     private readonly leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+    private readonly domainEvents?: Pick<DomainEvents, 'collect'>,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -297,13 +300,24 @@ export class IngestionPersistence {
     });
     let sportEventParticipantsPersisted: number;
     const seedsLocked = seedsLockedOn(persistedEvent);
+    // What follows the field (#1952): the provider's games, then the tiers and prices, in a job
+    // written with the field, so a task that stops after the write still has them run.
+    const followUps = await this.domainEvents?.collect({
+      type: DomainEventType.SPORT_EVENT_FIELD_SYNCED,
+      sportEvent: { id: persistedEvent.id, status: persistedEvent.status },
+      providerId: detail.providerId,
+      externalId: detail.externalId,
+      ...(detail.games !== undefined && { games: detail.games }),
+      ...(detail.bracket !== undefined && { bracket: detail.bracket }),
+    }) ?? NO_JOBS_FOR_WRITE;
 
     try {
-      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows);
+      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows, followUps);
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
       this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
     }
+    followUps.queued();
 
     const unlinkedRankedParticipants = await this.findUnlinkedRankedParticipants(persistedEvent.id, detail.providerId);
 
@@ -349,7 +363,9 @@ export class IngestionPersistence {
   /**
    * Writes the provider's field onto the event's rows, one row per mapped participant, and
    * returns how many (#1183). The rows are read in one query; an unchanged row is not
-   * written, and the new and changed ones are written in one transaction.
+   * written, and the new and changed ones are written in one transaction, with the field sync's
+   * follow-up jobs. A field with no row to write still writes those jobs, on their own: the
+   * provider's games may have changed when its field did not.
    */
   private async persistEventField(
     detail: FieldFeed,
@@ -357,6 +373,7 @@ export class IngestionPersistence {
     seedsLocked: boolean,
     participantIdByKey: ReadonlyMap<string, string>,
     detailRows: SyncWriteDetailRow[],
+    followUps: JobsForWrite,
   ): Promise<number> {
     const mapped = new Map<string, ProviderParticipant>();
     for (const participant of detail.participants) {
@@ -414,10 +431,12 @@ export class IngestionPersistence {
           where: { id: (plan.existing as { id: string }).id },
           data: plan.data,
         })),
-        ...(rebuild.jobs.length > 0 ? [backgroundJobsInsert(this.prisma, rebuild.jobs)] : []),
+        ...(rebuild.jobs.length > 0 || followUps.jobs.length > 0 ? [backgroundJobsInsert(this.prisma, [...rebuild.jobs, ...followUps.jobs])] : []),
       ]);
       rebuild.queued();
       createdIdByParticipantId = new Map(created.map((row) => [row.participantId, row.id]));
+    } else {
+      await insertBackgroundJobs(this.prisma, followUps.jobs);
     }
 
     for (const plan of plans) {

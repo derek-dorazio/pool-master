@@ -49,7 +49,7 @@ flowchart LR
   E & S --> R --> A --> RD --> C --> V[(api.balldontlie.io)]
   E & S --> L
   S -- scores --> P[publishLiveScoreUpdate] --> W[GOLF / GAME / STAT_LINE writer]
-  S -- field --> IP[IngestionPersistence] --> TP[tiers and prices]
+  S -- field --> IP[IngestionPersistence] --> GT[SYNC_EVENT_GAMES_AND_TIERS job<br/>games, then tiers and prices]
   W & IP --> J[REBUILD_LEADERBOARDS job]
 ```
 
@@ -148,8 +148,13 @@ The Field loop runs every participant interval over each provider's next two `DR
 `SCHEDULED` events of synced leagues starting inside the lookahead window. An admin's **Load
 Participant Field** (`POST /api/v1/events/:eventId/participants/refresh`) queues a
 `MANUAL_EVENT_SYNC` job down the same path: `runEventFieldSync` →
-`provider.getEventDetails(externalId)` → `IngestionPersistence.persistEventDetailWithDiagnostics`,
-then games, then tiers and prices.
+`provider.getEventDetails(externalId)` → `IngestionPersistence.persistEventDetailWithDiagnostics`.
+The games and then the tiers and prices follow in one `SYNC_EVENT_GAMES_AND_TIERS` job per event,
+written with the field (the `sync-games-then-tier-field` handler of `SPORT_EVENT_FIELD_SYNCED`,
+#1952), so a task that stops after the field still runs them. The job carries the provider's
+games and bracket. A finished event queues none. Its stats and warnings below are the job's
+result in Activity, not the field sync run's; a job that changed nothing and warned of nothing
+leaves no row.
 
 ### Participants
 
@@ -178,13 +183,14 @@ the event's last pricing or the league's pricing profile. Any tier placed by han
 for that event, and any price typed by hand freezes prices (`tiersKeptAsEdited`,
 `pricesKeptAsEdited`); later field additions then warn `FIELD_ROWS_UNTIERED` / `UNPRICED`.
 Pressing *Auto-assign* is not a hand edit. A released event's tiers and prices are locked. A
-failure is a `TIERS_AND_PRICES_NOT_MADE` warning; the field is written regardless.
+failure is a `TIERS_AND_PRICES_NOT_MADE` warning on the job; the field is written regardless.
 
 ### Games and brackets
 
-After each field load, `ProviderGameSlateService.afterFieldLoad` (`events/provider-game-slate.ts`)
-turns the provider's games into the event's matches. A game is matched to a stored match by its
-two teams. Nothing loads while a team is missing from the field; a refused load is logged and
+After each field load, its job's first step, `ProviderGameSlateService.afterFieldLoad`
+(`events/provider-game-slate.ts`), turns the provider's games into the event's matches. A game is matched to a stored match by its
+two teams. Nothing loads while a team is missing from the field; a refused load is logged, is a
+`GAMES_NOT_SYNCED` warning on the job, and
 never fails the field sync. Spreads stay the admin's. Each round with kickoffs starts at its
 earliest one.
 

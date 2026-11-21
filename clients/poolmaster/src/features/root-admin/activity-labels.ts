@@ -36,6 +36,7 @@ export const JOB_TYPE_LABELS: Record<BackgroundJobType, string> = {
   [BackgroundJobType.REBUILD_LEADERBOARDS]: 'Rebuild leaderboards',
   [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: 'Add to contest',
   [BackgroundJobType.RELEASE_SPORT_EVENT]: 'Release check',
+  [BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS]: 'Games, tiers and prices',
 };
 
 export const JOB_STATUS_LABELS: Record<BackgroundJobStatus, string> = {
