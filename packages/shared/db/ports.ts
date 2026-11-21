@@ -650,10 +650,10 @@ export type ContestCreate = Pick<
 >;
 
 /**
- * What can change on a contest row itself; its events change through `replaceSportEvents` and
- * its season through `moveToSeason`.
+ * What can change on a contest row itself; its events change through `replaceSportEvents`, its
+ * season through `moveToSeason`, and its status only through `ContestLifecycle` (#1949).
  */
-export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt'>>;
+export type ContestUpdate = Partial<Pick<Contest, 'name' | 'startsAt' | 'endsAt'>>;
 
 /**
  * The plan's sports leagues a year (#947) for a contest's season, with the contest's own sports

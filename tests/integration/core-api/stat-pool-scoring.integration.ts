@@ -33,6 +33,7 @@ import {
 } from '../helpers';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { leagueProfiles, STAT_POOL_TIER_PROFILE_NAME } from '../../support/league-profiles';
+import { testDomainEvents } from '../../support/domain-events';
 
 // The composite family (#934) against real Postgres: a World Series stat pool scored from its
 // players' stat lines (Box Score: total bases + runs + RBI + walks + stolen bases each game),
@@ -427,7 +428,7 @@ describe('World Series stat pool contest — scored from its players\' stat line
       .toEqual([[speedsters.id, '1', 6], [sluggers.id, '2', 5]]);
 
     await prisma.sportEvent.update({ where: { id: event.id }, data: { status: 'COMPLETED' } });
-    await expect(createContestSettlementService(getAppPrisma()).settleFinishedSportEvent(event.id))
+    await expect(createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() }).settleFinishedSportEvent(event.id))
       .resolves.toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
     const standings = await prisma.contestEntryStanding.findMany({ where: { contestId: contest.id }, orderBy: { position: 'asc' } });
     expect(standings.map((row) => [row.contestEntryId, row.position, row.totalScore])).toEqual([

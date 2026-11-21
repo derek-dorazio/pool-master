@@ -9,13 +9,15 @@
  * published unchanged if the delivery ever moves out of process.
  */
 
-import type { SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
+import type { ContestStatus, SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
 
 export const DomainEventType = {
   /** A sport event's status moved (`EventLifecycleService.applySportEventStatusTransition`). */
   SPORT_EVENT_STATUS_CHANGED: 'SPORT_EVENT_STATUS_CHANGED',
   /** A sport event's start moved, by an admin's edit that tells its leagues; each handler decides which statuses it acts on. */
   SPORT_EVENT_RESCHEDULED: 'SPORT_EVENT_RESCHEDULED',
+  /** A contest's status moved (`ContestLifecycle`), one event per contest a guarded write moves. */
+  CONTEST_STATUS_CHANGED: 'CONTEST_STATUS_CHANGED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
 
@@ -43,8 +45,26 @@ export interface SportEventRescheduled {
   reopeningContestIds: ReadonlySet<string>;
 }
 
+export interface ContestStatusChanged {
+  type: typeof DomainEventType.CONTEST_STATUS_CHANGED;
+  contest: { id: string };
+  /**
+   * The statuses the guarded write moves the contest from: it was in one of them, and a contest
+   * in none is left where it is and queues nothing. A batch write cannot say which one each row
+   * was in, so a handler reads `from` as the guard set: it acts on a move whose guard names the
+   * status it reacts to, which assumes the guard names only statuses with the same follow-ups
+   * (going live is from OPEN alone, a reopen from ACTIVE alone).
+   */
+  from: readonly ContestStatus[];
+  to: ContestStatus;
+  /** The sport event whose change moved the contest, when one did: its start took it live, or its postponement reopened it. */
+  sportEventId?: string;
+  /** The contest's start as the move sets it: when a reopened contest's picks close again. */
+  startsAt?: Date;
+}
+
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | ContestStatusChanged;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;

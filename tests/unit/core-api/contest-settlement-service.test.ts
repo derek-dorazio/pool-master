@@ -35,6 +35,7 @@ import {
   fakeSquaresRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
+import { testDomainEvents } from '../../support/domain-events';
 
 const MASTERS = 'event-masters';
 const PGA = 'event-pga';
@@ -169,6 +170,7 @@ function world({
 
   const leaderboards = new RecordingLeaderboardRebuilds();
   const service = new ContestSettlementService({
+    domainEvents: testDomainEvents(),
     leaderboards,
     squares: fakeSquaresRepo(),
     championship,

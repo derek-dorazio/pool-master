@@ -197,7 +197,10 @@ All backend services are TypeScript services with explicit module boundaries.
   one place `SportEvent.status` is ever written, called identically by
   provider-driven ingestion, admin-triggered transitions, and the automatic
   lifecycle scheduler — each caller supplies a different `actor`, not a
-  different implementation.
+  different implementation. `ContestLifecycle` is the same for
+  `Contest.status`: the event lifecycle, settlement and contest management
+  each move a contest through it, never through the repository's
+  `transitionStatus` directly.
 
 ### Follow-up work is a domain event handler
 

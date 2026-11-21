@@ -45,7 +45,7 @@ export interface LiveScorePublisherDeps {
   prisma: PrismaClient;
   providerId: string;
   /** What follows the changes a family's writer makes (#1946): the app's one map. */
-  domainEvents: Pick<DomainEvents, 'collect'>;
+  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
   logger?: FastifyBaseLogger;
   /** Which scoring family scores an event, by its sport league's definition: the composition root passes the registry's. */
   scoringFamilyForEvent: (event: ScoringFamilyEvent) => ScoringFamilyModule;

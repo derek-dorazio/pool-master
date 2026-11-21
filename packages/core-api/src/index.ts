@@ -121,7 +121,7 @@ import { createScheduledEventReader } from './modules/ingestion/core/scheduled-e
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
 import { JobLeaderboardRebuilds } from './modules/contests/leaderboard-snapshots';
 import { leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService } from './modules/contest-management/wiring';
+import { createContestManagementService, createReleasedEditionContests } from './modules/contest-management/wiring';
 import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
@@ -191,15 +191,16 @@ export function buildApp() {
   // board is computed from tells this, which queues one rebuild job per event or contest (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs);
   const leaderboardRebuilder = createContestService(prisma, app.log, { planEntitlements });
-  const contestSettlement = createContestSettlementService(prisma, app.log, { jobs: backgroundJobs, leaderboards });
-  // A released edition joins its template contests by a job per contest (#1318).
-  const releasedEditionContests = createContestManagementService(prisma, app.log, planEntitlements);
-  // What follows each change (#1946): built once, with every dependency its handlers need.
+  // What follows each change (#1946): built once, with every dependency its handlers need. A
+  // released edition joins its template contests by a job per contest (#1318).
   const domainEvents = new DomainEvents({
     queue: backgroundJobs,
-    releasedEditionContests,
+    releasedEditionContests: createReleasedEditionContests(prisma, app.log),
     sportEventChanged: contestNotices,
   });
+  const contestSettlement = createContestSettlementService(prisma, app.log, { domainEvents, leaderboards });
+  // Each job that adds a released edition to a template contest is run by contest management.
+  const contestManagement = createContestManagementService(prisma, app.log, planEntitlements, { domainEvents });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: app.log,
@@ -389,7 +390,7 @@ export function buildApp() {
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
       REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-      ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
+      ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
       RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
     },
@@ -416,11 +417,12 @@ export function buildApp() {
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   app.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email, memberJoined });
-  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements });
+  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements, domainEvents });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
     email,
     planEntitlements,
+    domainEvents,
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });

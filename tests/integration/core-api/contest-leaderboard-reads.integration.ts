@@ -22,6 +22,7 @@ import { recordStatements, statementParams, statementsOn, statementTarget, State
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
+import { testDomainEvents } from '../../support/domain-events';
 
 // The roster contest leaderboard's reads against real Postgres (#1162): however many events the
 // contest has, its entries come from one query and its picks from one more, and only the picks
@@ -431,7 +432,7 @@ describe('Roster settlement freezes the last live board (#1435)', () => {
 
     const prisma = getPrisma();
     await prisma.sportEvent.update({ where: { id: live.event.id }, data: { status: SportEventStatus.COMPLETED } });
-    await createContestSettlementService(getAppPrisma()).settleFinishedSportEvent(live.event.id);
+    await createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() }).settleFinishedSportEvent(live.event.id);
 
     const byPlace = { orderBy: [{ position: 'asc' as const }, { contestEntryId: 'asc' as const }] };
     const frozenTotals = await prisma.contestEntryStanding.findMany({ where: { contestId: contest.id }, ...byPlace });

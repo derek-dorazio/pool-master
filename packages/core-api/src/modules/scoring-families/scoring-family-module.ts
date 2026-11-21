@@ -36,7 +36,7 @@ export interface LiveScoreWriteDeps {
   prisma: PrismaClient;
   providerId: string;
   /** What follows the changes a write makes (#1946): the app's one map. */
-  domainEvents: Pick<DomainEvents, 'collect'>;
+  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
   logger?: FastifyBaseLogger;
   /** The event's leaderboard rebuild, which the batch's last write carries (#1466); none without it. */
   leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;

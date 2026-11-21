@@ -42,6 +42,7 @@ import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
+import { testDomainEvents } from '../../support/domain-events';
 
 const HOUR = 60 * 60 * 1000;
 const T0 = new Date('2026-09-01T00:00:00.000Z');
@@ -150,7 +151,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
+  const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
   // The season reads a test counts (#1201).
   const seasonReads = { sportEvents: world.sportEventRepo(), matches: games.matchRepo() };
   const predictions = new PredictionService({
@@ -806,6 +807,7 @@ describe('ContestSettlementService — a survivor contest', () => {
     const matches = context.games.matchRepo();
     const sportEvents = context.world.sportEventRepo();
     const settlement = new ContestSettlementService({
+      domainEvents: testDomainEvents(),
       ...context.deps,
       matches: {
         findBySportEvent: async (sportEventId) => {

@@ -18,6 +18,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { participantLeagueId } from '../../support/participant-league';
+import { testDomainEvents } from '../../support/domain-events';
 
 // The finish-position extension (#622) against real Postgres: what the admin's finishing order
 // leaves in the tables, that it is all or none, the constraints the table holds on its own, and a
@@ -275,7 +276,7 @@ describe('horse racing contest — read and settled from the finishing order', (
     const { prisma, suffix, event, owner, contest, winners, scratch } = await seedContest();
     await createRaceResultService(getAppPrisma()).applyResults(event.id, officialOrder(suffix));
 
-    await expect(createContestSettlementService(getAppPrisma()).settleFinishedSportEvent(event.id))
+    await expect(createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() }).settleFinishedSportEvent(event.id))
       .resolves.toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
 
     const standings = await prisma.contestEntryStanding.findMany({
