@@ -34,6 +34,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 /** Before every event's start in this file, so the release cutoff never depends on today. */
 const NOW = new Date('2026-01-15T12:00:00.000Z');
@@ -61,9 +62,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     sportEvents,
     // What follows a release or a moved start, collected by the app's handler map.
     testDomainEvents({ sportEventChanged }),
-    undefined,
-    undefined,
-    sportEventChanged,
+    { ...NO_SETTLE_JOBS, sportEventChanged: sportEventChanged ?? NO_SETTLE_JOBS.sportEventChanged },
   );
   const service = new SportEventService({
     sportEvents,

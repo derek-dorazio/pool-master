@@ -37,6 +37,7 @@ import {
 import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { golfRoundsOf } from '../../support/live-score-rounds';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
@@ -900,6 +901,7 @@ describe('mock contest feed provider event-first verification', () => {
     const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: backgroundJobs.queue }),
       contestSettlement: settlement,
+      sportEventChanged: NO_SETTLE_JOBS.sportEventChanged,
     });
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));

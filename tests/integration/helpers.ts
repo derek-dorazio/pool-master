@@ -118,6 +118,7 @@ import { ActivityService } from '../../packages/core-api/src/modules/activity/ac
 import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
 import { CustomerService } from '../../packages/core-api/src/modules/customers/customer-service';
 import { PrismaCustomerReader } from '../../packages/core-api/src/adapters/prisma-customer-reader';
+import { NO_SETTLE_JOBS } from '../support/event-settlement';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -211,7 +212,7 @@ export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma())
  * contests and nobody told (`testDomainEvents`).
  */
 export function integrationEventLifecycle(prisma: PrismaClient = getAppPrisma()): EventLifecycleService {
-  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }) });
+  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), ...NO_SETTLE_JOBS });
 }
 
 /** The event services over `integrationEventLifecycle`, for a test of the services themselves. */
