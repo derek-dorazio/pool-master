@@ -123,8 +123,6 @@ export interface LeaderboardRebuilds {
    * failed insert fails the write rather than leaving it saved with an error answered.
    */
   forEvent(sportEventId: string): JobsForWrite;
-  /** The job rebuilding one contest's boards, for a write that changes only that contest (#1466). */
-  forContest(contestId: string): JobsForWrite;
   /**
    * These contests' stored boards are no longer current: rebuild them soon (#1788). What a read
    * that computes boards without storing them asks, so they are stored for the reads after.
@@ -146,10 +144,6 @@ export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
 
   forEvent(sportEventId: string): JobsForWrite {
     return this.forWrite(LeaderboardRebuildSubject.EVENT, sportEventId);
-  }
-
-  forContest(contestId: string): JobsForWrite {
-    return this.forWrite(LeaderboardRebuildSubject.CONTEST, contestId);
   }
 
   private forWrite(subject: LeaderboardRebuildSubject, id: string): JobsForWrite {

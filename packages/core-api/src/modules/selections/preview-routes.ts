@@ -8,6 +8,7 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { requireCommissioner } from '../leagues/permissions';
 import type { PlanModuleOptions } from '../plans/routes';
 import { createPickPreviewHandlers } from './preview-handler';
+import type { SelectionsModuleOptions } from './routes';
 import { createPredictionService, createSelectionService } from './wiring';
 
 const PREVIEW_WRITES_NOTHING = 'It writes nothing: no contest, entry or pick is created, and the trial picks are only read back.';
@@ -17,14 +18,16 @@ const PREVIEW_WRITES_NOTHING = 'It writes nothing: no contest, entry or pick is 
  * commissioners while they create or edit a contest. Both routes are POST because the setup and
  * the trial picks are a body; neither writes.
  */
-export function pickPreviewModule(fastify: FastifyInstance, opts: PlanModuleOptions): void {
+export function pickPreviewModule(fastify: FastifyInstance, opts: PlanModuleOptions & SelectionsModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const handlers = createPickPreviewHandlers(
     createSelectionService(prisma, fastify.log, { planEntitlements: opts.planEntitlements }),
-    createPredictionService(prisma, fastify.log),
+    // The preview only reads (previewGames), but it builds the same PredictionService, whose
+    // writes need the domain event map; passing the app's one keeps a single wiring.
+    createPredictionService(prisma, fastify.log, { domainEvents: opts.domainEvents }),
   );
 
   fastify.post('/roster', {

@@ -23,7 +23,7 @@ import { createPredictionService, createSelectionService, createSquaresService }
 import { createSquaresHandlers } from './squares-handler';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import type { PlanModuleOptions } from '../plans/routes';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
+import type { DomainEvents } from '../domain-events';
 
 const contestIdParams = {
   type: 'object',
@@ -93,9 +93,9 @@ const squaresBoxParams = {
 /** What every squares route answers for a contest it can't serve (#711). */
 const SQUARES_REFUSALS = '404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.';
 
-/** The contest's leaderboard rebuild (#1435), written with a prediction week submitted or sent back to draft (#1466). */
+/** What follows a prediction week submitted or sent back to draft (#1946), its board's rebuild among them (#1466). */
 export interface SelectionsModuleOptions {
-  leaderboards: Pick<LeaderboardRebuilds, 'forContest'>;
+  domainEvents: Pick<DomainEvents, 'collect'>;
 }
 
 export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions & SelectionsModuleOptions): void {
@@ -105,7 +105,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
   const mail = { email: opts.email, appBaseUrl: readApplicationBaseUrl(process.env) };
   const handlers = createSelectionHandlers(
     createSelectionService(prisma, fastify.log, { ...mail, planEntitlements: opts.planEntitlements }),
-    createPredictionService(prisma, fastify.log, { ...mail, leaderboards: opts.leaderboards }),
+    createPredictionService(prisma, fastify.log, { ...mail, domainEvents: opts.domainEvents }),
   );
   // #291 — the selection room shows every entry's picks, so reading it needs membership of the
   // contest's league, as every other contest read does.

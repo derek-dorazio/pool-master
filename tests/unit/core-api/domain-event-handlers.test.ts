@@ -1,9 +1,10 @@
-import { BackgroundJobType, ContestStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestEntryStatus, ContestStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import {
   DOMAIN_EVENT_HANDLERS,
   DomainEventType,
   DomainEvents,
+  type ContestEntryEventStatusChanged,
   type ContestStatusChanged,
   type DomainEventHandler,
   type DomainEventHandlerContext,
@@ -43,6 +44,15 @@ function rescheduled(status: SportEventStatus, reopening: ReadonlySet<string> = 
     sportEvent: { id: 'sport-event-1', startDate: START, status },
     previousStart: new Date('2026-04-25T20:00:00.000Z'),
     reopeningContestIds: reopening,
+  };
+}
+
+function weekStatusChanged(from: ContestEntryStatus, to: ContestEntryStatus): ContestEntryEventStatusChanged {
+  return {
+    type: DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED,
+    contestEntryEvent: { contestId: 'contest-1', contestEntryId: 'entry-1', sportEventId: 'sport-event-1' },
+    from,
+    to,
   };
 }
 
@@ -87,6 +97,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'rebuild-event-leaderboards',
       ],
       SPORT_EVENT_RESCHEDULED: ['tell-leagues-event-rescheduled'],
+      CONTEST_ENTRY_EVENT_STATUS_CHANGED: ['rebuild-contest-leaderboards'],
       CONTEST_STATUS_CHANGED: [
         'tell-league-contest-started',
         'tell-league-contest-reopened',
@@ -120,6 +131,13 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
     for (const status of Object.values(SportEventStatus)) {
       // poolmaster-allow-query-in-loop: a unit test over every status, no database
       for (const type of typesOf((await events.collect(rescheduled(status))).jobs)) expect(declaredRescheduled).toContain(type);
+    }
+    const declaredWeek = new Set(DOMAIN_EVENT_HANDLERS.CONTEST_ENTRY_EVENT_STATUS_CHANGED.flatMap((handler) => handler.queues));
+    for (const from of Object.values(ContestEntryStatus)) {
+      for (const to of Object.values(ContestEntryStatus)) {
+        // poolmaster-allow-query-in-loop: a unit test over every pair of statuses, no database
+        for (const type of typesOf((await events.collect(weekStatusChanged(from, to))).jobs)) expect(declaredWeek).toContain(type);
+      }
     }
     const declaredContest = new Set(DOMAIN_EVENT_HANDLERS.CONTEST_STATUS_CHANGED.flatMap((handler) => handler.queues));
     for (const from of Object.values(ContestStatus)) {
@@ -229,6 +247,27 @@ describe('SPORT_EVENT_RESCHEDULED handlers', () => {
     const told = Object.values(SportEventStatus).filter((status) => tell.when?.(rescheduled(status)));
 
     expect(told.sort()).toEqual([SportEventStatus.POSTPONED, SportEventStatus.SCHEDULED].sort());
+  });
+});
+
+describe('CONTEST_ENTRY_EVENT_STATUS_CHANGED handlers', () => {
+  const [rebuild] = DOMAIN_EVENT_HANDLERS.CONTEST_ENTRY_EVENT_STATUS_CHANGED;
+
+  it('rebuilds the contest\'s own boards, one job per contest whichever entry moved, for a week submitted or sent back to draft', async () => {
+    const ctx = { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD };
+    const submitted = await rebuild.jobs(weekStatusChanged(ContestEntryStatus.DRAFT, ContestEntryStatus.SUBMITTED), ctx);
+    const backToDraft = await rebuild.jobs({ ...weekStatusChanged(ContestEntryStatus.SUBMITTED, ContestEntryStatus.DRAFT), contestEntryEvent: { contestId: 'contest-1', contestEntryId: 'entry-2', sportEventId: 'sport-event-1' } }, ctx);
+
+    expect(rebuild.when).toBeUndefined();
+    expect(submitted).toEqual([{
+      type: BackgroundJobType.REBUILD_LEADERBOARDS,
+      payload: { subject: 'CONTEST', id: 'contest-1' },
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: 'REBUILD_LEADERBOARDS:CONTEST:contest-1',
+    }]);
+    // One dedupe key for the contest, so a burst of members submitting waits as one rebuild.
+    expect(backToDraft.map((job) => job.dedupeKey)).toEqual(submitted.map((job) => job.dedupeKey));
   });
 });
 
@@ -410,6 +449,7 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_RESCHEDULED` | `tell-leagues-event-rescheduled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
+      '| `CONTEST_ENTRY_EVENT_STATUS_CHANGED` | `rebuild-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-started` | `CONTEST_STARTED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-reopened` | `CONTEST_REOPENED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-settled` | `CONTEST_SETTLED_EMAILS` |',
@@ -418,7 +458,7 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
   });
 
   it('says so on purpose for an event type nothing follows', () => {
-    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], CONTEST_STATUS_CHANGED: [] };
+    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [] };
 
     expect(renderDomainEventTable(nothingFollows)).toContain('| `SPORT_EVENT_RESCHEDULED` | none | none |');
   });

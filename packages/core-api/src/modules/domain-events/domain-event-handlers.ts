@@ -9,7 +9,7 @@
  */
 
 import { releaseIntoTemplateContestsHandler } from '../contest-management/released-edition-job-requests';
-import { rebuildEventLeaderboardsHandler } from '../contests/leaderboard-rebuild-job-requests';
+import { rebuildContestLeaderboardsHandler, rebuildEventLeaderboardsHandler } from '../contests/leaderboard-rebuild-job-requests';
 import { settleFinishedEventContestsHandler } from '../contests/settle-sport-event-job-requests';
 import {
   tellLeagueContestReopenedHandler,
@@ -29,6 +29,7 @@ export const DOMAIN_EVENT_HANDLERS = {
     rebuildEventLeaderboardsHandler,
   ],
   [DomainEventType.SPORT_EVENT_RESCHEDULED]: [tellLeaguesEventRescheduledHandler],
+  [DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED]: [rebuildContestLeaderboardsHandler],
   // A contest opened by its commissioner (DRAFT to OPEN) has no handler: its entry reminders
   // start from the `nextReminderAt` the move sets, and its "New contest open" email is told by
   // contest management.

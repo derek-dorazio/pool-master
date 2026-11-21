@@ -155,6 +155,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
   // The season reads a test counts (#1201).
   const seasonReads = { sportEvents: world.sportEventRepo(), matches: games.matchRepo() };
   const predictions = new PredictionService({
+    domainEvents: testDomainEvents(),
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     scoringRules: world.scoringRuleRepo(),
