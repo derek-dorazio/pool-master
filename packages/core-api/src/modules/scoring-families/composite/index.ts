@@ -40,7 +40,7 @@ export const compositeScoringFamily: ScoringFamilyModule = {
     category: 'STAT_LINE',
     persist(deps, event, result) {
       return writeStatLineGames(
-        createStatLineWriterDeps(deps.prisma, deps.providerId, deps.logger, deps.leaderboards),
+        createStatLineWriterDeps(deps.prisma, deps.providerId, deps.domainEvents, deps.logger),
         event,
         result.games,
       );

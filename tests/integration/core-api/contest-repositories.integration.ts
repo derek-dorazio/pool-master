@@ -1206,7 +1206,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const { queue } = integrationBackgroundJobs();
     const domainEvents = testDomainEvents({ queue, releasedEditionContests: createReleasedEditionContests(getAppPrisma(), fakeLogger()) });
     const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()), { domainEvents });
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents, jobs: queue });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents });
     const release = (sportEventId: string) => lifecycle.applySportEventStatusTransition({
       sportEventId, toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true,
     });
@@ -1977,7 +1977,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const jobs = integrationBackgroundJobs();
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }), jobs: jobs.queue });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }) });
     const emailJobs = createContestEmailJobs(getAppPrisma(), {
       notices: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
@@ -2075,7 +2075,6 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     const emailJobs = createContestEmailJobs(getAppPrisma(), { notices, logger: fakeLogger() });
     const lifecycle = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }),
-      jobs: jobs.queue,
       sportEventChanged: notices,
       contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger(), { domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }) }),
     });

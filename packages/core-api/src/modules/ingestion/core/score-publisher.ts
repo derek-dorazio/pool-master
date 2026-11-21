@@ -29,7 +29,7 @@ import type { DomainEvents } from '../../domain-events';
 import type { LiveScoreTargetEvent, LiveScoreWriteDeps, LiveScoreWriter, ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 import type { EventFieldCache } from '../../events/event-field-cache';
-import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
+import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 
 export class LiveScoreValidationError extends Error {
   /** Activity's Error column (#1861). */
@@ -45,17 +45,14 @@ export interface LiveScorePublisherDeps {
   prisma: PrismaClient;
   providerId: string;
   /** What follows the changes a family's writer makes (#1946): the app's one map. */
-  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
+  domainEvents: Pick<DomainEvents, 'collect'>;
   logger?: FastifyBaseLogger;
   /** Which scoring family scores an event, by its sport league's definition: the composition root passes the registry's. */
   scoringFamilyForEvent: (event: ScoringFamilyEvent) => ScoringFamilyModule;
   /** The event fields this container read lately: an event's is forgotten once its scores are written (#1163). */
   fieldCache?: Pick<EventFieldCache, 'forget'>;
-  /**
-   * The event's leaderboard rebuild, handed to the scoring family's writer so its last write
-   * carries the job (#1435, #1466): scores that fail to write queue no rebuild.
-   */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /** The app's event lifecycle, which a result passing a contest's cutoff puts it live through (#1954). */
+  contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;
 }
 
 export interface LiveScorePersistenceResult {

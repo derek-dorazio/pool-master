@@ -1,7 +1,7 @@
 import { expect } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, MatchResultSource, MatchSide, MatchStatus, ProviderGameState, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import {
   PrismaSportEventMatchRepository,
@@ -13,7 +13,8 @@ import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/i
 import { headToHeadScoringFamily } from '../../../packages/core-api/src/modules/scoring-families/head-to-head';
 import { expectDefined } from '../../support/expect-defined';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
-import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { recordStatements, statementCounts } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
 
@@ -92,10 +93,47 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   return { event, externalId, entryOf, teamId, matches };
 }
 
+/** An OPEN squares contest played on one of the event's games, in a league of its own. */
+async function squaresContestOn(sportEventId: string, sportEventMatchId: string): Promise<string> {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  const league = await prisma.league.create({
+    data: { cupName: 'Test Cup', leagueCode: `GSQ${suffix.toUpperCase()}`, name: `Game Squares ${suffix}`, iconKey: 'TROPHY' },
+  });
+  const contest = await prisma.contest.create({
+    data: {
+      leagueId: league.id,
+      seasonYear: 2027,
+      sportEvents: { create: { sportEventId, sequence: 1 } },
+      squaresGame: { create: { sportEventMatchId } },
+      name: `Squares ${suffix}`,
+      status: ContestStatus.OPEN,
+      contestFormat: 'SQUARES',
+      selectionType: SelectionType.SQUARES,
+    },
+  });
+  await prisma.contestConfiguration.create({
+    data: { contestId: contest.id, selectionType: SelectionType.SQUARES, configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 } },
+  });
+  return contest.id;
+}
+
+/**
+ * Publishes a provider's games as the app does: through the app's handler map onto the job table,
+ * and the app's event lifecycle, which queues a contest's "Contest is live" job as it goes live.
+ */
 function publish(externalEventId: string, games: GameScoreUpdate[]) {
+  const { queue } = integrationBackgroundJobs();
+  const domainEvents = testDomainEvents({ queue });
   return publishLiveScoreUpdate(
     { category: 'GAME', externalEventId, games },
-    { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent: () => headToHeadScoringFamily },
+    {
+      prisma: getAppPrisma(),
+      providerId: PROVIDER,
+      domainEvents,
+      contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents }),
+      scoringFamilyForEvent: () => headToHeadScoringFamily,
+    },
   );
 }
 
@@ -115,6 +153,24 @@ describe('game scores from a provider', () => {
     // A live score decides nothing: no winner, no result source.
     expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 40, awayScore: 38, resultSource: null });
     expect(final.homeSportEventParticipantId).toBe(entryOf('Duke').id);
+  });
+
+  it('puts a squares contest on a game the provider calls final live with its "Contest is live" job, and writes the job that settles it, as an admin\'s result does', async () => {
+    const { event, externalId, teamId, matches } = await linkedBracket();
+    const [game] = await matches.findBySportEvent(event.id);
+    const contestId = await squaresContestOn(event.id, expectDefined(game, 'g1').id);
+
+    await publish(externalId, [
+      { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 },
+    ]);
+
+    expect(await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId }, select: { status: true } })).toEqual({ status: ContestStatus.ACTIVE });
+    const jobs = await getPrisma().backgroundJob.findMany({ where: { type: { in: [BackgroundJobType.CONTEST_STARTED_EMAILS, BackgroundJobType.SETTLE_GAME_CONTESTS] } }, select: { type: true, payload: true } });
+    expect(jobs).toEqual(expect.arrayContaining([
+      { type: BackgroundJobType.CONTEST_STARTED_EMAILS, payload: expect.objectContaining({ contestId, sportEventId: event.id }) },
+      { type: BackgroundJobType.SETTLE_GAME_CONTESTS, payload: expect.objectContaining({ sportEventId: event.id, sportEventMatchId: expectDefined(game, 'g1').id }) },
+    ]));
+    expect(jobs).toHaveLength(2);
   });
 
   it('completes a match that was showing a live score once a later sync calls its game final, and sends the winner on as the provider\'s result', async () => {
@@ -289,9 +345,11 @@ describe('game scores from a provider', () => {
       { externalGameId: 'g2', homeTeamExternalId: teamId('Auburn'), awayTeamExternalId: teamId('Florida'), state: ProviderGameState.FINAL, homeScore: 80, awayScore: 70 },
     ]));
 
-    // Pinned: a new statement here is a new cost on every sync of a live bracket.
+    // Pinned: a new statement here is a new cost on every sync of a live bracket. Each final writes
+    // its follow-up jobs (the game's settling, the boards' rebuild) in one insert with its result.
     expect(statementCounts(statements)).toEqual([
       ['DELETE sport_event_participant_standings', 1],
+      ['INSERT background_jobs', 2],
       ['INSERT sport_event_participant_standings', 2],
       ['SELECT contests', 2],
       ['SELECT event_series', 3],

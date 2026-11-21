@@ -60,7 +60,7 @@ function jobsOf(type: BackgroundJobType, contestIds: readonly string[]) {
 
 function lifecycle() {
   const { queue } = integrationBackgroundJobs();
-  return createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue }), jobs: queue });
+  return createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue }) });
 }
 
 describe('ContestLifecycle through the event lifecycle', () => {

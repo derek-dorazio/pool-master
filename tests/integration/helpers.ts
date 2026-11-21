@@ -216,7 +216,7 @@ export function integrationEventLifecycle(prisma: PrismaClient = getAppPrisma())
 
 /** The event services over `integrationEventLifecycle`, for a test of the services themselves. */
 export function integrationSportEventServices(prisma: PrismaClient = getAppPrisma(), providers?: SportDataProviderLookup): SportEventServices {
-  return createSportEventServices(prisma, undefined, integrationEventLifecycle(prisma), undefined, providers);
+  return createSportEventServices(prisma, undefined, integrationEventLifecycle(prisma), testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), providers);
 }
 
 /** Get the shared Fastify app instance (created once per test suite). */
@@ -307,7 +307,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: testApp.log,
-    jobs: backgroundJobs.queue,
     sportEventChanged: contestNotices,
     contestSettlement: createContestSettlementService(prisma, testApp.log, { domainEvents, leaderboards }),
   });
@@ -334,7 +333,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
-    sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, leaderboards, providerRegistry).sportEvents,
+    sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providerRegistry).sportEvents,
     syncRuns: providerSyncRuns,
     jobs: backgroundJobs.queue,
   });
@@ -385,7 +384,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, {
-    prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, leaderboards, schedule: ingestionConfigService, webhookProviderIds: [],
+    prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, domainEvents, leaderboards, schedule: ingestionConfigService, webhookProviderIds: [],
   });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });

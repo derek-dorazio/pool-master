@@ -9,7 +9,13 @@
  */
 
 import { releaseIntoTemplateContestsHandler } from '../contest-management/released-edition-job-requests';
-import { rebuildContestLeaderboardsHandler, rebuildEventLeaderboardsHandler } from '../contests/leaderboard-rebuild-job-requests';
+import {
+  rebuildChangedResultsLeaderboardsHandler,
+  rebuildContestLeaderboardsHandler,
+  rebuildDecidedGameLeaderboardsHandler,
+  rebuildEventLeaderboardsHandler,
+} from '../contests/leaderboard-rebuild-job-requests';
+import { settleDecidedGameContestsHandler } from '../contests/settle-game-job-requests';
 import { settleFinishedEventContestsHandler } from '../contests/settle-sport-event-job-requests';
 import {
   tellLeagueContestReopenedHandler,
@@ -30,6 +36,8 @@ export const DOMAIN_EVENT_HANDLERS = {
     rebuildEventLeaderboardsHandler,
   ],
   [DomainEventType.SPORT_EVENT_RESCHEDULED]: [tellLeaguesEventRescheduledHandler],
+  [DomainEventType.SPORT_EVENT_RESULTS_CHANGED]: [rebuildChangedResultsLeaderboardsHandler],
+  [DomainEventType.GAME_DECIDED]: [settleDecidedGameContestsHandler, rebuildDecidedGameLeaderboardsHandler],
   [DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED]: [rebuildContestLeaderboardsHandler],
   // A contest opened by its commissioner (DRAFT to OPEN) has no handler: its entry reminders
   // start from the `nextReminderAt` the move sets, and its "New contest open" email is told by

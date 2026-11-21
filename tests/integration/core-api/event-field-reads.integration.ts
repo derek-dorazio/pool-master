@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
@@ -124,7 +125,7 @@ describe('An event\'s field', () => {
   it('is read in one call on the field table, each row with its participant, whether it is in the event league, price, standing and rounds in round order, seeded first', async () => {
     const { event, ana, bea, cal } = await golfEvent();
 
-    const { result: field, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id));
+    const { result: field, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id));
 
     // The event's own row, then the field and each of its relations in one statement: no read per
     // row, and nothing else. A field row's games are read twice, as the home side and as the away side.
@@ -156,8 +157,8 @@ describe('An event\'s field', () => {
 
   it('is read once for every contest and pick screen on the event within 30 seconds, and again after', async () => {
     const { event } = await golfEvent();
-    const contestReads = createSportEventParticipantService(getAppPrisma());
-    const pickScreenReads = createSportEventParticipantService(getAppPrisma());
+    const contestReads = createSportEventParticipantService(getAppPrisma(), testDomainEvents());
+    const pickScreenReads = createSportEventParticipantService(getAppPrisma(), testDomainEvents());
     const fieldReads = (statements: readonly RecordedStatement[]) => statementsOn(statements, StatementVerb.SELECT, 'sport_event_participants');
 
     const shared = await recordStatements(async () => {
@@ -262,7 +263,7 @@ describe('An event\'s field, for every scoring family', () => {
       data: { sportEventId: event.id, sportEventRoundId: round1.id, matchNumber: 3, homeSportEventParticipantId: kansas.id, awaySportEventParticipantId: baylor.id, isNeutralSite: true },
     });
 
-    const rows = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
+    const rows = await createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id);
     const matches = await new PrismaSportEventMatchRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const dukeRow = rows.find((row) => row.entry.id === duke.id);
@@ -288,7 +289,7 @@ describe('An event\'s field, for every scoring family', () => {
       data: { sportEventParticipantId: scratched.id, resultStatus: 'DID_NOT_START' },
     });
 
-    const rows = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
+    const rows = await createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id);
     const results = await new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const byRow = new Map(rows.map((row) => [row.entry.id, row.raceResult]));
@@ -304,7 +305,7 @@ describe('An event\'s field, for every scoring family', () => {
 describe('A write to one field row', () => {
   it('reads that row alone to answer, with the values the whole field read gives it', async () => {
     const { event, ana } = await golfEvent();
-    const service = createSportEventParticipantService(getAppPrisma());
+    const service = createSportEventParticipantService(getAppPrisma(), testDomainEvents());
 
     const { result: row, statements } = await recordStatements(() => service.getEventParticipant(event.id, ana.id));
 
@@ -312,7 +313,7 @@ describe('A write to one field row', () => {
     expect(fieldReads).toHaveLength(1);
     expect(statementParams(expectDefined(fieldReads[0]))).toContain(ana.id);
     expect(expectDefined(fieldReads[0]).sql).toContain('LIMIT');
-    const [fromField] = await createSportEventParticipantService(getAppPrisma()).listEventParticipants(event.id);
+    const [fromField] = await createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id);
     expect(row).toEqual(fromField);
   });
 

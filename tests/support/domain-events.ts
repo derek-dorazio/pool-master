@@ -7,6 +7,7 @@
 
 import { BackgroundJobQueue } from '../../packages/core-api/src/modules/background-jobs';
 import { DomainEvents, type DomainEventHandlerContext, type DomainEventsDeps } from '../../packages/core-api/src/modules/domain-events';
+import type { EventLifecycleService } from '../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { inMemoryBackgroundJobs, testCurrentJobStart } from './in-memory-background-jobs';
 
 /** Template contests no release joins. */
@@ -22,3 +23,9 @@ export function testDomainEvents(deps: Partial<DomainEventsDeps> = {}): DomainEv
     sportEventChanged: deps.sportEventChanged ?? NOBODY_TOLD,
   });
 }
+
+/**
+ * No contest goes live: the event lifecycle's activation, for a test of a writer that is not about
+ * contests going live. A test that is passes the lifecycle it watches.
+ */
+export const NO_CONTEST_ACTIVATION: Pick<EventLifecycleService, 'activateContestsPastCutoff'> = { activateContestsPastCutoff: async () => undefined };
