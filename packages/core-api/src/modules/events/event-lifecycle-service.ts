@@ -35,8 +35,8 @@ import { ContestEventChangeKind } from '../email';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import { contestReopenedEmailsJob, contestStartedEmailsJob } from '../notifications/contest-email-job-requests';
 import type { SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
-import { settleGameContestsJob, type SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
-import { NO_JOBS_FOR_WRITE, type BackgroundJobQueue, type JobsForWrite } from '../background-jobs';
+import type { SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
+import type { BackgroundJobQueue, JobsForWrite } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import { DomainEventType, type DomainEvents } from '../domain-events';
 
@@ -55,9 +55,6 @@ export interface FinishedSportEventSettlement {
     input?: { completedAt?: Date },
   ): Promise<number>;
 }
-
-/** The job a decided game's write carries (#711). */
-export type FinishedGameSettlement = JobsForWrite;
 
 /** Who drove the transition: an admin by hand, or the lifecycle scheduler. */
 export type SportEventStatusTransitionActor =
@@ -128,8 +125,8 @@ export class EventLifecycleService {
     private readonly domainEvents: Pick<DomainEvents, 'collect'>,
     private readonly logger?: FastifyBaseLogger,
     /**
-     * Where each contest that goes live queues its "Contest is live" email job (#1387), and a
-     * decided game the job that settles its squares contests (#711); without it, neither runs.
+     * Where each contest that goes live queues its "Contest is live" email job (#1387); without
+     * it, nobody is told.
      */
     private readonly jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>,
     private readonly contestSettlement?: FinishedSportEventSettlement,
@@ -257,21 +254,6 @@ export class EventLifecycleService {
       previousStart,
       reopeningContestIds,
     });
-  }
-
-  /**
-   * A game's result is in, a quarter score it waited for came after it, or it was cancelled
-   * (#711): the squares contests played on it settle now, while its event may still have weeks to
-   * run. They settle in a job the caller writes with the game, so a request never loops over an
-   * event's contests. Without a job queue and settlement, nothing settles.
-   */
-  finishedGameSettlement(sportEventId: string, sportEventMatchId: string, now: Date = new Date()): FinishedGameSettlement {
-    if (!this.jobs || !this.contestSettlement) return NO_JOBS_FOR_WRITE;
-    const { jobs } = this;
-    return {
-      jobs: [settleGameContestsJob(jobs, sportEventId, sportEventMatchId, now)],
-      queued: () => jobs.queued(),
-    };
   }
 
   /**

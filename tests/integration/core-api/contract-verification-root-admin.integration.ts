@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { AppSettingsService } from '../../../packages/core-api/src/modules/platform/app-settings-service';
 import { IngestionConfigService } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
@@ -389,6 +390,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     ingestionService,
     providerRegistry: registry,
     cdn: new RecordingCdnInvalidator(),
+    domainEvents: testDomainEvents(),
     leaderboards: new RecordingLeaderboardRebuilds(),
     schedule: new IngestionConfigService(settings),
     webhookProviderIds: [],

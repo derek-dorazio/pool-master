@@ -616,34 +616,6 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 });
 
 describe('EventLifecycleService settling a decided game\'s squares contests in a job', () => {
-  it('hands the game\'s write the job that settles its contests at the moment it was decided, and wakes the runner when told the write committed', async () => {
-    const jobs = startedJobs();
-    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
-    const decidedAt = new Date('2026-05-02T23:30:00.000Z');
-
-    const settlement = lifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, fakeSettlement())
-      .finishedGameSettlement('sport-event-1', 'game-1', decidedAt);
-
-    expect(settlement.jobs).toEqual([{
-      type: BackgroundJobType.SETTLE_GAME_CONTESTS,
-      payload: { sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', completedAt: decidedAt.toISOString() },
-      sportEventId: 'sport-event-1',
-      runAt: undefined,
-      start: TEST_JOB_START,
-      dedupeKey: 'SETTLE_GAME_CONTESTS:game-1',
-    }]);
-    expect(jobs.queued).not.toHaveBeenCalled();
-    settlement.queued();
-    expect(jobs.queued).toHaveBeenCalledTimes(1);
-  });
-
-  it('hands over no job when the service has no settlement to run it', async () => {
-    const { sportEvents } = seededEvents();
-
-    expect(lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs())
-      .finishedGameSettlement('sport-event-1', 'game-1').jobs).toEqual([]);
-  });
-
   it('settles the game\'s contests when its job runs, at the moment the job carries, and lets a failure throw so the runner retries it', async () => {
     const settlement = fakeSettlement();
     const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS });

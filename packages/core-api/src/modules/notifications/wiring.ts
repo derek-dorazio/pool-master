@@ -31,7 +31,7 @@ import { createContestService } from '../contests/wiring';
 import { createEventPageService } from '../event-pages/wiring';
 import type { EmailService } from '../email';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
+import { createEventFieldReader, createSportEventTierService } from '../events/wiring';
 import { CommissionerNotices } from './commissioner-notices';
 import { ContestExpandedNotices } from './contest-expanded-notices';
 import { ContestEmailJobs } from './contest-email-jobs';
@@ -185,7 +185,7 @@ export function createLiveStandings(prisma: PrismaClient, options: {
   return new LiveStandings({
     contests: new PrismaContestRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
-    eventParticipants: createSportEventParticipantService(prisma, options.logger),
+    eventParticipants: createEventFieldReader(prisma),
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     leaderboards: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
     matches: new PrismaSportEventMatchRepository(prisma),

@@ -41,14 +41,14 @@ function setup() {
     sportEvents,
     testDomainEvents(),
   );
-  const service = new SportEventService({
+  const service = new SportEventService({ domainEvents: testDomainEvents(),
     sportEvents,
     eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), tierProfiles: store.tierProfileRepo(), pricingProfiles: store.pricingProfileRepo() }),
-    bracket: new SportEventBracketService({
+    bracket: new SportEventBracketService({ domainEvents: testDomainEvents(),
       sportEvents,
       sportLeagues: store.sportLeagueRepo(),
       rounds: store.roundRepo(),

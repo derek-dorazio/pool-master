@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { testDomainEvents } from '../../support/domain-events';
+import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { ParticipantRoundStatus, ProviderGameState, ScoringFamily, Sport, type SportStat } from '@poolmaster/shared/domain';
 import type { StatLineGameUpdate } from '@poolmaster/shared/dto';
@@ -83,7 +83,7 @@ function boxScore(gameNumber: number, state: ProviderGameState, lines: Record<st
 function publish(externalEventId: string, games: StatLineGameUpdate[]) {
   return publishLiveScoreUpdate(
     { category: 'STAT_LINE', externalEventId, games },
-    { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent },
+    { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent },
   );
 }
 

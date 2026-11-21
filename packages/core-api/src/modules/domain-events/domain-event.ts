@@ -16,6 +16,16 @@ export const DomainEventType = {
   SPORT_EVENT_STATUS_CHANGED: 'SPORT_EVENT_STATUS_CHANGED',
   /** A sport event's start moved, by an admin's edit that tells its leagues; each handler decides which statuses it acts on. */
   SPORT_EVENT_RESCHEDULED: 'SPORT_EVENT_RESCHEDULED',
+  /**
+   * What a sport event's boards are computed from changed: a score, a result, a standing, its
+   * field, its games or its own details. Every results, field and bracket write of the event says so.
+   */
+  SPORT_EVENT_RESULTS_CHANGED: 'SPORT_EVENT_RESULTS_CHANGED',
+  /**
+   * A game of a sport event was decided: its result is in, a period score came after it, or it was
+   * cancelled. Said by the match result write, an admin's or a provider's alike.
+   */
+  GAME_DECIDED: 'GAME_DECIDED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
 
@@ -43,8 +53,22 @@ export interface SportEventRescheduled {
   reopeningContestIds: ReadonlySet<string>;
 }
 
+export interface SportEventResultsChanged {
+  type: typeof DomainEventType.SPORT_EVENT_RESULTS_CHANGED;
+  sportEventId: string;
+}
+
+export interface GameDecided {
+  type: typeof DomainEventType.GAME_DECIDED;
+  sportEventId: string;
+  /** The game, a `SportEventMatch`. */
+  sportEventMatchId: string;
+  /** When it was decided: the moment its contests settle at. */
+  decidedAt: Date;
+}
+
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventResultsChanged | GameDecided;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;

@@ -101,7 +101,7 @@ function lifecycleSweep(now: Date) {
       logger,
       planEntitlements,
       memberJoined: createMemberJoinedNotices(prisma, { email, readConfig, appBaseUrl, logger }),
-      releaseReadiness: createSportEventServices(prisma, logger, eventLifecycleService).sportEvents,
+      releaseReadiness: createSportEventServices(prisma, logger, eventLifecycleService, domainEvents).sportEvents,
     }),
     { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, logger, { email, appBaseUrl, planEntitlements }) },
   ].map((due) => new DueNotificationsScheduler({ ...due, jobLock, logger, now: () => now }));

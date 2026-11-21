@@ -55,8 +55,8 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
-import { NO_JOBS_FOR_WRITE, combineJobsForWrite, type JobsForWrite } from '../../background-jobs/background-job-queue';
-import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
+import type { JobsForWrite } from '../../background-jobs/background-job-queue';
+import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
 /** No game settlement: contests are not wired to this service, or the change decides no game. */
@@ -92,11 +92,11 @@ export interface MatchResultServiceDeps {
    * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
    * second-chance bracket's starting round puts it live even where the scheduler leaves the event
    * to an admin, as a period score does for a squares contest on that game (#711). A game's result
-   * or cancellation settles the squares contests played on it, in a job written with the game.
+   * or cancellation is a GAME_DECIDED, which settles the squares contests played on it.
    */
-  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'finishedGameSettlement'>;
-  /** The event's leaderboard rebuild, written with each result and score (#1466); none without it. */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;
+  /** What follows each result and score it writes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -220,15 +220,15 @@ export class MatchResultService {
     const result = { id: match.id, status: MatchStatus.COMPLETED, winnerSide: input.winnerSide, homeScore: input.homeScore, awayScore: input.awayScore, ...shootout, ending, resultSource: source, completedAt: now };
     // A tie sends nobody on: only a game that forms no bracket can end level.
     const sideFill = input.winnerSide === null ? null : this.advance(bracket, match, sideRowId(match, input.winnerSide));
-    // The squares contests on the game settle in a job written with its result, and the event's
-    // boards are rebuilt by another (#1466).
-    const jobs = combineJobsForWrite(this.gameSettlement(sportEventId, match.id, now), this.rebuild(sportEventId));
+    // The game is decided: what follows (its squares contests' settling, the boards' rebuild) is
+    // written with its result.
+    const jobs = await this.decided(sportEventId, match.id, now);
     const after = await this.write(sportEventId, bracket, result, sideFill, jobs.jobs);
     jobs.queued();
     this.deps.logger?.info({ sportEventId, matchNumber, winnerSide: input.winnerSide, ending, winnerChanges }, 'Saved a match result');
     // The bracket as written stands in for a read of it (#1355).
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
-      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now, after);
+      await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now, after);
     }
     return after;
   }
@@ -247,7 +247,7 @@ export class MatchResultService {
     }
     this.assertNextMatchOpen(sportEventId, bracket, match);
     const result = { id: match.id, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null, completedAt: null };
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     const after = await this.write(sportEventId, bracket, result, this.advance(bracket, match, null), rebuild.jobs);
     rebuild.queued();
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cleared a match result');
@@ -289,7 +289,7 @@ export class MatchResultService {
     // Only an admin cancels a match.
     const result = { id: match.id, status: MatchStatus.CANCELLED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: MatchResultSource.ADMIN, completedAt: null };
     // A squares contest on the game ends Final with no scores (#711, #743), in a job written with it.
-    const jobs = combineJobsForWrite(this.gameSettlement(sportEventId, match.id, this.deps.now?.() ?? new Date()), this.rebuild(sportEventId));
+    const jobs = await this.decided(sportEventId, match.id, this.deps.now?.() ?? new Date());
     const after = await this.write(sportEventId, bracket, result, null, jobs.jobs);
     jobs.queued();
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Cancelled a game');
@@ -318,7 +318,7 @@ export class MatchResultService {
     }
     const result = { id: match.id, status: MatchStatus.POSTPONED, winnerSide: null, homeScore: null, awayScore: null, ...NO_RESULT_DETAILS, resultSource: null, completedAt: null };
     // The game's chip shows on the event's contests' boards, so they are rebuilt (#1466).
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     const after = await this.write(sportEventId, bracket, result, null, rebuild.jobs);
     rebuild.queued();
     this.deps.logger?.info({ sportEventId, matchNumber }, 'Postponed a game');
@@ -356,14 +356,13 @@ export class MatchResultService {
     const now = this.deps.now?.() ?? new Date();
     // A quarter entered after the result may be the last one a squares contest waits for: its
     // settling job is written with the score.
-    const settlement = match.status === MatchStatus.COMPLETED ? this.gameSettlement(sportEventId, match.id, now) : NO_JOBS_FOR_WRITE;
-    const jobs = combineJobsForWrite(settlement, this.rebuild(sportEventId));
+    const jobs = match.status === MatchStatus.COMPLETED ? await this.decided(sportEventId, match.id, now) : await this.rebuild(sportEventId);
     await this.deps.matches.savePeriodScore(match.id, { periodNumber, ...input }, jobs.jobs);
     jobs.queued();
     this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Saved a period score');
     // A scored period means the game is under way: a squares contest on it goes live (#711).
     if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
-      await this.deps.contestActivation?.activateContestsPastCutoff(sportEvent, now);
+      await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now);
     }
     return this.deps.matches.findBySportEvent(sportEventId);
   }
@@ -377,7 +376,7 @@ export class MatchResultService {
     if (!match.periodScores.some((score) => score.periodNumber === periodNumber)) {
       return this.deps.matches.findBySportEvent(sportEventId);
     }
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     await this.deps.matches.deletePeriodScore(match.id, periodNumber, rebuild.jobs);
     rebuild.queued();
     this.deps.logger?.info({ sportEventId, matchNumber, periodNumber }, 'Cleared a period score');
@@ -452,14 +451,14 @@ export class MatchResultService {
     return after;
   }
 
-  /** The job settling the game's squares contests, when contests are wired to this service. */
-  private gameSettlement(sportEventId: string, sportEventMatchId: string, now: Date): JobsForWrite {
-    return this.deps.contestActivation?.finishedGameSettlement(sportEventId, sportEventMatchId, now) ?? NO_JOBS_FOR_WRITE;
+  /** What follows a game's being decided (#711, #1946), for the write deciding it to carry. */
+  private decided(sportEventId: string, sportEventMatchId: string, decidedAt: Date): Promise<JobsForWrite> {
+    return this.deps.domainEvents.collect({ type: DomainEventType.GAME_DECIDED, sportEventId, sportEventMatchId, decidedAt });
   }
 
-  /** The job rebuilding the event's boards, when leaderboards are wired to this service. */
-  private rebuild(sportEventId: string): JobsForWrite {
-    return this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
+  /** What follows a change to a game that decides nothing: the boards' rebuild (#1466). */
+  private rebuild(sportEventId: string): Promise<JobsForWrite> {
+    return this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
   }
 
   private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {

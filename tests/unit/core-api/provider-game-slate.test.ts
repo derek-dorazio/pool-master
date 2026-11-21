@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { BracketAdvancement, MatchSide, MatchStatus, Sport, SportEventStatus, SportEventSyncScope, type SportEventStatus as Status } from '@poolmaster/shared/domain';
@@ -40,7 +41,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
     return [name, store.addToField(event.id, team.id).id];
   })) as Record<(typeof TEAMS)[number], string>;
   let sequence = 0;
-  const bracket = new SportEventBracketService({
+  const bracket = new SportEventBracketService({ domainEvents: testDomainEvents(),
     sportEvents: store.sportEventRepo(),
     sportLeagues: store.sportLeagueRepo(),
     rounds: store.roundRepo(),
@@ -285,7 +286,7 @@ describe('ProviderGameSlateService', () => {
       }));
       const rowOf = (seed: number) => field.get(seed) ?? '';
       let sequence = 0;
-      const bracket = new SportEventBracketService({
+      const bracket = new SportEventBracketService({ domainEvents: testDomainEvents(),
         sportEvents: store.sportEventRepo(),
         sportLeagues: store.sportLeagueRepo(),
         rounds: store.roundRepo(),

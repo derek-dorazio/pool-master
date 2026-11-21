@@ -208,11 +208,11 @@ export function buildApp() {
     contestSettlement,
   });
   // One set of event services for the admin routes, the synced event creation sweep and the draft event notices.
-  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
+  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, domainEvents, registry);
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
   const cdn = createCdnInvalidator(process.env, app.log);
-  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache, cdn, leaderboards);
+  const ingestionPersistence = new IngestionPersistence(prisma, domainEvents, app.log, eventFieldCache, cdn);
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -314,10 +314,10 @@ export function buildApp() {
         prisma,
         providerId,
         domainEvents,
+        contestActivation: eventLifecycleService,
         logger: app.log,
         scoringFamilyForEvent,
         fieldCache: eventFieldCache,
-        leaderboards,
       });
     },
   };
@@ -433,6 +433,7 @@ export function buildApp() {
     ingestionService,
     providerRegistry: registry,
     cdn,
+    domainEvents,
     leaderboards,
     services: sportEventServices,
     schedule: ingestionConfigService,

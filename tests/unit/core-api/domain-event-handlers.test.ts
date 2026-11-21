@@ -4,10 +4,11 @@ import {
   DOMAIN_EVENT_HANDLERS,
   DomainEventType,
   DomainEvents,
-  type DomainEvent,
   type DomainEventHandler,
   type DomainEventHandlerMap,
+  type GameDecided,
   type SportEventRescheduled,
+  type SportEventResultsChanged,
   type SportEventStatusChanged,
 } from '../../../packages/core-api/src/modules/domain-events';
 import {
@@ -70,6 +71,20 @@ function domainEvents(overrides: Partial<ConstructorParameters<typeof DomainEven
 
 const typesOf = (jobs: readonly BackgroundJobRequest[]) => jobs.map((job) => job.type);
 
+const DECIDED_AT = new Date('2026-05-02T23:30:00.000Z');
+
+const resultsChanged: SportEventResultsChanged = { type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId: 'sport-event-1' };
+const gameDecided: GameDecided = { type: DomainEventType.GAME_DECIDED, sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', decidedAt: DECIDED_AT };
+
+const EVENT_REBUILD = {
+  type: BackgroundJobType.REBUILD_LEADERBOARDS,
+  payload: { subject: 'EVENT', id: 'sport-event-1' },
+  sportEventId: 'sport-event-1',
+  runAt: undefined,
+  start: TEST_JOB_START,
+  dedupeKey: 'REBUILD_LEADERBOARDS:EVENT:sport-event-1',
+};
+
 describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () => {
   it('is pinned: adding, removing or reordering a follow-up changes this list, so it shows in review', () => {
     const pinned = Object.fromEntries(Object.entries(DOMAIN_EVENT_HANDLERS).map(([type, handlers]) => [type, handlers.map((handler) => handler.key)]));
@@ -82,6 +97,8 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'rebuild-event-leaderboards',
       ],
       SPORT_EVENT_RESCHEDULED: ['tell-leagues-event-rescheduled'],
+      SPORT_EVENT_RESULTS_CHANGED: ['rebuild-leaderboards-for-changed-results'],
+      GAME_DECIDED: ['settle-decided-game-contests', 'rebuild-leaderboards-for-decided-game'],
     });
   });
 
@@ -110,6 +127,11 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
     for (const status of Object.values(SportEventStatus)) {
       // poolmaster-allow-query-in-loop: a unit test over every status, no database
       for (const type of typesOf((await events.collect(rescheduled(status))).jobs)) expect(declaredRescheduled).toContain(type);
+    }
+    for (const event of [resultsChanged, gameDecided]) {
+      const declaredFor = new Set(DOMAIN_EVENT_HANDLERS[event.type].flatMap((handler) => handler.queues));
+      // poolmaster-allow-query-in-loop: a unit test over the results-side events, no database
+      for (const type of typesOf((await events.collect(event)).jobs)) expect(declaredFor).toContain(type);
     }
   });
 });
@@ -214,6 +236,37 @@ describe('SPORT_EVENT_RESCHEDULED handlers', () => {
   });
 });
 
+describe('SPORT_EVENT_RESULTS_CHANGED handlers', () => {
+  it('rebuilds the event\'s boards on every change to a score, result, standing, field or game, and the write that changed it wakes the runner once committed', async () => {
+    const { queue, events } = domainEvents();
+
+    const written = await events.collect(resultsChanged);
+
+    expect(written.jobs).toEqual([EVENT_REBUILD]);
+    expect(queue.queued).not.toHaveBeenCalled();
+    written.queued();
+    expect(queue.queued).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('GAME_DECIDED handlers', () => {
+  it('settles the squares contests on the decided game at the moment it was decided, then rebuilds its event\'s boards, whoever decided it', async () => {
+    const { events } = domainEvents();
+
+    expect((await events.collect(gameDecided)).jobs).toEqual([
+      {
+        type: BackgroundJobType.SETTLE_GAME_CONTESTS,
+        payload: { sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', completedAt: DECIDED_AT.toISOString() },
+        sportEventId: 'sport-event-1',
+        runAt: undefined,
+        start: TEST_JOB_START,
+        dedupeKey: 'SETTLE_GAME_CONTESTS:game-1',
+      },
+      EVENT_REBUILD,
+    ]);
+  });
+});
+
 describe('DomainEvents.collect', () => {
   it('collects the jobs of each handler whose `when` takes the event, in map order, and wakes the runner only once told the write committed', async () => {
     const { queue, events } = domainEvents({ releasedEditionContests: templateContests(['contest-1']) });
@@ -273,7 +326,7 @@ describe('DomainEvents.collectEach, for a guarded batch write', () => {
 
   it('keeps every event\'s jobs when two events are about one subject', async () => {
     const { events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
-    const twice: DomainEvent[] = [events[0], { ...events[0], previousStart: new Date('2026-04-18T20:00:00.000Z') }];
+    const twice: SportEventRescheduled[] = [events[0], { ...events[0], previousStart: new Date('2026-04-18T20:00:00.000Z') }];
 
     const batch = await domain.collectEach(twice, (event) => event.sportEvent.id);
 
@@ -292,12 +345,15 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_RESCHEDULED` | `tell-leagues-event-rescheduled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
+      '| `SPORT_EVENT_RESULTS_CHANGED` | `rebuild-leaderboards-for-changed-results` | `REBUILD_LEADERBOARDS` |',
+      '| `GAME_DECIDED` | `settle-decided-game-contests` | `SETTLE_GAME_CONTESTS` |',
+      '| `GAME_DECIDED` | `rebuild-leaderboards-for-decided-game` | `REBUILD_LEADERBOARDS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));
   });
 
   it('says so on purpose for an event type nothing follows', () => {
-    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [] };
+    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], GAME_DECIDED: [] };
 
     expect(renderDomainEventTable(nothingFollows)).toContain('| `SPORT_EVENT_RESCHEDULED` | none | none |');
   });
