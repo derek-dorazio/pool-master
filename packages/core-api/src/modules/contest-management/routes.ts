@@ -13,20 +13,24 @@ import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { createContestNotices } from '../notifications/wiring';
 import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
 import type { PlanModuleOptions } from '../plans/routes';
+import type { DomainEventsModuleOptions } from '../domain-events';
 
 export function contestManagementModule(
   fastify: FastifyInstance,
-  opts: MailModuleOptions & PlanModuleOptions,
+  opts: MailModuleOptions & PlanModuleOptions & DomainEventsModuleOptions,
 ): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const contestManagementService = createContestManagementService(prisma, fastify.log, opts.planEntitlements, createContestNotices(prisma, {
-    email: opts.email,
-    appBaseUrl: readApplicationBaseUrl(process.env),
-    logger: fastify.log,
-  }));
+  const contestManagementService = createContestManagementService(prisma, fastify.log, opts.planEntitlements, {
+    domainEvents: opts.domainEvents,
+    contestOpened: createContestNotices(prisma, {
+      email: opts.email,
+      appBaseUrl: readApplicationBaseUrl(process.env),
+      logger: fastify.log,
+    }),
+  });
   const handlers = createContestManagementHandlers(contestManagementService);
 
   fastify.get('/contests/:contestId', {

@@ -112,7 +112,7 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
+  const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
   const predictions = new PredictionService({
     domainEvents: testDomainEvents(),
     contests: world.contestRepo(),

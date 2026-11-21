@@ -17,12 +17,19 @@ import { DOMAIN_EVENT_HANDLERS } from './domain-event-handlers';
  * write has committed.
  */
 export interface JobsForBatchWrite {
+  /** Whether any subject's event has jobs at all, so a batch none of whose events has any needs no transaction. */
+  readonly hasJobs: boolean;
   jobsFor(movedSubjectIds: readonly string[]): BackgroundJobRequest[];
   queued(): void;
 }
 
 export interface DomainEventsDeps extends DomainEventHandlerContext {
   queue: Pick<BackgroundJobQueue, 'request' | 'queued'>;
+}
+
+/** What a route module whose writes collect follow-ups takes (#1949): the app's one map, built in index.ts. */
+export interface DomainEventsModuleOptions {
+  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
 }
 
 export class DomainEvents {
@@ -47,6 +54,7 @@ export class DomainEvents {
     }
     let anyJobs = false;
     return {
+      hasJobs: [...bySubject.values()].some((jobs) => jobs.length > 0),
       jobsFor: (movedSubjectIds) => {
         const jobs = movedSubjectIds.flatMap((id) => bySubject.get(id) ?? []);
         anyJobs ||= jobs.length > 0;

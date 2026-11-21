@@ -6,9 +6,9 @@
  */
 
 import { z } from 'zod';
-import { BackgroundJobType, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import type { DomainEventType } from '../domain-events/domain-event';
+import type { ContestStatusChanged, DomainEventType } from '../domain-events/domain-event';
 import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 import { ContestEventChangeKind } from '../email/system-email-templates';
 import type { SportEventChange } from './contest-notices';
@@ -159,4 +159,48 @@ export const tellLeaguesEventRescheduledHandler: DomainEventHandler<typeof Domai
     { kind: ContestEventChangeKind.RESCHEDULED, previousStart: event.previousStart },
     { reopening: event.reopeningContestIds },
   ),
+};
+
+/**
+ * The event a contest's move names as its cause. A contest goes live, or reopens, only because
+ * its event started or was postponed, so a move without one is a caller's mistake: it fails the
+ * write rather than queue an email that names no event.
+ */
+function causingSportEventId(event: ContestStatusChanged): string {
+  if (event.sportEventId === undefined) {
+    throw new Error(`Contest ${event.contest.id} moved from ${event.from.join('/')} to ${event.to} without the sport event that moved it`);
+  }
+  return event.sportEventId;
+}
+
+/** E1, "Contest is live": an open contest its event's start took live, written with the move (#1387). */
+export const tellLeagueContestStartedHandler: DomainEventHandler<typeof DomainEventType.CONTEST_STATUS_CHANGED> = {
+  key: 'tell-league-contest-started',
+  queues: [BackgroundJobType.CONTEST_STARTED_EMAILS],
+  when: (event) => event.to === ContestStatus.ACTIVE && event.from.includes(ContestStatus.OPEN),
+  jobs: (event, { queue }) => [contestStartedEmailsJob(queue, event.contest.id, causingSportEventId(event))],
+};
+
+/**
+ * "Event postponed, picks are open again" (#1808, #1910): a live contest a postponement took back
+ * to open, told the start its picks close at again.
+ */
+export const tellLeagueContestReopenedHandler: DomainEventHandler<typeof DomainEventType.CONTEST_STATUS_CHANGED> = {
+  key: 'tell-league-contest-reopened',
+  queues: [BackgroundJobType.CONTEST_REOPENED_EMAILS],
+  when: (event) => event.to === ContestStatus.OPEN && event.from.includes(ContestStatus.ACTIVE),
+  jobs: (event, { queue }) => {
+    if (event.startsAt === undefined) {
+      throw new Error(`Contest ${event.contest.id} reopened without the start its picks close at again`);
+    }
+    return [contestReopenedEmailsJob(queue, event.contest.id, causingSportEventId(event), event.startsAt)];
+  },
+};
+
+/** F1 or F2, the final results: a contest settlement completed (#1387). */
+export const tellLeagueContestSettledHandler: DomainEventHandler<typeof DomainEventType.CONTEST_STATUS_CHANGED> = {
+  key: 'tell-league-contest-settled',
+  queues: [BackgroundJobType.CONTEST_SETTLED_EMAILS],
+  when: (event) => event.to === ContestStatus.COMPLETED,
+  jobs: (event, { queue }) => [contestSettledEmailsJob(queue, event.contest.id)],
 };

@@ -893,7 +893,7 @@ describe('mock contest feed provider event-first verification', () => {
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
-    const settlement = createContestSettlementService(getAppPrisma());
+    const settlement = createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() });
     const settleJobs = integrationBackgroundJobs();
     const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: settleJobs.queue }),

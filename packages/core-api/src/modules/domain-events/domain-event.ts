@@ -9,7 +9,7 @@
  * published unchanged if the delivery ever moves out of process.
  */
 
-import type { ContestEntryStatus, SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
+import type { ContestEntryStatus, ContestStatus, SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 
 export const DomainEventType = {
@@ -22,6 +22,8 @@ export const DomainEventType = {
    * a change its picks no longer pass (`PredictionService`). A pick saved without moving it is not one.
    */
   CONTEST_ENTRY_EVENT_STATUS_CHANGED: 'CONTEST_ENTRY_EVENT_STATUS_CHANGED',
+  /** A contest's status moved (`ContestLifecycle`), one event per contest a guarded write moves. */
+  CONTEST_STATUS_CHANGED: 'CONTEST_STATUS_CHANGED',
   /** A provider's field sync wrote a sport event's field (`IngestionPersistence.persistEventDetailWithDiagnostics`). */
   SPORT_EVENT_FIELD_SYNCED: 'SPORT_EVENT_FIELD_SYNCED',
 } as const;
@@ -59,6 +61,24 @@ export interface ContestEntryEventStatusChanged {
   to: ContestEntryStatus;
 }
 
+export interface ContestStatusChanged {
+  type: typeof DomainEventType.CONTEST_STATUS_CHANGED;
+  contest: { id: string };
+  /**
+   * The statuses the guarded write moves the contest from: it was in one of them, and a contest
+   * in none is left where it is and queues nothing. A batch write cannot say which one each row
+   * was in, so a handler reads `from` as the guard set: it acts on a move whose guard names the
+   * status it reacts to, which assumes the guard names only statuses with the same follow-ups
+   * (going live is from OPEN alone, a reopen from ACTIVE alone).
+   */
+  from: readonly ContestStatus[];
+  to: ContestStatus;
+  /** The sport event whose change moved the contest, when one did: its start took it live, or its postponement reopened it. */
+  sportEventId?: string;
+  /** The contest's start as the move sets it: when a reopened contest's picks close again. */
+  startsAt?: Date;
+}
+
 export interface SportEventFieldSynced {
   type: typeof DomainEventType.SPORT_EVENT_FIELD_SYNCED;
   /** The event whose field was written, as the sync read it. */
@@ -73,7 +93,7 @@ export interface SportEventFieldSynced {
 }
 
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | ContestEntryEventStatusChanged | SportEventFieldSynced;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;

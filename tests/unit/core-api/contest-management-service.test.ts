@@ -75,6 +75,8 @@ import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
 import { buildLeague } from '../../factories';
+import { testDomainEvents } from '../../support/domain-events';
+import { releasedEditionContests } from '../../../packages/core-api/src/modules/contest-management/released-edition-contests';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 /** What a Platinum league's contests are made and moved under: its 50 sports leagues a year (#947, #986). */
@@ -339,6 +341,7 @@ describe('ContestManagementService', () => {
     const cupsAsked: CupKey[] = [];
 
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: contestConfigTemplateRepo,
       configurations: contestConfigurationRepo,
@@ -398,6 +401,7 @@ describe('ContestManagementService', () => {
   it('refuses to create a tiered contest whose countedScores exceeds the event\'s tier count times picksPerTier, writing nothing', async () => {
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -439,6 +443,7 @@ describe('ContestManagementService', () => {
       const contestConfigurationRepo = createContestConfigurationRepo();
       const contestCoreRepo = createContestRepo();
       const service = new ContestManagementService({
+        domainEvents: testDomainEvents(),
         contests: contestCoreRepo,
         configTemplates: createContestConfigTemplateRepo(),
         configurations: contestConfigurationRepo,
@@ -496,6 +501,7 @@ describe('ContestManagementService', () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -546,6 +552,7 @@ describe('ContestManagementService', () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -572,6 +579,7 @@ describe('ContestManagementService', () => {
       if (!template) throw new Error('The template fake holds one template');
       jest.mocked(templateRepo.findById).mockResolvedValue({ ...template, sportLeagueId: templateLeagueId });
       const service = new ContestManagementService({
+        domainEvents: testDomainEvents(),
         contests: contestCoreRepo,
         configTemplates: templateRepo,
         configurations: createContestConfigurationRepo(),
@@ -631,6 +639,7 @@ describe('ContestManagementService', () => {
         return true;
       });
       const service = new ContestManagementService({
+        domainEvents: testDomainEvents(),
         contests: contestCoreRepo,
         configTemplates: createContestConfigTemplateRepo(),
         configurations: createContestConfigurationRepo(),
@@ -713,6 +722,7 @@ describe('ContestManagementService', () => {
       });
       const tiers = createSportEventTierServiceStub(options?.tierCount ?? 0);
       const service = new ContestManagementService({
+        domainEvents: testDomainEvents(),
         contests: contestCoreRepo,
         configTemplates: createContestConfigTemplateRepo(),
         configurations: createContestConfigurationRepo(),
@@ -850,6 +860,7 @@ describe('ContestManagementService', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -890,6 +901,7 @@ describe('ContestManagementService', () => {
   it('refuses a tiered contest update whose countedScores exceeds the event\'s tier count times picksPerTier, writing nothing', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -920,6 +932,7 @@ describe('ContestManagementService', () => {
   it('accepts a tiered contest update whose countedScores equals the event\'s tier count times picksPerTier', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -949,6 +962,7 @@ describe('ContestManagementService', () => {
 
   it('returns contest management detail by contest id', async () => {
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -973,6 +987,7 @@ describe('ContestManagementService', () => {
   it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
     const golfTierService = createSportEventTierServiceStub(2, true);
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -1030,6 +1045,7 @@ describe('ContestManagementService', () => {
     });
     const tiers = createSportEventTierServiceStub(2, true);
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -1057,6 +1073,7 @@ describe('ContestManagementService', () => {
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
 
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: contestConfigTemplateRepo,
       configurations: contestConfigurationRepo,
@@ -1103,6 +1120,7 @@ describe('ContestManagementService', () => {
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: contestConfigTemplateRepo,
       configurations: contestConfigurationRepo,
@@ -1143,6 +1161,7 @@ describe('ContestManagementService', () => {
   it('rejects a create naming neither a template nor a configuration', async () => {
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -1178,6 +1197,7 @@ describe('ContestManagementService', () => {
     });
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: contestConfigTemplateRepo,
       configurations: createContestConfigurationRepo(),
@@ -1211,6 +1231,7 @@ describe('ContestManagementService', () => {
     (contestConfigTemplateRepo.findById as jest.Mock).mockResolvedValueOnce(null);
 
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: contestConfigTemplateRepo,
       configurations: createContestConfigurationRepo(),
@@ -1246,6 +1267,7 @@ describe('ContestManagementService', () => {
     (contestConfigurationRepo.findByContest as jest.Mock).mockResolvedValueOnce(null);
 
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: createContestRepo(),
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -1270,6 +1292,7 @@ describe('ContestManagementService', () => {
   it('rejects contest creation when the sporting event field has not loaded yet', async () => {
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -1326,6 +1349,7 @@ describe('ContestManagementService', () => {
   ])('createContest $name, creating nothing', async ({ event, code, message }) => {
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -1373,6 +1397,7 @@ describe('ContestManagementService', () => {
       const contestRepo = options.contestRepo ?? createContestRepo();
       const configurationRepo = options.configurationRepo ?? createContestConfigurationRepo();
       const service = new ContestManagementService({
+        domainEvents: testDomainEvents(),
         contests: contestRepo,
         configTemplates: options.templateRepo ?? createContestConfigTemplateRepo(),
         configurations: configurationRepo,
@@ -1532,6 +1557,7 @@ describe('ContestManagementService budget rules (#93)', () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -1668,6 +1694,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -1758,6 +1785,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       updatedAt: new Date(),
     }]);
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: templateRepo,
       configurations: createContestConfigurationRepo(),
@@ -1814,6 +1842,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -1918,6 +1947,7 @@ describe('ContestManagementService stat pool scoring (#934)', () => {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: createContestConfigurationRepo(),
@@ -2067,6 +2097,7 @@ describe('ContestManagementService — a contest of several events', () => {
       });
     }
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: configurationRepo,
@@ -2281,13 +2312,13 @@ describe('ContestManagementService — a contest of several events', () => {
     const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(() => CONTEST_MANAGEMENT_TEST_NOW), currentStart: testCurrentJobStart });
 
     it('answers one job per joinable pool for the release to write, and changes no contest', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      const { contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
       jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([
         { id: 'contest-1', leagueId: 'league-1', sportEventIds: [MASTERS] },
         { id: 'contest-2', leagueId: 'league-2', sportEventIds: [MASTERS] },
       ] as Awaited<ReturnType<typeof contestRepo.findJoinableByReleasedEdition>>);
 
-      const requests = await service.releasedEditionJobs(PGA_EDITION, jobs);
+      const requests = await releasedEditionContests({ contests: contestRepo }).releasedEditionJobs(PGA_EDITION, jobs);
 
       expect(contestRepo.findJoinableByReleasedEdition).toHaveBeenCalledWith(PGA_EDITION);
       expect(requests).toEqual(['contest-1', 'contest-2'].map((contestId) => ({
@@ -2303,10 +2334,10 @@ describe('ContestManagementService — a contest of several events', () => {
     });
 
     it('answers no job when no template covers the released event\'s series', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      const { contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
       jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([]);
 
-      await expect(service.releasedEditionJobs(PGA_EDITION, jobs)).resolves.toEqual([]);
+      await expect(releasedEditionContests({ contests: contestRepo }).releasedEditionJobs(PGA_EDITION, jobs)).resolves.toEqual([]);
     });
 
     it('a pool\'s job adds the released major to a live majors pool of its year, after the majors it already has, and reports the one contest it changed', async () => {
@@ -2408,6 +2439,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       gamesWithoutSpreadCount: options.gamesWithoutSpreadCount,
     });
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -2634,6 +2666,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
       bracketProblem: options.bracketProblem ?? null,
     });
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -2736,6 +2769,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
     });
     let now = NOW;
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: world.contestRepo(),
       configTemplates: createContestConfigTemplateRepo(),
       configurations: configurationRepo,
@@ -2877,6 +2911,7 @@ describe('ContestManagementService squares rules (#711)', () => {
     reader.findGame.mockImplementation(async (sportEventId: string, sportEventMatchId: string) =>
       sportEventId === EVENT_ID && sportEventMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
@@ -3017,6 +3052,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
     const cupsAsked: CupKey[] = [];
     contests.create = jest.fn().mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 5, sportLeagueCount: 5 });
     const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
       contests,
       configTemplates: createContestConfigTemplateRepo(),
       configurations,

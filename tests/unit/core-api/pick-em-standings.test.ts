@@ -31,6 +31,7 @@ import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
+import { testDomainEvents } from '../../support/domain-events';
 
 const T0 = new Date('2026-09-01T00:00:00.000Z');
 const WEEK_1 = new Date('2026-09-10T20:00:00.000Z');
@@ -117,7 +118,7 @@ function setup() {
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
+  const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
 
   const play = (game: SportEventMatch, winner: MatchSide | null, homeScore: number, awayScore: number) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore, awayScore }]);
