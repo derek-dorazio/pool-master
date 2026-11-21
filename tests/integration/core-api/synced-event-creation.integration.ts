@@ -5,9 +5,8 @@ import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository, PrismaSpo
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/modules/events/synced-event-creation-scheduler';
-import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
-import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { heldHere } from '../../support/job-locks';
 import { leagueProfiles } from '../../support/league-profiles';
 
@@ -55,7 +54,7 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     sports: new PrismaSportRepository(prisma),
     scoreSource: { listTourEventsForYear },
-    sportEvents: createSportEventServices(prisma).sportEvents,
+    sportEvents: integrationSportEventServices(prisma).sportEvents,
     syncRuns: new PrismaProviderSyncRunRepository(prisma),
     jobs: backgroundJobs.queue,
     now: () => NOW,
@@ -136,7 +135,7 @@ describe('Synced event creation (ADR 0011)', () => {
     const synced = await golfLeague({ matchKeyword: `SYNC${randomUUID().slice(0, 4)}`, eventSyncProviderId: PROVIDER_ID });
     const { scheduler } = buildScheduler();
     await scheduler.runSweep();
-    const { sportEvents } = createSportEventServices(getAppPrisma());
+    const { sportEvents } = integrationSportEventServices();
     const manual = await sportEvents.createEvent({
       sportLeagueId: synced.id,
       eventYear: 2027,

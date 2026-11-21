@@ -5,6 +5,13 @@ in `background_jobs`, written in the same transaction as the change that caused 
 task claims it, runs it, and retries it on failure; a deploy or a crashed task never loses it.
 The code is `packages/core-api/src/modules/background-jobs`.
 
+Which jobs follow which change is declared once, in the domain event handler map
+(`DOMAIN_EVENT_HANDLERS`, `modules/domain-events`, #1946): a writer describes its change as a
+typed domain event, collects the jobs its handlers ask for, and writes them in its own
+transaction (`rules/architecture-rules.md` §4 *Follow-up work is a domain event handler*). The
+table under *Domain event handlers* below is generated from the map. Writers not yet moved onto
+it (epic #1946) still build their jobs where the table of job types says.
+
 Recurring work (the lifecycle sweep, the automatic event release sweep, each kind of clock-driven email's sweep, the provider loops,
 the nightly cleanup, the email sender) stays on its own timer behind a job lock (`rules/architecture-rules.md` §4 *Background jobs run
 on one server task*). The job table is for one-off work.
@@ -19,12 +26,35 @@ on one server task*). The job table is for one-off work.
 | `CONTEST_STARTED_EMAILS` | Each contest that goes live (`EventLifecycleService`, #1387), with its move to `ACTIVE`. Payload: the contest and the event that started it; dedupe key `CONTEST_STARTED_EMAILS:<contestId>` | `ContestEmailJobs.contestStarted`: reads the contest and event again and queues "Contest is live" (E1) to the league | Each email's outbox idempotency key is the contest, the event and the person, so a retry queues only what an earlier try did not |
 | `CONTEST_SETTLED_EMAILS` | Each contest that completes (`ContestSettlementService`, #1387), with its move to `COMPLETED`. Payload: the contest; dedupe key `CONTEST_SETTLED_EMAILS:<contestId>` | `ContestEmailJobs.contestSettled`: reads the final places frozen at settlement and queues "Final results" (F1 to F3); a contest no longer completed is skipped | As above, keyed by the contest and the person |
 | `CONTEST_REOPENED_EMAILS` | Each live contest a postponement takes back to `OPEN` while its event's start is ahead (`EventLifecycleService.followPostponedStart`, #1808), with its move. Payload: the contest, the event and the start the reopen set; dedupe key `CONTEST_REOPENED_EMAILS:<contestId>:<sportEventId>:reopened-<start>` | `ContestEmailJobs.contestReopened`: reads the contest and event again and queues "Event postponed, picks are open again" to the league, the only email those contests get for the change (#1910); a contest no longer open to that start, or gone, is skipped | Keyed by the contest, the event, the start and the person, so a retry queues only what an earlier try did not |
-| `CONTEST_EVENT_CHANGED_EMAILS` | Each open or live contest on an event that is postponed, moved or cancelled (`ContestNotices.sportEventChangedJobs`, #1458). A postponement or a moved start writes them in the same transaction as the event's change (#1464), so a change that fails or loses a race queues none and one that lands always has them; a cancellation's settle job queues them before it settles. Payload: the contest, the event, the change and the event's start as it left it (and the old start of a move); dedupe key `CONTEST_EVENT_CHANGED_EMAILS:<contestId>:<change>` | `ContestEmailJobs.contestEventChanged`: reads the contest and event again and queues C6 or C7 to its commissioners and entrants, whatever the contest's status now (a cancellation's job may run after settlement); a contest or event gone is skipped | Keyed by the contest, the change and the person, as above |
-| `SETTLE_SPORT_EVENT_CONTESTS` | An event's move to `COMPLETED` or `CANCELLED` (`EventLifecycleService.transition`, #1448), in the same write as the status change, so a lost race queues nothing. Payload: the event and the time its contests settle at (its end, or the cancellation); dedupe key `SETTLE_SPORT_EVENT_CONTESTS:<sportEventId>` | `EventLifecycleService.settleFinishedEventContests`: reads the event again (one no longer finished is skipped), queues a cancellation's "event cancelled" email jobs (C7; a failure fails the job before anything settles, so the retry tells them), then settles each of its contests through `ContestSettlementService` | Each contest settles in its own write and leaves `COMPLETED`, so a retry settles only the contests an earlier try did not; C7's outbox key is the contest, the change and the person |
+| `CONTEST_EVENT_CHANGED_EMAILS` | Each open or live contest on an event that is postponed, moved or cancelled (`ContestNotices.sportEventChangedJobs`, #1458). A postponement or a moved start writes them, through the `tell-leagues-event-postponed` and `tell-leagues-event-rescheduled` handlers, in the same transaction as the event's change (#1464), so a change that fails or loses a race queues none and one that lands always has them; a cancellation's settle job queues them before it settles. Payload: the contest, the event, the change and the event's start as it left it (and the old start of a move); dedupe key `CONTEST_EVENT_CHANGED_EMAILS:<contestId>:<change>` | `ContestEmailJobs.contestEventChanged`: reads the contest and event again and queues C6 or C7 to its commissioners and entrants, whatever the contest's status now (a cancellation's job may run after settlement); a contest or event gone is skipped | Keyed by the contest, the change and the person, as above |
+| `SETTLE_SPORT_EVENT_CONTESTS` | An event's move to `COMPLETED` or `CANCELLED` (the `settle-finished-event-contests` handler of `SPORT_EVENT_STATUS_CHANGED`, #1448), in the same write as the status change, so a lost race queues nothing. Payload: the event and the time its contests settle at (its end, or the cancellation); dedupe key `SETTLE_SPORT_EVENT_CONTESTS:<sportEventId>` | `EventLifecycleService.settleFinishedEventContests`: reads the event again (one no longer finished is skipped), queues a cancellation's "event cancelled" email jobs (C7; a failure fails the job before anything settles, so the retry tells them), then settles each of its contests through `ContestSettlementService` | Each contest settles in its own write and leaves `COMPLETED`, so a retry settles only the contests an earlier try did not; C7's outbox key is the contest, the change and the person |
 | `SETTLE_GAME_CONTESTS` | A game decided by `MatchResultService` (#1460): its result saved, a quarter score entered after its result, or the game cancelled. Written in the same transaction as the match write. Payload: the event, the game and the moment it was decided; dedupe key `SETTLE_GAME_CONTESTS:<sportEventMatchId>` | `EventLifecycleService.settleFinishedGameContests`: settles the squares contests on the game through `ContestSettlementService.settleFinishedGame`, from the game as it stands when the job runs | A contest already `COMPLETED` is skipped, and a contest's winners and standings are replaced in place, so a retry settles only the contests an earlier try did not finish |
 | `REBUILD_LEADERBOARDS` | Any write that changes what live leaderboards are computed from (#1463), through `JobLeaderboardRebuilds`: an admin's event write (scores, field, status), a provider sync, live scores, a pick'em or survivor week submitted or sent back, and a settlement (one job for the settled event, however many contests it settled). One job per event or contest named. An admin's event write (a score, result, bracket, field, start or status change), a provider sync that changes a field row and a live-score tick (with its last write, the ranks) write their event's job in the same transaction as the change (`LeaderboardRebuilds.forEvent`, #1466), and a pick'em or survivor week submitted or sent back to draft writes its contest's job with the week (`LeaderboardRebuilds.forContest`), so a write that fails queues none and one whose job fails to insert is rolled back and answers an error. A field sync that changes no row writes none. A settlement queues its job once its contests are settled, inside the settle job: its per-contest writes are separate transactions, and a contest it completed has changed, so a read of that contest computes its board again whether or not the job was written. Payload: the subject (`EVENT` or `CONTEST`) and its id; dedupe key `REBUILD_LEADERBOARDS:<subject>:<id>`, so a burst of writes to one event waits as one job, and a write made while it runs queues one more | `ContestService.rebuildLeaderboardSnapshots`: rebuilds every stored board of the contests on the event, or of the one contest, from the data as it stands when the job runs | A rebuild only stores a board computed from newer data than the stored one, so a repeated rebuild changes nothing a viewer sees; a board left stale by a failed rebuild is still caught by a read (`isSnapshotCurrent`) |
-| `ADD_RELEASED_EDITION_TO_CONTEST` | A root admin's release of an edition (`EventLifecycleService.transition`, #1318): one job for each contest made from a template covering the edition's series that can still take it (a majors pool and its next major), found by `ContestManagementService.releasedEditionJobs` and written in the same write as the release, so a lost race queues nothing. Payload: the contest and the edition; dedupe key `ADD_RELEASED_EDITION_TO_CONTEST:<contestId>:<sportEventId>` | `ContestManagementService.addReleasedEditionToContest`: adds the edition to the contest's events under the commissioner's own rules; a contest gone or already holding it is left alone, and one whose rules now refuse it (drawn, finished, another salary cap) is logged and skipped | A retry finds the edition already added and changes nothing. Two editions' jobs on one pool at once cannot drop either: the write is refused under the contest's row lock if its events changed since the job read them (`ContestEventsChangedError`), and the retry adds its edition beside the other |
+| `ADD_RELEASED_EDITION_TO_CONTEST` | A root admin's release of an edition (the `release-into-template-contests` handler of `SPORT_EVENT_STATUS_CHANGED`, #1318): one job for each contest made from a template covering the edition's series that can still take it (a majors pool and its next major), found by `ContestManagementService.releasedEditionJobs` and written in the same write as the release, so a lost race queues nothing. Payload: the contest and the edition; dedupe key `ADD_RELEASED_EDITION_TO_CONTEST:<contestId>:<sportEventId>` | `ContestManagementService.addReleasedEditionToContest`: adds the edition to the contest's events under the commissioner's own rules; a contest gone or already holding it is left alone, and one whose rules now refuse it (drawn, finished, another salary cap) is logged and skipped | A retry finds the edition already added and changes nothing. Two editions' jobs on one pool at once cannot drop either: the write is refused under the contest's row lock if its events changed since the job read them (`ContestEventsChangedError`), and the retry adds its edition beside the other |
 | `RELEASE_SPORT_EVENT` | The hourly automatic release sweep (`SportEventAutoReleaseScheduler`, #1823): one job per synced DRAFT event inside its sport league's `autoReleaseDaysBeforeStart` window, in one insert. Payload: the event and the trigger (`SCHEDULE`); dedupe key `RELEASE_SPORT_EVENT:<sportEventId>`, so a sweep that finds the event again before its job runs queues nothing | `SportEventService.autoReleaseEvent`: reads the event again; one no longer a synced draft in its window is skipped. Judges every ready check; all passing releases it through the manual button's path, any failing holds it as a draft for the next sweep. Either way the event keeps that check as its latest (when, `RELEASED` or `HELD`, and the failed checks, #1847), which the Sports page counts. A hold for exactly the failed checks the stored one already names discards the job (#1865), so a draft held all week shows in Activity once, then again only when what holds it changes or it is released. Its result, kept on the job and shown in Activity under the Release kind, is the outcome with every check and its value, or why it was skipped | A released event is skipped as `NOT_DRAFT`, so a retry never releases twice; a held attempt changes nothing but its stored check, which the retry overwrites |
+
+## Domain event handlers
+
+What follows each change, as the map declares it: each handler, in the order its jobs are
+collected, and the job types it may queue. A handler only collects jobs (it may read, never
+write); its `when` filters on the event's own model fields. An event type with no handler says
+so on purpose.
+
+<!-- domain-event-handlers:start (generated from DOMAIN_EVENT_HANDLERS by `npm run docs:domain-events`; edit the map, not this table) -->
+| Domain event | Handler | Queues |
+|---|---|---|
+| `SPORT_EVENT_STATUS_CHANGED` | `settle-finished-event-contests` | `SETTLE_SPORT_EVENT_CONTESTS` |
+| `SPORT_EVENT_STATUS_CHANGED` | `release-into-template-contests` | `ADD_RELEASED_EDITION_TO_CONTEST` |
+| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |
+| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |
+| `SPORT_EVENT_RESCHEDULED` | `tell-leagues-event-rescheduled` | `CONTEST_EVENT_CHANGED_EMAILS` |
+<!-- domain-event-handlers:end -->
+
+Adding a follow-up to a change: a handler beside its job's builder in the module that owns the
+job, listed under its event type in `DOMAIN_EVENT_HANDLERS`, its unit test (event in, job
+requests out, none when `when` says no), the pinned map in `domain-event-handlers.test.ts`, and
+`npm run docs:domain-events`. A new kind of change is a member of `DomainEvent` and a value of
+`DomainEventType`; the map is exhaustive over it, so a type without an entry fails typecheck.
 
 Adding a type: a value in `BackgroundJobType` (domain enum and Prisma enum, by migration), its
 payload schema in `BACKGROUND_JOB_PAYLOADS`, its scope in `BACKGROUND_JOB_SCOPES`, its kind in
@@ -181,3 +211,26 @@ integration app's runner has no timer: a queued job wakes it, as in the app
 (`integrationBackgroundJobs` in `tests/integration/helpers.ts`). `deliverQueuedIntegrationEmail`
 drains the app's jobs first, and `holdingBackgroundJobs` holds them back while a test counts a
 request's own statements. Functional tests wait on the outcome, such as a sync run's status.
+
+## Scaling out (deferred)
+
+Not built, and none of it changes the handler map: `background_jobs` is already a transactional
+outbox and a queue (rows written with the change, claimed with `FOR UPDATE SKIP LOCKED`, leases,
+retries, dedupe keys), and `core/task-role.ts` already has the `api`, `worker` and all-in-one
+roles. Each step waits for its trigger (design: epic #1946).
+
+1. A separate worker service, the `worker` role as its own ECS service scaled on queue depth:
+   when job work slows API requests, or one worker can't keep up.
+2. A cross-task wake (Postgres `LISTEN/NOTIFY` on commit): when the 10-second poll delay is
+   noticeable to members.
+3. Lanes, one per job kind with its own concurrency in the same table: when one kind starves
+   another.
+4. An outbox relay to SQS, one queue per lane, workers still recording the outcome: when claim
+   polling becomes real database load.
+5. EventBridge, each domain event published for a second deployable service to subscribe to:
+   only when such a service exists.
+
+What keeps each step cheap: never publish to a queue from a request (the outbox row is what
+makes a relay safe), keep every handler idempotent and every job deduped (SQS and EventBridge
+deliver at least once), keep domain events additive, and keep payloads to ids and from/to
+values.

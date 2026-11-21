@@ -33,13 +33,14 @@ import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
 import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
 import { SportLeaguePageService, type SportLeaguePageServiceDeps } from '../sport-catalog/sport-league-page';
-import { createEventLifecycleService, createSportEventServices, eventFieldCache, type SportEventServices } from './wiring';
+import { createSportEventServices, eventFieldCache, type SportEventServices } from './wiring';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
 import { PublicReadPath } from '../../core/public-cache';
 
 export interface EventsModuleOptions {
-  eventLifecycleService?: EventLifecycleService;
+  /** The app's one status-change path, with its follow-ups (#1946). */
+  eventLifecycleService: EventLifecycleService;
   ingestionService: IngestionService;
   providerRegistry?: ProviderRegistry;
   cdn: CdnInvalidator;
@@ -100,7 +101,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
   await fastify.register(rateLimit, { global: false, errorResponseBuilder: () => new EventAdminRateLimitError() });
 
   const prisma = getAppPrisma(fastify);
-  const eventLifecycle = opts.eventLifecycleService ?? createEventLifecycleService(prisma, { logger: fastify.log });
+  const eventLifecycle = opts.eventLifecycleService;
   const handler = createEventHandlers({
     services: opts.services ?? createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle, opts.leaderboards),
     eventLifecycle,

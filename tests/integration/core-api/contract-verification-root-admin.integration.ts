@@ -87,7 +87,6 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
-import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import { activityModule } from '../../../packages/core-api/src/modules/activity/routes';
 import { ActivityService } from '../../../packages/core-api/src/modules/activity/activity-service';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -102,8 +101,7 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
-  withoutJsonBodyHeaders,
-} from '../helpers';
+  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle } from '../helpers';
 import type {
   ProviderHealthStatus,
   ProviderParticipant,
@@ -356,7 +354,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
     sports: new PrismaSportRepository(getAppPrisma()),
     scoreSource: new EventScoreSourceService(getAppPrisma(), registry),
-    sportEvents: createSportEventServices(getAppPrisma(), undefined, undefined, undefined, registry).sportEvents,
+    sportEvents: integrationSportEventServices(getAppPrisma(), registry).sportEvents,
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
     jobs: backgroundJobs.queue,
   });
@@ -387,6 +385,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   await settings.load();
   await app.register(eventsModule, {
     prefix: '/api/v1/events',
+    eventLifecycleService: integrationEventLifecycle(prisma),
     ingestionService,
     providerRegistry: registry,
     cdn: new RecordingCdnInvalidator(),

@@ -13,6 +13,7 @@
  * hours from the test's clock) and T2 against T3 (game 6, five hours from it). The final is game 7.
  */
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import {
   ContestEntryStatus,
   ContestFormat,
@@ -140,7 +141,7 @@ function setup(options: { startsAtRound?: number } = {}) {
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     matches: games.matchRepo(),
-  }, sportEvents, fakeLogger());
+  }, sportEvents, testDomainEvents(), fakeLogger());
 
   const input = { contestId: contest.id, entryId: aliceEntry.id, sportEventId: sportEvent.id, actorUserId: alice.id };
   const entry = () => expectDefined(world.entries.get(aliceEntry.id));
@@ -415,7 +416,7 @@ describe('a second-chance bracket — going live', () => {
       contests: context.world.contestRepo(),
       configurations,
       matches: context.games.matchRepo(),
-    }, context.world.sportEventRepo(), fakeLogger());
+    }, context.world.sportEventRepo(), testDomainEvents(), fakeLogger());
 
     await lifecycle.activateContestsPastCutoff(context.eventNow(), at(2.1));
 

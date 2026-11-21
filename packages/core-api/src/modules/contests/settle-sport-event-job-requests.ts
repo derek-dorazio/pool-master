@@ -7,8 +7,10 @@
  */
 
 import { z } from 'zod';
-import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, isSportEventStatusFinished, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { DomainEventType } from '../domain-events/domain-event';
+import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 
 export const SettleSportEventContestsJobPayloadSchema = z.object({
   sportEventId: z.string().min(1),
@@ -31,3 +33,15 @@ export function settleSportEventContestsJob(
     dedupeKey: `${BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS}:${sportEventId}`,
   });
 }
+
+/**
+ * An event that completes or is cancelled settles its contests by this job, written with the
+ * status (#1448): an event can hold hundreds of contests, too many for the request. A cancelled
+ * event counts for nothing, so it must not hold a contest open either (#743).
+ */
+export const settleFinishedEventContestsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
+  key: 'settle-finished-event-contests',
+  queues: [BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS],
+  when: (event) => isSportEventStatusFinished(event.to),
+  jobs: (event, { queue }) => [settleSportEventContestsJob(queue, event.sportEvent.id, event.settleAt)],
+};

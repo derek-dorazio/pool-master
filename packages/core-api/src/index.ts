@@ -90,6 +90,7 @@ import type { IngestionCallbacks, SportEventDetail } from './modules/ingestion/c
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './modules/events/wiring';
+import { DomainEvents } from './modules/domain-events';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
@@ -193,14 +194,21 @@ export function buildApp() {
   const contestSettlement = createContestSettlementService(prisma, app.log, { jobs: backgroundJobs, leaderboards });
   // A released edition joins its template contests by a job per contest (#1318).
   const releasedEditionContests = createContestManagementService(prisma, app.log, planEntitlements);
+  // What follows each change (#1946): built once, with every dependency its handlers need.
+  const domainEvents = new DomainEvents({
+    queue: backgroundJobs,
+    releasedEditionContests,
+    sportEventChanged: contestNotices,
+  });
   const eventLifecycleService = createEventLifecycleService(prisma, {
+    domainEvents,
     logger: app.log,
     jobs: backgroundJobs,
     sportEventChanged: contestNotices,
     contestSettlement,
-    releasedEditionContests,
-    leaderboards,
   });
+  // One set of event services for the admin routes, the synced event creation sweep and the draft event notices.
+  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
   const cdn = createCdnInvalidator(process.env, app.log);
@@ -231,6 +239,7 @@ export function buildApp() {
       logger: app.log,
       planEntitlements,
       memberJoined,
+      releaseReadiness: sportEventServices.sportEvents,
     }),
     // A quick pick draw's receipts, queued by the draw for the sweep (#1171).
     { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, app.log, { email, appBaseUrl, planEntitlements }) },
@@ -304,6 +313,7 @@ export function buildApp() {
       return publishLiveScoreUpdate(result, {
         prisma,
         providerId,
+        domainEvents,
         logger: app.log,
         scoringFamilyForEvent,
         fieldCache: eventFieldCache,
@@ -313,8 +323,6 @@ export function buildApp() {
   };
 
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, new PrismaSportEventRepository(prisma));
-  // One set of event services for the admin routes and the synced event creation sweep.
-  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
   // A synced draft event is released on its own once its ready checks pass, in its league's window (#1823).
   const sportEventAutoReleaseScheduler = new SportEventAutoReleaseScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),

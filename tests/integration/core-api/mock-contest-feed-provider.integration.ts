@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema, type ContestLeaderboardResponse } from '@poolmaster/shared/dto';
@@ -895,6 +896,7 @@ describe('mock contest feed provider event-first verification', () => {
     const settlement = createContestSettlementService(getAppPrisma());
     const settleJobs = integrationBackgroundJobs();
     const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
+      domainEvents: testDomainEvents({ queue: settleJobs.queue }),
       jobs: settleJobs.queue,
       contestSettlement: settlement,
     });
@@ -908,7 +910,7 @@ describe('mock contest feed provider event-first verification', () => {
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async (result, providerIdForResult) =>
-        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, scoringFamilyForEvent }),
+        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, domainEvents: testDomainEvents(), scoringFamilyForEvent }),
     }, undefined, {
       eventReader,
       syncRunLedger,

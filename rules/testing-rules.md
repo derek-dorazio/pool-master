@@ -1086,12 +1086,24 @@ export async function buildContestWithEntries(
 
 ---
 
-## 8. Domain Event Testing — removed
+## 8. Domain Event Handler Testing
 
-There is no event bus to test (`architecture-rules.md` *No event bus — modules call each
-other*; #261). Assert the outcome a change produces — the rows written, the status moved, the
-standing settled — not that something was announced. The section number is kept so references
-to the sections after it stay valid.
+Follow-up work goes through the domain event handler map (`architecture-rules.md` §4
+*Follow-up work is a domain event handler*), and each piece of it is tested where it lives:
+
+- **The map is pinned.** One unit test holds `{ eventType: [handler keys] }` as a literal, so
+  adding, removing or reordering a follow-up changes the pin and shows in review, like the
+  leaderboard format hash.
+- **Each handler is unit-tested from event to job requests**: this event in, these requests
+  out, and none when its `when` says no, covering every line. A test also checks that the job
+  types a handler queues are the ones it declares, since the generated table in
+  `docs/BACKGROUND-JOBS.md` reads them.
+- **Each writer is tested to hand its collected jobs to its write** and to call `queued()` only
+  once the write landed: none on a write that fails or loses a guarded race.
+- **Integration tests stay outcome tests**: the rows a change writes, its job rows among them,
+  the status moved, the standing settled. Never a mocked map in production code; a test that
+  is not about a follow-up passes the real `DomainEvents` over test ports
+  (`tests/support/domain-events.ts`).
 
 ---
 

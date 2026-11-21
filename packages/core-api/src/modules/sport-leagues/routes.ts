@@ -19,7 +19,7 @@ import { requireRootAdmin } from '../../core/root-admin-guard';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
 import { PublicReadPath, readPublicReadCacheTtlMs } from '../../core/public-cache';
 import { ReadCache } from '../../core/read-cache';
-import { createSportEventServices, eventFieldCache } from '../events/wiring';
+import { createSportLeagueService, eventFieldCache } from '../events/wiring';
 import { PrismaSportLeagueOverviewReader } from '../../adapters/prisma-sport-league-overview-reader';
 import { SportLeagueOverviewService } from '../sport-catalog/sport-league-overview';
 import { createSportLeagueHandlers } from './handler';
@@ -51,7 +51,7 @@ export interface SportLeaguesModuleOptions {
 
 export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
-  const services = createSportEventServices(getAppPrisma(fastify), fastify.log, undefined, undefined, opts.providerRegistry);
+  const sportLeagues = createSportLeagueService(getAppPrisma(fastify), fastify.log, opts.providerRegistry);
   const lists = new ReadCache<SportLeagueListResponse>(readPublicReadCacheTtlMs(process.env));
   const overviews = new SportLeagueOverviewService({ reader: new PrismaSportLeagueOverviewReader(getAppPrisma(fastify)) });
   const page = new SportLeaguePageService({
@@ -59,7 +59,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schedule: opts.schedule,
     webhookProviderIds: opts.webhookProviderIds,
   });
-  const handler = createSportLeagueHandlers(services.sportLeagues, lists, overviews, page);
+  const handler = createSportLeagueHandlers(sportLeagues, lists, overviews, page);
   const write = { onRequest: requireRootAdmin };
 
   // A ranking write changes the participants every event of the sport league shows on its field

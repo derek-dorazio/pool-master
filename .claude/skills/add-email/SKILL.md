@@ -70,7 +70,9 @@ default in `email-settings.ts`, its label on the root admin Notifications page
 
 The notification lives in `packages/core-api/src/modules/notifications/`, one file per kind of
 notice, called by the service or scheduler step that knows the moment (`rules/architecture-rules.md`
-§4 *Service Topology*: modules call each other's services, there is no event bus). It finds the
+§4 *Service Topology*: follow-up work goes through the domain event handler map, results needed
+now are a service call). An email that follows a change is queued as a job by that change's
+domain event handler (§4 *Follow-up work is a domain event handler*). It finds the
 recipients, builds the data and calls `email.send(key, { to: emailRecipientOf(user), about,
 league, data })` with an idempotency key that makes the frequency from Step 1 true. A missing
 fact the email needs is a skip with a warning log (`rules/service-rules.md` §11 *Backend

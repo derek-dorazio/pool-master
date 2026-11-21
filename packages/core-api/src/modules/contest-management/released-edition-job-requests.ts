@@ -6,8 +6,10 @@
  */
 
 import { z } from 'zod';
-import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { DomainEventType } from '../domain-events/domain-event';
+import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 
 export const AddReleasedEditionToContestJobPayloadSchema = z.object({
   contestId: z.string().min(1),
@@ -30,3 +32,15 @@ export function addReleasedEditionToContestJob(
     dedupeKey: `${BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST}:${contestId}:${sportEventId}`,
   });
 }
+
+/**
+ * A released edition joins the contests made to cover its series, a majors pool's major (#714),
+ * by one job per contest written with the release (#1318): a release that loses a race queues
+ * nothing, and one that lands always has its contests' jobs.
+ */
+export const releaseIntoTemplateContestsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
+  key: 'release-into-template-contests',
+  queues: [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST],
+  when: (event) => event.from === SportEventStatus.DRAFT && event.to === SportEventStatus.SCHEDULED,
+  jobs: (event, { queue, releasedEditionContests }) => releasedEditionContests.releasedEditionJobs(event.sportEvent, queue),
+};

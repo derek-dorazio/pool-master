@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { ScoringFamily, Sport, type SportEvent } from '@poolmaster/shared/domain';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
@@ -43,6 +44,7 @@ function setup() {
   const lifecycle = new EventLifecycleService(
     { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
     sportEvents,
+    testDomainEvents(),
   );
   const service = new SportEventService({
     sportEvents,

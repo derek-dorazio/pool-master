@@ -25,6 +25,7 @@ import {
 import { SportEventStatus, JobErrorType } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
+import type { DomainEvents } from '../../domain-events';
 import type { LiveScoreTargetEvent, LiveScoreWriteDeps, LiveScoreWriter, ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 import type { EventFieldCache } from '../../events/event-field-cache';
@@ -43,6 +44,8 @@ export class LiveScoreValidationError extends Error {
 export interface LiveScorePublisherDeps {
   prisma: PrismaClient;
   providerId: string;
+  /** What follows the changes a family's writer makes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   logger?: FastifyBaseLogger;
   /** Which scoring family scores an event, by its sport league's definition: the composition root passes the registry's. */
   scoringFamilyForEvent: (event: ScoringFamilyEvent) => ScoringFamilyModule;

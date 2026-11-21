@@ -168,7 +168,8 @@ All backend services are TypeScript services with explicit module boundaries.
 - Route handlers do not return raw Prisma models.
 - Database access stays behind service/repository boundaries.
 - Cross-module communication is a typed service call, wired in the calling module's
-  `wiring.ts`. There is no event bus — see *No event bus — modules call each other* below.
+  `wiring.ts`. Work that follows a change goes through the domain event handler map — see
+  *Follow-up work is a domain event handler* below.
 - League isolation must remain explicit in request context and persistence boundaries.
 - **Dependency direction is one-way: `packages/shared` must never import from
   `packages/core-api`.** Shared is the contract layer that both the service and the clients
@@ -198,19 +199,32 @@ All backend services are TypeScript services with explicit module boundaries.
   lifecycle scheduler — each caller supplies a different `actor`, not a
   different implementation.
 
-### No event bus — modules call each other
+### Follow-up work is a domain event handler
 
-There is no in-process event bus. One existed in `packages/shared/events/` with typed event
-contracts and two publishers, and #261 deleted it: in six months nothing ever subscribed, so
-every publish iterated an empty handler list. A module that needs another module's effect calls
-that module's service directly, wired in its `wiring.ts`; the event lifecycle service calling
-settlement is the model. The persisted rows are the outcome, and tests assert those rather than
-an event.
+A write that sets off work beyond itself describes what changed as a typed `DomainEvent` and
+takes its follow-up jobs from the one handler map, `DOMAIN_EVENT_HANDLERS` in
+`modules/domain-events` (#1946). The map is exhaustive over `DomainEventType`, so every change
+says what follows it, even if that is nothing. A handler only collects background jobs: it may
+read, but it never writes, sends email or calls another module's write. The writer collects
+before its write (`DomainEvents.collect`, or `collectEach` for a guarded batch write that learns
+inside its transaction which rows moved), writes the jobs in its own transaction and calls
+`queued()` once it has committed, so a change that commits always has its follow-ups and one
+that fails or loses a guarded race has none. A job handler that changes state describes its own
+change the same way, so a chain of follow-ups reads in the map, not in handlers. Each handler
+lives beside its job's builder in the module that owns the job; the map only imports them, and
+`DomainEvents` is built once in `index.ts` and passed as a required dependency.
 
-If pub/sub is wanted later, reintroduce it against a real subscriber, so a concrete consumer
-decides its shape, and write its rules then. The rules that stood here (typed events, emission
-after commit, at-least-once idempotent subscribers, `allSettled` failure policy) were written
-for subscribers that never existed; they are in git history if that day comes.
+A module that needs another module's result now (a read, a validation, a write in the same unit
+of work) still calls that module's service directly, wired in its `wiring.ts`. A handler is for
+work that can happen after the write.
+
+The map is static and typed. There is no runtime subscription, no string topic and no handler
+that a reader of the map cannot see. A domain event type names a model entity and its change,
+never a sport or league, and a handler filters only on the event's model fields
+(`domain-model-conventions-rules.md` §17 *Rules Live In The Model, Not In Code*). The delivery
+is the `background_jobs` table, the transactional outbox; moving it out of process changes the
+delivery, not the map (`docs/BACKGROUND-JOBS.md` *Scaling out*). The bus #261 deleted had
+publishers and no subscriber; this map exists because its handlers do.
 
 ### Background jobs run on one server task
 
@@ -236,7 +250,9 @@ provider loops, the email sender), and prod runs more than one task. So that a j
   #1439), not `outsideRequest` around a `setImmediate`. The job is written in the transaction of
   the change that caused it, so a deploy or a crashed task never loses it; any task's runner
   claims it, and a throw is retried. Its handler is idempotent, because a lapsed lease runs it
-  again. A recurring job stays a timer under a job lock: the table is for one-off work.
+  again. A recurring job stays a timer under a job lock: the table is for one-off work. A
+  follow-up to a change is queued by its domain event handler, not by the writer (*Follow-up
+  work is a domain event handler*).
 - **A member's own action never queues a job of its own** (#1861). Work a member's write or read
   sets off that spans a contest or an event (rebuilding its boards, its emails) is queued once
   per contest or event, keyed so a waiting job absorbs the next ask (`dedupeKey`), never one
