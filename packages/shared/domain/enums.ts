@@ -1734,6 +1734,8 @@ export const BackgroundJobType = {
   SYNC_LEAGUE_EVENTS: 'SYNC_LEAGUE_EVENTS',
   /** Tries one synced DRAFT event's automatic release: every ready check passing releases it, any failing holds it (#1823). */
   RELEASE_SPORT_EVENT: 'RELEASE_SPORT_EVENT',
+  /** Syncs one event's games from its provider after a field sync, then tiers and prices its field (#1952). */
+  SYNC_EVENT_GAMES_AND_TIERS: 'SYNC_EVENT_GAMES_AND_TIERS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by the label each screen shows. */

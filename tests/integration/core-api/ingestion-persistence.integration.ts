@@ -30,6 +30,9 @@ const rankedEventIds = [
   'integration-linked-by-name',
   'integration-linked-by-league',
   'integration-play-in-place',
+  'integration-follow-up-sync',
+  'integration-follow-up-fail',
+  'integration-follow-up-finished',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -85,6 +88,9 @@ afterAll(async () => {
           'ingestion-rebuild-2',
           'ingestion-play-in-team',
           'ingestion-play-in-place',
+          'ingestion-follow-up-1',
+          'ingestion-follow-up-2',
+          'ingestion-follow-up-3',
         ],
       },
     },
@@ -133,6 +139,54 @@ describe('IngestionPersistence', () => {
 
     const sportEventId = await eventIdOf(detail.externalId);
     await expect(getPrisma().sportEventParticipant.count({ where: { sportEventId } })).resolves.toBe(0);
+  });
+
+  describe('a field sync\'s follow-ups, the provider\'s games then the tiers and prices (#1952)', () => {
+    const withFollowUps = () => new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
+    const followUpJobs = (sportEventId: string) => getPrisma().backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId } });
+    const KICKOFF = new Date('2026-04-15T17:00:00.000Z');
+    const games = [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'home', awayTeamExternalId: 'away', scheduledAt: KICKOFF, isNeutralSite: false }];
+
+    it('writes one job with the field a sync writes, carrying the provider\'s games, and one on its own when the field is unchanged', async () => {
+      const detail = { ...await linkedField('integration-follow-up-sync', 'ingestion-follow-up-1'), games };
+      const persistence = withFollowUps();
+
+      await persistence.persistEventDetailWithDiagnostics(detail);
+      const sportEventId = await eventIdOf(detail.externalId);
+      const [job, ...more] = await followUpJobs(sportEventId);
+      expect(more).toEqual([]);
+      expect(job).toMatchObject({
+        status: 'QUEUED',
+        dedupeKey: `SYNC_EVENT_GAMES_AND_TIERS:${sportEventId}`,
+        payload: { sportEventId, providerId: 'TEST_PROVIDER', externalId: detail.externalId, games: [{ ...games[0], scheduledAt: KICKOFF.toISOString() }] },
+      });
+
+      // The same field again writes no field row, but the games may have moved, so its job is written on its own.
+      await getPrisma().backgroundJob.deleteMany({ where: { sportEventId } });
+      await persistence.persistEventDetailWithDiagnostics(detail);
+      await expect(followUpJobs(sportEventId)).resolves.toHaveLength(1);
+      await getPrisma().backgroundJob.deleteMany({ where: { sportEventId } });
+    });
+
+    it('writes none of the field when its follow-up job cannot be written, so the next sync writes both', async () => {
+      const detail = await linkedField('integration-follow-up-fail', 'ingestion-follow-up-2');
+
+      await expect(withBackgroundJobsFailing('SYNC_EVENT_GAMES_AND_TIERS', () => withFollowUps().persistEventDetailWithDiagnostics(detail))).rejects.toThrow();
+
+      const sportEventId = await eventIdOf(detail.externalId);
+      await expect(getPrisma().sportEventParticipant.count({ where: { sportEventId } })).resolves.toBe(0);
+    });
+
+    it('queues nothing for a finished event, whose games are played and whose tiers and prices are locked', async () => {
+      const detail = await linkedField('integration-follow-up-finished', 'ingestion-follow-up-3');
+      const sportEventId = await eventIdOf(detail.externalId);
+      await getPrisma().sportEvent.update({ where: { id: sportEventId }, data: { status: 'COMPLETED' } });
+
+      await withFollowUps().persistEventDetailWithDiagnostics(detail);
+
+      await expect(followUpJobs(sportEventId)).resolves.toEqual([]);
+      await expect(getPrisma().sportEventParticipant.count({ where: { sportEventId } })).resolves.toBe(1);
+    });
   });
 
   it('persists event detail into events, participants, event participants, and source data', async () => {

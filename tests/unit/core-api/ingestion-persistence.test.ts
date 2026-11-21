@@ -2,7 +2,7 @@ import { testDomainEvents } from '../../support/domain-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { expect } from '@jest/globals';
-import { MappingConfidence, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, MappingConfidence, Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
   ProviderParticipant,
@@ -451,7 +451,7 @@ describe('IngestionPersistence', () => {
     });
   });
 
-  it('writes the event\'s leaderboard rebuild job in the same transaction as a field sync that changes a row, and wakes the runner after it (#1435, #1466)', async () => {
+  it('writes the event\'s leaderboard rebuild job and the sync\'s follow-up job in the one transaction of a field sync that changes a row, and wakes the runner after it (#1435, #1466, #1952)', async () => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       externalId: 'golf-open-2026',
@@ -513,12 +513,16 @@ describe('IngestionPersistence', () => {
     await persistence.persistEventDetailWithDiagnostics(detail);
 
     expect(prisma.backgroundJob.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: [expect.objectContaining({ type: eventRebuildJob('sport-event-1').type, dedupeKey: eventRebuildJob('sport-event-1').dedupeKey })],
+      data: [
+        expect.objectContaining({ type: eventRebuildJob('sport-event-1').type, dedupeKey: eventRebuildJob('sport-event-1').dedupeKey }),
+        expect.objectContaining({ type: BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS, dedupeKey: `${BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS}:sport-event-1` }),
+      ],
     }));
+    expect(prisma.backgroundJob.createMany).toHaveBeenCalledTimes(1);
     expect(domainEvents.changedSportEventIds).toEqual(['sport-event-1']);
   });
 
-  it('writes no rebuild job for a field sync that changes no row, since no board can have moved (#1466)', async () => {
+  it('writes no rebuild job for a field sync that changes no row, since no board can have moved, but still writes the sync\'s follow-up job (#1466, #1952)', async () => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       externalId: 'golf-open-2026',
@@ -543,7 +547,10 @@ describe('IngestionPersistence', () => {
     const result = await persistence.persistEventDetailWithDiagnostics(detail);
 
     expect(result.writeDiagnostics.rows.filter((row) => row.entityType === 'SportEventParticipant').map((row) => row.disposition)).toEqual(['UNCHANGED']);
-    expect(prisma.backgroundJob.createMany).not.toHaveBeenCalled();
+    expect(prisma.backgroundJob.createMany).toHaveBeenCalledTimes(1);
+    expect(prisma.backgroundJob.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: [expect.objectContaining({ type: BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS })],
+    }));
     expect(domainEvents.handedOutSportEventIds).toEqual([]);
   });
 
