@@ -25,6 +25,8 @@ export function pickPreviewModule(fastify: FastifyInstance, opts: PlanModuleOpti
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const handlers = createPickPreviewHandlers(
     createSelectionService(prisma, fastify.log, { planEntitlements: opts.planEntitlements }),
+    // The preview only reads (previewGames), but it builds the same PredictionService, whose
+    // writes need the domain event map; passing the app's one keeps a single wiring.
     createPredictionService(prisma, fastify.log, { domainEvents: opts.domainEvents }),
   );
 

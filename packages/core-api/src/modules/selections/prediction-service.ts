@@ -532,7 +532,12 @@ export class PredictionService {
     return { after: this.withLockedWeek(context, week), written };
   }
 
-  /** The follow-ups of the week's status moving `from` → `to`, for its write to carry (#1946). */
+  /**
+   * The follow-ups of the week's status moving `from` → `to`, for its write to carry (#1946). This
+   * is collected on every pick save, before the write knows whether the week moves, so the
+   * handlers of `CONTEST_ENTRY_EVENT_STATUS_CHANGED` must stay read-free: a read there would run
+   * on every save a member makes.
+   */
   private weekStatusChanged(context: WeekContext, from: ContestEntryStatus, to: ContestEntryStatus): Promise<JobsForWrite> {
     return this.deps.domainEvents.collect({
       type: DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED,
