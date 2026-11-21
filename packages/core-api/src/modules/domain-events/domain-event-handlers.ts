@@ -24,12 +24,15 @@ import {
   tellLeaguesEventPostponedHandler,
   tellLeaguesEventRescheduledHandler,
 } from '../notifications/contest-email-job-requests';
+import { activateEventContestsHandler, followPostponedEventContestsHandler } from '../events/event-contests-job-requests';
 import { syncGamesThenTierFieldHandler } from '../events/synced-field-follow-up-job';
 import { DomainEventType } from './domain-event';
 import type { DomainEventHandlerMap } from './domain-event-handler';
 
 export const DOMAIN_EVENT_HANDLERS = {
   [DomainEventType.SPORT_EVENT_STATUS_CHANGED]: [
+    activateEventContestsHandler,
+    followPostponedEventContestsHandler,
     settleFinishedEventContestsHandler,
     releaseIntoTemplateContestsHandler,
     tellLeaguesEventPostponedHandler,

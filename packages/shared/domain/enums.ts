@@ -1736,6 +1736,10 @@ export const BackgroundJobType = {
   RELEASE_SPORT_EVENT: 'RELEASE_SPORT_EVENT',
   /** Syncs one event's games from its provider after a field sync, then tiers and prices its field (#1952). */
   SYNC_EVENT_GAMES_AND_TIERS: 'SYNC_EVENT_GAMES_AND_TIERS',
+  /** Takes one event's contests live at their cutoffs once the event has started (#1952). */
+  ACTIVATE_EVENT_CONTESTS: 'ACTIVATE_EVENT_CONTESTS',
+  /** A postponed event's contests follow its start: reopened while it is ahead, live once it has passed (#1792, #1952). */
+  FOLLOW_POSTPONED_EVENT_CONTESTS: 'FOLLOW_POSTPONED_EVENT_CONTESTS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by the label each screen shows. */

@@ -108,6 +108,8 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
 
     expect(pinned).toEqual({
       SPORT_EVENT_STATUS_CHANGED: [
+        'activate-event-contests',
+        'follow-postponed-event-contests',
         'settle-finished-event-contests',
         'release-into-template-contests',
         'tell-leagues-event-postponed',
@@ -182,6 +184,40 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
     return found;
   };
   const context = () => ({ queue: watchedQueue(), releasedEditionContests: templateContests(['contest-1', 'contest-2']), sportEventChanged: recordingSportEventChangedNotice() });
+
+  it('takes an event\'s contests live by a job when the event starts, and on no other change', async () => {
+    const activate = handler('activate-event-contests');
+
+    expect(activate.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS))).toBe(true);
+    expect(activate.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.IN_PROGRESS))).toBe(true);
+    for (const to of [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
+      expect(activate.when?.(statusChanged(SportEventStatus.IN_PROGRESS, to))).toBe(false);
+    }
+    expect(await activate.jobs(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS), context())).toEqual([{
+      type: BackgroundJobType.ACTIVATE_EVENT_CONTESTS,
+      payload: { sportEventId: 'sport-event-1' },
+      sportEventId: 'sport-event-1',
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: 'ACTIVATE_EVENT_CONTESTS:sport-event-1',
+    }]);
+  });
+
+  it('has a postponed event\'s contests follow its start by a job on every postponement, a repeated one too, as the lifecycle sweep asks', async () => {
+    const follow = handler('follow-postponed-event-contests');
+
+    expect(follow.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED))).toBe(true);
+    expect(follow.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.POSTPONED))).toBe(true);
+    expect(follow.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.SCHEDULED))).toBe(false);
+    expect(await follow.jobs(statusChanged(SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED), context())).toEqual([{
+      type: BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS,
+      payload: { sportEventId: 'sport-event-1' },
+      sportEventId: 'sport-event-1',
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: 'FOLLOW_POSTPONED_EVENT_CONTESTS:sport-event-1',
+    }]);
+  });
 
   it('settles the contests of an event that completes or is cancelled, at the moment the event carries, and of no other change', async () => {
     const settle = handler('settle-finished-event-contests');
@@ -538,6 +574,8 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       DOMAIN_EVENT_TABLE_START,
       '| Domain event | Handler | Queues |',
       '|---|---|---|',
+      '| `SPORT_EVENT_STATUS_CHANGED` | `activate-event-contests` | `ACTIVATE_EVENT_CONTESTS` |',
+      '| `SPORT_EVENT_STATUS_CHANGED` | `follow-postponed-event-contests` | `FOLLOW_POSTPONED_EVENT_CONTESTS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `settle-finished-event-contests` | `SETTLE_SPORT_EVENT_CONTESTS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `release-into-template-contests` | `ADD_RELEASED_EDITION_TO_CONTEST` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |',

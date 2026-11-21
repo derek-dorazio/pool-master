@@ -149,14 +149,14 @@ async function awaitJobs(what: string, where: JobWhere): Promise<void> {
 }
 
 /**
- * Waits until the jobs an event's write queued for its contests have run: settling them when it
- * finishes, or a decided game's squares contests, and adding a released edition to its template
+ * Waits until the jobs an event's write queued for its contests have run: taking them live when it
+ * starts, following a postponed event's start (#1952), settling them when it finishes, or a decided game's squares contests, and adding a released edition to its template
  * contests. The server runs these after the write answers, and the scenarios read the contests
  * next, as a member would once the jobs are done.
  */
 async function awaitEventContestJobs(sportEventId: string, since: Date): Promise<void> {
   await awaitJobs(`Event ${sportEventId}'s contest jobs`, {
-    type: { in: ['SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'ADD_RELEASED_EDITION_TO_CONTEST'] },
+    type: { in: ['ACTIVATE_EVENT_CONTESTS', 'FOLLOW_POSTPONED_EVENT_CONTESTS', 'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'ADD_RELEASED_EDITION_TO_CONTEST'] },
     payload: { path: ['sportEventId'], equals: sportEventId },
     createdAt: { gte: since },
   });
