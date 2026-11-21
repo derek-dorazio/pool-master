@@ -34,6 +34,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Env-var fallbacks | `poolmaster/no-env-fallbacks` (ESLint) |
 | A gate sending its refusal without awaiting it | `poolmaster/no-unawaited-send-error` (ESLint) |
 | A repository or Prisma call per loop iteration or `.map` row in the backend | `poolmaster/no-query-in-loop` (ESLint) |
+| A follow-up job or board rebuild queued by the writer instead of a domain event handler | `poolmaster/follow-ups-via-domain-events` (ESLint) |
 | A screen keeping one row, a count or an id/status/year slice of a list query | `poolmaster/no-list-lookup` (ESLint) |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |

@@ -2075,7 +2075,6 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     const emailJobs = createContestEmailJobs(getAppPrisma(), { notices, logger: fakeLogger() });
     const lifecycle = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }),
-      sportEventChanged: notices,
       contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger(), { domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }) }),
     });
     // Held until the transition has returned, so the email is seen to come from its jobs (#1448, #1458).
@@ -2090,9 +2089,8 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     await deliverQueuedEmail();
     expect(send).not.toHaveBeenCalled();
 
-    // The settle job decides which contests hear of the cancellation and writes one job for the
-    // one contest that goes on, building no email itself (#1458), then settles.
-    await runner.drain();
+    // The cancellation's own write decides which contests hear of it and carries one job for the
+    // one contest that goes on, building no email itself (#1458); its settle job then settles.
     await expect(prisma.backgroundJob.findMany({ where: { type: 'CONTEST_EVENT_CHANGED_EMAILS' }, select: { payload: true } })).resolves.toEqual([{
       payload: { contestId: open.id, sportEventId: event.id, change: { kind: 'CANCELLED', startsAt: event.startDate.toISOString() } },
     }]);

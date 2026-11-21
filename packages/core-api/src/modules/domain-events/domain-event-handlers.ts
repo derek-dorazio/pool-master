@@ -21,6 +21,7 @@ import {
   tellLeagueContestReopenedHandler,
   tellLeagueContestSettledHandler,
   tellLeagueContestStartedHandler,
+  tellLeaguesEventCancelledHandler,
   tellLeaguesEventPostponedHandler,
   tellLeaguesEventRescheduledHandler,
 } from '../notifications/contest-email-job-requests';
@@ -33,6 +34,7 @@ export const DOMAIN_EVENT_HANDLERS = {
     settleFinishedEventContestsHandler,
     releaseIntoTemplateContestsHandler,
     tellLeaguesEventPostponedHandler,
+    tellLeaguesEventCancelledHandler,
     rebuildEventLeaderboardsHandler,
   ],
   [DomainEventType.SPORT_EVENT_RESCHEDULED]: [tellLeaguesEventRescheduledHandler],

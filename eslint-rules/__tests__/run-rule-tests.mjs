@@ -35,6 +35,7 @@ import noRawThemeColors from '../no-raw-theme-colors.mjs';
 import noUnawaitedSendError from '../no-unawaited-send-error.mjs';
 import noQueryInLoop from '../no-query-in-loop.mjs';
 import noListLookup from '../no-list-lookup.mjs';
+import followUpsViaDomainEvents from '../follow-ups-via-domain-events.mjs';
 
 const ruleTester = new RuleTester({
   languageOptions: {
@@ -1314,6 +1315,125 @@ ruleTester.run('no-inline-display-format', noInlineDisplayFormat, {
     { code: "new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });", errors: [{ messageId: 'inlineIntl' }] },
     { code: "Intl.NumberFormat(locale).format(1);", errors: [{ messageId: 'inlineIntl' }] },
     { code: "new Intl.PluralRules('en-US');", errors: [{ messageId: 'inlineIntl' }] },
+  ],
+});
+
+// A write's follow-up jobs come from the domain event handler map: a queuing call is recognised by
+// its receiver's declared type, so the names in the cases say nothing the types do not.
+const jobDeclarations = `
+  interface BackgroundJobRequest { type: string }
+  declare class BackgroundJobQueue {
+    request(type: string, payload: unknown): BackgroundJobRequest;
+    enqueue(type: string, payload: unknown): Promise<boolean>;
+    enqueueReturning(type: string, payload: unknown): Promise<unknown>;
+    enqueueRequestReturning(request: BackgroundJobRequest): Promise<unknown>;
+    enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number>;
+    queued(): void;
+  }
+  interface BackgroundJobRepository { enqueue(request: BackgroundJobRequest): Promise<boolean>; enqueueAll(requests: readonly BackgroundJobRequest[]): Promise<number>; claimDue(): Promise<unknown[]>; }
+  interface LeaderboardRebuilds { eventsChanged(ids: readonly string[]): Promise<void>; contestsChanged(ids: readonly string[]): Promise<void>; }
+  declare class JobLeaderboardRebuilds implements LeaderboardRebuilds { eventsChanged(ids: readonly string[]): Promise<void>; contestsChanged(ids: readonly string[]): Promise<void>; }
+  interface Http { request(url: string): Promise<unknown>; }
+  interface Collector { collect(event: { type: string }): Promise<{ jobs: BackgroundJobRequest[]; queued(): void }>; }
+  declare const deps: {
+    queue: BackgroundJobQueue;
+    jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
+    wake: Pick<BackgroundJobQueue, 'queued'>;
+    rows: Pick<BackgroundJobRepository, 'enqueueAll' | 'claimDue'>;
+    leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
+    rebuilds: JobLeaderboardRebuilds;
+    client: Http;
+    domainEvents: Collector;
+  };
+`;
+
+typedRuleTester.run('follow-ups-via-domain-events', followUpsViaDomainEvents, {
+  valid: [
+    {
+      // The map's way: collect the change's jobs and hand them to the write.
+      code: `${jobDeclarations} async function f() { const followUps = await deps.domainEvents.collect({ type: 'X' }); followUps.queued(); }`,
+      filename: typedFixture,
+    },
+    {
+      // Waking the runner after a write that carried its jobs queues nothing.
+      code: `${jobDeclarations} deps.wake.queued();`,
+      filename: typedFixture,
+    },
+    {
+      // A method of the same name on something that is not a job queue.
+      code: `${jobDeclarations} async function f() { await deps.client.request('https://example.test'); }`,
+      filename: typedFixture,
+    },
+    {
+      // A repository method that writes no job.
+      code: `${jobDeclarations} async function f() { await deps.rows.claimDue(); }`,
+      filename: typedFixture,
+    },
+    {
+      // An entry point that starts work says so where it queues.
+      code: `${jobDeclarations} async function f() {
+        // poolmaster-allow-direct-job: a root admin's Sync now starts the sync
+        await deps.queue.enqueue('SYNC', {});
+      }`,
+      filename: typedFixture,
+    },
+    {
+      // The marker covers the statement holding the call.
+      code: `${jobDeclarations} async function f() {
+        // poolmaster-allow-direct-job: a provider's webhook starts the syncs
+        const syncs = ['a', 'b'].map((id) =>
+          deps.jobs.request('SYNC', { id }));
+        return syncs;
+      }`,
+      filename: typedFixture,
+    },
+  ],
+  invalid: [
+    {
+      code: `${jobDeclarations} deps.jobs.request('SYNC', {});`,
+      filename: typedFixture,
+      errors: [{ messageId: 'directJob', data: { method: 'request', receiver: 'BackgroundJobQueue' } }],
+    },
+    {
+      code: `${jobDeclarations} async function f() { await deps.queue.enqueue('SYNC', {}); await deps.queue.enqueueReturning('SYNC', {}); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'directJob', data: { method: 'enqueue', receiver: 'BackgroundJobQueue' } }, { messageId: 'directJob', data: { method: 'enqueueReturning', receiver: 'BackgroundJobQueue' } }],
+    },
+    {
+      code: `${jobDeclarations} async function f(request: BackgroundJobRequest) { await deps.queue.enqueueRequestReturning(request); await deps.jobs.enqueueAll([request]); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'directJob', data: { method: 'enqueueRequestReturning', receiver: 'BackgroundJobQueue' } }, { messageId: 'directJob', data: { method: 'enqueueAll', receiver: 'BackgroundJobQueue' } }],
+    },
+    {
+      // The job table written to directly, past the queue.
+      code: `${jobDeclarations} async function f(request: BackgroundJobRequest) { await deps.rows.enqueueAll([request]); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'directJob', data: { method: 'enqueueAll', receiver: 'BackgroundJobRepository' } }],
+    },
+    {
+      // An optional dependency is still a queue, and a class implementing the interface is one too.
+      code: `${jobDeclarations} async function f() { await deps.leaderboards?.eventsChanged(['e']); await deps.rebuilds.contestsChanged(['c']); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'directJob', data: { method: 'eventsChanged', receiver: 'LeaderboardRebuilds' } }, { messageId: 'directJob', data: { method: 'contestsChanged', receiver: 'LeaderboardRebuilds' } }],
+    },
+    {
+      // A marker with no reason is an error of its own.
+      code: `${jobDeclarations} async function f() {
+        // poolmaster-allow-direct-job
+        await deps.queue.enqueue('SYNC', {});
+      }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'missingReason' }],
+    },
+    {
+      // A marker left behind once its call is gone is reported, so a fix removes it.
+      code: `${jobDeclarations} async function f() {
+        // poolmaster-allow-direct-job: a sweep's timer starts it
+        await deps.client.request('https://example.test');
+      }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'unusedAllow' }],
+    },
   ],
 });
 

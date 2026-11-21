@@ -271,6 +271,7 @@ export class ContestSettlementService {
     }
 
     // One rebuild of the event's boards, however many of its contests settled.
+    // poolmaster-allow-direct-job: settlement's standings writes carry no jobs yet; #1973 moves this rebuild onto the map
     if (contestsSettled > 0) await this.deps.leaderboards?.eventsChanged([sportEventId]);
 
     this.logger.info({

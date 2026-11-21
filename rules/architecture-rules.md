@@ -221,6 +221,12 @@ A module that needs another module's result now (a read, a validation, a write i
 of work) still calls that module's service directly, wired in its `wiring.ts`. A handler is for
 work that can happen after the write.
 
+`poolmaster/follow-ups-via-domain-events` (ESLint, #1951) refuses a job request, an enqueue or a
+board rebuild outside the job builders and their handlers (`*-job-requests.ts`, `*-job.ts`) and
+the queue itself. An entry point that starts work rather than reacting to a change (a provider's
+webhook, an admin's sync or rebuild route, a sweep on a timer, a read asking for a stale board)
+says so at the call with `// poolmaster-allow-direct-job: <what starts the work>`.
+
 The map is static and typed. There is no runtime subscription, no string topic and no handler
 that a reader of the map cannot see. A domain event type names a model entity and its change,
 never a sport or league, and a handler filters only on the event's model fields

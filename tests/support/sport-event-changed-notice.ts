@@ -12,18 +12,9 @@ export function eventChangedJob(sportEventId: string, kind: string): BackgroundJ
   };
 }
 
-/**
- * An event-changed notice that answers one `eventChangedJob` per change it is asked about, and
- * records each change it is told of in `order` as `told <kind>`.
- */
-export function recordingSportEventChangedNotice(order: string[] = []) {
+/** An event-changed notice that answers one `eventChangedJob` per change it is asked about. */
+export function recordingSportEventChangedNotice() {
   return {
-    sportEventChangedJobs: mockFn<SportEventChangedNotice['sportEventChangedJobs']>(async (sportEvent, change) => {
-      order.push(`told ${change.kind}`);
-      return [eventChangedJob(sportEvent.id, change.kind)];
-    }),
-    sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async (_sportEvent, change) => {
-      order.push(`told ${change.kind}`);
-    }),
+    sportEventChangedJobs: mockFn<SportEventChangedNotice['sportEventChangedJobs']>(async (sportEvent, change) => [eventChangedJob(sportEvent.id, change.kind)]),
   };
 }

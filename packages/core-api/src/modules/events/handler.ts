@@ -286,6 +286,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     rebuildEventLeaderboards: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const { eventId } = request.params;
       await requireEvent(eventId);
+      // poolmaster-allow-direct-job: a root admin's Settle again route starts the rebuild
       await leaderboards.eventsChanged([eventId]);
       (request.contextLogger ?? request.log).info({ action: 'events.route.leaderboards.rebuild.queued', data: { eventId } }, 'Queued a rebuild of the event\'s leaderboards');
       return reply.status(204).send();

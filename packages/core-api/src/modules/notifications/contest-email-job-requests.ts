@@ -144,6 +144,18 @@ export const tellLeaguesEventPostponedHandler: DomainEventHandler<typeof DomainE
 };
 
 /**
+ * A cancellation tells the leagues on the event (C7) by one job per contest written with the
+ * status, while the contests are still open: its settle job finishes them after. A contest the
+ * cancellation leaves no event to play gets its no-scores result (F2) instead, so no job.
+ */
+export const tellLeaguesEventCancelledHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
+  key: 'tell-leagues-event-cancelled',
+  queues: [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS],
+  when: (event) => event.to === SportEventStatus.CANCELLED && event.from !== SportEventStatus.CANCELLED,
+  jobs: (event, { sportEventChanged }) => sportEventChanged.sportEventChangedJobs(event.sportEvent, { kind: ContestEventChangeKind.CANCELLED }),
+};
+
+/**
  * The statuses whose moved start is told to the leagues on the event: a draft's commissioners
  * can't see it yet, and a started event's picks are closed.
  */

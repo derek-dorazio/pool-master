@@ -12,7 +12,7 @@ import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { DomainEventType } from '../domain-events/domain-event';
 import type { DomainEventHandler } from '../domain-events/domain-event-handler';
-import type { LeaderboardChanges } from './leaderboard-snapshots';
+import type { LeaderboardChanges, LeaderboardRebuilds } from './leaderboard-snapshots';
 
 /** What a rebuild job covers. */
 export const LeaderboardRebuildSubject = {
@@ -84,3 +84,20 @@ export const rebuildContestLeaderboardsHandler: DomainEventHandler<typeof Domain
   queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
   jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.CONTEST, event.contestEntryEvent.contestId)],
 };
+
+/** Queues a rebuild job per event or contest a write changed, each one waiting at most once. */
+export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
+  constructor(private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>) {}
+
+  eventsChanged(sportEventIds: readonly string[]): Promise<void> {
+    return this.queue(LeaderboardRebuildSubject.EVENT, sportEventIds);
+  }
+
+  contestsChanged(contestIds: readonly string[]): Promise<void> {
+    return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
+  }
+
+  private async queue(subject: LeaderboardRebuildSubject, ids: readonly string[]): Promise<void> {
+    await this.jobs.enqueueAll([...new Set(ids)].map((id) => rebuildLeaderboardsJob(this.jobs, subject, id)));
+  }
+}
