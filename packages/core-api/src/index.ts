@@ -394,6 +394,8 @@ export function buildApp() {
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
       RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
       SYNC_EVENT_GAMES_AND_TIERS: (payload) => syncedFieldFollowUps.run(payload),
+      ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
+      FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

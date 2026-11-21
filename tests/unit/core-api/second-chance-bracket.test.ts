@@ -367,7 +367,7 @@ describe('a second-chance bracket — its leaderboard and standings', () => {
 });
 
 describe('a second-chance bracket — going live', () => {
-  it('stays OPEN when its event moves to IN_PROGRESS, while an ordinary contest on the event goes live at the event\'s start', async () => {
+  it('stays OPEN when its event moves to IN_PROGRESS and the start\'s job runs, while an ordinary contest on the event goes live at the event\'s start', async () => {
     const context = setup();
     context.world.sportEvents.set(context.sportEvent.id, { ...context.eventNow(), status: SportEventStatus.SCHEDULED });
     const ordinary = context.world.addContest(context.contest.leagueId, { status: ContestStatus.OPEN, sportEventIds: [context.sportEvent.id] });
@@ -376,6 +376,7 @@ describe('a second-chance bracket — going live', () => {
     await context.lifecycle.applySportEventStatusTransition({
       sportEventId: context.sportEvent.id, toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' },
     });
+    await context.lifecycle.activateEventContests({ sportEventId: context.sportEvent.id });
 
     expect(expectDefined(context.world.contests.get(ordinary.id))).toMatchObject({ status: ContestStatus.ACTIVE, startsAt: at(-48) });
     expect(context.contestNow().status).toBe(ContestStatus.OPEN);
