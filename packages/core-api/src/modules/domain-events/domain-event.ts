@@ -9,13 +9,18 @@
  * published unchanged if the delivery ever moves out of process.
  */
 
-import type { SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
+import type { ContestEntryStatus, SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
 
 export const DomainEventType = {
   /** A sport event's status moved (`EventLifecycleService.applySportEventStatusTransition`). */
   SPORT_EVENT_STATUS_CHANGED: 'SPORT_EVENT_STATUS_CHANGED',
   /** A sport event's start moved, by an admin's edit that tells its leagues; each handler decides which statuses it acts on. */
   SPORT_EVENT_RESCHEDULED: 'SPORT_EVENT_RESCHEDULED',
+  /**
+   * A contest entry's week of picks for one event moved status: submitted, or sent back to draft by
+   * a change its picks no longer pass (`PredictionService`). A pick saved without moving it is not one.
+   */
+  CONTEST_ENTRY_EVENT_STATUS_CHANGED: 'CONTEST_ENTRY_EVENT_STATUS_CHANGED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
 
@@ -43,8 +48,16 @@ export interface SportEventRescheduled {
   reopeningContestIds: ReadonlySet<string>;
 }
 
+export interface ContestEntryEventStatusChanged {
+  type: typeof DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED;
+  /** The entry's row for one event of its contest, by its ids. */
+  contestEntryEvent: { contestId: string; contestEntryId: string; sportEventId: string };
+  from: ContestEntryStatus;
+  to: ContestEntryStatus;
+}
+
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | ContestEntryEventStatusChanged;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;
