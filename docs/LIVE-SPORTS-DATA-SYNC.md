@@ -189,7 +189,8 @@ failure is a `TIERS_AND_PRICES_NOT_MADE` warning on the job; the field is writte
 
 After each field load, its job's first step, `ProviderGameSlateService.afterFieldLoad`
 (`events/provider-game-slate.ts`), turns the provider's games into the event's matches. A game is matched to a stored match by its
-two teams. Nothing loads while a team is missing from the field; a refused load is logged and
+two teams. Nothing loads while a team is missing from the field; a refused load is logged, is a
+`GAMES_NOT_SYNCED` warning on the job, and
 never fails the field sync. Spreads stay the admin's. Each round with kickoffs starts at its
 earliest one.
 

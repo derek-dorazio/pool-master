@@ -77,16 +77,36 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
   });
 
   it('keeps a run that changed nothing but failed to tier and price, so Activity shows the warning', async () => {
-    const { service } = followUps({ valuation: { outcome: 'FAILED', message: 'no tier profile' } });
+    const { service } = followUps({ slate: { outcome: 'UNCHANGED', sportEventId: 'sport-event-1' }, valuation: { outcome: 'FAILED', message: 'no tier profile' } });
 
     expect(await service.run(PAYLOAD)).toEqual({
       changedCount: 0,
       result: {
-        games: { outcome: 'NO_GAMES_LISTED' },
+        games: { outcome: 'UNCHANGED', sportEventId: 'sport-event-1' },
         stats: {},
         warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: no tier profile' }],
       },
     });
+  });
+
+  it('keeps a run whose listed games failed to sync, with a warning, rather than reading as if none were listed', async () => {
+    // The slate logs a failure and answers null, as it does when no games were listed.
+    const { service } = followUps({ slate: null });
+
+    expect(await service.run(PAYLOAD)).toEqual({
+      changedCount: 0,
+      result: {
+        games: { outcome: 'FAILED' },
+        stats: { tiersUnchanged: 4, pricesUnchanged: 32 },
+        warnings: [{ code: 'GAMES_NOT_SYNCED', message: 'The provider\'s games were not synced to the event; the next field sync tries again.' }],
+      },
+    });
+  });
+
+  it('leaves no Activity row when the provider listed no games and the tiers and prices are unchanged', async () => {
+    const { service } = followUps();
+
+    expect(await service.run({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'week-2' })).toBe(DISCARD_BACKGROUND_JOB);
   });
 
   it('leaves no Activity row for a run that changed nothing and has nothing to report, as most repeat syncs are', async () => {

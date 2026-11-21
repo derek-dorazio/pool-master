@@ -17,9 +17,8 @@ import {
 } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { DISCARD_BACKGROUND_JOB, type BackgroundJobAnswer } from '../background-jobs/background-job-outcome';
-import type { DomainEventType } from '../domain-events/domain-event';
+import type { DomainEventType, SportEventFieldSynced } from '../domain-events/domain-event';
 import type { DomainEventHandler } from '../domain-events/domain-event-handler';
-import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 import type { ProviderGameSlateOutcome, ProviderGameSlateService } from './provider-game-slate';
 import { fieldValuationReport, type FieldValuationOutcome, type SyncedFieldValuationService } from './synced-field-valuation';
 
@@ -55,15 +54,6 @@ export const SyncEventGamesAndTiersJobPayloadSchema = z.object({
 });
 export type SyncEventGamesAndTiersJobPayload = z.infer<typeof SyncEventGamesAndTiersJobPayloadSchema>;
 
-/** What a field sync hands its follow-ups: the event it wrote, and the provider's games that came with the field. */
-export interface SyncedFieldDetail {
-  sportEventId: string;
-  providerId: string;
-  externalId: string;
-  games?: readonly ProviderScheduledGame[];
-  bracket?: readonly ProviderBracketMatch[];
-}
-
 const isoOrNull = (date: Date | null): string | null => (date === null ? null : date.toISOString());
 const dateOrNull = (iso: string | null): Date | null => (iso === null ? null : new Date(iso));
 
@@ -73,15 +63,15 @@ const dateOrNull = (iso: string | null): Date | null => (iso === null ? null : n
  * waiting job syncs the games the first one brought. The next sync after it is claimed queues a
  * fresh job, so games a provider changed in between are taken then.
  */
-export function syncEventGamesAndTiersJob(jobs: Pick<BackgroundJobQueue, 'request'>, detail: SyncedFieldDetail): BackgroundJobRequest {
+export function syncEventGamesAndTiersJob(jobs: Pick<BackgroundJobQueue, 'request'>, synced: Omit<SportEventFieldSynced, 'type'>): BackgroundJobRequest {
   return jobs.request(BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS, {
-    sportEventId: detail.sportEventId,
-    providerId: detail.providerId,
-    externalId: detail.externalId,
-    ...(detail.games !== undefined && { games: detail.games.map((game) => ({ ...game, scheduledAt: isoOrNull(game.scheduledAt) })) }),
-    ...(detail.bracket !== undefined && { bracket: detail.bracket.map((match) => ({ ...match, scheduledAt: isoOrNull(match.scheduledAt) })) }),
+    sportEventId: synced.sportEvent.id,
+    providerId: synced.providerId,
+    externalId: synced.externalId,
+    ...(synced.games !== undefined && { games: synced.games.map((game) => ({ ...game, scheduledAt: isoOrNull(game.scheduledAt) })) }),
+    ...(synced.bracket !== undefined && { bracket: synced.bracket.map((match) => ({ ...match, scheduledAt: isoOrNull(match.scheduledAt) })) }),
   }, {
-    dedupeKey: `${BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS}:${detail.sportEventId}`,
+    dedupeKey: `${BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS}:${synced.sportEvent.id}`,
   });
 }
 
@@ -94,13 +84,7 @@ export const syncGamesThenTierFieldHandler: DomainEventHandler<typeof DomainEven
   key: 'sync-games-then-tier-field',
   queues: [BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS],
   when: (event) => !isSportEventStatusFinished(event.sportEvent.status),
-  jobs: (event, { queue }) => [syncEventGamesAndTiersJob(queue, {
-    sportEventId: event.sportEvent.id,
-    providerId: event.providerId,
-    externalId: event.externalId,
-    ...(event.games !== undefined && { games: event.games }),
-    ...(event.bracket !== undefined && { bracket: event.bracket }),
-  })],
+  jobs: (event, { queue }) => [syncEventGamesAndTiersJob(queue, event)],
 };
 
 /** How many of the event's games one slate sync loaded or changed. */
@@ -126,7 +110,7 @@ export interface SyncedFieldFollowUpsDeps {
  * The SYNC_EVENT_GAMES_AND_TIERS job's handler: the provider's games first, so a draft's tiers and
  * prices come from a field whose games are in, then the tiers and prices. Each step reads the
  * event as it stands when the job runs and writes only what differs, so a retry or a repeat
- * changes nothing more. A step that fails is logged and reported in the job's result, not
+ * changes nothing more. A step that fails is logged and reported as a warning in the job's result, not
  * thrown, as it was on the field sync's run: the field is written, and the next field sync tries
  * again. A run that changed nothing and has nothing to report leaves no Activity row (#1865).
  */
@@ -141,12 +125,20 @@ export class SyncedFieldFollowUps {
       ...(payload.bracket !== undefined && { bracket: payload.bracket.map((match) => ({ ...match, scheduledAt: dateOrNull(match.scheduledAt) })) }),
     });
     const valuation = await this.deps.valuation.afterFieldLoad(ref);
-    const { stats, warnings } = fieldValuationReport(valuation);
+    const { stats, warnings: valuationWarnings } = fieldValuationReport(valuation);
+    // The slate answers null both for no games listed and for a sync that failed (it logs and
+    // swallows the error), so whether the provider listed any tells the two apart.
+    const listed = payload.games !== undefined || payload.bracket !== undefined;
+    const gamesFailed = listed && slate === null;
+    const warnings = [
+      ...(gamesFailed ? [{ code: 'GAMES_NOT_SYNCED', message: 'The provider\'s games were not synced to the event; the next field sync tries again.' }] : []),
+      ...valuationWarnings,
+    ];
     const changedCount = gamesChanged(slate) + valuedCount(valuation);
     if (changedCount === 0 && warnings.length === 0) return DISCARD_BACKGROUND_JOB;
     return {
       changedCount,
-      result: { games: slate ?? { outcome: 'NO_GAMES_LISTED' }, stats, warnings },
+      result: { games: slate ?? { outcome: gamesFailed ? 'FAILED' : 'NO_GAMES_LISTED' }, stats, warnings },
     };
   }
 }
