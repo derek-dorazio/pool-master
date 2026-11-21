@@ -6,6 +6,7 @@
  * data participant whose feed id the Load test data run bound is the row the sync fields, so the
  * two never make a duplicate.
  */
+import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'crypto';
 import { expect } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
@@ -59,7 +60,7 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
   return { golfer, detail, event, sportLeagueId: league.id, suffix };
 }
 
-const sync = (detail: SportEventDetail) => new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
+const sync = (detail: SportEventDetail) => new IngestionPersistence(getAppPrisma(), testDomainEvents()).persistEventDetailWithDiagnostics(detail);
 const mappingOf = (externalId: string, sportLeagueId: string) => getPrisma().participantProviderMapping.findUnique({
   where: { providerId_externalId_sportLeagueId: { providerId: PROVIDER, externalId, sportLeagueId } },
 });

@@ -39,8 +39,6 @@ import { eventStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService, type SportDataProviderLookup } from '../sport-catalog/sport-league-service';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
-import type { BackgroundJobQueue } from '../background-jobs';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import { EventLifecycleService, type FinishedSportEventSettlement } from './event-lifecycle-service';
 import type { DomainEvents } from '../domain-events';
 import { SportEventService } from './service';
@@ -49,6 +47,7 @@ import { ProviderGameSlateService } from './provider-game-slate';
 import { ReadCache } from '../../core/read-cache';
 import { readEventFieldCacheTtlMs, type EventFieldCache } from './event-field-cache';
 import { SportEventParticipantService } from './sport-event-participant-service';
+import { EventFieldReader } from './event-field-reader';
 import { SportEventRoundService } from './sport-event-round-service';
 import { SportEventContestService } from './sport-event-contest-service';
 import { PrismaSportEventContestReader } from '../../adapters/prisma-sport-event-contest-reader';
@@ -69,8 +68,8 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
 
 export function createGolfScoreService(
   prisma: PrismaClient,
+  domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): GolfScoreService {
   return new GolfScoreService({
     events: new PrismaSportEventRepository(prisma),
@@ -81,7 +80,7 @@ export function createGolfScoreService(
     golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
     golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
     storesGolfRoundScores: eventStoresGolfRoundScores,
-    leaderboards,
+    domainEvents,
     logger,
   });
 }
@@ -89,15 +88,15 @@ export function createGolfScoreService(
 /** Each game's box score lines for a stat pool event (#935). */
 export function createStatLineService(
   prisma: PrismaClient,
+  domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): StatLineService {
   return new StatLineService({
     events: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
-    leaderboards,
+    domainEvents,
     logger,
   });
 }
@@ -106,14 +105,14 @@ export function createStatLineService(
 export function createStatLineWriterDeps(
   prisma: PrismaClient,
   providerId: string,
+  domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): StatLineWriterDeps {
   return {
     providerId,
     field: new PrismaSportEventParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
-    statLines: createStatLineService(prisma, logger, leaderboards),
+    statLines: createStatLineService(prisma, domainEvents, logger),
     logger,
   };
 }
@@ -121,8 +120,8 @@ export function createStatLineWriterDeps(
 /** The admin finishing order for a finish-position event (#622). */
 export function createRaceResultService(
   prisma: PrismaClient,
+  domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): RaceResultService {
   return new RaceResultService({
     events: new PrismaSportEventRepository(prisma),
@@ -130,7 +129,7 @@ export function createRaceResultService(
     participants: new PrismaParticipantRepository(prisma),
     raceResults: new PrismaSportEventParticipantRaceResultRepository(prisma),
     storesRaceResults: eventStoresRaceResults,
-    leaderboards,
+    domainEvents,
     logger,
   });
 }
@@ -138,8 +137,8 @@ export function createRaceResultService(
 /** An event's bracket of matches (#698), for an event whose sport plays one. */
 export function createSportEventBracketService(
   prisma: PrismaClient,
+  domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): SportEventBracketService {
   return new SportEventBracketService({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -152,7 +151,7 @@ export function createSportEventBracketService(
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
     contests: new PrismaContestRepository(prisma),
-    leaderboards,
+    domainEvents,
     logger,
   });
 }
@@ -176,37 +175,39 @@ export interface SportEventServices {
 
 export function createMatchResultService(
   prisma: PrismaClient,
+  domainEvents: Pick<DomainEvents, 'collect'>,
+  /** The app's event lifecycle, so a result that passes a contest's cutoff puts it live with its email (#1954). */
+  contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>,
   logger?: FastifyBaseLogger,
-  contestActivation?: Pick<EventLifecycleService, 'activateContestsPastCutoff' | 'finishedGameSettlement'>,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): MatchResultService {
   return new MatchResultService({
     sportEvents: new PrismaSportEventRepository(prisma),
     matches: new PrismaSportEventMatchRepository(prisma),
     contestActivation,
-    leaderboards,
+    domainEvents,
     logger,
   });
 }
 
 /**
- * What a provider's game scores are written with (#1496): the admin's own result path, so a
- * result starts contests past their cutoff and settles the squares contests on its game.
+ * What a provider's game scores are written with (#1496): the admin's own result path, on the
+ * app's own event lifecycle and handler map, so a result starts contests past their cutoff with
+ * their "Contest is live" email and settles the squares contests on its game (#1954).
  */
 export function createGameScoreWriterDeps(
   prisma: PrismaClient,
   providerId: string,
-  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>,
+  domainEvents: Pick<DomainEvents, 'collect'>,
+  contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>,
   logger?: FastifyBaseLogger,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): GameScoreWriterDeps {
   return {
     providerId,
     matches: new PrismaSportEventMatchRepository(prisma),
     eventParticipants: new PrismaSportEventParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
-    results: createMatchResultService(prisma, logger, createEventLifecycleService(prisma, { domainEvents, logger }), leaderboards),
-    playIns: createSportEventBracketService(prisma, logger, leaderboards),
+    results: createMatchResultService(prisma, domainEvents, contestActivation, logger),
+    playIns: createSportEventBracketService(prisma, domainEvents, logger),
     logger,
   };
 }
@@ -218,11 +219,20 @@ export function createGameScoreWriterDeps(
  */
 export const eventFieldCache: EventFieldCache = new ReadCache(readEventFieldCacheTtlMs(process.env));
 
-/** The event's field as every reader sees it — the event admin screens and the contest golf reads alike. */
+/** The event's field as the contest and email readers read it, on the one field cache (#1163). */
+export function createEventFieldReader(prisma: PrismaClient): EventFieldReader {
+  return new EventFieldReader({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    fieldCache: eventFieldCache,
+  });
+}
+
+/** The event's field as the event admin screens read and write it, on the same field cache. */
 export function createSportEventParticipantService(
   prisma: PrismaClient,
+  domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): SportEventParticipantService {
   return new SportEventParticipantService({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -232,7 +242,7 @@ export function createSportEventParticipantService(
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     fieldCache: eventFieldCache,
-    leaderboards,
+    domainEvents,
     logger,
   });
 }
@@ -245,8 +255,8 @@ export function createSportEventServices(
   prisma: PrismaClient,
   logger: FastifyBaseLogger | undefined,
   lifecycle: EventLifecycleService,
-  /** Every admin write that changes a board carries its rebuild job (#1466); without it, none are rebuilt. */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
+  /** What follows each results, field or game write (#1946): the app's one map, built in index.ts. */
+  domainEvents: Pick<DomainEvents, 'collect'>,
   /**
    * The registered providers a sport league's event sync may name (ADR 0011). Pass the app's
    * registry wherever a sport league is updated; omitted, none is registered, so turning a
@@ -260,7 +270,7 @@ export function createSportEventServices(
 
   const rounds = new SportEventRoundService({ rounds: new PrismaSportEventRoundRepository(prisma), logger });
   const tiers = createSportEventTierService(prisma, logger);
-  const bracket = createSportEventBracketService(prisma, logger, leaderboards);
+  const bracket = createSportEventBracketService(prisma, domainEvents, logger);
   const sportEventService = new SportEventService({
     sportEvents: events,
     eventSeries: new PrismaEventSeriesRepository(prisma),
@@ -271,7 +281,7 @@ export function createSportEventServices(
     bracket,
     lifecycle,
     contests: new PrismaContestRepository(prisma),
-    leaderboards,
+    domainEvents,
     logger,
   });
   return {
@@ -280,7 +290,7 @@ export function createSportEventServices(
     bracket,
     sportEvents: sportEventService,
     contests: new SportEventContestService({ sportEvents: sportEventService, reader: new PrismaSportEventContestReader(prisma) }),
-    field: createSportEventParticipantService(prisma, logger, leaderboards),
+    field: createSportEventParticipantService(prisma, domainEvents, logger),
     providerGames: new ProviderGameSlateService({
       sportEvents: events,
       matches: new PrismaSportEventMatchRepository(prisma),
@@ -290,10 +300,10 @@ export function createSportEventServices(
       rounds,
       logger,
     }),
-    golfScores: createGolfScoreService(prisma, logger, leaderboards),
-    raceResults: createRaceResultService(prisma, logger, leaderboards),
-    statLines: createStatLineService(prisma, logger, leaderboards),
-    matchResults: createMatchResultService(prisma, logger, lifecycle, leaderboards),
+    golfScores: createGolfScoreService(prisma, domainEvents, logger),
+    raceResults: createRaceResultService(prisma, domainEvents, logger),
+    statLines: createStatLineService(prisma, domainEvents, logger),
+    matchResults: createMatchResultService(prisma, domainEvents, lifecycle, logger),
     sportLeagues: createSportLeagueService(prisma, logger, providers),
   };
 }
@@ -328,8 +338,6 @@ export function createEventLifecycleService(
     /** What follows a status change or a moved start (#1946): the app's one map, built in index.ts. */
     domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
     logger?: FastifyBaseLogger;
-    /** Where a decided game queues the job that settles its squares contests (#711); without it, none runs. */
-    jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
     /** Who a cancellation's settle job tells (C7); without it, nobody is. */
     sportEventChanged?: SportEventChangedNotice;
     contestSettlement?: FinishedSportEventSettlement;
@@ -344,7 +352,6 @@ export function createEventLifecycleService(
     new PrismaSportEventRepository(prisma),
     options.domainEvents,
     options.logger,
-    options.jobs,
     options.contestSettlement,
     options.sportEventChanged,
   );

@@ -17,7 +17,7 @@
 import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
 import { SelectionType, type Contest, type SportEvent, type SportEventMatch } from '@poolmaster/shared/domain';
 import { readMillisecondsSetting } from '../../core/read-cache';
-import type { BackgroundJobQueue, JobsForWrite } from '../background-jobs/background-job-queue';
+import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from './leaderboard-rebuild-job-requests';
 
 /** Which leaderboard a stored board is: each contest has one, by how its entries pick. */
@@ -118,12 +118,6 @@ export interface LeaderboardRebuilds {
   /** The fields or statuses of these events changed: their contests' boards are rebuilt soon. */
   eventsChanged(sportEventIds: readonly string[]): Promise<void>;
   /**
-   * The job rebuilding the event's contests' boards, for the write changing its scores, field or
-   * status to carry into its own transaction (#1466): a write that fails queues no rebuild, and a
-   * failed insert fails the write rather than leaving it saved with an error answered.
-   */
-  forEvent(sportEventId: string): JobsForWrite;
-  /**
    * These contests' stored boards are no longer current: rebuild them soon (#1788). What a read
    * that computes boards without storing them asks, so they are stored for the reads after.
    */
@@ -140,14 +134,6 @@ export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
 
   contestsChanged(contestIds: readonly string[]): Promise<void> {
     return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
-  }
-
-  forEvent(sportEventId: string): JobsForWrite {
-    return this.forWrite(LeaderboardRebuildSubject.EVENT, sportEventId);
-  }
-
-  private forWrite(subject: LeaderboardRebuildSubject, id: string): JobsForWrite {
-    return { jobs: [rebuildLeaderboardsJob(this.jobs, subject, id)], queued: () => this.jobs.queued() };
   }
 
   private async queue(subject: LeaderboardRebuildSubject, ids: readonly string[]): Promise<void> {

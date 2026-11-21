@@ -9,6 +9,8 @@
 import { z } from 'zod';
 import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { DomainEventType } from '../domain-events/domain-event';
+import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 
 export const SettleGameContestsJobPayloadSchema = z.object({
   sportEventId: z.string().min(1),
@@ -34,3 +36,14 @@ export function settleGameContestsJob(
     dedupeKey: `${BackgroundJobType.SETTLE_GAME_CONTESTS}:${sportEventMatchId}`,
   });
 }
+
+/**
+ * The squares contests played on a decided game settle now, while its event may have weeks to run
+ * (#711), in a job written with the game, so a request never loops over an event's contests. An
+ * admin's result and a provider's queue it alike (#1954).
+ */
+export const settleDecidedGameContestsHandler: DomainEventHandler<typeof DomainEventType.GAME_DECIDED> = {
+  key: 'settle-decided-game-contests',
+  queues: [BackgroundJobType.SETTLE_GAME_CONTESTS],
+  jobs: (event, { queue }) => [settleGameContestsJob(queue, event.sportEventId, event.sportEventMatchId, event.decidedAt)],
+};

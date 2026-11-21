@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { eventStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
@@ -27,7 +28,7 @@ async function setup() {
     await store.mappingRepo().bind({ providerId: 'feed', externalId, participantId, sportLeagueId: store.leagueOf(participantId), confidence: 'EXACT', mappedAt });
   }
   const logger = fakeLogger();
-  const service = new GolfScoreService({
+  const service = new GolfScoreService({ domainEvents: testDomainEvents(),
     events: store.sportEventRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),

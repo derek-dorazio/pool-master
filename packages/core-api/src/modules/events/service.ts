@@ -57,7 +57,7 @@ import type { SportEventBracketService } from './sport-event-bracket-service';
 import { dailyRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 import { NO_JOBS_FOR_WRITE, combineJobsForWrite } from '../background-jobs';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 
 /**
  * What only a root admin reads of an event: its release readiness and whether it can be deleted.
@@ -186,8 +186,8 @@ export interface SportEventServiceDeps {
   lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduledJobs'>;
   /** A new start moves the event's contests' entry reminders (#1170). */
   contests: Pick<ContestRepository, 'recheckReminders'>;
-  /** An edit can move what the event's contests' boards show, so it carries their rebuild (#1466). */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /** What follows each results, field or game change it writes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
 }
@@ -535,7 +535,7 @@ export class SportEventService {
       ? await this.deps.lifecycle.sportEventRescheduledJobs({ id: sportEventId, startDate, status }, startedAt)
       : NO_JOBS_FOR_WRITE;
     // The edit can change what the event's contests' boards show, so its rebuild rides with it (#1466).
-    const written = combineJobsForWrite(told, this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE);
+    const written = combineJobsForWrite(told, await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId }));
     // The event and its jobs are one write; the rounds and reminders follow it, not in its
     // transaction: a failure after it leaves the rounds behind the event's new dates. The round
     // writes only reject a round the event lacks, and they read the event's rounds first, so in

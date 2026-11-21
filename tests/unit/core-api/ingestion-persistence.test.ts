@@ -1,6 +1,8 @@
-import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { testDomainEvents } from '../../support/domain-events';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { expect } from '@jest/globals';
-import { MappingConfidence, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, MappingConfidence, Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
   ProviderParticipant,
@@ -140,7 +142,7 @@ describe('IngestionPersistence', () => {
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
     const logger = fakeLogger();
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), logger);
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), logger);
     const events: SportEvent[] = [
       {
         externalId: 'golf-weekend-1',
@@ -273,7 +275,7 @@ describe('IngestionPersistence', () => {
         },
       },
     });
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
 
     const result = await persistence.persistEventDetailWithDiagnostics(detail);
 
@@ -317,7 +319,7 @@ describe('IngestionPersistence', () => {
       unlinkedRanked: [{ ranking: 2, participant: { id: 'site-doncic', name: 'Luka Dončić' } }, { ranking: 5, participant: { id: 'site-brown', name: 'Jaylen Brown' } }],
     });
 
-    const result = await new IngestionPersistence(asPrismaClient(prisma), fakeLogger()).persistEventDetailWithDiagnostics(detail);
+    const result = await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger()).persistEventDetailWithDiagnostics(detail);
 
     expect(result.unlinkedRankedParticipants).toEqual([
       { participantId: 'site-doncic', name: 'Luka Dončić', ranking: 2 },
@@ -333,7 +335,7 @@ describe('IngestionPersistence', () => {
   it('lists no unlinked ranked participants for a provider event no event is linked to, since it writes no field', async () => {
     const prisma = fieldSyncPrisma({ externalId: 'golfer-01', eventRow: linkedRow(), linkedEvent: null, fieldRow: null });
 
-    const result = await new IngestionPersistence(asPrismaClient(prisma), fakeLogger()).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [] });
+    const result = await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger()).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [] });
 
     expect(result.unlinkedRankedParticipants).toEqual([]);
     expect(prisma.sportEventParticipant.findMany).not.toHaveBeenCalled();
@@ -380,7 +382,7 @@ describe('IngestionPersistence', () => {
         metadata: { seed: 3 },
       },
     });
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
 
     await persistence.persistEventDetailWithDiagnostics(detail);
 
@@ -424,7 +426,7 @@ describe('IngestionPersistence', () => {
       const fieldCache = await cacheHoldingTheField();
       const prisma = syncedEvent(jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]));
 
-      await new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail);
+      await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail);
 
       expect(await readsAfresh(fieldCache)).toBe(true);
     });
@@ -433,7 +435,7 @@ describe('IngestionPersistence', () => {
       const cdn = new RecordingCdnInvalidator();
       const prisma = syncedEvent(jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]));
 
-      await new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), undefined, cdn).persistEventDetailWithDiagnostics(detail);
+      await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger(), undefined, cdn).persistEventDetailWithDiagnostics(detail);
 
       expect(cdn.calls).toEqual([[PublicReadPath.EVENT_PAGES]]);
     });
@@ -442,14 +444,14 @@ describe('IngestionPersistence', () => {
       const fieldCache = await cacheHoldingTheField();
       const prisma = syncedEvent(jest.fn().mockRejectedValue(new Error('connection reset')));
 
-      await expect(new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail))
+      await expect(new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail))
         .rejects.toThrow('connection reset');
 
       expect(await readsAfresh(fieldCache)).toBe(true);
     });
   });
 
-  it('writes the event\'s leaderboard rebuild job in the same transaction as a field sync that changes a row, and wakes the runner after it (#1435, #1466)', async () => {
+  it('writes the event\'s leaderboard rebuild job and the sync\'s follow-up job in the one transaction of a field sync that changes a row, and wakes the runner after it (#1435, #1466, #1952)', async () => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       externalId: 'golf-open-2026',
@@ -505,18 +507,22 @@ describe('IngestionPersistence', () => {
         },
       },
     });
-    const leaderboards = new RecordingLeaderboardRebuilds();
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), undefined, undefined, leaderboards);
+    const domainEvents = new RecordingDomainEvents();
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), domainEvents, fakeLogger());
 
     await persistence.persistEventDetailWithDiagnostics(detail);
 
     expect(prisma.backgroundJob.createMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: [expect.objectContaining({ type: eventRebuildJob('sport-event-1').type, dedupeKey: eventRebuildJob('sport-event-1').dedupeKey })],
+      data: [
+        expect.objectContaining({ type: eventRebuildJob('sport-event-1').type, dedupeKey: eventRebuildJob('sport-event-1').dedupeKey }),
+        expect.objectContaining({ type: BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS, dedupeKey: `${BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS}:sport-event-1` }),
+      ],
     }));
-    expect(leaderboards.sportEventIds).toEqual(['sport-event-1']);
+    expect(prisma.backgroundJob.createMany).toHaveBeenCalledTimes(1);
+    expect(domainEvents.changedSportEventIds).toEqual(['sport-event-1']);
   });
 
-  it('writes no rebuild job for a field sync that changes no row, since no board can have moved (#1466)', async () => {
+  it('writes no rebuild job for a field sync that changes no row, since no board can have moved, but still writes the sync\'s follow-up job (#1466, #1952)', async () => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       externalId: 'golf-open-2026',
@@ -535,14 +541,17 @@ describe('IngestionPersistence', () => {
         metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
       },
     });
-    const leaderboards = new RecordingLeaderboardRebuilds();
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), undefined, undefined, leaderboards);
+    const domainEvents = new RecordingDomainEvents();
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), domainEvents, fakeLogger());
 
     const result = await persistence.persistEventDetailWithDiagnostics(detail);
 
     expect(result.writeDiagnostics.rows.filter((row) => row.entityType === 'SportEventParticipant').map((row) => row.disposition)).toEqual(['UNCHANGED']);
-    expect(prisma.backgroundJob.createMany).not.toHaveBeenCalled();
-    expect(leaderboards.handedOut).toEqual([]);
+    expect(prisma.backgroundJob.createMany).toHaveBeenCalledTimes(1);
+    expect(prisma.backgroundJob.createMany).toHaveBeenCalledWith(expect.objectContaining({
+      data: [expect.objectContaining({ type: BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS })],
+    }));
+    expect(domainEvents.handedOutSportEventIds).toEqual([]);
   });
 
   it('reads every linked event of a feed in one query and writes only the changed ones in one transaction (#1247)', async () => {
@@ -557,7 +566,7 @@ describe('IngestionPersistence', () => {
       },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
     const changed = { ...buildInProgressEvent(), participantCount: 80 };
 
     const result = await persistence.persistEventsWithDiagnostics([
@@ -585,7 +594,7 @@ describe('IngestionPersistence', () => {
       },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
     const event = buildInProgressEvent();
 
     const result = await persistence.persistEventsWithDiagnostics([
@@ -604,7 +613,7 @@ describe('IngestionPersistence', () => {
 
   it('reads and writes nothing for an empty feed', async () => {
     const prisma = { sportEvent: { findMany: jest.fn() }, $transaction: jest.fn() };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
 
     const result = await persistence.persistEventsWithDiagnostics([]);
 
@@ -623,7 +632,7 @@ describe('IngestionPersistence', () => {
       },
       $transaction: jest.fn(async (operations: Array<Promise<unknown>>) => Promise.all(operations)),
     };
-    const persistence = new IngestionPersistence(asPrismaClient(prisma), fakeLogger());
+    const persistence = new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger());
 
     const result = await persistence.persistEventsWithDiagnostics([
       { ...buildInProgressEvent(), name: 'Provider Open', rounds: 5, participantCount: 80, startDate: new Date('2026-07-01T12:00:00.000Z') },
@@ -679,6 +688,8 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
         )),
       },
       participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn().mockResolvedValue({ count: 0 }), updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      // The field write carries the event's leaderboard rebuild (#1466).
+      backgroundJob: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
     };
     // A callback transaction runs on the double itself; a batch runs all, in order.
     const $transaction = jest.fn((work: unknown): Promise<unknown> => (typeof work === 'function'
@@ -689,7 +700,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
 
   async function sync(prisma: ReturnType<typeof unmappedPrisma>, participants: ProviderParticipant[]) {
     const logger = fakeLogger();
-    await new IngestionPersistence(asPrismaClient(prisma), logger).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants });
+    await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), logger).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants });
     const [[{ data: mappings }]] = prisma.participantProviderMapping.createMany.mock.calls as Array<[{ data: Array<{ participantId: string; externalId: string; confidence: string }> }]>;
     return { mappings, logger };
   }
@@ -739,7 +750,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
   it('creates no participant for a feed event no event is linked to, there being no sport league for them to belong to', async () => {
     const prisma = unmappedPrisma([], false);
 
-    const result = await new IngestionPersistence(asPrismaClient(prisma), fakeLogger())
+    const result = await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger())
       .persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [golfer('bdl-1', 'Scottie Scheffler')] });
 
     expect(result.value.participantsPersisted).toBe(0);

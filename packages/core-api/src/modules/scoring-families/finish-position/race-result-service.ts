@@ -39,8 +39,7 @@ import {
 } from '../../sport-catalog/participant-row-resolver';
 import { displayPlace, placesFormFinishingOrder, standingStatusForResult } from './race-order';
 import type { ScoringFamilyEvent } from '../scoring-family-module';
-import { NO_JOBS_FOR_WRITE } from '../../background-jobs/background-job-queue';
-import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
+import { DomainEventType, type DomainEvents } from '../../domain-events';
 
 export class RaceResultError extends Error {
   constructor(
@@ -101,8 +100,8 @@ export interface RaceResultServiceDeps {
    * event is refused rather than given rows its leaderboard never reads.
    */
   storesRaceResults: (event: ScoringFamilyEvent) => boolean;
-  /** The event's leaderboard rebuild, written with the result (#1466); none without it. */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /** What follows each results, field or game change it writes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -243,7 +242,7 @@ export class RaceResultService {
       asOf,
     }));
 
-    const rebuild = this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
+    const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
     await this.deps.raceResults.applyResults(sportEventId, { results, isOfficial: input.isOfficial, standings, jobs: rebuild.jobs });
     rebuild.queued();
     this.deps.logger?.info({

@@ -26,8 +26,7 @@ import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import type { EventDetailPersisted, UnlinkedRankedParticipant } from '../core/ingestion-scheduler';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
-import type { LeaderboardRebuilds } from '../../contests/leaderboard-snapshots';
-import { NO_JOBS_FOR_WRITE, type JobsForWrite } from '../../background-jobs/background-job-queue';
+import type { JobsForWrite } from '../../background-jobs/background-job-queue';
 import { backgroundJobsInsert, insertBackgroundJobs } from '../../../adapters/prisma-background-job-repository';
 import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { PublicReadPath } from '../../../core/public-cache';
@@ -43,18 +42,17 @@ export class IngestionPersistence {
   /**
    * `fieldCache`: the event fields this container read lately, an event's forgotten once its field
    * is written (#1163). `cdn`: clears the public event pages once a field is written, since a
-   * loaded field is what turns an offer from NOT_YET to OPEN (#1181). `leaderboards`: the event's
-   * rebuild job, written with a field write that changes a row, so the event's contests' stored
-   * leaderboards are computed again (#1435, #1466). `domainEvents`: what follows a field sync, the
-   * event's games and then its tiers and prices (#1952), written with the field.
+   * loaded field is what turns an offer from NOT_YET to OPEN (#1181). `domainEvents`: what follows
+   * a field sync, written with the field (#1946): the event's games and then its tiers and prices
+   * (#1952), and, when a row changed, the event's contests' stored leaderboards computed again
+   * (#1435, #1466).
    */
   constructor(
     private readonly prisma: PrismaClient,
+    private readonly domainEvents: Pick<DomainEvents, 'collect'>,
     private readonly logger?: FastifyBaseLogger,
     private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
     private readonly cdn?: CdnInvalidator,
-    private readonly leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
-    private readonly domainEvents?: Pick<DomainEvents, 'collect'>,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -302,14 +300,14 @@ export class IngestionPersistence {
     const seedsLocked = seedsLockedOn(persistedEvent);
     // What follows the field (#1952): the provider's games, then the tiers and prices, in a job
     // written with the field, so a task that stops after the write still has them run.
-    const followUps = await this.domainEvents?.collect({
+    const followUps = await this.domainEvents.collect({
       type: DomainEventType.SPORT_EVENT_FIELD_SYNCED,
       sportEvent: { id: persistedEvent.id, status: persistedEvent.status },
       providerId: detail.providerId,
       externalId: detail.externalId,
       ...(detail.games !== undefined && { games: detail.games }),
       ...(detail.bracket !== undefined && { bracket: detail.bracket }),
-    }) ?? NO_JOBS_FOR_WRITE;
+    });
 
     try {
       sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows, followUps);
@@ -418,8 +416,8 @@ export class IngestionPersistence {
     const toUpdate = plans.filter((plan) => plan.existing && plan.disposition !== 'UNCHANGED');
     let createdIdByParticipantId = new Map<string, string>();
     if (toCreate.length > 0 || toUpdate.length > 0) {
-      // The field changed, so the event's boards are rebuilt by a job written with it (#1466).
-      const rebuild = this.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
+      // The field changed, so what follows it (the boards' rebuild, #1466) is written with it.
+      const rebuild = await this.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
       const [created] = await this.prisma.$transaction([
         this.prisma.sportEventParticipant.createManyAndReturn({
           // A play-in place is marked as one when its row is made; a later load leaves the mark to the bracket's own fill (#1571).

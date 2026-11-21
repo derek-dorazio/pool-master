@@ -35,8 +35,8 @@ import { ContestEventChangeKind } from '../email';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import { ContestLifecycle } from '../contests/contest-lifecycle';
 import type { SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
-import { settleGameContestsJob, type SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
-import { NO_JOBS_FOR_WRITE, type BackgroundJobQueue, type JobsForWrite } from '../background-jobs';
+import type { SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
+import type { JobsForWrite } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import { DomainEventType, type DomainEvents } from '../domain-events';
 import type { EventContestsJobPayload } from './event-contests-job-requests';
@@ -56,9 +56,6 @@ export interface FinishedSportEventSettlement {
     input?: { completedAt?: Date },
   ): Promise<number>;
 }
-
-/** The job a decided game's write carries (#711). */
-export type FinishedGameSettlement = JobsForWrite;
 
 /** Who drove the transition: an admin by hand, or the lifecycle scheduler. */
 export type SportEventStatusTransitionActor =
@@ -132,8 +129,6 @@ export class EventLifecycleService {
     /** What follows a status change or a moved start: the jobs each writes with its change (#1946). */
     private readonly domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>,
     private readonly logger?: FastifyBaseLogger,
-    /** Where a decided game queues the job that settles its squares contests (#711); without it, none runs. */
-    private readonly jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>,
     private readonly contestSettlement?: FinishedSportEventSettlement,
     /** Who a cancellation's settle job tells before it settles (C7). */
     private readonly sportEventChanged?: SportEventChangedNotice,
@@ -182,7 +177,8 @@ export class EventLifecycleService {
     // misses is still told: either another caller reopened it first, and its write queued the same
     // reopen email, or the contest left ACTIVE, and the C6 a live contest would get no longer
     // applies. The job plans again as it runs, and a job that fails is retried, with the lifecycle
-    // sweep behind it.
+    // sweep behind it. One case gets neither email: if the new start passes before the job runs
+    // (its latency or a retry), a planned contest stays live, since the event has started by then.
     const postponing = input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED;
     const reopenPlan = postponing ? await this.contestsToReopen({ ...before, status: SportEventStatus.POSTPONED }, now) : undefined;
     // What follows the change (settlement, a release into template contests, the postponed
@@ -258,21 +254,6 @@ export class EventLifecycleService {
   }
 
   /**
-   * A game's result is in, a quarter score it waited for came after it, or it was cancelled
-   * (#711): the squares contests played on it settle now, while its event may still have weeks to
-   * run. They settle in a job the caller writes with the game, so a request never loops over an
-   * event's contests. Without a job queue and settlement, nothing settles.
-   */
-  finishedGameSettlement(sportEventId: string, sportEventMatchId: string, now: Date = new Date()): FinishedGameSettlement {
-    if (!this.jobs || !this.contestSettlement) return NO_JOBS_FOR_WRITE;
-    const { jobs } = this;
-    return {
-      jobs: [settleGameContestsJob(jobs, sportEventId, sportEventMatchId, now)],
-      queued: () => jobs.queued(),
-    };
-  }
-
-  /**
    * The SETTLE_GAME_CONTESTS job: settles the squares contests on one game as the game stands
    * when the job runs. A contest already COMPLETED is not settled again, so a retry after a
    * failure part way settles only the rest.
@@ -292,6 +273,9 @@ export class EventLifecycleService {
    * or was cancelled, after telling a cancelled event's leagues (C7), which it must do while their
    * contests are still open. It reads the event again: one moved back out of COMPLETED or
    * CANCELLED before the job ran settles nothing, and its next finish queues a job of its own.
+   *
+   * A completed event's contests still open past their cutoff go live first, so each is told it
+   * went live (E1) before it is told it finished.
    *
    * Settlement is idempotent, so a retry after a failure part way finishes the rest: a contest
    * already COMPLETED is not settled again, one whose standings for this event are frozen keeps
@@ -315,8 +299,16 @@ export class EventLifecycleService {
     if (sportEvent.status === SportEventStatus.CANCELLED) {
       await this.sportEventChanged?.sportEventChanged(sportEvent, { kind: ContestEventChangeKind.CANCELLED });
     }
+    const completedAt = new Date(payload.completedAt);
+    // A completed event's open contests go live first (#1952), as the sweep does: an event that
+    // completed before its ACTIVATE_EVENT_CONTESTS job ran, or while that job waited to retry, would
+    // otherwise settle them straight from OPEN and nobody would be told the contest went live.
+    // The guarded moves keep it idempotent with that job.
+    if (sportEvent.status === SportEventStatus.COMPLETED) {
+      await this.activateContestsPastCutoff(sportEvent, completedAt);
+    }
     const summary = await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
-      completedAt: new Date(payload.completedAt),
+      completedAt,
       sportEvent,
     });
     return { changedCount: summary.contestsSettled };
