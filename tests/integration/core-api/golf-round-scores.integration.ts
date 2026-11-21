@@ -466,6 +466,7 @@ describe('Golf standings ranks — the leaderboard rebuild they carry (#1466)', 
     await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, round1.roundNumber, [row(rory.participant.id)]);
     const standings = new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma());
     const [stored] = await standings.findBySportEvent(event.id);
+    const jobsBefore = await rebuildJobCount(event.id);
 
     await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => standings.updateRanks(
       [{ standingId: stored.standing.id, position: 7, displayPosition: 'T7' }], [eventRebuildJob(event.id)],
@@ -473,7 +474,7 @@ describe('Golf standings ranks — the leaderboard rebuild they carry (#1466)', 
 
     await expect(getPrisma().sportEventParticipantStanding.findUniqueOrThrow({ where: { id: stored.standing.id } }))
       .resolves.toMatchObject({ position: stored.standing.position, displayPosition: stored.standing.displayPosition ?? null });
-    await expect(rebuildJobCount(event.id)).resolves.toBe(0);
+    await expect(rebuildJobCount(event.id)).resolves.toBe(jobsBefore);
   });
 });
 
