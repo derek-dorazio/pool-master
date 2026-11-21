@@ -893,13 +893,12 @@ describe('mock contest feed provider event-first verification', () => {
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
-    const settlement = createContestSettlementService(getAppPrisma());
+    const settlement = createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() });
     // One queue and one runner over the job table, as the app has: two runners here would each
     // claim the other's jobs and fail them as unexpected.
     const backgroundJobs = integrationBackgroundJobs();
     const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: backgroundJobs.queue }),
-      jobs: backgroundJobs.queue,
       contestSettlement: settlement,
     });
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());

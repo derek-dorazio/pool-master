@@ -46,8 +46,8 @@ import {
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { ChampionshipService } from '../championship/service';
 import { readFinalStandings } from './final-standings';
-import { contestSettledEmailsJob } from '../notifications/contest-email-job-requests';
-import type { BackgroundJobQueue } from '../background-jobs';
+import type { DomainEvents } from '../domain-events';
+import { ContestLifecycle } from './contest-lifecycle';
 import type { LeaderboardRebuilds } from './leaderboard-snapshots';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -97,8 +97,8 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   eventStandings: ContestEntryEventStandingRepository;
   squares: Pick<ContestSquaresRepository, 'findSquares' | 'findDraw' | 'replaceWinners'>;
   championship: Pick<ChampionshipService, 'recordContest'>;
-  /** Where a contest that completes queues its final results email job (#845 F1, F2, #1387); without it, nobody is told. */
-  jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
+  /** What follows a contest's completion (#1949): its final results email job (#845 F1, F2, #1387), written with the move. */
+  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
   /** Told which event's contests settled, so their stored leaderboards show the frozen result (#1435). */
   leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
   logger?: LifecycleLogger;
@@ -119,9 +119,12 @@ type SettlementReads = Omit<ContestSettlementDeps, 'sportEvents'> & {
 
 export class ContestSettlementService {
   private readonly logger: LifecycleLogger;
+  /** The one writer of a contest's status (#1949). */
+  private readonly contestLifecycle: ContestLifecycle;
 
   constructor(private readonly deps: ContestSettlementDeps) {
     this.logger = deps.logger ?? createNoopLogger();
+    this.contestLifecycle = new ContestLifecycle(deps.contests, deps.domainEvents);
   }
 
   /**
@@ -578,16 +581,12 @@ export class ContestSettlementService {
     const final = await readFinalStandings(this.deps, contest);
     const ranked = final.entries.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
     await this.deps.championship.recordContest(contest, completedAt, ranked);
-    const { jobs } = this.deps;
-    const completed = await this.deps.contests.transitionStatus(contest.id, {
+    // Its handler tells the league F1 or F2, the final results, by a job written with the move.
+    return this.contestLifecycle.transition(contest.id, {
       from: SETTLEABLE,
       to: ContestStatus.COMPLETED,
       endsAt: completedAt,
-      // F1 or F2, the final results, built by a job written with the move.
-      ...(jobs && { jobs: () => [contestSettledEmailsJob(jobs, contest.id)] }),
     });
-    if (completed) jobs?.queued();
-    return completed;
   }
 
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */

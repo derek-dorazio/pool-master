@@ -131,7 +131,7 @@ function publish(externalEventId: string, games: GameScoreUpdate[]) {
       prisma: getAppPrisma(),
       providerId: PROVIDER,
       domainEvents,
-      contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents, jobs: queue }),
+      contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents }),
       scoringFamilyForEvent: () => headToHeadScoringFamily,
     },
   );

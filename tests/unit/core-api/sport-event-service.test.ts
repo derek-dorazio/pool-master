@@ -63,7 +63,6 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     testDomainEvents({ sportEventChanged }),
     undefined,
     undefined,
-    undefined,
     sportEventChanged,
   );
   const service = new SportEventService({

@@ -91,7 +91,7 @@ import { testDomainEvents } from '../support/domain-events';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
 import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService } from '../../packages/core-api/src/modules/contest-management/wiring';
+import { createContestManagementService, createReleasedEditionContests } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
@@ -300,16 +300,15 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   // A write's boards are rebuilt by a job per event or contest, as in index.ts (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs.queue);
   const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
-  // A released edition joins its template contests by a job per contest (#1318).
-  const releasedEditionContests = createContestManagementService(prisma, testApp.log, planEntitlements);
-  // What follows each change (#1946), as in index.ts.
-  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, releasedEditionContests, sportEventChanged: contestNotices });
+  // What follows each change (#1946), as in index.ts. A released edition joins its template
+  // contests by a job per contest (#1318), which contest management runs.
+  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, releasedEditionContests: createReleasedEditionContests(prisma, testApp.log), sportEventChanged: contestNotices });
+  const contestManagement = createContestManagementService(prisma, testApp.log, planEntitlements, { domainEvents });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: testApp.log,
-    jobs: backgroundJobs.queue,
     sportEventChanged: contestNotices,
-    contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue, leaderboards }),
+    contestSettlement: createContestSettlementService(prisma, testApp.log, { domainEvents, leaderboards }),
   });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
@@ -348,7 +347,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-    ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
+    ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });
@@ -370,11 +369,12 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });
   testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email, memberJoined });
-  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements });
+  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements, domainEvents });
   testApp.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
     email,
     planEntitlements,
+    domainEvents,
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   // The trophy room's routes, for the query-scaling tests of its reads (#1242).

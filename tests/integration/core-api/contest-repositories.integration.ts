@@ -17,7 +17,7 @@ import {
   PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
 import { recordStatements, statementCounts, statementShape } from '../statement-log';
-import { createContestManagementService } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { createContestManagementService, createReleasedEditionContests } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import { ContestEventsChangedError } from '../../../packages/core-api/src/modules/contest-management/service';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
@@ -1203,9 +1203,10 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
 
   /** The release as the events routes make it, with the app's job queue: its jobs wait for a drain. */
   function releasing() {
-    const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()));
     const { queue } = integrationBackgroundJobs();
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue, releasedEditionContests: contestManagement }), jobs: queue });
+    const domainEvents = testDomainEvents({ queue, releasedEditionContests: createReleasedEditionContests(getAppPrisma(), fakeLogger()) });
+    const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()), { domainEvents });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents });
     const release = (sportEventId: string) => lifecycle.applySportEventStatusTransition({
       sportEventId, toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true,
     });
@@ -1976,7 +1977,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const jobs = integrationBackgroundJobs();
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }), jobs: jobs.queue });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }) });
     const emailJobs = createContestEmailJobs(getAppPrisma(), {
       notices: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
@@ -2074,9 +2075,8 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     const emailJobs = createContestEmailJobs(getAppPrisma(), { notices, logger: fakeLogger() });
     const lifecycle = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }),
-      jobs: jobs.queue,
       sportEventChanged: notices,
-      contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger()),
+      contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger(), { domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }) }),
     });
     // Held until the transition has returned, so the email is seen to come from its jobs (#1448, #1458).
     const runner = integrationBackgroundJobs().runWith({

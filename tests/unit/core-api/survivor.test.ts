@@ -151,7 +151,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
+  const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
   // The season reads a test counts (#1201).
   const seasonReads = { sportEvents: world.sportEventRepo(), matches: games.matchRepo() };
   const predictions = new PredictionService({
@@ -808,6 +808,7 @@ describe('ContestSettlementService — a survivor contest', () => {
     const matches = context.games.matchRepo();
     const sportEvents = context.world.sportEventRepo();
     const settlement = new ContestSettlementService({
+      domainEvents: testDomainEvents(),
       ...context.deps,
       matches: {
         findBySportEvent: async (sportEventId) => {

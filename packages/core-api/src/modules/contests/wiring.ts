@@ -38,6 +38,7 @@ import { ContestService } from './service';
 import { JobLeaderboardRebuilds, readLeaderboardSnapshotMaxAgeMs, type LeaderboardRebuilds } from './leaderboard-snapshots';
 import { createChampionshipService } from '../championship/wiring';
 import { BackgroundJobQueue } from '../background-jobs';
+import type { DomainEvents } from '../domain-events';
 import { currentJobStart } from '../../core/job-start';
 
 /** The bracket, pick'em and survivor reads, plus the batched match read the season leaderboards take (#762). */
@@ -97,8 +98,12 @@ export function createContestService(
 
 export function createContestSettlementService(
   prisma: PrismaClient,
-  logger?: FastifyBaseLogger,
-  options?: { jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>; leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'> },
+  logger: FastifyBaseLogger | undefined,
+  options: {
+    /** What follows a contest's completion (#1949): the app's one handler map, built in index.ts. */
+    domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
+    leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
+  },
 ): ContestSettlementService {
   return new ContestSettlementService({
     ...createContestLeaderboardReadDeps(prisma),
@@ -108,8 +113,8 @@ export function createContestSettlementService(
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     squares: new PrismaSquaresRepository(prisma),
     championship: createChampionshipService(prisma, logger),
-    jobs: options?.jobs,
-    leaderboards: options?.leaderboards,
+    domainEvents: options.domainEvents,
+    leaderboards: options.leaderboards,
     logger,
   });
 }

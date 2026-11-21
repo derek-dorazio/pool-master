@@ -39,7 +39,6 @@ import { eventStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService, type SportDataProviderLookup } from '../sport-catalog/sport-league-service';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
-import type { BackgroundJobQueue } from '../background-jobs';
 import { EventLifecycleService, type FinishedSportEventSettlement } from './event-lifecycle-service';
 import type { DomainEvents } from '../domain-events';
 import { SportEventService } from './service';
@@ -337,10 +336,8 @@ export function createEventLifecycleService(
   prisma: PrismaClient,
   options: {
     /** What follows a status change or a moved start (#1946): the app's one map, built in index.ts. */
-    domainEvents: Pick<DomainEvents, 'collect'>;
+    domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
     logger?: FastifyBaseLogger;
-    /** Where a contest that goes live queues its "Contest is live" email job (#845, #1387); without it, nobody is told, so only a test leaves it out: the app builds one lifecycle, with it, in index.ts. */
-    jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
     /** Who a cancellation's settle job tells (C7); without it, nobody is. */
     sportEventChanged?: SportEventChangedNotice;
     contestSettlement?: FinishedSportEventSettlement;
@@ -355,7 +352,6 @@ export function createEventLifecycleService(
     new PrismaSportEventRepository(prisma),
     options.domainEvents,
     options.logger,
-    options.jobs,
     options.contestSettlement,
     options.sportEventChanged,
   );
