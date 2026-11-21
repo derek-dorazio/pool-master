@@ -32,6 +32,7 @@ import { PredictionService } from '../../../packages/core-api/src/modules/select
 import { expectDefined } from '../../support/expect-defined';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
+import { testDomainEvents } from '../../support/domain-events';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -64,6 +65,7 @@ function predictionService(before: () => Promise<void> = async () => {}) {
     },
   };
   return new PredictionService({
+    domainEvents: testDomainEvents(),
     contests: new PrismaContestRepository(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
     scoringRules: new PrismaParticipantContestScoringRuleRepository(prisma),

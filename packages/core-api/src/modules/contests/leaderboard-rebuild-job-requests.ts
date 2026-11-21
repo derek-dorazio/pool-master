@@ -53,3 +53,16 @@ export const rebuildEventLeaderboardsHandler: DomainEventHandler<typeof DomainEv
   queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
   jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEvent.id)],
 };
+
+/**
+ * A contest's board lists the entries that submitted and each week's submitted flag (#1435), so a
+ * week submitted or sent back to draft rebuilds that contest's boards (#1466). The rebuild's dedupe
+ * key holds one job per contest, so a burst of members submitting queues one rebuild, never one
+ * per pick (`rules/architecture-rules.md` §4). It is collected on every pick save, so it stays
+ * read-free.
+ */
+export const rebuildContestLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED> = {
+  key: 'rebuild-contest-leaderboards',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.CONTEST, event.contestEntryEvent.contestId)],
+};

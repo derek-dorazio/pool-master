@@ -115,6 +115,7 @@ function setup(options: { startsAtRound?: number } = {}) {
   let now = NOW;
   const clock = () => now;
   const predictions = new PredictionService({
+    domainEvents: testDomainEvents(),
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     scoringRules,

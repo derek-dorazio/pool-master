@@ -42,6 +42,7 @@ import { LEADERBOARD_BOARD_FORMAT } from '../../../packages/core-api/src/modules
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
+import { testDomainEvents } from '../../support/domain-events';
 
 const HOUR = 60 * 60 * 1000;
 const T0 = new Date('2026-09-01T00:00:00.000Z');
@@ -154,6 +155,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
   // The season reads a test counts (#1201).
   const seasonReads = { sportEvents: world.sportEventRepo(), matches: games.matchRepo() };
   const predictions = new PredictionService({
+    domainEvents: testDomainEvents(),
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     scoringRules: world.scoringRuleRepo(),
