@@ -1986,9 +1986,11 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
       }),
       logger: fakeLogger(),
     });
-    // Held until the transition has returned, so the good luck emails are seen to come from its job.
+    // Held until the transition has returned, so the contest is seen to go live in the job written
+    // with the start (#1952), and the good luck emails to come from the job that move writes.
     // The start also rebuilds the event's boards (#1466), which this test of the emails does not follow.
     const runner = integrationBackgroundJobs().runWith({
+      ACTIVATE_EVENT_CONTESTS: (payload) => lifecycle.activateEventContests(payload),
       CONTEST_STARTED_EMAILS: (payload) => emailJobs.contestStarted(payload),
       REBUILD_LEADERBOARDS: async () => ({ changedCount: 0 }),
     });
@@ -2001,9 +2003,10 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     const queued = await prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true } });
     expect(queued).toHaveLength(2);
     expect(queued).toEqual(expect.arrayContaining([
-      { type: 'CONTEST_STARTED_EMAILS', payload: { contestId: open.id, sportEventId: event.id }, status: 'QUEUED' },
+      { type: 'ACTIVATE_EVENT_CONTESTS', payload: { sportEventId: event.id }, status: 'QUEUED' },
       { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: event.id }, status: 'QUEUED' },
     ]));
+    await expect(repos().contests.findById(open.id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.OPEN }));
     await runner.drain();
 
     const [started, untouched] = await Promise.all([
