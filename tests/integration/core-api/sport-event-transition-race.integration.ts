@@ -46,7 +46,6 @@ function lifecycleCountingSettlements() {
     new PrismaSportEventRepository(getAppPrisma()),
     testDomainEvents({ queue }),
     fakeLogger(),
-    queue,
     settlement,
   );
   const settleJobs = async () => (await getPrisma().backgroundJob.findMany({

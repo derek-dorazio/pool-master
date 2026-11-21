@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import {
   getAppPrisma,
   integrationBackgroundJobs,
@@ -6,14 +7,12 @@ import {
   getPrisma,
   withBackgroundJobsFailing,
 } from '../helpers';
-import { JobLeaderboardRebuilds } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
-import { testDomainEvents } from '../../support/domain-events';
 
 const rankedEventIds = [
   'integration-ingestion-event',
@@ -116,7 +115,7 @@ describe('IngestionPersistence', () => {
     await linkedProviderEvent(getPrisma(), { providerId: detail.providerId, externalId, name: detail.name, startDate: detail.startDate });
     return detail;
   }
-  const withRebuilds = () => new IngestionPersistence(getAppPrisma(), undefined, undefined, undefined, new JobLeaderboardRebuilds(integrationBackgroundJobs().queue));
+  const withRebuilds = () => new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
   const eventIdOf = async (externalId: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'TEST_PROVIDER', externalId } } })).id;
 
   it('writes the event\'s leaderboard rebuild job with the field a sync changes, and none for a sync that changes nothing (#1466)', async () => {
@@ -143,7 +142,7 @@ describe('IngestionPersistence', () => {
   });
 
   describe('a field sync\'s follow-ups, the provider\'s games then the tiers and prices (#1952)', () => {
-    const withFollowUps = () => new IngestionPersistence(getAppPrisma(), undefined, undefined, undefined, undefined, testDomainEvents({ queue: integrationBackgroundJobs().queue }));
+    const withFollowUps = () => new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
     const followUpJobs = (sportEventId: string) => getPrisma().backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId } });
     const KICKOFF = new Date('2026-04-15T17:00:00.000Z');
     const games = [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'home', awayTeamExternalId: 'away', scheduledAt: KICKOFF, isNeutralSite: false }];
@@ -192,7 +191,7 @@ describe('IngestionPersistence', () => {
 
   it('persists event detail into events, participants, event participants, and source data', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
 
     const detail: SportEventDetail = {
       externalId: 'integration-ingestion-event',
@@ -265,7 +264,7 @@ describe('IngestionPersistence', () => {
 
   it('writes each golfer\'s ranking from the provider\'s field onto the event participant, and leaves it empty when the field gives none', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const golfer = (externalId: string, name: string, ranking?: number) => ({
       externalId,
       providerId: 'TEST_PROVIDER',
@@ -333,7 +332,7 @@ describe('IngestionPersistence', () => {
 
   it('keeps a golfer\'s existing ranking when a later field refresh gives no ranking', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const first = rankedFieldDetail('integration-ranked-refresh', [rankedGolfer('ingestion-ranked-3', 12)]);
     const event = await linkedProviderEvent(prisma, {
       providerId: first.providerId,
@@ -355,7 +354,7 @@ describe('IngestionPersistence', () => {
 
   it('writes the field\'s ranking over the ranking a golfer already has on the event when a refresh carries a new one', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const first = rankedFieldDetail('integration-ranked-overwrite', [rankedGolfer('ingestion-ranked-4', 40)]);
     const event = await linkedProviderEvent(prisma, {
       providerId: first.providerId,
@@ -379,7 +378,7 @@ describe('IngestionPersistence', () => {
   // league, so a created row would have to guess its tour.
   it('updates the event linked to a provider event and writes no row for a provider event nothing is linked to', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const startDate = new Date('2026-06-04T12:00:00.000Z');
     const linked = await linkedProviderEvent(prisma, {
       providerId: 'TEST_PROVIDER',
@@ -415,7 +414,7 @@ describe('IngestionPersistence', () => {
   // same rows and dispositions the one-event-at-a-time sync wrote.
   it('syncs a feed of linked, unlinked, changed and unchanged events into the right rows and dispositions', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const startDate = new Date('2026-06-18T12:00:00.000Z');
     const link = async (externalId: string, participantCount: number) => {
       const event = await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId, name: `Batch ${externalId}`, startDate });
@@ -464,7 +463,7 @@ describe('IngestionPersistence', () => {
 
   it('writes each golfer\'s seed, and the odds only when they were quoted for this event, onto the event participant', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const golfer = (externalId: string, oddsSourceEventId: string) => ({
       externalId,
       providerId: 'TEST_PROVIDER',
@@ -506,7 +505,7 @@ describe('IngestionPersistence', () => {
 
   it('marks the row it makes for a provider\'s play-in place as one, and a team\'s row as none', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const entrant = (externalId: string, metadata: Record<string, unknown>) => ({
       externalId, providerId: 'TEST_PROVIDER', sport: Sport.GOLF, name: `Golfer ${externalId}`, active: true, metadata,
     });
@@ -531,7 +530,7 @@ describe('IngestionPersistence', () => {
     'leaves a %s event\'s admin-owned name, start, rounds and status as they were, and refreshes only its field size',
     async (syncScope) => {
       const prisma = getPrisma();
-      const persistence = new IngestionPersistence(getAppPrisma());
+      const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
       const externalId = `integration-admin-header-${syncScope}`;
       const startDate = new Date('2026-06-11T12:00:00.000Z');
       const created = await linkedProviderEvent(prisma, {
@@ -582,7 +581,7 @@ describe('IngestionPersistence', () => {
   // #1183 — a field sync reads its mappings and field rows at once and writes only what moved.
   it('creates a new field with its participants and mappings, then on a repeat sync writes nothing, and on a change writes only the changed golfer', async () => {
     const prisma = getPrisma();
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     type Golfer = ReturnType<typeof rankedGolfer> & Partial<SportEventDetail['participants'][number]>;
     const field = (secondRanking: number, changes: Record<string, Partial<Golfer>> = {}) => rankedFieldDetail('integration-batched-sync', [
       { ...rankedGolfer('ingestion-batch-1', 1), ...changes['ingestion-batch-1'] },
@@ -659,7 +658,7 @@ describe('IngestionPersistence', () => {
     const event = await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
     const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
 
-    const { statements } = await recordStatements(() => new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail));
+    const { statements } = await recordStatements(() => new IngestionPersistence(getAppPrisma(), testDomainEvents()).persistEventDetailWithDiagnostics(detail));
 
     const created = await prisma.participant.findMany({ where: { externalId: { in: ['ingestion-league-a', 'ingestion-league-b'] } }, select: { sportLeagueId: true } });
     expect(created).toEqual([{ sportLeagueId }, { sportLeagueId }]);

@@ -55,6 +55,24 @@ export const rebuildEventLeaderboardsHandler: DomainEventHandler<typeof DomainEv
 };
 
 /**
+ * A score, result, standing, field or game of an event is what its contests' boards are computed
+ * from, so every write changing one carries the job rebuilding them (#1466): a write that fails
+ * queues no rebuild.
+ */
+export const rebuildChangedResultsLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_RESULTS_CHANGED> = {
+  key: 'rebuild-leaderboards-for-changed-results',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEventId)],
+};
+
+/** A decided game changes its event's boards, as any result does. */
+export const rebuildDecidedGameLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.GAME_DECIDED> = {
+  key: 'rebuild-leaderboards-for-decided-game',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEventId)],
+};
+
+/**
  * A contest's board lists the entries that submitted and each week's submitted flag (#1435), so a
  * week submitted or sent back to draft rebuilds that contest's boards (#1466). The rebuild's dedupe
  * key holds one job per contest, so a burst of members submitting queues one rebuild, never one

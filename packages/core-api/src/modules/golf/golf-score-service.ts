@@ -43,8 +43,7 @@ import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core
 import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from '../ingestion/core/sync-write-diagnostics';
 import { matchAmong, resolveParticipantRow, type ParticipantRowResolution } from '../sport-catalog/participant-row-resolver';
 import type { ScoringFamilyEvent } from '../scoring-families/scoring-family-module';
-import { NO_JOBS_FOR_WRITE } from '../background-jobs/background-job-queue';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 
 export class GolfScoreError extends Error {
   constructor(
@@ -121,8 +120,8 @@ export interface GolfScoreServiceDeps {
    * admin corrections refuse any other event rather than write golf rows onto it.
    */
   storesGolfRoundScores: (event: ScoringFamilyEvent) => boolean;
-  /** The event's leaderboard rebuild, written with each score write's last statement (#1466); none without it. */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /** What follows each results, field or game change it writes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -342,7 +341,7 @@ export class GolfScoreService {
     });
     // The last write of every score write: the event's boards are rebuilt from it, so the rebuild
     // job commits with it or not at all (#1466).
-    const rebuild = this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
+    const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
     await this.deps.golfStandings.updateRanks(changed, rebuild.jobs);
     rebuild.queued();
   }
