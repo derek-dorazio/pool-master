@@ -301,7 +301,18 @@ phase:
 - **Pick list.** The player field rows of the event's teams that are not eliminated and
   have a place in a covered slot, judged at cutoff, so bye teams are included. The API
   computes it. A Super Bowl card has 2 teams; a Semifinal card has 4.
-- **Tiers and prices** are set per contest over its pick list when it opens, and frozen.
+- **Tiers and prices are keyed by event slot** for every contest type:
+  **…EventSlotTier** (unique event slot + tier key, from the league's tier profile) and
+  **…EventSlotParticipantValuation** (unique event slot + field row: tier, price, manual
+  flag), replacing SportEventTier and SportEventParticipantValuation. A contest reads the
+  tier set of its first covered slot: team contests read the first slot's (built at
+  release); a week event has one slot, as today. A manual tier or price freezes auto-tiering
+  for that slot's set.
+- **Player tier sets** cover the players of the teams alive entering that slot. They're computed when the slot before it completes and ratings
+  refresh (the first slot of a phase at release), then frozen. A contest reads the tier set
+  of its first covered slot.
+- **Contests hold no player, team or match data**: only covered slots, setup, picks (FKs to
+  field rows) and standings. The tier and cost snapshots on `ContestEntryPick` go.
 - **Members pick once**, before the first covered Game; a player scores in every covered
   Game his team plays.
 - **Picks** point at those field rows. Injured and reserve players stay pickable.
@@ -409,8 +420,7 @@ Before this plan is deleted:
 
 Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
 
-1. **Clutch Card player tiers and prices.** Recommendation: set per contest over its pick
-   list when it opens, then frozen.
+1. ~~Clutch Card player tiers and prices~~ Settled: tier sets and valuations keyed by event slot, read from a contest's first covered slot (§8).
 2. **Roster row shape.** Recommendation: one row per Season and player (current team,
    position, rating, last seen).
 3. **Multi-slot Clutch Card picks.** Recommendation: pick once before the first covered Game.
