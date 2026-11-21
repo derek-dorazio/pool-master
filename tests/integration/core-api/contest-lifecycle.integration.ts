@@ -7,7 +7,9 @@
  */
 import { BackgroundJobType, ContestStatus, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
+import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { testDomainEvents } from '../../support/domain-events';
+import { expectDefined } from '../../support/expect-defined';
 import {
   cleanupTestData,
   getAppPrisma,
@@ -30,7 +32,9 @@ afterAll(async () => {
 /** An event under way with `contests` open contests on it, each in a league of its own, so a read per league shows too. */
 async function seedOpenContests(contests: number, { status = ContestStatus.OPEN }: { status?: ContestStatus } = {}) {
   const prisma = getPrisma();
-  const { event } = await seedEventWithField(0, { startsInDays: -1, status: SportEventStatus.IN_PROGRESS });
+  const seeded = await seedEventWithField(0, { startsInDays: -1, status: SportEventStatus.IN_PROGRESS });
+  // The event as the lifecycle reads it, the domain shape rather than the row.
+  const event = expectDefined(await new PrismaSportEventRepository(getAppPrisma()).findById(seeded.event.id));
   const contestIds: string[] = [];
   for (let index = 0; index < contests; index += 1) {
     const { league, suffix } = await seedLeagueWithTeams(0);
