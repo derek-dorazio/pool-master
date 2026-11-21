@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import type { SportEventParticipantResponse } from '@poolmaster/shared/dto';
 import {
   cleanupTestData,
@@ -9,15 +10,14 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   withBackgroundJobsFailing,
-  integrationBackgroundJobs,
-} from '../helpers';
+  integrationBackgroundJobs, integrationSportEventServices } from '../helpers';
 import { JobLeaderboardRebuilds } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { Sport } from '@poolmaster/shared/domain';
 import {
   GolfScoreError,
   type GolfScoreRowInput,
 } from '../../../packages/core-api/src/modules/golf/golf-score-service';
-import { createGolfScoreService, createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
+import { createGolfScoreService } from '../../../packages/core-api/src/modules/events/wiring';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
@@ -95,7 +95,7 @@ describe('Golf round scores — admin correction surface', () => {
 
     // #236 — the per-round score read is the field read now: every field row with its
     // rounds and standing, each carrying its golf extension.
-    const views = await createSportEventServices(getAppPrisma()).field.listEventParticipants(event.id);
+    const views = await integrationSportEventServices().field.listEventParticipants(event.id);
     const byName = new Map(views.map((view) => [view.participant.name, view]));
 
     expect(byName.get('Jordan Spieth')).toMatchObject({ rounds: [], standing: null });
@@ -356,7 +356,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [1, 2, 3, 4].map((round) => update('ext-rory', round)).concat(update('ext-rory', 5), update('ext-jordan', 1, 19)),
-    }, { prisma, providerId: 'integration-test', scoringFamilyForEvent });
+    }, { prisma, providerId: 'integration-test', domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     expect(result).toMatchObject({ updatesReturned: 6, updatesPersisted: 4, updatesSkipped: 2 });
     const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort((left, right) => left - right);
@@ -411,7 +411,7 @@ describe('Golf round scores — a live sync writes only what changed', () => {
         { participantExternalId: 'ext-rory', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const },
         { participantExternalId: 'ext-jordan', round: 1, strokes: 36 + jordanToPar, scoreToPar: jordanToPar, thru: 9, status: 'IN_PROGRESS' as const },
       ],
-    }, { prisma, providerId: 'integration-test', scoringFamilyForEvent });
+    }, { prisma, providerId: 'integration-test', domainEvents: testDomainEvents(), scoringFamilyForEvent });
     const stamps = async (): Promise<Record<string, Array<string | undefined>>> => {
       const byEntry: Record<string, Array<string | undefined>> = {};
       for (const { sep } of [rory, jordan]) {
@@ -489,7 +489,7 @@ describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () 
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [{ participantExternalId: 'ext-rory-live', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const }],
-    }, { prisma: getAppPrisma(), providerId: 'integration-test', scoringFamilyForEvent, leaderboards: new JobLeaderboardRebuilds(integrationBackgroundJobs().queue) });
+    }, { prisma: getAppPrisma(), providerId: 'integration-test', domainEvents: testDomainEvents(), scoringFamilyForEvent, leaderboards: new JobLeaderboardRebuilds(integrationBackgroundJobs().queue) });
 
     await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
   });

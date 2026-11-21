@@ -192,9 +192,6 @@ export interface SportEventServiceDeps {
   now?: () => Date;
 }
 
-/** The statuses whose start moving is told to the leagues on the event (#845 C6). */
-const RESCHEDULE_TOLD: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED];
-
 /** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
 function isDateOnlyPlaceholder(start: Date): boolean {
   return start.getUTCHours() === 12 && start.getUTCMinutes() === 0 && start.getUTCSeconds() === 0 && start.getUTCMilliseconds() === 0;
@@ -532,10 +529,9 @@ export class SportEventService {
     }
     const startDate = updates.startDate ?? startedAt;
     const shiftMs = startDate.getTime() - startedAt.getTime();
-    // A moved start is told to the leagues on the event by jobs written with the new start
-    // (#1464), so an edit that fails tells nobody and one that lands always tells them. A draft's
-    // commissioners can't see it yet, and a started event's picks are closed.
-    const told = shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers
+    // A moved start's follow-ups are written with the new start (#1464, #1946), so an edit that
+    // fails tells nobody and one that lands always tells those its handlers tell.
+    const told = shiftMs !== 0 && options.tellMembers
       ? await this.deps.lifecycle.sportEventRescheduledJobs({ id: sportEventId, startDate, status }, startedAt)
       : NO_JOBS_FOR_WRITE;
     // The edit can change what the event's contests' boards show, so its rebuild rides with it (#1466).

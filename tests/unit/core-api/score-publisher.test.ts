@@ -13,6 +13,7 @@
  *   - Unknown externalEventId logs a warn and skips persistence.
  */
 
+import { testDomainEvents } from '../../support/domain-events';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { mockFn } from '../../support/mock-fn';
 import {
@@ -54,7 +55,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
 
       await expect(
-        publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), providerId: 'mock', scoringFamilyForEvent }),
+        publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), domainEvents: testDomainEvents(), providerId: 'mock', scoringFamilyForEvent }),
       ).rejects.toBeInstanceOf(LiveScoreValidationError);
     });
   });
@@ -93,7 +94,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const persisted = await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient(prisma),
-        providerId: 'mock-contest-feed',
+        domainEvents: testDomainEvents(), providerId: 'mock-contest-feed',
         scoringFamilyForEvent,
       });
 
@@ -133,7 +134,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const persisted = await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient(prisma),
-        providerId: 'mock-contest-feed',
+        domainEvents: testDomainEvents(), providerId: 'mock-contest-feed',
         logger,
         scoringFamilyForEvent,
       });
@@ -169,7 +170,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
         };
 
-        const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger, scoringFamilyForEvent });
+        const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), domainEvents: testDomainEvents(), providerId: 'mock', logger, scoringFamilyForEvent });
 
         expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
         expect(logger.warn).toHaveBeenCalledWith(
@@ -203,7 +204,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const persisted = await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient(prisma),
-        providerId: 'mock',
+        domainEvents: testDomainEvents(), providerId: 'mock',
         logger,
         scoringFamilyForEvent: () => adminEnteredFamily,
       });
@@ -234,7 +235,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result = await publishLiveScoreUpdate(games, {
         prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
-        providerId: 'balldontlie',
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
         scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GAME', persist } }),
       });
 
@@ -248,7 +249,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result = await publishLiveScoreUpdate(games, {
         prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
-        providerId: 'balldontlie',
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
         logger,
         scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GOLF', persist } }),
       });
@@ -276,7 +277,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result = await publishLiveScoreUpdate(boxScores, {
         prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
-        providerId: 'balldontlie',
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
         scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'STAT_LINE', persist } }),
       });
 
@@ -290,7 +291,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result = await publishLiveScoreUpdate(boxScores, {
         prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
-        providerId: 'balldontlie',
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
         logger,
         scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GAME', persist } }),
       });
@@ -309,7 +310,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       await expect(publishLiveScoreUpdate(malformed, {
         prisma: asPrismaClient({ sportEvent: inProgressEvent() }),
-        providerId: 'balldontlie',
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
         scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'STAT_LINE', persist } }),
       })).rejects.toThrow('schema mismatch');
       expect(persist).not.toHaveBeenCalled();
@@ -348,7 +349,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
-        providerId: 'mock',
+        domainEvents: testDomainEvents(), providerId: 'mock',
         scoringFamilyForEvent: () => familyWriting(async () => persisted),
         fieldCache,
       });
@@ -361,7 +362,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       await expect(publishLiveScoreUpdate(result, {
         prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
-        providerId: 'mock',
+        domainEvents: testDomainEvents(), providerId: 'mock',
         scoringFamilyForEvent: () => familyWriting(async () => { throw new Error('connection reset'); }),
         fieldCache,
       })).rejects.toThrow('connection reset');
@@ -375,7 +376,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
-        providerId: 'mock',
+        domainEvents: testDomainEvents(), providerId: 'mock',
         scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GOLF', persist } }),
         leaderboards,
       });
@@ -388,7 +389,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const leaderboards = new RecordingLeaderboardRebuilds();
       const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'GOLF', status: 'COMPLETED', eventSeries: { sportLeague: { scoringFamily: null } } }) } };
 
-      await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger: fakeLogger(), scoringFamilyForEvent, leaderboards });
+      await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), domainEvents: testDomainEvents(), providerId: 'mock', logger: fakeLogger(), scoringFamilyForEvent, leaderboards });
 
       expect(leaderboards.sportEventIds).toEqual([]);
     });
@@ -397,7 +398,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const fieldCache = await cacheHoldingTheField();
       const prisma = { sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'GOLF', status: 'COMPLETED', eventSeries: { sportLeague: { scoringFamily: null } } }) } };
 
-      await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger: fakeLogger(), scoringFamilyForEvent, fieldCache });
+      await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), domainEvents: testDomainEvents(), providerId: 'mock', logger: fakeLogger(), scoringFamilyForEvent, fieldCache });
 
       expect(await readsAfresh(fieldCache)).toBe(false);
     });

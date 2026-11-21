@@ -19,6 +19,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
+import type { DomainEvents } from '../domain-events';
 import type { ContestScoringSettings, SportEvent } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { ParticipantScore } from '../contests/contest-leaderboard-calculator';
@@ -34,6 +35,8 @@ export type FieldScoringEvent = ScoringFamilyEvent & Pick<SportEvent, 'rounds' |
 export interface LiveScoreWriteDeps {
   prisma: PrismaClient;
   providerId: string;
+  /** What follows the changes a write makes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   logger?: FastifyBaseLogger;
   /** The event's leaderboard rebuild, which the batch's last write carries (#1466); none without it. */
   leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;

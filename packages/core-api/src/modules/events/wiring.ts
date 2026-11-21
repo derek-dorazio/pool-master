@@ -41,7 +41,8 @@ import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import type { BackgroundJobQueue } from '../background-jobs';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
-import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
+import { EventLifecycleService, type FinishedSportEventSettlement } from './event-lifecycle-service';
+import type { DomainEvents } from '../domain-events';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
 import { ProviderGameSlateService } from './provider-game-slate';
@@ -195,6 +196,7 @@ export function createMatchResultService(
 export function createGameScoreWriterDeps(
   prisma: PrismaClient,
   providerId: string,
+  domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
   leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): GameScoreWriterDeps {
@@ -203,7 +205,7 @@ export function createGameScoreWriterDeps(
     matches: new PrismaSportEventMatchRepository(prisma),
     eventParticipants: new PrismaSportEventParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
-    results: createMatchResultService(prisma, logger, createEventLifecycleService(prisma, { logger }), leaderboards),
+    results: createMatchResultService(prisma, logger, createEventLifecycleService(prisma, { domainEvents, logger }), leaderboards),
     playIns: createSportEventBracketService(prisma, logger, leaderboards),
     logger,
   };
@@ -236,14 +238,13 @@ export function createSportEventParticipantService(
 }
 
 /**
- * `lifecycle` is the status-change path the release action goes through. Pass the app's own
- * so a release runs on the same instance as every other transition; omitted, one is built
- * without mail or settlement, which a release never needs.
+ * `lifecycle` is the status-change path the release action and an event edit go through: the
+ * app's own, so they run on the same instance as every other transition, with its follow-ups.
  */
 export function createSportEventServices(
   prisma: PrismaClient,
-  logger?: FastifyBaseLogger,
-  lifecycle: EventLifecycleService = createEventLifecycleService(prisma, { logger }),
+  logger: FastifyBaseLogger | undefined,
+  lifecycle: EventLifecycleService,
   /** Every admin write that changes a board carries its rebuild job (#1466); without it, none are rebuilt. */
   leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
   /**
@@ -256,7 +257,6 @@ export function createSportEventServices(
   const sports = new PrismaSportRepository(prisma);
   const sportLeagues = new PrismaSportLeagueRepository(prisma);
   const events = new PrismaSportEventRepository(prisma);
-  const participants = new PrismaParticipantRepository(prisma);
 
   const rounds = new SportEventRoundService({ rounds: new PrismaSportEventRoundRepository(prisma), logger });
   const tiers = createSportEventTierService(prisma, logger);
@@ -294,17 +294,27 @@ export function createSportEventServices(
     raceResults: createRaceResultService(prisma, logger, leaderboards),
     statLines: createStatLineService(prisma, logger, leaderboards),
     matchResults: createMatchResultService(prisma, logger, lifecycle, leaderboards),
-    sportLeagues: new SportLeagueService({
-      sports,
-      sportLeagues,
-      sportEvents: events,
-      participants,
-      providers,
-      tierProfiles: new PrismaTierProfileRepository(prisma),
-      pricingProfiles: new PrismaPricingProfileRepository(prisma),
-      logger,
-    }),
+    sportLeagues: createSportLeagueService(prisma, logger, providers),
   };
+}
+
+/** The sport league admin's service: its settings, its sync switch and its rankings. */
+export function createSportLeagueService(
+  prisma: PrismaClient,
+  logger?: FastifyBaseLogger,
+  /** The registered providers a sport league's event sync may name (ADR 0011); none, turning a league's sync on is refused. */
+  providers: SportDataProviderLookup = new ProviderRegistry(),
+): SportLeagueService {
+  return new SportLeagueService({
+    sports: new PrismaSportRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    participants: new PrismaParticipantRepository(prisma),
+    providers,
+    tierProfiles: new PrismaTierProfileRepository(prisma),
+    pricingProfiles: new PrismaPricingProfileRepository(prisma),
+    logger,
+  });
 }
 
 /**
@@ -315,16 +325,15 @@ export function createSportEventServices(
 export function createEventLifecycleService(
   prisma: PrismaClient,
   options: {
+    /** What follows a status change or a moved start (#1946): the app's one map, built in index.ts. */
+    domainEvents: Pick<DomainEvents, 'collect'>;
     logger?: FastifyBaseLogger;
     /** Where a contest that goes live queues its "Contest is live" email job (#845, #1387); without it, nobody is told. */
     jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
-    /** Who is told an event was postponed, moved or cancelled (#845); without it, nobody is. */
+    /** Who a cancellation's settle job tells (C7); without it, nobody is. */
     sportEventChanged?: SportEventChangedNotice;
     contestSettlement?: FinishedSportEventSettlement;
-    releasedEditionContests?: ReleasedEditionContests;
-    /** Rebuilds the event's contests' boards with each status change (#1466); without it, none are. */
-    leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
-  } = {},
+  },
 ): EventLifecycleService {
   return new EventLifecycleService(
     {
@@ -333,11 +342,10 @@ export function createEventLifecycleService(
       matches: new PrismaSportEventMatchRepository(prisma),
     },
     new PrismaSportEventRepository(prisma),
+    options.domainEvents,
     options.logger,
     options.jobs,
     options.contestSettlement,
-    options.releasedEditionContests,
     options.sportEventChanged,
-    options.leaderboards,
   );
 }

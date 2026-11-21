@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobType, ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus, type BackgroundJobOutcome } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
@@ -1203,7 +1204,8 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
   /** The release as the events routes make it, with the app's job queue: its jobs wait for a drain. */
   function releasing() {
     const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()));
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { jobs: integrationBackgroundJobs().queue, releasedEditionContests: contestManagement });
+    const { queue } = integrationBackgroundJobs();
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue, releasedEditionContests: contestManagement }), jobs: queue });
     const release = (sportEventId: string) => lifecycle.applySportEventStatusTransition({
       sportEventId, toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true,
     });
@@ -1974,7 +1976,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const jobs = integrationBackgroundJobs();
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { jobs: jobs.queue });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }), jobs: jobs.queue });
     const emailJobs = createContestEmailJobs(getAppPrisma(), {
       notices: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
@@ -1984,16 +1986,23 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
       logger: fakeLogger(),
     });
     // Held until the transition has returned, so the good luck emails are seen to come from its job.
-    const runner = integrationBackgroundJobs().runWith({ CONTEST_STARTED_EMAILS: (payload) => emailJobs.contestStarted(payload) });
+    // The start also rebuilds the event's boards (#1466), which this test of the emails does not follow.
+    const runner = integrationBackgroundJobs().runWith({
+      CONTEST_STARTED_EMAILS: (payload) => emailJobs.contestStarted(payload),
+      REBUILD_LEADERBOARDS: async () => ({ changedCount: 0 }),
+    });
 
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'ROOT_ADMIN' },
     });
     await deliverQueuedEmail();
     expect(send).not.toHaveBeenCalled();
-    await expect(prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true } })).resolves.toEqual([
+    const queued = await prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true } });
+    expect(queued).toHaveLength(2);
+    expect(queued).toEqual(expect.arrayContaining([
       { type: 'CONTEST_STARTED_EMAILS', payload: { contestId: open.id, sportEventId: event.id }, status: 'QUEUED' },
-    ]);
+      { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: event.id }, status: 'QUEUED' },
+    ]));
     await runner.drain();
 
     const [started, untouched] = await Promise.all([
@@ -2019,7 +2028,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await runner.drain();
     await deliverQueuedEmail();
     expect(send).toHaveBeenCalledTimes(3);
-    await expect(prisma.backgroundJob.count()).resolves.toBe(1);
+    await expect(prisma.backgroundJob.count({ where: { type: 'CONTEST_STARTED_EMAILS' } })).resolves.toBe(1);
 
     // A retry of the job, after a try that queued the emails but was not marked done, finds
     // each one recorded and sends nothing twice.
@@ -2027,7 +2036,8 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await runner.drain();
     await deliverQueuedEmail();
     expect(send).toHaveBeenCalledTimes(3);
-    await expect(prisma.backgroundJob.findMany({ select: { status: true } })).resolves.toEqual([{ status: 'SUCCEEDED' }, { status: 'SUCCEEDED' }]);
+    await expect(prisma.backgroundJob.findMany({ where: { type: 'CONTEST_STARTED_EMAILS' }, select: { status: true } }))
+      .resolves.toEqual([{ status: 'SUCCEEDED' }, { status: 'SUCCEEDED' }]);
   });
 });
 
@@ -2063,6 +2073,7 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     });
     const emailJobs = createContestEmailJobs(getAppPrisma(), { notices, logger: fakeLogger() });
     const lifecycle = createEventLifecycleService(getAppPrisma(), {
+      domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }),
       jobs: jobs.queue,
       sportEventChanged: notices,
       contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger()),

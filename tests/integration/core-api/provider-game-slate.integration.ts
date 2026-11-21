@@ -2,10 +2,9 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { MatchSide, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
-import { createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
-import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { leagueProfiles } from '../../support/league-profiles';
 
 // A synced league's game week and fixed-shape playoff take their games from its provider (ADR
@@ -77,7 +76,7 @@ async function matchesOf(sportEventId: string) {
 describe('Provider game slate (#1728)', () => {
   it('writes a synced draft week\'s games as its matches, then moves a released week\'s kickoff the provider moved', async () => {
     const { event, field, game } = await syncedWeek();
-    const { providerGames } = createSportEventServices(getAppPrisma());
+    const { providerGames } = integrationSportEventServices();
 
     await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: event.externalId, games: [game('g2', 'Packers', 'Vikings', 3), game('g1', 'Bears', 'Lions', 0)] }))
       .resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 2 });
@@ -98,7 +97,7 @@ describe('Provider game slate (#1728)', () => {
   it('leaves an event of a league that is not synced without games', async () => {
     const { event, game } = await syncedWeek();
     await getPrisma().sportLeague.updateMany({ where: { eventSeries: { some: { id: event.eventSeriesId } } }, data: { eventSyncProviderId: null } });
-    const { providerGames } = createSportEventServices(getAppPrisma());
+    const { providerGames } = integrationSportEventServices();
 
     await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: event.externalId, games: [game('g1', 'Bears', 'Lions', 0)] }))
       .resolves.toEqual({ outcome: 'SKIPPED', reason: 'NOT_SYNCED' });
@@ -161,7 +160,7 @@ describe('Provider game slate (#1728)', () => {
       externalGameId: id, roundNumber, homeTeamExternalId: team(home), awayTeamExternalId: team(away), scheduledAt: at, isNeutralSite: false,
     });
     const wildCard = [game('w1', 1, 2, 7, KICKOFF), game('w2', 1, 3, 6, KICKOFF), game('w3', 1, 4, 5, KICKOFF)];
-    const { providerGames } = createSportEventServices(getAppPrisma());
+    const { providerGames } = integrationSportEventServices();
     const sides = async () => (await matchesOf(event.id)).map(([matchNumber, home, away]) => [matchNumber, home, away]);
 
     await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: event.externalId, games: wildCard, bracket }))

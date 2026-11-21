@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import {
   cleanupTestData,
   getAppPrisma,
@@ -106,7 +107,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       },
       {
         prisma: getAppPrisma(),
-        providerId: 'integration-test',
+        providerId: 'integration-test', domainEvents: testDomainEvents(),
         scoringFamilyForEvent,
       },
     );
@@ -223,7 +224,7 @@ describe('Golf live-score persistence', () => {
         { participantExternalId: 'scoped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
         { participantExternalId: 'scoped-tiger', round: 1, strokes: 37, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS' },
       ],
-    }, { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent });
+    }, { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0 });
     expect(await standingOf(expectDefined(sepByKey.get('rory')))).toMatchObject({
@@ -252,7 +253,7 @@ describe('Golf live-score persistence', () => {
         { participantExternalId: 'status-dsq', round: 1, strokes: 75, scoreToPar: 3, status: 'DSQ' },
         { participantExternalId: 'status-cut', round: 1, strokes: 78, scoreToPar: 6, status: 'MISSED_CUT' },
       ],
-    }, { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent });
+    }, { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     expect((await standingOf(expectDefined(sepByKey.get('dnf'))))?.status).toBe('WITHDRAWN');
     expect((await standingOf(expectDefined(sepByKey.get('dsq'))))?.status).toBe('WITHDRAWN');
@@ -266,7 +267,7 @@ describe('Golf live-score persistence', () => {
       externalEventId: event.externalId,
       rounds: [{ participantExternalId: 'idempotent-rory', round: 1, strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const }],
     };
-    const deps = { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent };
+    const deps = { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent };
 
     await publishLiveScoreUpdate(result, deps);
     const second = await publishLiveScoreUpdate(result, deps);
@@ -296,7 +297,7 @@ describe('Golf live-score persistence', () => {
         category: 'GOLF',
         externalEventId: event.externalId,
         rounds: [{ participantExternalId: `closed-${status.toLowerCase()}-rory`, round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
-      }, { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent });
+      }, { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
       expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
       expect(await getPrisma().sportEventParticipantRound.count({
@@ -313,7 +314,7 @@ describe('Golf live-score persistence', () => {
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [{ participantExternalId: 'nostrokes-rory', round: 1, strokes: null, scoreToPar: -2, status: 'IN_PROGRESS' }],
-    }, { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent });
+    }, { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
     expect(await getPrisma().sportEventParticipantRound.count({
@@ -332,7 +333,7 @@ describe('Golf live-score persistence', () => {
         { participantExternalId: 'unmapped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
         { participantExternalId: 'nobody-we-know', round: 1, strokes: 80, scoreToPar: 8, status: 'COMPLETED' },
       ],
-    }, { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent });
+    }, { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
     expect(await getPrisma().sportEventParticipantRound.count({

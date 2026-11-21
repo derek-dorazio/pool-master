@@ -1,4 +1,5 @@
 import { expect, jest } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
@@ -29,8 +30,6 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
-import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
-import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 
@@ -55,13 +54,12 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
       matches: store.matchRepo(),
     },
     sportEvents,
+    // What follows a release or a moved start, collected by the app's handler map.
+    testDomainEvents({ sportEventChanged }),
     undefined,
-    // The job queue an event change's jobs are requested from and woken through.
-    sportEventChanged ? new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart }) : undefined,
     undefined,
     undefined,
     sportEventChanged,
-    leaderboards,
   );
   const service = new SportEventService({
     sportEvents,
@@ -799,6 +797,22 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     );
     // Written with the new start, not queued after it.
     expect(store.backgroundJobs).toEqual([eventChangedJob(released.id, 'RESCHEDULED')]);
+  });
+
+  it('tells nobody when an admin moves the start of an event already under way or finished, since its picks are closed', async () => {
+    const notice = recordingSportEventChangedNotice();
+    const { store, service, sportLeague } = setup(Sport.GOLF, notice);
+    const moved = new Date(MANUAL_INPUT.startDate.getTime() + DAY);
+    for (const status of [SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
+      const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, name: `${status} Open` });
+      await store.sportEventRepo().update(event.id, { status });
+
+      // poolmaster-allow-query-in-loop: one in-memory edit per status under test
+      await service.updateEvent(event.id, { startDate: moved }, TELL);
+    }
+
+    expect(notice.sportEventChangedJobs).not.toHaveBeenCalled();
+    expect(store.backgroundJobs).toEqual([]);
   });
 
   it('tells nobody, and moves nothing, when telling the leagues a released event moved fails before the edit is written', async () => {

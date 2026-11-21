@@ -1,4 +1,5 @@
 import { expect, jest } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import {
   AutoReleaseCheckOutcome,
   BackgroundJobType,
@@ -38,6 +39,7 @@ function setup() {
   const lifecycle = new EventLifecycleService(
     { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
     sportEvents,
+    testDomainEvents(),
   );
   const service = new SportEventService({
     sportEvents,

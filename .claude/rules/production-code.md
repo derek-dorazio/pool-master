@@ -24,6 +24,10 @@ canonical statement, which wins if this summary ever disagrees.
   parsing id strings, no picking by array position, no per-league constant tables, and no
   second computation of a fact the API or a shared helper already gives.
   `rules/domain-model-conventions-rules.md` §17 *Rules Live In The Model, Not In Code*.
+- **Follow-up work is a domain event handler.** A write that sets off work beyond itself
+  collects its jobs from `DOMAIN_EVENT_HANDLERS` and writes them in its own transaction; a
+  handler only collects jobs. `rules/architecture-rules.md` §4 *Follow-up work is a domain
+  event handler*.
 - **A contract change regenerates the SDK in the same slice** — DTO, mapper, route schema,
   OpenAPI, generated client and its consumers move together. `rules/architecture-rules.md`
   §2 *Contract-First API Architecture*; the `add-endpoint` skill sequences it.

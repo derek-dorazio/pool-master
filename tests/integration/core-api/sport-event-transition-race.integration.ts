@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { testDomainEvents } from '../../support/domain-events';
 import { BackgroundJobType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigurationRepository,
@@ -35,6 +36,7 @@ function lifecycleCountingSettlements() {
     settleFinishedSportEvent: async () => ({ contestsSettled: 0 }),
     settleFinishedGame: async () => 0,
   };
+  const { queue } = integrationBackgroundJobs();
   const service = new EventLifecycleService(
     {
       contests: new PrismaContestRepository(getAppPrisma()),
@@ -42,8 +44,9 @@ function lifecycleCountingSettlements() {
       matches: new PrismaSportEventMatchRepository(getAppPrisma()),
     },
     new PrismaSportEventRepository(getAppPrisma()),
+    testDomainEvents({ queue }),
     fakeLogger(),
-    integrationBackgroundJobs().queue,
+    queue,
     settlement,
   );
   const settleJobs = async () => (await getPrisma().backgroundJob.findMany({

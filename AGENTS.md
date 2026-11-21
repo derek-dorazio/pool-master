@@ -44,7 +44,8 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Touches domain entities, or the ask uses domain words (squad, team, entry, pick, field, release, submit, settle) | `domain-model-concepts.md` — what each entity is, what it is called on screen, and what the verb means in the model |
 | Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
 | Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation, §9B query scaling |
-| Adds a module, port, adapter, mapper, or has one module call another | `architecture-rules.md` §5 *Project Structure and Layer Boundaries*, §4 *Service Topology* (there is no event bus; modules call each other's services) |
+| Adds a module, port, adapter, mapper, or has one module call another | `architecture-rules.md` §5 *Project Structure and Layer Boundaries*, §4 *Service Topology* (follow-up work goes through the domain event handler map; results needed now are a service call) |
+| Adds a follow-up to a change, or a new kind of change | `architecture-rules.md` §4 *Follow-up work is a domain event handler*; `testing-rules.md` §8 *Domain Event Handler Testing* |
 | Defines product behavior, use cases, or screens | `poolmaster-webapp-rules.md`, `ux-rules.md` |
 | Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |
 | Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push*; a Terraform change also `workflow-rules.md` §6 *Applying Terraform* and the `apply-terraform` skill |

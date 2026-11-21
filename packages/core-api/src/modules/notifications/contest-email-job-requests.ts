@@ -6,8 +6,10 @@
  */
 
 import { z } from 'zod';
-import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { DomainEventType } from '../domain-events/domain-event';
+import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 import { ContestEventChangeKind } from '../email/system-email-templates';
 import type { SportEventChange } from './contest-notices';
 
@@ -124,3 +126,37 @@ export function contestReopenedEmailsJob(
     dedupeKey: `${BackgroundJobType.CONTEST_REOPENED_EMAILS}:${contestReopenedAbout(payload)}`,
   });
 }
+
+/**
+ * A first postponement tells the leagues on the event by one job per contest written with the
+ * status (#1464). Its start does not move, so the jobs read it from the event as it was. A live
+ * contest the postponement reopens is told by its reopen's email instead (#1910).
+ */
+export const tellLeaguesEventPostponedHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
+  key: 'tell-leagues-event-postponed',
+  queues: [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS],
+  when: (event) => event.to === SportEventStatus.POSTPONED && event.from !== SportEventStatus.POSTPONED,
+  jobs: (event, { sportEventChanged }) => sportEventChanged.sportEventChangedJobs(
+    event.sportEvent,
+    { kind: ContestEventChangeKind.POSTPONED },
+    { reopening: event.reopeningContestIds },
+  ),
+};
+
+/**
+ * The statuses whose moved start is told to the leagues on the event: a draft's commissioners
+ * can't see it yet, and a started event's picks are closed.
+ */
+const RESCHEDULE_TOLD: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED];
+
+/** C6 for a released event whose start moved: one job per contest on it, written with the new start (#1464). */
+export const tellLeaguesEventRescheduledHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_RESCHEDULED> = {
+  key: 'tell-leagues-event-rescheduled',
+  queues: [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS],
+  when: (event) => RESCHEDULE_TOLD.includes(event.sportEvent.status),
+  jobs: (event, { sportEventChanged }) => sportEventChanged.sportEventChangedJobs(
+    { id: event.sportEvent.id, startDate: event.sportEvent.startDate },
+    { kind: ContestEventChangeKind.RESCHEDULED, previousStart: event.previousStart },
+    { reopening: event.reopeningContestIds },
+  ),
+};

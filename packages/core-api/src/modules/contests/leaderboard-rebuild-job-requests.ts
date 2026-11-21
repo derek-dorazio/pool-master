@@ -10,6 +10,8 @@
 import { z } from 'zod';
 import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
+import type { DomainEventType } from '../domain-events/domain-event';
+import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 import type { LeaderboardChanges } from './leaderboard-snapshots';
 
 /** What a rebuild job covers. */
@@ -44,3 +46,10 @@ export function leaderboardChangesOf(payload: RebuildLeaderboardsJobPayload): Le
     ? { sportEventIds: [payload.id], contestIds: [] }
     : { sportEventIds: [], contestIds: [payload.id] };
 }
+
+/** A sport event's status shows on its contests' boards, so they are rebuilt by a job written with it (#1466). */
+export const rebuildEventLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
+  key: 'rebuild-event-leaderboards',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEvent.id)],
+};

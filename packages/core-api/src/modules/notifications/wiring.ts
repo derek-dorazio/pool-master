@@ -31,12 +31,12 @@ import { createContestService } from '../contests/wiring';
 import { createEventPageService } from '../event-pages/wiring';
 import type { EmailService } from '../email';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import { createSportEventParticipantService, createSportEventServices, createSportEventTierService } from '../events/wiring';
+import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
 import { CommissionerNotices } from './commissioner-notices';
 import { ContestExpandedNotices } from './contest-expanded-notices';
 import { ContestEmailJobs } from './contest-email-jobs';
 import { ContestNotices } from './contest-notices';
-import { DraftEventNotices } from './draft-event-notices';
+import { DraftEventNotices, type DraftEventNoticeDeps } from './draft-event-notices';
 import { EntryReceipts } from './entry-receipts';
 import { EntryReminders } from './entry-reminders';
 import { LiveStandings } from './live-standings';
@@ -151,11 +151,11 @@ export function createDraftEventNotices(prisma: PrismaClient, options: {
   email: EmailService;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
+  /** The app's event service, which judges whether a draft is ready to release. */
+  releaseReadiness: DraftEventNoticeDeps['releaseReadiness'];
 }): DraftEventNotices {
   return new DraftEventNotices({
     sportEvents: new PrismaSportEventRepository(prisma),
-    // Read-only: only release readiness is asked, so its own lifecycle is never used.
-    releaseReadiness: createSportEventServices(prisma, options.logger).sportEvents,
     users: new PrismaUserRepository(prisma),
     ...options,
   });
@@ -243,13 +243,14 @@ export function createDueNotifications(prisma: PrismaClient, options: {
   logger: FastifyBaseLogger;
   planEntitlements: PlanEntitlementsService;
   memberJoined: MemberJoinedNotices;
+  releaseReadiness: DraftEventNoticeDeps['releaseReadiness'];
 }): NamedDueNotifications[] {
   const { email, readConfig, appBaseUrl, logger, planEntitlements } = options;
   return [
     { kind: DueNotificationKind.ENTRY_REMINDERS, notifications: createEntryReminders(prisma, { email, readConfig, appBaseUrl, logger }) },
     { kind: DueNotificationKind.LIVE_STANDINGS, notifications: createLiveStandings(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }) },
     { kind: DueNotificationKind.COMMISSIONER_NOTICES, notifications: createCommissionerNotices(prisma, { email, readConfig, appBaseUrl, logger }) },
-    { kind: DueNotificationKind.DRAFT_EVENT_NOTICES, notifications: createDraftEventNotices(prisma, { email, appBaseUrl, logger }) },
+    { kind: DueNotificationKind.DRAFT_EVENT_NOTICES, notifications: createDraftEventNotices(prisma, { email, appBaseUrl, logger, releaseReadiness: options.releaseReadiness }) },
     { kind: DueNotificationKind.MEMBER_JOINED_NOTICES, notifications: options.memberJoined },
     { kind: DueNotificationKind.PLAN_PREVIEW_NOTICES, notifications: createPlanPreviewNotices(prisma, { email, readConfig, appBaseUrl, logger, planEntitlements }) },
   ];

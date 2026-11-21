@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, Sport } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
@@ -94,7 +95,7 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
 function publish(externalEventId: string, games: GameScoreUpdate[]) {
   return publishLiveScoreUpdate(
     { category: 'GAME', externalEventId, games },
-    { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent: () => headToHeadScoringFamily },
+    { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent: () => headToHeadScoringFamily },
   );
 }
 

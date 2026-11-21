@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { ParticipantRoundStatus, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import { BalldontlieAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
@@ -145,7 +146,7 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
     const provider = adapter();
     await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(await roundDetail(provider));
 
-    const result = await publishLiveScoreUpdate(await provider.getLiveScores(ROUND), { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent });
+    const result = await publishLiveScoreUpdate(await provider.getLiveScores(ROUND), { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     // Game 4, not yet tipped off, writes nothing.
     expect(result).toMatchObject({ updatesReturned: 4, updatesPersisted: 3, updatesSkipped: 1 });

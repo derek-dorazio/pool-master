@@ -83,6 +83,11 @@ import { TEST_BALLDONTLIE_WEBHOOK_SECRET } from '../support/balldontlie-webhooks
 import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { jobHandlers, testCurrentJobStart } from '../support/in-memory-background-jobs';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
+import type { EventLifecycleService } from '../../packages/core-api/src/modules/events/event-lifecycle-service';
+import type { SportEventServices } from '../../packages/core-api/src/modules/events/wiring';
+import type { SportDataProviderLookup } from '../../packages/core-api/src/modules/sport-catalog/sport-league-service';
+import { DomainEvents } from '../../packages/core-api/src/modules/domain-events';
+import { testDomainEvents } from '../support/domain-events';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
 import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
@@ -200,6 +205,20 @@ export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma())
   };
 }
 
+/**
+ * An event lifecycle for a test about the event services themselves rather than what follows a
+ * change: its follow-ups go through the app's handler map onto the job table, with no template
+ * contests and nobody told (`testDomainEvents`).
+ */
+export function integrationEventLifecycle(prisma: PrismaClient = getAppPrisma()): EventLifecycleService {
+  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }) });
+}
+
+/** The event services over `integrationEventLifecycle`, for a test of the services themselves. */
+export function integrationSportEventServices(prisma: PrismaClient = getAppPrisma(), providers?: SportDataProviderLookup): SportEventServices {
+  return createSportEventServices(prisma, undefined, integrationEventLifecycle(prisma), undefined, providers);
+}
+
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
   return app;
@@ -283,13 +302,14 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
   // A released edition joins its template contests by a job per contest (#1318).
   const releasedEditionContests = createContestManagementService(prisma, testApp.log, planEntitlements);
+  // What follows each change (#1946), as in index.ts.
+  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, releasedEditionContests, sportEventChanged: contestNotices });
   const eventLifecycleService = createEventLifecycleService(prisma, {
+    domainEvents,
     logger: testApp.log,
     jobs: backgroundJobs.queue,
     sportEventChanged: contestNotices,
     contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue, leaderboards }),
-    releasedEditionContests,
-    leaderboards,
   });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
