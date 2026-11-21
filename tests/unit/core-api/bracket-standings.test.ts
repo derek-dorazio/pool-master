@@ -46,6 +46,7 @@ import { placeOnStoredBoard, storeUnderOlderBoardFormat } from '../../support/in
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeParticipantContestScoringRuleRepo, fakeSquaresRepo } from '../../support/repo-fakes';
+import { testDomainEvents } from '../../support/domain-events';
 
 const T0 = new Date('2027-03-01T00:00:00.000Z');
 /** The bracket tips off at noon on 18 March; the test's clock is set either side of it. */
@@ -127,7 +128,7 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
+  const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
 
   return {
     world, games, contest, sportEvent, viewer, deps, contestService, settlement,
@@ -298,6 +299,7 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     const matches = context.games.matchRepo();
     const field = context.games.fieldService();
     const settlement = new ContestSettlementService({
+      domainEvents: testDomainEvents(),
       ...context.deps,
       matches: {
         findBySportEvent: async (sportEventId) => {

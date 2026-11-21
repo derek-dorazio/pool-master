@@ -196,7 +196,7 @@ export function createMatchResultService(
 export function createGameScoreWriterDeps(
   prisma: PrismaClient,
   providerId: string,
-  domainEvents: Pick<DomainEvents, 'collect'>,
+  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>,
   logger?: FastifyBaseLogger,
   leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>,
 ): GameScoreWriterDeps {
@@ -326,9 +326,9 @@ export function createEventLifecycleService(
   prisma: PrismaClient,
   options: {
     /** What follows a status change or a moved start (#1946): the app's one map, built in index.ts. */
-    domainEvents: Pick<DomainEvents, 'collect'>;
+    domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
     logger?: FastifyBaseLogger;
-    /** Where a contest that goes live queues its "Contest is live" email job (#845, #1387); without it, nobody is told. */
+    /** Where a decided game queues the job that settles its squares contests (#711); without it, none runs. */
     jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
     /** Who a cancellation's settle job tells (C7); without it, nobody is. */
     sportEventChanged?: SportEventChangedNotice;

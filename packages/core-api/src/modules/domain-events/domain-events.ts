@@ -25,6 +25,11 @@ export interface DomainEventsDeps extends DomainEventHandlerContext {
   queue: Pick<BackgroundJobQueue, 'request' | 'queued'>;
 }
 
+/** What a route module whose writes collect follow-ups takes (#1949): the app's one map, built in index.ts. */
+export interface DomainEventsModuleOptions {
+  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
+}
+
 export class DomainEvents {
   constructor(private readonly deps: DomainEventsDeps) {}
 

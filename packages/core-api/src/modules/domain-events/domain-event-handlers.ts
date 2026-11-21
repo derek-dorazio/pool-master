@@ -11,7 +11,13 @@
 import { releaseIntoTemplateContestsHandler } from '../contest-management/released-edition-job-requests';
 import { rebuildEventLeaderboardsHandler } from '../contests/leaderboard-rebuild-job-requests';
 import { settleFinishedEventContestsHandler } from '../contests/settle-sport-event-job-requests';
-import { tellLeaguesEventPostponedHandler, tellLeaguesEventRescheduledHandler } from '../notifications/contest-email-job-requests';
+import {
+  tellLeagueContestReopenedHandler,
+  tellLeagueContestSettledHandler,
+  tellLeagueContestStartedHandler,
+  tellLeaguesEventPostponedHandler,
+  tellLeaguesEventRescheduledHandler,
+} from '../notifications/contest-email-job-requests';
 import { DomainEventType } from './domain-event';
 import type { DomainEventHandlerMap } from './domain-event-handler';
 
@@ -23,4 +29,12 @@ export const DOMAIN_EVENT_HANDLERS = {
     rebuildEventLeaderboardsHandler,
   ],
   [DomainEventType.SPORT_EVENT_RESCHEDULED]: [tellLeaguesEventRescheduledHandler],
+  // A contest opened by its commissioner (DRAFT to OPEN) has no handler: its entry reminders
+  // start from the `nextReminderAt` the move sets, and its "New contest open" email is told by
+  // contest management.
+  [DomainEventType.CONTEST_STATUS_CHANGED]: [
+    tellLeagueContestStartedHandler,
+    tellLeagueContestReopenedHandler,
+    tellLeagueContestSettledHandler,
+  ],
 } as const satisfies DomainEventHandlerMap;

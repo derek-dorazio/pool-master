@@ -600,7 +600,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('still starts the contest, in a write that asks for no job, when no job queue is wired', async () => {
+  it('starts the contest with its "Contest is live" job from the handler map, which needs no game-settlement queue wired', async () => {
     const { sportEvents } = seededEvents();
     const contests = contestDeps({ startedContest: true });
 
@@ -611,7 +611,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
 
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.ACTIVE }));
-    expect(jest.mocked(contests.contests.transitionStatuses).mock.calls[0]?.[1].jobs).toBeUndefined();
+    const jobsOf = expectDefined(jest.mocked(contests.contests.transitionStatuses).mock.calls[0]?.[1].jobs);
+    expect(jobsOf(['contest-1']).map((job) => job.type)).toEqual([BackgroundJobType.CONTEST_STARTED_EMAILS]);
   });
 });
 
@@ -920,7 +921,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     await follow(deps, postponedEvents(NEW_START));
 
     expect(deps.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', { statuses: [ContestStatus.ACTIVE] });
-    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], { from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN, startsAt: NEW_START });
+    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN, startsAt: NEW_START }));
   });
 
   it('reopens the live contests as the event is postponed, without waiting for the next sweep', async () => {
