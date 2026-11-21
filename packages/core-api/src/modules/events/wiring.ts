@@ -339,7 +339,7 @@ export function createEventLifecycleService(
     /** What follows a status change or a moved start (#1946): the app's one map, built in index.ts. */
     domainEvents: Pick<DomainEvents, 'collect'>;
     logger?: FastifyBaseLogger;
-    /** Where a contest that goes live queues its "Contest is live" email job (#845, #1387); without it, nobody is told. */
+    /** Where a contest that goes live queues its "Contest is live" email job (#845, #1387); without it, nobody is told, so only a test leaves it out: the app builds one lifecycle, with it, in index.ts. */
     jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>;
     /** Who a cancellation's settle job tells (C7); without it, nobody is. */
     sportEventChanged?: SportEventChangedNotice;

@@ -59,7 +59,6 @@ import type { JobsForWrite } from '../../background-jobs/background-job-queue';
 import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { formsNoBracket } from '../../events/sport-event-bracket-service';
 
-/** No game settlement: contests are not wired to this service, or the change decides no game. */
 export interface MatchResultInput {
   /** The side that won; null for a tie (#792), only in a game of a week, which forms no bracket. */
   winnerSide: MatchSide | null;
