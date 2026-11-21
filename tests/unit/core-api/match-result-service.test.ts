@@ -174,7 +174,7 @@ describe('MatchResultService.recordResult', () => {
 
   it('asks the lifecycle to start the contests whose cutoff the result passed, with the service clock, on an event under way', async () => {
     const { store, event } = await setup();
-    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
+    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
     const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, finishedGameSettlement: gameSettlement().finishedGameSettlement }, now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
@@ -184,7 +184,7 @@ describe('MatchResultService.recordResult', () => {
 
   it('starts no contest for a result on an event that is not under way', async () => {
     const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
-    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
+    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
     const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff, finishedGameSettlement: gameSettlement().finishedGameSettlement }, now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
@@ -200,7 +200,7 @@ describe('MatchResultService.recordResult', () => {
     const service = new MatchResultService({
       sportEvents: store.sportEventRepo(),
       matches,
-      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0), finishedGameSettlement: settlement.finishedGameSettlement },
       now: () => AS_OF,
     });
 
@@ -220,7 +220,7 @@ describe('MatchResultService.recordResult', () => {
     const service = new MatchResultService({
       sportEvents: store.sportEventRepo(),
       matches,
-      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0), finishedGameSettlement: settlement.finishedGameSettlement },
       now: () => AS_OF,
     });
 
@@ -571,7 +571,7 @@ describe('MatchResultService.cancelMatch', () => {
     const service = new MatchResultService({
       sportEvents: store.sportEventRepo(),
       matches,
-      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0), finishedGameSettlement: settlement.finishedGameSettlement },
       now: () => AS_OF,
     });
 
@@ -717,7 +717,7 @@ describe('MatchResultService period scores', () => {
     const service = new MatchResultService({
       sportEvents: store.sportEventRepo(),
       matches,
-      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined), finishedGameSettlement: settlement.finishedGameSettlement },
+      contestActivation: { activateContestsPastCutoff: jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0), finishedGameSettlement: settlement.finishedGameSettlement },
       now: () => AS_OF,
     });
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
@@ -1017,7 +1017,7 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
   it('writes the rebuild job with a result, after the game\'s settling job, and wakes both once the result is written', async () => {
     const { store, event } = await setup();
     const settlement = gameSettlement();
-    const { service, leaderboards } = rebuilding(store, { activateContestsPastCutoff: async () => undefined, finishedGameSettlement: settlement.finishedGameSettlement });
+    const { service, leaderboards } = rebuilding(store, { activateContestsPastCutoff: async () => 0, finishedGameSettlement: settlement.finishedGameSettlement });
 
     await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
 

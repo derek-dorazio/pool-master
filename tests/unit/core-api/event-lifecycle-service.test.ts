@@ -104,6 +104,19 @@ function startedEmailsJob(contestId: string) {
   };
 }
 
+/** The job an event's start writes with its status, which takes its contests live (#1952). */
+const activateJob = {
+  type: BackgroundJobType.ACTIVATE_EVENT_CONTESTS,
+  payload: { sportEventId: 'sport-event-1' },
+  sportEventId: 'sport-event-1',
+  runAt: undefined,
+  start: TEST_JOB_START,
+  dedupeKey: 'ACTIVATE_EVENT_CONTESTS:sport-event-1',
+};
+
+/** The job a postponement writes with its status, which has the event's contests follow its start (#1952). */
+const followPostponedJob = { ...activateJob, type: BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS, dedupeKey: 'FOLLOW_POSTPONED_EVENT_CONTESTS:sport-event-1' };
+
 /** The settle job a finished event's move writes (#1448). */
 function settleJob(completedAt: Date) {
   return {
@@ -147,7 +160,7 @@ function seededEvents(overrides: Partial<SportEvent> = {}) {
     status: SportEventStatus.SCHEDULED,
     ...overrides,
   });
-  return { sportEvents: store.sportEventRepo(), storedEvent: () => store.events[0] };
+  return { sportEvents: store.sportEventRepo(), storedEvent: () => store.events[0], statusJobs: () => store.backgroundJobs };
 }
 
 describe('SPORT_EVENT_STATUS_TRANSITIONS exhaustiveness', () => {
@@ -237,11 +250,13 @@ describe('EventLifecycleService release guard (#431)', () => {
 
     expect(contests.releasedEditionJobs).toHaveBeenCalledTimes(1);
     expect(contests.releasedEditionJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', eventSeriesId: 'event-series-2', eventYear: 2026 }), jobs);
-    // Each status change also rebuilds the event's boards; the start adds no template contest job.
+    // Each status change also rebuilds the event's boards; the start adds no template contest job,
+    // only the one that takes its contests live.
     expect(store.backgroundJobs.map((job) => job.payload)).toEqual([
       { contestId: 'contest-1', sportEventId: 'sport-event-1' },
       { contestId: 'contest-2', sportEventId: 'sport-event-1' },
       { subject: 'EVENT', id: 'sport-event-1' },
+      { sportEventId: 'sport-event-1' },
       { subject: 'EVENT', id: 'sport-event-1' },
     ]);
     expect(jobs.queued).toHaveBeenCalledTimes(2);
@@ -497,8 +512,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
   });
 
   // pool-master-9ya — relocated from ingestion-persistence.test.ts.
-  it('pool-master-9ya activates open contests when an event starts and writes each one\'s contest-started email job with the move, building no email itself', async () => {
-    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+  it('pool-master-9ya writes the job that takes an event\'s open contests live with its start, and the job activates them with each one\'s contest-started email job, building no email itself', async () => {
+    const { sportEvents, statusJobs } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const written: unknown[] = [];
     const contests = contestDeps({ startedContest: true, written });
     const jobs = startedJobs();
@@ -509,6 +524,12 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       toStatus: SportEventStatus.IN_PROGRESS,
       actor: { type: 'SYSTEM' },
     });
+
+    // The status change moves no contest itself: its job does, once the change has committed (#1952).
+    expect(contests.contests.transitionStatuses).not.toHaveBeenCalled();
+    expect(statusJobs()).toContainEqual(activateJob);
+    expect(await service.activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 1 });
+
 
     expect(contests.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', {
       statuses: [ContestStatus.OPEN],
@@ -539,6 +560,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       toStatus: SportEventStatus.IN_PROGRESS,
       actor: { type: 'SYSTEM' },
     });
+    expect(await service.activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 2 });
 
     expect(contests.contests.transitionStatuses).toHaveBeenCalledTimes(1);
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1', 'contest-2', 'contest-3'], expect.objectContaining({ startsAt: STARTED_EVENT_START }));
@@ -595,6 +617,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       toStatus: SportEventStatus.IN_PROGRESS,
       actor: { type: 'SYSTEM' },
     });
+    expect(await service.activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
 
     expect(written).toEqual([]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
@@ -604,15 +627,35 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     const { sportEvents } = seededEvents();
     const contests = contestDeps({ startedContest: true });
 
-    await lifecycleService(contests, sportEvents, fakeLogger()).applySportEventStatusTransition({
+    const service = lifecycleService(contests, sportEvents, fakeLogger());
+    await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.IN_PROGRESS,
       actor: { type: 'SYSTEM' },
     });
+    await service.activateEventContests({ sportEventId: 'sport-event-1' });
 
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.ACTIVE }));
     const jobsOf = expectDefined(jest.mocked(contests.contests.transitionStatuses).mock.calls[0]?.[1].jobs);
     expect(jobsOf(['contest-1']).map((job) => job.type)).toEqual([BackgroundJobType.CONTEST_STARTED_EMAILS]);
+  });
+});
+
+describe('EventLifecycleService — the job that takes an event\'s contests live (#1952)', () => {
+  it('takes no contest live once the event has moved back before its start, or is gone, and still does for one already completed', async () => {
+    for (const status of [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED, SportEventStatus.CANCELLED]) {
+      const { sportEvents } = seededEvents({ status });
+      const contests = contestDeps({ startedContest: true });
+
+      // poolmaster-allow-query-in-loop: a unit test over a few statuses, against in-memory fakes
+      expect(await lifecycleService(contests, sportEvents, fakeLogger()).activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
+      expect(contests.contests.transitionStatuses).not.toHaveBeenCalled();
+    }
+    expect(await lifecycleService(contestDeps({ startedContest: true }), new InMemorySportEvents().sportEventRepo(), fakeLogger())
+      .activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
+
+    const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED });
+    expect(await lifecycleService(contestDeps({ startedContest: true }), sportEvents, fakeLogger()).activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 1 });
   });
 });
 
@@ -676,8 +719,8 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     expect(notice.sportEventChangedJobs).toHaveBeenCalledTimes(1);
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', startDate: STARTED_EVENT_START }), { kind: 'POSTPONED' }, { reopening: new Set() });
     expect(notice.sportEventChanged).not.toHaveBeenCalled();
-    // Each call still rebuilds the event's boards.
-    expect(store.backgroundJobs).toEqual([eventChangedJob('sport-event-1', 'POSTPONED'), rebuildJob(), rebuildJob()]);
+    // Each call still rebuilds the event's boards, and has its contests follow its start.
+    expect(store.backgroundJobs).toEqual([followPostponedJob, eventChangedJob('sport-event-1', 'POSTPONED'), rebuildJob(), followPostponedJob, rebuildJob()]);
     expect(jobs.queued).toHaveBeenCalledTimes(2);
   });
 
@@ -866,7 +909,7 @@ describe('EventLifecycleService — leaderboard rebuild (#1466)', () => {
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
 
-    expect(store.backgroundJobs).toEqual([rebuildJob()]);
+    expect(store.backgroundJobs).toEqual([followPostponedJob, rebuildJob()]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
@@ -924,19 +967,34 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN, startsAt: NEW_START }));
   });
 
-  it('reopens the live contests as the event is postponed, without waiting for the next sweep', async () => {
+  it('writes the job that reopens the live contests with the postponement, and the job reopens them without waiting for the next sweep', async () => {
     const store = new InMemorySportEvents();
     // The transition reads the clock, so the moved start is a week from now.
     store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: new Date(Date.now() + 7 * 24 * 60 * 60_000), status: SportEventStatus.IN_PROGRESS });
     const deps = liveContests([LIVE]);
+    const service = lifecycleService(deps, store.sportEventRepo(), fakeLogger());
 
-    await lifecycleService(deps, store.sportEventRepo(), fakeLogger()).applySportEventStatusTransition({
+    await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.POSTPONED,
       actor: { type: 'ROOT_ADMIN' },
     });
 
+    // The postponement moves no contest itself: its job does, once the change has committed (#1952).
+    expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
+    expect(store.backgroundJobs).toContainEqual(followPostponedJob);
+    expect(await service.followPostponedEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 1 });
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN }));
+  });
+
+  it('moves no contest from a postponement\'s job once the event is no longer postponed, since its own change queued what follows it', async () => {
+    const deps = liveContests([LIVE]);
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: NEW_START, status: SportEventStatus.SCHEDULED });
+
+    expect(await lifecycleService(deps, store.sportEventRepo(), fakeLogger()).followPostponedEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
+    expect(await lifecycleService(deps, new InMemorySportEvents().sportEventRepo(), fakeLogger()).followPostponedEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
+    expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
   });
 
   it('keeps live a season contest whose earlier event has started, and reopens one whose every event is still ahead, starting at its first event', async () => {
@@ -1057,17 +1115,19 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     const deps = liveContests([LIVE, squares]);
     const notice = recordingSportEventChangedNotice();
 
-    await lifecycleService(deps, store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, undefined, notice).applySportEventStatusTransition({
+    const service = lifecycleService(deps, store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, undefined, notice);
+    await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.POSTPONED,
       actor: { type: 'ROOT_ADMIN' },
     });
+    await service.followPostponedEventContests({ sportEventId: 'sport-event-1' });
 
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1' }), { kind: 'POSTPONED' }, { reopening: new Set(['contest-1']) });
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.OPEN }));
   });
 
-  it('still sends the picks are open again email at the next sweep when the postponement\'s reopen write fails after the event was postponed, so a contest left out of the event changed jobs is told', async () => {
+  it('fails the postponement\'s job when its reopen write fails, and its retry sends the picks are open again email, so a contest left out of the event changed jobs is told', async () => {
     const store = new InMemorySportEvents();
     store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: new Date(Date.now() + 7 * 24 * 60 * 60_000), status: SportEventStatus.IN_PROGRESS });
     const sportEvents = store.sportEventRepo();
@@ -1077,11 +1137,12 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     deps.contests.transitionStatuses = mockFn<ContestRepository['transitionStatuses']>(async () => { throw new Error('database unavailable'); });
     const service = lifecycleService(deps, sportEvents, fakeLogger(), startedJobs(), undefined, undefined, recordingSportEventChangedNotice());
 
-    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } }))
-      .rejects.toThrow('database unavailable');
+    // The postponement itself lands: the reopen is its job's.
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
+    await expect(service.followPostponedEventContests({ sportEventId: 'sport-event-1' })).rejects.toThrow('database unavailable');
 
     deps.contests.transitionStatuses = move;
-    await service.followPostponedStart(expectDefined(await sportEvents.findById('sport-event-1')));
+    await service.followPostponedEventContests({ sportEventId: 'sport-event-1' });
 
     expect((written as Array<{ type: string; payload: { contestId: string } }>).map(({ type, payload }) => [type, payload.contestId]))
       .toEqual([[BackgroundJobType.CONTEST_REOPENED_EMAILS, 'contest-1']]);
