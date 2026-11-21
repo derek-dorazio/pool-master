@@ -9,10 +9,10 @@ import type { EventSettlementDeps } from '../../packages/core-api/src/modules/ev
 export const NO_SETTLE_JOBS: EventSettlementDeps = {
   contestSettlement: {
     settleFinishedSportEvent: async () => {
-      throw new Error('This test runs no settle job: pass the contest settlement it watches');
+      throw new Error('This test runs no settle job, but settleFinishedSportEvent was called: pass the contest settlement it watches');
     },
     settleFinishedGame: async () => {
-      throw new Error('This test runs no settle job: pass the contest settlement it watches');
+      throw new Error('This test runs no settle job, but settleFinishedGame was called: pass the contest settlement it watches');
     },
   },
   sportEventChanged: {
