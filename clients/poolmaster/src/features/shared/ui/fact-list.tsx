@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "./class-names";
+import { HelpTip } from "./help-tip";
 import { Text } from "./text";
 
 /** One label and its value. */
@@ -9,6 +10,8 @@ export type Fact = {
   value: ReactNode;
   /** A muted second line under the value, such as the names behind a count. */
   detail?: ReactNode;
+  /** How the fact works, behind a (?) after the label (as `FormField`'s `help`): never a sentence under it. */
+  help?: ReactNode;
   /** Set on the value (and its detail), which is what a test reads. */
   testId?: string;
 };
@@ -45,6 +48,19 @@ const COLUMNS: Record<2 | 3, string> = {
   3: "sm:grid-cols-3",
 };
 
+/** The label, and its (?) when the fact has help; the (?) takes the value's test id plus `-help`. */
+function factLabel(fact: Fact): ReactNode {
+  if (!fact.help) return fact.label;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {fact.label}
+      <HelpTip label={`About ${typeof fact.label === "string" ? fact.label : "this fact"}`} testId={`${fact.testId ?? fact.id}-help`}>
+        {fact.help}
+      </HelpTip>
+    </span>
+  );
+}
+
 function FactValue({ fact, align }: { fact: Fact; align: "left" | "right" }) {
   return (
     <dd className={cn("m-0 min-w-0", align === "right" ? "text-right" : null)} data-testid={fact.testId}>
@@ -79,7 +95,7 @@ export function FactList({
         {facts.map((fact) => (
           <div className="grid min-w-0 content-start gap-0.5" key={fact.id}>
             <Text asChild variant="label">
-              <dt>{fact.label}</dt>
+              <dt>{factLabel(fact)}</dt>
             </Text>
             <FactValue align="left" fact={fact} />
           </div>
@@ -96,7 +112,7 @@ export function FactList({
       {facts.map((fact) => (
         <div className={cn("flex items-baseline justify-between gap-4", ROW_PADDING[density])} key={fact.id}>
           <Text asChild className="min-w-0" variant="meta">
-            <dt>{fact.label}</dt>
+            <dt>{factLabel(fact)}</dt>
           </Text>
           <FactValue align="right" fact={fact} />
         </div>

@@ -294,6 +294,71 @@ describe('RootAdminSportsPage', () => {
     expect(await screen.findByTestId('root-admin-sport-league-settings-edit')).toBeInTheDocument();
   });
 
+  it('shows a Clutch Card\'s Provider as following its parent league\'s provider, locked and explained behind (i), and a Save leaves the provider unsent', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' });
+    const worldSeries = sportLeagueFixture({
+      id: 'ws', sport: 'BASEBALL', name: 'World Series', matchKeyword: null, scoringFamily: 'COMPOSITE',
+      parentSportLeagueId: 'mlb', parentRoundNumbers: [4],
+    });
+    getSportLeagueMock.mockImplementation(({ path }: { path: { sportLeagueId: string } }) =>
+      Promise.resolve({ data: { sportLeague: path.sportLeagueId === 'mlb' ? mlb : worldSeries } }));
+    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...worldSeries, tierProfileId: OTHER_TIER_PROFILE_ID } } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sports-settings-ws'));
+    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-settings-provider')).toHaveTextContent('Follows MLB (BALLDONTLIE)'));
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-help')).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-edit'));
+
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toHaveDisplayValue('Follows MLB (BALLDONTLIE)');
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input-help')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sport-league-settings-auto-release-input')).toBeEnabled();
+    await screen.findByRole('option', { name: '6 tiers of 5' });
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-settings-tier-profile-input'), '6 tiers of 5');
+    await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-save'));
+
+    await waitFor(() => expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { sportLeagueId: 'ws' },
+      body: { tierProfileId: OTHER_TIER_PROFILE_ID },
+    })));
+  });
+
+  it('says a Clutch Card follows a parent league with no provider when its parent has none', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: null });
+    const worldSeries = sportLeagueFixture({
+      id: 'ws', sport: 'BASEBALL', name: 'World Series', matchKeyword: null, scoringFamily: 'COMPOSITE',
+      parentSportLeagueId: 'mlb', parentRoundNumbers: [4],
+    });
+    getSportLeagueMock.mockImplementation(({ path }: { path: { sportLeagueId: string } }) =>
+      Promise.resolve({ data: { sportLeague: path.sportLeagueId === 'mlb' ? mlb : worldSeries } }));
+    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [] } });
+    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: [] } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sports-settings-ws'));
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-settings-provider')).toHaveTextContent('Follows MLB (No provider)'));
+  });
+
+  it('keeps the Provider editable, with no (i), on a league that follows no parent', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB' }) } });
+    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [] } });
+    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: [] } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
+    await userEvent.click(await screen.findByTestId('root-admin-sport-league-settings-edit'));
+
+    expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toBeEnabled();
+    expect(screen.queryByTestId('root-admin-sport-league-settings-provider-help')).not.toBeInTheDocument();
+  });
+
   it('keeps Save off on a second Edit right after a save, so nothing unchanged is sent', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' });

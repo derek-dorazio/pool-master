@@ -67,6 +67,19 @@ describe("FactList", () => {
     expect(screen.getByTestId("facts")).toHaveClass("sm:grid-cols-2");
   });
 
+  it("puts a (?) after a fact's label when it has help, under the value's test id plus -help, in every layout", () => {
+    const facts = [
+      { id: "provider", label: "Provider", value: "Follows MLB", help: "It follows MLB's sync.", testId: "provider" },
+      { id: "status", label: "Status", value: "On", testId: "status" },
+    ];
+    const { rerender } = render(<FactList facts={facts} />);
+    expect(screen.getByTestId("provider-help")).toBeInTheDocument();
+    expect(screen.queryByTestId("status-help")).not.toBeInTheDocument();
+
+    rerender(<FactList facts={facts} layout="columns" />);
+    expect(screen.getByTestId("provider-help")).toBeInTheDocument();
+  });
+
   it("puts a fact's detail line inside its value, muted, so the value's test id reads both", () => {
     render(<FactList facts={[{ detail: "PGA Tour, NBA", id: "leagues", label: "Sports leagues", testId: "leagues", value: "2 of 3" }]} />);
 

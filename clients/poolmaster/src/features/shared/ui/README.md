@@ -201,7 +201,8 @@ Labels beside their values.
   a hand-built `<dl>`.
 - **Props that matter:** `layout` (`inline` by default, `inset` under a row that opened it,
   `columns` for a few facts side by side, stacking on a phone); `density="compact"` in a popover
-  or peek card.
+  or peek card; a fact's `help` puts a (?) after its label, as `FormField`'s does, never a
+  hand-built `HelpTip` in the label.
 - **Story:** [fact-list.stories.tsx](./fact-list.stories.tsx)
 
 ### `MetricGrid` and `MetricTile`
