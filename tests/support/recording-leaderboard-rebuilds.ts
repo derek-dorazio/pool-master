@@ -7,7 +7,7 @@ export function eventRebuildJob(sportEventId: string): BackgroundJobRequest {
   return rebuildJob('EVENT', sportEventId);
 }
 
-/** The rebuild job a recording `forContest` hands a write, for one contest. */
+/** A contest's rebuild job, as a week submitted or sent back to draft writes it (#1466). */
 export function contestRebuildJob(contestId: string): BackgroundJobRequest {
   return rebuildJob('CONTEST', contestId);
 }
@@ -23,8 +23,8 @@ function rebuildJob(subject: 'EVENT' | 'CONTEST', id: string): BackgroundJobRequ
 
 /**
  * Records what each write told the leaderboard rebuilds (#1435), in place of rebuilding anything.
- * A write carrying its rebuild (`forEvent`, `forContest`, #1466) is recorded only once it calls `queued()`,
- * that is once the write has committed; `handedOut` is every event or contest whose job a write was given.
+ * A write carrying its rebuild (`forEvent`, #1466) is recorded only once it calls `queued()`,
+ * that is once the write has committed; `handedOut` is every event whose job a write was given.
  */
 export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
   readonly sportEventIds: string[] = [];
@@ -38,11 +38,6 @@ export class RecordingLeaderboardRebuilds implements LeaderboardRebuilds {
   forEvent(sportEventId: string): JobsForWrite {
     this.handedOut.push(sportEventId);
     return { jobs: [eventRebuildJob(sportEventId)], queued: () => { this.sportEventIds.push(sportEventId); } };
-  }
-
-  forContest(contestId: string): JobsForWrite {
-    this.handedOut.push(contestId);
-    return { jobs: [contestRebuildJob(contestId)], queued: () => { this.contestIds.push(contestId); } };
   }
 
   async contestsChanged(contestIds: readonly string[]): Promise<void> {

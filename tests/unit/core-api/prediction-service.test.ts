@@ -6,6 +6,7 @@
 import { expect } from '@jest/globals';
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
 import {
+  BackgroundJobType,
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
@@ -28,7 +29,9 @@ import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeLogger } from '../../support/fake-logger';
-import { contestRebuildJob, RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
+import { testDomainEvents } from '../../support/domain-events';
+import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 const HOUR = 60 * 60 * 1000;
 /** The test's clock starts two hours before the week's first kickoff. */
@@ -85,7 +88,10 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   const receipts: GamePicksView[] = [];
   // The week each receipt was handed with, so it reads nothing the service already loaded (#1201).
   const receiptWeeks: SubmittedWeek[] = [];
-  const leaderboards = new RecordingLeaderboardRebuilds();
+  // The real handler map over a job queue whose wake is watched: a wake is a follow-up written
+  // with a committed week (#1946).
+  const jobQueue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
+  const wakes = jest.spyOn(jobQueue, 'queued');
   const service = new PredictionService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
@@ -107,7 +113,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
     },
     logger,
     receipts: { gamePicksSubmitted: async (view, submitted) => { receipts.push(view); receiptWeeks.push(submitted); } },
-    leaderboards,
+    domainEvents: testDomainEvents({ queue: jobQueue }),
     ...(options.tiePicks ? { sportDefinitionOf: offeringTiePicks } : {}),
     now: () => now,
   });
@@ -127,7 +133,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   });
 
   return {
-    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick, receipts, receiptWeeks, logger, leaderboards,
+    world, week, service, contest, sportEvent, otherEvent, alice, bob, input, pick, tiePick, receipts, receiptWeeks, logger, wakes,
     failNextWrite: () => { failNextWrite = true; },
     games: { thursday, sunday, monday, cancelled, otherWeekGame },
     weekStatus: () => contestEntryEventStatus(expectDefined(world.entries.get(aliceEntry.id)), sportEvent.id),
@@ -495,49 +501,63 @@ describe('PredictionService — a submitted week before the first kickoff', () =
   });
 });
 
-describe('PredictionService — rebuilding the stored leaderboard (#1435)', () => {
-  it('rebuilds the contest\'s board once when a week is submitted, and not when a submit is refused or repeats', async () => {
+/** The contest's board rebuild, as the real handler map collects it for a week that moved status. */
+const contestRebuildJob = (contestId: string) => ({
+  type: BackgroundJobType.REBUILD_LEADERBOARDS,
+  payload: { subject: 'CONTEST', id: contestId },
+  dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:CONTEST:${contestId}`,
+  runAt: undefined,
+  start: TEST_JOB_START,
+});
+
+describe('PredictionService — what follows a week that moves status, from the domain event map (#1435, #1946)', () => {
+  it('writes the contest\'s rebuild job with the submitted week and wakes the runner once, and writes none when a submit is refused or repeats', async () => {
     const context = setup();
     await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
     await expectRefused(context.service.submitGamePicks(context.input), 'PREDICTION_WEEK_INCOMPLETE', 409);
-    expect(context.leaderboards.contestIds).toEqual([]);
+    expect(context.week.writtenJobs).toEqual([]);
+    expect(context.wakes).not.toHaveBeenCalled();
 
     await submitFullWeek(context);
-    expect(context.leaderboards.contestIds).toEqual([context.contest.id]);
+    expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id)]);
+    expect(context.wakes).toHaveBeenCalledTimes(1);
 
     await context.service.submitGamePicks(context.input);
-    expect(context.leaderboards.contestIds).toEqual([context.contest.id]);
+    expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id)]);
+    expect(context.wakes).toHaveBeenCalledTimes(1);
   });
 
-  it('writes the contest\'s rebuild job with the submitted week itself, and with a change sending it back to draft, but none with a save that keeps a draft a draft (#1466)', async () => {
+  it('writes the contest\'s rebuild job with a change that sends a submitted week back to draft, and none with a save that keeps a draft a draft', async () => {
     const context = setup();
     await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
     expect(context.week.writtenJobs).toEqual([]);
 
     await submitFullWeek(context);
-    expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id)]);
-
     await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    expect(context.weekStatus()).toBe(ContestEntryStatus.DRAFT);
     expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id), contestRebuildJob(context.contest.id)]);
+    expect(context.wakes).toHaveBeenCalledTimes(2);
   });
 
-  it('rebuilds the contest\'s board when a change sends a submitted week back to draft, and not for a save that keeps a draft a draft', async () => {
-    const context = setup();
-    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
-    expect(context.leaderboards.contestIds).toEqual([]);
-
-    await submitFullWeek(context);
-    await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
-    expect(context.leaderboards.contestIds).toEqual([context.contest.id, context.contest.id]);
-  });
-
-  it('keeps the board as it is for a save that leaves a submitted week submitted', async () => {
+  it('writes no rebuild for a save that leaves a submitted week submitted', async () => {
     const context = setup();
     await submitFullWeek(context);
     await context.service.saveGamePicks({
       ...context.input, picks: [context.pick(context.games.thursday, 2), context.pick(context.games.sunday, 3)],
     });
-    expect(context.leaderboards.contestIds).toEqual([context.contest.id]);
+    expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id)]);
+    expect(context.wakes).toHaveBeenCalledTimes(1);
+  });
+
+  it('wakes nothing when the submit\'s write fails, so no follow-up runs for a week that was never submitted', async () => {
+    const context = setup();
+    const { thursday, sunday, monday } = context.games;
+    await context.service.saveGamePicks({ ...context.input, picks: [context.pick(thursday, 3), context.pick(sunday, 2), context.pick(monday, 1)], tiebreakerValue: 41 });
+    context.failNextWrite();
+    await expect(context.service.submitGamePicks(context.input)).rejects.toThrow('the write failed');
+    expect(context.weekStatus()).not.toBe(ContestEntryStatus.SUBMITTED);
+    expect(context.week.writtenJobs).toEqual([]);
+    expect(context.wakes).not.toHaveBeenCalled();
   });
 });
 
