@@ -104,6 +104,16 @@ describe('ContestLifecycle.transitionAll, a guarded batch', () => {
     expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 
+  it('hands a batch no handler takes no jobs at all, so its write needs no transaction', async () => {
+    const { contests, written } = guardedContests({ a: ContestStatus.DRAFT, b: ContestStatus.DRAFT });
+    const { queue, contestLifecycle } = lifecycle(contests);
+
+    await expect(contestLifecycle.transitionAll(['a', 'b'], { from: [ContestStatus.DRAFT], to: ContestStatus.OPEN })).resolves.toEqual(['a', 'b']);
+
+    expect(written[0]?.transition).not.toHaveProperty('jobs');
+    expect(queue.queued).not.toHaveBeenCalled();
+  });
+
   it('wakes nothing when another caller already moved every contest', async () => {
     const { contests } = guardedContests({ a: ContestStatus.ACTIVE });
     const { queue, contestLifecycle } = lifecycle(contests);

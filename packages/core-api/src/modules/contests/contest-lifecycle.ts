@@ -41,7 +41,7 @@ export class ContestLifecycle {
     const followUps = await this.domainEvents.collectEach(contestIds.map((contestId) => statusChanged(contestId, change)), (event) => event.contest.id);
     const moved = await this.contests.transitionStatuses(contestIds, {
       ...transitionOf(change),
-      jobs: (movedIds) => followUps.jobsFor(movedIds),
+      ...(followUps.hasJobs && { jobs: (movedIds: readonly string[]) => followUps.jobsFor(movedIds) }),
     });
     if (moved.length > 0) followUps.queued();
     return moved;

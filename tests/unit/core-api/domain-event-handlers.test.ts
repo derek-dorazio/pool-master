@@ -382,6 +382,13 @@ describe('DomainEvents.collectEach, for a guarded batch write', () => {
     expect(queue.queued).not.toHaveBeenCalled();
   });
 
+  it('says whether any subject has jobs at all, so a batch none of whose events has any can skip its transaction', async () => {
+    const { events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
+
+    expect((await domain.collectEach(events, (event) => event.sportEvent.id)).hasJobs).toBe(true);
+    expect((await domain.collectEach([rescheduled(SportEventStatus.DRAFT)], (event) => event.sportEvent.id)).hasJobs).toBe(false);
+  });
+
   it('keeps every event\'s jobs when two events are about one subject', async () => {
     const { events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
     const twice: SportEventRescheduled[] = [events[0], { ...events[0], previousStart: new Date('2026-04-18T20:00:00.000Z') }];

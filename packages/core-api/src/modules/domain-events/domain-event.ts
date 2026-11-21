@@ -50,7 +50,10 @@ export interface ContestStatusChanged {
   contest: { id: string };
   /**
    * The statuses the guarded write moves the contest from: it was in one of them, and a contest
-   * in none is left where it is and queues nothing.
+   * in none is left where it is and queues nothing. A batch write cannot say which one each row
+   * was in, so a handler reads `from` as the guard set: it acts on a move whose guard names the
+   * status it reacts to, which assumes the guard names only statuses with the same follow-ups
+   * (going live is from OPEN alone, a reopen from ACTIVE alone).
    */
   from: readonly ContestStatus[];
   to: ContestStatus;
