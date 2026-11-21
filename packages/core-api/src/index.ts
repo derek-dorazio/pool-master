@@ -104,7 +104,8 @@ import { ActivityService } from './modules/activity/activity-service';
 import { customersModule } from './modules/customers/routes';
 import { CustomerService } from './modules/customers/customer-service';
 import { PrismaCustomerReader } from './adapters/prisma-customer-reader';
-import { SyncedFieldValuationService, fieldValuationReport } from './modules/events/synced-field-valuation';
+import { SyncedFieldValuationService } from './modules/events/synced-field-valuation';
+import { SyncedFieldFollowUps } from './modules/events/synced-field-follow-up-job';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,
@@ -212,7 +213,7 @@ export function buildApp() {
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
   const cdn = createCdnInvalidator(process.env, app.log);
-  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache, cdn, leaderboards);
+  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache, cdn, leaderboards, domainEvents);
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -299,11 +300,8 @@ export function buildApp() {
       }, 'Ingested event detail');
       const persisted = await ingestionPersistence.persistEventDetailWithDiagnostics(detail);
       app.log.info({ persisted: persisted.value }, 'Persisted event detail');
-      // A synced league's event takes its games once its field is in (ADR 0011, #1728).
-      await sportEventServices.providerGames.afterFieldLoad(detail);
-      // Then its tiers and prices, from the field just written (#1822).
-      const fieldValuation = fieldValuationReport(await syncedFieldValuation.afterFieldLoad(detail));
-      return { ...persisted, fieldValuation };
+      // Its games and then its tiers and prices follow in a job written with the field (#1952).
+      return persisted;
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {
       app.log.info({
@@ -335,6 +333,9 @@ export function buildApp() {
     tiers: sportEventServices.tiers,
     logger: app.log.child({ module: 'events.syncedFieldValuation' }),
   });
+  // A field sync's follow-ups, in its job: a synced league's event takes its games once its field
+  // is in (ADR 0011, #1728), then its tiers and prices from that field (#1822, #1952).
+  const syncedFieldFollowUps = new SyncedFieldFollowUps({ providerGames: sportEventServices.providerGames, valuation: syncedFieldValuation });
   // A sport league's events sync (#1819): the schedule and an admin's Sync now queue the same job.
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
@@ -392,6 +393,7 @@ export function buildApp() {
       ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
       RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
+      SYNC_EVENT_GAMES_AND_TIERS: (payload) => syncedFieldFollowUps.run(payload),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

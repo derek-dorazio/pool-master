@@ -231,6 +231,7 @@ enum PrismaBackgroundJobType {
   CONTEST_REOPENED_EMAILS
   SYNC_LEAGUE_EVENTS
   RELEASE_SPORT_EVENT
+  SYNC_EVENT_GAMES_AND_TIERS
 }
 
 enum PrismaBackgroundJobStatus {

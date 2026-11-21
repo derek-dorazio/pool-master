@@ -10,12 +10,15 @@
  */
 
 import type { SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
+import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 
 export const DomainEventType = {
   /** A sport event's status moved (`EventLifecycleService.applySportEventStatusTransition`). */
   SPORT_EVENT_STATUS_CHANGED: 'SPORT_EVENT_STATUS_CHANGED',
   /** A sport event's start moved, by an admin's edit that tells its leagues; each handler decides which statuses it acts on. */
   SPORT_EVENT_RESCHEDULED: 'SPORT_EVENT_RESCHEDULED',
+  /** A provider's field sync wrote a sport event's field (`IngestionPersistence.persistEventDetailWithDiagnostics`). */
+  SPORT_EVENT_FIELD_SYNCED: 'SPORT_EVENT_FIELD_SYNCED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
 
@@ -43,8 +46,21 @@ export interface SportEventRescheduled {
   reopeningContestIds: ReadonlySet<string>;
 }
 
+export interface SportEventFieldSynced {
+  type: typeof DomainEventType.SPORT_EVENT_FIELD_SYNCED;
+  /** The event whose field was written, as the sync read it. */
+  sportEvent: Pick<SportEvent, 'id' | 'status'>;
+  /** The provider and its event id the field came from. */
+  providerId: string;
+  externalId: string;
+  /** The provider's games of the event that came with the field, when it listed any (ADR 0011, #1728). */
+  games?: readonly ProviderScheduledGame[];
+  /** A fixed-shape playoff's whole bracket, when the provider gave one. */
+  bracket?: readonly ProviderBracketMatch[];
+}
+
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventFieldSynced;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;
