@@ -53,3 +53,21 @@ export const rebuildEventLeaderboardsHandler: DomainEventHandler<typeof DomainEv
   queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
   jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEvent.id)],
 };
+
+/**
+ * A score, result, standing, field or game of an event is what its contests' boards are computed
+ * from, so every write changing one carries the job rebuilding them (#1466): a write that fails
+ * queues no rebuild.
+ */
+export const rebuildChangedResultsLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_RESULTS_CHANGED> = {
+  key: 'rebuild-leaderboards-for-changed-results',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEventId)],
+};
+
+/** A decided game changes its event's boards, as any result does. */
+export const rebuildDecidedGameLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.GAME_DECIDED> = {
+  key: 'rebuild-leaderboards-for-decided-game',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEventId)],
+};

@@ -18,8 +18,8 @@
  */
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { DomainEvents } from '../domain-events';
+import type { EventLifecycleService } from '../events/event-lifecycle-service';
 import type { ContestScoringSettings, SportEvent } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { ParticipantScore } from '../contests/contest-leaderboard-calculator';
@@ -37,9 +37,12 @@ export interface LiveScoreWriteDeps {
   providerId: string;
   /** What follows the changes a write makes (#1946): the app's one map. */
   domainEvents: Pick<DomainEvents, 'collect'>;
+  /**
+   * The app's event lifecycle: a provider's result that passes a contest's cutoff puts it live
+   * with its "Contest is live" email, as an admin's does (#1954).
+   */
+  contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;
   logger?: FastifyBaseLogger;
-  /** The event's leaderboard rebuild, which the batch's last write carries (#1466); none without it. */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
 }
 
 /** The in-progress event a provider's live scores are written to. */

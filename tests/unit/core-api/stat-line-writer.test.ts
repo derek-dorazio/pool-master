@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { ParticipantRoundStatus, ProviderGameState, ScoringFamily, Sport, SportStat } from '@poolmaster/shared/domain';
 import type { StatLineGameUpdate } from '@poolmaster/shared/dto';
 import { writeStatLineGames, type StatLineWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/composite/stat-line-writer';
@@ -26,7 +27,7 @@ async function setup(options: { rounds?: number | null } = {}) {
   // Mapped, but not one of this event's stars.
   await mappings.bind({ participantId: outsider.id, sportLeagueId: outsider.sportLeagueId, providerId: PROVIDER, externalId: 'bdl-outsider', confidence: 'EXACT', mappedAt: NOW });
   const logger = fakeLogger();
-  const statLines = new StatLineService({
+  const statLines = new StatLineService({ domainEvents: testDomainEvents(),
     events: store.sportEventRepo(), rounds: store.roundRepo(), field: store.fieldRepo(), statLines: store.statLineRepo(), now: () => NOW,
   });
   const deps: StatLineWriterDeps = { providerId: PROVIDER, field: store.fieldRepo(), mappings, statLines, logger };

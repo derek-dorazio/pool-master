@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { testDomainEvents } from '../../support/domain-events';
+import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema, type ContestLeaderboardResponse } from '@poolmaster/shared/dto';
@@ -589,7 +589,7 @@ describe('mock contest feed provider event-first verification', () => {
   it('pool-master-rop.68.1.3 bridges the real mock provider into adapter ingestion persistence, each golfer\'s ranking taken from the field', async () => {
     const prisma = getPrisma();
     const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
 
     const events = await adapter.getUpcomingEvents(Sport.GOLF, {
       from: new Date('2026-04-01T00:00:00.000Z'),
@@ -688,7 +688,7 @@ describe('mock contest feed provider event-first verification', () => {
   it('loads the provider field into a SCORES_ONLY event without overwriting its admin-authored header, schedule or status', async () => {
     const prisma = getPrisma();
     const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const detail = await adapter.getEventDetails(eventExternalId);
     expect(detail).not.toBeNull();
 
@@ -744,7 +744,7 @@ describe('mock contest feed provider event-first verification', () => {
     const provider = new MockContestFeedAdapter(mockProvider.baseUrl);
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
     const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const configReader = {
@@ -904,13 +904,13 @@ describe('mock contest feed provider event-first verification', () => {
     const settleRunner = settleJobs.runWith({
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     });
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
     const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async (result, providerIdForResult) =>
-        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, domainEvents: testDomainEvents(), scoringFamilyForEvent }),
+        publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: providerIdForResult, domainEvents: testDomainEvents(), scoringFamilyForEvent }),
     }, undefined, {
       eventReader,
       syncRunLedger,
@@ -1160,7 +1160,7 @@ describe('mock contest feed provider event-first verification', () => {
     const getEventDetailsSpy = jest.spyOn(provider, 'getEventDetails');
     registry.register(Sport.GOLF, provider, 'PRIMARY');
 
-    const persistence = new IngestionPersistence(getAppPrisma());
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async () => emptyLiveScorePersistenceResult(),

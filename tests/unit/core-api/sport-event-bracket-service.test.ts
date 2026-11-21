@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { MatchEnding, BracketAdvancement, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
@@ -8,7 +9,8 @@ import {
 } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
-import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { RecordingDomainEvents } from '../../support/recording-domain-events';
 
 // A bracket's rules against an in-memory store: what loading refuses, what a match edit may
 // change before and after release, what release still needs, and the First Four's play-in places.
@@ -36,7 +38,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
   });
   let sequence = 0;
   const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
-  const leaderboards = new RecordingLeaderboardRebuilds();
+  const domainEvents = new RecordingDomainEvents();
   const service = new SportEventBracketService({
     sportEvents: store.sportEventRepo(),
     sportLeagues: store.sportLeagueRepo(),
@@ -48,14 +50,14 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
     valuations: store.valuationRepo(),
     contests: { recheckReminders: reminderRechecks },
     ...picks,
-    leaderboards,
+    domainEvents,
     now: () => NOW,
     newId: () => {
       sequence += 1;
       return `match-${sequence}`;
     },
   });
-  return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas, reminderRechecks, leaderboards };
+  return { store, service, event, sportRow, sportLeague, duke, vermont, houston, texas, reminderRechecks, domainEvents };
 }
 
 /**
@@ -376,7 +378,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
       return store.addToField(event.id, team.id, { seedNumber });
     });
     const seed = (number: number): string => expectDefined(seeds[number - 1]).id;
-    const service = new SportEventBracketService({
+    const service = new SportEventBracketService({ domainEvents: testDomainEvents(),
       sportEvents: store.sportEventRepo(),
       sportLeagues: store.sportLeagueRepo(),
       rounds: store.roundRepo(),
@@ -744,9 +746,9 @@ describe('SportEventBracketService.replaceWithdrawn', () => {
 describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
   /** What the store kept and the rebuilds woke for, from `from` on: one action's writes. */
   function since(context: ReturnType<typeof setup>, from: { jobs: number; woken: number }) {
-    return { jobs: context.store.backgroundJobs.slice(from.jobs), woken: context.leaderboards.sportEventIds.slice(from.woken) };
+    return { jobs: context.store.backgroundJobs.slice(from.jobs), woken: context.domainEvents.changedSportEventIds.slice(from.woken) };
   }
-  const mark = (context: ReturnType<typeof setup>) => ({ jobs: context.store.backgroundJobs.length, woken: context.leaderboards.sportEventIds.length });
+  const mark = (context: ReturnType<typeof setup>) => ({ jobs: context.store.backgroundJobs.length, woken: context.domainEvents.changedSportEventIds.length });
   const once = (sportEventId: string) => ({ jobs: [eventRebuildJob(sportEventId)], woken: [sportEventId] });
 
   it('writes the event\'s rebuild job with a loaded bracket and with a match edit, waking the runner after each', async () => {
@@ -798,6 +800,6 @@ describe('SportEventBracketService — leaderboard rebuild (#1466)', () => {
     await expect(context.service.loadBracket(context.event.id, [first, { ...second, matchNumber: 1 }, final])).rejects.toBeDefined();
 
     expect(context.store.backgroundJobs).toEqual([]);
-    expect(context.leaderboards.handedOut).toEqual([]);
+    expect(context.domainEvents.handedOutSportEventIds).toEqual([]);
   });
 });

@@ -9,7 +9,12 @@
  */
 
 import { releaseIntoTemplateContestsHandler } from '../contest-management/released-edition-job-requests';
-import { rebuildEventLeaderboardsHandler } from '../contests/leaderboard-rebuild-job-requests';
+import {
+  rebuildChangedResultsLeaderboardsHandler,
+  rebuildDecidedGameLeaderboardsHandler,
+  rebuildEventLeaderboardsHandler,
+} from '../contests/leaderboard-rebuild-job-requests';
+import { settleDecidedGameContestsHandler } from '../contests/settle-game-job-requests';
 import { settleFinishedEventContestsHandler } from '../contests/settle-sport-event-job-requests';
 import { tellLeaguesEventPostponedHandler, tellLeaguesEventRescheduledHandler } from '../notifications/contest-email-job-requests';
 import { DomainEventType } from './domain-event';
@@ -23,4 +28,6 @@ export const DOMAIN_EVENT_HANDLERS = {
     rebuildEventLeaderboardsHandler,
   ],
   [DomainEventType.SPORT_EVENT_RESCHEDULED]: [tellLeaguesEventRescheduledHandler],
+  [DomainEventType.SPORT_EVENT_RESULTS_CHANGED]: [rebuildChangedResultsLeaderboardsHandler],
+  [DomainEventType.GAME_DECIDED]: [settleDecidedGameContestsHandler, rebuildDecidedGameLeaderboardsHandler],
 } as const satisfies DomainEventHandlerMap;

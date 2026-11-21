@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { testDomainEvents } from '../../support/domain-events';
+import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { ParticipantRoundStatus, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import { BalldontlieAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
@@ -107,7 +107,7 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
     const { event, league, tatum, tatumEntry } = await finalsWithLoadedStar();
     const detail = await roundDetail(adapter());
 
-    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(detail);
+    await new IngestionPersistence(getAppPrisma(), testDomainEvents()).persistEventDetailWithDiagnostics(detail);
 
     const prisma = getPrisma();
     await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId_sportLeagueId: { providerId: PROVIDER, externalId: 'nba-player-3202', sportLeagueId: league.id } } }))
@@ -129,7 +129,7 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
     const doncic = await loadedStar(event.id, league, 'Luka Dončić', 2);
     const porzingis = await loadedStar(event.id, league, 'Kristaps Porziņģis', 3);
 
-    const result = await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(await roundDetail(adapter()));
+    const result = await new IngestionPersistence(getAppPrisma(), testDomainEvents()).persistEventDetailWithDiagnostics(await roundDetail(adapter()));
 
     const prisma = getPrisma();
     await expect(prisma.participantProviderMapping.findUniqueOrThrow({ where: { providerId_externalId_sportLeagueId: { providerId: PROVIDER, externalId: 'nba-player-132', sportLeagueId: league.id } } }))
@@ -144,9 +144,9 @@ describe('a Clutch Card\'s stars and box scores from the provider', () => {
   it('then writes each played game\'s lines from a live sync, the live game\'s in progress, under the star whose feed id is bound', async () => {
     const { event, tatumEntry } = await finalsWithLoadedStar();
     const provider = adapter();
-    await new IngestionPersistence(getAppPrisma()).persistEventDetailWithDiagnostics(await roundDetail(provider));
+    await new IngestionPersistence(getAppPrisma(), testDomainEvents()).persistEventDetailWithDiagnostics(await roundDetail(provider));
 
-    const result = await publishLiveScoreUpdate(await provider.getLiveScores(ROUND), { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
+    const result = await publishLiveScoreUpdate(await provider.getLiveScores(ROUND), { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     // Game 4, not yet tipped off, writes nothing.
     expect(result).toMatchObject({ updatesReturned: 4, updatesPersisted: 3, updatesSkipped: 1 });

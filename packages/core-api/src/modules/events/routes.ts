@@ -33,6 +33,7 @@ import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
 import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
 import { SportLeaguePageService, type SportLeaguePageServiceDeps } from '../sport-catalog/sport-league-page';
+import type { DomainEvents } from '../domain-events';
 import { createSportEventServices, eventFieldCache, type SportEventServices } from './wiring';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
 import type { CdnInvalidator } from '../../core/cdn-invalidator';
@@ -44,11 +45,10 @@ export interface EventsModuleOptions {
   ingestionService: IngestionService;
   providerRegistry?: ProviderRegistry;
   cdn: CdnInvalidator;
-  /**
-   * Each admin write that changes what the event's contests' boards show writes their rebuild job
-   * in its own transaction (#1466).
-   */
-  leaderboards: Pick<LeaderboardRebuilds, 'forEvent' | 'eventsChanged'>;
+  /** What follows each admin results, field or game write (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
+  /** What the rebuild route asks for (#1466). */
+  leaderboards: Pick<LeaderboardRebuilds, 'eventsChanged'>;
   /**
    * The app's one set of event services, shared with the synced event creation sweep so both
    * write through the same instances; omitted, the module builds its own.
@@ -103,7 +103,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
   const prisma = getAppPrisma(fastify);
   const eventLifecycle = opts.eventLifecycleService;
   const handler = createEventHandlers({
-    services: opts.services ?? createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle, opts.leaderboards),
+    services: opts.services ?? createSportEventServices(prisma, fastify.log.child({ module: 'events.service' }), eventLifecycle, opts.domainEvents),
     eventLifecycle,
     scoreSource: new EventScoreSourceService(prisma, opts.providerRegistry, fastify.log),
     ingestion: opts.ingestionService,

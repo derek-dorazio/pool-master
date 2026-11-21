@@ -41,10 +41,8 @@ import {
   type SportEvent,
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
-import { BatchedRead } from '../../core/batched-read';
-import { NO_JOBS_FOR_WRITE, type JobsForWrite } from '../background-jobs/background-job-queue';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
-import { ReadCache } from '../../core/read-cache';
+import type { JobsForWrite } from '../background-jobs/background-job-queue';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 import { deriveSeedNumbersAndOdds } from '../golf/golf-seeding-algorithm';
 import {
   matchAmong,
@@ -54,6 +52,7 @@ import {
 } from '../sport-catalog/participant-row-resolver';
 import { SportEventError } from './errors';
 import type { EventFieldCache } from './event-field-cache';
+import { EventFieldReader, type EventFieldReads } from './event-field-reader';
 import { assertTiersAndPricesEditable } from './sport-event-tier-service';
 
 // The field row a reader sees lives with the port that reads it (#1163).
@@ -179,63 +178,33 @@ export interface SportEventParticipantServiceDeps {
   valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;
   /** The fields read lately, shared by every instance of this service in the container; a new one when omitted. */
   fieldCache?: EventFieldCache;
-  /** The event's leaderboard rebuild, written with each field write (#1466); none without it. */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /** What follows each results, field or game change it writes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   now?: () => Date;
   random?: () => number;
   logger?: FastifyBaseLogger;
 }
 
-/** An event's field as readers read it: now, from this container's cache, or batched for a fan-out. */
-export type EventFieldReads = Pick<SportEventParticipantService, 'listEventParticipants' | 'listCachedEventParticipants' | 'batchedFieldReads'>;
+export type { EventFieldReads } from './event-field-reader';
 
-export class SportEventParticipantService {
-  private readonly fieldCache: EventFieldCache;
+export class SportEventParticipantService implements EventFieldReads {
+  /** The field's reads (#1163, #1315), which the contest and email readers are built with alone. */
+  private readonly fieldReader: EventFieldReader;
 
   constructor(private readonly deps: SportEventParticipantServiceDeps) {
-    this.fieldCache = deps.fieldCache ?? new ReadCache();
+    this.fieldReader = new EventFieldReader(deps);
   }
 
-  /**
-   * The field in seed order, unseeded last, read now in one repository call (#1163). What a
-   * write answers with, and what settlement and the emails read. 404 EVENT_NOT_FOUND for an
-   * unknown event.
-   */
-  async listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
-    const event = await this.requireEvent(sportEventId);
-    return this.deps.field.findFieldForEvent(sportEventId, event.sportLeagueId);
+  listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
+    return this.fieldReader.listEventParticipants(sportEventId);
   }
 
-  /**
-   * The same field, as viewers poll it (#1163): the one read in this container within the last
-   * 30 seconds, else read now and kept. Every contest on the event shares it. A write through
-   * the events routes or ingestion forgets it, so this container's next read is current.
-   */
   listCachedEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
-    return this.fieldCache.get(sportEventId, this.deps.now?.() ?? new Date(), () => this.listEventParticipants(sportEventId));
+    return this.fieldReader.listCachedEventParticipants(sportEventId);
   }
 
-  /**
-   * The same two reads for one fan-out (#1315), batched: the fields asked for together are read
-   * together, with their events, in the same few statements however many events. The cached
-   * read still answers from this container's cache first.
-   */
   batchedFieldReads(): EventFieldReads {
-    const fields = new BatchedRead<string, SportEventParticipantView[]>(async (sportEventIds) => {
-      const events = new Map((await this.deps.sportEvents.findByIds([...new Set(sportEventIds)])).map((event) => [event.id, event]));
-      const missing = sportEventIds.find((sportEventId) => !events.has(sportEventId));
-      if (missing !== undefined) {
-        throw new SportEventError(`Sport event ${missing} was not found.`, 'EVENT_NOT_FOUND', 404);
-      }
-      const rows = await this.deps.field.findFieldsForEvents([...events.values()].map((event) => ({ sportEventId: event.id, sportLeagueId: event.sportLeagueId })));
-      return sportEventIds.map((sportEventId) => rows.filter((row) => row.entry.sportEventId === sportEventId));
-    });
-    const reads: EventFieldReads = {
-      listEventParticipants: (sportEventId) => fields.load(sportEventId),
-      listCachedEventParticipants: (sportEventId) => this.fieldCache.get(sportEventId, this.deps.now?.() ?? new Date(), () => fields.load(sportEventId)),
-      batchedFieldReads: () => reads,
-    };
-    return reads;
+    return this.fieldReader.batchedFieldReads();
   }
 
   /**
@@ -272,7 +241,7 @@ export class SportEventParticipantService {
       this.deps.random,
     );
     if (seeded.length > 0) {
-      const rebuild = this.rebuild(sportEventId);
+      const rebuild = await this.rebuild(sportEventId);
       await this.deps.field.createMany(sportEventId, seeded.map((entry) => ({
         participantId: entry.participantId,
         ranking: entry.ranking,
@@ -301,7 +270,7 @@ export class SportEventParticipantService {
     const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.participantId));
     const toAdd = [...new Set(participantIds)].filter((participantId) => !onField.has(participantId));
     if (toAdd.length > 0) {
-      const rebuild = this.rebuild(sportEventId);
+      const rebuild = await this.rebuild(sportEventId);
       await this.deps.field.createMany(sportEventId, toAdd.map((participantId) => ({ participantId })), rebuild.jobs);
       rebuild.queued();
     }
@@ -382,7 +351,7 @@ export class SportEventParticipantService {
     // little: the adapter writes one statement per distinct new value (#1252).
     const entryById = new Map(field.map((entry) => [entry.id, entry]));
     const tierMoves = await this.tierMoves(sportEventId, updates);
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, tierKey: _tierKey, ...patch }) => {
       const entry = entryById.get(sportEventParticipantId);
       const tier = tierMoves.get(sportEventParticipantId);
@@ -553,14 +522,14 @@ export class SportEventParticipantService {
         409,
       );
     }
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     await this.deps.field.delete(sportEventParticipantId, rebuild.jobs);
     rebuild.queued();
   }
 
-  /** The job rebuilding the event's boards, written with a field write that may change them (#1466). */
-  private rebuild(sportEventId: string): JobsForWrite {
-    return this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
+  /** The job rebuilding the event's boards, written with a field write that may change them (#1466, #1946). */
+  private rebuild(sportEventId: string): Promise<JobsForWrite> {
+    return this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
   }
 
   private async requireEvent(sportEventId: string): Promise<SportEvent> {
