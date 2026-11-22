@@ -143,7 +143,7 @@ The current model was built one sport at a time and leans on code to look right:
   registry copy) goes.
 - **SportLeagueSeasonParticipantTeam**: one row per Season and player, holding his current
   team, position, `rating` and last-seen date, written by the roster sync; it replaces
-  `teamAffiliation`. History lives in player field rows and stat rows. (Open question 2.)
+  `teamAffiliation`. No trade history is kept (Derek).
 - Leagues with no feed stay switched off (decided), so every league in scope is synced.
 - **Providers**:
   - a **Provider** enum;
@@ -421,9 +421,8 @@ Before this plan is deleted:
 Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
 
 1. ~~Clutch Card player tiers and prices~~ Settled: tier sets and valuations keyed by event slot, read from a contest's first covered slot (§8).
-2. **Roster row shape.** Recommendation: one row per Season and player (current team,
-   position, rating, last seen).
-3. **Multi-slot Clutch Card picks.** Recommendation: pick once before the first covered Game.
+2. ~~Roster row shape~~ Settled: one row per Season and player, no trade history (§4).
+3. ~~Multi-slot Clutch Card picks~~ Settled: pick once; a player stops scoring when his team is out (§8).
 4. **Clutch Cards during the build.** Revised recommendation: keep them on until the first
    slice that breaks them (around slice 7 or 9), remove their code in that slice, and order
    the work so the new Clutch Card lands as early as possible.
