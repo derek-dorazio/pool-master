@@ -426,6 +426,15 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
 2. ~~Roster row shape~~ Settled: one row per Season and player, no trade history (§4).
 3. ~~Multi-slot Clutch Card picks~~ Settled: pick once; a player stops scoring when his team is out (§8).
 4. ~~Clutch Cards during the build~~ Settled (Derek): no users, so the old Clutch Card leagues and code are removed early (slice 1b) and rebuilt as the new contest type; no effort keeps them working.
-5. **Naming pass.** Slice 0, before anything is built; it also settles the `slot` name clash.
+5. **Naming pass** (proposed 2026-11-22, awaiting Derek): keep the full-path names and today's
+   `SportEvent` prefix. Definitions `SportLeaguePhase`, `SportLeaguePhaseSlot`,
+   `…SlotProviderMapping`, `SportLeaguePosition`; calendar `SportLeagueSeason`,
+   `…SeasonProviderMapping`, `…SeasonPhase`, `…SeasonPhaseSlot`, `…SeasonParticipantTeam`;
+   events `SportEvent`, `SportEventSlot`, `SportEventProviderMapping`, `SportEventParticipant`,
+   `SportEventSlotTier`, `SportEventSlotParticipantValuation`, `SportEventRound`,
+   `SportEventRoundMatch`, `SportEventRoundMatchGame` (+ `…GameProviderMapping`,
+   `…GamePlayerStat`, `…GamePlayerScore`); `Provider`, `ProviderLeague`,
+   `SportLeagueProviderMapping`, `ProviderSyncFinding`, `ScoringComposite`,
+   `PlayerRatingProfile`; contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`).
 6. ~~Test data~~ Settled: test events in the current Season on flagged test slot rows (§2).
    the loader re-dates test events into it.
