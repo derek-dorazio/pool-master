@@ -213,8 +213,10 @@ The current model was built one sport at a time and leans on code to look right:
   - **…GameSidePeriodScore**: one row per Game side and period, with a period kind REGULAR /
     OVERTIME / SHOOTOUT. Golf hole scores are stored only where a contest reads them; none
     does today.
-  - **…GameSidePlayer**: team-cup lineups, the player field rows that played for a side in
-    a Game (Ryder Cup pairs). Built when match play is synced; not needed for stroke play.
+  - **…GameSidePlayer** (DEFERRED, Derek 2026-11-22): team-cup lineups, the player field
+    rows that played for a side in a Game (Ryder Cup pairs). Not built in this epic; built
+    when match play is synced. Recorded in `rules/domain-model-concepts.md` as a deferred
+    concept so a later change uses this shape.
 - **SportEventParticipantStanding**: the event result per field row: total, score to par,
   position, display position ("T5") and status (CUT / WD / DQ). One writer per scoring
   family: when the feed supplies them, the sync writes the feed's own totals and tie-aware
@@ -517,6 +519,9 @@ In order:
 27. Clutch Card test data moved onto the parent leagues.
 28. Provider switch gate and re-mapping.
 29. QA rebuild and squash.
+30. Domain model documentation overhaul (Derek 2026-11-22): `rules/domain-model-concepts.md`
+    and the model rules rewritten for the new model, including its deferred concepts
+    (team-cup lineups, injuries #1934).
 
 Admin screens ship with their backend slice. Related tickets:
 
