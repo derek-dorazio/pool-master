@@ -262,9 +262,9 @@ phase:
 **The contest's covered slots**:
 
 - **Storage.** A contest copies its template's slots, resolved to that Season's slots, into
-  **ContestSlot** (name settled in the naming pass; `ContestEntryPick.slot` and
+  **ContestSeasonSlot** (`ContestEntryPick.slot` and
   `lineupSlot` already exist). A later template edit never changes a running contest.
-- **One record.** ContestSlot is the **only** record of what a contest covers. The
+- **One record.** ContestSeasonSlot is the **only** record of what a contest covers. The
   contest's events are read through each slot's owning event. `ContestSportEvent`,
   `squaresFromRound`, the squares round number and `bracketStartRound` go. A squares
   contest still names its one Game, because a best-of Finals has several: the commissioner
@@ -299,7 +299,7 @@ phase:
 ## 8. Clutch Cards: a contest type on the parent league
 
 - **What it is.** A Clutch Card contest covers any set of the parent league's slots in one
-  Season, through the same ContestSlot.
+  Season, through the same ContestSeasonSlot.
 - **Pick list.** The player field rows of the event's teams that are not eliminated and
   have a place in a covered slot, judged at cutoff, so bye teams are included. The API
   computes it. A Super Bowl card has 2 teams; a Semifinal card has 4.
@@ -385,7 +385,7 @@ In order:
 13. Sync matching by date window and calendar week, with #1924's backend.
 14. Status bubbling on the handler map, completion per scoring family, release by next
     unstarted slot.
-15. ContestSlot replaces ContestSportEvent, `squaresFromRound`, `bracketStartRound`.
+15. ContestSeasonSlot replaces ContestSportEvent, `squaresFromRound`, `bracketStartRound`.
 16. Readiness and cutoff from covered slots.
 17. Pick windows per slot and voided picks.
 18. Settlement by covered slots.
@@ -414,7 +414,7 @@ Before this plan is deleted:
 
 - an ADR for the Season, Phase, Slot model, contests covering slots, and Clutch Cards as a
   contest type (superseding the round-league design and amending ADR 0011);
-- `rules/domain-model-concepts.md` updated for Season, Phase, Slot, Game, ContestSlot and
+- `rules/domain-model-concepts.md` updated for Season, Phase, Slot, Game, ContestSeasonSlot and
   the roster row;
 - `architecture-rules.md` §4 updated for status bubbling;
 - `docs/LIVE-SPORTS-DATA-SYNC.md` rewritten for the mapping-table sync.
