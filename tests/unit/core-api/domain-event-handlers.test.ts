@@ -124,6 +124,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'tell-league-contest-started',
         'tell-league-contest-reopened',
         'tell-league-contest-settled',
+        'rebuild-moved-contest-leaderboards',
       ],
       SPORT_EVENT_FIELD_SYNCED: ['sync-games-then-tier-field'],
     });
@@ -489,15 +490,29 @@ describe('CONTEST_STATUS_CHANGED handlers', () => {
     }]);
   });
 
-  it('queues nothing when a commissioner opens a draft: its reminders start from the move itself', () => {
-    expect(told(contestChanged([ContestStatus.DRAFT], ContestStatus.OPEN, { sportEventId: undefined }))).toEqual([]);
+  it('rebuilds the moved contest\'s boards for every move, keyed once per contest, since its status shows on them and settlement completes it after its standings', async () => {
+    const rebuild = handler('rebuild-moved-contest-leaderboards');
+    const event = contestChanged([ContestStatus.OPEN, ContestStatus.ACTIVE], ContestStatus.COMPLETED, { sportEventId: undefined });
+
+    expect(await rebuild.jobs(event, context())).toEqual([{
+      type: BackgroundJobType.REBUILD_LEADERBOARDS,
+      payload: { subject: 'CONTEST', id: 'contest-1' },
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: 'REBUILD_LEADERBOARDS:CONTEST:contest-1',
+    }]);
   });
 
-  it('runs exactly one handler for each move it tells, and none for a move it does not', () => {
-    expect(told(contestChanged([ContestStatus.OPEN], ContestStatus.ACTIVE))).toEqual(['tell-league-contest-started']);
-    expect(told(contestChanged([ContestStatus.ACTIVE], ContestStatus.OPEN, { startsAt: START }))).toEqual(['tell-league-contest-reopened']);
-    expect(told(contestChanged([ContestStatus.ACTIVE], ContestStatus.COMPLETED))).toEqual(['tell-league-contest-settled']);
-    expect(told(contestChanged([ContestStatus.DRAFT], ContestStatus.ACTIVE))).toEqual([]);
+  it('only rebuilds the boards when a commissioner opens a draft: its reminders start from the move itself', () => {
+    expect(told(contestChanged([ContestStatus.DRAFT], ContestStatus.OPEN, { sportEventId: undefined }))).toEqual(['rebuild-moved-contest-leaderboards']);
+  });
+
+  it('runs exactly one email handler for each move it tells, none for a move it does not, and the boards\' rebuild for every move', () => {
+    const rebuild = 'rebuild-moved-contest-leaderboards';
+    expect(told(contestChanged([ContestStatus.OPEN], ContestStatus.ACTIVE))).toEqual(['tell-league-contest-started', rebuild]);
+    expect(told(contestChanged([ContestStatus.ACTIVE], ContestStatus.OPEN, { startsAt: START }))).toEqual(['tell-league-contest-reopened', rebuild]);
+    expect(told(contestChanged([ContestStatus.ACTIVE], ContestStatus.COMPLETED))).toEqual(['tell-league-contest-settled', rebuild]);
+    expect(told(contestChanged([ContestStatus.DRAFT], ContestStatus.ACTIVE))).toEqual([rebuild]);
   });
 
   it('fails the move of a contest that went live or reopened without the event that moved it, rather than queue an email naming none', () => {
@@ -523,7 +538,7 @@ describe('CONTEST_STATUS_CHANGED handlers', () => {
       (event) => event.contest.id,
     );
 
-    expect(typesOf(batch.jobsFor(contestIds))).toEqual(contestIds.map(() => BackgroundJobType.CONTEST_STARTED_EMAILS));
+    expect(typesOf(batch.jobsFor(contestIds))).toEqual(contestIds.flatMap(() => [BackgroundJobType.CONTEST_STARTED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS]));
   });
 });
 
@@ -584,13 +599,6 @@ describe('DomainEvents.collectEach, for a guarded batch write', () => {
     expect(queue.queued).not.toHaveBeenCalled();
   });
 
-  it('says whether any subject has jobs at all, so a batch none of whose events has any can skip its transaction', async () => {
-    const { events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
-
-    expect((await domain.collectEach(events, (event) => event.sportEvent.id)).hasJobs).toBe(true);
-    expect((await domain.collectEach([rescheduled(SportEventStatus.DRAFT)], (event) => event.sportEvent.id)).hasJobs).toBe(false);
-  });
-
   it('keeps every event\'s jobs when two events are about one subject', async () => {
     const { events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
     const twice: SportEventRescheduled[] = [events[0], { ...events[0], previousStart: new Date('2026-04-18T20:00:00.000Z') }];
@@ -622,6 +630,7 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-started` | `CONTEST_STARTED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-reopened` | `CONTEST_REOPENED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-settled` | `CONTEST_SETTLED_EMAILS` |',
+      '| `CONTEST_STATUS_CHANGED` | `rebuild-moved-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_FIELD_SYNCED` | `sync-games-then-tier-field` | `SYNC_EVENT_GAMES_AND_TIERS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));

@@ -1902,10 +1902,10 @@ describe('ContestEntryEventStandingRepository', () => {
       settledAt: new Date('2026-06-07T22:00:00.000Z'),
       totalScore: 9,
     };
-    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id }, { ...write, sportEventId: second.id, totalScore: 11 }]);
+    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id }, { ...write, sportEventId: second.id, totalScore: 11 }], []);
     const [first] = await prisma.contestEntryEventStanding.findMany({ where: { contestId: contest.id, sportEventId: event.id } });
 
-    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id, position: 1, displayPosition: '1', totalScore: 12 }]);
+    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id, position: 1, displayPosition: '1', totalScore: 12 }], []);
 
     const rows = await repos().eventStandings.findByContest(contest.id);
     expect(rows.map((row) => [row.sportEventId, row.position, row.totalScore]).sort((left, right) => String(left[0]).localeCompare(String(right[0]))))
@@ -1967,7 +1967,7 @@ describe('ContestEntryEventStandingRepository', () => {
       const rows = await Promise.all(Array.from({ length: entries }, (_, index) => prisma.contestEntry.create({
         data: { contestId, squadId: squads[index % 2].id, entryNumber: index + 1, name: `Entry ${String(index + 1)}` },
       })));
-      await repos().eventStandings.upsertMany(contestId, rows.map((entry) => ({ ...write, contestId, contestEntryId: entry.id, sportEventId })));
+      await repos().eventStandings.upsertMany(contestId, rows.map((entry) => ({ ...write, contestId, contestEntryId: entry.id, sportEventId })), []);
     };
     await settleOn(settledHere.id, event.id, 3);
     await settleOn(settledElsewhere.id, other.id, 1);

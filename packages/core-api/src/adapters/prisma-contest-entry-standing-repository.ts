@@ -105,7 +105,7 @@ export class PrismaContestEntryEventStandingRepository implements ContestEntryEv
     return new Set(rows.map((row) => row.contestId));
   }
 
-  async upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
+  async upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[], jobs: readonly BackgroundJobRequest[]): Promise<void> {
     assertOfContest(contestId, writes);
     // With no row to write, the jobs are the only write: one insert needs no transaction.
     if (writes.length === 0) {

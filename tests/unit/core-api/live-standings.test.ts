@@ -491,7 +491,7 @@ describe('LiveStandings.queueDue', () => {
       totalScore: -9,
       asOf: settledAt,
       settledAt,
-    }]);
+    }], []);
     boards.set(contest.id, [row('e1', ana.squad, 1, -9, { events: [{ sportEventId: masters.id, score: -9, position: 2, displayPosition: 'T2' }] })]);
 
     await standings().queueDue(after(settledAt, 31));
@@ -517,7 +517,7 @@ describe('LiveStandings.queueDue', () => {
       totalScore: -5,
       asOf: pgaSettledAt,
       settledAt: pgaSettledAt,
-    }]);
+    }], []);
     await standings().queueDue(after(pgaSettledAt, 31));
     expect(outbox.rows).toHaveLength(0);
   });
@@ -551,7 +551,7 @@ describe('LiveStandings.queueDue', () => {
       totalScore: 1,
       asOf: settledAt,
       settledAt,
-    }]);
+    }], []);
   }
 
   function pickEmBoard(contestId: string, weekIds: string[], entries: Array<{ entryId: string; squad: { id: string; name: string }; position: number; total: number; week1: { position: number; points: number; display?: string } | null }>): PickEmLeaderboardModel {
@@ -962,7 +962,7 @@ describe('LiveStandings.queueDue', () => {
     await world.eventStandingRepo().upsertMany(contest.id, [{
       contestId: contest.id, contestEntryId: 'e2', sportEventId: masters.id, position: 2, displayPosition: '2',
       countingPickLimit: 4, scoredPickCount: 4, totalScore: -3, asOf: after(firstAt, 90), settledAt: after(firstAt, 90),
-    }]);
+    }], []);
     boards.set(contest.id, [row('e1', ana.squad, 1, -9)]);
 
     await standings().queueDue(after(firstAt, 31));

@@ -18,6 +18,7 @@ import {
   SelectionType,
   SportEventStatus,
   parseContestScoringSettings,
+  type BackgroundJobRequest,
   type Contest,
   type SportEvent,
 } from '@poolmaster/shared/domain';
@@ -172,6 +173,8 @@ function world({
 
   const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
   const wakes = jest.spyOn(queue, 'queued');
+  /** Each contest move and the jobs written with it. */
+  const moves: Array<{ contestId: string; to: ContestStatus; jobs: readonly BackgroundJobRequest[] }> = [];
   const service = new ContestSettlementService({
     domainEvents: testDomainEvents({ queue }),
     squares: fakeSquaresRepo(),
@@ -187,6 +190,7 @@ function world({
         const contest = contestOf(id);
         if (!transition.from.includes(contest.status)) return false;
         contests.set(id, { ...contest, status: transition.to });
+        moves.push({ contestId: id, to: transition.to, jobs: transition.jobs?.([id]) ?? [] });
         return true;
       }),
     }),
@@ -244,6 +248,7 @@ function world({
     contests,
     queue,
     wakes,
+    moves,
     settledReads,
     eventStandingWrites,
     standingWrites,
@@ -471,6 +476,18 @@ describe('ContestSettlementService — a cancelled event counts for nothing (#74
     expect(w.standings).toEqual([]);
     expect(w.contest().status).toBe(ContestStatus.COMPLETED);
     expect(summary).toMatchObject({ contestsCompleted: 1, standingsUpserted: 0 });
+  });
+
+  it('writes the contest\'s board rebuild with its move to COMPLETED though no standings were written, so its board does not stay Live', async () => {
+    const w = world();
+    w.cancel(MASTERS);
+    w.cancel(PGA);
+
+    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(w.eventStandingWrites).not.toHaveBeenCalled();
+    expect(w.moves.map(({ contestId, to }) => [contestId, to])).toEqual([['majors', ContestStatus.COMPLETED]]);
+    expect(w.moves[0]?.jobs).toContainEqual(rebuildLeaderboardsJob(w.queue, LeaderboardRebuildSubject.CONTEST, 'majors'));
   });
 });
 

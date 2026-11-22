@@ -325,6 +325,7 @@ describe('Opening a contest (#1355)', () => {
       .filter((statement) => !(statementParams(statement).includes(first.id) && statementParams(statement).includes(second.id))).length;
     expect([eachEvent('sport_events'), eachEvent('sport_event_tiers')]).toEqual([0, 1]);
     expect(requestCounts(statements)).toEqual([
+      ['INSERT background_jobs', 1], // the opened contest's board rebuild, written with the move (#1973)
       ['SELECT contest_configurations', 1],
       ['SELECT contest_draws', 2],
       ['SELECT contest_sport_events', 2],

@@ -2,6 +2,7 @@ import { expect } from '@jest/globals';
 import {
   ContestFormat,
   CupWeight,
+  BackgroundJobType,
   ContestStatus,
   type ContestScoringSettings,
   MatchSide,
@@ -759,12 +760,15 @@ describe('ContestManagementService', () => {
 
       const opened = await service.openContest('league-1', 'contest-1');
 
-      expect(contestCoreRepo.transitionStatus).toHaveBeenCalledWith('contest-1', {
+      expect(contestCoreRepo.transitionStatus).toHaveBeenCalledWith('contest-1', expect.objectContaining({
         from: [ContestStatus.DRAFT],
         to: ContestStatus.OPEN,
         openedAt: CONTEST_MANAGEMENT_TEST_NOW,
         nextReminderAt: CONTEST_MANAGEMENT_TEST_NOW,
-      });
+      }));
+      // The move carries only its boards' rebuild (#1973): the new contest email is told apart.
+      const jobsOf = expectDefined(jest.mocked(contestCoreRepo.transitionStatus).mock.calls[0]?.[1].jobs);
+      expect(jobsOf(['contest-1']).map((job) => job.type)).toEqual([BackgroundJobType.REBUILD_LEADERBOARDS]);
       expect(opened.status).toBe(ContestStatus.OPEN);
     });
 

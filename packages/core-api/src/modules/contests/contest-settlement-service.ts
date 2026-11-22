@@ -99,8 +99,8 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   championship: Pick<ChampionshipService, 'recordContest'>;
   /**
    * What follows settlement's writes: a contest's completion queues its final results email job
-   * (#845 F1, F2, #1387, #1949), and an event's frozen standings the rebuild of its boards (#1435,
-   * #1973), each written with its write.
+   * and its boards' rebuild (#845 F1, F2, #1387, #1949, #1973), and an event's frozen standings
+   * the rebuild of its boards (#1435, #1973), each written with its write.
    */
   domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
   logger?: LifecycleLogger;
@@ -191,7 +191,7 @@ export class ContestSettlementService {
       if (contest.selectionType === SelectionType.SQUARES) {
         // Its game normally settles it first (`settleFinishedGame`); an event finished without
         // that game's result leaves it Final with no scores.
-        const settled = await this.settleSquaresContest(reads, contest, sportEvent, completedAt, rebuild.jobs);
+        const settled = await this.settleSquaresContest(reads, contest, sportEvent, completedAt);
         contestsSettled++;
         standingsUpserted += settled.standingsUpserted;
         if (settled.completed) contestsCompleted++;
@@ -316,14 +316,11 @@ export class ContestSettlementService {
     }
     const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
       .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
-    // A settled grid's standings change the event's boards, so their write carries the rebuild (#1973).
-    const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
     let completed = 0;
     for (const contest of contests) {
-      const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), rebuild.jobs, { waitForEveryPeriod: true });
+      const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
       if (settled.completed) completed++;
     }
-    if (contests.length > 0) rebuild.queued();
     return completed;
   }
 
@@ -340,8 +337,6 @@ export class ContestSettlementService {
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
-    /** The event's board rebuild, written with its event standings. */
-    rebuild: readonly BackgroundJobRequest[],
     options?: { waitForEveryPeriod?: boolean },
   ): Promise<{ standingsUpserted: number; completed: boolean }> {
     const [games, draw] = await Promise.all([
@@ -385,7 +380,9 @@ export class ContestSettlementService {
           totalScore: score,
         };
       });
-      await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId: sportEvent.id })), rebuild);
+      // No board rebuild rides this write (#1973): a squares contest stores no board (its grid is
+      // its board), and its game's decision already rebuilt the event's (`GAME_DECIDED`).
+      await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId: sportEvent.id })), []);
       await this.deps.standings.upsertMany(contest.id, frozen);
       standingsUpserted = holders.length;
     }

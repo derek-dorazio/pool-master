@@ -729,7 +729,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     expect(standings).toEqual(expect.arrayContaining([[context.alice.id, '1', 2], [context.bob.id, '2', 1]]));
   });
 
-  it('reads the event\'s games once, gives the championship the final places read once, and writes the results email job with the move (#1355, #1387)', async () => {
+  it('reads the event\'s games once, gives the championship the final places read once, and writes the results email and board rebuild jobs with the move (#1355, #1387, #1973)', async () => {
     const context = setup({ status: ContestStatus.ACTIVE });
     context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
     context.squares.addBox(context.contest.id, context.bob.id, 3, 4);
@@ -772,9 +772,14 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       runAt: undefined,
       start: TEST_JOB_START,
       dedupeKey: `CONTEST_SETTLED_EMAILS:${context.contest.id}`,
+    }, {
+      type: BackgroundJobType.REBUILD_LEADERBOARDS,
+      payload: { subject: 'CONTEST', id: context.contest.id },
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: `REBUILD_LEADERBOARDS:CONTEST:${context.contest.id}`,
     }]);
-    // The runner is woken once for the results email and once for the event's board rebuild (#1973).
-    expect(queued).toHaveBeenCalledTimes(2);
+    expect(queued).toHaveBeenCalledTimes(1);
   });
 
   it('waits for every quarter\'s score when the result goes in first, then settles with all four winners once the last quarter is entered', async () => {

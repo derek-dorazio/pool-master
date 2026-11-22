@@ -214,5 +214,5 @@ export interface ContestEntryEventStandingRepository {
    * `ContestEntryStandingRepository.upsertMany` writes. Settlement is their one writer, and `jobs`
    * (the event's leaderboard rebuild, #1973) are written in the same transaction, rows changed or not.
    */
-  upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+  upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[], jobs: readonly BackgroundJobRequest[]): Promise<void>;
 }

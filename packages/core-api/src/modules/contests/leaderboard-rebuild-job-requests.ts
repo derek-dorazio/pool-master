@@ -85,6 +85,19 @@ export const rebuildContestLeaderboardsHandler: DomainEventHandler<typeof Domain
   jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.CONTEST, event.contestEntryEvent.contestId)],
 };
 
+/**
+ * A contest's status shows on its board, and a completed contest's board carries its final
+ * standings, so every move of a contest rebuilds its boards, written with the move
+ * (`ContestLifecycle`). Settlement completes a contest after its event standings are written, and
+ * some contests complete with none written (a cancelled event's), so the event's rebuild written
+ * with the standings can run before the move; this one cannot.
+ */
+export const rebuildMovedContestLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.CONTEST_STATUS_CHANGED> = {
+  key: 'rebuild-moved-contest-leaderboards',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.CONTEST, event.contest.id)],
+};
+
 /** Queues a rebuild job per event or contest a write changed, each one waiting at most once. */
 export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
   constructor(private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>) {}
