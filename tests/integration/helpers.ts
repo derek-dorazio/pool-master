@@ -118,6 +118,7 @@ import { ActivityService } from '../../packages/core-api/src/modules/activity/ac
 import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
 import { CustomerService } from '../../packages/core-api/src/modules/customers/customer-service';
 import { PrismaCustomerReader } from '../../packages/core-api/src/adapters/prisma-customer-reader';
+import { NO_SETTLE_JOBS } from '../support/event-settlement';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -208,10 +209,11 @@ export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma())
 /**
  * An event lifecycle for a test about the event services themselves rather than what follows a
  * change: its follow-ups go through the app's handler map onto the job table, with no template
- * contests and nobody told (`testDomainEvents`).
+ * contests and nobody told (`testDomainEvents`). It runs no settle job: its settlement throws
+ * (`NO_SETTLE_JOBS`), so a settlement test builds a lifecycle with the settlement it watches.
  */
 export function integrationEventLifecycle(prisma: PrismaClient = getAppPrisma()): EventLifecycleService {
-  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }) });
+  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), ...NO_SETTLE_JOBS });
 }
 
 /** The event services over `integrationEventLifecycle`, for a test of the services themselves. */

@@ -17,6 +17,7 @@ import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, se
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { recordStatements, statementCounts } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
 // head-to-head family's GAME writer, through the admin's result path, with the teams' provider
@@ -131,7 +132,7 @@ function publish(externalEventId: string, games: GameScoreUpdate[]) {
       prisma: getAppPrisma(),
       providerId: PROVIDER,
       domainEvents,
-      contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents }),
+      contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents, ...NO_SETTLE_JOBS }),
       scoringFamilyForEvent: () => headToHeadScoringFamily,
     },
   );

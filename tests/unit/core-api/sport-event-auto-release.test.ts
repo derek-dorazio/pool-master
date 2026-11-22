@@ -25,6 +25,7 @@ import { standardEventPricing } from '../../support/budget-pricing';
 import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 const NOW = new Date('2026-01-15T12:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -40,6 +41,7 @@ function setup() {
     { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
     sportEvents,
     testDomainEvents(),
+    NO_SETTLE_JOBS,
   );
   const service = new SportEventService({ domainEvents: testDomainEvents(),
     sportEvents,

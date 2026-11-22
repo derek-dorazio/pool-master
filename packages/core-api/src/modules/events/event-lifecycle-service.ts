@@ -55,6 +55,14 @@ export interface FinishedSportEventSettlement {
   ): Promise<number>;
 }
 
+/**
+ * What a finished event's settle jobs need (#1946): both required, so a lifecycle built without
+ * them fails to compile instead of settling nothing or telling nobody of a cancellation.
+ */
+export interface EventSettlementDeps {
+  contestSettlement: FinishedSportEventSettlement;
+}
+
 /** Who drove the transition: an admin by hand, or the lifecycle scheduler. */
 export type SportEventStatusTransitionActor =
   | { type: 'ROOT_ADMIN' }
@@ -126,8 +134,8 @@ export class EventLifecycleService {
     private readonly sportEvents: SportEventRepository,
     /** What follows a status change or a moved start: the jobs each writes with its change (#1946). */
     private readonly domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>,
+    private readonly settlement: EventSettlementDeps,
     private readonly logger?: FastifyBaseLogger,
-    private readonly contestSettlement?: FinishedSportEventSettlement,
   ) {
     this.contestLifecycle = new ContestLifecycle(contestDeps.contests, domainEvents);
   }
@@ -254,10 +262,7 @@ export class EventLifecycleService {
    * failure part way settles only the rest.
    */
   async settleFinishedGameContests(payload: SettleGameContestsJobPayload): Promise<BackgroundJobOutcome> {
-    if (!this.contestSettlement) {
-      throw new Error('Contest settlement is required to settle a finished game\'s contests');
-    }
-    const completed = await this.contestSettlement.settleFinishedGame(payload.sportEventId, payload.sportEventMatchId, {
+    const completed = await this.settlement.contestSettlement.settleFinishedGame(payload.sportEventId, payload.sportEventMatchId, {
       completedAt: new Date(payload.completedAt),
     });
     return { changedCount: completed };
@@ -277,9 +282,6 @@ export class EventLifecycleService {
    * them. Reports the contests it settled (#1861).
    */
   async settleFinishedEventContests(payload: SettleSportEventContestsJobPayload): Promise<BackgroundJobOutcome> {
-    if (!this.contestSettlement) {
-      throw new Error('Contest settlement is required to settle a finished event\'s contests');
-    }
     const sportEvent = await this.sportEvents.findById(payload.sportEventId);
     if (!sportEvent || !isSportEventStatusFinished(sportEvent.status)) {
       this.logger?.warn(
@@ -296,7 +298,7 @@ export class EventLifecycleService {
     if (sportEvent.status === SportEventStatus.COMPLETED) {
       await this.activateContestsPastCutoff(sportEvent, completedAt);
     }
-    const summary = await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
+    const summary = await this.settlement.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
       completedAt,
       sportEvent,
     });

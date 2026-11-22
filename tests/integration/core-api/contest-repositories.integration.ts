@@ -44,6 +44,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { createContestRow } from '../../support/contest-rows';
 import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -1206,7 +1207,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const { queue } = integrationBackgroundJobs();
     const domainEvents = testDomainEvents({ queue, releasedEditionContests: createReleasedEditionContests(getAppPrisma(), fakeLogger()) });
     const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()), { domainEvents });
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents, ...NO_SETTLE_JOBS });
     const release = (sportEventId: string) => lifecycle.applySportEventStatusTransition({
       sportEventId, toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true,
     });
@@ -1977,7 +1978,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const jobs = integrationBackgroundJobs();
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }) });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }), ...NO_SETTLE_JOBS });
     const emailJobs = createContestEmailJobs(getAppPrisma(), {
       notices: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),

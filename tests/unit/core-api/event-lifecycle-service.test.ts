@@ -28,6 +28,7 @@ import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/rep
 import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { mockFn } from '../../support/mock-fn';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
@@ -89,7 +90,9 @@ function lifecycleService(
   notice?: SportEventChangedNotice,
 ): EventLifecycleService {
   const domainEvents = testDomainEvents({ queue: jobs ?? startedJobs(), releasedEditionContests, sportEventChanged: notice });
-  return new EventLifecycleService(contests, sportEvents, domainEvents, logger, settlement);
+  return new EventLifecycleService(contests, sportEvents, domainEvents, {
+    contestSettlement: settlement ?? NO_SETTLE_JOBS.contestSettlement,
+  }, logger);
 }
 
 /** The "Contest is live" job one contest's move writes. */
