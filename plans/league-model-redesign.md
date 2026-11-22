@@ -126,7 +126,11 @@ The current model was built one sport at a time and leans on code to look right:
   - PROVIDER_CODE: structured phases, set by migration;
   - NAME_PATTERN: open phases;
   - DATE_WINDOW: feeds with no round marker, such as the NCAAF postseason. It uses a team
-    filter, and has an explicit IGNORE mapping for bowls and unsynced phases.
+    filter.
+  - Inclusion only (Derek 2026-11-22): a row names each provider value we sync, and
+    anything else is not synced. Each unmapped value raises one INFO finding per league and
+    value (deduplicated, not per game), so a new format is seen once and never synced by
+    default.
 - **SportLeaguePosition**: code, order, `isFieldEligible` and `baselineRating`, with provider
   codes in **SportLeaguePositionProviderMapping**. The NFL's eligible positions are QB, RB, WR and TE.
 
@@ -176,8 +180,8 @@ The current model was built one sport at a time and leans on code to look right:
 - **SportEventRound** also carries `matchFormat` HEAD_TO_HEAD / FIELD, read from the feed
   where it varies by round (Ryder Cup foursomes, fourballs, singles). An F1 Grand Prix
   has one Round, its Race session (Derek 2026-11-22: pools run only on the race); which
-  sessions are synced is mapping data, not code: the slot provider mapping maps session
-  type Race to the round and Practice, Qualifying and Sprint to IGNORE, like bowls. A golf playoff is not a Round (Derek
+  sessions are synced is mapping data, not code: the slot provider mapping includes session
+  type Race only. A golf playoff is not a Round (Derek
   2026-11-22): its extra holes belong to round 4's Game, like overtime or extra innings, and
   we store whatever the feed reports for that Game and the Standing.
 - **SportEventRoundMatch** (today SportEventMatch): any meeting of sides in a round (Derek
