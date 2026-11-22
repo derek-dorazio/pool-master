@@ -217,8 +217,9 @@ The current model was built one sport at a time and leans on code to look right:
     a Game (Ryder Cup pairs). Built when match play is synced; not needed for stroke play.
 - **SportEventParticipantStanding**: the event result per field row: total, score to par,
   position, display position ("T5") and status (CUT / WD / DQ). One writer per scoring
-  family: on synced events the sync writes the feed's own totals and tie-aware position
-  (the provider wins); otherwise one function per family computes it from Game sides.
+  family: when the feed supplies them, the sync writes the feed's own totals and tie-aware
+  position (the provider is the source of truth, Derek 2026-11-22); one function per family
+  computes only what the feed doesn't supply.
   - A cut golfer has no side in the rounds after the cut; CUT lives only here.
   - The field row's withdrawn and eliminated reasons stay the event-level status, and
     Standing reads them.
@@ -534,6 +535,11 @@ Before this plan is deleted:
   the roster row;
 - `architecture-rules.md` §4 updated for status bubbling;
 - `docs/LIVE-SPORTS-DATA-SYNC.md` rewritten for the mapping-table sync.
+- `rules/domain-model-conventions-rules.md` §17 *One computation per fact* gains (Derek
+  2026-11-22): the data provider is the source of truth. A fact the feed supplies (scores,
+  totals, positions and ties, status, cut) is stored from the feed; we compute or derive a
+  fact only when the feed doesn't supply it (composites, ratings, standings for families
+  the feed doesn't rank).
 
 ## Open questions
 
