@@ -8,6 +8,7 @@ import { SportEventRoundService } from '../../../packages/core-api/src/modules/e
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 // #1820: every Clutch Card event created names its season event (the World Series round of the
 // MLB Postseason) and the rounds of it the league covers; no other event names one. The service
@@ -45,6 +46,7 @@ function setup() {
     { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
     sportEvents,
     testDomainEvents(),
+    NO_SETTLE_JOBS,
   );
   const service = new SportEventService({ domainEvents: testDomainEvents(),
     sportEvents,

@@ -47,6 +47,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeParticipantContestScoringRuleRepo } from '../../support/repo-fakes';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 const HOUR = 60 * 60 * 1000;
 /** The test's clock: every time below is relative to it, so nothing depends on today's date. */
@@ -142,7 +143,7 @@ function setup(options: { startsAtRound?: number } = {}) {
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     matches: games.matchRepo(),
-  }, sportEvents, testDomainEvents(), fakeLogger());
+  }, sportEvents, testDomainEvents(), NO_SETTLE_JOBS, fakeLogger());
 
   const input = { contestId: contest.id, entryId: aliceEntry.id, sportEventId: sportEvent.id, actorUserId: alice.id };
   const entry = () => expectDefined(world.entries.get(aliceEntry.id));
@@ -418,7 +419,7 @@ describe('a second-chance bracket — going live', () => {
       contests: context.world.contestRepo(),
       configurations,
       matches: context.games.matchRepo(),
-    }, context.world.sportEventRepo(), testDomainEvents(), fakeLogger());
+    }, context.world.sportEventRepo(), testDomainEvents(), NO_SETTLE_JOBS, fakeLogger());
 
     await lifecycle.activateContestsPastCutoff(context.eventNow(), at(2.1));
 

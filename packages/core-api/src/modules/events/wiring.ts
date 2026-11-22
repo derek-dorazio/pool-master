@@ -338,9 +338,9 @@ export function createEventLifecycleService(
     /** What follows a status change or a moved start (#1946): the app's one map, built in index.ts. */
     domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
     logger?: FastifyBaseLogger;
-    /** Who a cancellation's settle job tells (C7); without it, nobody is. */
-    sportEventChanged?: SportEventChangedNotice;
-    contestSettlement?: FinishedSportEventSettlement;
+    /** Who a cancellation's settle job tells (C7). */
+    sportEventChanged: SportEventChangedNotice;
+    contestSettlement: FinishedSportEventSettlement;
   },
 ): EventLifecycleService {
   return new EventLifecycleService(
@@ -351,8 +351,7 @@ export function createEventLifecycleService(
     },
     new PrismaSportEventRepository(prisma),
     options.domainEvents,
+    { contestSettlement: options.contestSettlement, sportEventChanged: options.sportEventChanged },
     options.logger,
-    options.contestSettlement,
-    options.sportEventChanged,
   );
 }
