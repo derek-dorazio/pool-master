@@ -175,8 +175,9 @@ The current model was built one sport at a time and leans on code to look right:
   (NBA play-in) belong to bracket shape (#1926).
 - **SportEventRound** also carries `matchFormat` HEAD_TO_HEAD / FIELD, read from the feed
   where it varies by round (Ryder Cup foursomes, fourballs, singles). An F1 Grand Prix
-  has one Round, its Race session (Derek 2026-11-22: pools run only on the race); the feed's
-  practice, qualifying and sprint sessions are not synced. A golf playoff is not a Round (Derek
+  has one Round, its Race session (Derek 2026-11-22: pools run only on the race); which
+  sessions are synced is mapping data, not code: the slot provider mapping maps session
+  type Race to the round and Practice, Qualifying and Sprint to IGNORE, like bowls. A golf playoff is not a Round (Derek
   2026-11-22): its extra holes belong to round 4's Game, like overtime or extra innings, and
   we store whatever the feed reports for that Game and the Standing.
 - **SportEventRoundMatch** (today SportEventMatch): any meeting of sides in a round (Derek
