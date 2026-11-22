@@ -40,7 +40,7 @@ function gameSettlement() {
   return { domainEvents, queued, decided };
 }
 
-const noActivation = () => jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
+const noActivation = () => jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
 
 async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PROGRESS }: { sport?: Sport; status?: SportEventStatus } = {}) {
   const store = new InMemorySportEvents();
@@ -192,7 +192,7 @@ describe('MatchResultService.recordResult', () => {
 
   it('asks the lifecycle to start the contests whose cutoff the result passed, with the service clock, on an event under way', async () => {
     const { store, event } = await setup();
-    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
+    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
     const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
@@ -202,7 +202,7 @@ describe('MatchResultService.recordResult', () => {
 
   it('starts no contest for a result on an event that is not under way', async () => {
     const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
-    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => undefined);
+    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
     const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
 
     await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);

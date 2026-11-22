@@ -28,4 +28,4 @@ export function testDomainEvents(deps: Partial<DomainEventsDeps> = {}): DomainEv
  * No contest goes live: the event lifecycle's activation, for a test of a writer that is not about
  * contests going live. A test that is passes the lifecycle it watches.
  */
-export const NO_CONTEST_ACTIVATION: Pick<EventLifecycleService, 'activateContestsPastCutoff'> = { activateContestsPastCutoff: async () => undefined };
+export const NO_CONTEST_ACTIVATION: Pick<EventLifecycleService, 'activateContestsPastCutoff'> = { activateContestsPastCutoff: async () => 0 };

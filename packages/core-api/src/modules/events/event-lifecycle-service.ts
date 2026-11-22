@@ -37,6 +37,7 @@ import type { SettleGameContestsJobPayload } from '../contests/settle-game-job-r
 import type { JobsForWrite } from '../background-jobs';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import { DomainEventType, type DomainEvents } from '../domain-events';
+import type { EventContestsJobPayload } from './event-contests-job-requests';
 
 export interface FinishedSportEventSettlement {
   settleFinishedSportEvent(
@@ -166,12 +167,14 @@ export class EventLifecycleService {
 
     const now = new Date();
     const endDate = input.toStatus === SportEventStatus.COMPLETED && !before.endDate ? now : undefined;
-    // A postponement reopens the live contests on it whose start is still ahead (#1792). Read once,
-    // for the event's jobs here and the reopen after the write. A planned contest the reopen's
-    // guarded write then misses is still told: either another caller reopened it first, and its
-    // write queued the same reopen email, or the contest left ACTIVE, and the C6 a live contest
-    // would get no longer applies. A reopen write that fails after the status landed is retried by
-    // the next lifecycle sweep, which plans again and sends the reopen email then.
+    // A postponement reopens the live contests on it whose start is still ahead (#1792), in the
+    // job written with the status (#1952). They are planned here too, so the event changed email
+    // leaves them to the reopen's own email (#1910). A planned contest the job's guarded write then
+    // misses is still told: either another caller reopened it first, and its write queued the same
+    // reopen email, or the contest left ACTIVE, and the C6 a live contest would get no longer
+    // applies. The job plans again as it runs, and a job that fails is retried, with the lifecycle
+    // sweep behind it. One case gets neither email: if the new start passes before the job runs
+    // (its latency or a retry), a planned contest stays live, since the event has started by then.
     const postponing = input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED;
     const reopenPlan = postponing ? await this.contestsToReopen({ ...before, status: SportEventStatus.POSTPONED }, now) : undefined;
     // What follows the change (settlement, a release into template contests, the postponed
@@ -216,14 +219,8 @@ export class EventLifecycleService {
       return { sportEvent: current, fromStatus, toStatus: input.toStatus };
     }
 
-    if (input.toStatus === SportEventStatus.IN_PROGRESS) {
-      await this.activateContestsPastCutoff(updated);
-    }
-    if (reopenPlan) {
-      await this.followPostponedStart(updated, now, reopenPlan);
-    } else if (input.toStatus === SportEventStatus.POSTPONED) {
-      await this.followPostponedStart(updated);
-    }
+    // The contests going live at the start, and a postponed event's contests following its start,
+    // are jobs written with the status (#1952), as are a cancellation's emails (C7).
     followUps.queued();
 
     return {
@@ -272,6 +269,9 @@ export class EventLifecycleService {
    * wrote, while their contests were still open. It reads the event again: one moved back out of COMPLETED or
    * CANCELLED before the job ran settles nothing, and its next finish queues a job of its own.
    *
+   * A completed event's contests still open past their cutoff go live first, so each is told it
+   * went live (E1) before it is told it finished.
+   *
    * Settlement is idempotent, so a retry after a failure part way finishes the rest: a contest
    * already COMPLETED is not settled again, and one whose standings for this event are frozen keeps
    * them. Reports the contests it settled (#1861).
@@ -288,8 +288,16 @@ export class EventLifecycleService {
       );
       return { changedCount: 0 };
     }
+    const completedAt = new Date(payload.completedAt);
+    // A completed event's open contests go live first (#1952), as the sweep does: an event that
+    // completed before its ACTIVATE_EVENT_CONTESTS job ran, or while that job waited to retry, would
+    // otherwise settle them straight from OPEN and nobody would be told the contest went live.
+    // The guarded moves keep it idempotent with that job.
+    if (sportEvent.status === SportEventStatus.COMPLETED) {
+      await this.activateContestsPastCutoff(sportEvent, completedAt);
+    }
     const summary = await this.contestSettlement.settleFinishedSportEvent(sportEvent.id, {
-      completedAt: new Date(payload.completedAt),
+      completedAt,
       sportEvent,
     });
     return { changedCount: summary.contestsSettled };
@@ -301,14 +309,49 @@ export class EventLifecycleService {
    * its contests go live as at any start. The lifecycle scheduler asks on each sweep of a postponed
    * event, so a start moved later reopens them and the new start closes them.
    */
-  async followPostponedStart(sportEvent: SportEvent, now: Date = new Date(), reopenPlan?: ReopenPlan): Promise<void> {
+  async followPostponedStart(sportEvent: SportEvent, now: Date = new Date()): Promise<number> {
     if (hasSportEventStarted(sportEvent, now)) {
-      await this.activateContestsPastCutoff(sportEvent, now);
-      return;
+      return this.activateContestsPastCutoff(sportEvent, now);
     }
     // A reopened contest goes live again through the same activation, which queues its "Contest is
     // live" job a second time; the outbox's idempotency key (contest, event and member) sends nothing new.
-    await this.reopenContestsBeforeStart(reopenPlan ?? await this.contestsToReopen(sportEvent, now), sportEvent);
+    return this.reopenContestsBeforeStart(await this.contestsToReopen(sportEvent, now), sportEvent);
+  }
+
+  /**
+   * The ACTIVATE_EVENT_CONTESTS job (#1952): an event that started takes its contests live at
+   * their cutoffs. It reads the event again: one gone, or moved back before its start (postponed,
+   * scheduled again, cancelled), starts nothing here; a postponed one's own job and the lifecycle
+   * sweep follow it. One already completed did start, so its contests still go live first, as they
+   * would have inline. A retry finds the contests already live and moves none.
+   */
+  async activateEventContests(payload: EventContestsJobPayload): Promise<BackgroundJobOutcome> {
+    const sportEvent = await this.sportEvents.findById(payload.sportEventId);
+    if (!sportEvent || (sportEvent.status !== SportEventStatus.IN_PROGRESS && sportEvent.status !== SportEventStatus.COMPLETED)) {
+      this.logger?.info(
+        { action: 'events.activateContests.skipped', data: { sportEventId: payload.sportEventId, status: sportEvent?.status ?? null } },
+        'Skipped taking an event\'s contests live because the event is gone or no longer under way',
+      );
+      return { changedCount: 0 };
+    }
+    return { changedCount: await this.activateContestsPastCutoff(sportEvent) };
+  }
+
+  /**
+   * The FOLLOW_POSTPONED_EVENT_CONTESTS job (#1952): a postponed event's contests follow its start
+   * as it stands when the job runs (`followPostponedStart`). An event gone or no longer postponed
+   * moves nothing; its own change queued what follows it. A retry finds the contests already moved.
+   */
+  async followPostponedEventContests(payload: EventContestsJobPayload): Promise<BackgroundJobOutcome> {
+    const sportEvent = await this.sportEvents.findById(payload.sportEventId);
+    if (!sportEvent || sportEvent.status !== SportEventStatus.POSTPONED) {
+      this.logger?.info(
+        { action: 'events.postponedContests.skipped', data: { sportEventId: payload.sportEventId, status: sportEvent?.status ?? null } },
+        'Skipped following a postponed event\'s start because the event is gone or no longer postponed',
+      );
+      return { changedCount: 0 };
+    }
+    return { changedCount: await this.followPostponedStart(sportEvent) };
   }
 
   /**
@@ -360,7 +403,8 @@ export class EventLifecycleService {
    * count down to the new start and close entries at it: one guarded write per start, as when
    * contests go live.
    */
-  private async reopenContestsBeforeStart(dueByStart: ReopenPlan, sportEvent: SportEvent): Promise<void> {
+  private async reopenContestsBeforeStart(dueByStart: ReopenPlan, sportEvent: SportEvent): Promise<number> {
+    let reopenedCount = 0;
     for (const [startsAt, contestIds] of dueByStart) {
       // One guarded write per start moment of the reopened contests, not per contest.
       const reopened = await this.contestLifecycle.transitionAll(contestIds, {
@@ -376,20 +420,23 @@ export class EventLifecycleService {
           'Reopened a live contest for entries because its postponed event has not started',
         );
       }
+      reopenedCount += reopened.length;
     }
+    return reopenedCount;
   }
 
   /**
    * The event's OPEN contests go live at their cutoff (#721): every contest when the event starts,
    * a second-chance bracket at its starting round's first game, and a squares contest at its
    * game's kickoff (#711), each of which comes while the event is under way, so the lifecycle scheduler asks again on each sweep of an event in progress.
-   * `knownGames`, the event's games as a caller just wrote them, saves reading them.
+   * `knownGames`, the event's games as a caller just wrote them, saves reading them. Answers how
+   * many contests went live.
    */
   async activateContestsPastCutoff(
     sportEvent: SportEvent,
     now: Date = new Date(),
     knownGames?: readonly SportEventMatch[],
-  ): Promise<void> {
+  ): Promise<number> {
     const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
     let games: readonly SportEventMatch[] | undefined = knownGames;
     // A bracket's or squares contest's cutoff is in its configuration: all of them read at once (#1183).
@@ -416,6 +463,7 @@ export class EventLifecycleService {
       dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), { contest, cutoff: cutoff.kind }]);
     }
 
+    let activatedCount = 0;
     for (const [startsAt, due] of dueByStart) {
       // One guarded write per cutoff moment (the event's start, a bracket round's, a squares game's kickoff), not per contest.
       const activated = new Set(await this.contestLifecycle.transitionAll(due.map(({ contest }) => contest.id), {
@@ -437,7 +485,9 @@ export class EventLifecycleService {
           continue;
         }
         this.logger?.info({ ...logged, cutoff }, 'Activated contest from in-progress sport event');
+        activatedCount++;
       }
     }
+    return activatedCount;
   }
 }
