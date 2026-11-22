@@ -11,7 +11,8 @@ See *Names* for every table, old and new.
 ## Names (settled with Derek 2026-11-22)
 
 Full-path names built from their owners. Today's `SportEvent` prefix is kept, so an event
-does not carry `Season` in its name: it gains a `seasonId` FK instead. Every provider id or
+does not carry `Season` in its name: it gains a `seasonId` FK instead (Derek: a longer
+`SportLeagueSeasonEvent` would lengthen every event table's name). Every provider id or
 code lives only in a table whose name ends in `ProviderMapping`.
 
 | Today | New | What it is |
