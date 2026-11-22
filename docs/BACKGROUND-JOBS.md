@@ -46,8 +46,8 @@ so on purpose.
 <!-- domain-event-handlers:start (generated from DOMAIN_EVENT_HANDLERS by `npm run docs:domain-events`; edit the map, not this table) -->
 | Domain event | Handler | Queues |
 |---|---|---|
-| `SPORT_EVENT_STATUS_CHANGED` | `activate-event-contests` | `undefined` |
-| `SPORT_EVENT_STATUS_CHANGED` | `follow-postponed-event-contests` | `undefined` |
+| `SPORT_EVENT_STATUS_CHANGED` | `activate-event-contests` | `ACTIVATE_EVENT_CONTESTS` |
+| `SPORT_EVENT_STATUS_CHANGED` | `follow-postponed-event-contests` | `FOLLOW_POSTPONED_EVENT_CONTESTS` |
 | `SPORT_EVENT_STATUS_CHANGED` | `settle-finished-event-contests` | `SETTLE_SPORT_EVENT_CONTESTS` |
 | `SPORT_EVENT_STATUS_CHANGED` | `release-into-template-contests` | `ADD_RELEASED_EDITION_TO_CONTEST` |
 | `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |
