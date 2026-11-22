@@ -175,8 +175,9 @@ The current model was built one sport at a time and leans on code to look right:
   (NBA play-in) belong to bracket shape (#1926).
 - **SportEventRound** also carries `matchFormat` HEAD_TO_HEAD / FIELD, read from the feed
   where it varies by round (Ryder Cup foursomes, fourballs, singles). A golf playoff and F1
-  qualifying or a sprint are Rounds of their own; a golf playoff only breaks the tie and is
-  never counted as another round.
+  qualifying or a sprint are Rounds of their own. A golf playoff is not a Round (Derek
+  2026-11-22): its extra holes belong to round 4's Game, like overtime or extra innings, and
+  we store whatever the feed reports for that Game and the Standing.
 - **SportEventRoundMatch** (today SportEventMatch): any meeting of sides in a round (Derek
   2026-11-22). A best-of series is one Match. Two teams, two players, or a whole field: a
   golf stroke-play round is one FIELD Match with every golfer as a side, and a race is one
