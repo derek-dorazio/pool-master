@@ -174,7 +174,7 @@ The current model was built one sport at a time and leans on code to look right:
   WEEK_14; all four Masters rounds are MASTERS. A round kind and a loser-advances link
   (NBA play-in) belong to bracket shape (#1926).
 - **SportEventRound** also carries `matchFormat` HEAD_TO_HEAD / FIELD, read from the feed
-  where it varies by round (Ryder Cup foursomes, fourballs, singles). A golf playoff and F1
+  where it varies by round (Ryder Cup foursomes, fourballs, singles). F1
   qualifying or a sprint are Rounds of their own. A golf playoff is not a Round (Derek
   2026-11-22): its extra holes belong to round 4's Game, like overtime or extra innings, and
   we store whatever the feed reports for that Game and the Standing.
