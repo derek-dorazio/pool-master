@@ -331,6 +331,24 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
     }]);
   });
 
+  it('carries a playoff\'s whole bracket with the job, and a game or match with no kickoff yet as null', async () => {
+    const synced: SportEventFieldSynced = {
+      ...fieldSynced(SportEventStatus.DRAFT),
+      games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null, isNeutralSite: false }],
+      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, isNeutralSite: true, scheduledAt: KICKOFF, advancesTo: null, regionLabel: null }],
+    };
+
+    const [job] = await follow.jobs(synced, { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD });
+
+    expect(job.payload).toEqual({
+      sportEventId: 'sport-event-1',
+      providerId: 'balldontlie',
+      externalId: 'week-2',
+      games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null, isNeutralSite: false }],
+      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, isNeutralSite: true, scheduledAt: KICKOFF.toISOString(), advancesTo: null, regionLabel: null }],
+    });
+  });
+
   it('follows a sync of every event still to be played, and of no finished or cancelled one', () => {
     for (const status of [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED]) {
       expect(follow.when?.(fieldSynced(status))).toBe(true);

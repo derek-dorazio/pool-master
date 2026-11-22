@@ -105,7 +105,7 @@ import { customersModule } from './modules/customers/routes';
 import { CustomerService } from './modules/customers/customer-service';
 import { PrismaCustomerReader } from './adapters/prisma-customer-reader';
 import { SyncedFieldValuationService } from './modules/events/synced-field-valuation';
-import { SyncedFieldFollowUps } from './modules/events/synced-field-follow-up-job';
+import { SyncedFieldFollowUps } from './modules/events/synced-field-follow-ups';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,

@@ -15,7 +15,8 @@
  *
  * Where a job is built or started is not linted (eslint.config.js lists the files): the job
  * builders and the handlers beside them (`*-job-requests.ts`, `*-job.ts`), and the queue itself
- * (`modules/background-jobs`). An entry point that starts work rather than reacting to a change
+ * (`modules/background-jobs`). Those files hold only payloads, requests and handlers; a job's
+ * runner, which writes state, lives in a file of its own that is linted. An entry point that starts work rather than reacting to a change
  * (a provider's webhook, an admin's sync or rebuild route, a sweep on a timer, a read asking for
  * a stale board to be rebuilt) says so where it queues:
  *   // poolmaster-allow-direct-job: <what starts the work>

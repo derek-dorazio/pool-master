@@ -223,7 +223,7 @@ work that can happen after the write.
 
 `poolmaster/follow-ups-via-domain-events` (ESLint, #1951) refuses a job request, an enqueue or a
 board rebuild outside the job builders and their handlers (`*-job-requests.ts`, `*-job.ts`) and
-the queue itself. An entry point that starts work rather than reacting to a change (a provider's
+the queue itself; a job's runner lives in a file of its own, so it is linted. An entry point that starts work rather than reacting to a change (a provider's
 webhook, an admin's sync or rebuild route, a sweep on a timer, a read asking for a stale board)
 says so at the call with `// poolmaster-allow-direct-job: <what starts the work>`.
 
