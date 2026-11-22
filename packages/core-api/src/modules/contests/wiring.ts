@@ -35,7 +35,7 @@ import type { EventFieldReads } from '../events/event-field-reader';
 import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
-import { readLeaderboardSnapshotMaxAgeMs, type LeaderboardRebuilds } from './leaderboard-snapshots';
+import { readLeaderboardSnapshotMaxAgeMs } from './leaderboard-snapshots';
 import { JobLeaderboardRebuilds } from './leaderboard-rebuild-job-requests';
 import { createChampionshipService } from '../championship/wiring';
 import { BackgroundJobQueue } from '../background-jobs';
@@ -101,9 +101,8 @@ export function createContestSettlementService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger | undefined,
   options: {
-    /** What follows a contest's completion (#1949): the app's one handler map, built in index.ts. */
+    /** What follows settlement's writes (#1949, #1973): the app's one handler map, built in index.ts. */
     domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
-    leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
   },
 ): ContestSettlementService {
   return new ContestSettlementService({
@@ -115,7 +114,6 @@ export function createContestSettlementService(
     squares: new PrismaSquaresRepository(prisma),
     championship: createChampionshipService(prisma, logger),
     domainEvents: options.domainEvents,
-    leaderboards: options.leaderboards,
     logger,
   });
 }

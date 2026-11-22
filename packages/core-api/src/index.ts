@@ -198,7 +198,7 @@ export function buildApp() {
     releasedEditionContests: createReleasedEditionContests(prisma, app.log),
     sportEventChanged: contestNotices,
   });
-  const contestSettlement = createContestSettlementService(prisma, app.log, { domainEvents, leaderboards });
+  const contestSettlement = createContestSettlementService(prisma, app.log, { domainEvents });
   // Each job that adds a released edition to a template contest is run by contest management.
   const contestManagement = createContestManagementService(prisma, app.log, planEntitlements, { domainEvents });
   const eventLifecycleService = createEventLifecycleService(prisma, {

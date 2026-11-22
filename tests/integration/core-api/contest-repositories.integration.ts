@@ -45,6 +45,7 @@ import { createContestRow } from '../../support/contest-rows';
 import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
+import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -1910,6 +1911,40 @@ describe('ContestEntryEventStandingRepository', () => {
     expect(rows.map((row) => [row.sportEventId, row.position, row.totalScore]).sort((left, right) => String(left[0]).localeCompare(String(right[0]))))
       .toEqual([[event.id, 1, 12], [second.id, 2, 11]].sort((left, right) => String(left[0]).localeCompare(String(right[0]))));
     expect(rows.find((row) => row.sportEventId === event.id)?.id).toBe(first.id);
+  });
+
+  it('writes the jobs passed with the standings, also when no row changed or none is written, so a settled event\'s board rebuild is never lost (#1973)', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Rebuild with standings');
+    const entry = await prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Weekly' } });
+    const write = {
+      contestId: contest.id,
+      contestEntryId: entry.id,
+      sportEventId: event.id,
+      position: 1,
+      displayPosition: '1',
+      countingPickLimit: 4,
+      scoredPickCount: 4,
+      asOf: new Date('2026-06-07T21:00:00.000Z'),
+      settledAt: new Date('2026-06-07T22:00:00.000Z'),
+      totalScore: 7,
+    };
+    const rebuild = rebuildLeaderboardsJob(integrationBackgroundJobs().queue, LeaderboardRebuildSubject.EVENT, event.id);
+    const rebuilds = () => prisma.backgroundJob.findMany({ where: { dedupeKey: rebuild.dedupeKey } });
+
+    await repos().eventStandings.upsertMany(contest.id, [write], [rebuild]);
+    const [written] = await rebuilds();
+    expect(written).toMatchObject({ type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.EVENT, id: event.id } });
+    await expect(prisma.contestEntryEventStanding.count({ where: { contestId: contest.id } })).resolves.toBe(1);
+
+    await prisma.backgroundJob.deleteMany({ where: { dedupeKey: rebuild.dedupeKey } });
+    await repos().eventStandings.upsertMany(contest.id, [write], [rebuild]);
+    await expect(rebuilds()).resolves.toHaveLength(1);
+
+    await prisma.backgroundJob.deleteMany({ where: { dedupeKey: rebuild.dedupeKey } });
+    await repos().eventStandings.upsertMany(contest.id, [], [rebuild]);
+    await expect(rebuilds()).resolves.toHaveLength(1);
   });
 
   it('names the contests holding standings for the event, once each however many entries, leaving out other events and contests not asked about', async () => {

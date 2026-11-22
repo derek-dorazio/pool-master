@@ -773,7 +773,8 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       start: TEST_JOB_START,
       dedupeKey: `CONTEST_SETTLED_EMAILS:${context.contest.id}`,
     }]);
-    expect(queued).toHaveBeenCalledTimes(1);
+    // The runner is woken once for the results email and once for the event's board rebuild (#1973).
+    expect(queued).toHaveBeenCalledTimes(2);
   });
 
   it('waits for every quarter\'s score when the result goes in first, then settles with all four winners once the last quarter is entered', async () => {

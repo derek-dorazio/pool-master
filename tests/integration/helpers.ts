@@ -309,7 +309,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: testApp.log,
-    contestSettlement: createContestSettlementService(prisma, testApp.log, { domainEvents, leaderboards }),
+    contestSettlement: createContestSettlementService(prisma, testApp.log, { domainEvents }),
   });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({

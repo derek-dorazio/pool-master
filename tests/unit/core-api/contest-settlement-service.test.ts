@@ -3,7 +3,6 @@
  * event completes, and only the last event's completion settles the contest itself, with each
  * entry's total the sum of its frozen event scores.
  */
-import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import type {
   ContestEntryEventStandingRepository,
   ContestEntryEventStandingResult,
@@ -22,7 +21,9 @@ import {
   type Contest,
   type SportEvent,
 } from '@poolmaster/shared/domain';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
+import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { buildContest } from '../../factories';
 import {
   fakeContestConfigurationRepo,
@@ -36,6 +37,7 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import { testDomainEvents } from '../../support/domain-events';
+import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 const MASTERS = 'event-masters';
 const PGA = 'event-pga';
@@ -168,10 +170,10 @@ function world({
     }
   });
 
-  const leaderboards = new RecordingLeaderboardRebuilds();
+  const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
+  const wakes = jest.spyOn(queue, 'queued');
   const service = new ContestSettlementService({
-    domainEvents: testDomainEvents(),
-    leaderboards,
+    domainEvents: testDomainEvents({ queue }),
     squares: fakeSquaresRepo(),
     championship,
     sportEvents: fakeSportEventRepo({
@@ -240,7 +242,8 @@ function world({
     service,
     events,
     contests,
-    leaderboards,
+    queue,
+    wakes,
     settledReads,
     eventStandingWrites,
     standingWrites,
@@ -295,24 +298,26 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
   });
 
-  it('asks for one rebuild of the settled event\'s boards, however many contests it settled, so they show the frozen standings (#1463)', async () => {
+  it('writes the settled event\'s board rebuild with each contest\'s frozen standings, one job keyed for the event however many contests settle, and wakes the runner once after', async () => {
     const w = world({ contestCount: 3 });
     w.complete(MASTERS);
 
     const summary = await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
     expect(summary.contestsSettled).toBe(3);
-    expect(w.leaderboards.sportEventIds).toEqual([MASTERS]);
-    expect(w.leaderboards.contestIds).toEqual([]);
+    const rebuild = rebuildLeaderboardsJob(w.queue, LeaderboardRebuildSubject.EVENT, MASTERS);
+    expect(w.eventStandingWrites).toHaveBeenCalledTimes(3);
+    expect(w.eventStandingWrites.mock.calls.map(([, , jobs]) => jobs)).toEqual([[rebuild], [rebuild], [rebuild]]);
+    expect(w.wakes).toHaveBeenCalledTimes(1);
   });
 
-  it('asks for no rebuild when it settles nothing, as for an event that has not completed (#1435)', async () => {
+  it('writes no rebuild and wakes nothing when it settles nothing, as for an event that has not completed (#1435)', async () => {
     const w = world();
 
     await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
 
-    expect(w.leaderboards.sportEventIds).toEqual([]);
-    expect(w.leaderboards.contestIds).toEqual([]);
+    expect(w.eventStandingWrites).not.toHaveBeenCalled();
+    expect(w.wakes).not.toHaveBeenCalled();
   });
 
   it('hands the contest to the league championship as it goes final, after its places are frozen and before it is COMPLETED', async () => {

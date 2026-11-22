@@ -9,6 +9,7 @@ import type {
 import {
   ContestStatus,
   MatchStatus,
+  type BackgroundJobRequest,
   SelectionType,
   SportEventStatus,
   SurvivorWeekOutcome,
@@ -46,9 +47,8 @@ import {
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { ChampionshipService } from '../championship/service';
 import { readFinalStandings } from './final-standings';
-import type { DomainEvents } from '../domain-events';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 import { ContestLifecycle } from './contest-lifecycle';
-import type { LeaderboardRebuilds } from './leaderboard-snapshots';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -97,10 +97,12 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   eventStandings: ContestEntryEventStandingRepository;
   squares: Pick<ContestSquaresRepository, 'findSquares' | 'findDraw' | 'replaceWinners'>;
   championship: Pick<ChampionshipService, 'recordContest'>;
-  /** What follows a contest's completion (#1949): its final results email job (#845 F1, F2, #1387), written with the move. */
+  /**
+   * What follows settlement's writes: a contest's completion queues its final results email job
+   * (#845 F1, F2, #1387, #1949), and an event's frozen standings the rebuild of its boards (#1435,
+   * #1973), each written with its write.
+   */
   domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
-  /** Told which event's contests settled, so their stored leaderboards show the frozen result (#1435). */
-  leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'>;
   logger?: LifecycleLogger;
 }
 
@@ -161,12 +163,17 @@ export class ContestSettlementService {
     // A contest whose standings for this event are already frozen keeps them: read for all at once.
     const settledForEvent = await this.deps.eventStandings.findContestsSettledFor(sportEventId, contests.map((contest) => contest.id));
 
+    // The event's frozen standings are what its contests' boards show, so every standings write
+    // carries the boards' rebuild (#1973). Its dedupe key keeps one waiting, however many contests
+    // settle; the next write after the runner claims it queues one more.
+    const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
+
     let standingsUpserted = 0;
     let contestsCompleted = 0;
     let contestsSettled = 0;
     for (const contest of contests) {
       if (contest.selectionType === SelectionType.BRACKET) {
-        const settled = await this.settleBracketContest(reads, contest, sportEvent, completedAt);
+        const settled = await this.settleBracketContest(reads, contest, sportEvent, completedAt, rebuild.jobs);
         if (settled) {
           contestsSettled++;
           standingsUpserted += settled.standingsUpserted;
@@ -175,7 +182,7 @@ export class ContestSettlementService {
         continue;
       }
       if (contest.selectionType === SelectionType.SURVIVOR) {
-        const settled = await this.settleSurvivorWeek(reads, contest, sportEvent, completedAt, settledForEvent.has(contest.id));
+        const settled = await this.settleSurvivorWeek(reads, contest, sportEvent, completedAt, settledForEvent.has(contest.id), rebuild.jobs);
         contestsSettled++;
         standingsUpserted += settled.standingsUpserted;
         if (settled.completed) contestsCompleted++;
@@ -184,14 +191,14 @@ export class ContestSettlementService {
       if (contest.selectionType === SelectionType.SQUARES) {
         // Its game normally settles it first (`settleFinishedGame`); an event finished without
         // that game's result leaves it Final with no scores.
-        const settled = await this.settleSquaresContest(reads, contest, sportEvent, completedAt);
+        const settled = await this.settleSquaresContest(reads, contest, sportEvent, completedAt, rebuild.jobs);
         contestsSettled++;
         standingsUpserted += settled.standingsUpserted;
         if (settled.completed) contestsCompleted++;
         continue;
       }
       if (contest.selectionType === SelectionType.PICK_EM) {
-        const settled = await this.settlePickEmWeek(reads, contest, sportEvent, completedAt, settledForEvent.has(contest.id));
+        const settled = await this.settlePickEmWeek(reads, contest, sportEvent, completedAt, settledForEvent.has(contest.id), rebuild.jobs);
         if (settled) {
           contestsSettled++;
           standingsUpserted += settled.standingsUpserted;
@@ -251,7 +258,7 @@ export class ContestSettlementService {
           asOf,
           settledAt: completedAt,
           totalScore: entry.score,
-        })));
+        })), rebuild.jobs);
       }
       contestsSettled++;
 
@@ -270,9 +277,8 @@ export class ContestSettlementService {
       }
     }
 
-    // One rebuild of the event's boards, however many of its contests settled.
-    // poolmaster-allow-direct-job: settlement's standings writes carry no jobs yet; #1973 moves this rebuild onto the map
-    if (contestsSettled > 0) await this.deps.leaderboards?.eventsChanged([sportEventId]);
+    // The standings writes have committed: wake the runner for the rebuild they carried.
+    if (contestsSettled > 0) rebuild.queued();
 
     this.logger.info({
       sportEventId,
@@ -310,11 +316,14 @@ export class ContestSettlementService {
     }
     const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
       .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
+    // A settled grid's standings change the event's boards, so their write carries the rebuild (#1973).
+    const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
     let completed = 0;
     for (const contest of contests) {
-      const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
+      const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), rebuild.jobs, { waitForEveryPeriod: true });
       if (settled.completed) completed++;
     }
+    if (contests.length > 0) rebuild.queued();
     return completed;
   }
 
@@ -331,6 +340,8 @@ export class ContestSettlementService {
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
+    /** The event's board rebuild, written with its event standings. */
+    rebuild: readonly BackgroundJobRequest[],
     options?: { waitForEveryPeriod?: boolean },
   ): Promise<{ standingsUpserted: number; completed: boolean }> {
     const [games, draw] = await Promise.all([
@@ -374,7 +385,7 @@ export class ContestSettlementService {
           totalScore: score,
         };
       });
-      await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId: sportEvent.id })));
+      await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId: sportEvent.id })), rebuild);
       await this.deps.standings.upsertMany(contest.id, frozen);
       standingsUpserted = holders.length;
     }
@@ -403,6 +414,8 @@ export class ContestSettlementService {
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
+    /** The event's board rebuild, written with its event standings. */
+    rebuild: readonly BackgroundJobRequest[],
   ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
     const sportEventId = sportEvent.id;
     if (sportEvent.status === SportEventStatus.CANCELLED) {
@@ -430,7 +443,7 @@ export class ContestSettlementService {
       settledAt: completedAt,
       totalScore: standing.score.points,
     }));
-    await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId })));
+    await this.deps.eventStandings.upsertMany(contest.id, frozen.map((standing) => ({ ...standing, sportEventId })), rebuild);
     await this.deps.standings.upsertMany(contest.id, frozen);
     const completed = await this.complete(contest, completedAt);
     this.logger.info({ contestId: contest.id, sportEventId, entryCount: standings.entries.length, completed }, 'Settled a bracket contest');
@@ -452,6 +465,8 @@ export class ContestSettlementService {
     completedAt: Date,
     /** Whether the week's standings are already frozen: a week settles once. */
     weekSettled: boolean,
+    /** The event's board rebuild, written with the week's standings. */
+    rebuild: readonly BackgroundJobRequest[],
   ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
     const sportEventId = sportEvent.id;
     let scoring: GamePickScoring;
@@ -476,7 +491,7 @@ export class ContestSettlementService {
         asOf: completedAt,
         settledAt: completedAt,
         totalScore: standing.score.points,
-      })));
+      })), rebuild);
       this.logger.info({ contestId: contest.id, sportEventId, entryCount: week.entries.length }, 'Settled one week of a pick\'em contest');
     }
     if (!(await this.allEventsFinished(reads, contest))) {
@@ -508,6 +523,8 @@ export class ContestSettlementService {
     completedAt: Date,
     /** Whether the week's standings are already frozen: a week settles once. */
     weekSettled: boolean,
+    /** The event's board rebuild, written with the week's standings. */
+    rebuild: readonly BackgroundJobRequest[],
   ): Promise<{ standingsUpserted: number; completed: boolean }> {
     const sportEventId = sportEvent.id;
     const lives = survivorLivesOf((await reads.configurations.findByContest(contest.id))?.configJson);
@@ -537,7 +554,7 @@ export class ContestSettlementService {
         asOf: completedAt,
         settledAt: completedAt,
         totalScore: survived,
-      })));
+      })), rebuild);
       const survivorCount = decided.filter(({ survived, decidedCount }) => survived === decidedCount).length;
       this.logger.info({ contestId: contest.id, sportEventId, entryCount: decided.length, survivorCount }, 'Settled one week of a survivor contest');
     }
