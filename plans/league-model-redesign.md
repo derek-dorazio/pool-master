@@ -39,14 +39,19 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SportEventParticipant` | same name | The event's field: teams, plus eligible players where Clutch Cards exist. |
 | `SportEventTier` | `SportEventSlotTier` | Tier set per event slot. |
 | `SportEventParticipantValuation` | `SportEventSlotParticipantValuation` | Tier and price per event slot and field row. |
-| `SportEventRound` | same name | A scoring unit; gains a required slot FK. |
-| `SportEventMatch` | `SportEventRoundMatch` | Two sides meeting in a round; a best-of series is one Match. |
+| `SportEventRound` | same name | A scoring unit; gains a required slot FK and its `matchFormat`. |
+| `SportEventMatch` | `SportEventRoundMatch` | Any meeting of sides in a round: two teams, two players, or a whole field. A best-of series is one Match. |
+| `SportEventMatch` home/away columns | `SportEventRoundMatchSide` | One side of a Match: field row (empty until known), side number, home/away, seed, spread, rollup outcome. |
 | none | `SportEventRoundMatchGame` | One played game: date, status, scores. |
-| none | `SportEventRoundMatchGameProviderMapping` | A provider's game id. |
-| `SportEventMatchPeriodScore` | `SportEventRoundMatchGamePeriodScore` | Period scores move from the Match to the Game. |
+| none | `SportEventRoundMatchGameProviderMapping` | A provider's game id (team-sport game, PGA round, PGA match). |
+| `SportEventMatch` home/away scores, `SportEventParticipantGolfRound`, `SportEventParticipantRaceResult` | `SportEventRoundMatchGameSide` | A side's result in one Game: score, text result, score to par, position, start position, periods completed, start period, status. |
+| none | `SportEventRoundMatchGameSidePlayer` | Team-cup lineups: which players played for a side in a Game. |
+| `SportEventMatchPeriodScore` | `SportEventRoundMatchGameSidePeriodScore` | Score per period per Game side, with a period kind (REGULAR / OVERTIME / SHOOTOUT). |
 | `SportEventParticipantStatLine` | `SportEventRoundMatchGamePlayerStat` | Raw box score per Game, player and stat code. |
 | none | `SportEventRoundMatchGamePlayerScore` | Composite score per Game, player and composite. |
-| `SportEventParticipantRound`, `…GolfRound`, `…Standing`, `…GolfStanding`, `…RaceResult` | same names | Golf and racing tables, re-keyed onto the new rounds and field rows. |
+| `SportEventParticipantStanding`, `…GolfStanding` | `SportEventParticipantStanding` | Event result per field row: total, score to par, position, display position, status (CUT / WD / DQ). |
+| `SportEventParticipantRound`, `…GolfRound`, `…GolfStanding`, `…RaceResult` | removed | Replaced by Match sides, Game sides and Standing. |
+| none | `SportEventParticipantProviderMapping` | Provider ids that last one event (PGA team and pairing competitors). |
 | composite weights in code | `ScoringComposite` | Platform-level stat weights (Redzone, Hat Trick, …); a league picks one. |
 | none | `PlayerRatingProfile` | Platform-level rating weights; a league picks one. |
 | `ProviderSyncRun` | same name | One sync run. |
@@ -168,20 +173,62 @@ The current model was built one sport at a time and leans on code to look right:
   of its own event's slots (enforced by a composite FK). A week event's round 1 is
   WEEK_14; all four Masters rounds are MASTERS. A round kind and a loser-advances link
   (NBA play-in) belong to bracket shape (#1926).
-- **SportEventRoundMatch** (today SportEventMatch): two sides meeting in a round; a best-of series is one Match.
+- **SportEventRound** also carries `matchFormat` HEAD_TO_HEAD / FIELD, read from the feed
+  where it varies by round (Ryder Cup foursomes, fourballs, singles). A golf playoff and F1
+  qualifying or a sprint are Rounds of their own; a golf playoff only breaks the tie and is
+  never counted as another round.
+- **SportEventRoundMatch** (today SportEventMatch): any meeting of sides in a round (Derek
+  2026-11-22). A best-of series is one Match. Two teams, two players, or a whole field: a
+  golf stroke-play round is one FIELD Match with every golfer as a side, and a race is one
+  FIELD Match with every driver as a side.
   - It is numbered within its round in kickoff order, and the number is stable once set.
-  - Advancement is a match FK plus a side.
-  - `winnerSide` and status are written once, from its Games.
-  - A pick'em pick predicts the Match (the series winner).
-- **SportEventRoundMatchGame**: one played game: date, status, scores, period scores,
-  shootout, ending and spread, with provider ids in **GameProviderMapping**.
-  - Every Match has at least one Game. Unique (provider, provider id) on GameProviderMapping.
-  - The bracket build creates FINAL's Match and Game 1 before the feed lists them, so
-    squares can point at it early. `regionLabel` stays until #1926.
-  - Squares games re-point to Game.
-- Golf and racing tables (participant rounds, golf standings, race results) stay, re-keyed
-  onto the renamed round and field rows. The horse trainer moves from `teamAffiliation` to
-  its own field-row column.
+  - Status is written once, from its Games.
+- **SportEventRoundMatchSide**: one side of a Match.
+  - Field row (a team or a player), `sideNumber`, `homeAway` HOME / AWAY / NONE, seed and
+    spread. The field row is empty until the side is known (an undecided bracket slot, a
+    knockout match before its teams are set).
+  - `outcome` WON / LOST / TIED / PENDING is a rollup from the Games, written only by the
+    result writer (a series' 4–2). FIELD matches leave it empty.
+  - Advancement is the next match plus a side number, unique per target side.
+  - Pick'em picks and bracket picks point at a Match side.
+  - Constraints: unique (match, side number) and (match, field row); a HEAD_TO_HEAD match has
+    exactly sides 1 and 2, written in one transaction by the one writer; composite FKs keep
+    every side in its Match's event.
+- **SportEventRoundMatchGame**: one played game: date, status (including SUSPENDED and
+  OFFICIAL), ending, result source, neutral site, with provider ids in
+  **SportEventRoundMatchGameProviderMapping**.
+  - Every Match has at least one Game. Unique (provider, provider id) on the mapping. The
+    id is the team-sport game id, the PGA round id for a stroke-play round, or the PGA match
+    id for match play.
+  - The bracket build creates FINAL's Match, its two sides and Game 1 before the feed lists
+    them, so squares can point at it early. `regionLabel` stays until #1926.
+  - Squares games re-point to Game and read their two Game sides by side number; squares
+    readiness requires HEAD_TO_HEAD.
+- **SportEventRoundMatchGameSide**: a side's raw result in one Game, unique per Game and
+  side: `score` (points, goals, strokes, holes up), a text result where the feed sends one
+  ("4 & 3"), `scoreToPar` from the feed (never derived from a par, which breaks for
+  multi-course events and mid-round), `position` (finish place), `startPosition`,
+  `periodsCompleted` and `startPeriod` (holes thru, back-nine starts), shootout score and
+  `status` (DNF, DSQ, DNS, WD within that Game).
+  - **…GameSidePeriodScore**: one row per Game side and period, with a period kind REGULAR /
+    OVERTIME / SHOOTOUT. Golf hole scores are stored only where a contest reads them; none
+    does today.
+  - **…GameSidePlayer**: team-cup lineups, the player field rows that played for a side in
+    a Game (Ryder Cup pairs). Built when match play is synced; not needed for stroke play.
+- **SportEventParticipantStanding**: the event result per field row: total, score to par,
+  position, display position ("T5") and status (CUT / WD / DQ). One writer per scoring
+  family: on synced events the sync writes the feed's own totals and tie-aware position
+  (the provider wins); otherwise one function per family computes it from Game sides.
+  - A cut golfer has no side in the rounds after the cut; CUT lives only here.
+  - The field row's withdrawn and eliminated reasons stay the event-level status, and
+    Standing reads them.
+- **Removed**: SportEventParticipantRound, …GolfRound, …GolfStanding and …RaceResult. The
+  racing rider name and the horse trainer become field-row columns.
+- **SportEventParticipantProviderMapping**: provider ids that last only one event, such as
+  PGA team and pairing competitors (their players come from the feed's `members`).
+- Leaderboards read Standing in one query and per-round Game side scores in one
+  event-wide query; webhook writes are batch upserts. Query-scaling tests pin a 150-golfer,
+  4-round event.
 
 ## 4. Participants and providers
 
@@ -225,7 +272,8 @@ The current model was built one sport at a time and leans on code to look right:
 ## 5. Player stats, scores and ratings
 
 - **…GamePlayerStat**: the raw box score, one row per Game, player and `SportStat` code.
-  - The team is stored on the row and checked against the Game's two sides.
+  - The team is stored on the row and checked: the player's team row, or the player row
+    itself in individual sports, is a side of that Game's Match.
   - The enum gains the codes the composites need.
 - **Composite definitions** (Redzone, Triple Threat, Box Score, Power Play, Hat Trick)
   become platform-level rows of weights per stat code, and each league picks one.
@@ -400,7 +448,9 @@ phase:
   - `Sport.participantType`;
   - `Participant.teamAffiliation`;
   - `ContestSportEvent`, `squaresFromRound`, `EventPageOffer.bracketStartRound`;
-  - SportEventParticipantStatLine.
+  - SportEventParticipantStatLine;
+  - SportEventParticipantRound, …GolfRound, …GolfStanding, …RaceResult;
+  - the home/away, score and winner columns on SportEventMatch (now sides).
 - **Changed**:
   - `EventPageOffer.eventSeriesName` and `ContestConfigTemplate.eventSeriesNames` become
     slot definition ids;
@@ -441,7 +491,11 @@ In order:
 8. Sync matching by provider code; adapter tables, `roundNames`, `roundSeriesLengths`,
    `bracketAdvancement` removed.
 9. Round slot FK and per-round match numbering, with all readers.
-10. Games, GameProviderMapping, Match winner and status from Games, FINAL placeholder Game.
+10. Games, Match sides and Game sides for team sports, GameProviderMapping, period kinds,
+    Match status and outcome from Games, FINAL placeholder Game; pick'em, brackets and squares
+    read sides.
+10b. Golf and racing on FIELD Matches: Game sides from the PGA round id, Standing from the
+    feed, the cut, event-level competitor mapping; golf and race tables removed.
 11. EventSeries removed; event page offers and templates point at slots.
 12. Sync matching by golf name, with the finding actions.
 13. Sync matching by date window and calendar week, with #1924's backend.
