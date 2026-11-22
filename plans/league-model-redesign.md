@@ -76,8 +76,8 @@ The current model was built one sport at a time and leans on code to look right:
   - NAME_PATTERN: open phases;
   - DATE_WINDOW: feeds with no round marker, such as the NCAAF postseason. It uses a team
     filter, and has an explicit IGNORE mapping for bowls and unsynced phases.
-- **SportLeaguePosition**: code, order, `isFieldEligible`, `baselineRating`, and provider
-  code mappings. The NFL's eligible positions are QB, RB, WR and TE.
+- **SportLeaguePosition**: code, order, `isFieldEligible` and `baselineRating`, with provider
+  codes in **SportLeaguePositionProviderMapping**. The NFL's eligible positions are QB, RB, WR and TE.
 
 ## 2. Calendar (the real slots each Season)
 
@@ -129,7 +129,7 @@ The current model was built one sport at a time and leans on code to look right:
   - A pick'em pick predicts the Match (the series winner).
 - **…EventRoundMatchGame**: one played game: date, status, scores, period scores,
   shootout, ending and spread, with provider ids in **GameProviderMapping**.
-  - Every Match has at least one Game. Unique (provider, ref) on GameProviderMapping.
+  - Every Match has at least one Game. Unique (provider, provider id) on GameProviderMapping.
   - The bracket build creates FINAL's Match and Game 1 before the feed lists them, so
     squares can point at it early. `regionLabel` stays until #1926.
   - Squares games re-point to Game.
@@ -152,8 +152,9 @@ The current model was built one sport at a time and leans on code to look right:
   - **SportLeagueProviderMapping**, with `SportLeague.selectedProviderMapping` (null = not
     synced) replacing `eventSyncProviderId` and `matchKeyword`;
   - **ParticipantProviderMapping**, with the provider as the enum.
-  - The convention: a *Ref* is one provider id on a row; a *ProviderMapping* is a table
-    with one row per provider.
+  - The convention (Derek): every provider id or code lives in a table whose name ends in
+    *ProviderMapping*, one row per provider. No other row holds a provider key. ProviderLeague
+    is the provider's own league list, which SportLeagueProviderMapping points at.
 - **ProviderSyncFinding**:
   - severity ERROR / WARNING / INFO, plus kind, subject ids and detail;
   - status OPEN / RESOLVED / WAIVED, where WAIVED needs a note;
@@ -426,15 +427,16 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
 2. ~~Roster row shape~~ Settled: one row per Season and player, no trade history (§4).
 3. ~~Multi-slot Clutch Card picks~~ Settled: pick once; a player stops scoring when his team is out (§8).
 4. ~~Clutch Cards during the build~~ Settled (Derek): no users, so the old Clutch Card leagues and code are removed early (slice 1b) and rebuilt as the new contest type; no effort keeps them working.
-5. **Naming pass** (proposed 2026-11-22, awaiting Derek): keep the full-path names and today's
+5. ~~Naming pass~~ Settled (Derek 2026-11-22): keep the full-path names and today's
    `SportEvent` prefix. Definitions `SportLeaguePhase`, `SportLeaguePhaseSlot`,
-   `…SlotProviderMapping`, `SportLeaguePosition`; calendar `SportLeagueSeason`,
+   `…SlotProviderMapping`, `SportLeaguePosition` (+ `…PositionProviderMapping`); calendar `SportLeagueSeason`,
    `…SeasonProviderMapping`, `…SeasonPhase`, `…SeasonPhaseSlot`, `…SeasonParticipantTeam`;
    events `SportEvent`, `SportEventSlot`, `SportEventProviderMapping`, `SportEventParticipant`,
    `SportEventSlotTier`, `SportEventSlotParticipantValuation`, `SportEventRound`,
    `SportEventRoundMatch`, `SportEventRoundMatchGame` (+ `…GameProviderMapping`,
    `…GamePlayerStat`, `…GamePlayerScore`); `Provider`, `ProviderLeague`,
    `SportLeagueProviderMapping`, `ProviderSyncFinding`, `ScoringComposite`,
-   `PlayerRatingProfile`; contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`).
+   `PlayerRatingProfile`; contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`). Every provider key
+   lives in a `…ProviderMapping` table.
 6. ~~Test data~~ Settled: test events in the current Season on flagged test slot rows (§2).
    the loader re-dates test events into it.
