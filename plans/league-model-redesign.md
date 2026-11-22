@@ -83,9 +83,10 @@ The current model was built one sport at a time and leans on code to look right:
 
 - **SportLeagueSeason**: its own identity (start year and date span, unique per league and
   start year, span checked against its slots), with a **SeasonProviderMapping** per provider.
-  - `isTestData`: each league has one **test Season** for the test-data loader (open
-    question 6). It is never current, so re-dated "Test-" events never share a slot with
-    synced ones.
+  - Test data (Derek): a few "Test-" events live in the **current** Season, each on its own
+    Season slot row flagged `isTestData` (unique per Season, definition and flag), with
+    re-dated dates. The sync never reads or writes test slots, so test and synced events
+    never share a slot. QA only; never in production.
   - `SportLeague.currentSeasonId` follows one global rule: the Season whose span includes
     today. Between Seasons it points at the next Season once its schedule is published,
     otherwise the last one.
@@ -371,7 +372,7 @@ In order:
 3. Mechanical rename.
 4. Positions; `SportLeague.participantType` required.
 5. Phase and slot definitions for every league, with the `add-sport` skill.
-6. Seasons (including test Seasons), the current-Season rule and the Season fetch;
+6. Seasons (and flagged test slots), the current-Season rule and the Season fetch;
    calendar-week slots.
 7. Events in a Season, EventSlot, event provider mapping.
 8. Sync matching by provider code; adapter tables, `roundNames`, `roundSeriesLengths`,
@@ -426,5 +427,5 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
 3. ~~Multi-slot Clutch Card picks~~ Settled: pick once; a player stops scoring when his team is out (§8).
 4. ~~Clutch Cards during the build~~ Settled (Derek): no users, so the old Clutch Card leagues and code are removed early (slice 1b) and rebuilt as the new contest type; no effort keeps them working.
 5. **Naming pass.** Slice 0, before anything is built; it also settles the `slot` name clash.
-6. **Test data.** Recommendation: one test Season per league, flagged and never current;
+6. ~~Test data~~ Settled: test events in the current Season on flagged test slot rows (§2).
    the loader re-dates test events into it.
