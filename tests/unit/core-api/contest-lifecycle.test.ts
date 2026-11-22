@@ -46,11 +46,11 @@ describe('ContestLifecycle.transition, one contest', () => {
     expect(written).toHaveLength(1);
     expect(written[0]?.ids).toEqual(['contest-1']);
     expect(written[0]?.transition).toMatchObject({ from: [ContestStatus.OPEN, ContestStatus.ACTIVE], to: ContestStatus.COMPLETED, endsAt });
-    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_SETTLED_EMAILS]);
+    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_SETTLED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS]);
     expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('opens a draft with its reminder time and no job at all, so the write needs no transaction and wakes nothing', async () => {
+  it('opens a draft with its reminder time and only its boards\' rebuild, no email, waking the runner once', async () => {
     const { contests, written } = guardedContests({ 'contest-1': ContestStatus.DRAFT });
     const { queue, contestLifecycle } = lifecycle(contests);
     const openedAt = new Date('2026-04-01T12:00:00.000Z');
@@ -58,8 +58,9 @@ describe('ContestLifecycle.transition, one contest', () => {
     await expect(contestLifecycle.transition('contest-1', { from: [ContestStatus.DRAFT], to: ContestStatus.OPEN, openedAt, nextReminderAt: openedAt })).resolves.toBe(true);
 
     expect(written).toHaveLength(1);
-    expect(written[0]?.transition).toEqual({ from: [ContestStatus.DRAFT], to: ContestStatus.OPEN, openedAt, nextReminderAt: openedAt });
-    expect(queue.queued).not.toHaveBeenCalled();
+    expect(written[0]?.transition).toMatchObject({ from: [ContestStatus.DRAFT], to: ContestStatus.OPEN, openedAt, nextReminderAt: openedAt });
+    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.REBUILD_LEADERBOARDS]);
+    expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 
   it('answers false and wakes nothing when another caller moved the contest first, so the race\'s loser queues no email', async () => {
@@ -87,7 +88,7 @@ describe('ContestLifecycle.transition, one contest', () => {
     await contestLifecycle.transition('contest-1', { from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN, startsAt: STARTS_AT, sportEventId: 'sport-event-1' });
 
     expect(written[0]?.transition).not.toHaveProperty('sportEventId');
-    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_REOPENED_EMAILS]);
+    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_REOPENED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS]);
   });
 });
 
@@ -100,18 +101,18 @@ describe('ContestLifecycle.transitionAll, a guarded batch', () => {
 
     expect(moved).toEqual(['a', 'c']);
     expect(written).toHaveLength(1);
-    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_STARTED_EMAILS, BackgroundJobType.CONTEST_STARTED_EMAILS]);
+    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_STARTED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS, BackgroundJobType.CONTEST_STARTED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS]);
     expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('hands a batch no handler takes no jobs at all, so its write needs no transaction', async () => {
+  it('writes each opened draft of a batch its own boards\' rebuild and no email', async () => {
     const { contests, written } = guardedContests({ a: ContestStatus.DRAFT, b: ContestStatus.DRAFT });
     const { queue, contestLifecycle } = lifecycle(contests);
 
     await expect(contestLifecycle.transitionAll(['a', 'b'], { from: [ContestStatus.DRAFT], to: ContestStatus.OPEN })).resolves.toEqual(['a', 'b']);
 
-    expect(written[0]?.transition).not.toHaveProperty('jobs');
-    expect(queue.queued).not.toHaveBeenCalled();
+    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.REBUILD_LEADERBOARDS, BackgroundJobType.REBUILD_LEADERBOARDS]);
+    expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 
   it('wakes nothing when another caller already moved every contest', async () => {

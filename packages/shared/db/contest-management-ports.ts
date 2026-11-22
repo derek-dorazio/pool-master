@@ -1,4 +1,5 @@
 import type {
+  BackgroundJobRequest,
   ContestConfigTemplate,
   ContestConfiguration,
   ContestEntryPick,
@@ -210,7 +211,8 @@ export interface ContestEntryEventStandingRepository {
   findContestsSettledFor(sportEventId: string, contestIds: readonly string[]): Promise<Set<string>>;
   /**
    * The contest's event standings, one per entry and event, written all or none (#1172), as
-   * `ContestEntryStandingRepository.upsertMany` writes.
+   * `ContestEntryStandingRepository.upsertMany` writes. Settlement is their one writer, and `jobs`
+   * (the event's leaderboard rebuild, #1973) are written in the same transaction, rows changed or not.
    */
-  upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[]): Promise<void>;
+  upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[], jobs: readonly BackgroundJobRequest[]): Promise<void>;
 }

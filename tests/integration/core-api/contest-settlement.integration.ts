@@ -351,7 +351,11 @@ describe('golf contest settlement — which contests settle', () => {
     const prisma = getPrisma();
     const jobs = integrationBackgroundJobs();
     const service = createContestSettlementService(getAppPrisma(), fakeLogger(), { domainEvents: testDomainEvents({ queue: jobs.queue }) });
-    const runner = jobs.runWith({ CONTEST_SETTLED_EMAILS: () => Promise.reject(new Error('outbox unavailable')) });
+    // The settled event's board rebuild is written with the standings (#1973) and runs beside the email.
+    const runner = jobs.runWith({
+      CONTEST_SETTLED_EMAILS: () => Promise.reject(new Error('outbox unavailable')),
+      REBUILD_LEADERBOARDS: async () => ({ changedCount: 0 }),
+    });
     const { league, event, suffix } = await seedCompletedEvent();
     const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Mail Down ${suffix}` });
 
@@ -361,7 +365,10 @@ describe('golf contest settlement — which contests settle', () => {
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: active.id }, select: { status: true } }))
       .resolves.toEqual({ status: 'COMPLETED' });
-    await expect(prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true, attempts: true, lastError: true } })).resolves.toEqual([
+    await expect(prisma.backgroundJob.findMany({
+      where: { type: 'CONTEST_SETTLED_EMAILS' },
+      select: { type: true, payload: true, status: true, attempts: true, lastError: true },
+    })).resolves.toEqual([
       { type: 'CONTEST_SETTLED_EMAILS', payload: { contestId: active.id }, status: 'QUEUED', attempts: 1, lastError: 'outbox unavailable' },
     ]);
   });

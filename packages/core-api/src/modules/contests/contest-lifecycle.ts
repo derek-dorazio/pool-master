@@ -5,7 +5,8 @@
  * commissioner opening it all move it here, each as a guarded write. The move is described as a
  * `CONTEST_STATUS_CHANGED` domain event, and what follows it (the league's emails) is collected
  * from `DOMAIN_EVENT_HANDLERS` and written in the move's transaction: a contest another caller
- * moved first queues nothing, and one that moves always has its jobs.
+ * moved first queues nothing, and one that moves always has its jobs. Every move has at least
+ * one: its boards' rebuild, since a contest's status shows on them (#1973).
  */
 
 import type { ContestRepository, ContestStatusTransition } from '@poolmaster/shared/db';
@@ -25,7 +26,7 @@ export class ContestLifecycle {
     const followUps = await this.domainEvents.collect(statusChanged(contestId, change));
     const moved = await this.contests.transitionStatus(contestId, {
       ...transitionOf(change),
-      ...(followUps.jobs.length > 0 && { jobs: () => followUps.jobs }),
+      jobs: () => followUps.jobs,
     });
     if (moved) followUps.queued();
     return moved;
@@ -41,7 +42,7 @@ export class ContestLifecycle {
     const followUps = await this.domainEvents.collectEach(contestIds.map((contestId) => statusChanged(contestId, change)), (event) => event.contest.id);
     const moved = await this.contests.transitionStatuses(contestIds, {
       ...transitionOf(change),
-      ...(followUps.hasJobs && { jobs: (movedIds: readonly string[]) => followUps.jobsFor(movedIds) }),
+      jobs: (movedIds: readonly string[]) => followUps.jobsFor(movedIds),
     });
     if (moved.length > 0) followUps.queued();
     return moved;

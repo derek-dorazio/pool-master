@@ -107,6 +107,17 @@ function startedEmailsJob(contestId: string) {
   };
 }
 
+/** The rebuild of a contest's boards written with its every move (#1973). */
+function contestRebuildJob(contestId: string) {
+  return {
+    type: BackgroundJobType.REBUILD_LEADERBOARDS,
+    payload: { subject: 'CONTEST', id: contestId },
+    runAt: undefined,
+    start: TEST_JOB_START,
+    dedupeKey: `REBUILD_LEADERBOARDS:CONTEST:${contestId}`,
+  };
+}
+
 /** The job an event's start writes with its status, which takes its contests live (#1952). */
 const activateJob = {
   type: BackgroundJobType.ACTIVATE_EVENT_CONTESTS,
@@ -502,7 +513,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     // Only the settle job runs; the activation job is still waiting.
     await service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() });
 
-    expect(written).toEqual([startedEmailsJob('contest-1')]);
+    expect(written).toEqual([startedEmailsJob('contest-1'), contestRebuildJob('contest-1')]);
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ from: [ContestStatus.OPEN], to: ContestStatus.ACTIVE }));
     expect(expectDefined(jest.mocked(contests.contests.transitionStatuses).mock.invocationCallOrder[0]))
       .toBeLessThan(expectDefined(settlement.settleFinishedSportEvent.mock.invocationCallOrder[0]));
@@ -571,7 +582,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       to: ContestStatus.ACTIVE,
       startsAt: STARTED_EVENT_START,
     }));
-    expect(written).toEqual([startedEmailsJob('contest-1')]);
+    expect(written).toEqual([startedEmailsJob('contest-1'), contestRebuildJob('contest-1')]);
     // Once for the contest's job, once for the status change's own follow-ups.
     expect(jobs.queued).toHaveBeenCalledTimes(2);
   });
@@ -597,7 +608,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(contests.contests.transitionStatuses).toHaveBeenCalledTimes(1);
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1', 'contest-2', 'contest-3'], expect.objectContaining({ startsAt: STARTED_EVENT_START }));
     expect(contests.contests.transitionStatus).not.toHaveBeenCalled();
-    expect(written).toEqual([startedEmailsJob('contest-1'), startedEmailsJob('contest-2')]);
+    expect(written).toEqual([startedEmailsJob('contest-1'), contestRebuildJob('contest-1'), startedEmailsJob('contest-2'), contestRebuildJob('contest-2')]);
     // Once for the contests' jobs, once for the status change's own follow-ups.
     expect(jobs.queued).toHaveBeenCalledTimes(2);
   });
@@ -634,7 +645,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     await expect(service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), new Date(kickoff.getTime() + 60_000)))
       .rejects.toThrow('database unavailable');
 
-    expect(written).toEqual([startedEmailsJob('contest-at-start')]);
+    expect(written).toEqual([startedEmailsJob('contest-at-start'), contestRebuildJob('contest-at-start')]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
@@ -669,7 +680,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.ACTIVE }));
     const jobsOf = expectDefined(jest.mocked(contests.contests.transitionStatuses).mock.calls[0]?.[1].jobs);
-    expect(jobsOf(['contest-1']).map((job) => job.type)).toEqual([BackgroundJobType.CONTEST_STARTED_EMAILS]);
+    expect(jobsOf(['contest-1']).map((job) => job.type)).toEqual([BackgroundJobType.CONTEST_STARTED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS]);
   });
 });
 
@@ -1114,7 +1125,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
       runAt: undefined,
       start: TEST_JOB_START,
       dedupeKey: `CONTEST_REOPENED_EMAILS:contest-1:sport-event-1:reopened-${NEW_START.toISOString()}`,
-    }]);
+    }, contestRebuildJob('contest-1')]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
@@ -1155,8 +1166,8 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     deps.contests.transitionStatuses = move;
     await service.followPostponedEventContests({ sportEventId: 'sport-event-1' });
 
-    expect((written as Array<{ type: string; payload: { contestId: string } }>).map(({ type, payload }) => [type, payload.contestId]))
-      .toEqual([[BackgroundJobType.CONTEST_REOPENED_EMAILS, 'contest-1']]);
+    expect((written as Array<{ type: string; payload: { contestId?: string; id?: string } }>).map(({ type, payload }) => [type, payload.contestId ?? payload.id]))
+      .toEqual([[BackgroundJobType.CONTEST_REOPENED_EMAILS, 'contest-1'], [BackgroundJobType.REBUILD_LEADERBOARDS, 'contest-1']]);
   });
 
   it('leaves out of a postponed event\'s moved start the live contests the new start reopens, and tells every contest of a scheduled event\'s move', async () => {
