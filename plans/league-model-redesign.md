@@ -366,6 +366,7 @@ In order:
 
 0. Naming pass and ADR (docs PR), before anything is built.
 1. Provider core.
+1b. Old Clutch Card leagues and their code removed (no users; rebuilt in 26).
 2. Findings, with the admin list.
 3. Mechanical rename.
 4. Positions; `SportLeague.participantType` required.
@@ -394,7 +395,7 @@ In order:
 24. Rating.
 25. Rating backfill job.
 26. Clutch Card contest type.
-27. Clutch Card leagues and their code removed; test data moved (timing: open question 4).
+27. Clutch Card test data moved onto the parent leagues.
 28. Provider switch gate and re-mapping.
 29. QA rebuild and squash.
 
@@ -423,9 +424,7 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
 1. ~~Clutch Card player tiers and prices~~ Settled: tier sets and valuations keyed by event slot, read from a contest's first covered slot (§8).
 2. ~~Roster row shape~~ Settled: one row per Season and player, no trade history (§4).
 3. ~~Multi-slot Clutch Card picks~~ Settled: pick once; a player stops scoring when his team is out (§8).
-4. **Clutch Cards during the build.** Revised recommendation: keep them on until the first
-   slice that breaks them (around slice 7 or 9), remove their code in that slice, and order
-   the work so the new Clutch Card lands as early as possible.
+4. ~~Clutch Cards during the build~~ Settled (Derek): no users, so the old Clutch Card leagues and code are removed early (slice 1b) and rebuilt as the new contest type; no effort keeps them working.
 5. **Naming pass.** Slice 0, before anything is built; it also settles the `slot` name clash.
 6. **Test data.** Recommendation: one test Season per league, flagged and never current;
    the loader re-dates test events into it.
