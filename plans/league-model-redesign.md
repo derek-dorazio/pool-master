@@ -16,8 +16,8 @@ code lives only in a table whose name ends in `ProviderMapping`.
 
 | Today | New | What it is |
 |---|---|---|
-| none | `Provider` (enum) | The data providers (BALLDONTLIE, …). |
-| none | `ProviderLeague` | The provider's own list of leagues: provider, its code, sport. |
+| `SPORT_DATA_PROVIDER_BINDINGS_JSON`, webhook provider list, adapter constants | `Provider` (table) | One row per data provider, with its settings (Derek 2026-11-22). |
+| `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` and other per-league adapter constants | `ProviderLeague` | The provider's own list of leagues: provider, its code, sport, webhook timing. |
 | `SportLeague.eventSyncProviderId`, `matchKeyword` | `SportLeagueProviderMapping` | Links a league to a ProviderLeague; `SportLeague.selectedProviderMapping` picks the one synced. |
 | none | `SportLeaguePhase` | Timeless phase definition: PRESEASON, REGULAR, POSTSEASON. |
 | none | `SportLeaguePhaseSlot` | Timeless slot definition in a phase: WEEK 14, WILD_CARD, FINAL, MASTERS. |
@@ -192,8 +192,22 @@ The current model was built one sport at a time and leans on code to look right:
   `teamAffiliation`. No trade history is kept (Derek).
 - Leagues with no feed stay switched off (decided), so every league in scope is synced.
 - **Providers**:
-  - a **Provider** enum;
-  - **ProviderLeague**: provider, provider-owned code and sport;
+  - **Provider** (a table, Derek 2026-11-22): `code` (BALLDONTLIE), name, `baseUrl`,
+    `requestsPerMinute`, `webhooksEnabled`, what its plan includes (`hasPlayerStats`, …) and
+    `isEnabled`. The code picks the adapter in code; nothing else about a provider is in
+    code. Each environment's database has its own rows, so QA's free-tier rate and
+    production's paid rate are row values, edited on the Providers admin page instead of by
+    a Terraform apply. The API key and webhook secret stay in Secrets Manager.
+  - **ProviderLeague**: FK to Provider, the provider's league code (`nfl`), sport, and the
+    webhook settings per league (`quietAfterMinutes`, which event set it sends). These
+    replace `BALLDONTLIE_WEBHOOK_GAME_LEAGUES`, the golf quiet minutes and the per-league
+    constants in the adapter. Event id prefixes go away with SportEventProviderMapping. The
+    provider's own words (its status codes, its webhook event names) stay in the adapter as
+    mapping data, with a finding on a miss (§17).
+  - Moving out of config and code: `SPORT_DATA_PROVIDER_BINDINGS_JSON` (base URL, rate),
+    the webhook provider list read from the environment, and `CFP_LEAGUE`'s tour and name
+    match (replaced by the slot's DATE_WINDOW mapping, slice 13). The Terraform variable is
+    removed only after the code that reads the table is deployed (`apply-terraform` skill).
   - **SportLeagueProviderMapping**, with `SportLeague.selectedProviderMapping` (null = not
     synced) replacing `eventSyncProviderId` and `matchKeyword`;
   - **ParticipantProviderMapping**, with the provider as the enum.
@@ -412,7 +426,9 @@ the deploy stops with P3009.
 In order:
 
 0. Naming pass and ADR (docs PR), before anything is built.
-1. Provider core.
+1. Provider core: the Provider table and ProviderLeague seeded by migration; base URL, rate,
+   webhook and per-league adapter settings read from them; Providers page edits them; the
+   Terraform binding variable removed afterwards.
 1b. Old Clutch Card leagues and their code removed (no users; rebuilt in 26).
 2. Findings, with the admin list.
 3. Mechanical rename.
