@@ -6,8 +6,53 @@ Agreed with Derek in the project thread "Sync Clutch Cards through their parent 
 2026-11-19 to 2026-11-21, and revised after a model, design and ticket review. No slice is
 dispatched until Derek gives the go.
 
-Names are design names built from their owners (SportLeagueSeasonPhaseSlot, …). A naming
-pass may shorten them before build; the shape does not change with it.
+See *Names* for every table, old and new.
+
+## Names (settled with Derek 2026-11-22)
+
+Full-path names built from their owners. Today's `SportEvent` prefix is kept, so an event
+does not carry `Season` in its name: it gains a `seasonId` FK instead. Every provider id or
+code lives only in a table whose name ends in `ProviderMapping`.
+
+| Today | New | What it is |
+|---|---|---|
+| none | `Provider` (enum) | The data providers (BALLDONTLIE, …). |
+| none | `ProviderLeague` | The provider's own list of leagues: provider, its code, sport. |
+| `SportLeague.eventSyncProviderId`, `matchKeyword` | `SportLeagueProviderMapping` | Links a league to a ProviderLeague; `SportLeague.selectedProviderMapping` picks the one synced. |
+| none | `SportLeaguePhase` | Timeless phase definition: PRESEASON, REGULAR, POSTSEASON. |
+| none | `SportLeaguePhaseSlot` | Timeless slot definition in a phase: WEEK 14, WILD_CARD, FINAL, MASTERS. |
+| none | `SportLeaguePhaseSlotProviderMapping` | How a provider's games match a slot. |
+| none | `SportLeaguePosition` | QB, RB, WR, TE, with field eligibility and a baseline rating. |
+| none | `SportLeaguePositionProviderMapping` | A provider's position codes. |
+| `SportLeague.currentEventYear` | `SportLeagueSeason` | One real Season, with its date span. |
+| none | `SportLeagueSeasonProviderMapping` | A provider's season id. |
+| none | `SportLeagueSeasonPhase` | A phase in one Season. |
+| none | `SportLeagueSeasonPhaseSlot` | A slot in one Season: dates, status, series format. |
+| `Participant.teamAffiliation` | `SportLeagueSeasonParticipantTeam` | Roster row: one per Season and player, with team, position and rating. |
+| `Participant` | `Participant` (same) | A team or player, across Seasons. |
+| `ParticipantProviderMapping` | same name | Provider ids for a participant; `providerId` becomes the Provider enum. |
+| `EventSeries` | removed | Cross-Season identity now comes from slot definitions. |
+| `SportEvent` | `SportEvent` (same name) | A real event in one Season; gains `seasonId`. |
+| none | `SportEventSlot` | Which Season slots an event covers; a slot belongs to at most one event. |
+| `SportEvent.providerId`, `externalId` | `SportEventProviderMapping` | A provider's event id. |
+| `SportEventParticipant` | same name | The event's field: teams, plus eligible players where Clutch Cards exist. |
+| `SportEventTier` | `SportEventSlotTier` | Tier set per event slot. |
+| `SportEventParticipantValuation` | `SportEventSlotParticipantValuation` | Tier and price per event slot and field row. |
+| `SportEventRound` | same name | A scoring unit; gains a required slot FK. |
+| `SportEventMatch` | `SportEventRoundMatch` | Two sides meeting in a round; a best-of series is one Match. |
+| none | `SportEventRoundMatchGame` | One played game: date, status, scores. |
+| none | `SportEventRoundMatchGameProviderMapping` | A provider's game id. |
+| `SportEventMatchPeriodScore` | `SportEventRoundMatchGamePeriodScore` | Period scores move from the Match to the Game. |
+| `SportEventParticipantStatLine` | `SportEventRoundMatchGamePlayerStat` | Raw box score per Game, player and stat code. |
+| none | `SportEventRoundMatchGamePlayerScore` | Composite score per Game, player and composite. |
+| `SportEventParticipantRound`, `…GolfRound`, `…Standing`, `…GolfStanding`, `…RaceResult` | same names | Golf and racing tables, re-keyed onto the new rounds and field rows. |
+| composite weights in code | `ScoringComposite` | Platform-level stat weights (Redzone, Hat Trick, …); a league picks one. |
+| none | `PlayerRatingProfile` | Platform-level rating weights; a league picks one. |
+| `ProviderSyncRun` | same name | One sync run. |
+| none | `ProviderSyncFinding` | A problem the sync found, with severity and status. |
+| `ContestSportEvent`, `squaresFromRound`, `bracketStartRound` | `ContestSeasonSlot` | The only record of which Season slots a contest covers. |
+
+Elsewhere in this plan a leading `…` stands for the owner path in this table.
 
 ## The principle
 
@@ -82,7 +127,7 @@ The current model was built one sport at a time and leans on code to look right:
 ## 2. Calendar (the real slots each Season)
 
 - **SportLeagueSeason**: its own identity (start year and date span, unique per league and
-  start year, span checked against its slots), with a **SeasonProviderMapping** per provider.
+  start year, span checked against its slots), with a **SportLeagueSeasonProviderMapping** per provider.
   - Test data (Derek): a few "Test-" events live in the **current** Season, each on its own
     Season slot row flagged `isTestData` (unique per Season, definition and flag), with
     re-dated dates. The sync never reads or writes test slots, so test and synced events
@@ -100,15 +145,15 @@ The current model was built one sport at a time and leans on code to look right:
 
 ## 3. Sporting events
 
-- **SportLeagueSeasonEvent** (today SportEvent): a real-world event in one Season, covering
-  one or more of its slots through **SportLeagueSeasonEventSlot**.
+- **SportEvent** (name kept): a real-world event in one Season (it gains `seasonId`),
+  covering one or more of its slots through **SportEventSlot**.
   - **A slot belongs to at most one event**, enforced by a unique key. The NFL postseason
     is one event over WILD_CARD, DIVISIONAL, CONFERENCE and FINAL; there is no separate
     Super Bowl event.
   - A SINGLE_SLOT event is identified by its Season and slot. Provider ids live in
-    **…EventProviderMapping**.
+    **SportEventProviderMapping**.
   - EventSeries is removed.
-- **…EventFieldParticipant** (today SportEventParticipant): the event's field.
+- **SportEventParticipant** (name kept): the event's field.
   - It holds the **teams**, and in TEAM leagues the **eligible players of those teams**.
     Each player row points at the league Participant and records the team he plays for in
     this event.
@@ -118,16 +163,16 @@ The current model was built one sport at a time and leans on code to look right:
   - Seed, play-in place, withdrawn and eliminated reasons stay.
   - **Team** tiers and prices stay event-level, frozen at release. **Every field check,
     count, tier and price runs over team rows only**, so player rows never block release.
-- **…EventRound**: a scoring unit, numbered within its event, with a **required** FK to one
+- **SportEventRound**: a scoring unit, numbered within its event, with a **required** FK to one
   of its own event's slots (enforced by a composite FK). A week event's round 1 is
   WEEK_14; all four Masters rounds are MASTERS. A round kind and a loser-advances link
   (NBA play-in) belong to bracket shape (#1926).
-- **…EventRoundMatch**: two sides meeting in a round; a best-of series is one Match.
+- **SportEventRoundMatch** (today SportEventMatch): two sides meeting in a round; a best-of series is one Match.
   - It is numbered within its round in kickoff order, and the number is stable once set.
   - Advancement is a match FK plus a side.
   - `winnerSide` and status are written once, from its Games.
   - A pick'em pick predicts the Match (the series winner).
-- **…EventRoundMatchGame**: one played game: date, status, scores, period scores,
+- **SportEventRoundMatchGame**: one played game: date, status, scores, period scores,
   shootout, ending and spread, with provider ids in **GameProviderMapping**.
   - Every Match has at least one Game. Unique (provider, provider id) on GameProviderMapping.
   - The bracket build creates FINAL's Match and Game 1 before the feed lists them, so
@@ -304,8 +349,8 @@ phase:
   have a place in a covered slot, judged at cutoff, so bye teams are included. The API
   computes it. A Super Bowl card has 2 teams; a Semifinal card has 4.
 - **Tiers and prices are keyed by event slot** for every contest type:
-  **…EventSlotTier** (unique event slot + tier key, from the league's tier profile) and
-  **…EventSlotParticipantValuation** (unique event slot + field row: tier, price, manual
+  **SportEventSlotTier** (unique event slot + tier key, from the league's tier profile) and
+  **SportEventSlotParticipantValuation** (unique event slot + field row: tier, price, manual
   flag), replacing SportEventTier and SportEventParticipantValuation. A contest reads the
   tier set of its first covered slot: team contests read the first slot's (built at
   release); a week event has one slot, as today. A manual tier or price freezes auto-tiering
