@@ -1,9 +1,7 @@
 import { FieldOrderBasis } from '@poolmaster/shared/domain';
 import { DISCARD_BACKGROUND_JOB } from '../../../packages/core-api/src/modules/background-jobs/background-job-outcome';
-import {
-  SyncedFieldFollowUps,
-  type SyncEventGamesAndTiersJobPayload,
-} from '../../../packages/core-api/src/modules/events/synced-field-follow-up-job';
+import type { SyncEventGamesAndTiersJobPayload } from '../../../packages/core-api/src/modules/events/synced-field-follow-up-job';
+import { SyncedFieldFollowUps } from '../../../packages/core-api/src/modules/events/synced-field-follow-ups';
 import type { ProviderGameSlateService } from '../../../packages/core-api/src/modules/events/provider-game-slate';
 import type { SyncedFieldValuationService } from '../../../packages/core-api/src/modules/events/synced-field-valuation';
 import { mockFn } from '../../support/mock-fn';

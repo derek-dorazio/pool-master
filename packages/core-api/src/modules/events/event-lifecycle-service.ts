@@ -31,8 +31,6 @@ import {
   isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, type EventTiming } from '../contests/entry-window';
-import { ContestEventChangeKind } from '../email';
-import type { SportEventChangedNotice } from '../notifications/contest-notices';
 import { ContestLifecycle } from '../contests/contest-lifecycle';
 import type { SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
 import type { SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
@@ -63,8 +61,6 @@ export interface FinishedSportEventSettlement {
  */
 export interface EventSettlementDeps {
   contestSettlement: FinishedSportEventSettlement;
-  /** Who a cancellation's settle job tells before it settles (C7). */
-  sportEventChanged: SportEventChangedNotice;
 }
 
 /** Who drove the transition: an admin by hand, or the lifecycle scheduler. */
@@ -232,8 +228,7 @@ export class EventLifecycleService {
     }
 
     // The contests going live at the start, and a postponed event's contests following its start,
-    // are jobs written with the status (#1952). The cancellation email (C7) is sent by the
-    // settlement job, before it finishes the contests it is about.
+    // are jobs written with the status (#1952), as are a cancellation's emails (C7).
     followUps.queued();
 
     return {
@@ -275,17 +270,16 @@ export class EventLifecycleService {
 
   /**
    * The SETTLE_SPORT_EVENT_CONTESTS job (#1448): settles the contests of an event that completed
-   * or was cancelled, after telling a cancelled event's leagues (C7), which it must do while their
-   * contests are still open. It reads the event again: one moved back out of COMPLETED or
+   * or was cancelled. A cancelled event's leagues were told (C7) by the jobs its cancellation
+   * wrote, while their contests were still open. It reads the event again: one moved back out of COMPLETED or
    * CANCELLED before the job ran settles nothing, and its next finish queues a job of its own.
    *
    * A completed event's contests still open past their cutoff go live first, so each is told it
    * went live (E1) before it is told it finished.
    *
    * Settlement is idempotent, so a retry after a failure part way finishes the rest: a contest
-   * already COMPLETED is not settled again, one whose standings for this event are frozen keeps
-   * them, and C7's idempotency key sends it to each member once. Reports the contests it settled
-   * (#1861).
+   * already COMPLETED is not settled again, and one whose standings for this event are frozen keeps
+   * them. Reports the contests it settled (#1861).
    */
   async settleFinishedEventContests(payload: SettleSportEventContestsJobPayload): Promise<BackgroundJobOutcome> {
     const sportEvent = await this.sportEvents.findById(payload.sportEventId);
@@ -295,11 +289,6 @@ export class EventLifecycleService {
         'Skipped settling an event\'s contests because the event is gone or no longer finished',
       );
       return { changedCount: 0 };
-    }
-    // Nothing has settled yet, so a failure to queue C7 fails the job and its retry tells them:
-    // swallowed here, the contests would complete and nothing would ever tell them.
-    if (sportEvent.status === SportEventStatus.CANCELLED) {
-      await this.settlement.sportEventChanged.sportEventChanged(sportEvent, { kind: ContestEventChangeKind.CANCELLED });
     }
     const completedAt = new Date(payload.completedAt);
     // A completed event's open contests go live first (#1952), as the sweep does: an event that

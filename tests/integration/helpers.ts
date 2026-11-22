@@ -89,7 +89,7 @@ import type { SportDataProviderLookup } from '../../packages/core-api/src/module
 import { DomainEvents } from '../../packages/core-api/src/modules/domain-events';
 import { testDomainEvents } from '../support/domain-events';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
-import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { createContestManagementService, createReleasedEditionContests } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -309,7 +309,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: testApp.log,
-    sportEventChanged: contestNotices,
     contestSettlement: createContestSettlementService(prisma, testApp.log, { domainEvents, leaderboards }),
   });
   const ingestionConfigService = new IngestionConfigService(settings);

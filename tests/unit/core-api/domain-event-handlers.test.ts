@@ -113,6 +113,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'settle-finished-event-contests',
         'release-into-template-contests',
         'tell-leagues-event-postponed',
+        'tell-leagues-event-cancelled',
         'rebuild-event-leaderboards',
       ],
       SPORT_EVENT_RESCHEDULED: ['tell-leagues-event-rescheduled'],
@@ -273,6 +274,20 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
     );
   });
 
+  it('tells the leagues of a cancellation, from any status it cancels from, and not of a repeated one', async () => {
+    const cancelled = handler('tell-leagues-event-cancelled');
+    const ctx = context();
+    const event = statusChanged(SportEventStatus.IN_PROGRESS, SportEventStatus.CANCELLED);
+
+    for (const from of [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED]) {
+      expect(cancelled.when?.(statusChanged(from, SportEventStatus.CANCELLED))).toBe(true);
+    }
+    expect(cancelled.when?.(statusChanged(SportEventStatus.CANCELLED, SportEventStatus.CANCELLED))).toBe(false);
+    expect(cancelled.when?.(statusChanged(SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED))).toBe(false);
+    expect(await cancelled.jobs(event, ctx)).toEqual([eventChangedJob('sport-event-1', 'CANCELLED')]);
+    expect(ctx.sportEventChanged.sportEventChangedJobs).toHaveBeenCalledWith(event.sportEvent, { kind: 'CANCELLED' });
+  });
+
   it('rebuilds the event\'s boards on every status change', async () => {
     const rebuild = handler('rebuild-event-leaderboards');
 
@@ -314,6 +329,24 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
       start: TEST_JOB_START,
       dedupeKey: 'SYNC_EVENT_GAMES_AND_TIERS:sport-event-1',
     }]);
+  });
+
+  it('carries a playoff\'s whole bracket with the job, and a game or match with no kickoff yet as null', async () => {
+    const synced: SportEventFieldSynced = {
+      ...fieldSynced(SportEventStatus.DRAFT),
+      games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null, isNeutralSite: false }],
+      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, isNeutralSite: true, scheduledAt: KICKOFF, advancesTo: null, regionLabel: null }],
+    };
+
+    const [job] = await follow.jobs(synced, { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD });
+
+    expect(job.payload).toEqual({
+      sportEventId: 'sport-event-1',
+      providerId: 'balldontlie',
+      externalId: 'week-2',
+      games: [{ externalGameId: 'g1', roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null, isNeutralSite: false }],
+      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, isNeutralSite: true, scheduledAt: KICKOFF.toISOString(), advancesTo: null, regionLabel: null }],
+    });
   });
 
   it('follows a sync of every event still to be played, and of no finished or cancelled one', () => {
@@ -579,6 +612,7 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `SPORT_EVENT_STATUS_CHANGED` | `settle-finished-event-contests` | `SETTLE_SPORT_EVENT_CONTESTS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `release-into-template-contests` | `ADD_RELEASED_EDITION_TO_CONTEST` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |',
+      '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-cancelled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_RESCHEDULED` | `tell-leagues-event-rescheduled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_RESULTS_CHANGED` | `rebuild-leaderboards-for-changed-results` | `REBUILD_LEADERBOARDS` |',

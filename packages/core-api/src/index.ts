@@ -105,7 +105,7 @@ import { customersModule } from './modules/customers/routes';
 import { CustomerService } from './modules/customers/customer-service';
 import { PrismaCustomerReader } from './adapters/prisma-customer-reader';
 import { SyncedFieldValuationService } from './modules/events/synced-field-valuation';
-import { SyncedFieldFollowUps } from './modules/events/synced-field-follow-up-job';
+import { SyncedFieldFollowUps } from './modules/events/synced-field-follow-ups';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,
@@ -120,8 +120,7 @@ import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/p
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
-import { JobLeaderboardRebuilds } from './modules/contests/leaderboard-snapshots';
-import { leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
+import { JobLeaderboardRebuilds, leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
 import { createContestManagementService, createReleasedEditionContests } from './modules/contest-management/wiring';
 import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
@@ -205,7 +204,6 @@ export function buildApp() {
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: app.log,
-    sportEventChanged: contestNotices,
     contestSettlement,
   });
   // One set of event services for the admin routes, the synced event creation sweep and the draft event notices.

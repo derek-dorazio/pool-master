@@ -1,9 +1,8 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { BackgroundJobStatus, BackgroundJobType, SelectionType } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
-import { leaderboardChangesOf, LeaderboardRebuildSubject } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
+import { JobLeaderboardRebuilds, leaderboardChangesOf, LeaderboardRebuildSubject } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import {
-  JobLeaderboardRebuilds,
   LEADERBOARD_BOARD_FORMAT,
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
   isSnapshotCurrent,

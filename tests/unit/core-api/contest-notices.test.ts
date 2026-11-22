@@ -133,9 +133,14 @@ describe('ContestNotices', () => {
     }
   }
 
-  /** C6 or C7 as an event change tells it: the request queues each contest's job, and the jobs run. */
+  /** The jobs C6 or C7 answers for a change, written in one write as the change's own write carries them. */
+  async function writeChangedJobs(sportEvent: SportEvent, change: SportEventChange, overrides: Partial<ContestNoticeDeps> = {}): Promise<void> {
+    await jobRows.enqueueAll(await notices(overrides).sportEventChangedJobs(sportEvent, change));
+  }
+
+  /** C6 or C7 as an event change tells it: the change's write carries each contest's job, and the jobs run. */
   async function tellChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
-    await notices().sportEventChanged(sportEvent, change);
+    await writeChangedJobs(sportEvent, change);
     await runEventChangedJobs();
   }
 
@@ -542,7 +547,7 @@ describe('ContestNotices', () => {
     });
   });
 
-  describe('sportEventChanged (C6, C7)', () => {
+  describe('sportEventChangedJobs (C6, C7)', () => {
     /** An entry of the member's squad in the contest, submitted for the event or left a draft. */
     async function enter(contestId: string, owner: { squad: { id: string } }, sportEventId: string, submitted: boolean) {
       const created = await world.entryRepo().create({ contestId, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: () => null });
@@ -627,7 +632,7 @@ describe('ContestNotices', () => {
       const memberReads = [jest.spyOn(leagues, 'findById'), jest.spyOn(memberships, 'findByLeagues'), jest.spyOn(entries, 'findByContest')];
       const writes = jest.spyOn(jobRows, 'enqueueAll');
 
-      await notices({ leagues, memberships, entries }).sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.POSTPONED }, { leagues, memberships, entries });
 
       expect(writes).toHaveBeenCalledTimes(1);
       expect(jobRows.rows.map((row) => row.payload)).toEqual([first, second, third].map((contest) => ({
@@ -646,7 +651,7 @@ describe('ContestNotices', () => {
       world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
       const season = world.addContest(league.id, { name: 'Season Pool', sportEventIds: [masters.id, open.id] });
 
-      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.CANCELLED });
 
       expect(jobRows.rows.map((row) => (row.payload as ContestEventChangedEmailsJobPayload).contestId)).toEqual([season.id]);
     });
@@ -657,9 +662,9 @@ describe('ContestNotices', () => {
       const masters = world.addSportEvent({ name: 'The Masters', startDate: newStart });
       world.addContest(league.id, { sportEventIds: [masters.id] });
 
-      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
-      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
-      await notices().sportEventChanged({ ...masters, startDate: new Date('2026-04-23T11:40:00.000Z') }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: newStart });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
+      await writeChangedJobs({ ...masters, startDate: new Date('2026-04-23T11:40:00.000Z') }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: newStart });
 
       expect(jobRows.rows.map((row) => (row.payload as ContestEventChangedEmailsJobPayload).change)).toEqual([
         { kind: 'RESCHEDULED', startsAt: newStart.toISOString(), previousStart: STARTS_AT.toISOString() },
@@ -692,14 +697,6 @@ describe('ContestNotices', () => {
       );
 
       expect(jobs.map((job) => (job.payload as ContestEventChangedEmailsJobPayload).contestId)).toEqual([open.id]);
-    });
-
-    it('throws when the jobs cannot be written, so the cancelled event\'s settle job that asked fails and is retried', async () => {
-      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
-      world.addContest(world.addLeague().id, { sportEventIds: [masters.id] });
-      jest.spyOn(jobRows, 'enqueueAll').mockRejectedValueOnce(new Error('database unavailable'));
-
-      await expect(notices().sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED })).rejects.toThrow('database unavailable');
     });
 
     it('tells, from each contest\'s job, its commissioners and its members with a submitted entry, and only them, league by league', async () => {
@@ -736,7 +733,7 @@ describe('ContestNotices', () => {
       const season = world.addContest(league.id, { name: 'Season Pool', status: ContestStatus.ACTIVE, sportEventIds: [masters.id, open.id] });
       const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
 
-      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.CANCELLED });
       await world.contestRepo().transitionStatus(season.id, { from: [ContestStatus.ACTIVE], to: ContestStatus.COMPLETED });
       await runEventChangedJobs();
 
@@ -749,7 +746,7 @@ describe('ContestNotices', () => {
       const league = world.addLeague();
       world.addContest(league.id, { sportEventIds: [masters.id] });
       const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
-      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.POSTPONED });
       const [job] = jobRows.rows;
       const payload = job.payload as ContestEventChangedEmailsJobPayload;
       const jobs = new ContestEmailJobs({ contests: world.contestRepo(), sportEvents: world.sportEventRepo(), finalStandings: {} as never, notices: notices(), logger });

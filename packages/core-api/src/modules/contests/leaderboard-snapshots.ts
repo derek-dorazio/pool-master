@@ -17,8 +17,6 @@
 import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
 import { SelectionType, type Contest, type SportEvent, type SportEventMatch } from '@poolmaster/shared/domain';
 import { readMillisecondsSetting } from '../../core/read-cache';
-import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from './leaderboard-rebuild-job-requests';
 
 /** Which leaderboard a stored board is: each contest has one, by how its entries pick. */
 export const LeaderboardKind = {
@@ -122,21 +120,4 @@ export interface LeaderboardRebuilds {
    * that computes boards without storing them asks, so they are stored for the reads after.
    */
   contestsChanged(contestIds: readonly string[]): Promise<void>;
-}
-
-/** Queues a rebuild job per event or contest a write changed, each one waiting at most once. */
-export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
-  constructor(private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll' | 'queued'>) {}
-
-  eventsChanged(sportEventIds: readonly string[]): Promise<void> {
-    return this.queue(LeaderboardRebuildSubject.EVENT, sportEventIds);
-  }
-
-  contestsChanged(contestIds: readonly string[]): Promise<void> {
-    return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
-  }
-
-  private async queue(subject: LeaderboardRebuildSubject, ids: readonly string[]): Promise<void> {
-    await this.jobs.enqueueAll([...new Set(ids)].map((id) => rebuildLeaderboardsJob(this.jobs, subject, id)));
-  }
 }

@@ -79,7 +79,6 @@ function lifecycleSweep(now: Date) {
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger,
-    sportEventChanged: contestNotices,
     contestSettlement: createContestSettlementService(prisma, logger, { domainEvents }),
   });
   const scheduler = new EventLifecycleScheduler({

@@ -97,16 +97,19 @@ export class ProviderNotificationService {
       receivedAt: now,
     });
     const after = (ms: number) => new Date(now.getTime() + ms);
+    // poolmaster-allow-direct-job: a provider's webhook starts the syncs of the events it names
     const syncs = events.map((event) => this.deps.jobs.request(
       BackgroundJobType.PROVIDER_EVENT_SYNC,
       { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
       { runAt: after(event.inProgress ? this.coalesceMs : this.startingSyncDelayMs), dedupeKey: providerEventSyncKey(event), start: WEBHOOK_START },
     ));
+    // poolmaster-allow-direct-job: a provider's webhook starts the reconciling syncs after a game ends
     const reconciles = notification.phase !== 'END' ? [] : events.map((event) => this.deps.jobs.request(
       BackgroundJobType.PROVIDER_EVENT_SYNC,
       { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
       { runAt: after(this.reconcileDelayMs), dedupeKey: providerEventReconcileKey(event), start: WEBHOOK_START },
     ));
+    // poolmaster-allow-direct-job: the webhook's syncs, in one write
     const queued = await this.deps.jobs.enqueueAll([...syncs, ...reconciles]);
     this.deps.logger?.debug({
       action: 'ingestion.providerNotification.received',

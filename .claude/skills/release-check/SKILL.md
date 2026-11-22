@@ -51,6 +51,11 @@ DB-backed failure means.
   `// poolmaster-allow-query-in-loop: <reason>` comment is for a small fixed bound or a
   finding with its own ticket, and a fix deletes the comment that names its ticket: a marker
   that covers nothing is an error too.
+- **`poolmaster/follow-ups-via-domain-events` fails** → a write queues its own follow-up job or
+  board rebuild. Describe the change as a domain event and add a handler beside the job's
+  builder, per `rules/architecture-rules.md` §4 *Follow-up work is a domain event handler*. The
+  `// poolmaster-allow-direct-job: <reason>` comment is for an entry point that starts work (a
+  webhook, an admin's route, a sweep on a timer), or a finding with its own ticket.
 - **`poolmaster/no-list-lookup` fails** → a screen keeps one row, a count or an id/status/year
   slice of a list query. Use the single-item endpoint, a filter parameter, or a count from the
   server per `rules/react-ui-rules.md` §4 *TanStack Query Rules*. The

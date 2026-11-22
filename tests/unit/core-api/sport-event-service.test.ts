@@ -62,7 +62,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     sportEvents,
     // What follows a release or a moved start, collected by the app's handler map.
     testDomainEvents({ sportEventChanged }),
-    { ...NO_SETTLE_JOBS, sportEventChanged: sportEventChanged ?? NO_SETTLE_JOBS.sportEventChanged },
+    NO_SETTLE_JOBS,
   );
   const service = new SportEventService({
     sportEvents,

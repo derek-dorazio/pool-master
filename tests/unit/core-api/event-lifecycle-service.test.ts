@@ -92,7 +92,6 @@ function lifecycleService(
   const domainEvents = testDomainEvents({ queue: jobs ?? startedJobs(), releasedEditionContests, sportEventChanged: notice });
   return new EventLifecycleService(contests, sportEvents, domainEvents, {
     contestSettlement: settlement ?? NO_SETTLE_JOBS.contestSettlement,
-    sportEventChanged: notice ?? NO_SETTLE_JOBS.sportEventChanged,
   }, logger);
 }
 
@@ -723,7 +722,6 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
 
     expect(notice.sportEventChangedJobs).toHaveBeenCalledTimes(1);
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', startDate: STARTED_EVENT_START }), { kind: 'POSTPONED' }, { reopening: new Set() });
-    expect(notice.sportEventChanged).not.toHaveBeenCalled();
     // Each call still rebuilds the event's boards, and has its contests follow its start.
     expect(store.backgroundJobs).toEqual([followPostponedJob, eventChangedJob('sport-event-1', 'POSTPONED'), rebuildJob(), followPostponedJob, rebuildJob()]);
     expect(jobs.queued).toHaveBeenCalledTimes(2);
@@ -757,20 +755,30 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 
-  it('tells the leagues an event was cancelled before its job settles its contests', async () => {
-    const order: string[] = [];
-    const settlement = {
-      settleFinishedSportEvent: jest.fn(async () => { order.push('settled'); return { sportEventId: 'sport-event-1', contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 0 }; }),
-      settleFinishedGame: jest.fn().mockResolvedValue(0),
-    };
-    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, undefined, changedNotice(order));
+  it('writes the leagues\' cancelled-event jobs with the CANCELLED status, while the contests are still open, and none on a repeated call', async () => {
+    const store = new InMemorySportEvents();
+    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    const notice = changedNotice();
+    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, undefined, notice);
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } });
-    expect(order).toEqual([]);
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } });
+
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledTimes(1);
+    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', startDate: STARTED_EVENT_START }), { kind: 'CANCELLED' });
+    expect(store.backgroundJobs.filter((job) => job.type === BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS)).toEqual([eventChangedJob('sport-event-1', 'CANCELLED')]);
+  });
+
+  it('settles a cancelled event\'s contests from its job without telling the leagues again, since the cancellation wrote their jobs', async () => {
+    const settlement = fakeSettlement();
+    const { sportEvents } = seededEvents({ status: SportEventStatus.CANCELLED });
+    const notice = changedNotice();
+    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, undefined, notice);
+
     await service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() });
 
-    expect(order).toEqual(['told CANCELLED', 'settled']);
+    expect(settlement.settleFinishedSportEvent).toHaveBeenCalledTimes(1);
+    expect(notice.sportEventChangedJobs).not.toHaveBeenCalled();
   });
 
   it('tells nothing when an event starts or completes', async () => {
@@ -782,7 +790,6 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.COMPLETED, actor: { type: 'SYSTEM' } });
 
     expect(notice.sportEventChangedJobs).not.toHaveBeenCalled();
-    expect(notice.sportEventChanged).not.toHaveBeenCalled();
   });
 
   it('hands a moved event\'s edit the jobs that tell its leagues the previous start, and wakes the runner only when told the edit committed', async () => {
@@ -812,17 +819,16 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     told.queued();
   });
 
-  it('fails the settle job and settles nothing when a cancelled event\'s email jobs cannot be queued, so the job is retried', async () => {
-    const settlement = fakeSettlement();
-    const { sportEvents } = seededEvents({ status: SportEventStatus.CANCELLED });
+  it('fails the cancellation, leaving the event SCHEDULED, when the contests to tell cannot be read, rather than cancelling it with nobody told', async () => {
+    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
-    notice.sportEventChanged.mockRejectedValueOnce(new Error('database unavailable'));
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, undefined, notice);
+    notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
+    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), undefined, undefined, notice);
 
-    await expect(service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() }))
+    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } }))
       .rejects.toThrow('database unavailable');
 
-    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+    expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
   });
 });
 
