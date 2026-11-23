@@ -8,7 +8,7 @@ import { ParticipantNotFoundError } from '../../../packages/core-api/src/modules
 import { SquadNotFoundError } from '../../../packages/core-api/src/modules/squads/errors';
 
 describe('global error handler envelopes', () => {
-  it.each([
+  it.each<[Error & { statusCode: number }, string]>([
     [new ContestNotFoundError('c-1'), 'CONTEST_NOT_FOUND'],
     [new ContestEntryNotFoundError('c-1', 's-1'), 'CONTEST_ENTRY_NOT_FOUND'],
     [new LeagueNotFoundError('l-1'), 'LEAGUE_NOT_FOUND'],

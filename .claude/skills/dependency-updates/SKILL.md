@@ -201,5 +201,14 @@ PR that cannot land, or the note from Steps 6 and 7.
   ticket, and the ticket removes it.
 - **Moving Node in the Dockerfiles but not `.nvmrc`.** CI tests one Node version and the
   image ships another.
+- **Trusting Dependabot's lockfile when vitest moves.** Its lockfile can put the new vitest
+  (or vite, postcss, storybook) under `clients/poolmaster/node_modules` and leave the old
+  version at the root. jest-dom stays at the root, its `declare module 'vitest'` stops
+  resolving, and thousands of `toBeInTheDocument`-style type errors follow. The fix is not
+  to set a package aside. Raise the web app's `vitest` range to `@vitest/coverage-v8`'s
+  exact peer. Delete the nested entries and the stale root entries for those packages from
+  `package-lock.json`, and the matching `node_modules` directories. Run `npm install`. Check
+  that each package has one hoisted copy. The fix goes on a branch of your own, so it
+  replaces the Dependabot PR.
 - **Merging Dependabot PRs back to back.** Three merges inside one `main` run lose a verdict;
   Dependabot's rebases after each merge also re-run every other open PR's CI.

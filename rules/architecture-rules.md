@@ -289,6 +289,11 @@ authoring and admin result entry are the fallback for leagues no provider covers
 correcting a feed. The decision and its alternatives are
 [ADR-0011](../docs/adr/0011-provider-sync-creates-events.md), which supersedes ADR-0009.
 
+[ADR-0012](../docs/adr/0012-season-phase-slot-model-contests-cover-slots.md) amends it: events
+sit in a Season and cover slots, their status bubbles up from the feed's Games, and a league
+with no feed stays off. This section describes today's code, and is rewritten by the slices
+of #1917 as they land.
+
 What the code does **today**, while the follow-up tickets of #1723 land:
 
 - A sport league is synced once a root admin names its provider (`SportLeague.eventSyncProviderId`,
@@ -363,6 +368,11 @@ that checks one, passed from the one instance in `index.ts`; there is no default
 fall back on.
 
 ### Sport extension
+
+> This section describes today's code. ADR 0012 and `domain-model-conventions-rules.md` §11
+> *Open-Ended Additive Substrate Design* replace it: Clutch Cards become a contest type on the
+> parent league (no round leagues), and every scoring family reads one shared result shape
+> rather than its own tables. It is rewritten by the slices of #1917 as they land.
 
 What differs between sports lives in exactly two places, so a new sport is added by
 filling them in rather than by finding guards scattered through the code:
