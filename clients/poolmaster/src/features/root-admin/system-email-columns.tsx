@@ -1,20 +1,20 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { EmailTemplateStatusOrder, LEAGUE_PLANS, type EmailTemplateStatus } from '@poolmaster/shared/domain';
 import type { SystemEmailDto } from '@/lib/api';
-import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 import { EmailStatusChip } from './email-status-chip';
-import { EMAIL_AUDIENCE_LABELS, EMAIL_STATUS_LABELS, EmailAudienceOrder, type EmailAudience, EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
+import { EMAIL_AUDIENCE_LABELS, EmailAudienceOrder, type EmailAudience, EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
 
 const PLAN_OPTIONS = [
   { value: EVERY_PLAN, label: planText(null) },
-  ...LEAGUE_PLANS.map((plan) => ({ value: plan, label: LEAGUE_PLAN_LABEL[plan] })),
+  ...LEAGUE_PLANS.map((plan) => ({ value: plan, label: enumLabel('LeaguePlan', plan) })),
 ];
 
 const columnHelper = createColumnHelper<SystemEmailDto>();
 
 /** The Notifications page's Emails grid (#1872): every column typed and explained behind its (i). */
 export const systemEmailColumns = [
-  columnHelper.accessor((email) => SYSTEM_EMAIL_LABELS[email.templateKey].name, {
+  columnHelper.accessor((email) => enumLabel('EmailTemplateKey', email.templateKey), {
     id: 'email',
     header: 'Email',
     meta: { info: 'The system email. ⤢ opens it: preview its latest send, send yourself a copy, or switch it on or off.', type: { kind: 'text' } },
@@ -43,7 +43,7 @@ export const systemEmailColumns = [
     header: 'Status',
     meta: {
       info: 'On or Off by the email\'s own switch. Always on: an account email or the test email, which only "Send system email" in Email settings stops.',
-      type: { kind: 'enum', order: EmailTemplateStatusOrder, label: (status) => EMAIL_STATUS_LABELS[status as EmailTemplateStatus] },
+      type: { kind: 'enum', order: EmailTemplateStatusOrder, label: (status) => enumLabel('EmailTemplateStatus', status as EmailTemplateStatus) },
     },
     cell: ({ getValue }) => <EmailStatusChip status={getValue()} />,
   }),

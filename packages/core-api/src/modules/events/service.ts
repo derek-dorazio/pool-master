@@ -30,23 +30,24 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   AutoReleaseCheckOutcome,
+  blocksManualRelease,
   eventPlaysMatches,
   eventSportDefinition,
   isProviderSyncedEvent,
   isWithinAutoReleaseWindow,
+  MANUAL_ADMIN_PROVIDER_ID,
   ReleaseAttemptOutcome,
   type ReleaseAttemptResult,
   ReleaseAttemptSkipReason,
-  blocksManualRelease,
   type ReleaseCheck,
   ReleaseCheckKey,
-  sportLeagueDefinitionOf,
-  MANUAL_ADMIN_PROVIDER_ID,
   type Sport,
+  type SportEvent,
   SportEventStatus,
   SportEventSyncScope,
-  type SportEvent,
   type SportLeague,
+  sportLeagueDefinitionOf,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
@@ -727,7 +728,7 @@ export class SportEventService {
   }
 
   private describeFailed(event: SportEvent, failed: readonly ReleaseCheck[]): string[] {
-    const { participant } = eventSportDefinition(event).vocabulary;
+    const { participant } = sportVocabulary(eventSportDefinition(event));
     return failed.flatMap((check) => describeFailedReleaseCheck(check, participant));
   }
 

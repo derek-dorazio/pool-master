@@ -1,4 +1,4 @@
-import { MatchEnding, Sport, SportLeagueNoun, getSportDefinition, sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { MatchEnding, Sport, SportLeagueNoun, sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { SportEventMatchDto } from '@/lib/api';
 import { offLeagueRosterMessages, reseededRounds, roundStarted, unfinishedBefore } from './bracket-copy';
@@ -73,7 +73,7 @@ describe('unfinishedBefore', () => {
 });
 
 describe('offLeagueRosterMessages', () => {
-  const tennis = getSportDefinition(Sport.TENNIS).vocabulary;
+  const tennis = sportVocabulary(Sport.TENNIS);
 
   it('names a tour\'s roster for the ATP and a league\'s roster for the NCAA when a player is refused as off it', () => {
     expect(offLeagueRosterMessages(tennis, sportLeagueNounOf(Sport.TENNIS, null)).PARTICIPANT_NOT_IN_SPORT_LEAGUE)

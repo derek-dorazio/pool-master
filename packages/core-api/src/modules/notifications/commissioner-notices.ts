@@ -34,22 +34,23 @@ import type {
   SportLeagueRepository,
 } from '@poolmaster/shared/db';
 import {
+  type Contest,
+  type ContestConfigTemplate,
   ContestStatus,
   ContestTemplateEventType,
-  EventEmailDelivery,
-  SportEventStatus,
   DigestEventState,
   contestTemplateEventTypeOf,
   countParticipants,
+  EventEmailDelivery,
+  type EventPage,
   eventSportDefinition,
   formatSelectionTypeName,
   isTemplateOfferedOn,
-  type Contest,
-  type ContestConfigTemplate,
-  type EventPage,
   type League,
   type SportEvent,
   type SportEventMatch,
+  SportEventStatus,
+  sportVocabulary,
   type User,
 } from '@poolmaster/shared/domain';
 import type { EventPageService } from '../event-pages/service';
@@ -451,7 +452,7 @@ export class CommissionerNotices implements DueNotifications {
     ]);
     const eventPageUrl = this.eventPageUrl(pages, sportEvent);
     const fieldSize = fieldSizes.get(sportEvent.id) ?? 0;
-    const field = fieldSize > 0 ? countParticipants(fieldSize, eventSportDefinition(sportEvent).vocabulary.participant) : null;
+    const field = fieldSize > 0 ? countParticipants(fieldSize, sportVocabulary(eventSportDefinition(sportEvent)).participant) : null;
     for (const league of leagues) {
       const setups = defaults.map((template) => this.setupTile(
         template,

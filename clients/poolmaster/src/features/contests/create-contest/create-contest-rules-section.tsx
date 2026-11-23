@@ -1,3 +1,4 @@
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import type { SportDefinition } from '@poolmaster/shared/domain';
 import type { ReactElement } from 'react';
 import { FormSection, InlineError, Text } from '@/features/shared/ui';
@@ -52,7 +53,7 @@ export function CreateContestRulesSection({
       <ContestRulesFields
         bracketStartRounds={bracketStartRounds}
         onChange={onChange}
-        participant={sportDefinition.vocabulary.participant}
+        participant={sportVocabulary(sportDefinition).participant}
         salaryCap={salaryCap}
         selectionType={values.selectionType}
         tierCount={tierCount}
@@ -64,7 +65,7 @@ export function CreateContestRulesSection({
           onChange={onChange}
           selectionType={values.selectionType}
           values={values}
-          vocabulary={sportDefinition.vocabulary}
+          vocabulary={sportVocabulary(sportDefinition)}
         />
       ) : null}
       {scoringError !== null ? <InlineError testId="contest-scoring-error">{scoringError}</InlineError> : null}

@@ -1,4 +1,4 @@
-import { sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { importEventYearFromProvider } from '@/lib/api';
 import { Button, ConfirmDialog } from '@/features/shared/ui';
@@ -23,7 +23,7 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ImportSportEventYearFromProviderResponse | null>(null);
   const { sport, definition } = useManagedSport();
-  const { event } = definition.vocabulary;
+  const { event } = sportVocabulary(definition);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
   const { providerId, providers, setProviderId, isSuccess: providersLoaded } = useSportProviderId(true, sport, sportLeague.eventSyncProviderId);
 

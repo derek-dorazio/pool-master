@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -39,6 +40,7 @@ export function SystemEmailDialog({ email, group, onClose }: { email: SystemEmai
   const [previewing, setPreviewing] = useState(false);
   const { templateKey } = email;
   const label = SYSTEM_EMAIL_LABELS[templateKey];
+  const name = enumLabel('EmailTemplateKey', templateKey);
   const switchKey = isSwitchable(templateKey, group.value.templates) ? templateKey : null;
   const toForm = (value: EmailConfig): StatusFormValues => ({ on: switchKey === null ? true : value.templates[switchKey] });
   const settings = useSettingsGroupForm({
@@ -99,7 +101,7 @@ export function SystemEmailDialog({ email, group, onClose }: { email: SystemEmai
       pendingLabel="Saving..."
       saveLabel="Save"
       testId={TEST_ID}
-      title={mode === 'edit' ? `${label.name} · Edit` : label.name}
+      title={mode === 'edit' ? `${name} · Edit` : name}
       viewActions={(
         <>
           <Button data-testid={`${TEST_ID}-preview`} disabled={!hasPreview} onClick={() => setPreviewing(true)} type="button" variant="secondary">

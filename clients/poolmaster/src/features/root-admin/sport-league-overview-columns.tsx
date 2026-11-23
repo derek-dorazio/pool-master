@@ -1,7 +1,9 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper, type Row, type SortingFn } from '@tanstack/react-table';
 import {
   getSportDefinition,
   SportLeagueIssueTypeOrder,
+  type SportLeagueIssueType,
   SportLeagueKind,
   SportLeagueKindOrder,
   SportLeagueSyncHealthOrder,
@@ -14,15 +16,9 @@ import { Button, Text, type DateRangeValue } from '@/features/shared/ui';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { OnOffChip } from './on-off-chip';
 import { SportLeagueIssueChips } from './sport-league-issue-chips';
-import { SPORT_LEAGUE_ISSUE_LABELS, SYNC_HEALTH_LABELS } from './sport-league-overview-text';
 import { SyncHealthChip } from './sync-health-chip';
 
 const columnHelper = createColumnHelper<SportLeagueOverviewDto>();
-
-export const SPORT_LEAGUE_KIND_LABELS: Record<SportLeagueKind, string> = {
-  [SportLeagueKind.REAL]: 'Real',
-  [SportLeagueKind.CLUTCH_CARD]: 'Clutch Card',
-};
 
 /** The Status column's values: a league is On (offered and synced) or Off. */
 export const LEAGUE_STATUS = { ON: 'ON', OFF: 'OFF' } as const;
@@ -122,9 +118,9 @@ export function sportLeagueOverviewColumns({
       header: 'Kind',
       meta: {
         info: "Real: a sport league with its own feed. Clutch Card: a stat-pool league built from its parent league's rounds.",
-        type: { kind: 'enum', order: SportLeagueKindOrder, label: (kind) => SPORT_LEAGUE_KIND_LABELS[kind as SportLeagueKind] },
+        type: { kind: 'enum', order: SportLeagueKindOrder, label: (kind) => enumLabel('SportLeagueKind', kind as SportLeagueKind) },
       },
-      cell: ({ getValue }) => SPORT_LEAGUE_KIND_LABELS[getValue()],
+      cell: ({ getValue }) => enumLabel('SportLeagueKind', getValue()),
     }),
     columnHelper.accessor((overview) => providerText(overview, nameOfLeague, nameOfProvider), {
       id: 'provider',
@@ -138,7 +134,7 @@ export function sportLeagueOverviewColumns({
       header: 'Sync health',
       meta: {
         info: 'OK: the last run of every sync (event list, field, live scores and results) worked. ERROR: at least one failed; Issues says which. NOT RUN YET: on, but no run so far. OFF: the league is off or has no provider.',
-        type: { kind: 'enum', order: SportLeagueSyncHealthOrder, label: (health) => SYNC_HEALTH_LABELS[health as SportLeagueSyncHealth] },
+        type: { kind: 'enum', order: SportLeagueSyncHealthOrder, label: (health) => enumLabel('SportLeagueSyncHealth', health as SportLeagueSyncHealth) },
       },
       cell: ({ getValue }) => <SyncHealthChip health={getValue()} />,
     }),
@@ -151,7 +147,7 @@ export function sportLeagueOverviewColumns({
           kind: 'enum',
           manyPerCell: true,
           order: SportLeagueIssueTypeOrder,
-          label: (type) => SPORT_LEAGUE_ISSUE_LABELS[type as keyof typeof SPORT_LEAGUE_ISSUE_LABELS],
+          label: (type) => enumLabel('SportLeagueIssueType', type as SportLeagueIssueType),
         },
       },
       sortingFn: byTotalIssues,

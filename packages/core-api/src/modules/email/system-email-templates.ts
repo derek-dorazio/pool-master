@@ -1861,7 +1861,7 @@ function renderContestStandingsEmail(
     if (next.picksCloseAt) nextRows.push(['Picks close', formatDay(next.picksCloseAt, context)]);
   }
   if (moment.kind === StandingsMomentKind.BRACKET_ROUND && moment.nextRound) {
-    nextRows.push(['Next round', `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context)}`]);
+    nextRows.push([displayString('word.nextRound', undefined, context.language), `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context)}`]);
   }
   if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
     nextRows.push([displayString('word.nextWeek', undefined, context.language), `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);

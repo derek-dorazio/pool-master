@@ -1,13 +1,16 @@
+import { displayString } from "@poolmaster/shared/display-strings";
 import { useState } from "react";
 import { cn } from "./class-names";
 import type { ColumnFilterProps } from "./data-grid-column-filter";
 import {
-  CALENDAR_PERIOD_LABELS,
+  calendarPeriodLabel,
   calendarPeriods,
   describeSpan,
   parseSpanText,
   quickEntries,
   relativeLabel,
+  towardLabel,
+  unitWord,
   resolveSpan,
   type DateSpan,
   type QuickEntry,
@@ -22,17 +25,16 @@ import { Input, Select } from "./form-field";
 /** The amount an "N" entry starts on, before the viewer types their own. */
 const DEFAULT_AMOUNT: Record<SpanUnit, number> = { m: 30, h: 2, d: 3, w: 2 };
 
-const RANGE_MATCHES: { value: DateRangeMatch; label: string }[] = [
-  { value: "overlaps", label: "Overlaps" },
-  { value: "startsWithin", label: "Starts within" },
-  { value: "endsWithin", label: "Ends within" },
-];
+const RANGE_MATCHES = [
+  { value: "overlaps", label: "word.overlaps" },
+  { value: "startsWithin", label: "word.startsWithin" },
+  { value: "endsWithin", label: "word.endsWithin" },
+] as const satisfies readonly { value: DateRangeMatch; label: string }[];
 
 function sameSpan(left: DateSpan | null, right: DateSpan): boolean {
   return left !== null && JSON.stringify(left) === JSON.stringify(right);
 }
 
-const ENTRY_UNIT_WORDS: Record<SpanUnit, string> = { m: "minutes", h: "hours", d: "days", w: "weeks" };
 
 /**
  * A date, date and time, or date range column's filter (#1838): the chosen span in a chip, a
@@ -139,7 +141,7 @@ export function DataGridDateFilter<TData>({ column, label, testId }: ColumnFilte
           className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground"
           data-testid={`${testId}-chip`}
         >
-          {span ? describeSpan(span, preferences, withTime) : "Any time"}
+          {span ? describeSpan(span, preferences, withTime) : displayString("word.anyTime")}
         </span>
         {type?.kind === "dateRange" ? (
           <Select
@@ -151,7 +153,7 @@ export function DataGridDateFilter<TData>({ column, label, testId }: ColumnFilte
           >
             {RANGE_MATCHES.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {displayString(option.label)}
               </option>
             ))}
           </Select>
@@ -202,10 +204,10 @@ export function DataGridDateFilter<TData>({ column, label, testId }: ColumnFilte
                   onClick={() => chooseEntry(entry)}
                   type="button"
                 >
-                  {entry.toward === "past" ? "Past" : "Next"}
+                  {towardLabel(entry.toward)}
                 </button>
                 <Input
-                  aria-label={`${entry.toward === "past" ? "Past" : "Next"} how many ${ENTRY_UNIT_WORDS[entry.unit]}`}
+                  aria-label={`${towardLabel(entry.toward)} how many ${unitWord(entry.unit, 2)}`}
                   className="h-6 w-10 px-1 py-0 text-xs sm:text-xs"
                   data-testid={`${testId}-amount-${key}`}
                   inputMode="numeric"
@@ -213,7 +215,7 @@ export function DataGridDateFilter<TData>({ column, label, testId }: ColumnFilte
                   onFocus={() => chooseEntry(entry)}
                   value={amounts[entry.unit]}
                 />
-                <span>{ENTRY_UNIT_WORDS[entry.unit]}</span>
+                <span>{unitWord(entry.unit, 2)}</span>
               </li>
             );
           })}
@@ -230,7 +232,7 @@ export function DataGridDateFilter<TData>({ column, label, testId }: ColumnFilte
                   onClick={() => setSpan(periodSpan)}
                   type="button"
                 >
-                  {CALENDAR_PERIOD_LABELS[period]}
+                  {calendarPeriodLabel(period)}
                 </button>
               </li>
             );

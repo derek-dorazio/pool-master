@@ -1,21 +1,12 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
-import { ParticipantAddedBy, ParticipantAddedByOrder, ParticipantType } from '@poolmaster/shared/domain';
+import { type ParticipantAddedBy, ParticipantAddedByOrder, ParticipantType } from '@poolmaster/shared/domain';
 import { Text } from '@/features/shared/ui';
 import type { SportLeagueParticipantOverviewDto } from '@/lib/api';
 
 type ParticipantRow = SportLeagueParticipantOverviewDto;
 
 const columnHelper = createColumnHelper<ParticipantRow>();
-
-export const PARTICIPANT_ADDED_BY_LABELS: Record<ParticipantAddedBy, string> = {
-  [ParticipantAddedBy.FEED]: 'Feed',
-  [ParticipantAddedBy.ADMIN]: 'Admin',
-};
-
-export const PARTICIPANT_TYPE_LABELS: Record<ParticipantType, string> = {
-  [ParticipantType.INDIVIDUAL]: 'Individual',
-  [ParticipantType.TEAM]: 'Team',
-};
 
 /** The participant columns a league can show beyond its name and when it was added. */
 export type ParticipantColumnId = 'ranking' | 'feedId' | 'lastInFeedAt' | 'nationality' | 'shortName' | 'teamAffiliation' | 'role';
@@ -90,9 +81,9 @@ export function leagueParticipantColumns(columnIds: readonly ParticipantColumnId
       header: 'Added by',
       meta: {
         info: 'Feed: a sync found it in the provider\'s feed. Admin: added by hand.',
-        type: { kind: 'enum', order: ParticipantAddedByOrder, label: (value) => PARTICIPANT_ADDED_BY_LABELS[value as ParticipantAddedBy] },
+        type: { kind: 'enum', order: ParticipantAddedByOrder, label: (value) => enumLabel('ParticipantAddedBy', value as ParticipantAddedBy) },
       },
-      cell: ({ getValue }) => PARTICIPANT_ADDED_BY_LABELS[getValue()],
+      cell: ({ getValue }) => enumLabel('ParticipantAddedBy', getValue()),
     }),
     columnHelper.accessor('createdAt', {
       header: 'Added',

@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { RaceResultStatus } from '@poolmaster/shared/domain';
 import { z } from 'zod';
 import type { RaceResultPreviewResponse, RaceResultUploadRequest, SportEventParticipantDto } from '@/lib/api';
@@ -124,20 +125,12 @@ export function raceResultTemplateRows(field: readonly SportEventParticipantDto[
   ]);
 }
 
-/** How the race ended for a runner, in words. */
-export const RACE_RESULT_STATUS_LABELS: Readonly<Record<RaceResultStatus, string>> = {
-  [RaceResultStatus.FINISHED]: 'Finished',
-  [RaceResultStatus.DID_NOT_FINISH]: 'Did not finish',
-  [RaceResultStatus.DISQUALIFIED]: 'Disqualified',
-  [RaceResultStatus.DID_NOT_START]: 'Did not start',
-};
-
 /** One side of a preview row: "1st · start 4 · I. Ortiz Jr." or "Did not finish". */
 export function describeRaceResult(values: RaceResultValues | null): string {
   if (!values) return '—';
   const outcome = values.resultStatus === RaceResultStatus.FINISHED && values.finishPosition !== null
     ? formatOrdinal(values.finishPosition)
-    : RACE_RESULT_STATUS_LABELS[values.resultStatus];
+    : enumLabel('RaceResultStatus', values.resultStatus);
   return [
     outcome,
     values.startPosition === null ? null : `start ${values.startPosition}`,

@@ -19,16 +19,16 @@ import type {
   UserRepository,
 } from '@poolmaster/shared/db';
 import {
-  PickEmMode,
-  SelectionType,
+  type Contest,
   eventRoundLabel,
   formatSpread,
-  getSportDefinition,
-  type Contest,
   type League,
+  PickEmMode,
+  SelectionType,
   type SportEvent,
   type SportEventMatch,
   type SportLeague,
+  sportVocabulary,
   type User,
 } from '@poolmaster/shared/domain';
 import {
@@ -241,7 +241,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
   }
 
   private receiptOf(view: GamePicksView, sportEvent: SportEvent, roundNames: readonly string[]): EntryReceipt {
-    const tieWord = getSportDefinition(sportEvent.sport).vocabulary.tie ?? 'Tie';
+    const tieWord = sportVocabulary(sportEvent.sport).tie;
     const picked = view.games.filter((game) => game.pick !== null);
     switch (view.selectionType) {
       case SelectionType.PICK_EM:
@@ -325,7 +325,7 @@ function describeMatchup(game: GamePickGame): string {
 /** "45 total points (Bills at Chiefs)": the guess of its game's total score, in the sport's unit. */
 function describeTiebreaker(view: GamePicksView, sportEvent: SportEvent): string | null {
   if (view.tiebreakerValue === null) return null;
-  const unit = getSportDefinition(sportEvent.sport).vocabulary.scoreUnit ?? 'points';
+  const unit = sportVocabulary(sportEvent.sport).scoreUnit;
   const game = view.games.find((candidate) => candidate.match.id === view.tiebreakerMatchId);
   const total = `${String(view.tiebreakerValue)} total ${unit}`;
   return game === undefined ? total : `${total} (${describeMatchup(game)})`;

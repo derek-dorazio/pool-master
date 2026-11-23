@@ -1,25 +1,14 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { isMatchUnplayed, MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
-import { tieWord } from '@/features/contests/contest-sport';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
-/** What a bracket screen calls one match when the sport's vocabulary names none. */
-const MATCH: SportNoun = { one: 'match', many: 'matches' };
-
 /**
- * How a match that stopped early is marked beside its result (#704): "ret.", "w/o", "def.", as
- * tennis writes them. The marks belong to the ending, not the sport. A played match has none.
+ * How a match that stopped early is marked beside its result (#704): the ending's short display
+ * string, "ret.", "w/o", "def.". The marks belong to the ending, not the sport. A played match has none.
  */
-export const MATCH_ENDING_MARK: Readonly<Record<MatchEnding, string | null>> = {
-  [MatchEnding.PLAYED]: null,
-  [MatchEnding.RETIREMENT]: 'ret.',
-  [MatchEnding.WALKOVER]: 'w/o',
-  [MatchEnding.DEFAULT]: 'def.',
-};
-
-/** One match of the sport's bracket as its screens say it: "game" for basketball. */
-export function matchNoun(vocabulary: SportVocabulary): SportNoun {
-  return vocabulary.match ?? MATCH;
+export function matchEndingMark(ending: MatchEnding): string | null {
+  return ending === MatchEnding.PLAYED ? null : enumLabel('MatchEnding', ending, { form: 'short' });
 }
 
 /** A field row as the bracket names it: "(1) Duke", or just the name when it has no seed. */
@@ -83,7 +72,7 @@ export function bracketErrorMessages(
   match?: SportEventMatchDto,
   bracket: readonly SportEventMatchDto[] = [],
 ): ErrorCodeMessages {
-  const noun = matchNoun(vocabulary);
+  const noun = vocabulary.match;
   const team = vocabulary.participant;
   const next = match ? bracket.find((candidate) => candidate.id === match.advancesToMatchId) : undefined;
   return {
@@ -91,7 +80,7 @@ export function bracketErrorMessages(
       ? `This ${noun.one}'s winner is already in ${noun.one} ${next.matchNumber}, which has a score. Clear ${noun.one} ${next.matchNumber}'s score first.`
       : `This ${noun.one}'s winner is already in its next ${noun.one}, which has a score. Clear that score first.`,
     MATCH_SIDES_NOT_SET: `Both ${team.many} in this ${noun.one} aren't known yet. Enter the results of the ${noun.many} before it first.`,
-    MATCH_RESULT_INVALID: `That result could not be saved. The winner's score is the higher, a ${tieWord(vocabulary).toLowerCase()} has level scores, and a final score is never below an earlier one.`,
+    MATCH_RESULT_INVALID: `That result could not be saved. The winner's score is the higher, a ${vocabulary.tie.toLowerCase()} has level scores, and a final score is never below an earlier one.`,
     MATCH_ALREADY_PLAYED: `This ${noun.one} has a result. Clear it before cancelling the ${noun.one}.`,
     MATCH_ALREADY_STARTED: `This ${noun.one} has started, so it can't be postponed.`,
     MATCH_IN_BRACKET: `This ${noun.one} is part of a bracket, which can't lose a ${noun.one}. Change its time instead.`,
@@ -99,10 +88,10 @@ export function bracketErrorMessages(
     SPORT_EVENT_BRACKET_LOCKED: `The ${vocabulary.event.one} has been released, so its pairings are locked.`,
     BRACKET_INVALID: `That pairing could not be saved. Each ${team.one} plays one opening ${noun.one}, and two different ${team.many} meet in a ${noun.one}.`,
     BRACKET_MATCH_NOT_FOUND: `That ${noun.one} is no longer in the bracket. Refresh the page.`,
-    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: `That place is not a ${vocabulary.playInPlace ?? 'play-in'} place, so its ${team.one} can't be replaced.`,
+    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: `That place is not a ${vocabulary.playInPlace} place, so its ${team.one} can't be replaced.`,
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: `That ${team.one} is already in the ${vocabulary.event.one}.`,
     PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
-    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: `That is a ${vocabulary.playInPlace ?? 'play-in'} place. Name its ${team.one} there instead.`,
+    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: `That is a ${vocabulary.playInPlace} place. Name its ${team.one} there instead.`,
     EVENT_PARTICIPANT_NOT_IN_BRACKET: `That ${team.one} no longer has a place in the bracket. Refresh the page.`,
     BRACKET_PARTICIPANT_ALREADY_PLAYED: `That ${team.one}'s ${noun.one} has started, so enter the withdrawal as a walkover.`,
     BRACKET_PLACE_NOT_FIRST_ROUND: `That ${team.one} skipped the first round, so enter the withdrawal as a walkover.`,
@@ -131,7 +120,7 @@ export const ReseedAction = {
 export type ReseedAction = (typeof ReseedAction)[keyof typeof ReseedAction];
 
 export function reseedErrorMessages(vocabulary: SportVocabulary, action: ReseedAction): ErrorCodeMessages {
-  const noun = matchNoun(vocabulary);
+  const noun = vocabulary.match;
   const team = vocabulary.participant;
   return {
     ...bracketErrorMessages(vocabulary),

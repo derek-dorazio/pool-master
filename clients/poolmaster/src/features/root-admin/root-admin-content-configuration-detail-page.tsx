@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { LayoutTemplate } from 'lucide-react';
-import { SelectionType, getSportDefinition, describeBracketRules, describePickEmRules  } from '@poolmaster/shared/domain';
+import { describeBracketRules, describePickEmRules, SelectionType, sportVocabulary } from '@poolmaster/shared/domain';
 import {
   Button,
   Checkbox,
@@ -107,7 +107,7 @@ function ContentConfigurationDetail({ templateKey }: { templateKey: string }) {
   useManageBreadcrumbOverride(templateKey || undefined, template?.name);
 
   // The size field and the tiers note name the template's sport's participants and events.
-  const vocabulary = draft ? getSportDefinition(draft.sport).vocabulary : null;
+  const vocabulary = draft ? sportVocabulary(draft.sport) : null;
   // A roster template edits its size and scores that count; a pick'em template has neither.
   const rosterConfiguration = draft && isRosterTemplateConfiguration(draft.configuration) ? draft.configuration : null;
   const sizeField = rosterConfiguration && vocabulary ? templateSizeFields(vocabulary)[rosterConfiguration.selectionType] : null;

@@ -810,14 +810,16 @@ sends codes and numbers, never these words.
 
 1. **What goes in the module.** Every value of every shared enum (`enum.<Enum>.<CODE>`), one
    message per API error code (`error.<CODE>`), generic words with numbers or plurals in them
-   (`word.<key>`: "Week {{n}}", `roundCount_one` / `roundCount_other`), and the words that
-   differ by sport, keyed by sport code and role (`sport.<SPORT>.<role>`: `sport.GOLF.participant`
-   is Golfer). Keys are codes, never names; nothing is keyed by a league.
+   (`word.<key>`: "Week {{n}}", `round_one` / `round_other`), and the words that differ by
+   sport, keyed by sport code and role (`sport.<SPORT>.<role>`: `sport.GOLF.participant_one` is
+   golfer). Keys are codes, never names; nothing is keyed by a league.
 2. **What never goes in it.** Proper names: teams, players, tournaments and named slots (Super
    Bowl, The Masters). They are name columns on the model and are never translated. Page
    sentences (How to Play, empty states, button text) stay in the page for now.
 3. **How to read it.** `enumLabel('ContestStatus', status, { locale })` for an enum value;
-   `displayString(key, values, locale)` for anything else. The language part of the
+   `sportWord(sport, role, { count, locale })` for a sport word; `displayString(key, values,
+   locale)` for anything else. A key's placeholder values are typed from its `en-US` words, so
+   a missing or misspelt value fails the type check. The language part of the
    reader's locale picks the module and anything missing falls back to `en-US`. Placeholders
    are `{{name}}`; plurals are `_one` / `_other` forms chosen by the language's rules
    (i18next).
@@ -830,5 +832,13 @@ sends codes and numbers, never these words.
    other language having exactly the `en-US` keys. Today's maps are on
    `scripts/display-strings-allowlist.json`; the ticket that moves a map deletes its entry,
    and the check fails an entry whose map is gone, so the list only shrinks.
-6. **Sorting follows the words.** An enum with `alphabeticalOrder` sorts by its display
+6. **Sport words are read by role.** The roles are one typed list, `SportWordRole`
+   (`sport-word-roles.ts`). A sport has an entry for every role it uses; a role it leaves out
+   reads the generic `word.<role>` (a sport that plays no bracket says "match"), and an
+   optional role with no generic word (`rider`, `topPlaces`, `shootout`) reads as absent, so
+   the screen leaves the thing out. A call site passes the sport (or a sport league definition,
+   whose `wordOverrides` reads a stat pool's players and games) and never builds a key.
+   `sportVocabulary(source, locale)` gives every role at once for a screen that reads many.
+   A new role goes in `SportWordRole` and, unless optional, in `word.` too.
+7. **Sorting follows the words.** An enum with `alphabeticalOrder` sorts by its display
    strings in the reader's language (`compareByEnumOrder(order, undefined, locale)`).

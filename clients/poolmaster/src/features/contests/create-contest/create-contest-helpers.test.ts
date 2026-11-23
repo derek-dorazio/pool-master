@@ -1,8 +1,9 @@
 import {
+  getSportDefinition,
   ScoringFamily,
   SelectionType,
   Sport,
-  getSportDefinition,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
@@ -41,7 +42,7 @@ describe('definitionOfEvent', () => {
     );
 
     expect(definition.scoringDefinitions).toEqual(['COMPOSITE_TOTAL']);
-    expect(definition.vocabulary.participant.many).toBe('players');
+    expect(sportVocabulary(definition).participant.many).toBe('players');
   });
 });
 

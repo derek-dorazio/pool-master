@@ -1,4 +1,4 @@
-import { getSportDefinition, Sport } from '@poolmaster/shared/domain';
+import { Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -17,7 +17,7 @@ describe('FinishPositionPointsFields', () => {
         onChange={vi.fn()}
         selectionType="TIERED"
         values={values}
-        vocabulary={getSportDefinition(Sport.HORSE_RACING).vocabulary}
+        vocabulary={sportVocabulary(Sport.HORSE_RACING)}
       />,
     );
 
@@ -27,7 +27,7 @@ describe('FinishPositionPointsFields', () => {
 
   it('leaves out the top-places example for a sport whose vocabulary has no name for them', () => {
     const vocabulary = {
-      ...getSportDefinition(Sport.HORSE_RACING).vocabulary,
+      ...sportVocabulary(Sport.HORSE_RACING),
       participant: { one: 'driver', many: 'drivers' },
       topPlaces: undefined,
     };
@@ -47,7 +47,7 @@ describe('FinishPositionPointsFields', () => {
 });
 
 describe('KnockoutRoundPointsFields', () => {
-  const vocabulary = getSportDefinition(Sport.BASKETBALL).vocabulary;
+  const vocabulary = sportVocabulary(Sport.BASKETBALL);
 
   it('asks for a win\'s points in each round and shows the multiplier only with the upset bonus on', () => {
     const { rerender } = render(

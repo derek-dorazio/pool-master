@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { z } from 'zod';
 import {
   parseDelimitedRecords,
@@ -144,13 +145,9 @@ export function formatEventFieldUploadValues(values: EventFieldUploadValues | nu
     values.seedNumber !== null ? `seed ${values.seedNumber}` : 'unseeded',
   ];
   if (!values.isActive) {
-    parts.push(values.inactiveReason ? formatInactiveReason(values.inactiveReason) : 'Inactive');
+    parts.push(values.inactiveReason ? enumLabel('ParticipantInactiveReason', values.inactiveReason) : 'Inactive');
   }
   return parts.join(' · ');
-}
-
-function formatInactiveReason(reason: string): string {
-  return reason.charAt(0) + reason.slice(1).toLowerCase();
 }
 
 /** Rows Apply would refuse: not matched to exactly one golfer on the field, or a duplicate. */

@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { Lock } from 'lucide-react';
 import { PickEmMode, type PickOutcome } from '@poolmaster/shared/domain';
 import {
@@ -127,7 +128,7 @@ function ConfidenceValue({
 
 /** A week as a used team names it, by default "Week 11". */
 function defaultWeekName(weekNumber: number): string {
-  return `Week ${weekNumber}`;
+  return displayString('word.weekNumber', { n: weekNumber });
 }
 
 /** The week a survivor team was used in, named, or null for a team the entry has not used. */
