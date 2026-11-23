@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { z } from 'zod';
 import {
   parseDelimitedRecords,
@@ -38,13 +39,8 @@ export type SportEventDtoStatus = SportEventDto['status'];
 
 // --- Sync scope (plans/124 §4.4) ---
 
-const SYNC_SCOPE_LABELS: Record<SportEventDtoSyncScope, string> = {
-  NONE: 'Manual',
-  SCORES_ONLY: 'Scores synced',
-};
-
 export function syncScopeLabel(scope: SportEventDtoSyncScope): string {
-  return SYNC_SCOPE_LABELS[scope];
+  return enumLabel('SportEventSyncScope', scope);
 }
 
 export function syncScopeTone(scope: SportEventDtoSyncScope): BadgeTone {
@@ -63,11 +59,8 @@ export function sportEventHasScoreSync(scope: SportEventDtoSyncScope): boolean {
 
 // --- Status (SportEventStatus) ---
 
-export function formatSportEventStatus(status: string): string {
-  return status
-    .split('_')
-    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-    .join(' ');
+export function formatSportEventStatus(status: SportEventDtoStatus): string {
+  return enumLabel('SportEventStatus', status);
 }
 
 export function sportEventStatusTone(status: SportEventDtoStatus): BadgeTone {
@@ -204,16 +197,9 @@ type _ParticipantStatusExhaustive =
     : ['golf player status missing from PARTICIPANT_STATUSES', ManagedParticipantStatus];
 export type ParticipantStatusesMatchEnum = AssertTrue<_ParticipantStatusExhaustive>;
 
-const PARTICIPANT_STATUS_LABELS: Record<ManagedParticipantStatus, string> = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  RETIRED: 'Retired',
-  SUSPENDED: 'Suspended',
-};
-
-/** A golfer's status in plain words, for badges, rows and options. */
+/** A participant's status in plain words, for badges, rows and options. */
 export function participantStatusLabel(status: ManagedParticipantStatus): string {
-  return PARTICIPANT_STATUS_LABELS[status];
+  return enumLabel('ParticipantStatus', status);
 }
 
 export function participantStatusTone(status: ManagedParticipantStatus): BadgeToneLite {
@@ -331,17 +317,9 @@ type _GolfRoundScoreStatusExhaustive =
     : ['golf round status missing from GOLF_ROUND_SCORE_STATUSES', GolfRoundScoreStatus];
 export type GolfRoundScoreStatusesMatchEnum = AssertTrue<_GolfRoundScoreStatusExhaustive>;
 
-const GOLF_ROUND_STATUS_LABEL: Record<GolfRoundScoreStatus, string> = {
-  IN_PROGRESS: 'In progress',
-  COMPLETED: 'Completed',
-  DNF: 'Did not finish',
-  DSQ: 'Disqualified',
-  MISSED_CUT: 'Missed cut',
-};
-
-/** Human-readable label for a golf round-result status enum value. */
+/** A participant's round status in words. */
 export function formatGolfRoundStatus(status: GolfRoundScoreStatus): string {
-  return GOLF_ROUND_STATUS_LABEL[status];
+  return enumLabel('ParticipantRoundStatus', status);
 }
 
 export const GOLF_ROUND_SCORE_UPLOAD_HEADERS = [

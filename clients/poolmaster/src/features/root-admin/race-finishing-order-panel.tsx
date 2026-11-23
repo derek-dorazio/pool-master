@@ -1,4 +1,5 @@
-import { getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportVocabulary } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { assertNever, getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
@@ -22,7 +23,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import {
-  RACE_RESULT_STATUS_LABELS,
   RACE_RESULT_UPLOAD_HEADERS,
   describeRaceResult,
   parseRaceResultUpload,
@@ -45,40 +45,33 @@ const RESOLUTION_LABEL: Record<RaceResultPreviewRow['resolution'], string> = {
   UNRESOLVED: 'Not in the field',
 };
 
-const CHANGE_LABEL: Record<NonNullable<RaceResultPreviewRow['change']>, string> = {
-  CREATE: 'New',
-  UPDATE: 'Changed',
-  UNCHANGED: 'Unchanged',
-};
-
 const CHANGE_TONE: Record<NonNullable<RaceResultPreviewRow['change']>, 'success' | 'info' | 'neutral'> = {
   CREATE: 'success',
   UPDATE: 'info',
   UNCHANGED: 'neutral',
 };
 
-const ROW_ERROR_LABEL: Record<NonNullable<RaceResultPreviewRow['rowError']>, string> = {
-  DUPLICATE_PARTICIPANT: 'Named on another row too',
-  POSITION_WITHOUT_FINISH: 'A place, but it did not finish',
-  FINISH_WITHOUT_POSITION: 'Finished, but has no place',
-};
-
-/** Why the finishing order as a whole cannot be applied, in the sport's words. */
-function orderErrorMessages(vocabulary: SportVocabulary): Record<RaceResultOrderError, string> {
-  return {
-    [RaceResultOrderError.POSITIONS_INVALID]:
-      'The places do not run 1, 2, 3 and on. Only a dead heat repeats a place, and the next place is then skipped (1, 2, 2, 4).',
-    [RaceResultOrderError.FIELD_INCOMPLETE]:
-      `An official result needs every ${vocabulary.participant.one} still in the field: a place for each finisher, or how its ${vocabulary.round.one} ended.`,
-  };
+/**
+ * Why the finishing order as a whole cannot be applied, in the sport's words. A page sentence
+ * telling the admin what to fix (rules/ux-rules.md §16 item 2); the error's label is
+ * `enumLabel('RaceResultOrderError', …)`.
+ */
+function orderErrorMessage(error: RaceResultOrderError, vocabulary: SportVocabulary): string {
+  switch (error) {
+    case RaceResultOrderError.POSITIONS_INVALID:
+      return 'The places do not run 1, 2, 3 and on. Only a dead heat repeats a place, and the next place is then skipped (1, 2, 2, 4).';
+    case RaceResultOrderError.FIELD_INCOMPLETE:
+      return `An official result needs every ${vocabulary.participant.one} still in the field: a place for each finisher, or how its ${vocabulary.round.one} ended.`;
+    default:
+      return assertNever(error, 'race result order error');
+  }
 }
 
 /** What a refused apply's error code means, in the sport's words. */
 function applyCodeMessages(vocabulary: SportVocabulary): ErrorCodeMessages {
-  const orderErrors = orderErrorMessages(vocabulary);
   return {
-    RACE_RESULT_POSITIONS_INVALID: orderErrors.POSITIONS_INVALID,
-    RACE_RESULT_FIELD_INCOMPLETE: orderErrors.FIELD_INCOMPLETE,
+    RACE_RESULT_POSITIONS_INVALID: orderErrorMessage(RaceResultOrderError.POSITIONS_INVALID, vocabulary),
+    RACE_RESULT_FIELD_INCOMPLETE: orderErrorMessage(RaceResultOrderError.FIELD_INCOMPLETE, vocabulary),
     RACE_RESULT_ROWS_INVALID: `A row does not match one ${vocabulary.participant.one} in the field, or has a problem. Preview again to see which.`,
   };
 }
@@ -152,7 +145,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                     ? (entry.isActive ? '—' : vocabulary.withdrawn)
                     : race.resultStatus === RaceResultStatus.FINISHED
                       ? (race.finishPosition === null ? '—' : formatOrdinal(race.finishPosition))
-                      : RACE_RESULT_STATUS_LABELS[race.resultStatus];
+                      : enumLabel('RaceResultStatus', race.resultStatus);
                   return (
                     <TableRow data-testid={`root-admin-race-result-row-${entry.id}`} key={entry.id}>
                       <TableCell className="font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</TableCell>
@@ -259,7 +252,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
             <div className="space-y-3">
               {orderErrors.map((orderError) => (
                 <Notice data-testid={`root-admin-race-result-order-error-${orderError}`} key={orderError} tone="danger">
-                  {orderErrorMessages(vocabulary)[orderError]}
+                  {orderErrorMessage(orderError, vocabulary)}
                 </Notice>
               ))}
               <UploadPreviewTable
@@ -267,9 +260,9 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
                   before: (entry) => describeRaceResult(entry.before),
                   after: (entry) => describeRaceResult(entry.after),
                   badge: (entry) => entry.rowError ? (
-                    <StatusBadge tone="danger">{ROW_ERROR_LABEL[entry.rowError]}</StatusBadge>
+                    <StatusBadge tone="danger">{enumLabel('RaceResultRowError', entry.rowError)}</StatusBadge>
                   ) : entry.change ? (
-                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{CHANGE_LABEL[entry.change]}</StatusBadge>
+                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{enumLabel('RaceResultChange', entry.change)}</StatusBadge>
                   ) : '—',
                 }}
                 describeRow={(entry) => describeRow(entry.row)}

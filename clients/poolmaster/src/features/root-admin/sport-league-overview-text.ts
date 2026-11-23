@@ -1,15 +1,9 @@
-import { ProviderSyncKind, SportLeagueSyncHealth, type ReleaseCheckKey } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import type { ProviderSyncKind, ReleaseCheckKey } from '@poolmaster/shared/domain';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { plural } from '@/lib/plural';
 
 export type SportLeagueIssue = SportLeagueOverviewDto['issues'][number];
-
-/** Each issue type's chip word, as the Issues column and its filter name it. */
-export const SPORT_LEAGUE_ISSUE_LABELS: Record<SportLeagueIssue['type'], string> = {
-  SYNC: 'Sync',
-  RELEASE: 'Release',
-  OVERDUE: 'Overdue',
-};
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -19,12 +13,10 @@ export function overdueLateness(expectedEndAt: string, now: Date): string {
   return hours < 48 ? `${plural(hours, 'hour')} late` : `${plural(Math.floor(hours / 24), 'day')} late`;
 }
 
-/** Each sync's name in domain words (rules/ux-rules.md §12 item 14). */
-export const SYNC_KIND_LABELS: Record<ProviderSyncKind, string> = {
-  [ProviderSyncKind.EVENTS]: 'Event list sync',
-  [ProviderSyncKind.FIELD]: 'Field sync',
-  [ProviderSyncKind.SCORES]: 'Live scores and results sync',
-};
+/** A sync failure's line, the sync named in domain words (rules/ux-rules.md §12 item 14): "Field sync failed". */
+export function syncFailedText(kind: ProviderSyncKind): string {
+  return `${enumLabel('ProviderSyncKind', kind)} sync failed`;
+}
 
 /** Each ready check that can hold an automatic release, as a short phrase. */
 export const RELEASE_CHECK_LABELS: Record<ReleaseCheckKey, string> = {
@@ -45,10 +37,3 @@ export function sportsCountLine(overviews: readonly SportLeagueOverviewDto[]): s
   return `${plural(sports, 'sport')} · ${String(on)} of ${plural(overviews.length, 'sport league')}`;
 }
 
-/** Each sync health's chip word, as the Sync health column and its filter name it. */
-export const SYNC_HEALTH_LABELS: Record<SportLeagueSyncHealth, string> = {
-  [SportLeagueSyncHealth.OK]: 'OK',
-  [SportLeagueSyncHealth.ERROR]: 'ERROR',
-  [SportLeagueSyncHealth.NOT_RUN_YET]: 'NOT RUN YET',
-  [SportLeagueSyncHealth.OFF]: 'OFF',
-};

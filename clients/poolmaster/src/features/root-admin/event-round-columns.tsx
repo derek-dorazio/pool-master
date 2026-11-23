@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { RoundStatus, RoundStatusOrder } from '@poolmaster/shared/domain';
 import { StatusBadge, Text, type StatusBadgeProps } from '@/features/shared/ui';
@@ -7,12 +8,6 @@ import type { SportEventRoundDto } from '@/lib/api';
 export type EventRoundRow = SportEventRoundDto & { label: string };
 
 const columnHelper = createColumnHelper<EventRoundRow>();
-
-export const ROUND_STATUS_LABELS: Record<RoundStatus, string> = {
-  [RoundStatus.SCHEDULED]: 'Scheduled',
-  [RoundStatus.IN_PROGRESS]: 'In progress',
-  [RoundStatus.COMPLETED]: 'Completed',
-};
 
 const ROUND_STATUS_TONES: Record<RoundStatus, NonNullable<StatusBadgeProps['tone']>> = {
   [RoundStatus.SCHEDULED]: 'neutral',
@@ -39,9 +34,9 @@ export function eventRoundColumns() {
       header: 'Status',
       meta: {
         info: 'Scheduled: nothing in it has started. In progress: some of it is under way or finished. Completed: all of it finished.',
-        type: { kind: 'enum', order: RoundStatusOrder, label: (status) => ROUND_STATUS_LABELS[status as RoundStatus] },
+        type: { kind: 'enum', order: RoundStatusOrder, label: (status) => enumLabel('RoundStatus', status as RoundStatus) },
       },
-      cell: ({ getValue }) => <StatusBadge tone={ROUND_STATUS_TONES[getValue()]}>{ROUND_STATUS_LABELS[getValue()]}</StatusBadge>,
+      cell: ({ getValue }) => <StatusBadge tone={ROUND_STATUS_TONES[getValue()]}>{enumLabel('RoundStatus', getValue())}</StatusBadge>,
     }),
     columnHelper.accessor('resultCount', {
       header: 'Results',
