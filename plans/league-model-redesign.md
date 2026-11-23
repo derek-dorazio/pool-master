@@ -562,6 +562,9 @@ Sync:
   leagues; an unknown id is a finding); `lastProviderNotificationAt` moves to the Game; the
   NCAA play-in placeholder participant becomes an empty Match side; field row metadata
   (seed, odds, play-in place) becomes columns.
+- Seeds (Derek 2026-11-23, slice 21 / #1926): a seed comes only from the feed. Where the feed
+  gives none (BALLDONTLIE's MLB standings), the slot raises a WARNING finding and an admin
+  enters the seeds; `toMlbSeeds` and every computed seeding rule are deleted.
 - Golf (slice 8): an unknown tour is a finding, not "all leagues".
 - The web app reads provider names from the API, not by id lookups in four places.
 - Implementation notes from the sync re-review (2026-11-23):
