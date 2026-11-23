@@ -67,7 +67,7 @@ describe('My account › Account', () => {
     const dialog = await screen.findByTestId('my-account-lifecycle-dialog');
     fireEvent.click(screen.getByTestId('my-account-inactivate'));
 
-    expect(await within(dialog).findByText('The account could not be inactivated.')).toBeVisible();
+    expect(await within(dialog).findByText('Something went wrong. Please try again.')).toBeVisible();
     expect(screen.queryByTestId('my-account-inactive-status')).not.toBeInTheDocument();
   });
 
@@ -83,7 +83,7 @@ describe('My account › Account', () => {
     const dialog = await screen.findByTestId('my-account-lifecycle-dialog');
     fireEvent.click(screen.getByTestId('my-account-reactivate'));
 
-    expect(await within(dialog).findByText('The account could not be reactivated.')).toBeVisible();
+    expect(await within(dialog).findByText('Something went wrong. Please try again.')).toBeVisible();
     expect(screen.getByTestId('my-account-inactive-status')).toBeVisible();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByTestId('my-account-lifecycle-dialog')).not.toBeInTheDocument());
@@ -123,7 +123,7 @@ describe('My account › Account', () => {
     fireEvent.change(screen.getByTestId('my-account-delete-confirmation'), { target: { value: 'derek@example.com' } });
     fireEvent.click(screen.getByTestId('my-account-delete-submit'));
 
-    expect(await within(dialog).findByText(/league-scoped data/)).toBeVisible();
+    expect(await within(dialog).findByText('This account still belongs to leagues. Remove it from them before deleting it.')).toBeVisible();
     expect(screen.queryByText('Your account was deleted')).not.toBeInTheDocument();
   });
 

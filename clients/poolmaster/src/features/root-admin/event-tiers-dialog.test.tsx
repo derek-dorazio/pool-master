@@ -125,7 +125,7 @@ describe('the event tiers dialog', () => {
     await userEvent.type(screen.getByTestId(`${TEST_ID}-label-0`), ' A');
     await userEvent.click(screen.getByTestId(`${TEST_ID}-save`));
 
-    expect(await screen.findByText(/Tiers are locked/)).toBeInTheDocument();
+    expect(await screen.findByText('This event has been released, so its tiers and prices are locked.')).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 

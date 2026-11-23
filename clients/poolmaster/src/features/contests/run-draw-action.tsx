@@ -6,7 +6,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
-import { CONTEST_DRAW_CODE_MESSAGES } from './use-contest-draw';
 import { entryWriteKeys } from './use-contest-entries';
 
 /**
@@ -97,7 +96,6 @@ export function RunDrawAction({
         {runDrawMutation.isError ? (
           <Notice data-testid="contest-run-draw-error" tone="danger">
             {extractErrorMessage(runDrawMutation.error, {
-              codeMessages: CONTEST_DRAW_CODE_MESSAGES,
               fallback: 'We could not run the draw. Please try again.',
             })}
           </Notice>

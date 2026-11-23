@@ -6,6 +6,7 @@ import {
   enumLabel,
   enUS,
   flattenDisplayStrings,
+  hasDisplayString,
   pluralBaseKey,
   GENERIC_SPORT_WORD_ROLES,
   SOURCE_LOCALE,
@@ -53,6 +54,19 @@ describe('display string lookups', () => {
 
   it('give an error code the message the en-US module holds for it', () => {
     expect(displayString('error.CONTEST_FULL')).toBe(enUS.error.CONTEST_FULL);
+  });
+
+  it('give a screen\'s own wording of an error code under error.<CODE>.<context>, with its placeholders filled', () => {
+    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear', { sportLeagueName: 'PGA Tour', events: 'tournaments', year: 2027 }))
+      .toBe('PGA Tour already has tournaments in 2027.');
+    expect(flattenDisplayStrings(enUS)['error.EVENT_YEAR_NOT_EMPTY.leagueYear']).toBe(enUS.errorContext.EVENT_YEAR_NOT_EMPTY.leagueYear);
+  });
+
+  it('say whether a key built at run time has words, so a screen\'s context is tried before the code\'s own message', () => {
+    expect(hasDisplayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear')).toBe(true);
+    expect(hasDisplayString('error.CONTEST_FULL.leagueYear')).toBe(false);
+    expect(hasDisplayString('error.CONTEST_FULL')).toBe(true);
+    expect(hasDisplayString('error.CONTEST_FULL', 'fr-CA')).toBe(true);
   });
 
   it('give the short form when asked, and the name for an entry that has no short form', () => {
@@ -112,6 +126,16 @@ describe('display string lookups', () => {
     // @ts-expect-error An error message has no placeholders.
     expect(displayString('error.CONTEST_FULL', { n: 1 })).toBe(enUS.error.CONTEST_FULL);
     expect(displayString('word.weekRange', { first: 1, last: 6 })).toBe('Weeks 1–6');
+  });
+
+  it('refuse at compile time a screen\'s error wording without its placeholder values, and fill them when given', () => {
+    // @ts-expect-error The league year wording needs its sportLeagueName, events and year.
+    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear')).toContain('{{sportLeagueName}}');
+    // @ts-expect-error The placeholder is year, not season.
+    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear', { sportLeagueName: 'NFL', events: 'games', season: 2026 }))
+      .toContain('{{year}}');
+    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear', { sportLeagueName: 'NFL', events: 'games', year: 2026 }))
+      .toBe('NFL already has games in 2026.');
   });
 
   it('refuse at compile time a key the modules do not hold', () => {

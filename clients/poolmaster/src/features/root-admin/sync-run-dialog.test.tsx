@@ -203,7 +203,7 @@ describe('SyncRunDialog', () => {
     getProviderSyncRunMock.mockResolvedValue({ error: { error: { code: 'SYNC_RUN_NOT_FOUND', message: 'No sync run sync-run-1' } } });
     renderDialog(syncRun());
 
-    expect(await screen.findByText('No sync run sync-run-1')).toBeInTheDocument();
+    expect(await screen.findByText('Sync run not found.')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sync-detail-rows')).not.toBeInTheDocument();
   });
 

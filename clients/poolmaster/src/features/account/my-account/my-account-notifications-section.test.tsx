@@ -68,7 +68,7 @@ describe('My account › Email notifications', () => {
     const results = await screen.findByRole('switch', { name: 'Results' });
     fireEvent.click(results);
 
-    expect(await screen.findByTestId('my-account-notifications-save-error')).toHaveTextContent('We could not save that right now.');
+    expect(await screen.findByTestId('my-account-notifications-save-error')).toHaveTextContent('Something went wrong. Please try again.');
     expect(results).toBeChecked();
   });
 
@@ -81,7 +81,7 @@ describe('My account › Email notifications', () => {
     renderMyAccount();
 
     const error = await screen.findByTestId('my-account-notifications-error');
-    expect(error).toHaveTextContent('Email settings are unavailable.');
+    expect(error).toHaveTextContent('Something went wrong. Please try again.');
     fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByRole('switch', { name: 'Results' })).toBeVisible();

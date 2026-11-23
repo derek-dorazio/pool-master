@@ -139,7 +139,7 @@ describe('My account › Preferences', () => {
   it('keeps the dialog open with the server reason when saving fails, and clears it once the member edits', async () => {
     primeMyAccount();
     mockApi.updateUserPreferences.mockResolvedValue({
-      error: { error: { code: 'VALIDATION_ERROR', message: 'That locale is not supported.' } },
+      error: { error: { code: 'BAD_REQUEST', message: 'That locale is not supported.' } },
     });
 
     renderMyAccount();
@@ -147,10 +147,10 @@ describe('My account › Preferences', () => {
     const dialog = await openPreferencesDialog();
     fireEvent.click(screen.getByTestId('my-account-preferences-save'));
 
-    expect(await within(dialog).findByText('That locale is not supported.')).toBeVisible();
+    expect(await within(dialog).findByText('The request is not valid. Check the details and try again.')).toBeVisible();
     expect(screen.queryByText('Preferences saved')).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId('my-account-locale'), { target: { value: 'fr-FR' } });
-    await waitFor(() => expect(within(dialog).queryByText('That locale is not supported.')).not.toBeInTheDocument());
+    await waitFor(() => expect(within(dialog).queryByText('The request is not valid. Check the details and try again.')).not.toBeInTheDocument());
   });
 
   it('closes on Cancel without saving', async () => {

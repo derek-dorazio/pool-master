@@ -2,9 +2,9 @@ import { isApiErrorCode } from '@poolmaster/shared/dto';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useEffect, type ReactElement } from 'react';
 import { ErrorState, LoadingState } from '@/features/shared/ui';
-import { ApiError } from '@/lib/errors';
+import { ApiError, errorCodeMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
+import { LEADERBOARD_REFUSAL_CODES } from './contest-leaderboard';
 
 /**
  * What a board shows while its read loads or after it fails, logged once per failure, or null
@@ -31,7 +31,8 @@ export function useLeaderboardFallback(
   if (isError || query.data === undefined) {
     // A refusal (picks hidden, not a member) will not change on a second read, so it offers no Retry.
     const refusal = error instanceof ApiError && error.code !== undefined && isApiErrorCode(error.code)
-      ? LEADERBOARD_ERROR_MESSAGES[error.code]
+      && LEADERBOARD_REFUSAL_CODES.includes(error.code)
+      ? errorCodeMessage(error.code)
       : undefined;
     return (
       <ErrorState

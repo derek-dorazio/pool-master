@@ -325,7 +325,7 @@ describe('League settings', () => {
     const dialog = within(await screen.findByRole('dialog', { name: 'Inactivate league' }));
     fireEvent.click(dialog.getByRole('button', { name: 'Inactivate' }));
 
-    expect(await dialog.findByRole('alert')).toHaveTextContent('Inactivation unavailable');
+    expect(await dialog.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
     expect(screen.queryByTestId('league-inactive-banner')).not.toBeInTheDocument();
   });
 
@@ -371,7 +371,7 @@ describe('League settings', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Activate league' }));
 
-    expect(await screen.findByText('Activation unavailable')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument();
     expect(screen.getByTestId('league-inactive-banner')).toBeInTheDocument();
   });
 
@@ -427,7 +427,7 @@ describe('League settings', () => {
     fireEvent.change(dialog.getByLabelText('Type BIGDAWGS'), { target: { value: 'BIGDAWGS' } });
     fireEvent.click(dialog.getByRole('button', { name: 'Delete league' }));
 
-    expect(await dialog.findByText('Delete unavailable')).toBeInTheDocument();
+    expect(await dialog.findByText('Something went wrong. Please try again.')).toBeInTheDocument();
     expect(screen.getByTestId('league-settings-page')).toBeInTheDocument();
   });
 });
@@ -519,7 +519,7 @@ describe('Edit league dialog', () => {
 
     fireEvent.click(await screen.findByTestId('league-settings-edit'));
     fireEvent.click(await screen.findByRole('button', { name: 'Save league' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Save unavailable');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     await waitFor(() => expect(screen.queryByTestId('edit-league-dialog')).not.toBeInTheDocument());
 
@@ -538,7 +538,7 @@ describe('Edit league dialog', () => {
     renderCommissionerTools('/league/BIGDAWGS/admin?edit=general');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Save league' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Save unavailable');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
     fireEvent.change(screen.getByLabelText('League name'), { target: { value: 'Bigger Dawgs' } });
 
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
@@ -596,7 +596,7 @@ describe('Edit league dialog', () => {
     fireEvent.change(await screen.findByLabelText('League name'), { target: { value: 'Bigger Dawgs' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save league' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Save unavailable');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
     expect(screen.getByLabelText('League name')).toHaveValue('Bigger Dawgs');
   });
 
@@ -764,7 +764,7 @@ describe('Championship settings', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Save settings' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('A custom points table needs points for at least 1st place');
+    expect(await screen.findByRole('alert')).toHaveTextContent('The custom points are not valid.');
     expect(screen.getByTestId('edit-championships-page')).toBeInTheDocument();
   });
 
@@ -965,7 +965,7 @@ describe('League plan', () => {
 
     fireEvent.click(await screen.findByTestId('league-settings-plan-extend-submit'));
 
-    expect(await screen.findByText('League not found')).toBeInTheDocument();
+    expect(await screen.findByText('League not found.')).toBeInTheDocument();
     expect(screen.getByTestId('league-settings-plan-renews')).toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
   });
 
@@ -1180,7 +1180,7 @@ describe('League plan', () => {
     fireEvent.click(await screen.findByTestId('league-plan-card-FREE-move'));
     fireEvent.click(screen.getByTestId('league-plan-confirm-save'));
 
-    expect(await screen.findByTestId('league-plan-confirm-error')).toHaveTextContent('Inactive leagues are read-only outside lifecycle actions');
+    expect(await screen.findByTestId('league-plan-confirm-error')).toHaveTextContent('Inactive leagues are read-only outside lifecycle actions.');
     expect(screen.getByTestId('league-plan-confirm')).toBeInTheDocument();
   });
 
@@ -1419,7 +1419,7 @@ describe('Event emails', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Save settings' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Not a sport league: sl-gone');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sport league not found.');
     expect(screen.getByTestId('edit-event-emails-page')).toBeInTheDocument();
   });
 
@@ -1429,7 +1429,7 @@ describe('Event emails', () => {
 
     renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
 
-    expect(await screen.findByTestId('edit-event-emails-error')).toHaveTextContent('Sport leagues are down');
+    expect(await screen.findByTestId('edit-event-emails-error')).toHaveTextContent('Something went wrong. Please try again.');
     expect(screen.queryByTestId('edit-event-emails-page')).not.toBeInTheDocument();
   });
 

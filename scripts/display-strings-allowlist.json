@@ -46,9 +46,6 @@
   "clients/poolmaster/src/features/teams/my-team-owners-panel.tsx": [
     "SquadOwnerInvitationStatus"
   ],
-  "clients/poolmaster/src/lib/errors.ts": [
-    "ApiErrorCode"
-  ],
   "packages/shared/domain/contest-rules-text.ts": [
     "SelectionType",
     "PickEmMode"

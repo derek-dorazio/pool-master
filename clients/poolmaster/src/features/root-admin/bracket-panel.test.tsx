@@ -792,7 +792,7 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
       listSportLeagueParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
       renderPage();
 
-      expect(await screen.findByRole('alert')).toHaveTextContent('boom');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
     });
 
     it('lists only the marked places', async () => {

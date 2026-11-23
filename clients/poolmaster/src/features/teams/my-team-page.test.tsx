@@ -254,7 +254,7 @@ describe('My team', () => {
 
     renderTeamRoutes();
 
-    expect(await screen.findByTestId('my-team-error')).toHaveTextContent('Teams are unavailable right now.');
+    expect(await screen.findByTestId('my-team-error')).toHaveTextContent('Something went wrong. Please try again.');
     expect(screen.queryByTestId('create-team-page')).not.toBeInTheDocument();
   });
 
@@ -701,7 +701,7 @@ describe('My team › Create team', () => {
     fireEvent.change(await screen.findByTestId('create-team-name'), { target: { value: 'Derek Squad' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(await screen.findByText('Team name is already taken.')).toBeInTheDocument();
+    expect(await screen.findByText('Someone in this league already uses that name.')).toBeInTheDocument();
     expect(screen.getByTestId('create-team-name')).toHaveValue('Derek Squad');
   });
 
@@ -747,7 +747,7 @@ describe('My team › Owners', () => {
   it('shows the reason and keeps the email when a co-owner invite is rejected', async () => {
     primeTeam();
     createSquadOwnerInvitationMock.mockResolvedValue({
-      error: { error: { code: 'SQUAD_OWNER_INVITATION_MEMBER_EXISTS', message: 'That person already belongs to this league.' } },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_SQUAD_CONFLICT', message: 'That person already belongs to this league.' } },
     });
 
     renderTeamRoutes();
@@ -755,7 +755,7 @@ describe('My team › Owners', () => {
     fireEvent.change(await screen.findByRole('textbox', { name: 'Co-owner email' }), { target: { value: 'member@example.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
 
-    expect(await screen.findByText('That person already belongs to this league.')).toBeInTheDocument();
+    expect(await screen.findByText('That user is already a member of this league.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Co-owner email' })).toHaveValue('member@example.com');
   });
 
@@ -783,7 +783,7 @@ describe('My team › Owners', () => {
   it('shows a failed replacement\'s reason and keeps the Replace owner form open with the email', async () => {
     primeTeam({ squads: [buildLeagueSquad({ members: [buildLeagueSquadMember(), coOwner], memberCount: 2 })] });
     replaceSquadOwnerMock.mockResolvedValue({
-      error: { error: { code: 'SQUAD_OWNER_EMAIL_IN_LEAGUE', message: 'That person is already in this league.' } },
+      error: { error: { code: 'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT', message: 'That person is already in this league.' } },
     });
 
     renderTeamRoutes();
@@ -792,7 +792,7 @@ describe('My team › Owners', () => {
     fireEvent.change(screen.getByRole('textbox', { name: 'Replacement owner email' }), { target: { value: 'taken@example.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
 
-    expect(await screen.findByText('That person is already in this league.')).toBeInTheDocument();
+    expect(await screen.findByText('That user already belongs to this league.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Replacement owner email' })).toHaveValue('taken@example.com');
   });
 
@@ -822,7 +822,7 @@ describe('My team › Owners', () => {
     expect(await screen.findByText('pending@example.com')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Revoke' }));
 
-    expect(await screen.findByText('That invite was already accepted.')).toBeInTheDocument();
+    expect(await screen.findByText('Only pending co-owner invitations can be revoked.')).toBeInTheDocument();
     expect(revokeSquadOwnerInvitationMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { id: 'league-1', invitationId: 'owner-invite-1' },
     }));
@@ -887,7 +887,7 @@ describe('My team › Edit team', () => {
     fireEvent.click(screen.getByTestId(`team-icon-${TeamIconKey.HELMET_BOLT_MIDNIGHT}`));
     fireEvent.click(screen.getByTestId('edit-team-save'));
 
-    expect(await screen.findByText('Another team in this league already uses that name.')).toBeInTheDocument();
+    expect(await screen.findByText('Someone in this league already uses that name.')).toBeInTheDocument();
     expect(screen.getByTestId('edit-team-name')).toHaveValue('Rival Squad');
     expect(screen.getByTestId(`team-icon-${TeamIconKey.HELMET_BOLT_MIDNIGHT}`)).toHaveAttribute('aria-pressed', 'true');
   });

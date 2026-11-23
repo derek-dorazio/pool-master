@@ -78,7 +78,7 @@ describe('EmailUnsubscribePage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Stop these emails' }));
 
-    expect(await screen.findByText('Email settings are unavailable right now.')).toBeVisible();
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Stop these emails' })).toBeEnabled();
     expect(screen.queryByTestId('email-unsubscribe-invalid')).not.toBeInTheDocument();
   });

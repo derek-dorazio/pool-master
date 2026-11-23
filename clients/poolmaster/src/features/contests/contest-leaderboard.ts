@@ -13,8 +13,8 @@
  */
 
 import { eventSportDefinition, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
+import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { ContestLeaderboardResponse } from '@/lib/api';
-import type { ErrorCodeMessages } from '@/lib/errors';
 import {
   formatCurrentRoundLabel,
   resolveCurrentRound,
@@ -146,11 +146,12 @@ export function buildLeaderboardView(
   };
 }
 
-/** Copy for the refusals a contest leaderboard can meet, the roster and the bracket board alike. */
-export const LEADERBOARD_ERROR_MESSAGES: ErrorCodeMessages = {
-  CONTEST_LEADERBOARD_PICKS_HIDDEN:
-    'Scores appear once picks are revealed. Until then, the contest board shows who has entered.',
-  LEAGUE_MEMBERSHIP_REQUIRED: 'Only members of this league can see its contest leaderboards.',
-  LEAGUE_MEMBERSHIP_INACTIVE:
-    'Your league membership is inactive, so this contest leaderboard is not available to you.',
-};
+/**
+ * The refusals a contest leaderboard can meet, the roster and the bracket board alike: a second
+ * read gives the same answer, so the board says why instead of offering Retry.
+ */
+export const LEADERBOARD_REFUSAL_CODES: readonly ApiErrorCode[] = [
+  'CONTEST_LEADERBOARD_PICKS_HIDDEN',
+  'LEAGUE_MEMBERSHIP_REQUIRED',
+  'LEAGUE_MEMBERSHIP_INACTIVE',
+];

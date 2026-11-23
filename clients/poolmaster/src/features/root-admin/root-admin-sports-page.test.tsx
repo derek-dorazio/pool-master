@@ -351,7 +351,7 @@ describe('RootAdminSportsPage', () => {
     await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-settings-provider-input'), 'BALLDONTLIE');
     await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-save'));
 
-    expect(await screen.findByText('This sport league needs a match keyword first.')).toBeInTheDocument();
+    expect(await screen.findByText('This league has no match keyword, so a sync cannot find its events.')).toBeInTheDocument();
     expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ body: { eventSyncProviderId: 'balldontlie' } }));
     expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toBeInTheDocument();
   });
@@ -363,7 +363,7 @@ describe('RootAdminSportsPage', () => {
 
     await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
 
-    expect(await screen.findByText('No such sport league.')).toBeInTheDocument();
+    expect(await screen.findByText('Sport league not found.')).toBeInTheDocument();
   });
 
   it('shows the empty line when there are no sport leagues', async () => {
@@ -375,10 +375,10 @@ describe('RootAdminSportsPage', () => {
   });
 
   it('says so when the sport leagues cannot be read', async () => {
-    listSportLeagueOverviewsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'Overview offline' } }, response: { status: 500 } });
+    listSportLeagueOverviewsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Overview offline' } }, response: { status: 500 } });
     renderPage();
 
-    expect(await screen.findByText('Overview offline')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument();
   });
 });
 

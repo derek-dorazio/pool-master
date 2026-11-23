@@ -15,7 +15,7 @@ export function SettingsSaveError({
 }: {
   conflicted: boolean;
   error: Error | null;
-  /** What the alert says when the server gives no reason of its own. */
+  /** What the alert says when the error carries no code the display strings word. */
   fallback: string;
   loadLabel?: string;
   onLoadLatest: () => Promise<void>;

@@ -17,7 +17,7 @@ describe('SettingsSaveError', () => {
     const onLoadLatest = vi.fn(() => Promise.resolve());
     render(<SettingsSaveError conflicted error={conflict} fallback="We could not save." loadLabel="Load the latest plans" onLoadLatest={onLoadLatest} testId="save-error" />);
 
-    expect(screen.getByTestId('save-error')).toHaveTextContent('Changed by someone else');
+    expect(screen.getByTestId('save-error')).toHaveTextContent('Someone else changed these settings.');
     await userEvent.click(screen.getByRole('button', { name: 'Load the latest plans' }));
     expect(onLoadLatest).toHaveBeenCalledTimes(1);
   });

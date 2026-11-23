@@ -50,7 +50,7 @@ describe("pool-master-3ew: shared modal templates", () => {
   it("shows the backend's error message in an alert when the form modal is given an API error", () => {
     render(
       <FormModal
-        error={new ApiError({ error: { code: "USERNAME_TAKEN", message: "Username is already taken." } })}
+        error={new ApiError({ error: { code: "ACCOUNT_USERNAME_TAKEN", message: "Username is already taken." } })}
         onCancel={vi.fn()}
         onOpenChange={vi.fn()}
         onSave={vi.fn()}
@@ -63,7 +63,7 @@ describe("pool-master-3ew: shared modal templates", () => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Username is already taken.",
+      "Username is already in use.",
     );
   });
 

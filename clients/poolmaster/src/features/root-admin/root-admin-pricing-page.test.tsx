@@ -146,7 +146,7 @@ describe('RootAdminPricingPage', () => {
     seed({ plansFail: true });
     renderPage();
 
-    expect(await screen.findByText('Plans are down.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-plan-prices-table')).not.toBeInTheDocument();
   });
 
@@ -289,7 +289,7 @@ describe('RootAdminPricingPage', () => {
     await userEvent.type(monthly, '6');
     await userEvent.click(screen.getByTestId('root-admin-plan-price-dialog-save'));
 
-    expect(await screen.findByText('Someone else saved the payments settings first. Reload to see them.')).toBeInTheDocument();
+    expect(await screen.findByText('Someone else changed these settings. Reload and try again.')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-plan-price-dialog-save')).toBeInTheDocument();
 
     const theirs = billingGroup({ ...BILLING, planPrices: { ...BILLING.planPrices, PRO: { yearlyCents: 7000, monthlyCents: 700 } } });

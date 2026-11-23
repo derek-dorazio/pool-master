@@ -9,7 +9,6 @@ import { ErrorState, formatDateTimeDisplay, LoadingState, Notice, refetchFailed,
 import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
 import {
   buildPickedAtById,
-  CONTEST_ENTRY_CODE_MESSAGES,
   lineupRulesFor,
   mergePickChange,
 } from './contest-entry-lineup';
@@ -504,7 +503,7 @@ export function RosterContestEntryPage() {
   const showFinish = isMyEntry && (isRandomDraw ? detailsEditable : detailsEditable || isEditable || tiebreaker !== null);
 
   const errorText = (error: Error | null, fallback: string) => (error
-    ? extractErrorMessage(error, { codeMessages: CONTEST_ENTRY_CODE_MESSAGES, fallback })
+    ? extractErrorMessage(error, { fallback })
     : null);
   const finishError = (submitEntryMutation.isError ? errorText(submitEntryMutation.error, 'We could not submit this entry right now.') : null)
     ?? (saveEntryDetailsMutation.isError ? errorText(saveEntryDetailsMutation.error, 'We could not save this entry right now.') : null);

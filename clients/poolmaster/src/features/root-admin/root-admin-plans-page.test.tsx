@@ -141,10 +141,10 @@ describe('RootAdminPlansPage', () => {
   });
 
   it('shows an error, not an endless loading state, when the plans group cannot be read', async () => {
-    getSettingsGroupMock.mockResolvedValue({ status: 404, error: { error: { code: 'NOT_FOUND', message: 'Settings group PLAN_CONFIG was not found.' } } });
+    getSettingsGroupMock.mockResolvedValue({ status: 404, error: { error: { code: 'SETTINGS_GROUP_NOT_FOUND', message: 'Settings group PLAN_CONFIG was not found.' } } });
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-plans-error')).toHaveTextContent('Settings group PLAN_CONFIG was not found.');
+    expect(await screen.findByTestId('root-admin-plans-error')).toHaveTextContent('Settings not found.');
     expect(screen.queryByText('Loading plans...')).not.toBeInTheDocument();
   });
 
@@ -263,7 +263,7 @@ describe('RootAdminPlansPage', () => {
     await userEvent.click(screen.getByTestId(`${CAP_DIALOG}-save`));
 
     const error = await screen.findByTestId(`${CAP_DIALOG}-error`);
-    expect(error).toHaveTextContent('changed by someone else');
+    expect(error).toHaveTextContent('Someone else changed these settings.');
     getSettingsGroupMock.mockResolvedValue({ data: theirs });
     await userEvent.click(within(error).getByRole('button', { name: 'Load the latest plans' }));
 

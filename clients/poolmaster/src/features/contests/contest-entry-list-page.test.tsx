@@ -764,7 +764,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     fireEvent.click(await screen.findByTestId('contest-board-create-entry'));
 
-    expect(await screen.findByTestId('contest-board-create-entry-error')).toHaveTextContent('Your team already has the most entries allowed.');
+    expect(await screen.findByTestId('contest-board-create-entry-error')).toHaveTextContent('You already have the most entries this contest allows.');
     expect(screen.queryByTestId('contest-entry-page')).not.toBeInTheDocument();
   });
 

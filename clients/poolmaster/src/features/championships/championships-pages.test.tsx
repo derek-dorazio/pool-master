@@ -614,7 +614,7 @@ describe('Championships › Trophy case', () => {
     fireEvent.click(await screen.findByTestId('crown-cup-cup-nfl'));
     fireEvent.click(screen.getByTestId('crown-cup-dialog-cup-nfl-confirm'));
 
-    expect(await screen.findByText('The cup cannot be crowned while Super Bowl Picks is not final.')).toBeInTheDocument();
+    expect(await screen.findByText('Some of this cup\'s contests have not finished yet.')).toBeInTheDocument();
     expect(screen.getByTestId('crown-cup-dialog-cup-nfl')).toBeInTheDocument();
   });
 });
@@ -672,7 +672,7 @@ describe('Championships › Year in review', () => {
     fireEvent.click(await screen.findByTestId('year-review-send'));
     fireEvent.click(screen.getByTestId('year-review-dialog-confirm'));
 
-    expect(await screen.findByText('The 2025 year in review was already sent.')).toBeInTheDocument();
+    expect(await screen.findByText('The year in review has already been sent.')).toBeInTheDocument();
     expect(screen.getByTestId('year-review-dialog')).toBeInTheDocument();
   });
 });
