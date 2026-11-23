@@ -1116,6 +1116,7 @@ export const enUS = {
     previousWeek: 'Previous week',
     thisWeek: 'This week',
     nextWeek: 'Next week',
+    nextRound: 'Next round',
     monthToDate: 'Month to date',
     previousMonth: 'Previous month',
     thisMonth: 'This month',
