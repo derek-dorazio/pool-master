@@ -542,6 +542,11 @@ Sync:
   priority and adapter `sportsCovered` become rows; duplicated schedule defaults go;
   sync jobs, runs and the rate budget carry a Provider FK; `MappingConfidence.HIGH` (unused)
   goes; participant ids are the raw feed id, never prefixed with the league.
+- Rate limit (Derek 2026-11-23, slice 1): each sync service limits itself locally to the
+  Provider's `requestsPerMinute` divided by the job task pool's maximum task count (config,
+  no database call per request); a resilience library (cockatiel) honours Retry-After on a
+  429, otherwise backs off exponentially with jitter up to a cap, and a circuit breaker
+  pauses that Provider briefly during a 429 storm.
 - Runs (slice 2): `ProviderSyncRun.payloadJson` stops driving behaviour (columns plus
   findings); field sync has one `ProviderSyncKind`, not five names; logged-only anomalies and
   the synthetic health check become finding kinds and a status computed from runs and jobs.
