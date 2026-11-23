@@ -1066,6 +1066,15 @@ export const enUS = {
     YEAR_REVIEW_NOTHING_TO_SEND: 'There is nothing to send in a year in review yet.',
     YEAR_REVIEW_NOT_OPEN: 'The year in review cannot be sent yet.',
   },
-  word: {},
+  word: {
+    // A numbered part of a game or event; the short form heads a tight column or tags a box.
+    quarterNumber: { name: 'Quarter {{n}}', short: 'Q{{n}}' },
+    halfNumber: { name: 'Half {{n}}', short: 'H{{n}}' },
+    periodNumber: { name: 'Period {{n}}', short: 'P{{n}}' },
+    gameNumber: { name: 'Game {{n}}', short: 'G{{n}}' },
+    roundNumber: { name: 'Round {{n}}', short: 'R{{n}}' },
+    // A game's last scoring moment, overtime included.
+    finalPeriod: { name: 'Final', short: 'F' },
+  },
   sport: {},
 } as const satisfies DisplayStringsModule;
