@@ -672,6 +672,14 @@ Contest:
   - Dropped as copies or dead: `Contest.contestFormat` (follows from `selectionType`),
     `Contest.startsAt`, `ContestEntryPick.slot`, `countingPickLimit` on both standing tables,
     `ContestConfiguration.selectionType` and `templateVersion`, `ContestPrizeDefinition`.
+- Template coverage (Derek 2026-11-23, slice 11): `ContestConfigTemplate` drops `sport`,
+  `eventType` and `eventSeriesNames` and lists the slot definitions it covers in one child
+  table, `ContestConfigTemplateSlot` (template, `SportLeaguePhaseSlot`); there is no phase
+  table ("whole postseason" lists its slots; a season-long open-phase contest is not
+  offered). One default per (sport league, selection type). No template versions: a contest
+  copies its slots into `ContestSeasonSlot` at creation, so a template edit (by migration
+  when a structure changes, or by root admin) affects only future contests. Slot
+  definitions are never deleted while a Season slot points at them.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
