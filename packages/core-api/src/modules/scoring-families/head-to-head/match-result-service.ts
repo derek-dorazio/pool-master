@@ -40,7 +40,6 @@ import {
   MatchResultSource,
   MatchSide,
   MatchStatus,
-  type SportShootout,
   ParticipantStandingStatus,
   SportEventStatus,
   compareScores,
@@ -532,7 +531,7 @@ function placementOf(bracket: readonly SportEventMatch[], match: SportEventMatch
 /** Where a result is entered: in a bracket or a week of games, and how the sport settles a level knockout. */
 export interface ScoreRules {
   inBracket: boolean;
-  shootout: SportShootout | null;
+  shootout: boolean;
 }
 
 /**

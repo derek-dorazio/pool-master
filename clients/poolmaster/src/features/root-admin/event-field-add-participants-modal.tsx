@@ -1,4 +1,4 @@
-import { getSportDefinition, ParticipantStatus, type Sport } from '@poolmaster/shared/domain';
+import { ParticipantStatus, type Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useMemo, useState } from 'react';
 import { addEventParticipants } from '@/lib/api';
@@ -49,7 +49,7 @@ export function EventFieldAddParticipantsModal({
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 
-  const { participant, sportLeague } = getSportDefinition(sport).vocabulary;
+  const { participant, sportLeague } = sportVocabulary(sport);
   const rosterQuery = useLeagueRosterQuery(sportLeagueId);
   const searchTerm = search.trim();
 

@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
@@ -39,25 +40,13 @@ export const baseballSportDefinition: SportDefinition = {
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  shootout: null,
+  shootout: false,
   composite: baseballComposite,
-  vocabulary: {
-    participant: { one: 'team', many: 'teams' },
-    event: { one: 'postseason', many: 'postseasons' },
-    sportLeague: { one: 'league', many: 'leagues' },
-    round: { one: 'round', many: 'rounds' },
-    eliminated: 'Eliminated',
-    withdrawn: 'Withdrawn',
-    eventStart: 'first pitch',
-    match: { one: 'series', many: 'series' },
-    tie: 'Tie',
-    scoreUnit: 'games',
-  },
   // A four-round postseason reads Wild Card Series, Division Series, League Championship Series,
   // World Series; a shorter one keeps the names counted back from its final.
-  roundLabel: (roundNumber, roundCount) => {
+  roundLabel: (roundNumber, roundCount, locale) => {
     const fromFinal = roundCount - roundNumber;
     const name = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return name ?? `Round ${roundNumber}`;
+    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
   },
 };

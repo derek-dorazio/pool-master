@@ -1,10 +1,11 @@
 import {
-  SelectionType,
-  type Sport,
-  type SportDefinition,
   countParticipants,
   getSportDefinition,
   pluralize,
+  SelectionType,
+  type Sport,
+  type SportDefinition,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { Link } from 'react-router';
 import type { SportEventDto } from '@/lib/api';
@@ -29,7 +30,7 @@ import type { useSquaresGameChoices } from '../use-squares-game-choices';
 
 /** How the events on offer are chosen and when entries close, by format: behind the (?). */
 function eventSectionHelp(selectionType: SelectionType, sport: SportDefinition) {
-  const { event, eventStart } = sport.vocabulary;
+  const { event, eventStart } = sportVocabulary(sport);
   if (selectionType === SelectionType.BRACKET) {
     return `Released events that haven't started, and ${event.many} under way for a second-chance bracket. Entries close at the ${eventStart}, or at a second-chance bracket's first game.`;
   }
@@ -109,7 +110,7 @@ function EventChoices({
               <Text className="block" variant="caption">
                 {event.contestEligible ? 'Starts' : 'Started'} {formatDateTimeDisplay(event.startDate, displayPreferences)}
                 {' · '}
-                {countParticipants(event.participantCount ?? 0, sport.vocabulary.participant)}
+                {countParticipants(event.participantCount ?? 0, sportVocabulary(sport).participant)}
                 {' · '}
                 {pluralize(event.tierCount, 'tier')}
               </Text>
@@ -186,7 +187,7 @@ export function CreateContestEventSection({
           tone="warning"
         >
           An event appears here once an admin releases it for contests, until it starts. Check back when
-          the next {sportDefinition.vocabulary.event.one} is released.
+          the next {sportVocabulary(sportDefinition).event.one} is released.
         </Notice>
       ) : (
         <EventChoices

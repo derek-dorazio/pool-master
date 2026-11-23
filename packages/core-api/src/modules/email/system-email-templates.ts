@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 import { CupTrophy, DEFAULT_DISPLAY_LOCALE, EmailCategory, BRAND_COLORS, PRODUCT_NAME, colorWithAlpha, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
@@ -1863,10 +1864,10 @@ function renderContestStandingsEmail(
     if (next.picksCloseAt) nextRows.push(['Picks close', formatDay(next.picksCloseAt, context)]);
   }
   if (moment.kind === StandingsMomentKind.BRACKET_ROUND && moment.nextRound) {
-    nextRows.push(['Next round', `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context)}`]);
+    nextRows.push([displayString('word.nextRound'), `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context)}`]);
   }
   if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
-    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);
+    nextRows.push([displayString('word.nextWeek'), `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);
   }
   const weekLeaders = moment.kind === StandingsMomentKind.PICK_EM_WEEK ? moment.weekLeaders : [];
   const weekLeadersTitle = moment.kind === StandingsMomentKind.PICK_EM_WEEK

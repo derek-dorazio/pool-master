@@ -1,23 +1,25 @@
 import {
-  MatchPeriodLayout,
-  PARTICIPANT_SCORING_DEFINITIONS,
-  ParticipantType,
-  SPORT_DEFINITIONS,
-  ScoringFamily,
-  SelectionType,
-  Sport,
-  type SportDefinition,
-  TournamentFormat,
-  getDefaultTournamentFormatForSport,
+  contestFormatForSelectionType,
   eventRoundLabel,
+  getDefaultTournamentFormatForSport,
   getSportDefinition,
   getValidContestFormatsForTournamentFormat,
   isContestFormatValidForTournamentFormat,
-  contestFormatForSelectionType,
   isPredictionSelectionType,
+  MatchPeriodLayout,
+  PARTICIPANT_SCORING_DEFINITIONS,
+  ParticipantType,
+  ScoringFamily,
+  SelectionType,
+  Sport,
+  SPORT_DEFINITIONS,
   sportAllowsSelectionType,
+  type SportDefinition,
   sportPlaysMatches,
+  sportVocabulary,
+  TournamentFormat,
 } from '@poolmaster/shared/domain';
+import { enUS } from '@poolmaster/shared/display-strings';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
 import { getPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/registry';
 
@@ -73,12 +75,16 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     expect(definition.pickEm !== undefined).toBe(definition.selectionTypes.includes(SelectionType.PICK_EM));
   });
 
-  it('names a game that ends level exactly when it plays matches, so results and picks can call a tie by its word (#792)', () => {
-    expect((definition.vocabulary.tie ?? '').trim() !== '').toBe(definition.scoringFamily === ScoringFamily.HEAD_TO_HEAD);
+  it('has its own display string for a game that ends level exactly when it plays matches, so results and picks call a tie by its word (#792)', () => {
+    expect('tie' in enUS.sport[definition.sport]).toBe(definition.scoringFamily === ScoringFamily.HEAD_TO_HEAD);
   });
 
-  it('has a name and every vocabulary word filled in, and an eliminated word that is either absent or filled in', () => {
-    const { participant, event, sportLeague, round, eliminated, withdrawn, eventStart } = definition.vocabulary;
+  it('says a shoot-out word exactly when it settles level knockout matches by a shoot-out', () => {
+    expect(sportVocabulary(definition).shootout !== undefined).toBe(definition.shootout);
+  });
+
+  it('has a name and every sport word filled in, its own or the generic one', () => {
+    const { participant, event, sportLeague, round, eliminated, withdrawn, eventStart } = sportVocabulary(definition);
     for (const word of [
       definition.name,
       participant.one,
@@ -91,11 +97,9 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
       round.many,
       withdrawn,
       eventStart,
+      eliminated,
     ]) {
       expect(word.trim()).not.toBe('');
-    }
-    if (eliminated !== undefined) {
-      expect(eliminated.trim()).not.toBe('');
     }
   });
 
@@ -116,18 +120,18 @@ describe('sport registry', () => {
     const golf = getSportDefinition(Sport.GOLF);
 
     expect(golf.roundLabel(2, 4)).toBe('Round 2');
-    expect(golf.vocabulary.eliminated).toBe('Cut');
+    expect(sportVocabulary(golf).eliminated).toBe('Cut');
     expect(golf.scoringFamily).toBe(ScoringFamily.STROKE_PLAY);
   });
 
-  it('scores horse racing by finishing place, calls a withdrawn horse Scratched, and has no word for eliminated', () => {
+  it('scores horse racing by finishing place, calls a withdrawn horse Scratched, and reads the generic Eliminated, having no word of its own', () => {
     const horseRacing = getSportDefinition(Sport.HORSE_RACING);
 
     expect(horseRacing.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(horseRacing.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
-    expect(horseRacing.vocabulary.withdrawn).toBe('Scratched');
-    expect(horseRacing.vocabulary.eliminated).toBeUndefined();
-    expect(horseRacing.vocabulary.participant).toEqual({ one: 'horse', many: 'horses' });
+    expect(sportVocabulary(horseRacing).withdrawn).toBe('Scratched');
+    expect(sportVocabulary(horseRacing).eliminated).toBe('Eliminated');
+    expect(sportVocabulary(horseRacing).participant).toEqual({ one: 'horse', many: 'horses' });
   });
 
   it('calls a horse racing event a race and its sport league a circuit, and a golf one a tournament on a tour', () => {
@@ -135,11 +139,11 @@ describe('sport registry', () => {
     const golf = getSportDefinition(Sport.GOLF);
 
     expect(horseRacing.name).toBe('Horse racing');
-    expect(horseRacing.vocabulary.event).toEqual({ one: 'race', many: 'races' });
-    expect(horseRacing.vocabulary.sportLeague).toEqual({ one: 'circuit', many: 'circuits' });
+    expect(sportVocabulary(horseRacing).event).toEqual({ one: 'race', many: 'races' });
+    expect(sportVocabulary(horseRacing).sportLeague).toEqual({ one: 'circuit', many: 'circuits' });
     expect(golf.name).toBe('Golf');
-    expect(golf.vocabulary.event).toEqual({ one: 'tournament', many: 'tournaments' });
-    expect(golf.vocabulary.sportLeague).toEqual({ one: 'tour', many: 'tours' });
+    expect(sportVocabulary(golf).event).toEqual({ one: 'tournament', many: 'tournaments' });
+    expect(sportVocabulary(golf).sportLeague).toEqual({ one: 'tour', many: 'tours' });
   });
 
   it('gives a new horse race one round labelled Race', () => {
@@ -149,20 +153,22 @@ describe('sport registry', () => {
     expect(horseRacing.roundLabel(1, 1)).toBe('Race');
   });
 
-  it('scores auto racing by finishing place in races of a series, calls a driver a driver, and names no rider, top places or eliminated', () => {
+  it('scores auto racing by finishing place in races of a series, calls a driver a driver, and names no rider or top places, and reads the generic Eliminated', () => {
     const autoRacing = getSportDefinition(Sport.AUTO_RACING);
 
     expect(autoRacing.name).toBe('Auto racing');
     expect(autoRacing.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(autoRacing.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
-    expect(autoRacing.vocabulary).toEqual({
+    expect(sportVocabulary(autoRacing)).toMatchObject({
       participant: { one: 'driver', many: 'drivers' },
       event: { one: 'race', many: 'races' },
       sportLeague: { one: 'series', many: 'series' },
       round: { one: 'race', many: 'races' },
       withdrawn: 'Withdrawn',
       eventStart: 'green flag',
+      eliminated: 'Eliminated',
     });
+    expect([sportVocabulary(autoRacing).rider, sportVocabulary(autoRacing).topPlaces]).toEqual([undefined, undefined]);
   });
 
   it('gives a new auto race one round labelled Race, and five tiers of eight so a 40-car field fills each exactly', () => {
@@ -173,20 +179,22 @@ describe('sport registry', () => {
     expect(autoRacing.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
-  it('scores cycling by final overall place in races of a tour, calls a rider a rider, and names no rider column, top places or eliminated', () => {
+  it('scores cycling by final overall place in races of a tour, calls a rider a rider, and names no rider column or top places, and reads the generic Eliminated', () => {
     const cycling = getSportDefinition(Sport.CYCLING);
 
     expect(cycling.name).toBe('Cycling');
     expect(cycling.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(cycling.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
-    expect(cycling.vocabulary).toEqual({
+    expect(sportVocabulary(cycling)).toMatchObject({
       participant: { one: 'rider', many: 'riders' },
       event: { one: 'race', many: 'races' },
       sportLeague: { one: 'tour', many: 'tours' },
       round: { one: 'race', many: 'races' },
       withdrawn: 'Withdrawn',
       eventStart: 'start',
+      eliminated: 'Eliminated',
     });
+    expect([sportVocabulary(cycling).rider, sportVocabulary(cycling).topPlaces]).toEqual([undefined, undefined]);
   });
 
   it('gives a new cycling race one round labelled Race, not one per stage, and five tiers of ten with the last taking the rest', () => {
@@ -197,21 +205,23 @@ describe('sport registry', () => {
     expect(cycling.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
-  it('scores running by finishing place in races of a series, calls a runner a runner, and names no rider column, top places or eliminated', () => {
+  it('scores running by finishing place in races of a series, calls a runner a runner, and names no rider column or top places, and reads the generic Eliminated', () => {
     const running = getSportDefinition(Sport.RUNNING);
 
     expect(running.name).toBe('Running');
     expect(running.participantType).toBe('INDIVIDUAL');
     expect(running.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(running.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
-    expect(running.vocabulary).toEqual({
+    expect(sportVocabulary(running)).toMatchObject({
       participant: { one: 'runner', many: 'runners' },
       event: { one: 'race', many: 'races' },
       sportLeague: { one: 'series', many: 'series' },
       round: { one: 'race', many: 'races' },
       withdrawn: 'Withdrawn',
       eventStart: 'start',
+      eliminated: 'Eliminated',
     });
+    expect([sportVocabulary(running).rider, sportVocabulary(running).topPlaces]).toEqual([undefined, undefined]);
   });
 
   it('gives a new running race one round labelled Race, and four tiers of six with the last taking the rest of an elite field', () => {
@@ -278,9 +288,9 @@ describe('basketball', () => {
   });
 
   it('calls a participant a team and the moment entries close the opening tip-off', () => {
-    expect(basketball.vocabulary.participant).toEqual({ one: 'team', many: 'teams' });
-    expect(basketball.vocabulary.eventStart).toBe('opening tip-off');
-    expect(basketball.vocabulary.eliminated).toBe('Eliminated');
+    expect(sportVocabulary(basketball).participant).toEqual({ one: 'team', many: 'teams' });
+    expect(sportVocabulary(basketball).eventStart).toBe('opening tip-off');
+    expect(sportVocabulary(basketball).eliminated).toBe('Eliminated');
   });
 });
 
@@ -314,13 +324,13 @@ describe('American football', () => {
   });
 
   it('calls the event the playoffs and the moment entries close the first kickoff', () => {
-    expect(americanFootball.vocabulary.event).toEqual({ one: 'playoffs', many: 'playoffs' });
-    expect(americanFootball.vocabulary.eventStart).toBe('first kickoff');
+    expect(sportVocabulary(americanFootball).event).toEqual({ one: 'playoffs', many: 'playoffs' });
+    expect(sportVocabulary(americanFootball).eventStart).toBe('first kickoff');
   });
 
   it('offers pick\'em pools against the spread but no tie pick, and calls a game that ends level a Tie (#792)', () => {
     expect(americanFootball.pickEm).toEqual({ tiePicks: false, againstTheSpread: true });
-    expect(americanFootball.vocabulary.tie).toBe('Tie');
+    expect(sportVocabulary(americanFootball).tie).toBe('Tie');
   });
 });
 
@@ -354,9 +364,9 @@ describe('hockey', () => {
   });
 
   it('calls the event the playoffs, a game a game, and the moment entries close the opening puck drop', () => {
-    expect(hockey.vocabulary.event).toEqual({ one: 'playoffs', many: 'playoffs' });
-    expect(hockey.vocabulary.match).toEqual({ one: 'game', many: 'games' });
-    expect(hockey.vocabulary.eventStart).toBe('opening puck drop');
+    expect(sportVocabulary(hockey).event).toEqual({ one: 'playoffs', many: 'playoffs' });
+    expect(sportVocabulary(hockey).match).toEqual({ one: 'game', many: 'games' });
+    expect(sportVocabulary(hockey).eventStart).toBe('opening puck drop');
   });
 });
 
@@ -388,9 +398,9 @@ describe('baseball', () => {
   });
 
   it('calls the event the postseason, a match a series, and the moment entries close the first pitch', () => {
-    expect(baseball.vocabulary.event).toEqual({ one: 'postseason', many: 'postseasons' });
-    expect(baseball.vocabulary.match).toEqual({ one: 'series', many: 'series' });
-    expect(baseball.vocabulary.eventStart).toBe('first pitch');
+    expect(sportVocabulary(baseball).event).toEqual({ one: 'postseason', many: 'postseasons' });
+    expect(sportVocabulary(baseball).match).toEqual({ one: 'series', many: 'series' });
+    expect(sportVocabulary(baseball).eventStart).toBe('first pitch');
   });
 });
 
@@ -407,8 +417,9 @@ describe('soccer', () => {
   });
 
   it('settles a knockout match level after extra time by a shoot-out, labelled pens, and calls overtime extra time', () => {
-    expect(soccer.shootout).toEqual({ label: 'pens' });
-    expect(soccer.vocabulary.overtime).toBe('extra time');
+    expect(soccer.shootout).toBe(true);
+    expect(sportVocabulary(soccer).shootout).toBe('pens');
+    expect(sportVocabulary(soccer).overtime).toBe('extra time');
   });
 
   it('gives a new tournament four rounds, for a 16-team knockout stage', () => {
@@ -427,14 +438,14 @@ describe('soccer', () => {
       SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
     ]);
     expect(soccer.pickEm).toEqual({ tiePicks: true, againstTheSpread: false });
-    expect(soccer.vocabulary.tie).toBe('Draw');
+    expect(sportVocabulary(soccer).tie).toBe('Draw');
   });
 
   it('calls the event a tournament, its sport league a competition, and the moment entries close the first kickoff', () => {
-    expect(soccer.vocabulary.event).toEqual({ one: 'tournament', many: 'tournaments' });
-    expect(soccer.vocabulary.sportLeague).toEqual({ one: 'competition', many: 'competitions' });
-    expect(soccer.vocabulary.match).toEqual({ one: 'match', many: 'matches' });
-    expect(soccer.vocabulary.eventStart).toBe('first kickoff');
+    expect(sportVocabulary(soccer).event).toEqual({ one: 'tournament', many: 'tournaments' });
+    expect(sportVocabulary(soccer).sportLeague).toEqual({ one: 'competition', many: 'competitions' });
+    expect(sportVocabulary(soccer).match).toEqual({ one: 'match', many: 'matches' });
+    expect(sportVocabulary(soccer).eventStart).toBe('first kickoff');
   });
 });
 
@@ -447,7 +458,7 @@ describe('tennis', () => {
     expect(tennis.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(tennis.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(tennis.matchPeriodLayout).toBeUndefined();
-    expect(tennis.shootout).toBeNull();
+    expect(tennis.shootout).toBe(false);
     expect(sportPlaysMatches(Sport.TENNIS)).toBe(true);
   });
 
@@ -474,13 +485,13 @@ describe('tennis', () => {
   });
 
   it('calls a competitor a player, the event a draw, its sport league a tour, a knocked-out player Out, and a draw place filled later a qualifier place', () => {
-    expect(tennis.vocabulary.participant).toEqual({ one: 'player', many: 'players' });
-    expect(tennis.vocabulary.event).toEqual({ one: 'draw', many: 'draws' });
-    expect(tennis.vocabulary.sportLeague).toEqual({ one: 'tour', many: 'tours' });
-    expect(tennis.vocabulary.match).toEqual({ one: 'match', many: 'matches' });
-    expect(tennis.vocabulary.eliminated).toBe('Out');
-    expect(tennis.vocabulary.eventStart).toBe('first match');
-    expect(tennis.vocabulary.playInPlace).toBe('qualifier');
+    expect(sportVocabulary(tennis).participant).toEqual({ one: 'player', many: 'players' });
+    expect(sportVocabulary(tennis).event).toEqual({ one: 'draw', many: 'draws' });
+    expect(sportVocabulary(tennis).sportLeague).toEqual({ one: 'tour', many: 'tours' });
+    expect(sportVocabulary(tennis).match).toEqual({ one: 'match', many: 'matches' });
+    expect(sportVocabulary(tennis).eliminated).toBe('Out');
+    expect(sportVocabulary(tennis).eventStart).toBe('first match');
+    expect(sportVocabulary(tennis).playInPlace).toBe('qualifier');
   });
 });
 

@@ -1,10 +1,10 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Sport, getSportDefinition } from '@poolmaster/shared/domain';
+import { Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import { LockedBudgetLineup } from './contest-entry-budget';
 import type { SelectionGroup } from './contest-entry-selection';
 
-const GOLFER = getSportDefinition(Sport.GOLF).vocabulary.participant;
+const GOLFER = sportVocabulary(Sport.GOLF).participant;
 
 function buildGroup(selected: { id: string; name: string; price: number }[]): SelectionGroup {
   const participants = selected.map(({ id, name, price }, index) => ({

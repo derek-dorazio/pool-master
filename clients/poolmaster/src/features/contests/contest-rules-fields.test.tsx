@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { PickEmMode, SelectionType, Sport, getSportDefinition } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import { describe, expect, it, vi } from 'vitest';
 import { ContestRulesFields } from './contest-rules-fields';
 import { DEFAULT_CONTEST_RULES } from './contest-rules-form';
 
-const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
+const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
 
 describe('contest rules fields for a pick\'em contest', () => {
   it('offers the two modes instead of roster size and scores that count, and reports the mode chosen', () => {
@@ -90,7 +90,7 @@ describe('contest rules fields for a tiered contest', () => {
     render(
       <ContestRulesFields
         onChange={vi.fn()}
-        participant={getSportDefinition(Sport.GOLF).vocabulary.participant}
+        participant={sportVocabulary(Sport.GOLF).participant}
         salaryCap={null}
         selectionType={SelectionType.TIERED}
         tierCount={6}

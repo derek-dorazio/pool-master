@@ -28,9 +28,6 @@
   "clients/poolmaster/src/features/contests/pick-em-games.tsx": [
     "PickOutcome"
   ],
-  "clients/poolmaster/src/features/contests/scoring-family-ui/stat-pool-copy.ts": [
-    "Sport"
-  ],
   "clients/poolmaster/src/features/event-pages/clutch-card-copy.ts": [
     "Sport"
   ],

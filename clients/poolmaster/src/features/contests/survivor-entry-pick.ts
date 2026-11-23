@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { useQuery } from '@tanstack/react-query';
 import type { ContestDto } from '@/lib/api';
 import { teamNamesOf } from './pick-em-board';
@@ -30,5 +31,5 @@ export function useSurvivorEntryPick(
   }
   const name = namesQuery.data?.get(team.sportEventParticipantId) ?? team.name;
   const weekNumber = picks.survivor?.roundWeeks.at(0)?.weekNumber;
-  return weekNumber === undefined ? name : `Week ${weekNumber}: ${name}`;
+  return weekNumber === undefined ? name : `${displayString('word.weekNumber', { n: weekNumber })}: ${name}`;
 }

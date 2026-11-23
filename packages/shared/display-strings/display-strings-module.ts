@@ -7,6 +7,7 @@
 import type * as Enums from '../domain/enums';
 import type { ApiErrorCode } from '../dto/api-error-codes';
 import type { Sport } from '../domain/enums';
+import type { GenericSportWordRole, SportWordEntryKey } from './sport-word-roles';
 
 /**
  * The words for one key: a plain string, or a name with a shorter form for tight spaces (a grid
@@ -133,14 +134,15 @@ export type EnumDisplayStrings = { readonly [E in SharedEnumName]: { readonly [V
 export type ErrorDisplayStrings = { readonly [C in ApiErrorCode]: string };
 
 /**
- * A display-string module. `word` holds generic words with numbers or plurals in them
- * (`weekNumber: 'Week {{n}}'`, `roundCount_one` / `roundCount_other`); `sport` holds the words
- * that differ by sport, keyed by sport code then role (`sport.GOLF.participant`). Proper names
- * (teams, players, tournaments, named slots) are model columns and never go in a module.
+ * A display-string module. `word` holds generic words, with numbers or plurals in them
+ * (`weekNumber: 'Week {{n}}'`, `round_one` / `round_other`), and the generic word for every sport
+ * word role; `sport` holds the words that differ by sport, keyed by sport code then role
+ * (`sport.GOLF.participant_one`), and a role a sport leaves out reads the generic word. Proper
+ * names (teams, players, tournaments, named slots) are model columns and never go in a module.
  */
 export type DisplayStringsModule = {
   readonly enum: EnumDisplayStrings;
   readonly error: ErrorDisplayStrings;
-  readonly word: { readonly [key: string]: DisplayEntry };
-  readonly sport: { readonly [S in Sport]?: { readonly [role: string]: DisplayEntry } };
+  readonly word: { readonly [key: string]: DisplayEntry } & { readonly [K in SportWordEntryKey<GenericSportWordRole>]: DisplayEntry };
+  readonly sport: { readonly [S in Sport]?: { readonly [K in SportWordEntryKey]?: DisplayEntry } };
 };

@@ -1,3 +1,4 @@
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -29,7 +30,7 @@ type NewTourValues = z.infer<typeof newTourSchema>;
  */
 export function RootAdminSportLeagueCreatePage() {
   const { sport, definition } = useManagedSport();
-  const { sportLeague } = definition.vocabulary;
+  const { sportLeague } = sportVocabulary(definition);
   const listPath = SPORTS_PATH;
 
   const logger = getLogger().child({

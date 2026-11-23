@@ -1,4 +1,4 @@
-import { SelectionType, type SportDefinition, formatSelectionTypeName } from '@poolmaster/shared/domain';
+import { formatSelectionTypeName, SelectionType, type SportDefinition, sportVocabulary } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto } from '@/lib/api';
 import { ChoiceCard, ChoiceCardText, FormSection, Text } from '@/features/shared/ui';
 import { formatChoicesFor, type CreatableSelectionType } from './create-contest-helpers';
@@ -25,7 +25,7 @@ export function CreateContestFormatSection({
   selectionType: SelectionType;
   sportDefinition: SportDefinition;
 }) {
-  const { participant } = sportDefinition.vocabulary;
+  const { participant } = sportVocabulary(sportDefinition);
   return (
     <FormSection
       help="The format is how members pick. A preset fills in its usual rules; you can change any of them in the next step."

@@ -1,4 +1,4 @@
-import { eventSportDefinition, countParticipants } from '@poolmaster/shared/domain';
+import { countParticipants, eventSportDefinition, sportVocabulary } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
 
 const HOUR_MS = 60 * 60_000;
@@ -45,7 +45,7 @@ export function getContestReadinessChecks(
   const isReleased = !event.readinessReasons.includes('EVENT_NOT_RELEASED');
   const hasField = !event.readinessReasons.includes('FIELD_NOT_LOADED');
   const hasStarted = event.readinessReasons.includes('EVENT_STARTED');
-  const { participant } = eventSportDefinition(event).vocabulary;
+  const { participant } = sportVocabulary(eventSportDefinition(event));
   const golfers = countParticipants(event.loadedParticipantCount, participant);
   const tiers = `${event.tierCount} tier${event.tierCount === 1 ? '' : 's'}`;
 

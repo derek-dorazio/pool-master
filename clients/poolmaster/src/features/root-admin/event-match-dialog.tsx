@@ -1,4 +1,4 @@
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import { MatchStatus } from '@poolmaster/shared/domain';
 import {
   DetailEditModal,
@@ -28,7 +28,7 @@ export function EventMatchDialog({
   const testId = 'root-admin-event-match-dialog';
   const settleAgain = useSettleAgain(eventId, testId);
   const facts: Fact[] = [
-    { id: 'round', label: 'Round', value: row.roundLabel, testId: `${testId}-round` },
+    { id: 'round', label: displayString('word.roundHeading'), value: row.roundLabel, testId: `${testId}-round` },
     {
       id: 'starts',
       label: 'Starts',

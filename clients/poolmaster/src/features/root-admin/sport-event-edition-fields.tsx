@@ -1,3 +1,4 @@
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import { FormField, Input, Select } from '@/features/shared/ui';
 import type { SportLeagueDto } from '@/lib/api';
 import {
@@ -22,7 +23,7 @@ export function SportEventEditionFields({
   onChange: (edition: SportEventEdition) => void;
   sportLeagues: readonly SportLeagueDto[];
 }) {
-  const { event, sportLeague: sportLeagueNoun } = useManagedSport().definition.vocabulary;
+  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(useManagedSport().definition);
   return (
     <>
       <FormField

@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { MatchSide, MatchStatus, SportEventStatus, SurvivorWeekOutcome, pluralize } from '@poolmaster/shared/domain';
 import type { SurvivorLeaderboardResponse } from '@/lib/api';
 
@@ -52,7 +53,7 @@ export function survivorStatusLabel(
     return 'Out';
   }
   const week = weeks.find((candidate) => candidate.weekNumber === entry.eliminatedInWeek);
-  return `Out · ${week ? weekName(week) : `Week ${entry.eliminatedInWeek}`}`;
+  return `Out · ${week ? weekName(week) : displayString('word.weekNumber', { n: entry.eliminatedInWeek })}`;
 }
 
 /** A pick's team as the board writes it: its code ("KC"), or its name where it has none. */
@@ -167,12 +168,12 @@ export function survivorDetailWeeks(entry: SurvivorRow, weeks: readonly Survivor
 /** The line that opens an entry's earlier weeks: "Weeks 1–6", or a playoff's "Earlier rounds". */
 export function survivorEarlierLabel(weeks: readonly SurvivorWeek[]): string {
   if (weeks.some((week) => week.roundCount > 1)) {
-    return 'Earlier rounds';
+    return displayString('word.earlierRounds');
   }
   const numbers = weeks.map((week) => week.weekNumber);
   const first = Math.min(...numbers);
   const last = Math.max(...numbers);
-  return first === last ? `Week ${first}` : `Weeks ${first}–${last}`;
+  return first === last ? displayString('word.weekNumber', { n: first }) : displayString('word.weekRange', { first, last });
 }
 
 /** The week the board is on: the latest week started, else the first; live while its games are under way. */

@@ -1,4 +1,4 @@
-import { sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -59,7 +59,7 @@ export function SportEventManualCreateForm({
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
   const { timeZone } = useDisplayPreferences();
-  const { event, participant, round } = definition.vocabulary;
+  const { event, participant, round } = sportVocabulary(definition);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId)?.noun ?? null);
 
   const form = useForm<ManualFormInput, unknown, ManualFormValues>({

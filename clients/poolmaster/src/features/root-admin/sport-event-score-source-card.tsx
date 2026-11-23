@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { SportEventSyncScope, getSportDefinition } from '@poolmaster/shared/domain';
+import { getSportDefinition, SportEventSyncScope, sportVocabulary } from '@poolmaster/shared/domain';
 import { linkEventScoreSource, unlinkEventScoreSource } from '@/lib/api';
 import {
   Button,
@@ -59,7 +59,7 @@ export function SportEventScoreSourceCard({
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
   const [catalogSearch, setCatalogSearch] = useState('');
   const definition = getSportDefinition(tournament.sport);
-  const { event: eventNoun } = definition.vocabulary;
+  const { event: eventNoun } = sportVocabulary(definition);
   const resultsWord = getScoringFamilyAdminUi(tournament).resultsLabel.toLowerCase();
 
   const catalog = useProviderCatalog({
