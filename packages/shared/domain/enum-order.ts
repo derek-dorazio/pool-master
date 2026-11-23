@@ -1,3 +1,6 @@
+import { enumLabel } from '../display-strings/display-strings';
+import type { SharedEnumName, SharedEnums } from '../display-strings/display-strings-module';
+
 /**
  * The natural order of a shared enum, declared on the enum itself in `enums.ts` (#1841), so
  * every list, grid and sort shows its values the same way and no consumer keeps an order of
@@ -7,38 +10,48 @@
  * - `explicit`: a position for every value. The map is exhaustive over the enum, so adding a
  *   value without a place fails the type check.
  * - `alphabetical`: the enum has no natural order; its values sort A to Z by the words the
- *   screen shows for them, which the web app passes in (labels are product copy, UI only).
+ *   display-string module gives them (`enumLabel`), so the order follows the reader's language
+ *   (`rules/ux-rules.md` §16 *Display Strings*).
  */
 export type ExplicitEnumOrder<V extends string> = {
   readonly kind: 'explicit';
   readonly orderIndex: Readonly<Record<V, number>>;
 };
-export type AlphabeticalEnumOrder = { readonly kind: 'alphabetical' };
-// `V` only types the values an alphabetical order is used with.
-export type EnumOrder<V extends string> = ExplicitEnumOrder<V> | AlphabeticalEnumOrder;
+export type AlphabeticalEnumOrder<V extends string = string> = {
+  readonly kind: 'alphabetical';
+  /** The enum whose display strings the values sort by. */
+  readonly enumName: SharedEnumName;
+  /** Types the values the order is used with; never set. */
+  readonly values?: V;
+};
+export type EnumOrder<V extends string> = ExplicitEnumOrder<V> | AlphabeticalEnumOrder<V>;
 
 /** An order giving every value its place; lower comes first. */
 export function explicitOrder<V extends string>(orderIndex: Readonly<Record<V, number>>): ExplicitEnumOrder<V> {
   return { kind: 'explicit', orderIndex };
 }
 
-/** An enum with no natural order: A to Z by the label each screen shows. */
-export function alphabeticalOrder(): AlphabeticalEnumOrder {
-  return { kind: 'alphabetical' };
+/** An enum with no natural order: A to Z by its display strings. */
+export function alphabeticalOrder<E extends SharedEnumName>(enumName: E): AlphabeticalEnumOrder<SharedEnums[E]> {
+  return { kind: 'alphabetical', enumName };
 }
 
 /**
  * Compares two values of an enum by its declared order. An alphabetical order compares the
- * labels (`label`, else the values themselves), ignoring case and accents.
+ * values' display strings in `locale` (`en-US` when none), ignoring case and accents; `label`
+ * replaces them only where a screen still keeps its own words (allowlisted, #1955).
  */
 export function compareByEnumOrder<V extends string>(
   order: EnumOrder<V>,
-  label: (value: V) => string = (value) => value,
+  label?: (value: V) => string,
+  locale?: string | null,
 ): (left: V, right: V) => number {
   if (order.kind === 'explicit') {
     return (left, right) => order.orderIndex[left] - order.orderIndex[right];
   }
-  return (left, right) => label(left).localeCompare(label(right), undefined, { sensitivity: 'base' });
+  const words =
+    label ?? ((value: V) => enumLabel(order.enumName, value as SharedEnums[SharedEnumName], { locale: locale ?? undefined }));
+  return (left, right) => words(left).localeCompare(words(right), locale ?? undefined, { sensitivity: 'base' });
 }
 
 /** The values, sorted by the enum's order: a new array, the given one untouched. */
@@ -46,8 +59,9 @@ export function sortByEnumOrder<V extends string>(
   values: readonly V[],
   order: EnumOrder<V>,
   label?: (value: V) => string,
+  locale?: string | null,
 ): V[] {
-  return [...values].sort(compareByEnumOrder(order, label));
+  return [...values].sort(compareByEnumOrder(order, label, locale));
 }
 
 /** An explicit order's values, first to last. */

@@ -1026,7 +1026,11 @@ handler). `getByTestId` passes through all of those.
 
 - `getByRole` with an accessible name is the default.
 - `getByLabelText` for form fields.
-- Text queries (`getByText`) are fine.
+- Text queries (`getByText`) are fine. A query or assertion on the words for a code (an enum
+  value's label, an error code's message) reads them from the display-string module,
+  `enumLabel('ContestStatus', ContestStatus.OPEN)` or `displayString('error.CONTEST_FULL')`,
+  never a typed copy, so a change of wording does not break the test
+  (`rules/ux-rules.md` §16 *Display Strings*).
 - `getByTestId` only where no accessible query reaches the element. Which case it is decides
   what to do:
   - An interactive or user-meaningful element (a control, a field, a status a user reads)

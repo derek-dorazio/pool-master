@@ -17,6 +17,10 @@
       "types": "./domain/*.ts",
       "default": "./dist/domain/*.js"
     },
+    "./display-strings": {
+      "types": "./display-strings/index.ts",
+      "default": "./dist/display-strings/index.js"
+    },
     "./db": {
       "types": "./db/index.ts",
       "default": "./dist/db/index.js"
@@ -68,6 +72,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
+    "i18next": "^26.7.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {

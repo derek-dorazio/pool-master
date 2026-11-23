@@ -795,3 +795,35 @@ extra text answers:
 
 The `poolmaster/no-ad-hoc-more-info` ESLint rule fails feature code that imports
 `InfoPopover` or sets a `title=` attribute on a DOM element.
+
+## 16. Display Strings
+
+Every word the app shows for a **code** comes from one display-string module per language,
+`packages/shared/display-strings/en-US.ts` first. The web app and the emails read it
+through the same two functions, so a word is written once and can be translated once. The API
+sends codes and numbers, never these words.
+
+1. **What goes in the module.** Every value of every shared enum (`enum.<Enum>.<CODE>`), one
+   message per API error code (`error.<CODE>`), generic words with numbers or plurals in them
+   (`word.<key>`: "Week {{n}}", `roundCount_one` / `roundCount_other`), and the words that
+   differ by sport, keyed by sport code and role (`sport.<SPORT>.<role>`: `sport.GOLF.participant`
+   is Golfer). Keys are codes, never names; nothing is keyed by a league.
+2. **What never goes in it.** Proper names: teams, players, tournaments and named slots (Super
+   Bowl, The Masters). They are name columns on the model and are never translated. Page
+   sentences (How to Play, empty states, button text) stay in the page for now.
+3. **How to read it.** `enumLabel('ContestStatus', status, { locale })` for an enum value;
+   `displayString(key, values, locale)` for anything else. The language part of the
+   reader's locale picks the module and anything missing falls back to `en-US`. Placeholders
+   are `{{name}}`; plurals are `_one` / `_other` forms chosen by the language's rules
+   (i18next).
+4. **One entry per code, with an optional short form.** An entry is a string or
+   `{ name, short }`. A tight space (a grid column, a chip) asks for `form: 'short'`, which
+   falls back to the name. A screen never shortens or re-words a label itself.
+5. **No word maps anywhere else.** No `Record<SharedEnum | ApiErrorCode, string>` is declared
+   outside `display-strings/`. `rules:check:display-strings` enforces it, together with an
+   entry for every enum value and error code, no unused `word.` or `sport.` key, and every
+   other language having exactly the `en-US` keys. Today's maps are on
+   `scripts/display-strings-allowlist.json`; the ticket that moves a map deletes its entry,
+   and the check fails an entry whose map is gone, so the list only shrinks.
+6. **Sorting follows the words.** An enum with `alphabeticalOrder` sorts by its display
+   strings in the reader's language (`compareByEnumOrder(order, undefined, locale)`).
