@@ -703,6 +703,11 @@ export const enUS = {
       RUNNER_UP: 'Runner-up',
       THIRD: '3rd place',
     },
+    DigestEventState: {
+      CONTEST_SET_UP: 'Contest set up',
+      READY: 'Ready for contests',
+      NOT_READY: 'Not ready for contests yet',
+    },
     SummaryTile: {
       MOST_CHAMPIONSHIPS: 'Most championships',
       MOST_CUPS: 'Most cups',

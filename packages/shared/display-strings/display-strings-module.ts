@@ -116,6 +116,7 @@ export type SharedEnums = {
   ContestResultCount: Enums.ContestResultCount;
   CupStatus: Enums.CupStatus;
   CupTrophy: Enums.CupTrophy;
+  DigestEventState: Enums.DigestEventState;
   SummaryTile: Enums.SummaryTile;
   RecordType: Enums.RecordType;
   TrophyKind: Enums.TrophyKind;

@@ -1943,6 +1943,23 @@ export const CupTrophyOrder = explicitOrder<CupTrophy>({
   [CupTrophy.THIRD]: 2,
 });
 
+/** Where a league stands on an event in its weekly digest email (#851). */
+export const DigestEventState = {
+  /** The league already has a contest on it. */
+  CONTEST_SET_UP: 'CONTEST_SET_UP',
+  /** Released, with no contest yet: the digest links to Create contest. */
+  READY: 'READY',
+  /** Still a draft, so no contest can be set up on it yet. */
+  NOT_READY: 'NOT_READY',
+} as const;
+export type DigestEventState = (typeof DigestEventState)[keyof typeof DigestEventState];
+/** The order the values are declared in. */
+export const DigestEventStateOrder = explicitOrder<DigestEventState>({
+  [DigestEventState.CONTEST_SET_UP]: 0,
+  [DigestEventState.READY]: 1,
+  [DigestEventState.NOT_READY]: 2,
+});
+
 /**
  * The All years page's tiles (#837): the squads with the most league championships won (years
  * over only) and the most cups won (crowned cups' champions). Ties name every squad.

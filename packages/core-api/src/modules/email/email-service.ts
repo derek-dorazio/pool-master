@@ -132,15 +132,6 @@ export const RESERVED_LEAGUE_CODES: ReadonlySet<string> = new Set([
   'WEBMASTER',
 ]);
 
-const SKIP_LOG_MESSAGES: Record<EmailSkipReason, string> = {
-  [EmailSkipReason.EMAIL_DISABLED]: 'Email is switched off in settings; skipped sending email',
-  [EmailSkipReason.TEMPLATE_DISABLED]: 'Email is switched off in settings; skipped sending email',
-  [EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT]: 'Recipient may not be emailed in this environment; skipped sending email',
-  [EmailSkipReason.SUPPRESSED]: 'Recipient bounced or complained before; skipped sending email',
-  [EmailSkipReason.OPTED_OUT]: 'Recipient turned this kind of email off; skipped sending email',
-  [EmailSkipReason.NOT_IN_PLAN]: 'League plan does not include this email; skipped sending email',
-};
-
 /** Where an email's "Stop these emails" page and one-click unsubscribe live (#844 slice 5). */
 export const UNSUBSCRIBE_PAGE_PATH = '/email/unsubscribe';
 export const ONE_CLICK_UNSUBSCRIBE_PATH = '/api/v1/email/unsubscribe';
@@ -321,6 +312,7 @@ export class EmailService {
     const content = renderSystemEmailTemplate(templateKey, input.data, {
       timeZone: this.resolveTimeZone(input.to.timeZone, refs),
       locale: this.resolveLocale(input.to.locale, refs),
+      language: input.to.locale && isKnownLocale(input.to.locale) ? input.to.locale : undefined,
       hour12: input.to.timeFormat ? input.to.timeFormat === TimeFormat.TWELVE_HOUR : undefined,
       unsubscribeUrl: unsubscribe?.pageUrl,
     });
@@ -344,7 +336,7 @@ export class EmailService {
       this.options.logger?.info({
         action: 'email.send.skip',
         data: { reason: state.skipReason, ...logRefs(refs) },
-      }, SKIP_LOG_MESSAGES[state.skipReason]);
+      }, 'Skipped sending email; the reason code is in data.reason');
     } else {
       this.options.logger?.info({ action: 'email.send.queued', data: logRefs(refs) }, 'Queued email');
     }

@@ -756,6 +756,11 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    the site's wordmark is. Small uppercase labels are label blue on white and navy haze on a
    navy band, as the site's eyebrows are. Email keeps to Archivo and Inter with Arial behind
    them; the site's condensed number face is not used, since most mail clients would fall back.
+10. **Codes in, words out.** A notification puts codes and numbers in a template's data (a
+   trophy, a digest event's state), never finished words; the renderer reads the words with
+   `enumLabel` and `displayString` in the recipient's language (`EmailRenderContext.language`,
+   their account locale), per §16 *Display Strings*. Sentences of the email itself stay in
+   the renderer for now.
 
 ## 15. Showing More
 
