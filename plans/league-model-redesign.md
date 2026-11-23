@@ -652,6 +652,26 @@ Contest:
   slot dialog until that Game starts (audited). If it is cancelled or moved out of the slot,
   the rule picks again and raises a finding; guesses carry over. Replaces
   `weekTiebreakerGame` and `rounds.at(-1)`.
+- Contest model audit (2026-11-23), consequences of the slot model:
+  - `ContestSeasonSlot` is unique on (contest, Season slot) with no sequence column; every
+    row's Season is the contest's `sportLeagueSeasonId` (`Contest.seasonYear` and
+    `Cup.seasonYear` become `sportLeagueSeasonId`; `Cup` keys on (league, Season) and drops
+    `sportLeagueId`).
+  - `ContestEntryEvent` becomes `ContestEntrySlot` and `ContestEntryEventStanding` becomes
+    `ContestEntrySlotStanding`, keyed (contestEntryId, contestSeasonSlotId), with a row per
+    covered slot that opens a pick window: each slot for pick'em and survivor, the first
+    covered slot for every other type (a bracket is submitted once).
+  - `ContestEntryMatchPrediction` becomes `ContestEntryRoundMatchPrediction`: a Match and a
+    side (null only for a TIE pick, check constraint), plus the predicted team for a bracket,
+    since a later-round side means "winner of match A" and can win while the picked team is
+    out; voids are `voidedAt` and `voidReason`.
+  - `ContestLeaderboardSnapshot` keys by a nullable ContestSeasonSlot FK (null = the default
+    board) on a surrogate id with a NULLS NOT DISTINCT unique, replacing `shownEvent = ''`.
+  - `ContestSquaresGame` points at `sportEventRoundMatchGameId` (a Game in a covered slot);
+    `ContestSquaresWinner` keys a moment as period number plus `isFinal`.
+  - Dropped as copies or dead: `Contest.contestFormat` (follows from `selectionType`),
+    `Contest.startsAt`, `ContestEntryPick.slot`, `countingPickLimit` on both standing tables,
+    `ContestConfiguration.selectionType` and `templateVersion`, `ContestPrizeDefinition`.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
