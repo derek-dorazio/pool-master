@@ -30,6 +30,8 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | none | `SportLeagueSeasonProviderMapping` | A provider's season id. |
 | none | `SportLeagueSeasonPhase` | A phase in one Season. |
 | none | `SportLeagueSeasonPhaseSlot` | A slot in one Season: dates, status, series format. |
+| team conference/division in `metadata` JSON | `SportLeagueConference`, `SportLeagueConferenceDivision` (+ `…ProviderMapping` each) | A league's conferences (AFC, American League, Big Ten) and their divisions (AFC East); set by migration. |
+| none | `SportLeagueSeasonTeamConference` | One row per Season and team: conference required, division optional, composite FK keeps the division inside the conference. |
 | `Participant.teamAffiliation` | `SportLeagueSeasonParticipantTeam` | Roster row: one per Season and player, with team, position and rating. |
 | `Participant` | `Participant` (same) | A team or player, across Seasons. |
 | `ParticipantProviderMapping` | same name | Provider ids for a participant; `providerId` becomes the Provider enum. |
@@ -494,6 +496,15 @@ Each moves into the model in the slice named. None is new design; each follows a
   `eventId` a SportEvent FK (slice 1).
 - `Participant.role` becomes the roster row's SportLeaguePosition; team abbreviation a
   Participant column (slice 21).
+- Conferences and divisions (Derek 2026-11-23), from team `metadata` JSON into the model:
+  SportLeagueConference (FK to the league, code unique per league, proper name) and
+  SportLeagueConferenceDivision (FK to its conference), each set by migration with a
+  provider mapping; SportLeagueSeasonTeamConference per Season and team (conference
+  required, division optional, composite FK). Divisions sit inside conferences in every feed
+  (MLB calls its top level "league"); WNBA and NCAA have conferences only; soccer and golf
+  have neither. The existing team sync writes the Season rows from the team payload (NCAA
+  conferences come as an id from the feed's conference list); no new sync. Bracket pairing
+  reads these (slice 21, readers with #1926).
 - `sport` copied onto SportEvent, ContestConfigTemplate and ProviderSyncRun: read through the
   league, columns dropped (slice 3).
 - `SportOrder` in code becomes `Sport.displayOrder` (slice 3).
