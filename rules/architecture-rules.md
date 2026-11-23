@@ -160,10 +160,11 @@ spend the provider's rate on its own or hammer it when it pushes back.
 - **Each sync process limits itself locally.** Its share of the rate is the provider's
   `requestsPerMinute` divided by the job pool's maximum task count, held in configuration
   and process memory. No database call is made per request to check a shared budget.
-- **One resilience library governs retries** (cockatiel). On a 429 the client waits for the
-  provider's `Retry-After` when it is sent, and otherwise backs off exponentially with jitter
-  up to a cap. Code never writes its own retry loop or sleep around a provider call.
-- **A circuit breaker per provider** opens during a storm of 429s and pauses every call to
+- **One resilience library governs retries** (cockatiel). A 429, a 5xx response and a
+  timeout are retried; on a 429 or 503 the client waits for the provider's `Retry-After` when
+  it is sent, and otherwise backs off exponentially with jitter up to a cap. Any other 4xx is
+  not retried. Code never writes its own retry loop or sleep around a provider call.
+- **A circuit breaker per provider** opens during a storm of 429s or failures and pauses every call to
   that provider for a short time, so the sync stops spending rate it cannot use; the jobs
   waiting on it retry once it closes.
 - The rate, the cap and the breaker's thresholds are settings on the provider, never
@@ -263,8 +264,9 @@ provider loops, the email sender), and prod runs more than one task. So that a j
 
 - **A recurring job holds a job lock** (`core/job-lock.ts`, a Postgres session advisory lock on
   a connection of its own). The task that takes a job's lock keeps it from tick to tick and the
-  others skip that job, until the holder stops and its connection closes. A new provider loop
-  passes a lock key; a loop that only changes this process's own state needs none.
+  others skip that job, until the holder stops and its connection closes. The sync scheduler
+  tick holds one (*Scheduled provider sync is jobs*, below); a loop that only changes this
+  process's own state needs none.
 - **One recurring job per lock.** Work that sweeps every league (an email kind, a cleanup) gets a
   timer and lock of its own rather than a step inside another sweep, so a slow one never holds
   up the rest. Each runs on a `LockedSweep` (`core/locked-sweep.ts`): the lifecycle sweep, and
