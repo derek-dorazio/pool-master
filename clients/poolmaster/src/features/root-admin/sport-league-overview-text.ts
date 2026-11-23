@@ -1,4 +1,5 @@
-import { assertNever, ProviderSyncKind, type ReleaseCheckKey } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import type { ProviderSyncKind, ReleaseCheckKey } from '@poolmaster/shared/domain';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { plural } from '@/lib/plural';
 
@@ -12,21 +13,9 @@ export function overdueLateness(expectedEndAt: string, now: Date): string {
   return hours < 48 ? `${plural(hours, 'hour')} late` : `${plural(Math.floor(hours / 24), 'day')} late`;
 }
 
-/**
- * A sync failure's line, the sync named in domain words (rules/ux-rules.md §12 item 14). A page
- * sentence (rules/ux-rules.md §16 item 2): the sync's own label is `enumLabel('ProviderSyncKind', …)`.
- */
+/** A sync failure's line, the sync named in domain words (rules/ux-rules.md §12 item 14): "Field sync failed". */
 export function syncFailedText(kind: ProviderSyncKind): string {
-  switch (kind) {
-    case ProviderSyncKind.EVENTS:
-      return 'Event list sync failed';
-    case ProviderSyncKind.FIELD:
-      return 'Field sync failed';
-    case ProviderSyncKind.SCORES:
-      return 'Live scores and results sync failed';
-    default:
-      return assertNever(kind, 'provider sync kind');
-  }
+  return `${enumLabel('ProviderSyncKind', kind)} sync failed`;
 }
 
 /** Each ready check that can hold an automatic release, as a short phrase. */

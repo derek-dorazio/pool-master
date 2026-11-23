@@ -3,6 +3,7 @@ import {
   ContestTemplateEventType,
   MatchEnding,
   ProviderSyncKind,
+  RaceResultChange,
   RaceResultRowError,
   SportEventReleaseMode,
 } from '@poolmaster/shared/domain';
@@ -46,6 +47,16 @@ describe('root admin words come from the display strings', () => {
     expect(enumLabel('RaceResultRowError', RaceResultRowError.DUPLICATE_PARTICIPANT)).toBe('Named on another row too');
     expect(enumLabel('RaceResultRowError', RaceResultRowError.POSITION_WITHOUT_FINISH)).toBe('A place, but it did not finish');
     expect(enumLabel('RaceResultRowError', RaceResultRowError.FINISH_WITHOUT_POSITION)).toBe('Finished, but has no place');
+  });
+
+  it('a race result preview row says whether it is new, changed or unchanged', () => {
+    expect(enumLabel('RaceResultChange', RaceResultChange.CREATE)).toBe('New');
+    expect(enumLabel('RaceResultChange', RaceResultChange.UPDATE)).toBe('Changed');
+    expect(enumLabel('RaceResultChange', RaceResultChange.UNCHANGED)).toBe('Unchanged');
+  });
+
+  it('the field sync is called Field on the League page, the Event page and the failed chip alike', () => {
+    expect(enumLabel('ProviderSyncKind', ProviderSyncKind.FIELD)).toBe('Field');
   });
 
   it('a failed sync chip names each sync kind in domain words', () => {

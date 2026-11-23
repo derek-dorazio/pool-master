@@ -45,12 +45,6 @@ const RESOLUTION_LABEL: Record<RaceResultPreviewRow['resolution'], string> = {
   UNRESOLVED: 'Not in the field',
 };
 
-const CHANGE_LABEL: Record<NonNullable<RaceResultPreviewRow['change']>, string> = {
-  CREATE: 'New',
-  UPDATE: 'Changed',
-  UNCHANGED: 'Unchanged',
-};
-
 const CHANGE_TONE: Record<NonNullable<RaceResultPreviewRow['change']>, 'success' | 'info' | 'neutral'> = {
   CREATE: 'success',
   UPDATE: 'info',
@@ -268,7 +262,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
                   badge: (entry) => entry.rowError ? (
                     <StatusBadge tone="danger">{enumLabel('RaceResultRowError', entry.rowError)}</StatusBadge>
                   ) : entry.change ? (
-                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{CHANGE_LABEL[entry.change]}</StatusBadge>
+                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{enumLabel('RaceResultChange', entry.change)}</StatusBadge>
                   ) : '—',
                 }}
                 describeRow={(entry) => describeRow(entry.row)}

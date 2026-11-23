@@ -119,8 +119,8 @@ export const enUS = {
       FIELD_INCOMPLETE: 'Field incomplete',
     },
     RaceResultChange: {
-      CREATE: 'Create',
-      UPDATE: 'Update',
+      CREATE: 'New',
+      UPDATE: 'Changed',
       UNCHANGED: 'Unchanged',
     },
     SelectionType: {
@@ -188,7 +188,7 @@ export const enUS = {
     },
     ProviderSyncKind: {
       EVENTS: 'Event list',
-      FIELD: 'Fields',
+      FIELD: 'Field',
       SCORES: 'Live scores and results',
     },
     AutoReleaseCheckOutcome: {
