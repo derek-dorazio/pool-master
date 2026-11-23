@@ -129,25 +129,46 @@ Related anti-patterns that are banned:
 
 ### Provider and Adapter Registry Discipline
 
-Provider, adapter, and integration factories are production architecture, even
-when one of the available providers is a mock or local-development provider.
+Provider, adapter, and integration factories are production architecture.
 
 Rules:
 
-- Production and staging provider registries must be driven by explicit runtime
-  configuration, not by a hardcoded single provider id.
-- QA and local development may use mock providers when configured for that
-  environment. The provider must still be selected through the same registry
-  and configuration path that real providers use.
-- Production and staging must reject mock providers unless an explicit
-  emergency override is configured, and that override must log loudly at
-  startup with environment, provider id, and reason.
-- Adding a new provider means updating the registry, configuration schema,
-  validation, startup logging, and tests together.
-- A factory that silently falls back to a mock provider because configuration is
-  missing is a production defect. Missing provider configuration should surface
-  as disabled ingestion or a typed startup/configuration error, not fabricated
-  data.
+- **A provider is a real feed.** Production source holds no mock or simulated provider in
+  any environment: no mock adapter wired into the registry, no branch that reads a mock
+  provider's state, and no admin tool that simulates a live feed (Derek, 2026-11-23). QA and
+  local development sync from the same real providers production does.
+- **Replays of a feed live in test code.** Recorded provider payloads, fake provider servers
+  and fixture catalogs are test infrastructure under `tests/` (`rules/testing-rules.md` §1B
+  *Forbidden Application-Code Patterns*), injected by the test, never selected through
+  production configuration.
+- The provider registry is driven by explicit runtime configuration, not by a hardcoded
+  single provider id.
+- Adding a new provider means updating the registry, configuration, validation, startup
+  logging, and tests together.
+- Missing provider configuration surfaces as disabled ingestion or a typed
+  startup/configuration error, never as a fallback to another provider or to fabricated data.
+- *Status:* `packages/mock-contest-feed-provider` and its QA service task predate this rule.
+  The QA task is disabled; the wiring, mock-state branches and the root admin live simulation
+  tool leave production source with the provider table (#1917), and the module itself is
+  removed by #1981. Add nothing new that uses it.
+
+### Provider calls are rate limited and resilient
+
+Every call to a provider goes through one governed client per provider, so no sync path can
+spend the provider's rate on its own or hammer it when it pushes back.
+
+- **Each sync process limits itself locally.** Its share of the rate is the provider's
+  `requestsPerMinute` divided by the job pool's maximum task count, held in configuration
+  and process memory. No database call is made per request to check a shared budget.
+- **One resilience library governs retries** (cockatiel). On a 429 the client waits for the
+  provider's `Retry-After` when it is sent, and otherwise backs off exponentially with jitter
+  up to a cap. Code never writes its own retry loop or sleep around a provider call.
+- **A circuit breaker per provider** opens during a storm of 429s and pauses every call to
+  that provider for a short time, so the sync stops spending rate it cannot use; the jobs
+  waiting on it retry once it closes.
+- The rate, the cap and the breaker's thresholds are settings on the provider, never
+  constants per sport or league (`rules/domain-model-conventions-rules.md` §17 *Rules Live
+  In The Model, Not In Code*).
 
 ---
 
@@ -262,6 +283,16 @@ provider loops, the email sender), and prod runs more than one task. So that a j
   again. A recurring job stays a timer under a job lock: the table is for one-off work. A
   follow-up to a change is queued by its domain event handler, not by the writer (*Follow-up
   work is a domain event handler*).
+- **Scheduled provider sync is jobs, never in-memory timers.** One scheduler tick, under its
+  job lock, is the only timer: it decides what is due and queues one background job per unit
+  of work, each with a dedupe key built from ids (a league, a Season, an event, a Game), never
+  from a provider id string. The live sweep queues work for the Games that are due to start
+  or in progress, not for whole leagues on a clock. How often each kind of sync runs comes
+  from global settings per sync kind and season state (in season, off season), never from a
+  per-sport or per-league schedule, a per-provider loop with its own `setInterval`, or a
+  constant. So a deploy or a crashed task loses no sync work, every run is visible as a job,
+  and the rate limit sees one queue. Today's per-provider loops predate this and are replaced
+  by #1917.
 - **A member's own action never queues a job of its own** (#1861). Work a member's write or read
   sets off that spans a contest or an event (rebuilding its boards, its emails) is queued once
   per contest or event, keyed so a waiting job absorbs the next ask (`dedupeKey`), never one
