@@ -551,6 +551,8 @@ Sync:
   `mockEventState` branches, wiring, or the root admin "Start live simulation" golf tool);
   the QA mock service task is disabled. The mock module itself stays in the repo until
   deferred #1981 removes it.
+- Manual score-source linking (Derek 2026-11-23, slice 7): removed, with `syncScope` and
+  admin-entered feed ids; a league is synced or off, so nothing is linked by hand.
 - Runs (slice 2): `ProviderSyncRun.payloadJson` stops driving behaviour (columns plus
   findings); field sync has one `ProviderSyncKind`, not five names; logged-only anomalies and
   the synthetic health check become finding kinds and a status computed from runs and jobs.
