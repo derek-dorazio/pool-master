@@ -981,10 +981,12 @@ screen renders what it is sent.
   it yet, adding that field is part of the slice; a web constant "for now" is not.
 - *Status:* existing values of this kind move to model or config data with the league model
   redesign (#1917): the web's golf winning-score tiebreaker options and unplayed-round `'80'`,
-  the limit and default constants in `packages/shared/domain` (events per selection type,
-  survivor lives, roster, squares and tier-profile maximums) and the numeric bounds in its Zod
-  schemas. The web app does not import them meanwhile; a change that touches one moves it,
-  and nothing new is added.
+  the limit and default constants in `packages/shared/domain` and `packages/shared/dto`
+  (events per selection type, survivor lives, roster, squares and tier-profile maximums, the
+  game-picks tiebreaker, rounds par, auto-release days and stat value bounds) and the numeric
+  bounds in their Zod schemas. Some of these are imported by the web app today; those imports
+  are residue too. A change that touches one moves it to an API field, and no new import or
+  constant is added.
 
 ### What stays in code
 

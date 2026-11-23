@@ -447,7 +447,7 @@ slice must not add a further copy of it (`domain-model-conventions-rules.md` §1
 the server, a provider's wire format parsed inside its adapter, a UI label map from a code to
 its words, and test fixtures are all fine. In the web app, every value of a shared enum in its
 declared order (a filter of every status) and a display cap (rows shown before "and N more")
-are fine; a hand-written subset or range is not. The finding is a fact about a *particular* sport, league, season
-or event, or a fact derived a second time. When in doubt, report it with the question; a
-wrong-but-asked finding costs a reply, a missed one costs a redesign later.
+are fine; a hand-written subset or range is not. The finding is a fact about a *particular*
+sport, league, season or event, or a fact derived a second time. When in doubt, report it with
+the question; a wrong-but-asked finding costs a reply, a missed one costs a redesign later.
 
