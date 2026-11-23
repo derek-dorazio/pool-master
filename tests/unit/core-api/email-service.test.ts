@@ -264,9 +264,9 @@ describe('email service: what it queues', () => {
     try {
       const email = service({ outbox: inMemoryEmailMessages() });
 
-      await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'berlin@gmail.com', userId: 'user-berlin', locale: 'de-DE' }));
-      await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'member@gmail.com', userId: 'user-1', locale: 'not a locale!' }));
-      await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'plain@gmail.com', userId: 'user-plain' }));
+      await email.send('LEAGUE_MEMBER_INVITE', invite('berlin@gmail.com', { to: { email: 'berlin@gmail.com', locale: 'de-DE' } }));
+      await email.send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com', { to: { email: 'member@gmail.com', locale: 'not a locale!' } }));
+      await email.send('LEAGUE_MEMBER_INVITE', invite('plain@gmail.com'));
 
       expect(render.mock.calls.map(([, , context]) => context.language)).toEqual(['de-DE', undefined, undefined]);
       expect(render.mock.calls[0][2].locale).toBe('en-DE');
