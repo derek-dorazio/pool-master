@@ -1,9 +1,9 @@
-import { displayString } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { type MatchStatus, MatchStatusOrder } from '@poolmaster/shared/domain';
 import { StatusBadge, Text } from '@/features/shared/ui';
 import type { EventMatchRow } from './event-match-rows';
-import { MATCH_STATUS_LABEL, MATCH_STATUS_TONE } from './match-status';
+import { MATCH_STATUS_TONE } from './match-status';
 
 const columnHelper = createColumnHelper<EventMatchRow>();
 
@@ -31,9 +31,9 @@ export function eventMatchColumns() {
       header: 'Status',
       meta: {
         info: 'Scheduled, Postponed, In progress, Final or Cancelled.',
-        type: { kind: 'enum', order: MatchStatusOrder, label: (status) => MATCH_STATUS_LABEL[status as MatchStatus] },
+        type: { kind: 'enum', order: MatchStatusOrder, label: (status) => enumLabel('MatchStatus', status as MatchStatus) },
       },
-      cell: ({ getValue }) => <StatusBadge tone={MATCH_STATUS_TONE[getValue()]}>{MATCH_STATUS_LABEL[getValue()]}</StatusBadge>,
+      cell: ({ getValue }) => <StatusBadge tone={MATCH_STATUS_TONE[getValue()]}>{enumLabel('MatchStatus', getValue())}</StatusBadge>,
     }),
     columnHelper.accessor('score', {
       header: 'Score',

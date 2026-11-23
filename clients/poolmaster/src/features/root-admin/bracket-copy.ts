@@ -1,17 +1,15 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { isMatchUnplayed, MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
 
 /**
- * How a match that stopped early is marked beside its result (#704): "ret.", "w/o", "def.", as
- * tennis writes them. The marks belong to the ending, not the sport. A played match has none.
+ * How a match that stopped early is marked beside its result (#704): the ending's short display
+ * string, "ret.", "w/o", "def.". The marks belong to the ending, not the sport. A played match has none.
  */
-export const MATCH_ENDING_MARK: Readonly<Record<MatchEnding, string | null>> = {
-  [MatchEnding.PLAYED]: null,
-  [MatchEnding.RETIREMENT]: 'ret.',
-  [MatchEnding.WALKOVER]: 'w/o',
-  [MatchEnding.DEFAULT]: 'def.',
-};
+export function matchEndingMark(ending: MatchEnding): string | null {
+  return ending === MatchEnding.PLAYED ? null : enumLabel('MatchEnding', ending, { form: 'short' });
+}
 
 /** A field row as the bracket names it: "(1) Duke", or just the name when it has no seed. */
 export function describeEntry(entry: SportEventParticipantDto): string {

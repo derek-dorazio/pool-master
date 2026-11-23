@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { ProviderSyncKind } from '@poolmaster/shared/domain';
 import {
   Button,
@@ -13,7 +14,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { LEAGUE_SYNC_NAMES, lastRunText, nextRunText } from './league-syncs-text';
+import { lastRunText, nextRunText } from './league-syncs-text';
 import { SyncHealthChip } from './sync-health-chip';
 import { useSportLeagueSyncsQuery } from './use-sport-league-page';
 
@@ -68,7 +69,7 @@ export function LeagueSyncsCard({ isSynced, sportLeagueId }: { isSynced: boolean
                 aside={<SyncHealthChip health={sync.health} />}
                 facts={lastRunText(sync, preferences)}
                 key={sync.kind}
-                name={LEAGUE_SYNC_NAMES[sync.kind]}
+                name={enumLabel('ProviderSyncKind', sync.kind)}
                 note={nextRunText(sync, preferences)}
                 testId={`root-admin-league-sync-${sync.kind}`}
               />

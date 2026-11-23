@@ -7,7 +7,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, formsNoBracket, matchEndingMark, sideEntry } from './bracket-copy';
 import type { BracketContext } from './bracket-match-write';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -44,7 +44,7 @@ export function MatchScoresRow({
     : null;
   // A result entered with the winner buttons alone has a winner but no final score.
   const winnerOnly = match.status === MatchStatus.COMPLETED && final === null;
-  const endingMark = match.status === MatchStatus.COMPLETED ? MATCH_ENDING_MARK[match.ending] : null;
+  const endingMark = match.status === MatchStatus.COMPLETED ? matchEndingMark(match.ending) : null;
   const shootout: ShootoutScore | null = final && match.homeShootoutScore !== null && match.awayShootoutScore !== null
     ? { homeShootoutScore: match.homeShootoutScore, awayShootoutScore: match.awayShootoutScore }
     : null;

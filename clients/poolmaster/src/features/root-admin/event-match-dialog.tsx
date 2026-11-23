@@ -1,4 +1,4 @@
-import { displayString } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import { MatchStatus } from '@poolmaster/shared/domain';
 import {
   DetailEditModal,
@@ -6,8 +6,7 @@ import {
   useDisplayPreferences,
   type Fact,
 } from '@/features/shared/ui';
-import { MATCH_RESULT_SOURCE_LABELS, type EventMatchRow } from './event-match-rows';
-import { MATCH_STATUS_LABEL } from './match-status';
+import { type EventMatchRow } from './event-match-rows';
 import { useSettleAgain } from './use-settle-again';
 
 /**
@@ -39,7 +38,7 @@ export function EventMatchDialog({
     {
       id: 'status',
       label: 'Status',
-      value: MATCH_STATUS_LABEL[row.status],
+      value: enumLabel('MatchStatus', row.status),
       testId: `${testId}-status`,
     },
     { id: 'score', label: 'Score', value: row.score ?? 'None yet', testId: `${testId}-score` },
@@ -53,7 +52,7 @@ export function EventMatchDialog({
       id: 'source',
       label: 'Result from',
       value:
-        row.resultSource === null ? 'No result yet' : MATCH_RESULT_SOURCE_LABELS[row.resultSource],
+        row.resultSource === null ? 'No result yet' : enumLabel('MatchResultSource', row.resultSource),
       testId: `${testId}-source`,
     },
     {
