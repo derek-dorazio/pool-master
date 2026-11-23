@@ -240,10 +240,14 @@ sport and every sport league. Never plan, ticket or build something for a single
 league: no "NBA-only" path, no "golf for now, the rest later", no flag or table that only one
 league fills in.
 
-- **More than one global path is fine.** Synced leagues and unsynced leagues are two
-  workflows, and each serves every league in its group. What a path is chosen by is a
-  property any league can have (a provider, a scoring family, a participant type), never a
-  league's or sport's name.
+- **Every active league is provider-synced; a league with no feed stays off.** There is no
+  admin-authored path for a live league: its Seasons, events, fields and results come from
+  its provider (`docs/adr/0012-season-phase-slot-model-contests-cover-slots.md`). Admin edits
+  correct a feed's mistake; they do not stand in for a missing feed. Seeded test data on QA
+  is not a second path.
+- **More than one global path is fine** where a property any league can have chooses it (a
+  provider, a scoring family, a participant type, a match format), never a league's or
+  sport's name. Each path serves every league that has the property.
 - **A sport's real difference lives in its data or its adapter**, behind the shared seam: the
   sport definition and scoring family (`architecture-rules.md` §4 *Sport extension*), a
   provider adapter's reads, a profile or setup row. The flow around it stays one flow.

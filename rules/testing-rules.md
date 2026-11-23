@@ -1190,6 +1190,13 @@ timing them, so it catches the per-row read at any data size.
   breaks the pin. The helper refuses a response showing fewer than two of the items that could each
   cost a query, since one item costs the same either way. Never use it for a list a user or a sync
   can grow.
+- **The event leaderboard is also pinned at full size.** Twenty rows hide reads that cost per
+  round or per side, and a real field is far larger than twenty. The one event leaderboard
+  read and its score write are pinned at the largest realistic field, today a 150-competitor,
+  4-round `FIELD` event (a golf tournament), to an exact statement count: the standings come
+  from one query and every round's Game side scores from one event-wide query, and a score
+  update is a batch upsert, not a write per competitor. It lands with the slice that builds the
+  read on Game sides and Standing.
 - **Seed the rows that could each cost a query:** the teams of a team list, the years of a history,
   the contests of a cup, and each parent of the row (give each contest its own event, so a read per
   event shows too). The helper refuses a case whose larger seed the response does not show, or whose

@@ -13,6 +13,10 @@ Fields are
 
 ## 1. The Entity Chain
 
+> **Being replaced.** The sport half of this chain (`EventSeries`, `SportEvent` by `eventYear`, `ContestSportEvent`, `SportEventMatch` with home and away sides, a bracket's `startsAtRound`, `winnerSide` and the home/away shoot-out scores, squares on one match) describes today's schema. The target model, which new code is designed toward, is §5
+> *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
+> slices of #1917 replace them, and this file is rewritten for the new model when they land.
+
 The model has two halves that meet at exactly one point, the pick.
 
 ```
@@ -157,6 +161,10 @@ a Team On Screen*.
 
 ### The sport side
 
+> **Being replaced.** Stale against the target model: `SportLeague`'s `roundNames` and `bracketAdvancement`; `TierProfile` and `PricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `EventSeries` (removed); `SportEvent` as an edition in an `eventYear` (it sits in a Season); `SportEventRound` and the golfer's `SportEventParticipantRound`; `Participant`'s Clutch Card league players; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game sides). The target model, which new code is designed toward, is §5
+> *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
+> slices of #1917 replace them, and this file is rewritten for the new model when they land.
+
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
 | `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball, soccer and tennis, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
@@ -185,6 +193,10 @@ and a record made with it (an event's tiers and prices) keeps the values it was 
 Rules that are not choices (the small-field even split) stay in code, not in a definition.
 
 ### Contests and entries
+
+> **Being replaced.** Stale against the target model: `Contest` covering events and `ContestSportEvent` (a contest covers Season slots through `ContestSeasonSlot`). The target model, which new code is designed toward, is §5
+> *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
+> slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
@@ -306,6 +318,10 @@ squad membership are one unit*. What follows is what it means for the product.
 What the phrases people use mean in the model. Status names are the enum values; the
 operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 
+> **Being replaced.** Stale against the target model: **release an event** (judged on the event's next unstarted slot), **add events** (a contest's coverage comes from its template's slots), **start** and **settle** (per covered slot, not per event), **score a round** and **correct a score** (Game sides), **sync** (every active league is synced; status comes from the feed's Games), **cancel** and **postpone a game** (a Game's status from the feed; a moved game moves to its slot and voids its picks). The target model, which new code is designed toward, is §5
+> *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
+> slices of #1917 replace them, and this file is rewritten for the new model when they land.
+
 | Phrase | What happens in the model |
 |---|---|
 | **create a league** | Writes the `League`, a `COMMISSIONER` `LeagueMembership` for the creator, and the creator's first `Squad`, in one request. The commissioner membership is the only record of who runs the league |
@@ -343,3 +359,94 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
   events is completed or cancelled. A contest whose events are all cancelled ends `COMPLETED`
   with no scores.
 - **A league has no join policy.** Every join is through an invitation.
+
+---
+
+## 5. The Target Model
+
+The league model redesign (ADR 0012, epic #1917) replaces the sport half of §1 and §2. New
+code, and any change to the code it replaces, is designed toward this model; the stale rows
+above are flagged until they go. Exact columns are `schema.prisma` once each slice lands.
+
+### Two sentences everything follows from
+
+- **The event side mirrors the real world as the feeds report it, and stores each real thing
+  once.** A real game is one Game row, its box score is one set of stat rows, and its status,
+  scores and positions come from the feed
+  ([domain-model-conventions-rules.md](domain-model-conventions-rules.md) §17 *One
+  computation per fact*).
+- **Contests cover Season slots, and hold no team, player or match data.** A contest holds its
+  covered slots, its setup, its picks (foreign keys to field rows and match sides) and its
+  standings. Everything it shows about the sport is read from the event side.
+
+### The chain
+
+```
+Definitions (timeless, per league, set by migration)
+SportLeague
+ ├─→ SportLeagueConference ─→ SportLeagueConferenceDivision
+ ├─→ SportLeaguePhase          (PRESEASON | REGULAR | POSTSEASON; synced or not)
+ │     └─→ SportLeaguePhaseSlot (a key, a kind, an optional proper name: WEEK 14, FINAL, a tournament)
+ └─→ SportLeaguePosition       (QB, RB...; field eligibility)
+
+Calendar (one real Season)
+SportLeagueSeason ─→ SportLeagueSeasonPhase ─→ SportLeagueSeasonPhaseSlot (dates, status, series format)
+ ├─→ SportLeagueSeasonParticipantTeam (roster row: one per Season and player; team, position, rating)
+ └─→ SportLeagueSeasonTeamConference  (one per Season and team: its conference, and division if any)
+
+Events (what the feed reports)
+SportEvent (in one Season) ─→ SportEventSlot ─→ SportLeagueSeasonPhaseSlot   (a slot has at most one event)
+ ├─→ SportEventParticipant     (the field: its competitors, teams or players; in a team league
+ │                               offering Clutch Cards, also the teams' eligible players)
+ └─→ SportEventRound           (a scoring unit on one of its event's slots; HEAD_TO_HEAD | FIELD)
+       └─→ SportEventRoundMatch          (any meeting of 2 or more sides; a best-of series is one Match)
+             ├─→ SportEventRoundMatchSide (a field row, or empty until known)
+             └─→ SportEventRoundMatchGame (one game played)
+                   ├─→ …GameSide ─→ …GameSidePeriodScore
+                   ├─→ …GamePlayerStat   (raw box score)
+                   └─→ …GamePlayerScore  (computed composite)
+SportEventParticipantStanding  (the event result per field row)
+
+Contests
+Contest ─→ ContestSeasonSlot ─→ SportLeagueSeasonPhaseSlot   (the only record of what it covers)
+```
+
+Platform settings a league picks are `Platform…Profile` tables (tiers, pricing, rating,
+scoring). Every provider id lives in a `…ProviderMapping` table; `Provider` and
+`ProviderLeague` are tables, and `ProviderSyncFinding` records what the sync could not place.
+
+### Vocabulary
+
+| Model | What it is | Not to be confused with |
+|---|---|---|
+| Phase | One part of a league's year: preseason, regular season or postseason. A phase that is not synced gets no slots or events | A Round, which is a scoring unit inside an event |
+| Slot | One position in a phase, found by its key: a week, a playoff round, a recurring tournament. The definition is timeless; the Season slot is the real one with dates and a status | `ContestEntryPick.lineupSlot`, a pick's place in a lineup |
+| Season | One real season of a league, with its own date span. The current Season follows one global rule from the dates | A calendar year |
+| Event | A real-world event in one Season, covering one or more of its slots (a week of games, a tournament, a whole postseason) | A Slot: an event can span several |
+| Round | A scoring unit of an event, on one of its slots, played head to head or as a field | A slot (a tournament's four rounds are all on one slot) |
+| Match | Any meeting of two or more sides in a round: two teams, two players or a whole field. A best-of series is one Match | A Game |
+| Match side | One side of a Match: its field row (empty until known), side number, home/away, seed, spread, and its rolled-up outcome. Pick'em and bracket picks point here | A Game side |
+| Game | One game played in a Match, with its date, status and each side's result | A Match, which may hold several Games |
+| Game side | A side's result in one Game: score, position, periods completed, status | The event result, which is the Standing |
+| Roster row | A player's team, position and rating in one Season | The event field row, which is the player in one event |
+| Conference, division | A league's grouping of its teams, defined once per league by migration; each Season places every team in a conference and, where the league has them, a division. Each has its own provider mapping | A Phase or a bracket region |
+| Covered slots | The Season slots a contest is played on, copied from its template when the contest is made | The contest's events, which are read through each slot's event |
+
+### Verbs
+
+- **Sync** creates a league's Seasons, its events for the slots its templates cover, their
+  fields, rounds, matches and games, and keeps them current. Every active league is synced.
+- **Status bubbles up**: a Game's status comes from the feed; a Match's from its Games; a
+  slot's from its Matches (one rule per scoring family); an event's from its slots. A
+  COMPLETED slot is final.
+- **Release** is per event, judged on its next slot that has not started.
+- **Settle** runs per contest when every covered slot is COMPLETED.
+
+### Deferred concepts
+
+Shapes agreed so that later work uses them, but not built now:
+
+- **Team-cup lineups** (`…GameSidePlayer`): which players played for a side in one Game, such
+  as a team match-play pairing. Built when match play is synced.
+- **Injuries** (#1934): a player's availability. Until then injured and reserve players stay
+  pickable.
