@@ -249,18 +249,6 @@ export function resolveDefaultLeagueCode(leagues: LeagueDto[]) {
     })[0]?.leagueCode ?? null;
 }
 
-export function getLeagueInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) {
-    return 'LG';
-  }
-
-  return parts
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join('');
-}
-
 function getLeagueCreatedAtTime(league: LeagueDto) {
   return league.createdAt ? Date.parse(league.createdAt) : 0;
 }

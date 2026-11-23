@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
@@ -32,27 +33,14 @@ export const tennisSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // A tennis match always has a winner: no level score to settle.
-  shootout: null,
+  shootout: false,
   composite: null,
-  vocabulary: {
-    participant: { one: 'player', many: 'players' },
-    event: { one: 'draw', many: 'draws' },
-    sportLeague: { one: 'tour', many: 'tours' },
-    round: { one: 'round', many: 'rounds' },
-    eliminated: 'Out',
-    withdrawn: 'Withdrawn',
-    eventStart: 'first match',
-    match: { one: 'match', many: 'matches' },
-    tie: 'Tie',
-    playInPlace: 'qualifier',
-    scoreUnit: 'sets',
-  },
   // A Slam's seven rounds read First round to Fourth round, then Quarterfinals, Semifinals,
   // Final; a 64 draw's six the same, with no Fourth round.
-  roundLabel: (roundNumber, roundCount) => {
+  roundLabel: (roundNumber, roundCount, locale) => {
     const fromFinal = roundCount - roundNumber;
-    if (fromFinal < 0) return `Round ${roundNumber}`;
+    if (fromFinal < 0) return displayString('word.roundNumber', { n: roundNumber }, locale);
     const name = fromFinal < LAST_ROUND_NAMES.length ? LAST_ROUND_NAMES[fromFinal] : EARLY_ROUND_NAMES.at(roundNumber - 1);
-    return name ?? `Round ${roundNumber}`;
+    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
   },
 };

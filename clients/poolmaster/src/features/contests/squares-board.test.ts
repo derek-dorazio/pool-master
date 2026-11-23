@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { describe, expect, it } from 'vitest';
 import {
   formatClaimedCount,
@@ -24,6 +25,21 @@ describe('squares board helpers', () => {
     expect([1, 2, 3, 4].map((period) => squaresMomentTag(period, 'QUARTERS'))).toEqual(['Q1', 'Q2', 'Q3', 'Final']);
     expect([1, 2].map((period) => squaresMomentTag(period, 'HALVES'))).toEqual(['H1', 'Final']);
     expect([1, 2, 3].map((period) => squaresMomentTag(period, 'THREE_PERIODS'))).toEqual(['P1', 'P2', 'Final']);
+  });
+
+  it('reads every period tag from the display strings\' short forms, and the last period\'s from its name unless asked for its short form', () => {
+    const short = { form: 'short' } as const;
+    expect([1, 2, 3, 4].map((period) => squaresMomentTag(period, 'QUARTERS'))).toEqual([
+      displayString('word.quarterNumber', { n: 1 }, undefined, short),
+      displayString('word.quarterNumber', { n: 2 }, undefined, short),
+      displayString('word.quarterNumber', { n: 3 }, undefined, short),
+      displayString('word.finalPeriod'),
+    ]);
+    expect(squaresMomentTag(1, 'HALVES')).toBe(displayString('word.halfNumber', { n: 1 }, undefined, short));
+    expect(squaresMomentTag(2, 'THREE_PERIODS')).toBe(displayString('word.periodNumber', { n: 2 }, undefined, short));
+    expect(squaresMomentTag(4, 'QUARTERS', 'short')).toBe(displayString('word.finalPeriod', undefined, undefined, short));
+    expect(squaresMomentTag(4, 'QUARTERS', 'short')).toBe('F');
+    expect(squaresMomentTag(2, 'QUARTERS', 'short')).toBe('Q2');
   });
 
   it('lists every scoring moment in order with its winner once scored and none before', () => {

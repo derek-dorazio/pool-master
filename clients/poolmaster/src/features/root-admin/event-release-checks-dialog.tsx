@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { blocksManualRelease } from '@poolmaster/shared/domain';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
@@ -92,7 +93,7 @@ export function EventReleaseChecksDialog({
           </SectionRows>
         )}
         details={[
-          { id: 'mode', label: 'Release mode', value: overview === undefined ? '…' : overview.releaseMode === 'AUTO' ? 'Automatic' : 'Manual' },
+          { id: 'mode', label: 'Release mode', value: overview === undefined ? '…' : enumLabel('SportEventReleaseMode', overview.releaseMode) },
           { id: 'tries', label: 'Tries', value: releaseTriesText(overview, preferences) },
           {
             id: 'lastTry',

@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { assertNever, type Sport } from '@poolmaster/shared/domain';
 import {
   Button,
@@ -11,7 +12,7 @@ import {
 } from '@/features/shared/ui';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { buildSportEventPath } from './manage-navigation';
-import { overdueLateness, RELEASE_CHECK_LABELS, SPORT_LEAGUE_ISSUE_LABELS, SYNC_KIND_LABELS } from './sport-league-overview-text';
+import { overdueLateness, RELEASE_CHECK_LABELS, syncFailedText } from './sport-league-overview-text';
 
 import type { SportLeagueIssue } from './sport-league-overview-text';
 
@@ -36,11 +37,11 @@ export function SportLeagueIssueChips({
         <DetailsPeek
           icon={(
             <Chip data-testid={`root-admin-sports-issue-${overview.id}-${issue.type}`} tone="danger">
-              {`${SPORT_LEAGUE_ISSUE_LABELS[issue.type]} ${String(issue.count)}`}
+              {`${enumLabel('SportLeagueIssueType', issue.type)} ${String(issue.count)}`}
             </Chip>
           )}
           key={issue.type}
-          label={`${overview.name}: ${SPORT_LEAGUE_ISSUE_LABELS[issue.type]} issues`}
+          label={`${overview.name}: ${enumLabel('SportLeagueIssueType', issue.type)} issues`}
           testId={`root-admin-sports-issue-${overview.id}-${issue.type}-popover`}
           trigger="cell"
         >
@@ -72,7 +73,7 @@ function IssueItems({ issue, onOpenSyncRun, sport }: { issue: SportLeagueIssue; 
               )}
               facts={`${when(item.occurredAt)} · ${item.label}`}
               key={item.target.id}
-              name={`${SYNC_KIND_LABELS[item.syncKind]} failed`}
+              name={syncFailedText(item.syncKind)}
             />
           ))}
         </SectionRows>

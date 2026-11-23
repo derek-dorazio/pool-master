@@ -8,6 +8,7 @@
  * module, or a key a module lacks, falls back to `en-US`.
  */
 import { createInstance, type i18n } from 'i18next';
+import type { Sport } from '../domain/enums';
 import type { ApiErrorCode } from '../dto/api-error-codes';
 import type {
   DisplayEntry,
@@ -17,6 +18,7 @@ import type {
 } from './display-strings-module';
 import type { enUS } from './en-US';
 import { DISPLAY_STRING_MODULES, SOURCE_LOCALE } from './languages';
+import { isSportNounRole, type OptionalSportWordRole, type SportNounRole, type SportWordRole } from './sport-word-roles';
 
 const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
 type PluralBase<K extends string> = K extends `${infer Base}_${'zero' | 'one' | 'two' | 'few' | 'many' | 'other'}` ? Base : K;
@@ -39,12 +41,61 @@ export type DisplayStringKey = KeysBySection[keyof KeysBySection];
 /** Values a string's placeholders take: `{ n: 3 }` for "Week {{n}}", `{ count }` for a plural. */
 export type DisplayStringValues = Readonly<Record<string, string | number>>;
 
+type PluralSuffix = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+/** The placeholder names in a string: `'n'` for "Week {{n}}". */
+type Placeholders<S> = S extends `${string}{{${infer Name}}}${infer Rest}` ? Name | Placeholders<Rest> : never;
+/** The strings an entry can read as: its name and its short form. */
+type EntryText<E> = E extends string ? E : E extends { readonly name: infer Name; readonly short: infer Short } ? Name | Short : never;
+/** The entries a base key reads in one section: itself, or its plural forms. */
+type SectionEntries<Section, Base extends string> = Section[Extract<keyof Section, Base | `${Base}_${PluralSuffix}`>];
+/** Whether a base key is a plural, so its lookup takes a `count`. */
+type IsPlural<Section, Base extends string> = [Extract<keyof Section, `${Base}_${PluralSuffix}`>] extends [never] ? false : true;
+type ValuesIn<Section, Base extends string> = { readonly [P in Placeholders<EntryText<SectionEntries<Section, Base>>>]: string | number }
+  & (IsPlural<Section, Base> extends true ? { readonly count: number } : unknown);
+
+/**
+ * The values one key's placeholders take, read off the en-US words (#1960): `{ n: number }` for
+ * `word.weekNumber` ("Week {{n}}"), `{ count: number }` for a plural; nothing for a key without
+ * placeholders. A missing or misspelt value fails the type check.
+ */
+export type DisplayStringValuesFor<K extends DisplayStringKey> = K extends `word.${infer Base}`
+  ? ValuesIn<typeof enUS.word, Base>
+  : K extends `sport.${infer S}.${infer Base}`
+    ? S extends keyof SportWords ? ValuesIn<SportWords[S], Base> : never
+    : unknown;
+
+/** `displayString`'s arguments after the key: values required exactly when the key has placeholders. */
+export type DisplayStringArgs<K extends DisplayStringKey> = keyof DisplayStringValuesFor<K> extends never
+  ? [values?: undefined, locale?: string | null, options?: DisplayStringOptions]
+  : [values: DisplayStringValuesFor<K>, locale?: string | null, options?: DisplayStringOptions];
+
 /** Which form of an entry to show: its name, or its short form, which falls back to the name. */
 export type DisplayForm = 'name' | 'short';
 
 export type DisplayStringOptions = { readonly form?: DisplayForm };
 
 export type EnumLabelOptions = { readonly form?: DisplayForm; readonly locale?: string };
+
+/**
+ * Words a definition reads from another role of its sport (#1960): a championship stat pool's
+ * competitors are players and its rounds games, whatever its sport calls them. Noun for noun.
+ */
+export type SportWordOverrides = { readonly [R in SportNounRole]?: SportNounRole };
+
+/**
+ * Whose words to read: a sport, a sport league definition with the roles it reads elsewhere, or
+ * null for the generic words (a contest that names no sport).
+ */
+export type SportWordSource = Sport | { readonly sport: Sport; readonly wordOverrides?: SportWordOverrides } | null;
+
+/** A sport word lookup's options: `count` picks a noun's plural form (1 when left out). */
+export type SportWordOptions = { readonly count?: number; readonly form?: DisplayForm; readonly locale?: string | null };
+
+/** What a sport word lookup gives: every generic role has a word; an optional role may have none. */
+export type SportWordResult<R extends SportWordRole> = R extends OptionalSportWordRole ? string | undefined : string;
+
+/** A sport word lookup, typed by role. */
+export type SportWordLookup = <R extends SportWordRole>(source: SportWordSource, role: R, options?: SportWordOptions) => SportWordResult<R>;
 
 /**
  * A module as flat i18next keys: `enum.ContestStatus.LIVE` for an entry's name and
@@ -79,13 +130,9 @@ export function pluralBaseKey(key: string): string {
 export type DisplayStrings = {
   /** The locale tag of the module a locale reads: `en-GB` → `en-US`; unknown → `en-US`. */
   readonly moduleLocaleFor: (locale?: string | null) => string;
-  readonly displayString: (
-    key: DisplayStringKey,
-    values?: DisplayStringValues,
-    locale?: string | null,
-    options?: DisplayStringOptions,
-  ) => string;
+  readonly displayString: <K extends DisplayStringKey>(key: K, ...args: DisplayStringArgs<K>) => string;
   readonly enumLabel: <E extends SharedEnumName>(enumName: E, code: SharedEnums[E], options?: EnumLabelOptions) => string;
+  readonly sportWord: SportWordLookup;
 };
 
 /**
@@ -129,10 +176,31 @@ export function createDisplayStrings(modules: Readonly<Record<string, DisplayStr
     return instance.t(wanted, { ...values, lng });
   };
 
+  /** Whether a module holds a key, as itself or in a plural form. */
+  const holds = (lng: string, key: string): boolean =>
+    instance.getResource(lng, 'translation', key) !== undefined || instance.getResource(lng, 'translation', `${key}_other`) !== undefined;
+
+  /**
+   * A sport word (#1960): the sport's own `sport.<SPORT>.<role>`, else the generic `word.<role>`,
+   * else none. A definition's override reads another role in its place.
+   */
+  const sportWord = ((source: SportWordSource, role: SportWordRole, options?: SportWordOptions): string | undefined => {
+    const sport = typeof source === 'string' || source === null ? source : source.sport;
+    const overrides = typeof source === 'string' || source === null ? undefined : source.wordOverrides;
+    const read = isSportNounRole(role) ? overrides?.[role] ?? role : role;
+    const lng = moduleLocaleFor(options?.locale);
+    const candidates = sport === null ? [`word.${read}`] : [`sport.${sport}.${read}`, `word.${read}`];
+    const key = candidates.find((candidate) => holds(lng, candidate) || holds(SOURCE_LOCALE, candidate));
+    if (key === undefined) return undefined;
+    const values = isSportNounRole(read) ? { count: options?.count ?? 1 } : undefined;
+    return lookup(key, values, options?.locale, options?.form);
+  }) as SportWordLookup;
+
   return {
     moduleLocaleFor,
-    displayString: (key, values, locale, options) => lookup(key, values, locale, options?.form),
+    displayString: (key, ...[values, locale, options]) => lookup(key, values as DisplayStringValues | undefined, locale, options?.form),
     enumLabel: (enumName, code, options) => lookup(`enum.${enumName}.${code}`, undefined, options?.locale, options?.form),
+    sportWord,
   };
 }
 
@@ -140,17 +208,21 @@ const appDisplayStrings = createDisplayStrings(DISPLAY_STRING_MODULES);
 
 /**
  * The words for a key, in the reader's language: `displayString('error.CONTEST_FULL')`,
- * `displayString('word.roundCount', { count: 3 }, user.locale)`. `form: 'short'` gives the
+ * `displayString('word.weekNumber', { n: 3 }, user.locale)`. `form: 'short'` gives the
  * entry's short form, or its name when it has none.
  */
-export function displayString(
-  key: DisplayStringKey,
-  values?: DisplayStringValues,
-  locale?: string | null,
-  options?: DisplayStringOptions,
-): string {
-  return appDisplayStrings.displayString(key, values, locale, options);
+export function displayString<K extends DisplayStringKey>(key: K, ...args: DisplayStringArgs<K>): string {
+  return appDisplayStrings.displayString(key, ...args);
 }
+
+/**
+ * What a sport's audience calls a role, in the reader's language (#1960):
+ * `sportWord(Sport.GOLF, 'participant', { count: 2 })` is "golfers". A sport with no word of its
+ * own reads the generic one (`word.participant`); an optional role (`rider`) may have none, and
+ * reads undefined. Pass a sport league definition to read its overrides (a stat pool's players).
+ */
+export const sportWord: SportWordLookup = ((source: SportWordSource, role: SportWordRole, options?: SportWordOptions) =>
+  appDisplayStrings.sportWord(source, role, options)) as SportWordLookup;
 
 /**
  * The words for one value of a shared enum: `enumLabel('ContestStatus', ContestStatus.LIVE)`.

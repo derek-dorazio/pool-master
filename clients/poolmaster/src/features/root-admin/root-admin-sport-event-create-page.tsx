@@ -1,3 +1,4 @@
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
@@ -30,7 +31,7 @@ export function RootAdminSportEventCreatePage() {
   const [selection, setSelection] = useState<Partial<SportEventEdition>>({});
 
   const { sport, definition } = useManagedSport();
-  const { event, sportLeague: sportLeagueNoun } = definition.vocabulary;
+  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(definition);
   const sportName = definition.name.toLowerCase();
   const sportLeaguesQuery = useSportLeaguesQuery(sport);
 

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MatchEnding, getSportDefinition, Sport } from '@poolmaster/shared/domain';
+import { getSportDefinition, MatchEnding, Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { BracketContext } from './bracket-match-write';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
@@ -52,12 +52,12 @@ export function bracketContext({
   const definition = getSportDefinition(sport);
   return {
     eventId: 'evt-1',
-    vocabulary: definition.vocabulary,
+    vocabulary: sportVocabulary(definition),
     bracket,
     field,
     fieldById: new Map(field.map((entry) => [entry.id, entry])),
     spreads: false,
-    shootout: definition.shootout,
+    shootout: definition.shootout ? sportVocabulary(definition).shootout ?? null : null,
     feedName: 'BALLDONTLIE',
   };
 }

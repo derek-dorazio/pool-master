@@ -1,16 +1,22 @@
-import { PickEmMode, SelectionType, Sport, getSportDefinition,
+import {
   describeSurvivorRules,
   formatBracketStartLabel,
   formatContestRules,
   formatEntriesPerTeam,
   formatEntriesPerTeamSentence,
   formatSelectionTypeName,
-  suggestContestName } from '@poolmaster/shared/domain';
+  getSportDefinition,
+  PickEmMode,
+  SelectionType,
+  Sport,
+  sportVocabulary,
+  suggestContestName,
+} from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONTEST_RULES, parseContestRules, toContestRulesValues } from './contest-rules-form';
 
-const GOLFER = getSportDefinition(Sport.GOLF).vocabulary.participant;
-const HORSE = getSportDefinition(Sport.HORSE_RACING).vocabulary.participant;
+const GOLFER = sportVocabulary(Sport.GOLF).participant;
+const HORSE = sportVocabulary(Sport.HORSE_RACING).participant;
 
 describe('contest rules sentence', () => {
   it('names the picks in the event sport\'s words, so a horse racing contest reads horses, not golfers', () => {
@@ -133,7 +139,7 @@ describe('contest rules form', () => {
 });
 
 describe('pick\'em rules', () => {
-  const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
+  const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
 
   it('names pick\'em in product words', () => {
     expect(formatSelectionTypeName(SelectionType.PICK_EM)).toBe('Pick’em');
@@ -177,7 +183,7 @@ describe('pick\'em rules', () => {
 });
 
 describe('survivor rules', () => {
-  const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
+  const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
 
   it('names survivor and reads its rules as one winner a week, each team once until all are picked (unless set otherwise), out after a loss', () => {
     expect(formatSelectionTypeName(SelectionType.SURVIVOR)).toBe('Survivor');
@@ -223,7 +229,7 @@ describe('survivor rules', () => {
 });
 
 describe('squares rules', () => {
-  const TEAM = getSportDefinition(Sport.AMERICAN_FOOTBALL).vocabulary.participant;
+  const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
 
   it('names squares and its suggested name, and reads its rules as boxes on a grid won by last digits', () => {
     expect(formatSelectionTypeName(SelectionType.SQUARES)).toBe('Squares');
@@ -244,7 +250,7 @@ describe('squares rules', () => {
 });
 
 describe('bracket rules', () => {
-  const TEAM = getSportDefinition(Sport.BASKETBALL).vocabulary.participant;
+  const TEAM = sportVocabulary(Sport.BASKETBALL).participant;
   const MARCH_MADNESS_ROUND = (roundNumber: number) => getSportDefinition(Sport.BASKETBALL).roundLabel(roundNumber, 6);
 
   it('names a full bracket contest Bracket and reads its rules as every game picked to the final before the first game', () => {

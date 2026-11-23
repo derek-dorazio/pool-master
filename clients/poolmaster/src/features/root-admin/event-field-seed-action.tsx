@@ -1,4 +1,4 @@
-import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shared/domain';
+import { type Sport, type SportNoun, sportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { seedEventParticipants } from '@/lib/api';
 import { Notice, Button, ConfirmDialog } from '@/features/shared/ui';
@@ -23,7 +23,7 @@ export function EventFieldSeedAction({ eventId, sport, sportLeague }: {
   /** What the event's sport league is called (#834), for the copy. */
   sportLeague: SportNoun;
 }) {
-  const { event, participant } = getSportDefinition(sport).vocabulary;
+  const { event, participant } = sportVocabulary(sport);
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-field-page',
   });

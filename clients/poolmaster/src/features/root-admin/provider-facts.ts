@@ -4,13 +4,6 @@ import { plural } from '@/lib/plural';
 
 export type ProviderStatus = ProviderSummaryDto['status'];
 
-/** A provider's live check in a word: Up, Slow or Down. */
-export const PROVIDER_STATUS_LABELS: Record<ProviderStatus, string> = {
-  HEALTHY: 'Up',
-  DEGRADED: 'Slow',
-  DOWN: 'Down',
-};
-
 export const PROVIDER_STATUS_TONES: Record<ProviderStatus, ChipProps['tone']> = {
   HEALTHY: 'success',
   DEGRADED: 'warning',

@@ -1,10 +1,10 @@
-import { MatchSide, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchSide, type SportMatchPeriods, type SportVocabulary } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { describeEntry, feederOf, matchNoun, sideEntry } from './bracket-copy';
+import { describeEntry, feederOf, sideEntry } from './bracket-copy';
 
 // What every bracket match editor shares: the bracket's context, how a side and a pairing read,
 // and one write to a match that refreshes the bracket and logs a refusal.
@@ -21,8 +21,8 @@ export type BracketContext = {
   spreads: boolean;
   /** The periods a game is scored by, for a sport that keeps a score at each period's end (#772). */
   periods?: SportMatchPeriods;
-  /** How a level bracket match is settled, for a sport that holds shoot-outs (#791); null otherwise. */
-  shootout: SportShootout | null;
+  /** What a level bracket match's shoot-out is called ("pens"), for a sport that holds shoot-outs (#791); null otherwise. */
+  shootout: string | null;
   /** The provider an event's synced results come from ("BALLDONTLIE"), named beside each of its results. */
   feedName: string;
 };
@@ -34,7 +34,7 @@ export function describeSide(match: SportEventMatchDto, side: MatchSide, context
     return describeEntry(entry);
   }
   const feeder = feederOf(match, side, context.bracket);
-  return feeder ? `Winner of ${matchNoun(context.vocabulary).one} ${feeder.matchNumber}` : 'To be decided';
+  return feeder ? `Winner of ${context.vocabulary.match.one} ${feeder.matchNumber}` : 'To be decided';
 }
 
 /** "Duke vs Vermont" on a neutral site, "Bills @ Chiefs" otherwise. */

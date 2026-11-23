@@ -6,6 +6,7 @@ import {
   assertNever,
   isMatchUnplayed, isSquaresRound, pluralize 
 } from '@poolmaster/shared/domain';
+import { displayString, type DisplayForm } from '@poolmaster/shared/display-strings';
 import type {
   SportEventMatchDto,
   SportEventParticipantDto,
@@ -37,26 +38,34 @@ export function winningPeriodsByPlace(winners: readonly SquaresWinnerDto[]): Rea
   return byPlace;
 }
 
-/** A period's short name, the letter the game's layout counts in and its number: Q2, H1, P3. */
-function periodShortName(periodNumber: number, layout: MatchPeriodLayout) {
+/** The word for a numbered period of the game's layout: Quarter 2, Half 1, Period 3. */
+function periodNumberKey(layout: MatchPeriodLayout): 'word.quarterNumber' | 'word.halfNumber' | 'word.periodNumber' {
   switch (layout) {
     case MatchPeriodLayout.QUARTERS:
-      return `Q${periodNumber}`;
+      return 'word.quarterNumber';
     case MatchPeriodLayout.HALVES:
-      return `H${periodNumber}`;
+      return 'word.halfNumber';
     case MatchPeriodLayout.THREE_PERIODS:
-      return `P${periodNumber}`;
+      return 'word.periodNumber';
     default:
       return assertNever(layout, 'match period layout');
   }
 }
 
+/** A period's short name, from the display strings: Q2, H1, P3. */
+function periodShortName(periodNumber: number, layout: MatchPeriodLayout) {
+  return displayString(periodNumberKey(layout), { n: periodNumber }, undefined, { form: 'short' });
+}
+
 /**
  * The tag a winning box wears on the board (#1758): the period it won by its short name (Q1, Q2,
- * Q3), and Final for the last, overtime included.
+ * Q3), and Final for the last, overtime included. `finalForm: 'short'` gives the last one's short
+ * form (F), for a box that wears several tags.
  */
-export function squaresMomentTag(periodNumber: number, layout: MatchPeriodLayout) {
-  return periodNumber >= MATCH_PERIOD_LAYOUTS[layout].count ? 'Final' : periodShortName(periodNumber, layout);
+export function squaresMomentTag(periodNumber: number, layout: MatchPeriodLayout, finalForm: DisplayForm = 'name') {
+  return periodNumber >= MATCH_PERIOD_LAYOUTS[layout].count
+    ? displayString('word.finalPeriod', undefined, undefined, { form: finalForm })
+    : periodShortName(periodNumber, layout);
 }
 
 /** "4 of 10 boxes": how many of the boxes it may claim an entry holds. */

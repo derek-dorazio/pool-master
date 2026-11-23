@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat, SportStat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
@@ -47,26 +48,15 @@ export const americanFootballSportDefinition: SportDefinition = {
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  shootout: null,
+  shootout: false,
   composite: americanFootballComposite,
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,
   pickEm: { tiePicks: false, againstTheSpread: true },
-  vocabulary: {
-    participant: { one: 'team', many: 'teams' },
-    event: { one: 'playoffs', many: 'playoffs' },
-    sportLeague: { one: 'league', many: 'leagues' },
-    round: { one: 'round', many: 'rounds' },
-    eliminated: 'Eliminated',
-    withdrawn: 'Withdrawn',
-    eventStart: 'first kickoff',
-    match: { one: 'game', many: 'games' },
-    tie: 'Tie',
-  },
   // A four-round bracket reads Wild Card, Divisional, Conference Championship, Super Bowl; a
   // shorter one keeps the names counted back from its final.
-  roundLabel: (roundNumber, roundCount) => {
+  roundLabel: (roundNumber, roundCount, locale) => {
     const fromFinal = roundCount - roundNumber;
     const name = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return name ?? `Round ${roundNumber}`;
+    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
   },
 };

@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useState } from 'react';
 import { TierProfileLastTierOrder, type TierProfileLastTier } from '@poolmaster/shared/domain';
@@ -8,7 +9,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { ProfileDeleteDialog } from './profile-delete-dialog';
 import { ProfileDialog, type ProfileDialogState } from './profile-dialog';
 import { TierProfileEditor } from './tier-profile-editor';
-import { describeLastTier, LAST_TIER_LABELS } from './tier-profile-format';
+import { describeLastTier } from './tier-profile-format';
 import { useTierProfilesQuery } from './use-profiles';
 
 const columnHelper = createColumnHelper<TierProfileDto>();
@@ -30,7 +31,7 @@ const columns = [
     header: 'Last tier',
     meta: {
       info: 'All remaining: the last tier takes everyone left. Capped: it takes at most the number shown, and anyone beyond is in no tier and can\'t be picked.',
-      type: { kind: 'enum', order: TierProfileLastTierOrder, label: (value) => LAST_TIER_LABELS[value as TierProfileLastTier] },
+      type: { kind: 'enum', order: TierProfileLastTierOrder, label: (value) => enumLabel('TierProfileLastTier', value as TierProfileLastTier) },
     },
     cell: ({ row }) => describeLastTier(row.original),
   }),

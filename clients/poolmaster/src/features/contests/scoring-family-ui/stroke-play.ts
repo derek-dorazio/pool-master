@@ -11,6 +11,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantStandingStatus,
 } from '@poolmaster/shared/domain';
+import { displayString } from '@poolmaster/shared/display-strings';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { resolveRoundNumbers } from '../contest-leaderboard-rounds';
 import type { LeaderboardDetailCell, ScoringFamilyUi } from './types';
@@ -77,7 +78,7 @@ export const strokePlayUi: ScoringFamilyUi = {
         { key: 'thru', label: 'Thr', width: 'minmax(40px,0.3fr)' },
         ...roundNumbers.map((roundNumber) => ({
           key: `round-${roundNumber}`,
-          label: `R${roundNumber}`,
+          label: displayString('word.roundNumber', { n: roundNumber }, undefined, { form: 'short' }),
           testId: `contest-leaderboard-round-header-${roundNumber}`,
           width: 'minmax(44px,0.3fr)',
         })),

@@ -5,7 +5,7 @@ import { displayString, type DisplayStringKey } from '@poolmaster/shared/display
  * The display-string key of each stat's count with its unit (#1958): "1 run", "15 pts". A
  * `Record` over the stats, so a new stat without its unit fails the type check.
  */
-const SPORT_STAT_UNIT_KEYS: Readonly<Record<SportStat, DisplayStringKey>> = {
+const SPORT_STAT_UNIT_KEYS: Readonly<Record<SportStat, Extract<DisplayStringKey, `word.statUnit${string}`>>> = {
   [SportStat.TOTAL_BASES]: 'word.statUnitTotalBases',
   [SportStat.RUNS]: 'word.statUnitRuns',
   [SportStat.RUNS_BATTED_IN]: 'word.statUnitRunsBattedIn',

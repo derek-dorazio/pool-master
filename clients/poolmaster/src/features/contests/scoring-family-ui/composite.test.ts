@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { displayString } from '@poolmaster/shared/display-strings';
 import { eventSportDefinition, ParticipantType, ScoringFamily, Sport, SportStat } from '@poolmaster/shared/domain';
 import type {
   ContestLeaderboardResponse,
@@ -117,6 +118,12 @@ describe('composite leaderboard', () => {
     const view = compositeUi.leaderboard(board, worldSeries);
 
     expect(view.detailColumns.map((column) => column.label)).toEqual(['G1', 'G3']);
+  });
+
+  it('reads each game column\'s heading from the display strings\' short form for a numbered game', () => {
+    const view = compositeUi.leaderboard(board, worldSeries);
+
+    expect(view.detailColumns.map((column) => column.label)).toEqual([1, 3].map((n) => displayString('word.gameNumber', { n }, undefined, { form: 'short' })));
   });
 
   it('shows a pick\'s points as its total and each game\'s composite in its column, DNP for a finished game the player missed', () => {

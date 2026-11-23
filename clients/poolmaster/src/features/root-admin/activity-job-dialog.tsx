@@ -1,11 +1,8 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { Button, DateDisplay, ReadOnlyDetailModal, StatusBadge } from '@/features/shared/ui';
 import type { ActivityJobDto } from '@/lib/api';
 import {
-  JOB_ERROR_TYPE_LABELS,
-  JOB_KIND_LABELS,
-  JOB_STATUS_LABELS,
   JOB_STATUS_TONES,
-  JOB_TYPE_LABELS,
   jobTitle,
   startedByText,
 } from './activity-labels';
@@ -61,16 +58,16 @@ export function ActivityJobDialog({
         </div>
       ) : undefined}
       details={[
-        { id: 'what', label: 'Kind · What', value: `${JOB_KIND_LABELS[job.kind]} · ${JOB_TYPE_LABELS[job.type]}` },
+        { id: 'what', label: 'Kind · What', value: `${enumLabel('BackgroundJobKind', job.kind)} · ${enumLabel('BackgroundJobType', job.type)}` },
         { id: 'scope', label: 'Sport league · Event', value: scope === '' ? NONE : scope },
-        { id: 'status', label: 'Status', value: <StatusBadge tone={JOB_STATUS_TONES[job.status]}>{JOB_STATUS_LABELS[job.status]}</StatusBadge> },
+        { id: 'status', label: 'Status', value: <StatusBadge tone={JOB_STATUS_TONES[job.status]}>{enumLabel('BackgroundJobStatus', job.status)}</StatusBadge> },
         { id: 'started-by', label: 'Started by', value: startedByText(job) },
         { id: 'queued', label: 'Queued', value: <DateDisplay value={job.createdAt} /> },
         { id: 'started', label: 'Started', value: job.startedAt === null ? NONE : <DateDisplay value={job.startedAt} /> },
         { id: 'finished', label: 'Finished', value: finished(job) },
         { id: 'tries', label: 'Tries', value: job.attempts },
         { id: 'changed', label: 'Changed', value: job.changedCount === null ? NONE : job.changedCount === 0 ? 'Nothing' : job.changedCount },
-        ...(job.errorType === null ? [] : [{ id: 'error', label: 'Error', value: JOB_ERROR_TYPE_LABELS[job.errorType] }]),
+        ...(job.errorType === null ? [] : [{ id: 'error', label: 'Error', value: enumLabel('JobErrorType', job.errorType) }]),
         ...(job.lastError === null ? [] : [{ id: 'message', label: 'Message', value: <span className="break-words">{job.lastError}</span> }]),
       ]}
       onCancel={onClose}

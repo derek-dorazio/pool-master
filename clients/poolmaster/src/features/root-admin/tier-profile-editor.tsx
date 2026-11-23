@@ -10,7 +10,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { clearsSaveError } from './clears-save-error';
 import type { ProfileEditorProps } from './profile-dialog';
 import { ProfileFormModal } from './profile-form-modal';
-import { LAST_TIER_LABELS } from './tier-profile-format';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 
 const { shape } = TierProfileWriteRequestSchema;
 const countRange = (min: number, max: number) => `From ${min} to ${max}.`;
@@ -102,7 +102,7 @@ export function TierProfileEditor(dialog: ProfileEditorProps<TierProfileDto>) {
               })}
             >
               {explicitOrderValues(TierProfileLastTierOrder).map((lastTier) => (
-                <option key={lastTier} value={lastTier}>{LAST_TIER_LABELS[lastTier]}</option>
+                <option key={lastTier} value={lastTier}>{enumLabel('TierProfileLastTier', lastTier)}</option>
               ))}
             </Select>
           </FormField>

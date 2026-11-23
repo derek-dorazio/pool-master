@@ -16,10 +16,17 @@ function leagueRoundEntry<T>(leagueList: readonly T[], roundNumber: number, roun
 /**
  * How one round of an event is labelled: by its sport league's own round names where the league
  * has one for the round (#706: the NBA's "Conference Finals"), otherwise by the event's sport
- * league definition (`SportDefinition.roundLabel`), so a stat pool's rounds are its games.
+ * league definition (`SportDefinition.roundLabel`), so a stat pool's rounds are its games. League
+ * round names are proper names and never translated; a numbered round reads the reader's locale.
  */
-export function eventRoundLabel(event: SportLeagueEvent, leagueRoundNames: readonly string[], roundNumber: number, roundCount: number): string {
-  return leagueRoundEntry(leagueRoundNames, roundNumber, roundCount) ?? eventSportDefinition(event).roundLabel(roundNumber, roundCount);
+export function eventRoundLabel(
+  event: SportLeagueEvent,
+  leagueRoundNames: readonly string[],
+  roundNumber: number,
+  roundCount: number,
+  locale?: string | null,
+): string {
+  return leagueRoundEntry(leagueRoundNames, roundNumber, roundCount) ?? eventSportDefinition(event).roundLabel(roundNumber, roundCount, locale);
 }
 
 /**

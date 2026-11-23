@@ -10,6 +10,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   RaceResultStatus,
   type SportDefinition,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantDto } from '@/lib/api';
 import type { ScoringFamilyUi } from './types';
@@ -29,7 +30,7 @@ const NON_FINISH_LABEL: Readonly<Record<Exclude<RaceResultStatus, typeof RaceRes
 export function formatFinish(participant: SportEventParticipantDto, sport: SportDefinition): string | null {
   const { race } = participant;
   if (!race) {
-    return participant.isActive ? null : sport.vocabulary.withdrawn;
+    return participant.isActive ? null : sportVocabulary(sport).withdrawn;
   }
   if (race.resultStatus === RaceResultStatus.FINISHED) {
     if (race.finishPosition === null) {
@@ -53,7 +54,7 @@ export const finishPositionUi: ScoringFamilyUi = {
       footnote: provisional
         ? {
           testId: 'contest-leaderboard-provisional-note',
-          text: `The finishing places shown are provisional: points count once the ${sport.vocabulary.round.one} result is official.`,
+          text: `The finishing places shown are provisional: points count once the ${sportVocabulary(sport).round.one} result is official.`,
         }
         : null,
       pickDetail(entryId, pick, participant) {

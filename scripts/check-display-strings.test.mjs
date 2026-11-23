@@ -72,12 +72,20 @@ describe('check-display-strings (#1956)', () => {
     ]);
   });
 
-  it('fails a word or sport key no source uses, and passes one used through its plural base', () => {
-    const module = { ...COMPLETE, word: { weekNumber: 'Week {{n}}', roundCount_one: 'x', roundCount_other: 'y' }, sport: { GOLF: { participant: 'Golfer' } } };
+  it('fails a word key no source uses, and passes one used through its plural base', () => {
+    const module = { ...COMPLETE, word: { weekNumber: 'Week {{n}}', roundCount_one: 'x', roundCount_other: 'y' } };
     const failures = unusedKeyFailures(module, ["displayString('word.roundCount', { count })"]);
-    assert.deepEqual(failures, [
-      'en-US: word.weekNumber is used nowhere. Delete it, or use it through displayString.',
-      'en-US: sport.GOLF.participant is used nowhere. Delete it, or use it through displayString.',
+    assert.deepEqual(failures, ['en-US: word.weekNumber is used nowhere. Delete it, or use it through displayString.']);
+  });
+
+  it('passes sport word entries and their roles\' generic words, read by role, and fails a sport entry whose role is not a sport word role', () => {
+    const module = {
+      ...COMPLETE,
+      word: { participant_one: 'participant', participant_other: 'participants' },
+      sport: { GOLF: { participant_one: 'golfer', participant_other: 'golfers', caddie: 'Caddie' } },
+    };
+    assert.deepEqual(unusedKeyFailures(module, [], ['participant']), [
+      'en-US: sport.GOLF.caddie is not a sport word role. Add caddie to SPORT_WORD_ROLES, or delete it.',
     ]);
   });
 
@@ -93,6 +101,12 @@ describe('check-display-strings (#1956)', () => {
       'fr-FR: has word.extra, which en-US does not.',
     ]);
     assert.deepEqual(parityFailures('fr-FR', COMPLETE, COMPLETE), []);
+  });
+
+  it('fails a language whose entry has other placeholders than the en-US entry', () => {
+    const english = { ...COMPLETE, word: { weekNumber: 'Week {{n}}' } };
+    const french = { ...COMPLETE, word: { weekNumber: 'Semaine {{number}}' } };
+    assert.deepEqual(parityFailures('fr-FR', french, english), ['fr-FR: word.weekNumber has placeholders {number}, but en-US has {n}.']);
   });
 
   it('finds a Record of an enum or of ApiErrorCode to strings, wrapped or not, and skips comment lines', () => {

@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { MatchEnding, getSportDefinition, Sport, type SportMatchPeriods } from '@poolmaster/shared/domain';
+import { getSportDefinition, MatchEnding, Sport, type SportMatchPeriods, sportVocabulary } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import type { BracketContext } from './bracket-match-write';
@@ -77,10 +77,10 @@ function knockoutMatch(overrides: Partial<SportEventMatchDto> = {}): SportEventM
 
 const soccer = getSportDefinition(Sport.SOCCER);
 
-function renderRow(match: SportEventMatchDto, shootout: BracketContext['shootout'] = soccer.shootout) {
+function renderRow(match: SportEventMatchDto, shootout: BracketContext['shootout'] = sportVocabulary(soccer).shootout ?? null) {
   const context: BracketContext = {
     eventId: 'evt-1',
-    vocabulary: soccer.vocabulary,
+    vocabulary: sportVocabulary(soccer),
     bracket: [match],
     field: [arsenal, porto],
     fieldById: new Map([arsenal, porto].map((entry) => [entry.id, entry])),

@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat, SportStat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
@@ -44,30 +45,19 @@ export const basketballSportDefinition: SportDefinition = {
   defaultRounds: 6,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  shootout: null,
+  shootout: false,
   composite: basketballComposite,
   // Quarters, as the NBA, the WNBA and women's college basketball play; men's college basketball
   // plays halves (its sport league's `matchPeriodLayout`).
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,
   pickEm: { tiePicks: false, againstTheSpread: true },
-  vocabulary: {
-    participant: { one: 'team', many: 'teams' },
-    event: { one: 'tournament', many: 'tournaments' },
-    sportLeague: { one: 'league', many: 'leagues' },
-    round: { one: 'round', many: 'rounds' },
-    eliminated: 'Eliminated',
-    withdrawn: 'Withdrawn',
-    eventStart: 'opening tip-off',
-    match: { one: 'game', many: 'games' },
-    tie: 'Tie',
-  },
   // A six-round bracket reads First Round, Second Round, Sweet 16, Elite Eight, Final Four,
   // National Championship; a shorter one keeps the names counted back from its final.
-  roundLabel: (roundNumber, roundCount) => {
+  roundLabel: (roundNumber, roundCount, locale) => {
     const fromFinal = roundCount - roundNumber;
     // A stored round past the count (the count was lowered) has no name from the final: `at` would
     // read a negative index from the end.
     const fromFinalName = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return fromFinalName ?? OPENING_ROUND_NAMES.at(roundNumber - 1) ?? `Round ${roundNumber}`;
+    return fromFinalName ?? OPENING_ROUND_NAMES.at(roundNumber - 1) ?? displayString('word.roundNumber', { n: roundNumber }, locale);
   },
 };

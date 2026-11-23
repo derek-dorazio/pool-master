@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import {
@@ -15,7 +16,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
-import { PARTICIPANT_ADDED_BY_LABELS, PARTICIPANT_TYPE_LABELS } from './league-participant-columns';
 import {
   editableParticipantFields,
   participantSchema,
@@ -75,7 +75,7 @@ export function LeagueParticipantDialog({
   const facts: Fact[] = [
     { id: 'name', label: 'Name', value: participant.name, testId: 'root-admin-league-participant-name' },
     { id: 'shortName', label: 'Short name', value: blank(participant.shortName), testId: 'root-admin-league-participant-short-name' },
-    { id: 'type', label: 'Type', value: PARTICIPANT_TYPE_LABELS[participant.participantType] },
+    { id: 'type', label: 'Type', value: enumLabel('ParticipantType', participant.participantType) },
     { id: 'league', label: 'League', value: sportLeagueName },
     { id: 'rank', label: 'Rank', value: participant.ranking === null ? 'Unranked' : String(participant.ranking), testId: 'root-admin-league-participant-rank' },
     { id: 'feedId', label: 'Feed id', value: blank(participant.feedId) },
@@ -83,7 +83,7 @@ export function LeagueParticipantDialog({
     {
       id: 'added',
       label: 'Added',
-      value: `${formatDateTimeDisplay(participant.createdAt, preferences)} · ${PARTICIPANT_ADDED_BY_LABELS[participant.addedBy]}`,
+      value: `${formatDateTimeDisplay(participant.createdAt, preferences)} · ${enumLabel('ParticipantAddedBy', participant.addedBy)}`,
     },
   ];
 

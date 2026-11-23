@@ -11,18 +11,19 @@ import type {
   SportLeagueRepository,
 } from '@poolmaster/shared/db';
 import {
-  SelectionType,
-  eventRoundLabel,
-  formatContestRules,
-  formatEntriesPerTeamSentence,
-  eventSportDefinition,
-  pluralize,
   type Contest,
   type ContestSelectionConfig,
+  eventRoundLabel,
+  eventSportDefinition,
+  formatContestRules,
+  formatEntriesPerTeamSentence,
+  pluralize,
   type RoundName,
+  SelectionType,
   type SportEvent,
   type SportEventMatch,
   type SportLeague,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
@@ -94,7 +95,7 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
     rules: formatContestRules(
       rules,
       rules.selectionType === SelectionType.TIERED ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id)).length : 0,
-      eventSportDefinition(first).vocabulary.participant,
+      sportVocabulary(eventSportDefinition(first)).participant,
       rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
       rules.selectionType === SelectionType.BRACKET ? roundNameOf(sportLeague, first) : undefined,
     ),

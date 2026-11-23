@@ -270,7 +270,7 @@ describe('League page', () => {
     renderLeaguePage('/manage/sports/basketball/leagues/nba/events');
 
     expect(await screen.findByTestId('root-admin-league-sync-EVENTS')).toHaveTextContent('Event list');
-    expect(screen.getByTestId('root-admin-league-sync-FIELD')).toHaveTextContent('Fields');
+    expect(screen.getByTestId('root-admin-league-sync-FIELD')).toHaveTextContent('Field');
     expect(screen.getByTestId('root-admin-league-sync-SCORES')).toHaveTextContent('Live scores and results');
     expect(screen.getByTestId('root-admin-league-sync-EVENTS')).toHaveTextContent('Never run');
 

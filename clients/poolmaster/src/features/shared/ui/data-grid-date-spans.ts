@@ -1,3 +1,4 @@
+import { displayString } from "@poolmaster/shared/display-strings";
 import {
   dateTimeLocalValueToIso,
   formatGridDate,
@@ -43,12 +44,18 @@ export type DateSpan =
 export type ResolvedSpan = { from: number | null; to: number | null };
 
 const UNIT_MS: Record<SpanUnit, number> = { m: 60_000, h: 3_600_000, d: 86_400_000, w: 604_800_000 };
-const UNIT_WORDS: Record<SpanUnit, [string, string]> = {
-  m: ["minute", "minutes"],
-  h: ["hour", "hours"],
-  d: ["day", "days"],
-  w: ["week", "weeks"],
-};
+/** The display-string noun for each unit: "minute" / "minutes". */
+const UNIT_WORDS = {
+  m: "word.minute",
+  h: "word.hour",
+  d: "word.day",
+  w: "word.weekUnit",
+} as const satisfies Record<SpanUnit, string>;
+
+/** A unit as words, singular or plural by the amount: "hour", "minutes". */
+export function unitWord(unit: SpanUnit, amount: number): string {
+  return displayString(UNIT_WORDS[unit], { count: amount });
+}
 
 /** One entry of the quick list: a fixed span (1 hour), or one whose amount the viewer types (N hours). */
 export type QuickEntry = { toward: "past" | "next"; unit: SpanUnit; amount: number | null };
@@ -89,25 +96,36 @@ export function calendarPeriods(direction: DateDirection): CalendarPeriod[] {
   return [...PAST_PERIODS, ...FUTURE_PERIODS.filter((period) => !PAST_PERIODS.includes(period))];
 }
 
-export const CALENDAR_PERIOD_LABELS: Record<CalendarPeriod, string> = {
-  today: "Today",
-  yesterday: "Yesterday",
-  weekToDate: "Week to date",
-  previousWeek: "Previous week",
-  monthToDate: "Month to date",
-  previousMonth: "Previous month",
-  yearToDate: "Year to date",
-  previousYear: "Previous year",
-  tomorrow: "Tomorrow",
-  thisWeek: "This week",
-  nextWeek: "Next week",
-  thisMonth: "This month",
-  nextMonth: "Next month",
-};
+/** The display string each calendar period reads as: "Previous month". */
+export const CALENDAR_PERIOD_WORDS = {
+  today: "word.today",
+  yesterday: "word.yesterday",
+  weekToDate: "word.weekToDate",
+  previousWeek: "word.previousWeek",
+  monthToDate: "word.monthToDate",
+  previousMonth: "word.previousMonth",
+  yearToDate: "word.yearToDate",
+  previousYear: "word.previousYear",
+  tomorrow: "word.tomorrow",
+  thisWeek: "word.thisWeek",
+  nextWeek: "word.nextWeek",
+  thisMonth: "word.thisMonth",
+  nextMonth: "word.nextMonth",
+} as const satisfies Record<CalendarPeriod, string>;
+
+/** A calendar period as words: "Previous month". */
+export function calendarPeriodLabel(period: CalendarPeriod): string {
+  return displayString(CALENDAR_PERIOD_WORDS[period]);
+}
+
+/** "Past" or "Next", as a quick entry starts. */
+export function towardLabel(toward: "past" | "next"): string {
+  return displayString(toward === "past" ? "word.past" : "word.next");
+}
 
 /** "Past 2 hours", "Next 1 week". */
 export function relativeLabel(toward: "past" | "next", amount: number, unit: SpanUnit): string {
-  return `${toward === "past" ? "Past" : "Next"} ${amount} ${UNIT_WORDS[unit][amount === 1 ? 0 : 1]}`;
+  return displayString(toward === "past" ? "word.pastSpan" : "word.nextSpan", { amount, unit: unitWord(unit, amount) });
 }
 
 /** The first day of the week in the member's locale: 1 Monday ... 7 Sunday. */
@@ -192,11 +210,11 @@ export function resolveSpan(span: DateSpan, now: number, preferences: DisplayPre
 /** How the filter's chip and the "Filtered:" line name a span. */
 export function describeSpan(span: DateSpan, preferences: DisplayPreferences, withTime: boolean): string {
   if (span.kind === "relative") return relativeLabel(span.toward, span.amount, span.unit);
-  if (span.kind === "calendar") return CALENDAR_PERIOD_LABELS[span.period];
+  if (span.kind === "calendar") return calendarPeriodLabel(span.period);
   const write = (iso: string) => formatGridDate(iso, { format: "words", withTime }, preferences);
   if (span.from !== null && span.to !== null) return `${write(span.from)} – ${write(span.to)}`;
   if (span.from !== null) return `From ${write(span.from)}`;
-  return span.to !== null ? `Through ${write(span.to)}` : "Any time";
+  return span.to !== null ? `Through ${write(span.to)}` : displayString("word.anyTime");
 }
 
 const SPAN_TEXT = /^(?:(past|last|next|-|\+)\s*)?(\d+)\s*(m|mins?|minutes?|h|hrs?|hours?|d|days?|w|wks?|weeks?)$/i;
