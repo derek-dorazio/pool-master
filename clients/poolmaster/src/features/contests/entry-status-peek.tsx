@@ -1,8 +1,8 @@
 import { CircleCheck, CircleDashed, EyeOff } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ContestEntryStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { DetailsPeek, formatDateTimeDisplay, Icon, PeekCard, useDisplayPreferences, type PeekFact } from '@/features/shared/ui';
-import { CONTEST_ENTRY_STATUS_LABELS } from './contest-status';
 
 const HIDDEN_STATUS_LABEL = 'Hidden until the event starts';
 
@@ -36,7 +36,7 @@ export function EntryStatusPeek({
   status: ContestEntryStatus | null;
 }) {
   const displayPreferences = useDisplayPreferences();
-  const statusLabel = status ? CONTEST_ENTRY_STATUS_LABELS[status] : HIDDEN_STATUS_LABEL;
+  const statusLabel = status ? enumLabel('ContestEntryStatus', status) : HIDDEN_STATUS_LABEL;
   // The card leads with the status and the contest's phase; the entry's name is right above it.
   // Short labels keep each date on one line on a phone.
   const lines: EntryStatusFact[] = [

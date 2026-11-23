@@ -1,7 +1,7 @@
 import type { PlanFeature } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { EmptyState, LinkButton } from '@/features/shared/ui';
-import { PLAN_FEATURE_LABEL } from './plan-labels';
 
 /**
  * What a view the league's plan lacks shows instead (#948): its name and a short note. Only a
@@ -12,7 +12,7 @@ export function PlanLockedNotice({
   feature,
   isCommissioner,
   leagueCode,
-  title = PLAN_FEATURE_LABEL[feature],
+  title = enumLabel('PlanFeature', feature),
 }: {
   feature: PlanFeature;
   isCommissioner: boolean;

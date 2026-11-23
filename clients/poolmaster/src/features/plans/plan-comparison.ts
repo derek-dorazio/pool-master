@@ -1,11 +1,9 @@
 import { PLAN_FEATURE_GROUP, PlanCap, PlanFeature, PlanFeatureGroup, type LeaguePlan } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
   EVERY_PLAN_INCLUDES,
   PLAN_CAP_DESCRIPTION,
-  PLAN_CAP_LABEL,
   PLAN_FEATURE_DESCRIPTION,
-  PLAN_FEATURE_GROUP_LABEL,
-  PLAN_FEATURE_LABEL,
   formatPlanLimit,
 } from './plan-labels';
 
@@ -48,7 +46,7 @@ export function buildPlanComparison(plans: readonly ComparedPlan[], locale: stri
     rows: Object.values(PlanCap).map((cap) => ({
       key: cap,
       cap,
-      label: PLAN_CAP_LABEL[cap],
+      label: enumLabel('PlanCap', cap),
       description: PLAN_CAP_DESCRIPTION[cap],
       cells: plans.map((plan) => formatPlanLimit(plan.caps[cap], locale)),
     })),
@@ -67,14 +65,14 @@ export function buildPlanComparison(plans: readonly ComparedPlan[], locale: stri
   };
   const groups = Object.values(PlanFeatureGroup).map((group) => ({
     key: group,
-    title: PLAN_FEATURE_GROUP_LABEL[group],
+    title: enumLabel('PlanFeatureGroup', group),
     group,
     rows: Object.values(PlanFeature)
       .filter((feature) => PLAN_FEATURE_GROUP[feature] === group)
       .map((feature) => ({
         key: feature,
         cap: null,
-        label: PLAN_FEATURE_LABEL[feature],
+        label: enumLabel('PlanFeature', feature),
         description: PLAN_FEATURE_DESCRIPTION[feature],
         cells: plans.map((plan) => plan.features.includes(feature)),
       })),

@@ -1,20 +1,15 @@
-import { ContestStatus, CupContestCount, CupStatus, CupWeight, championshipYear } from '@poolmaster/shared/domain';
+import { ContestStatus, CupContestCount, CupStatus, type CupWeight, championshipYear, cupWeightRaisesPoints } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { CupContestRowDto, CupDto, CupProjectedStandingDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
 import { formatCupPoints, formatPlace } from '@/features/shared/ui';
 
 /** How many squads the race chart draws. */
 export const RACE_CHART_SQUADS = 5;
 
-/**
- * A cup weight as a contest row shows it: nothing for an ordinary contest, the multiplier for a
- * heavier one. A `Record` over the enum, so a new weight without a label fails the typecheck.
- */
-export const CUP_WEIGHT_LABELS: Record<CupWeight, string | null> = {
-  [CupWeight.NORMAL]: null,
-  [CupWeight.BONUS]: 'x1.5',
-  [CupWeight.DOUBLE]: 'x2',
-  [CupWeight.NOT_COUNTED]: null,
-};
+/** A cup weight as a contest row shows it: nothing for an ordinary contest, the multiplier ("x1.5") for a heavier one. */
+export function cupWeightMark(weight: CupWeight): string | null {
+  return cupWeightRaisesPoints(weight) ? enumLabel('CupWeight', weight, { form: 'short' }) : null;
+}
 
 export type Movement = { label: string; description: string; direction: 'up' | 'down' | 'none' };
 

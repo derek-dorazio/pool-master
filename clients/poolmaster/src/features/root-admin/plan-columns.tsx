@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { LEAGUE_PLANS, LeaguePlanOrder, PlanFeatureGroupOrder, type LeaguePlan, type PlanFeatureGroup } from '@poolmaster/shared/domain';
-import { formatPlanLimit, LEAGUE_PLAN_LABEL, PLAN_FEATURE_GROUP_LABEL } from '@/features/plans/plan-labels';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { formatPlanLimit } from '@/features/plans/plan-labels';
 import type { PlanCapGridRow, PlanFeatureGridRow } from './plan-rows';
 
 const capColumn = createColumnHelper<PlanCapGridRow>();
@@ -16,8 +17,8 @@ export function planCapColumns(locale: string) {
     // Unlimited sorts and filters as the largest limit: above every number, in both directions.
     ...LEAGUE_PLANS.map((plan) => capColumn.accessor((row) => row.limits[plan] ?? Number.POSITIVE_INFINITY, {
       id: plan,
-      header: LEAGUE_PLAN_LABEL[plan],
-      meta: { info: `The most a league on ${LEAGUE_PLAN_LABEL[plan]} may have. Unlimited: no cap.`, type: { kind: 'number' } },
+      header: enumLabel('LeaguePlan', plan),
+      meta: { info: `The most a league on ${enumLabel('LeaguePlan', plan)} may have. Unlimited: no cap.`, type: { kind: 'number' } },
       cell: ({ row }) => formatPlanLimit(row.original.limits[plan], locale),
     })),
   ];
@@ -33,16 +34,16 @@ export const planFeatureColumns = [
     header: 'Group',
     meta: {
       info: 'Emails, Championships or History.',
-      type: { kind: 'enum', order: PlanFeatureGroupOrder, label: (group) => PLAN_FEATURE_GROUP_LABEL[group as PlanFeatureGroup] },
+      type: { kind: 'enum', order: PlanFeatureGroupOrder, label: (group) => enumLabel('PlanFeatureGroup', group as PlanFeatureGroup) },
     },
-    cell: ({ getValue }) => PLAN_FEATURE_GROUP_LABEL[getValue()],
+    cell: ({ getValue }) => enumLabel('PlanFeatureGroup', getValue()),
   }),
   featureColumn.accessor('startsAt', {
     header: 'Starts at',
     meta: {
       info: 'The first plan with it; every plan above has it too.',
-      type: { kind: 'enum', order: LeaguePlanOrder, label: (plan) => LEAGUE_PLAN_LABEL[plan as LeaguePlan] },
+      type: { kind: 'enum', order: LeaguePlanOrder, label: (plan) => enumLabel('LeaguePlan', plan as LeaguePlan) },
     },
-    cell: ({ getValue }) => LEAGUE_PLAN_LABEL[getValue()],
+    cell: ({ getValue }) => enumLabel('LeaguePlan', getValue()),
   }),
 ];

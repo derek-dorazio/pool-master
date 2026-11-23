@@ -5,7 +5,7 @@
  * event (a CFP or Super Bowl pool) has no game columns, since one would only repeat the total.
  * With an entry's Stats switch on, a line under each player's name gives their stats in the
  * current game, or their latest. The scores are the server's (`composite` on the pick); the
- * stats are the field's own stat lines, named by `SPORT_STAT_LABELS`.
+ * stats are the field's own stat lines, named by `enumLabel('SportStat', …)`.
  */
 
 import {
@@ -13,10 +13,11 @@ import {
   ParticipantRoundStatus,
   type SportStat,
 } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { upperFirst } from '@/lib/upper-first';
 import { resolveRoundNumbers } from '../contest-leaderboard-rounds';
-import { SPORT_STAT_LABELS } from './stat-labels';
+import { formatSportStatCount } from './stat-labels';
 import type { ScoringFamilyUi } from './types';
 
 const DID_NOT_PLAY = 'did not play';
@@ -30,10 +31,7 @@ const NOT_IN_YET = 'not in yet';
  */
 function statLineText(participant: SportEventParticipantDto, roundNumber: number, stats: readonly SportStat[]): string | null {
   const shown = shownStats(participant, roundNumber, stats);
-  return shown === null ? null : shown.map(({ stat, value }) => {
-    const { unit } = SPORT_STAT_LABELS[stat];
-    return `${String(value)} ${value === 1 ? unit.one : unit.many}`;
-  }).join(' · ');
+  return shown === null ? null : shown.map(({ stat, value }) => formatSportStatCount(stat, value)).join(' · ');
 }
 
 /** The stats a game's line shows, in the composite's order: those not at 0, or the first if all are. Null with no line. */
@@ -96,7 +94,7 @@ export const compositeUi: ScoringFamilyUi = {
               text: score === undefined ? (roundNumber === liveGame ? null : 'DNP') : definition.format(score),
               peek: score === undefined || line === null ? undefined : {
                 title: `G${String(roundNumber)} · ${playerName}`,
-                facts: line.map(({ stat, value }) => ({ label: SPORT_STAT_LABELS[stat].long, value: String(value) })),
+                facts: line.map(({ stat, value }) => ({ label: enumLabel('SportStat', stat), value: String(value) })),
               },
             };
           }),

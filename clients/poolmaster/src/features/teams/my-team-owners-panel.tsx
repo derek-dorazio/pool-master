@@ -1,4 +1,5 @@
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
 import { Notice, Button, Heading, Input, StatusBadge, Text, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -6,13 +7,6 @@ import { formatUserName } from '@/features/account/user-name';
 import { TeamOwnerActionMenu } from './team-owner-action-menu';
 import { type TeamMember, TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import type { MyTeamOwners } from './use-my-team-owners';
-
-const OWNER_INVITATION_STATUS_LABELS: Record<SquadOwnerInvitationStatus, string> = {
-  [SquadOwnerInvitationStatus.PENDING]: 'Pending',
-  [SquadOwnerInvitationStatus.ACCEPTED]: 'Accepted',
-  [SquadOwnerInvitationStatus.EXPIRED]: 'Expired',
-  [SquadOwnerInvitationStatus.REVOKED]: 'Revoked',
-};
 
 /** Co-owner invites, the active owner list, pending invites, and replace owner. */
 export function MyTeamOwnersPanel({
@@ -152,7 +146,7 @@ export function MyTeamOwnersPanel({
                 <div>
                   <Text as="div" size="inherit" variant="strong">{invitation.email}</Text>
                   <Text as="div" variant="meta">
-                    {OWNER_INVITATION_STATUS_LABELS[invitation.status]}
+                    {enumLabel('SquadOwnerInvitationStatus', invitation.status)}
                     {invitation.replacementForUserId ? ' · Replacement invite' : ''}
                   </Text>
                 </div>

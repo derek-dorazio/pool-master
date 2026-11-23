@@ -3,6 +3,7 @@ import {
   CUP_CUSTOM_POINTS_MAX_PLACES,
 } from '@poolmaster/shared/dto';
 import { CupPointsScale, CupWeight, cupPlacePoints, type CupPointsTable } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { formatNumberList, formatOrdinal } from '@/features/shared/ui';
 
 /** How many places the points preview shows. */
@@ -10,22 +11,21 @@ export const POINTS_PREVIEW_PLACES = 10;
 /** The field the preview scores FIELD_BEATEN on, since its points depend on how many entered. */
 export const POINTS_PREVIEW_FIELD = 12;
 
-/** Each points table as the settings name and explain it. A `Record`, so a new scale needs copy. */
-export const CUP_POINTS_SCALE_COPY: Record<CupPointsScale, { label: string; description: string }> = {
+/**
+ * Each points table as the settings explain it; its name is `enumLabel('CupPointsScale', …)`. A
+ * `Record`, so a new scale needs copy. Page sentences, which move to the display strings later (#1962).
+ */
+export const CUP_POINTS_SCALE_COPY: Record<CupPointsScale, { description: string }> = {
   [CupPointsScale.STANDARD]: {
-    label: 'Standard',
     description: '100 for 1st, 80 for 2nd, 65 for 3rd, down to 7 for 20th, then 5 for every place after.',
   },
   [CupPointsScale.TOP_TEN]: {
-    label: 'Top ten',
     description: '25, 18, 15, 12, 10, 8, 6, 4, 2 and 1 for 1st to 10th. Nothing after 10th.',
   },
   [CupPointsScale.FIELD_BEATEN]: {
-    label: 'Field beaten',
     description: 'One point for every entry finished behind, plus one for finishing. Bigger fields are worth more.',
   },
   [CupPointsScale.CUSTOM]: {
-    label: 'Custom',
     description: 'Your own points for each place. Places past your list score nothing.',
   },
 };
@@ -38,12 +38,12 @@ export const CUP_POINTS_SCALES = [
   CupPointsScale.CUSTOM,
 ] as const;
 
-/** Each cup weight as the contest settings name and explain it. */
-export const CUP_WEIGHT_COPY: Record<CupWeight, { label: string; description: string }> = {
-  [CupWeight.NORMAL]: { label: 'Normal (x1)', description: 'Earns the points table as it stands.' },
-  [CupWeight.BONUS]: { label: 'Bonus (x1.5)', description: 'Earns half as much again, for a bigger event.' },
-  [CupWeight.DOUBLE]: { label: 'Double (x2)', description: 'Earns twice the points, for a major.' },
-  [CupWeight.NOT_COUNTED]: { label: 'Not counted', description: 'Earns nothing toward the cup or the championship.' },
+/** Each cup weight as the contest settings explain it; its name is `enumLabel('CupWeight', …)`. Page sentences (#1962). */
+export const CUP_WEIGHT_COPY: Record<CupWeight, { description: string }> = {
+  [CupWeight.NORMAL]: { description: 'Earns the points table as it stands.' },
+  [CupWeight.BONUS]: { description: 'Earns half as much again, for a bigger event.' },
+  [CupWeight.DOUBLE]: { description: 'Earns twice the points, for a major.' },
+  [CupWeight.NOT_COUNTED]: { description: 'Earns nothing toward the cup or the championship.' },
 };
 
 /** The weights in the order the contest settings offer them. */
@@ -54,7 +54,7 @@ export function describePointsTable(table: CupPointsTable): string {
   if (table.scale === CupPointsScale.CUSTOM) {
     return `Custom: ${formatNumberList(table.customPoints)}`;
   }
-  return CUP_POINTS_SCALE_COPY[table.scale].label;
+  return enumLabel('CupPointsScale', table.scale);
 }
 
 /**

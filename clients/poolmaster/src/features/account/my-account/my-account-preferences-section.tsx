@@ -4,6 +4,7 @@ import { Controller, type RefCallBack, useForm } from 'react-hook-form';
 import { type z } from 'zod';
 import { UserPreferencesUpdateRequestSchema } from '@poolmaster/shared/dto';
 import { ColorScheme, TimeFormat } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { updateUserPreferences, type UserDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -24,7 +25,7 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { SELF_USER_ID } from '../user-routing';
-import { COLOR_SCHEME_LABELS, MATCH_MY_DEVICE, TIME_FORMAT_LABELS } from './my-account-helpers';
+import { MATCH_MY_DEVICE } from './my-account-helpers';
 import { useSectionDialog } from './use-section-dialog';
 
 type PreferencesFormValues = z.infer<typeof UserPreferencesUpdateRequestSchema>;
@@ -113,13 +114,13 @@ export function MyAccountPreferencesSection({ user }: { user: UserDto }) {
             layout="setting"
             name="Clock"
             testId="my-account-preferences-clock"
-            value={user.timeFormat ? TIME_FORMAT_LABELS[user.timeFormat] : MATCH_MY_DEVICE}
+            value={user.timeFormat ? enumLabel('TimeFormat', user.timeFormat) : MATCH_MY_DEVICE}
           />
           <SectionRow
             layout="setting"
             name="Theme"
             testId="my-account-preferences-theme"
-            value={COLOR_SCHEME_LABELS[user.colorScheme ?? ColorScheme.DEVICE]}
+            value={enumLabel('ColorScheme', user.colorScheme ?? ColorScheme.DEVICE)}
           />
         </SectionRows>
       </SectionCard>
@@ -177,8 +178,8 @@ export function MyAccountPreferencesSection({ user }: { user: UserDto }) {
                   value={field.value ?? ''}
                 >
                   <option value="">{MATCH_MY_DEVICE}</option>
-                  <option value={TimeFormat.TWELVE_HOUR}>{TIME_FORMAT_LABELS[TimeFormat.TWELVE_HOUR]}</option>
-                  <option value={TimeFormat.TWENTY_FOUR_HOUR}>{TIME_FORMAT_LABELS[TimeFormat.TWENTY_FOUR_HOUR]}</option>
+                  <option value={TimeFormat.TWELVE_HOUR}>{enumLabel('TimeFormat', TimeFormat.TWELVE_HOUR)}</option>
+                  <option value={TimeFormat.TWENTY_FOUR_HOUR}>{enumLabel('TimeFormat', TimeFormat.TWENTY_FOUR_HOUR)}</option>
                 </Select>
               )}
             />
@@ -195,7 +196,7 @@ export function MyAccountPreferencesSection({ user }: { user: UserDto }) {
                   value={field.value ?? ColorScheme.DEVICE}
                 >
                   {Object.values(ColorScheme).map((scheme) => (
-                    <option key={scheme} value={scheme}>{COLOR_SCHEME_LABELS[scheme]}</option>
+                    <option key={scheme} value={scheme}>{enumLabel('ColorScheme', scheme)}</option>
                   ))}
                 </Select>
               )}

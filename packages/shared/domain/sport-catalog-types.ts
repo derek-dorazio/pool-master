@@ -6,9 +6,8 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { SportStat } from './sports/sport-stats';
+import type { SportStat, BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
-import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {

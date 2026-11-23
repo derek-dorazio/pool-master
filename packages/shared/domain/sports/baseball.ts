@@ -1,7 +1,7 @@
-import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import { ParticipantType, SelectionType, Sport, TournamentFormat, SportStat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
-import { SportStat, statValue, type SportComposite } from './sport-stats';
+import { statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of an MLB postseason are called, counted back from the World Series. */
 const ROUND_NAMES_FROM_FINAL = ['World Series', 'League Championship Series', 'Division Series', 'Wild Card Series'] as const;

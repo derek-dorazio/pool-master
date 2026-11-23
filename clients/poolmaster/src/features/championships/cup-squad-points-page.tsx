@@ -15,7 +15,7 @@ import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { hasErrorCode } from '@/lib/errors';
 import { ContestRow } from '@/features/contests/contest-row';
-import { CUP_WEIGHT_LABELS } from './cup-view';
+import { cupWeightMark } from './cup-view';
 import { useChampionshipsRoute } from './use-championships-route';
 import { useCupSquadPointsQuery } from './use-cups-query';
 
@@ -63,7 +63,7 @@ export function CupSquadPointsPage() {
         {squadPoints.contests.length ? (
           <SectionRows>
             {squadPoints.contests.map((contest) => {
-              const weight = CUP_WEIGHT_LABELS[contest.cupWeight];
+              const weight = cupWeightMark(contest.cupWeight);
               return (
                 <ContestRow
                   completedAt={contest.completedAt}

@@ -1,7 +1,7 @@
-import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat, SportStat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
-import { SportStat, statValue, type SportComposite } from './sport-stats';
+import { statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of a playoff bracket are called, counted back from the final. */
 const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisional', 'Wild Card'] as const;

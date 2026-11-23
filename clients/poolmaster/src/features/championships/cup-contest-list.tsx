@@ -2,7 +2,7 @@ import type { CupContestRowDto } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { SectionEmpty, SectionRows, StatusBadge } from '@/features/shared/ui';
 import { ContestRow } from '@/features/contests/contest-row';
-import { CUP_WEIGHT_LABELS, describeCupContest } from './cup-view';
+import { cupWeightMark, describeCupContest } from './cup-view';
 
 /**
  * Every contest in a cup with its weight, its state and why: who won it, or why it doesn't count.
@@ -17,7 +17,7 @@ export function CupContestList({ contests, leagueCode }: { contests: CupContestR
     <SectionRows testId="cup-contests">
       {contests.map((contest) => {
         const state = describeCupContest(contest);
-        const weight = CUP_WEIGHT_LABELS[contest.cupWeight];
+        const weight = cupWeightMark(contest.cupWeight);
         return (
           <ContestRow
             completedAt={contest.completedAt}

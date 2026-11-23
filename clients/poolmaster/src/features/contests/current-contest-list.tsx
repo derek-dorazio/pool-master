@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ContestStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ContestDto, ContestEntryPlaceDto } from '@/lib/api';
 import { buildLeagueAdminContestPath, buildLeagueContestPath } from '@/features/leagues/league-routing';
 import {
@@ -14,7 +15,6 @@ import {
   formatPlace,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { CONTEST_STATUS_LABELS } from './contest-status';
 import { EventScheduleChip } from './event-schedule-chip';
 import { describeContestNextStep, type ContestNextStep } from './my-contest-entry';
 import { contestScheduleChipStatus } from './schedule-changes';
@@ -141,7 +141,7 @@ function ContestStatusLine({
   const { locale } = useDisplayPreferences();
   const startsAt = listedContestStartsAt(contest);
   const entryCount = contest.entryCount ?? 0;
-  const parts: { key: string; node: ReactNode }[] = [{ key: 'status', node: CONTEST_STATUS_LABELS[contest.status] }];
+  const parts: { key: string; node: ReactNode }[] = [{ key: 'status', node: enumLabel('ContestStatus', contest.status) }];
   const scheduleChip = contestScheduleChipStatus(contest.sportEvents);
   if (scheduleChip) {
     parts.push({ key: 'schedule', node: <EventScheduleChip status={scheduleChip} testId={`${testId}-schedule`} /> });

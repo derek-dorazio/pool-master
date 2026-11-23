@@ -1,5 +1,5 @@
 import { EmailTemplateKey, EmailTemplateStatus, explicitOrder, type LeaguePlan } from '@poolmaster/shared/domain';
-import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 
 /** Who a system email goes to: a code, worded by `EMAIL_AUDIENCE_LABELS`. */
 export const EMAIL_AUDIENCE = {
@@ -181,5 +181,5 @@ export const EVERY_PLAN = 'EVERY_PLAN';
 
 /** Where an email's plan starts, in words: "Pro", or "Every plan" for one every league gets. */
 export function planText(planStartsAt: LeaguePlan | null): string {
-  return planStartsAt === null ? 'Every plan' : LEAGUE_PLAN_LABEL[planStartsAt];
+  return planStartsAt === null ? 'Every plan' : enumLabel('LeaguePlan', planStartsAt);
 }

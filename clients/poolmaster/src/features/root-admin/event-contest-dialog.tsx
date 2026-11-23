@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
   DetailEditModal,
   formatDateTimeDisplay,
@@ -7,7 +8,6 @@ import {
   type Fact,
 } from '@/features/shared/ui';
 import type { SportEventContestDto } from '@/lib/api';
-import { CONTEST_STATUS_LABELS } from '@/features/contests/contest-status';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { CUSTOMER_LEAGUE_PARAM, CUSTOMER_LEAGUES_PATH } from './manage-navigation';
 import { NO_TEMPLATE } from './event-contest-columns';
@@ -23,7 +23,7 @@ export function EventContestDialog({ contest, onClose }: { contest: SportEventCo
     { id: 'name', label: 'Contest', value: contest.name, testId: `${testId}-name` },
     { id: 'league', label: 'League', value: contest.leagueName, testId: `${testId}-league` },
     { id: 'template', label: 'Contest template', value: contest.contestTemplateName ?? NO_TEMPLATE, testId: `${testId}-template` },
-    { id: 'status', label: 'Status', value: CONTEST_STATUS_LABELS[contest.status], testId: `${testId}-status` },
+    { id: 'status', label: 'Status', value: enumLabel('ContestStatus', contest.status), testId: `${testId}-status` },
     { id: 'entries', label: 'Entries', value: String(contest.entryCount), testId: `${testId}-entries` },
     { id: 'created', label: 'Created', value: formatDateTimeDisplay(contest.createdAt, preferences) },
   ];

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { formatUserName } from '@/features/account/user-name';
 import {
   formatDateDisplay,
@@ -35,7 +36,7 @@ import {
 } from './event-emails-view';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
-import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
+import { formatPlanLimit } from '@/features/plans/plan-labels';
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEditPath,
@@ -88,7 +89,7 @@ export function LeagueSettingsPage() {
       return LOADING_TEXT;
     }
     const plan = plansQuery.data ? lowestPlanIncluding(plansQuery.data.plans, features) : null;
-    return plan ? `Included with ${LEAGUE_PLAN_LABEL[plan]}.` : 'Not included in your league\'s plan.';
+    return plan ? `Included with ${enumLabel('LeaguePlan', plan)}.` : 'Not included in your league\'s plan.';
   };
 
   const activeMemberCount = members
@@ -121,7 +122,7 @@ export function LeagueSettingsPage() {
       <PageHeader
         meta={(
           <>
-            <span>{`${LEAGUE_PLAN_LABEL[league.planEntitlements.plan]} plan`}</span>
+            <span>{`${enumLabel('LeaguePlan', league.planEntitlements.plan)} plan`}</span>
             {activeMemberCount === null ? null : (
               <span>{`${activeMemberCount} ${activeMemberCount === 1 ? 'member' : 'members'}`}</span>
             )}
@@ -307,7 +308,7 @@ export function LeagueSettingsPage() {
               layout="setting"
               name="Plan"
               testId="league-settings-plan-name"
-              value={<span className="font-semibold">{LEAGUE_PLAN_LABEL[league.planEntitlements.plan]}</span>}
+              value={<span className="font-semibold">{enumLabel('LeaguePlan', league.planEntitlements.plan)}</span>}
             />
             <SectionRow
               layout="setting"
@@ -319,7 +320,7 @@ export function LeagueSettingsPage() {
               <SectionRow
                 layout="setting"
                 key={cap}
-                name={PLAN_CAP_LABEL[cap]}
+                name={enumLabel('PlanCap', cap)}
                 testId={`league-settings-plan-cap-${cap}`}
                 value={formatPlanLimit(league.planEntitlements.caps[cap], displayPreferences.locale)}
               />

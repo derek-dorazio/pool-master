@@ -10,6 +10,7 @@ import {
   formatSelectionTypeName,
   getSportDefinition,
 } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
@@ -17,7 +18,6 @@ import { useNavigate, useParams } from 'react-router';
 import type { EffectiveTierDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { ContestExpansionSection } from '@/features/billing/contest-expansion-section';
-import { CUP_WEIGHT_COPY } from '@/features/championships/cup-settings-view';
 import {
   buildLeagueAdminContestCupWeightPath,
   buildLeagueAdminContestEditPath,
@@ -326,7 +326,7 @@ export function ManageContestPage() {
               )}
               name="Cup weight"
               testId="manage-contest-cup-weight"
-              value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
+              value={enumLabel('CupWeight', managedContest.cupWeight)}
             />
           </SectionRows>
         </SectionCard>

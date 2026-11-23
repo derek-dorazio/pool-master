@@ -2068,3 +2068,39 @@ export const TierProfileLastTierOrder = explicitOrder<TierProfileLastTier>({
   [TierProfileLastTier.ALL_REMAINING]: 0,
   [TierProfileLastTier.CAPPED]: 1,
 });
+
+/**
+ * The component stats a sport's composite is made of (#934), one shared enum across the sports
+ * that have one, so a stat line's key is one Postgres enum. Each sport's composite names the
+ * stats it counts (`SportComposite.stats`).
+ */
+export const SportStat = {
+  // Baseball: Box Score.
+  TOTAL_BASES: 'TOTAL_BASES',
+  RUNS: 'RUNS',
+  RUNS_BATTED_IN: 'RUNS_BATTED_IN',
+  WALKS: 'WALKS',
+  STOLEN_BASES: 'STOLEN_BASES',
+  // Basketball: Triple Threat.
+  POINTS: 'POINTS',
+  REBOUNDS: 'REBOUNDS',
+  /** Basketball's, hockey's and soccer's: a pass that set up a score. */
+  ASSISTS: 'ASSISTS',
+  // Hockey: Power Play.
+  /** Hockey's and soccer's. */
+  GOALS: 'GOALS',
+  SHOTS_ON_GOAL: 'SHOTS_ON_GOAL',
+  // Soccer: Hat Trick.
+  SHOTS_ON_TARGET: 'SHOTS_ON_TARGET',
+  // American football: Redzone.
+  PASSING_TOUCHDOWNS: 'PASSING_TOUCHDOWNS',
+  RUSHING_TOUCHDOWNS: 'RUSHING_TOUCHDOWNS',
+  RECEIVING_TOUCHDOWNS: 'RECEIVING_TOUCHDOWNS',
+  RECEPTIONS: 'RECEPTIONS',
+  PASSING_YARDS: 'PASSING_YARDS',
+  RUSHING_YARDS: 'RUSHING_YARDS',
+  RECEIVING_YARDS: 'RECEIVING_YARDS',
+} as const;
+export type SportStat = (typeof SportStat)[keyof typeof SportStat];
+/** No order across sports: a composite lists its own stats in its own order. A to Z elsewhere. */
+export const SportStatOrder = alphabeticalOrder('SportStat');

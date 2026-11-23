@@ -1,13 +1,13 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { EmailTemplateStatusOrder, LEAGUE_PLANS, type EmailTemplateStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SystemEmailDto } from '@/lib/api';
-import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 import { EmailStatusChip } from './email-status-chip';
 import { EMAIL_AUDIENCE_LABELS, EMAIL_STATUS_LABELS, EmailAudienceOrder, type EmailAudience, EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';
 
 const PLAN_OPTIONS = [
   { value: EVERY_PLAN, label: planText(null) },
-  ...LEAGUE_PLANS.map((plan) => ({ value: plan, label: LEAGUE_PLAN_LABEL[plan] })),
+  ...LEAGUE_PLANS.map((plan) => ({ value: plan, label: enumLabel('LeaguePlan', plan) })),
 ];
 
 const columnHelper = createColumnHelper<SystemEmailDto>();

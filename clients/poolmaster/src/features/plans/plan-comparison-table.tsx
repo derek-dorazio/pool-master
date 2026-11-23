@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Minus } from 'lucide-react';
 import type { LeaguePlan, PlanCap, PlanFeatureGroup } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
   cn,
   HelpTip,
@@ -15,7 +16,6 @@ import {
   formatNumber,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { LEAGUE_PLAN_LABEL } from './plan-labels';
 import { buildPlanComparison, type ComparedPlan, type PlanComparisonSection } from './plan-comparison';
 
 interface PlanComparisonTableProps {
@@ -77,7 +77,7 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], highlightedPl
                 data-testid={`plan-comparison-column-${plan.plan}`}
                 key={plan.plan}
               >
-                {LEAGUE_PLAN_LABEL[plan.plan]}
+                {enumLabel('LeaguePlan', plan.plan)}
               </TableHeaderCell>
             ))}
           </tr>

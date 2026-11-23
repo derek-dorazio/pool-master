@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LeaguePlan } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { LeaguePlanListResponse } from '@/lib/api';
 import { describeExpansionPrices } from '@/features/billing/billing-format';
 import { Heading, Tile, useDisplayPreferences } from '@/features/shared/ui';
@@ -7,7 +8,7 @@ import { FeatureList } from './feature-list';
 import { FeatureMark } from './feature-mark';
 import type { ComparedPlan } from './plan-comparison';
 import { buildPlanHighlights } from './plan-highlights';
-import { LEAGUE_PLAN_LABEL, LEAGUE_PLAN_TAGLINE } from './plan-labels';
+import { LEAGUE_PLAN_TAGLINE } from './plan-labels';
 
 interface PlanCardsProps {
   plans: readonly ComparedPlan[];
@@ -33,7 +34,7 @@ export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
       {highlights.map((card, index) => (
         <Tile className="flex flex-col gap-4" data-testid={`plan-card-${card.plan}`} key={card.plan} padding="md">
           <div className="space-y-1">
-            <Heading level={3} variant="card" size="2xl">{LEAGUE_PLAN_LABEL[card.plan]}</Heading>
+            <Heading level={3} variant="card" size="2xl">{enumLabel('LeaguePlan', card.plan)}</Heading>
             <p className="min-h-10 text-sm text-muted-foreground">{LEAGUE_PLAN_TAGLINE[card.plan]}</p>
           </div>
           <p className="flex items-baseline gap-1.5" data-testid={`plan-card-${card.plan}-price`}>
@@ -50,7 +51,7 @@ export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
           <div className="border-t border-border pt-4">
             <FeatureList
               features={card.lines}
-              label={card.adds === null ? 'Included' : `Everything in ${LEAGUE_PLAN_LABEL[card.adds]}, plus`}
+              label={card.adds === null ? 'Included' : `Everything in ${enumLabel('LeaguePlan', card.adds)}, plus`}
               mark={FeatureMark.INCLUDED}
               testId={`plan-card-${card.plan}-highlights`}
             />
