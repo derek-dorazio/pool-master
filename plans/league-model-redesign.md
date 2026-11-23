@@ -679,7 +679,9 @@ Contest:
   offered). One default per (sport league, selection type). No template versions: a contest
   copies its slots into `ContestSeasonSlot` at creation, so a template edit (by migration
   when a structure changes, or by root admin) affects only future contests. Slot
-  definitions are never deleted while a Season slot points at them.
+  definitions are never deleted while a Season slot points at them. Fallback (Derek): if the
+  trophy design needs a stable identity across structure changes, revisit with a template
+  phase coverage row (`ContestConfigTemplatePhase`).
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
