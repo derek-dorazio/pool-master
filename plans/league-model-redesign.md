@@ -599,6 +599,37 @@ Before this plan is deleted:
   fact only when the feed doesn't supply it (composites, ratings, standings for families
   the feed doesn't rank).
 
+### Rules that land before implementation (slice 0, with the ADR, reviewed)
+
+- `domain-model-conventions-rules.md`: §10 *Full-path names* (owner-path names, `SportEvent`
+  prefix, `Platform…Profile` + `platform…ProfileId`, copied settings are `…Template`); §17
+  *Provider keys live only in ProviderMapping tables*, inclusion-only with one INFO finding
+  per unmapped value; §17 feed-first line in *One computation per fact*; §17 *Proper names are
+  data, generic words are strings* (#1955); §9 *No nullable either/or parents*; §11 a Match
+  has 2..n sides, no sport result tables; §17 fixes for `providerRef`, `orderIndex` and the
+  WARNING/ERROR miss wording.
+- `domain-model-concepts.md`: the target model (entity chain, vocabulary, "the event side
+  mirrors the feed", "contests cover Season slots and hold no team, player or match data")
+  and a *Deferred concepts* section, with stale rows flagged until slice 30.
+- `workflow-rules.md` §1 and AGENTS.md: every active league is provider-synced; a league with
+  no feed stays off (replaces "synced and unsynced are two workflows").
+- `review-triggers.md` §9 and the `scan-hard-coded-rules` / `review-a-pr` skills: flag a
+  provider key column outside a mapping, an either/or FK pair, generic-word columns, and
+  recomputing a fact the feed supplies.
+- `testing-rules.md` §9B: pin a 150-golfer, 4-round leaderboard read.
+
+### Docs that change with their slice
+
+- 1: provider settings out of `architecture-rules.md` §3/§6 and `service-rules.md` §1.
+- 1b: retire the `add-clutch-card-league` skill and its AGENTS.md rows; Clutch Card lines in
+  `architecture-rules.md` §4 and `ux-rules.md` §12/§13.
+- 5: rewrite the `add-sport` skill; the sport registry text in `architecture-rules.md` §4.
+- 6–7: the test-data shape in `architecture-rules.md` §6.
+- 11: rewrite the `add-event-page` skill; `ux-rules.md` §13 items 1–3 and §12 item 12.
+- 14: status bubbling and the handler map in `architecture-rules.md` §4.
+- Every sync slice: its part of `docs/LIVE-SPORTS-DATA-SYNC.md`, fully rewritten by 29.
+- 30: the full `domain-model-concepts.md` overhaul.
+
 ## Open questions
 
 Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
