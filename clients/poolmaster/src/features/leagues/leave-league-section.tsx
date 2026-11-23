@@ -10,16 +10,11 @@ import {
   SectionRows,
   showToast,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { type LeagueListCache, removeLeague } from './league-cache';
 import { buildLeaguePath } from './league-routing';
-
-const LEAVE_LEAGUE_ERROR_CODE_MESSAGES: ErrorCodeMessages = {
-  LEAGUE_LAST_COMMISSIONER_REQUIRED:
-    'Appoint another commissioner before the last commissioner leaves or steps down.',
-};
 
 /**
  * Leave league: a member's one danger action. Confirming leaves, moves the member to their next
@@ -88,7 +83,6 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
         error={leaveMutation.isError
           ? extractErrorMessage(leaveMutation.error, {
             fallback: 'We could not complete that leave request right now.',
-            codeMessages: LEAVE_LEAGUE_ERROR_CODE_MESSAGES,
           })
           : null}
         isPending={leaveMutation.isPending}

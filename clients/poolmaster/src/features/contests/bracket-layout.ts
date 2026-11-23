@@ -99,6 +99,11 @@ export function formatPoints(points: number): string {
   return `${points} ${points === 1 ? 'pt' : 'pts'}`;
 }
 
+/** What an entry has scored, once anyone can see it; a dash before. */
+export function formatEntryScore(points: number | null): string {
+  return points === null ? '—' : formatPoints(points);
+}
+
 /** A locked bracket's tiebreaker, under its middle: "Tiebreaker: 148 total points in the final." */
 export function describeBracketTiebreaker(value: number | null, scoreUnit: string): string {
   return value === null ? 'No tiebreaker was saved.' : `Tiebreaker: ${value} total ${scoreUnit} in the final.`;

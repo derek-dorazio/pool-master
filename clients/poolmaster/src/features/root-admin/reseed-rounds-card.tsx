@@ -8,7 +8,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { describeEntry, matchNoun, ReseedAction, reseededRounds, reseedErrorMessages, roundStarted, unfinishedBefore } from './bracket-copy';
+import { describeEntry, matchNoun, ReseedAction, reseededRounds, reseedErrors, roundStarted, unfinishedBefore } from './bracket-copy';
 import type { BracketContext } from './bracket-match-write';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { upperFirst } from '@/lib/upper-first';
@@ -185,7 +185,7 @@ function ReseedRound({
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <InlineError testId={`root-admin-reseed-error-${roundNumber}`}>
             {extractErrorMessage(proposalQuery.error, {
-              codeMessages: reseedErrorMessages(vocabulary, ReseedAction.SUGGEST),
+              ...reseedErrors(vocabulary, ReseedAction.SUGGEST),
               fallback: `The ${noun.many} could not be suggested. Try again.`,
             })}
           </InlineError>
@@ -250,7 +250,7 @@ function ReseedRound({
           {mutation.isError ? (
             <InlineError testId={`root-admin-reseed-save-error-${roundNumber}`}>
               {extractErrorMessage(mutation.error, {
-                codeMessages: reseedErrorMessages(vocabulary, ReseedAction.SAVE),
+                ...reseedErrors(vocabulary, ReseedAction.SAVE),
                 fallback: `The ${noun.many} could not be saved. Try again.`,
               })}
             </InlineError>

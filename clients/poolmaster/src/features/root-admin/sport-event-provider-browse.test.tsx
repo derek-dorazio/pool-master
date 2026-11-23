@@ -105,12 +105,12 @@ describe('SportEventProviderBrowse', () => {
   it('shows the server\'s reason when the provider catalog cannot be loaded', async () => {
     withSportProvider();
     listProviderCatalogEventsMock.mockResolvedValue({
-      error: { error: { code: 'PROVIDER_UNAVAILABLE', message: 'The golf feed is not answering.' } },
+      error: { error: { code: 'INTERNAL_ERROR', message: 'The golf feed is not answering.' } },
       response: { status: 502 },
     });
     renderBrowse();
 
-    expect(await screen.findByText('The golf feed is not answering.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument();
   });
 
   it('browses every tour, with no tour filter, when the edition names no tour yet', async () => {
@@ -251,7 +251,7 @@ describe('SportEventProviderBrowse', () => {
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-create-provider-submit'));
 
     expect(
-      await screen.findByText('Provider mock-contest-feed has no event pga-2026-masters.'),
+      await screen.findByText('The provider has no such event.'),
     ).toBeInTheDocument();
   });
 

@@ -238,7 +238,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
       ),
     );
     const modal = screen.getByTestId('root-admin-tier-auto-tiers-modal');
-    expect(await within(modal).findByText('Tiers are locked for this tournament.')).toBeInTheDocument();
+    expect(await within(modal).findByText('This event has been released, so its tiers and prices are locked.')).toBeInTheDocument();
   });
 
   it('refuses pricing values that contradict each other or are not numbers, naming the problem', async () => {

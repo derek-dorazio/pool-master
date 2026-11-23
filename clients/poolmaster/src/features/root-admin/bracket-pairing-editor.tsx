@@ -4,7 +4,7 @@ import { updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, InlineError, Select, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { bracketErrorMessages, describeEntry, matchNoun } from './bracket-copy';
+import { bracketErrors, describeEntry, matchNoun } from './bracket-copy';
 import { type BracketContext, describeSide, useMatchWrite } from './bracket-match-write';
 
 /** The select's value for a side left without a team. */
@@ -96,7 +96,7 @@ export function PairingEditor({
       {save.isError ? (
         <InlineError testId={`root-admin-bracket-pairing-error-${match.matchNumber}`}>
           {extractErrorMessage(save.error, {
-            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            ...bracketErrors(context.vocabulary, match, context.bracket),
             fallback: `This ${noun.one}'s pairing could not be saved. Try again.`,
           })}
         </InlineError>

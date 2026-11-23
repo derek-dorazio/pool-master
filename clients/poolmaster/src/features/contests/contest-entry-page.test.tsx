@@ -901,7 +901,7 @@ describe('ContestEntryPage', () => {
     });
     fireEvent.click(screen.getByTestId('contest-entry-submit'));
 
-    expect(await screen.findByText('Entries for this contest are closed.')).toBeInTheDocument();
+    expect(await screen.findByText('Contest entries can only be changed before the contest starts.')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-page')).not.toBeInTheDocument();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'contestEntry.saveDetails.failed' }),
@@ -934,7 +934,7 @@ describe('ContestEntryPage', () => {
     const scottie = await screen.findByTestId('contest-entry-participant-sep-1');
     fireEvent.click(scottie);
 
-    expect(await screen.findByText('Entries for this contest are closed.')).toBeInTheDocument();
+    expect(await screen.findByText('Contest entries can only be changed before the contest starts.')).toBeInTheDocument();
     expect(within(screen.getByTestId('contest-entry-participant-sep-1')).getByRole('checkbox')).not.toBeChecked();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'contestEntry.pickChange.failed' }),
@@ -1030,7 +1030,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     // An unfinished tier opens on its own.
     fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-2'));
 
-    expect(await screen.findByText('Picks can no longer be changed.')).toBeInTheDocument();
+    expect(await screen.findByText('Contest entries can only be changed before the contest starts.')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-participant-sep-2')).not.toHaveTextContent('Selected');
     expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('Selected');
   });
@@ -1087,7 +1087,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
     fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-2'));
 
-    expect(await screen.findByText('Rory McIlroy has withdrawn.')).toBeInTheDocument();
+    expect(await screen.findByText('They are no longer available to pick.')).toBeInTheDocument();
     expect(await screen.findByTestId('contest-entry-participant-sep-2')).not.toHaveTextContent('Selected');
     expect(screen.getByText('1/2 saved')).toBeInTheDocument();
   });
@@ -1415,7 +1415,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
       });
       fireEvent.click(screen.getByTestId('contest-entry-submit'));
 
-      expect(await screen.findByTestId('contest-entry-submit-error')).toHaveTextContent('Tier 2 still need picks');
+      expect(await screen.findByTestId('contest-entry-submit-error')).toHaveTextContent('Fill every spot before you submit.');
       expect(screen.queryByTestId('contest-page')).not.toBeInTheDocument();
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'contestEntry.submit.failed' }),

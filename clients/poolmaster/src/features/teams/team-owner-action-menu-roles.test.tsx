@@ -110,7 +110,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     fireEvent.click(dialog.getByRole('button', { name: 'Remove as commissioner' }));
 
     expect(await dialog.findByText(
-      'Appoint another active commissioner before removing or demoting the last commissioner.',
+      'Appoint another commissioner before the last commissioner leaves or steps down.',
     )).toBeInTheDocument();
     expect(dialog.getByRole('button', { name: 'Remove as commissioner' })).toBeEnabled();
   });
@@ -124,13 +124,13 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     await chooseAction('Remove as commissioner');
     const dialog = within(screen.getByRole('dialog', { name: 'Remove as commissioner' }));
     fireEvent.click(dialog.getByRole('button', { name: 'Remove as commissioner' }));
-    await dialog.findByText('Cannot demote the last commissioner.');
+    await dialog.findByText('Appoint another commissioner before the last commissioner leaves or steps down.');
     fireEvent.click(dialog.getByRole('button', { name: 'Close Remove as commissioner' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
     await chooseAction('Remove as commissioner');
     const reopened = within(screen.getByRole('dialog', { name: 'Remove as commissioner' }));
-    expect(reopened.queryByText('Cannot demote the last commissioner.')).not.toBeInTheDocument();
+    expect(reopened.queryByText('Appoint another commissioner before the last commissioner leaves or steps down.')).not.toBeInTheDocument();
   });
 
   it('removes an owner from a squad that has another owner, warning it also removes them from the league', async () => {
@@ -153,7 +153,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
 
   it('shows the server reason and keeps the dialog open when removing an owner fails', async () => {
     mockApi.removeSquadOwner.mockResolvedValue({
-      error: { error: { code: 'SQUAD_OWNER_REMOVE_FAILED', message: 'That owner could not be removed.' } },
+      error: { error: { code: 'SQUAD_OWNER_REMOVE_REQUIRES_MULTIPLE_OWNERS', message: 'That owner could not be removed.' } },
     });
     renderMenu({ activeOwnerCount: 3 });
 
@@ -161,7 +161,7 @@ describe('TeamOwnerActionMenu by viewer role', () => {
     const dialog = within(screen.getByRole('dialog', { name: 'Remove owner' }));
     fireEvent.click(dialog.getByRole('button', { name: 'Remove' }));
 
-    expect(await dialog.findByText('That owner could not be removed.')).toBeInTheDocument();
+    expect(await dialog.findByText('The only active owner cannot be removed. Make the team inactive instead.')).toBeInTheDocument();
   });
 
   it('does not remove a squad\'s only owner directly, and sends a commissioner to the Manage page to inactivate it', async () => {

@@ -6,6 +6,7 @@ import {
   enumLabel,
   enUS,
   flattenDisplayStrings,
+  hasDisplayString,
   pluralBaseKey,
   SOURCE_LOCALE,
   type DisplayStringsModule,
@@ -49,6 +50,19 @@ describe('display string lookups', () => {
 
   it('give an error code the message the en-US module holds for it', () => {
     expect(displayString('error.CONTEST_FULL')).toBe(enUS.error.CONTEST_FULL);
+  });
+
+  it('give a screen\'s own wording of an error code under error.<CODE>.<context>, with its placeholders filled', () => {
+    expect(displayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear', { sportLeagueName: 'PGA Tour', events: 'tournaments', year: 2027 }))
+      .toBe('PGA Tour already has tournaments in 2027.');
+    expect(flattenDisplayStrings(enUS)['error.EVENT_YEAR_NOT_EMPTY.leagueYear']).toBe(enUS.errorContext.EVENT_YEAR_NOT_EMPTY.leagueYear);
+  });
+
+  it('say whether a key built at run time has words, so a screen\'s context is tried before the code\'s own message', () => {
+    expect(hasDisplayString('error.EVENT_YEAR_NOT_EMPTY.leagueYear')).toBe(true);
+    expect(hasDisplayString('error.CONTEST_FULL.leagueYear')).toBe(false);
+    expect(hasDisplayString('error.CONTEST_FULL')).toBe(true);
+    expect(hasDisplayString('error.CONTEST_FULL', 'fr-CA')).toBe(true);
   });
 
   it('give the short form when asked, and the name for an entry that has no short form', () => {

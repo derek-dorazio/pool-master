@@ -333,7 +333,7 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
       fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-live-simulation-start'));
 
       expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-error'))
-        .toHaveTextContent('Provider mock-contest-feed has no event mock-weekend.');
+        .toHaveTextContent('The provider has no such event.');
     });
   });
 
@@ -364,7 +364,7 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
     fireEvent.click(await within(modal).findByTestId('root-admin-sport-event-link-option-mock-weekend'));
     fireEvent.click(within(modal).getByTestId('root-admin-sport-event-link-modal-apply'));
 
-    expect(await within(modal).findByText('Provider mock-contest-feed does not cover GOLF.')).toBeInTheDocument();
+    expect(await within(modal).findByText('This provider does not cover this sport.')).toBeInTheDocument();
   });
 
   it('asks the catalog for events from the start date with no end bound when the tournament has no end date', async () => {
@@ -409,14 +409,14 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
       data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
     });
     linkEventScoreSourceMock.mockResolvedValue(
-      refusal('SPORT_EVENT_ALREADY_LINKED', 'This tournament is already linked to a score source.', 409),
+      refusal('EXTERNAL_EVENT_ALREADY_LINKED', 'This tournament is already linked to a score source.', 409),
     );
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-link-simulated'));
 
     expect(await screen.findByTestId('root-admin-sport-event-link-error')).toHaveTextContent(
-      'This tournament is already linked to a score source.',
+      'Another event is already linked to that provider event.',
     );
   });
 
@@ -439,14 +439,14 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
     it('shows the server\'s reason in the confirmation when unlinking the score source is refused', async () => {
       seedLinked();
       unlinkEventScoreSourceMock.mockResolvedValue(
-        refusal('SPORT_EVENT_IN_PROGRESS', 'A live tournament cannot be unlinked.', 409),
+        refusal('SPORT_EVENT_ALREADY_STARTED', 'A live tournament cannot be unlinked.', 409),
       );
       renderPage();
 
       fireEvent.click(await screen.findByTestId('root-admin-sport-event-unlink-open'));
       fireEvent.click(await screen.findByTestId('root-admin-sport-event-unlink-confirm'));
 
-      expect(await screen.findByText('A live tournament cannot be unlinked.')).toBeInTheDocument();
+      expect(await screen.findByText('This event has already started, so it can no longer be released.')).toBeInTheDocument();
     });
 
     it('closes the unlink confirmation from its close button without unlinking', async () => {
@@ -505,7 +505,7 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
       renderPage();
 
       expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status-error'))
-        .toHaveTextContent('The simulation clock is unavailable.');
+        .toHaveTextContent('Something went wrong. Please try again.');
     });
 
     it('disables the start button and reads "Starting…" while the simulation start is in flight', async () => {
@@ -546,10 +546,10 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
     renderPage();
 
     fireEvent.click(await screen.findByTestId('root-admin-sport-event-link-simulated'));
-    expect(await screen.findByTestId('root-admin-sport-event-link-error')).toHaveTextContent('Simulated event refused.');
+    expect(await screen.findByTestId('root-admin-sport-event-link-error')).toHaveTextContent('The provider has no such event.');
 
     fireEvent.click(screen.getByTestId('root-admin-sport-event-link-open'));
     const modal = await screen.findByTestId('root-admin-sport-event-link-modal');
-    expect(within(modal).queryByText('Simulated event refused.')).not.toBeInTheDocument();
+    expect(within(modal).queryByText('The provider has no such event.')).not.toBeInTheDocument();
   });
 });

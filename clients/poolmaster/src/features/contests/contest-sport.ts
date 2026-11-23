@@ -1,4 +1,5 @@
 import { eventSportDefinition, formatParticipantStatusLabel, getSportDefinition, type Sport, type SportDefinition, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import type { DisplayStringValues } from '@poolmaster/shared/display-strings';
 import type { ContestDto } from '@/lib/api';
 import type { SelectionParticipant } from './contest-entry-selection';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
@@ -53,6 +54,16 @@ export function contestEventStart(sport: Sport | null | undefined): string {
 /** What a match's score counts, as a tiebreaker reads it: "sets" in tennis, "points" wherever the sport names none. */
 export function contestScoreUnit(sport: Sport | null | undefined): string {
   return (sport ? getSportDefinition(sport).vocabulary.scoreUnit : undefined) ?? 'points';
+}
+
+/**
+ * The sport's words a game-pick contest's error wording takes (#718, #721; #704: a tennis
+ * survivor pool picks players in matches): `{{match}}`, `{{matches}}`, `{{participant}}` and the
+ * tiebreaker's `{{scoreUnit}}`.
+ */
+export function gamePickErrorValues(sport: Sport | null | undefined): DisplayStringValues {
+  const match = contestMatchNoun(sport);
+  return { match: match.one, matches: match.many, participant: contestParticipantNoun(sport).one, scoreUnit: contestScoreUnit(sport) };
 }
 
 /** What a game that ends level is called (#792): "Draw" in soccer, "Tie" wherever the sport names none. */

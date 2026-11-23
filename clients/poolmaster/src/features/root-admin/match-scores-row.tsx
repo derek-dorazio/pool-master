@@ -8,7 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { tieWord } from '@/features/contests/contest-sport';
-import { bracketErrorMessages, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
+import { bracketErrors, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
 import type { BracketContext } from './bracket-match-write';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -273,7 +273,7 @@ function ScoreMoment({
       {failed ? (
         <InlineError className="mt-2" testId={`${testId}-error`}>
           {extractErrorMessage(failed, {
-            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            ...bracketErrors(context.vocabulary, match, context.bracket),
             fallback: 'This score could not be saved. Try again.',
           })}
         </InlineError>

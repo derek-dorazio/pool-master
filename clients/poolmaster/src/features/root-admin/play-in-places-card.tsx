@@ -7,7 +7,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry, offLeagueRosterMessages } from './bracket-copy';
+import { bracketErrors, describeEntry, replacementErrors } from './bracket-copy';
 import { candidatePrompt, useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-play-in' });
@@ -105,7 +105,7 @@ function PlayInUnmarkButton({ eventId, row, vocabulary }: { eventId: string; row
       </Button>
       {mutation.isError ? (
         <InlineError>
-          {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'That change could not be saved. Try again.' })}
+          {extractErrorMessage(mutation.error, { ...bracketErrors(vocabulary), fallback: 'That change could not be saved. Try again.' })}
         </InlineError>
       ) : null}
     </>
@@ -140,7 +140,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
       </Button>
       {mutation.isError ? (
         <InlineError className="w-full">
-          {extractErrorMessage(mutation.error, { codeMessages: bracketErrorMessages(vocabulary), fallback: 'That change could not be saved. Try again.' })}
+          {extractErrorMessage(mutation.error, { ...bracketErrors(vocabulary), fallback: 'That change could not be saved. Try again.' })}
         </InlineError>
       ) : null}
     </div>
@@ -211,7 +211,7 @@ function PlayInWinnerPicker({
       </Button>
       {mutation.isError ? (
         <InlineError className="w-full">
-          {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: 'The winner could not be saved. Try again.' })}
+          {extractErrorMessage(mutation.error, { ...replacementErrors(vocabulary, sportLeague), fallback: 'The winner could not be saved. Try again.' })}
         </InlineError>
       ) : null}
       {teamsQuery.isError ? (

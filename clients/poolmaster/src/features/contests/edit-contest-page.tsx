@@ -32,7 +32,6 @@ import {
 import { bracketStartRoundOptions } from './bracket-start-round';
 import { bracketStartRoundsOf } from './contest-template-events';
 import { firstContestEvent } from './contest-events';
-import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
   CONTEST_RULES_FORM_SHAPE,
@@ -172,7 +171,7 @@ function EditContestForm({
     ?? form.formState.errors.contestName?.message
     ?? (saveMutation.isError
       ? extractErrorMessage(saveMutation.error, {
-        codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+        context: 'contestSetup',
         fallback: 'We could not save that contest. Please try again.',
       })
       : null);

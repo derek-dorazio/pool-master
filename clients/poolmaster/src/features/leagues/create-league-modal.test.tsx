@@ -209,8 +209,8 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     createLeagueMock.mockResolvedValue({
       error: {
         error: {
-          code: 'LEAGUE_CODE_IN_USE',
-          message: 'League code is already taken.',
+          code: 'BAD_REQUEST',
+          message: 'body/name must NOT have fewer than 3 characters',
         },
       },
     });
@@ -235,10 +235,10 @@ describe('pool-master-rop.23: CreateLeagueModal generated DTO fixtures', () => {
     fireEvent.blur(screen.getByTestId('create-league-name'));
     fireEvent.click(screen.getByTestId('create-league-submit'));
 
-    await screen.findByText('League code is already taken.');
+    await screen.findByText('The request is not valid. Check the details and try again.');
     // A save error is the shared danger Notice above the buttons, and the dialog stays open.
     expect(screen.getByRole('alert')).toHaveTextContent('League not created');
-    expect(screen.getByRole('alert')).toHaveTextContent('League code is already taken.');
+    expect(screen.getByRole('alert')).toHaveTextContent('The request is not valid. Check the details and try again.');
     expect(screen.getByTestId('create-league-modal')).toBeInTheDocument();
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({

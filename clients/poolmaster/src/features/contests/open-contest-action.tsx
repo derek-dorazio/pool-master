@@ -5,7 +5,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Button, ConfirmDialog, showToast } from '@/features/shared/ui';
-import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { entryWriteKeys } from './use-contest-entries';
 
 /**
@@ -118,7 +117,7 @@ export function OpenContestDialog({
       confirmTestId="contest-open-confirm"
       error={openContestMutation.isError
         ? extractErrorMessage(openContestMutation.error, {
-          codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+          context: 'contestSetup',
           fallback: 'We could not open that contest. Please try again.',
         })
         : null}

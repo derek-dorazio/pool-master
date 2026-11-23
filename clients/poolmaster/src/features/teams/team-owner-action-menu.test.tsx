@@ -114,7 +114,7 @@ describe('TeamOwnerActionMenu', () => {
     await openAction('promote');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-promote-team-1-user-2'));
 
-    expect(await screen.findByText('Only a commissioner can change roles.')).toBeInTheDocument();
+    expect(await screen.findByText('Only a league commissioner can do this.')).toBeInTheDocument();
     expect(screen.getByTestId('team-home-owner-actions-confirm-promote-team-1-user-2')).toBeEnabled();
   });
 
@@ -132,7 +132,7 @@ describe('TeamOwnerActionMenu', () => {
     await openAction('demote');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-demote-team-1-user-2'));
 
-    expect(await screen.findByText(/Appoint another active commissioner/)).toBeInTheDocument();
+    expect(await screen.findByText('Appoint another commissioner before the last commissioner leaves or steps down.')).toBeInTheDocument();
     expect(changeMemberRoleMock).toHaveBeenCalledWith({
       path: { id: 'league-1', uid: 'user-2' },
       body: { role: 'MEMBER' },
@@ -222,7 +222,7 @@ describe('TeamOwnerActionMenu', () => {
 
     await openAction('remove');
     fireEvent.click(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2'));
-    expect(await screen.findByText('Only an active owner can do this')).toBeInTheDocument();
+    expect(await screen.findByText('Only an active owner can do this.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Close Remove owner' }));
     await waitFor(() =>
@@ -231,7 +231,7 @@ describe('TeamOwnerActionMenu', () => {
     await openAction('remove');
 
     expect(await screen.findByTestId('team-home-owner-actions-confirm-remove-team-1-user-2')).toBeInTheDocument();
-    expect(screen.queryByText('Only an active owner can do this')).not.toBeInTheDocument();
+    expect(screen.queryByText('Only an active owner can do this.')).not.toBeInTheDocument();
   });
 
   it('closes the owner menu on a click outside it, without opening a dialog', async () => {

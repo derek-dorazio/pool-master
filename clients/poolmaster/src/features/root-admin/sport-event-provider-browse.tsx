@@ -253,9 +253,11 @@ export function SportEventProviderBrowse({
             {createMutation.isError ? (
               <InlineError>
                 {extractErrorMessage(createMutation.error, {
-                  codeMessages: {
-                    EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one} already has a ${edition.eventYear} edition of this ${eventNoun.one}.`,
-                    SPORT_EVENT_ALREADY_STARTED: `This ${eventNoun.one} has already started, so it can’t be added.`,
+                  context: 'createEvent',
+                  values: {
+                    sportLeague: sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one,
+                    year: edition.eventYear,
+                    event: eventNoun.one,
                   },
                   fallback: `We could not create this ${eventNoun.one}.`,
                 })}
