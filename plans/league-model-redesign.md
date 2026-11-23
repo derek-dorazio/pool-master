@@ -474,6 +474,47 @@ phase:
 - **Data.** None is migrated. When the core lands, QA is rebuilt and the migration history
   is squashed again, both on Derek's word.
 
+## 9b. Sport-specific leftovers found by the 2026-11-23 scan
+
+Each moves into the model in the slice named. None is new design; each follows a settled rule.
+
+- `Sport.tournamentFormat`, its enum and the registry copy: replaced by a default
+  `matchFormat` on the slot definition, copied to the Round; the contest validity matrix keys
+  on matchFormat (slice 5, readers in 10/10b).
+- Scoring family: `SportLeague.scoringFamily` required, the registry copy deleted; COMPOSITE
+  leaves the enum with Clutch Cards (slices 4 and 26).
+- Round count: `SportEvent.rounds`, the sport's `defaultRounds`, the made-up 4 golf rounds and
+  `roundsPar` deleted; the count is an API field from the Round rows. The unplayed-round
+  penalty becomes a to-par setting on the stroke-play scoring definition, never derived from
+  a par (slice 10b).
+- Periods: `matchPeriodLayout`, its sport default and both "18 holes" constants become one
+  required period count and period word per league or slot definition (slice 10).
+- Provider keys outside mappings: `Participant.externalId` and `externalIds` move to
+  ParticipantProviderMapping; `ProviderSyncRun.providerId` becomes a Provider FK and its
+  `eventId` a SportEvent FK (slice 1).
+- `Participant.role` becomes the roster row's SportLeaguePosition; team abbreviation a
+  Participant column (slice 21).
+- `sport` copied onto SportEvent, ContestConfigTemplate and ProviderSyncRun: read through the
+  league, columns dropped (slice 3).
+- `SportOrder` in code becomes `Sport.displayOrder` (slice 3).
+- Ties, shootouts and spreads per sport (`pickEm.tiePicks`, `shootout`): slot definition
+  columns `canEndTied` and `tiebreak` (NONE / OVERTIME / SHOOTOUT); whether a spread is
+  offered is template config (slices 5 and 17).
+- `selectionTypes` and `scoringDefinitions` per sport: the league's templates say it; the API
+  returns the offered types and default scoring; the web app stops re-deriving (slice 19).
+- `SPORT_TYPICAL_PLAY_MS`: a per-league `typicalGameMinutes` beside `quietAfterMinutes` on
+  ProviderLeague (slice 1).
+- `ROUND_NAMES_FROM_FINAL` arrays ("Super Bowl", "Frozen Four", …) deleted; slot `name`
+  holds proper names, generic words come from the display strings (slice 5).
+- `modules/golf/golf-seeding-algorithm.ts`: its invented `oddsToWin` stops (odds come only
+  from the feed, otherwise empty, and the tier order falls to seed then rank); pricing moves
+  to a PlatformPricingProfile function; the golf module is deleted (slice 3).
+- Web app: the leaderboard's `scoringFamily === HEAD_TO_HEAD` branch becomes an API field;
+  `STAT_POOL_FORMULAS`, `clutch-card-copy.ts` and `BUILT_STAT_LINE_SPORTS` go with the Clutch
+  Card rebuild, rendered from PlatformScoringProfile (slices 19 and 26).
+- League URL slug: a stored `SportLeague.slug` key instead of one built from the name; one
+  shared helper for the sport's URL segment (slice 3).
+
 ## 10. Slices
 
 Live state is in the sub-issues of #1917. Each slice is 1–3 hours and carries in its own PR:
