@@ -617,8 +617,9 @@ Contest:
   Bracket and pick'em settings are `{ pointsPerWin, roundScaling, upsetBonus }`, where
   `roundScaling` is `{ rule: NONE }` or `{ rule: MULTIPLY_EACH_ROUND, multiplier }` and
   `upsetBonus` is `{ rule: NONE }` or `{ rule: SEED_DIFFERENCE, multiplier }`. Round n scores
-  `pointsPerWin × multiplier^(n-1)`, counted from the contest's first covered slot by a stored
-  round number on the slot definition (never list position). The positional `roundValues`
+  `pointsPerWin × multiplier^(n-1)`, where n counts the contest's covered slots in `slotKind` order
+  (the enum's explicit order, plus `weekNumber`), starting at 1 for the first covered slot;
+  no new column, never list position. The positional `roundValues`
   array and the placeholder `KNOCKOUT_ROUND_POINTS` on prediction contests are removed.
   Templates set the defaults (brackets ×2, pick'em NONE).
 - Per-event entry state (`ContestEntryEvent`, `ContestEntryEventStanding`, the leaderboard
