@@ -955,13 +955,18 @@ shared function, and every consumer reads that.
 
 `clients/poolmaster` contains no domain value of any kind (Derek, 2026-11-23: "Nothing should
 ever be hardcoded in the webapp code"). No option list, range, limit, default, threshold,
-penalty, count or scoring number is written in web code, nor imported into it from a shared
+penalty or scoring number is written in web code, nor imported into it from a shared
 constant: every such value is model or configuration data that the API returns, and the
 screen renders what it is sent.
 
 - **What the web app may own:** display strings, through the display-strings module
-  (`rules/ux-rules.md` §16), and pure layout constants (spacing, breakpoints, column widths,
-  animation timings) that mean nothing about the domain.
+  (`rules/ux-rules.md` §16 *Display Strings*), and pure layout constants (spacing,
+  breakpoints, column widths, animation timings) that mean nothing about the domain.
+- **Calibration.** Every value of a shared enum, read from the enum in its declared order
+  (a grid filter of every status), is the model, not a copy of it; a hand-written subset or
+  range of it is a finding. A display cap (how many rows before "and N more") is layout. A
+  shared schema's shape is fine for the web to use, but its numeric bounds come from the
+  API.
 - **Why it is absolute:** a value in the screen is a second copy of a rule the server holds
   or should hold. It is invisible to the model, cannot differ by league or contest, and
   drifts; the screen then offers what the server refuses or shows a number the scoring never
@@ -974,9 +979,12 @@ screen renders what it is sent.
   settings, a definition row, a platform profile) and the read that the screen already makes
   returns it (`rules/react-ui-rules.md` §3 *API Integration Rules*). When no API field carries
   it yet, adding that field is part of the slice; a web constant "for now" is not.
-- *Status:* existing web constants of this kind (the golf winning-score tiebreaker options,
-  the unplayed-round `'80'`, and any a scan finds) move to the API with the league model
-  redesign (#1917); a change that touches one moves it, and nothing new is added.
+- *Status:* existing values of this kind move to model or config data with the league model
+  redesign (#1917): the web's golf winning-score tiebreaker options and unplayed-round `'80'`,
+  the limit and default constants in `packages/shared/domain` (events per selection type,
+  survivor lives, roster, squares and tier-profile maximums) and the numeric bounds in its Zod
+  schemas. The web app does not import them meanwhile; a change that touches one moves it,
+  and nothing new is added.
 
 ### What stays in code
 

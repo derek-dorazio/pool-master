@@ -60,6 +60,12 @@ rg -n -i "'(Week \d+|Round \d+|Quarterfinals?|Semifinals?|Final)'" packages/core
 
 # 9. Facts the feed supplies, recomputed
 rg -n "${EXCL[@]}" -i "(compute|derive|calc)\w*(Position|ToPar|Total|Tie|Cut|Status)\b" $BACKEND
+
+# 10. Domain values in the web app
+WEB="clients/poolmaster/src"
+rg -n "${EXCL[@]}" "(OPTIONS|_MAX|_MIN|DEFAULT|LIMIT|THRESHOLD|PENALTY)[A-Z_]*\s*=|Array\.from\(\{ *length:" $WEB
+rg -n "${EXCL[@]}" "(min|max|step)=\{-?[0-9]|\.(min|max)\(-?[0-9]|defaultValues" $WEB
+rg -n "${EXCL[@]}" "from '@poolmaster/shared[^']*'" $WEB | rg "_(MAX|MIN|DEFAULT|LIMIT)"
 ```
 
 Then do the search no pattern does: **list the facts, not the code.** For each concept in
@@ -71,6 +77,10 @@ single line looks wrong; note whether the copies already disagree. For each fact
 whether the feed already supplies it: a value we compute that the provider sends is a finding
 even with one copy (`rules/domain-model-conventions-rules.md` §17 *One computation per
 fact*).
+
+Read each hit of search 10 against `rules/domain-model-conventions-rules.md` §17 *The web app
+holds no domain values*: every value of a shared enum in its declared order and a display cap
+are fine, and anything else is a finding whose home is a field the API returns.
 
 Read each hit of searches 6 to 8 against its rule: a provider key belongs only in a
 `…ProviderMapping` table (§17 *Provider keys live only in ProviderMapping tables*); a model

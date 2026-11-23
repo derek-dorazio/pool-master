@@ -68,6 +68,17 @@ git diff origin/main...HEAD -U0 -- packages/core-api/prisma \
   | grep -nE "externalId|Ref\b|provider[A-Z][A-Za-z]*Id|matchKeyword|[a-z]+Id +String\?|label|displayName|Names\b"
 ```
 
+If the diff touches `clients/poolmaster/src`, search its added lines for a domain value
+(`rules/review-triggers.md` §9 item 10):
+
+```bash
+git diff origin/main...HEAD -U0 -- clients/poolmaster/src \
+  | grep '^+' | grep -v '^+++' \
+  | grep -nE "(OPTIONS|_MAX|_MIN|DEFAULT|LIMIT|THRESHOLD|PENALTY)[A-Z_]*\s*=|Array\.from\(\{ *length:|(min|max|step)=\{-?[0-9]|defaultValues|\.(min|max)\(-?[0-9]"
+```
+
+The §9 calibration says which hits are fine (a whole enum in its declared order, a display cap).
+
 Then ask the questions no search answers: **does this compute something the codebase already
 computes, or something the feed already supplies?** Search for the fact (the current season, whether an event is over, the final
 round, a contest's event limit), not for the function name the author chose
