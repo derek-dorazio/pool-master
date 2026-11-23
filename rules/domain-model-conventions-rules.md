@@ -934,8 +934,9 @@ shared function, and every consumer reads that.
   rule. Two copies of a rule disagree sooner or later, and the screen then offers what the
   server refuses (`rules/react-ui-rules.md` §3 *API Integration Rules*).
 - **A rule both sides must run lives in `packages/shared`** beside the type it describes
-  (status predicates beside the status enum, limits per selection type beside the selection
-  type), and both import it.
+  (status predicates beside the status enum), and both import it. It holds behaviour, not
+  domain values: a limit, range or default it would carry is model or config data
+  (*The web app holds no domain values*, below).
 - **The data provider is the source of truth.** A fact the feed supplies (scores, totals,
   finishing positions and ties, a game's or competitor's status, the cut) is stored as the
   feed gives it, by the sync, and never recomputed from other columns. We compute a fact
@@ -949,6 +950,33 @@ shared function, and every consumer reads that.
   stored rows when the feed sent it.
 - This is `rules/architecture-rules.md` §4 *Service Topology* ("one code path per piece of
   business logic") applied to facts and across the backend/web boundary.
+
+### The web app holds no domain values
+
+`clients/poolmaster` contains no domain value of any kind (Derek, 2026-11-23: "Nothing should
+ever be hardcoded in the webapp code"). No option list, range, limit, default, threshold,
+penalty, count or scoring number is written in web code, nor imported into it from a shared
+constant: every such value is model or configuration data that the API returns, and the
+screen renders what it is sent.
+
+- **What the web app may own:** display strings, through the display-strings module
+  (`rules/ux-rules.md` §16), and pure layout constants (spacing, breakpoints, column widths,
+  animation timings) that mean nothing about the domain.
+- **Why it is absolute:** a value in the screen is a second copy of a rule the server holds
+  or should hold. It is invisible to the model, cannot differ by league or contest, and
+  drifts; the screen then offers what the server refuses or shows a number the scoring never
+  used.
+- **Smell:** an array of choices (`WINNING_SCORE_OPTIONS`, a +10 to -30 range), a numeric
+  literal that is a rule (`'80'` for an unplayed round, a maximum entries count, a default
+  roster size), a `min`/`max` on an input that the API did not send, a map from a code to a
+  number, a default picked in a form because the API sent none.
+- **Instead:** the value lives where it belongs in the model (a contest's scoring or setup
+  settings, a definition row, a platform profile) and the read that the screen already makes
+  returns it (`rules/react-ui-rules.md` §3 *API Integration Rules*). When no API field carries
+  it yet, adding that field is part of the slice; a web constant "for now" is not.
+- *Status:* existing web constants of this kind (the golf winning-score tiebreaker options,
+  the unplayed-round `'80'`, and any a scan finds) move to the API with the league model
+  redesign (#1917); a change that touches one moves it, and nothing new is added.
 
 ### What stays in code
 

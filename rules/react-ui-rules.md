@@ -82,6 +82,10 @@ Examples:
   questions
 - `as any`, `as unknown as`, or manual shape rewriting to bypass generated types
 - Continuing to use legacy manual-client helpers when generated SDK operations now exist
+- Any domain value written in web code or imported from a shared constant: option lists,
+  ranges, limits, defaults, thresholds, penalties or scoring numbers. The API returns them;
+  the web app owns only display strings and pure layout constants
+  (`rules/domain-model-conventions-rules.md` §17 *The web app holds no domain values*)
 
 ### Low-Level Transport Exceptions
 
