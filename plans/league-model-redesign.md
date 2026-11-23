@@ -525,8 +525,9 @@ Each moves into the model in the slice named. None is new design; each follows a
 - Web app: the leaderboard's `scoringFamily === HEAD_TO_HEAD` branch becomes an API field;
   `STAT_POOL_FORMULAS`, `clutch-card-copy.ts` and `BUILT_STAT_LINE_SPORTS` go with the Clutch
   Card rebuild, rendered from PlatformScoringProfile (slices 19 and 26).
-- League URL slug: a stored `SportLeague.slug` key instead of one built from the name; one
-  shared helper for the sport's URL segment (slice 3).
+- URL segments (Derek 2026-11-23): stored `SportLeague.urlSegment` (`nfl`) and
+  `Sport.urlSegment` (`football`) instead of building them from names or computing them in
+  two places; event pages' `slug` is renamed `urlSegment` too (slice 3).
 
 ## 10. Slices
 
