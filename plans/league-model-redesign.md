@@ -588,6 +588,11 @@ Sync:
   - Slice 1: `scheduledSports` and the Sports page's own schedule calculation and `nextRunAt`
     are deleted; the webhook safety-net poll interval is a per-Provider column, read by the
     10c tick; 10c owns every other interval.
+  - Slice 7 (Derek 2026-11-23): the root admin catalog browse (pick a feed event to link) is
+    deleted with manual linking, along with its live provider call; admin views of the feed
+    read what sync stored. "Sync now" and other admin buttons queue the scheduled job;
+    webhooks record the notification and queue the scores job, with no provider call.
+    Endpoint paths stay in each adapter beside the typed response they parse.
   - Slice 7: admin event creation stays only for flagged test slots, which have no provider
     mapping.
   - Slice 10: a tournament-level notification (golf) routes through
