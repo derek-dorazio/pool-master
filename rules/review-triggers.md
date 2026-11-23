@@ -431,6 +431,11 @@ Read every added or changed line for these, and report each one found:
    status or cut worked out from stored rows when the provider sends it, or kept beside the
    feed's value (`domain-model-conventions-rules.md` §17 *One computation per fact*: the
    provider is the source of truth).
+10. **A domain value in the web app** — an option list, range, limit, default, threshold,
+    penalty or scoring number in `clients/poolmaster/src`, written there or imported from a
+    shared constant, rather than read from the API. Blocking whenever the diff adds one; the
+    web app owns only display strings and pure layout constants
+    (`domain-model-conventions-rules.md` §17 *The web app holds no domain values*).
 
 For each finding, state **the model home it belongs in** (a column on a definition, a
 reference row, a mapping table, a field the API returns, one shared predicate) — "hard-coded"
@@ -438,9 +443,11 @@ alone is not actionable. A finding the slice can fix by touching code it already
 fixed before merge; one that needs a model change becomes a linked follow-up ticket, and the
 slice must not add a further copy of it (`domain-model-conventions-rules.md` §15 *Residue*).
 
-**Calibration.** A literal is not automatically a finding: a scoring family's arithmetic, a
-provider's wire format parsed inside its adapter, a UI label map from a code to its words, and
-test fixtures are all fine. The finding is a fact about a *particular* sport, league, season
-or event, or a fact derived a second time. When in doubt, report it with the question; a
-wrong-but-asked finding costs a reply, a missed one costs a redesign later.
+**Calibration.** A literal is not automatically a finding: a scoring family's arithmetic on
+the server, a provider's wire format parsed inside its adapter, a UI label map from a code to
+its words, and test fixtures are all fine. In the web app, every value of a shared enum in its
+declared order (a filter of every status) and a display cap (rows shown before "and N more")
+are fine; a hand-written subset or range is not. The finding is a fact about a *particular*
+sport, league, season or event, or a fact derived a second time. When in doubt, report it with
+the question; a wrong-but-asked finding costs a reply, a missed one costs a redesign later.
 

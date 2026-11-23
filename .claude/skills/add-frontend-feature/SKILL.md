@@ -54,7 +54,13 @@ several are scanner-enforced, so a miss fails CI rather than review.
 - **Tests and selectors** — request wiring tested with MSW against generated contract
   shapes; automation-critical controls expose stable selectors per `rules/react-ui-rules.md` §9 *Stable Automation Selectors*.
 
-## Two traps worth naming
+## Traps worth naming
+
+- **A domain value in the screen.** An option list, range, limit, default, threshold, penalty
+  or scoring number written in a component, or imported from a shared constant, is a second
+  copy of a server rule. Read it from the API; if no field carries it, adding the field is
+  part of the work. The web app owns only display strings and pure layout constants
+  (`rules/domain-model-conventions-rules.md` §17 *The web app holds no domain values*).
 
 - **Server data into form state.** Initialize form drafts from server data once per entity
   identity, not on every query-result object change. Memo deps keyed on narrow fields
