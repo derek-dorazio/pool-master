@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router';
 import {
   ContestEntryStatus,
   PickEmMode,
-  type Sport,
   formatPickEmRulesName,
   formatSelectionTypeName,
 } from '@poolmaster/shared/domain';
@@ -21,9 +20,9 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
-import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
+import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { formatPoints } from './bracket-layout';
+import { formatEntryScore } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
 import { ContestEntryFrame } from './contest-header';
@@ -31,7 +30,7 @@ import { EntryFinishCard } from './entry-finish-card';
 import { entryFinishStatus, entryStatusLine } from './entry-status-line';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { useContestLeagueCode } from './use-contest-league';
-import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
+import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel, gamePickErrorValues } from './contest-sport';
 import {
   canRenameEntries,
 } from './contest-status';
@@ -60,32 +59,6 @@ import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
 import { useEntryName } from './use-entry-name';
 import { useGamePicks } from './use-game-picks';
 import { TiebreakerNumberField } from './tiebreaker-number-field';
-
-/**
- * Copy for the refusals a week's picks, tiebreaker and submit can meet (#718), in the contest's
- * sport's words (#704: a tennis survivor pool picks players in matches). The codes are the
- * contract; the server's own sentences are a fallback for anything not listed.
- */
-function pickEmCodeMessages(sport: Sport | null | undefined): ErrorCodeMessages {
-  const match = contestMatchNoun(sport);
-  const participant = contestParticipantNoun(sport);
-  return {
-    PREDICTION_WEEK_INCOMPLETE: `Every ${match.one} needs a pick before this week can be submitted.`,
-    PREDICTION_CONFIDENCE_INVALID: `Give each pick a different confidence value, from 1 up to the number of ${match.many}.`,
-    PREDICTION_TIEBREAKER_MISSING: `Enter your tiebreaker, the total ${contestScoreUnit(sport)} of the tiebreaker ${match.one}, before you submit.`,
-    PREDICTION_GAME_STARTED: `That ${match.one} has started, so its pick is locked.`,
-    PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: `The week has started, so a pick can be changed to the other ${participant.one} but not removed.`,
-    CONTEST_ENTRY_LOCKED: `The ${match.many} have started, so this can no longer change.`,
-    PREDICTION_ONE_PICK_REQUIRED: `Pick one ${participant.one} to win this week, or in a playoff, this round.`,
-    PREDICTION_TEAM_ALREADY_USED: `You picked that ${participant.one} in another week or round. Each ${participant.one} can be picked once.`,
-    PREDICTION_ENTRY_ELIMINATED: 'This entry is out, so it picks no more.',
-  };
-}
-
-/** What the entry has scored, once anyone can see it; a dash before. */
-function formatScore(points: number | null) {
-  return points === null ? '—' : formatPoints(points);
-}
 
 /**
  * A pick'em contest's entry page (#718): one week at a time, with a switcher for the season's
@@ -193,7 +166,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     }
   };
   const errorMessage = (error: Error | null, fallback: string) => (error
-    ? extractErrorMessage(error, { codeMessages: pickEmCodeMessages(contest.sport), fallback })
+    ? extractErrorMessage(error, { context: ['pickEm', 'gamePicks'], values: gamePickErrorValues(contest.sport), fallback })
     : null);
   // A save with no picks is the tiebreaker's, from the Name and submit card.
   const pickError = saveMutation.variables?.picks.length === 0 ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
@@ -276,8 +249,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           { label: 'Status', value: eliminatedInWeek === null ? 'In' : 'Out', testId: 'survivor-status' },
         ] : [
           { label: 'Picked', value: `${gamePicks.pickedCount} of ${gamePicks.gameCount}`, testId: 'pick-em-picked-count' },
-          { label: 'Points', value: formatScore(gamePicks.points), testId: 'pick-em-points' },
-          { label: 'Max', value: formatScore(gamePicks.maxPossiblePoints), testId: 'pick-em-max-possible' },
+          { label: 'Points', value: formatEntryScore(gamePicks.points), testId: 'pick-em-points' },
+          { label: 'Max', value: formatEntryScore(gamePicks.maxPossiblePoints), testId: 'pick-em-max-possible' },
         ]}
         testId="pick-em-progress"
       />

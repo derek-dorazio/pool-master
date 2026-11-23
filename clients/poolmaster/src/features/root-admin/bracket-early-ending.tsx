@@ -4,7 +4,7 @@ import { recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { Button, InlineError, Select, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { bracketErrorMessages } from './bracket-copy';
+import { bracketErrors } from './bracket-copy';
 import { type BracketContext, useMatchWrite } from './bracket-match-write';
 
 /** The ways a match can stop early (#704), as the admin picks one; PLAYED is the winner buttons. */
@@ -86,7 +86,7 @@ export function EarlyEndingResult({
       {save.isError ? (
         <InlineError className="w-full" testId={`${testId}-error`}>
           {extractErrorMessage(save.error, {
-            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            ...bracketErrors(context.vocabulary, match, context.bracket),
             fallback: `This ${context.vocabulary.match.one}'s result could not be saved. Try again.`,
           })}
         </InlineError>

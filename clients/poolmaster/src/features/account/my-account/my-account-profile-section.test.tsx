@@ -136,7 +136,7 @@ describe('My account › Profile', () => {
     fireEvent.change(screen.getByTestId('my-account-username'), { target: { value: 'taken' } });
     fireEvent.click(screen.getByTestId('my-account-profile-save'));
 
-    expect(await within(dialog).findByText('That username is already taken. Choose another username.')).toBeVisible();
+    expect(await within(dialog).findByText('Username is already in use.')).toBeVisible();
     expect(screen.queryByText('Profile saved')).not.toBeInTheDocument();
   });
 
@@ -153,7 +153,7 @@ describe('My account › Profile', () => {
     fireEvent.change(screen.getByTestId('my-account-username'), { target: { value: 'newname' } });
     fireEvent.click(screen.getByTestId('my-account-profile-save'));
 
-    expect(await within(dialog).findByText('That email is already in use.')).toBeVisible();
+    expect(await within(dialog).findByText('Email is already in use.')).toBeVisible();
     expect(mockApi.updateUserUsername).not.toHaveBeenCalled();
   });
 

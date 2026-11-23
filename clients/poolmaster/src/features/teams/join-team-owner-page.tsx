@@ -221,14 +221,6 @@ export function JoinTeamOwnerPage() {
               title="Create your account"
             >
               <SignUpForm
-                errorMessages={{
-                  // The one case worth its own words: the invited address already has an
-                  // account, so the answer is to sign in rather than register again.
-                  SQUAD_OWNER_INVITATION_ACCOUNT_EXISTS:
-                    'An account already exists for the email this invitation was sent to. Sign in to accept it.',
-                  SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED:
-                    'This invitation has already been accepted. Sign in to reach the league.',
-                }}
                 onRegistered={handleRegistered}
                 pendingLabel="Creating your account..."
                 submitLabel="Create account and join"

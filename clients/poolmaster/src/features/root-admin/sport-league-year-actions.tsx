@@ -99,9 +99,8 @@ export function SportLeagueYearActions({
         error={
           setCurrentMutation.isError
             ? extractErrorMessage(setCurrentMutation.error, {
-                codeMessages: {
-                  EVENT_YEAR_HAS_NO_EVENTS: `${sportLeague.name} has no ${event.many} in ${eventYear}, so it cannot be the current year.`,
-                },
+                context: 'leagueYear',
+                values: { sportLeagueName: sportLeague.name, events: event.many, year: eventYear },
                 fallback: 'We could not set this year as current.',
               })
             : undefined
@@ -122,9 +121,8 @@ export function SportLeagueYearActions({
         error={
           cloneMutation.isError
             ? extractErrorMessage(cloneMutation.error, {
-                codeMessages: {
-                  EVENT_YEAR_NOT_EMPTY: `${sportLeague.name} already has ${event.many} in ${targetYear}.`,
-                },
+                context: 'leagueYear',
+                values: { sportLeagueName: sportLeague.name, events: event.many, year: targetYear },
                 fallback: 'We could not clone this year.',
               })
             : undefined

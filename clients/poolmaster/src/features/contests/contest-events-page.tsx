@@ -1,20 +1,15 @@
 import { ContestStatus, coversOneEvent } from '@poolmaster/shared/domain';
-import {
-  CONTEST_BUDGET_SALARY_CAP_MISMATCH,
-  CONTEST_EVENTS_LEAGUE_MISMATCH,
-  CONTEST_EVENTS_LOCKED,
-} from '@poolmaster/shared/dto';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { listEvents, listEventYears, setContestSportEvents, type ContestDto, type SportEventDto } from '@/lib/api';
-import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
+import { buildLeagueAdminContestPath } from '@/features/leagues/league-routing';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { buildLeagueAdminContestPath } from '@/features/leagues/league-routing';
-import { useLeagueContext } from '@/features/leagues/use-league-context';
 import {
   Button,
   Checkbox,
@@ -36,17 +31,9 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { firstContestEvent, hasContestEventStarted } from './contest-events';
-import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
 import { entryWriteKeys } from './use-contest-entries';
-
-const CONTEST_EVENTS_CODE_MESSAGES: ErrorCodeMessages = {
-  ...CONTEST_RELEASE_CODE_MESSAGES,
-  [CONTEST_EVENTS_LOCKED]: 'An event in this contest has started, so its events can no longer be removed.',
-  [CONTEST_EVENTS_LEAGUE_MISMATCH]: 'Every event in a contest comes from the same league.',
-  [CONTEST_BUDGET_SALARY_CAP_MISMATCH]: 'These events have different salary caps, so they cannot share an open budget contest.',
-};
 
 /** Why an event outside the contest can't be added right now; null when it can. */
 function unavailableReason(event: SportEventDto): string | null {
@@ -202,7 +189,7 @@ function ContestEventsForm({
         : 'Choose the events this contest covers. Entries make picks for each event before it starts, and the contest is final when the last one ends.'}
       errorMessage={saveMutation.isError
         ? extractErrorMessage(saveMutation.error, {
-          codeMessages: CONTEST_EVENTS_CODE_MESSAGES,
+          context: ['contestEvents', 'contestSetup'],
           fallback: 'We could not save these events. Please try again.',
         })
         : null}

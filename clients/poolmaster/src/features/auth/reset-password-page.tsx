@@ -104,12 +104,7 @@ export function ResetPasswordPage() {
         help="Your new password works on every device. You'll sign in again everywhere."
         errorMessage={
           confirmMutation.isError
-            ? extractErrorMessage(confirmMutation.error, {
-                codeMessages: {
-                  PASSWORD_RESET_RATE_LIMITED: "Too many tries. Wait a minute and try again.",
-                  PASSWORD_CONFIRMATION_MISMATCH: "Passwords must match",
-                },
-              })
+            ? extractErrorMessage(confirmMutation.error)
             : null
         }
         isPending={confirmMutation.isPending}

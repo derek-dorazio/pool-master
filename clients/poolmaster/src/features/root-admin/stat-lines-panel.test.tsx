@@ -182,6 +182,6 @@ describe('The Rounds and matches tab for a stat pool event', () => {
 
     await userEvent.type(await screen.findByTestId('root-admin-stat-lines-WALKS-sep-1'), '1');
     await userEvent.click(screen.getByTestId('root-admin-stat-lines-save-sep-1'));
-    expect(await screen.findByTestId('root-admin-stat-lines-save-error')).toHaveTextContent('participant p-1 is not in the field');
+    expect(await screen.findByTestId('root-admin-stat-lines-save-error')).toHaveTextContent('Some stat lines cannot be stored. Check the rows.');
   });
 });

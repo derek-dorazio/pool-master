@@ -7,7 +7,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry, offLeagueRosterMessages, replaceableEntries } from './bracket-copy';
+import { describeEntry, replacementErrors, replaceableEntries } from './bracket-copy';
 import { candidatePrompt, useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-withdrawals' });
@@ -108,7 +108,7 @@ export function WithdrawalsCard({
         </Button>
         {mutation.isError ? (
           <InlineError className="w-full">
-            {extractErrorMessage(mutation.error, { codeMessages: { ...bracketErrorMessages(vocabulary), ...offLeagueRosterMessages(vocabulary, sportLeague) }, fallback: `The ${participant.one} could not be replaced. Try again.` })}
+            {extractErrorMessage(mutation.error, { ...replacementErrors(vocabulary, sportLeague), fallback: `The ${participant.one} could not be replaced. Try again.` })}
           </InlineError>
         ) : null}
         {candidatesQuery.isError ? (

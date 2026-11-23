@@ -18,7 +18,7 @@ import {
   TableRow,
   UploadPreviewTable,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
+import { errorCodeMessage, extractErrorMessage, throwApiError, type ExtractErrorMessageOptions } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -51,29 +51,25 @@ const CHANGE_TONE: Record<NonNullable<RaceResultPreviewRow['change']>, 'success'
   UNCHANGED: 'neutral',
 };
 
+/** A race result's refusals in the sport's words: the field's `{{participant}}` and `{{round}}`. */
+function raceResultErrors(vocabulary: SportVocabulary): ExtractErrorMessageOptions {
+  return { context: 'raceResult', values: { participant: vocabulary.participant.one, round: vocabulary.round.one } };
+}
+
 /**
- * Why the finishing order as a whole cannot be applied, in the sport's words. A page sentence
- * telling the admin what to fix (rules/ux-rules.md §16 item 2); the error's label is
- * `enumLabel('RaceResultOrderError', …)`.
+ * Why the finishing order as a whole cannot be applied, in the sport's words: the same sentence
+ * as the server's refusal of that order (`raceResult` error wording), so the preview and a
+ * refused apply agree. The error's label is `enumLabel('RaceResultOrderError', …)`.
  */
 function orderErrorMessage(error: RaceResultOrderError, vocabulary: SportVocabulary): string {
   switch (error) {
     case RaceResultOrderError.POSITIONS_INVALID:
-      return 'The places do not run 1, 2, 3 and on. Only a dead heat repeats a place, and the next place is then skipped (1, 2, 2, 4).';
+      return errorCodeMessage('RACE_RESULT_POSITIONS_INVALID', raceResultErrors(vocabulary));
     case RaceResultOrderError.FIELD_INCOMPLETE:
-      return `An official result needs every ${vocabulary.participant.one} still in the field: a place for each finisher, or how its ${vocabulary.round.one} ended.`;
+      return errorCodeMessage('RACE_RESULT_FIELD_INCOMPLETE', raceResultErrors(vocabulary));
     default:
       return assertNever(error, 'race result order error');
   }
-}
-
-/** What a refused apply's error code means, in the sport's words. */
-function applyCodeMessages(vocabulary: SportVocabulary): ErrorCodeMessages {
-  return {
-    RACE_RESULT_POSITIONS_INVALID: orderErrorMessage(RaceResultOrderError.POSITIONS_INVALID, vocabulary),
-    RACE_RESULT_FIELD_INCOMPLETE: orderErrorMessage(RaceResultOrderError.FIELD_INCOMPLETE, vocabulary),
-    RACE_RESULT_ROWS_INVALID: `A row does not match one ${vocabulary.participant.one} in the field, or has a problem. Preview again to see which.`,
-  };
 }
 
 function describeRow(row: RaceResultPreviewRow['row']): string {
@@ -234,7 +230,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
           apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
           applyError={applyMutation.isError
             ? extractErrorMessage(applyMutation.error, {
-              codeMessages: applyCodeMessages(vocabulary),
+              ...raceResultErrors(vocabulary),
               fallback: 'We could not apply this result.',
             })
             : null}

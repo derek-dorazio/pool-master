@@ -151,7 +151,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(await screen.findByTestId(`root-admin-tier-profile-${GOLF_ID}-delete`));
     await userEvent.click(await screen.findByTestId('root-admin-tier-profile-delete-confirm'));
 
-    expect(await screen.findByText('Tier profile is named by 2 sport leagues, so it cannot be deleted.')).toBeInTheDocument();
+    expect(await screen.findByText('This tier profile is in use, so it cannot be deleted.')).toBeInTheDocument();
     expect(mocks.deleteTierProfile).toHaveBeenCalledWith(expect.objectContaining({ path: { profileId: GOLF_ID } }));
     expect(screen.getByTestId('root-admin-tier-profile-delete')).toBeInTheDocument();
   });
@@ -213,7 +213,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.type(name, 'Small');
     await userEvent.click(screen.getByTestId('root-admin-pricing-profile-editor-save'));
 
-    expect(await screen.findByText('Another pricing profile is already named "Small".')).toBeInTheDocument();
+    expect(await screen.findByText('A pricing profile already uses that name.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(await screen.findByTestId('root-admin-pricing-profile-dialog-edit')).toBeInTheDocument();
   });

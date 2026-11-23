@@ -600,17 +600,17 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(createContestMock).not.toHaveBeenCalled();
   });
 
-  it('shows the server\'s message when contest creation is refused', async () => {
+  it('shows the refusal\'s display string when contest creation is refused', async () => {
     primeCommonMocks();
     createContestMock.mockResolvedValue({
-      error: { error: { code: 'CONTEST_NAME_IN_USE', message: 'Contest name is already in use.' } },
+      error: { error: { code: 'CONTEST_CONFIGURATION_INVALID', message: 'Contest name is already in use.' } },
     });
 
     renderCreateContestPage();
 
     await submitOnceReady();
 
-    await screen.findByText('Contest name is already in use.');
+    await screen.findByText('These contest settings are not valid.');
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'contest.create.failed' }),
       expect.any(String),
@@ -1027,7 +1027,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).not.toBeChecked();
   });
 
-  it('shows the server\'s own words when a second-chance bracket\'s starting round has already started', async () => {
+  it('says the event has started, so no contest can be made on it, when a second-chance bracket\'s starting round has already started', async () => {
     primeBasketballMocks([basketballEvent(MARCH_MADNESS_UNDER_WAY)]);
     createContestMock.mockResolvedValue({
       error: {
@@ -1047,7 +1047,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4, 8, 16, 32' } });
     await submitOnceReady();
 
-    expect(await screen.findByText('The bracket\'s starting round has already started, so a bracket can no longer start there.')).toBeInTheDocument();
+    expect(await screen.findByText('This event has already started, so a contest can no longer be made on it.')).toBeInTheDocument();
   });
 
   it('says a bracket needs games that fill in as one when the server refuses the event with CONTEST_EVENT_NOT_A_BRACKET', async () => {

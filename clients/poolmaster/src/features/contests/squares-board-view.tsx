@@ -21,7 +21,7 @@ import {
   TabbedCard,
   Text,
 } from '@/features/shared/ui';
-import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
+import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -37,17 +37,6 @@ import { useLandOnEntry } from './use-linked-entry';
 
 /** The tabs above a drawn board. */
 type SquaresTab = 'score' | 'winners';
-
-/** Copy for the refusals a claim, a clear and the draw can meet (#711). The codes are the contract. */
-const SQUARES_CODE_MESSAGES: ErrorCodeMessages = {
-  SQUARES_BOX_TAKEN: 'Someone claimed that box first. The grid has been refreshed.',
-  SQUARES_BOX_LIMIT_REACHED: 'That entry holds all the boxes it may claim. Clear one to claim another.',
-  SQUARES_BOX_NOT_CLAIMED: 'That box is already empty. The grid has been refreshed.',
-  SQUARES_CLAIMING_CLOSED: 'Boxes can no longer change: the numbers are drawn or the game has kicked off.',
-  SQUARES_ALREADY_DRAWN: 'The numbers are already drawn.',
-  SQUARES_DRAW_CLOSED: 'The numbers can no longer be drawn: the first quarter\'s score is in.',
-  ENTRY_ACCESS_DENIED: 'Only that entry\'s owners or a commissioner can change its boxes.',
-};
 
 /**
  * A squares contest's board (#711, design §4.2): the winners of each quarter above the grid, then
@@ -186,7 +175,7 @@ export function SquaresBoardView({
     boxMutation.mutate({ rowIndex, columnIndex, action, contestEntryId: claimingEntryId });
   };
   const boxError = boxMutation.error
-    ? extractErrorMessage(boxMutation.error, { codeMessages: SQUARES_CODE_MESSAGES, fallback: 'We could not change that box. Please try again.' })
+    ? extractErrorMessage(boxMutation.error, { fallback: 'We could not change that box. Please try again.' })
     : null;
 
   return (
@@ -310,7 +299,7 @@ export function SquaresBoardView({
       >
         {drawMutation.isError ? (
           <Notice data-testid="squares-draw-error" tone="danger">
-            {extractErrorMessage(drawMutation.error, { codeMessages: SQUARES_CODE_MESSAGES, fallback: 'We could not draw the numbers. Please try again.' })}
+            {extractErrorMessage(drawMutation.error, { fallback: 'We could not draw the numbers. Please try again.' })}
           </Notice>
         ) : null}
       </ConfirmDialog>

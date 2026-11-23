@@ -36,10 +36,10 @@ describe('formPageSave', () => {
 
   it('shows the server\'s reason for a failed save, and the fallback when it gives none', () => {
     const { result } = renderHook(() => useForm<Values>());
-    const refused = new ApiError({ error: { code: 'LEAGUE_NAME_TAKEN', message: 'That league name is taken.' } });
+    const refused = new ApiError({ error: { code: 'LEAGUE_CODE_CONFLICT', message: 'That league name is taken.' } });
 
     expect(formPageSave(result.current, mutation({ error: refused, isError: true }), 'We could not save the league.').errorMessage)
-      .toBe('That league name is taken.');
+      .toBe('That league code is already taken.');
     expect(formPageSave(result.current, mutation({ error: new ApiError(undefined), isError: true }), 'We could not save the league.').errorMessage)
       .toBe('We could not save the league.');
   });

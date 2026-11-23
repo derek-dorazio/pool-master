@@ -7,7 +7,8 @@
  *    type check could not ask for its words;
  * 2. a module misses a value of a shared enum or an API error code, or keeps one that no longer
  *    exists — each failure names the enum (or `error`) and the code;
- * 3. a `word.` key is used nowhere in the source, or a plural has `_one` without `_other`. A
+ * 3. a `word.` key, or an error context (`error.<CODE>.<context>`), is used nowhere in the
+ *    source, or a plural has `_one` without `_other`. A
  *    `sport.<SPORT>.<role>` entry, and the generic `word.<role>` it falls back to, are read
  *    through `sportWord` by role rather than by key, so they count as used when the role is a
  *    `SportWordRole` (#1960); a role that is not one fails;
@@ -92,10 +93,17 @@ export function completenessFailures(locale, module, enums, errorCodes) {
   for (const code of Object.keys(messages)) {
     if (!errorCodes.includes(code)) failures.push(`${locale}: error ${code} has a display string but is not an API error code.`);
   }
+  for (const [code, contexts] of Object.entries(module.errorContext ?? {})) {
+    if (!errorCodes.includes(code)) failures.push(`${locale}: errorContext ${code} has display strings but is not an API error code.`);
+    if ('short' in (contexts ?? {})) failures.push(`${locale}: errorContext ${code} names a context "short", which a lookup would read as a short form. Rename the context.`);
+  }
   return failures;
 }
 
-/** Every key a module holds, flat: `enum.ContestStatus.LIVE`, `enum.ContestStatus.LIVE.short`, `word.roundCount_one`. */
+/**
+ * Every key a module holds, flat: `enum.ContestStatus.LIVE`, `enum.ContestStatus.LIVE.short`,
+ * `error.CONTEST_FULL`, `error.CONTEST_ENTRY_LOCKED.pickEm`, `word.roundCount_one`.
+ */
 export function flatKeys(module) {
   const keys = [];
   const add = (key, entry) => {
@@ -106,6 +114,9 @@ export function flatKeys(module) {
     for (const [code, entry] of Object.entries(values)) add(`enum.${enumName}.${code}`, entry);
   }
   for (const [code, entry] of Object.entries(module.error ?? {})) add(`error.${code}`, entry);
+  for (const [code, contexts] of Object.entries(module.errorContext ?? {})) {
+    for (const [context, entry] of Object.entries(contexts ?? {})) add(`error.${code}.${context}`, entry);
+  }
   for (const [key, entry] of Object.entries(module.word ?? {})) add(`word.${key}`, entry);
   for (const [sport, roles] of Object.entries(module.sport ?? {})) {
     for (const [role, entry] of Object.entries(roles ?? {})) add(`sport.${sport}.${role}`, entry);
@@ -113,15 +124,23 @@ export function flatKeys(module) {
   return keys;
 }
 
+const quoted = (text, value) => text.includes(`'${value}'`) || text.includes(`"${value}"`) || text.includes(`\`${value}\``);
+
 /**
  * 3: `word.` keys no source file uses (a plural counts as used through its base key), sport
- * word entries whose role is not a `SportWordRole`, and plurals with `_one` but no `_other`.
+ * word entries whose role is not a `SportWordRole`, error contexts no source file names, and plurals with `_one` but no `_other`.
  * Sport word entries and the generic words of their roles are read by role (`sportWord`), so
  * they count as used.
  */
 export function unusedKeyFailures(module, sourceTexts, sportWordRoles = []) {
   const keys = flatKeys(module).filter((key) => (key.startsWith('word.') || key.startsWith('sport.')) && !key.endsWith('.short'));
   const failures = [];
+  const contexts = new Set(Object.values(module.errorContext ?? {}).flatMap((byContext) => Object.keys(byContext ?? {})));
+  for (const context of [...contexts].sort()) {
+    if (!sourceTexts.some((text) => quoted(text, context))) {
+      failures.push(`${SOURCE_LOCALE}: error context ${context} is named by no screen. Delete its errorContext entries, or pass it to extractErrorMessage.`);
+    }
+  }
   const roles = new Set(sportWordRoles);
   const bases = new Set(keys.map((key) => key.replace(PLURAL, '')));
   for (const base of bases) {
@@ -131,7 +150,7 @@ export function unusedKeyFailures(module, sourceTexts, sportWordRoles = []) {
       continue;
     }
     if (roles.has(base.slice('word.'.length))) continue;
-    if (!sourceTexts.some((text) => text.includes(`'${base}'`) || text.includes(`"${base}"`) || text.includes(`\`${base}\``))) {
+    if (!sourceTexts.some((text) => quoted(text, base))) {
       failures.push(`${SOURCE_LOCALE}: ${base} is used nowhere. Delete it, or use it through displayString.`);
     }
   }

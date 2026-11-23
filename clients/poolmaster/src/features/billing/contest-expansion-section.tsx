@@ -5,19 +5,11 @@ import {
   type ContestExpansionOffer,
   type ContestExpansionResponse,
 } from '@/lib/api';
-import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Button, ErrorState, formatCount, formatMoneyCents, formatNumber, FormField, Input, LoadingState, Notice, SectionBody, SectionCard, SectionNote, SectionRow, SectionRows, SectionStack, useDisplayPreferences } from '@/features/shared/ui';
 import { useContestExpansionQuery } from './use-contest-expansion-query';
-
-/** Copy for the refusals Expand and a root admin's free expansion can meet. */
-const EXPANSION_CODE_MESSAGES: ErrorCodeMessages = {
-  CONTEST_EXPANSION_CLOSED: 'This contest has stopped taking entries, so it can no longer be expanded.',
-  CONTEST_EXPANSION_BAND_UNAVAILABLE: 'That size is no longer offered for this contest. Pick another.',
-  CONTEST_EXPANSION_NOT_ABOVE_CAP: 'The contest already takes that many entries. Give a larger size.',
-  PAYMENTS_CHECKOUT_UNAVAILABLE: 'Paying for an expansion isn’t available yet.',
-};
 
 /** "12 of 50", or "12, no limit". */
 function describeEntries(state: ContestExpansionResponse, locale: string): string {
@@ -150,7 +142,6 @@ export function ContestExpansionSection({
             {expandMutation.isError ? (
               <Notice data-testid="contest-expansion-expand-error" tone="danger">
                 {extractErrorMessage(expandMutation.error, {
-                  codeMessages: EXPANSION_CODE_MESSAGES,
                   fallback: 'We could not expand this contest. Please try again.',
                 })}
               </Notice>
@@ -232,7 +223,6 @@ function GrantExpansionForm({
       {grantMutation.isError ? (
         <Notice data-testid="contest-expansion-grant-error" tone="danger">
           {extractErrorMessage(grantMutation.error, {
-            codeMessages: EXPANSION_CODE_MESSAGES,
             fallback: 'We could not give that expansion. Please try again.',
           })}
         </Notice>
