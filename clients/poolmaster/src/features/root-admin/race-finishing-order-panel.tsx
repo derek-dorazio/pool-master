@@ -1,4 +1,5 @@
-import { getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportVocabulary } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { assertNever, getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
@@ -22,7 +23,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import {
-  RACE_RESULT_STATUS_LABELS,
   RACE_RESULT_UPLOAD_HEADERS,
   describeRaceResult,
   parseRaceResultUpload,
@@ -45,22 +45,10 @@ const RESOLUTION_LABEL: Record<RaceResultPreviewRow['resolution'], string> = {
   UNRESOLVED: 'Not in the field',
 };
 
-const CHANGE_LABEL: Record<NonNullable<RaceResultPreviewRow['change']>, string> = {
-  CREATE: 'New',
-  UPDATE: 'Changed',
-  UNCHANGED: 'Unchanged',
-};
-
 const CHANGE_TONE: Record<NonNullable<RaceResultPreviewRow['change']>, 'success' | 'info' | 'neutral'> = {
   CREATE: 'success',
   UPDATE: 'info',
   UNCHANGED: 'neutral',
-};
-
-const ROW_ERROR_LABEL: Record<NonNullable<RaceResultPreviewRow['rowError']>, string> = {
-  DUPLICATE_PARTICIPANT: 'Named on another row too',
-  POSITION_WITHOUT_FINISH: 'A place, but it did not finish',
-  FINISH_WITHOUT_POSITION: 'Finished, but has no place',
 };
 
 /** A race result's refusals in the sport's words: the field's `{{participant}}` and `{{round}}`. */
@@ -69,14 +57,19 @@ function raceResultErrors(vocabulary: SportVocabulary): ExtractErrorMessageOptio
 }
 
 /**
- * Why the finishing order as a whole cannot be applied, in the sport's words: the same sentences
- * as the server's refusal of the order, so the preview and a refused apply agree.
+ * Why the finishing order as a whole cannot be applied, in the sport's words: the same sentence
+ * as the server's refusal of that order (`raceResult` error wording), so the preview and a
+ * refused apply agree. The error's label is `enumLabel('RaceResultOrderError', …)`.
  */
-function orderErrorMessages(vocabulary: SportVocabulary): Record<RaceResultOrderError, string> {
-  return {
-    [RaceResultOrderError.POSITIONS_INVALID]: errorCodeMessage('RACE_RESULT_POSITIONS_INVALID', raceResultErrors(vocabulary)),
-    [RaceResultOrderError.FIELD_INCOMPLETE]: errorCodeMessage('RACE_RESULT_FIELD_INCOMPLETE', raceResultErrors(vocabulary)),
-  };
+function orderErrorMessage(error: RaceResultOrderError, vocabulary: SportVocabulary): string {
+  switch (error) {
+    case RaceResultOrderError.POSITIONS_INVALID:
+      return errorCodeMessage('RACE_RESULT_POSITIONS_INVALID', raceResultErrors(vocabulary));
+    case RaceResultOrderError.FIELD_INCOMPLETE:
+      return errorCodeMessage('RACE_RESULT_FIELD_INCOMPLETE', raceResultErrors(vocabulary));
+    default:
+      return assertNever(error, 'race result order error');
+  }
 }
 
 function describeRow(row: RaceResultPreviewRow['row']): string {
@@ -148,7 +141,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                     ? (entry.isActive ? '—' : vocabulary.withdrawn)
                     : race.resultStatus === RaceResultStatus.FINISHED
                       ? (race.finishPosition === null ? '—' : formatOrdinal(race.finishPosition))
-                      : RACE_RESULT_STATUS_LABELS[race.resultStatus];
+                      : enumLabel('RaceResultStatus', race.resultStatus);
                   return (
                     <TableRow data-testid={`root-admin-race-result-row-${entry.id}`} key={entry.id}>
                       <TableCell className="font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</TableCell>
@@ -255,7 +248,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
             <div className="space-y-3">
               {orderErrors.map((orderError) => (
                 <Notice data-testid={`root-admin-race-result-order-error-${orderError}`} key={orderError} tone="danger">
-                  {orderErrorMessages(vocabulary)[orderError]}
+                  {orderErrorMessage(orderError, vocabulary)}
                 </Notice>
               ))}
               <UploadPreviewTable
@@ -263,9 +256,9 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
                   before: (entry) => describeRaceResult(entry.before),
                   after: (entry) => describeRaceResult(entry.after),
                   badge: (entry) => entry.rowError ? (
-                    <StatusBadge tone="danger">{ROW_ERROR_LABEL[entry.rowError]}</StatusBadge>
+                    <StatusBadge tone="danger">{enumLabel('RaceResultRowError', entry.rowError)}</StatusBadge>
                   ) : entry.change ? (
-                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{CHANGE_LABEL[entry.change]}</StatusBadge>
+                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{enumLabel('RaceResultChange', entry.change)}</StatusBadge>
                   ) : '—',
                 }}
                 describeRow={(entry) => describeRow(entry.row)}

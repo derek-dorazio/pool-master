@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { ProviderSyncKind, SportLeagueSyncHealth } from '@poolmaster/shared/domain';
 import { refreshEventParticipants, submitEventSync, type SportEventDto, type SportEventOverviewDto } from '@/lib/api';
 import {
@@ -21,12 +22,6 @@ const logger = getLogger().child({ feature: 'root-admin-event-page' });
 
 /** The syncs an event's tabs show, each on its own tab. */
 type EventSyncKind = typeof ProviderSyncKind.FIELD | typeof ProviderSyncKind.SCORES;
-
-/** Each sync's name on its row (the Event page spec), in domain words. */
-const EVENT_SYNC_NAMES: Record<EventSyncKind, string> = {
-  [ProviderSyncKind.FIELD]: 'Field',
-  [ProviderSyncKind.SCORES]: 'Live scores and results',
-};
 
 /** Queues one run of the event's field or live scores sync, as its provider's own. */
 async function queueEventSync(event: SportEventDto, kind: EventSyncKind): Promise<void> {
@@ -61,7 +56,7 @@ export function EventSyncsCard({
   const syncNow = useInvalidatingMutation({
     mutationFn: () => queueEventSync(event, kind),
     invalidates: [QueryKeys.rootAdmin.manageSport.eventOverview(event.id), ...(kind === ProviderSyncKind.FIELD ? fieldWriteKeys(event.id) : [])],
-    onSuccess: () => showToast({ title: `${EVENT_SYNC_NAMES[kind]} sync queued`, tone: 'success' }),
+    onSuccess: () => showToast({ title: `${enumLabel('ProviderSyncKind', kind)} sync queued`, tone: 'success' }),
     onError: (error) => {
       logger.warn({ action: 'eventPage.syncNow.failed', data: { eventId: event.id, kind }, err: error }, 'Sync now was refused');
       showToast({ title: extractErrorMessage(error, { fallback: 'We could not queue the sync right now.' }), tone: 'danger' });
@@ -88,7 +83,7 @@ export function EventSyncsCard({
             )}
             aside={<SyncHealthChip health={sync.health} />}
             facts={lastRunText(sync, preferences)}
-            name={EVENT_SYNC_NAMES[kind]}
+            name={enumLabel('ProviderSyncKind', kind)}
             note={nextRunText(sync, preferences)}
             testId={`root-admin-event-sync-${kind}`}
           />

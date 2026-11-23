@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { updateEventRounds, type SportEventDto } from '@/lib/api';
@@ -13,7 +14,7 @@ import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { ROUND_STATUS_LABELS, type EventRoundRow } from './event-round-columns';
+import { type EventRoundRow } from './event-round-columns';
 import {
   roundScheduleRequestBody,
   roundScheduleSchema,
@@ -96,7 +97,7 @@ export function EventRoundDialog({
     {
       id: 'status',
       label: 'Status',
-      value: ROUND_STATUS_LABELS[row.status],
+      value: enumLabel('RoundStatus', row.status),
       testId: `${testId}-status`,
     },
     { id: 'results', label: 'Results', value: row.resultCount, testId: `${testId}-results` },

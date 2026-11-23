@@ -1,4 +1,4 @@
-import { ParticipantInactiveReason } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { StatusBadge, Text } from '@/features/shared/ui';
 import {
@@ -11,14 +11,8 @@ import {
 
 const columnHelper = createColumnHelper<EventFieldRow>();
 
-/** Why a participant left the field, in domain words; a row with no reason recorded is just out. */
-export const FIELD_OUT_LABELS: Record<ParticipantInactiveReason, string> = {
-  [ParticipantInactiveReason.WITHDRAWN]: 'Withdrawn',
-  [ParticipantInactiveReason.ELIMINATED]: 'Eliminated',
-};
-
 export function fieldOutLabel(entry: EventFieldRow['entry']): string {
-  return entry.inactiveReason === null ? 'Out' : FIELD_OUT_LABELS[entry.inactiveReason];
+  return entry.inactiveReason === null ? 'Out' : enumLabel('ParticipantInactiveReason', entry.inactiveReason);
 }
 
 /**
