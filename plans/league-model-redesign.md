@@ -638,7 +638,12 @@ Contest:
 - `Contest.startsAt` stops being a stored cutoff; the cutoff function is the one source, the
   API returns it, and the SQL that hides never-opening drafts calls the same rule; the web
   app's lock, entry, current-event and squares-game helpers read API fields (slices 16/18).
-- Squares use side 1 and side 2 by side number, not away rows and home columns (slice 18).
+- Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
+  not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
+  at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
+  the running score from the Game sides' period scores, which hold the feed's points per
+  period (BALLDONTLIE `home_team_q1`…), summed by one server function. A feed correction
+  after settlement that would move the winning box raises a finding, never a silent change.
 - `GOLF_RELATIVE_TO_PAR_TOTAL` is renamed for stroke play and reads Game sides; the web's
   unplayed-round `'80'` and current-round derivation become API fields (slice 10b).
 - Event page offer copy moves out of `event-page-copy.ts` into offer or template data
