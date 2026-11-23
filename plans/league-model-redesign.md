@@ -547,6 +547,10 @@ Sync:
   no database call per request); a resilience library (cockatiel) honours Retry-After on a
   429, otherwise backs off exponentially with jitter up to a cap, and a circuit breaker
   pauses that Provider briefly during a 429 storm.
+- Mock provider (Derek 2026-11-23, slice 1): no mock provider code in production source (no
+  `mockEventState` branches, wiring, or the root admin "Start live simulation" golf tool);
+  the QA mock service task is disabled. The mock module itself stays in the repo until
+  deferred #1981 removes it.
 - Runs (slice 2): `ProviderSyncRun.payloadJson` stops driving behaviour (columns plus
   findings); field sync has one `ProviderSyncKind`, not five names; logged-only anomalies and
   the synthetic health check become finding kinds and a status computed from runs and jobs.
