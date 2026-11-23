@@ -510,9 +510,9 @@ Each moves into the model in the slice named. None is new design; each follows a
 - `sport` copied onto SportEvent, ContestConfigTemplate and ProviderSyncRun: read through the
   league, columns dropped (slice 3).
 - `SportOrder` in code becomes `Sport.displayOrder` (slice 3).
-- Ties, shootouts and spreads per sport (`pickEm.tiePicks`, `shootout`): slot definition
-  columns `canEndTied` and `tiebreak` (NONE / OVERTIME / SHOOTOUT); whether a spread is
-  offered is template config (slices 5 and 17).
+- Ties per sport (`pickEm.tiePicks`, `shootout`): a boolean `canEndTied` on the slot definition
+  (Derek 2026-11-23); how a game actually ended comes from the feed as the Game's ending;
+  whether a spread is offered is template config (slices 5 and 17).
 - `selectionTypes` and `scoringDefinitions` per sport: the league's templates say it; the API
   returns the offered types and default scoring; the web app stops re-deriving (slice 19).
 - `SPORT_TYPICAL_PLAY_MS`: a per-league `typicalGameMinutes` beside `quietAfterMinutes` on
