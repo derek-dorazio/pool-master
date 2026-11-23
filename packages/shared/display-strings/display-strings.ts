@@ -42,6 +42,8 @@ export type DisplayStringValues = Readonly<Record<string, string | number>>;
 /** Which form of an entry to show: its name, or its short form, which falls back to the name. */
 export type DisplayForm = 'name' | 'short';
 
+export type DisplayStringOptions = { readonly form?: DisplayForm };
+
 export type EnumLabelOptions = { readonly form?: DisplayForm; readonly locale?: string };
 
 /**
@@ -77,7 +79,12 @@ export function pluralBaseKey(key: string): string {
 export type DisplayStrings = {
   /** The locale tag of the module a locale reads: `en-GB` → `en-US`; unknown → `en-US`. */
   readonly moduleLocaleFor: (locale?: string | null) => string;
-  readonly displayString: (key: DisplayStringKey, values?: DisplayStringValues, locale?: string | null) => string;
+  readonly displayString: (
+    key: DisplayStringKey,
+    values?: DisplayStringValues,
+    locale?: string | null,
+    options?: DisplayStringOptions,
+  ) => string;
   readonly enumLabel: <E extends SharedEnumName>(enumName: E, code: SharedEnums[E], options?: EnumLabelOptions) => string;
 };
 
@@ -110,16 +117,22 @@ export function createDisplayStrings(modules: Readonly<Record<string, DisplayStr
     return locales.find((candidate) => candidate.split('-')[0]?.toLowerCase() === language) ?? SOURCE_LOCALE;
   };
 
-  const lookup = (keys: string[], values: DisplayStringValues | undefined, locale: string | null | undefined): string =>
-    instance.t(keys, { ...values, lng: moduleLocaleFor(locale) });
+  /**
+   * A short form is read only from the reader's own module: when it has none, the name in that
+   * same language wins over another language's short form, and only then does the en-US
+   * fallback apply.
+   */
+  const lookup = (key: string, values: DisplayStringValues | undefined, locale: string | null | undefined, form: DisplayForm | undefined): string => {
+    const lng = moduleLocaleFor(locale);
+    const shortKey = `${key}.short`;
+    const wanted = form === 'short' && instance.getResource(lng, 'translation', shortKey) !== undefined ? shortKey : key;
+    return instance.t(wanted, { ...values, lng });
+  };
 
   return {
     moduleLocaleFor,
-    displayString: (key, values, locale) => lookup([key], values, locale),
-    enumLabel: (enumName, code, options) => {
-      const key = `enum.${enumName}.${code}`;
-      return lookup(options?.form === 'short' ? [`${key}.short`, key] : [key], undefined, options?.locale);
-    },
+    displayString: (key, values, locale, options) => lookup(key, values, locale, options?.form),
+    enumLabel: (enumName, code, options) => lookup(`enum.${enumName}.${code}`, undefined, options?.locale, options?.form),
   };
 }
 
@@ -127,10 +140,16 @@ const appDisplayStrings = createDisplayStrings(DISPLAY_STRING_MODULES);
 
 /**
  * The words for a key, in the reader's language: `displayString('error.CONTEST_FULL')`,
- * `displayString('word.roundCount', { count: 3 }, user.locale)`.
+ * `displayString('word.roundCount', { count: 3 }, user.locale)`. `form: 'short'` gives the
+ * entry's short form, or its name when it has none.
  */
-export function displayString(key: DisplayStringKey, values?: DisplayStringValues, locale?: string | null): string {
-  return appDisplayStrings.displayString(key, values, locale);
+export function displayString(
+  key: DisplayStringKey,
+  values?: DisplayStringValues,
+  locale?: string | null,
+  options?: DisplayStringOptions,
+): string {
+  return appDisplayStrings.displayString(key, values, locale, options);
 }
 
 /**

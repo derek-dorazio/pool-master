@@ -15,7 +15,11 @@ import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 /** A second language for the lookups to choose between: French words for two entries, and a plural. */
 const frFR: DisplayStringsModule = {
   ...enUS,
-  enum: { ...enUS.enum, ContestStatus: { ...enUS.enum.ContestStatus, ACTIVE: 'En direct' } },
+  enum: {
+    ...enUS.enum,
+    ContestStatus: { ...enUS.enum.ContestStatus, ACTIVE: 'En direct' },
+    Sport: { ...enUS.enum.Sport, AMERICAN_FOOTBALL: 'Football américain' },
+  },
   error: { ...enUS.error, CONTEST_FULL: 'Ce concours est complet.' },
   word: { roundCount_one: '{{count}} manche', roundCount_other: '{{count}} manches' },
 };
@@ -24,13 +28,18 @@ const frFR: DisplayStringsModule = {
 const enWithWords: DisplayStringsModule = {
   ...enUS,
   enum: { ...enUS.enum, Sport: { ...enUS.enum.Sport, AMERICAN_FOOTBALL: { name: 'American football', short: 'Football' } } },
-  word: { weekNumber: 'Week {{n}}', roundCount_one: '{{count}} round', roundCount_other: '{{count}} rounds' },
+  word: { weekNumber: 'Week {{n}}', roundCount_one: '{{count}} round', roundCount_other: '{{count}} rounds', championship: { name: 'Championship', short: 'Champ' } },
   sport: { GOLF: { participant: 'Golfer' } },
 };
 
 const strings = createDisplayStrings({ 'en-US': enWithWords, 'fr-FR': frFR });
 // The test modules add keys the real module's types do not list yet, so their lookups go through this.
-const lookup = strings.displayString as (key: string, values?: Record<string, string | number>, locale?: string | null) => string;
+const lookup = strings.displayString as (
+  key: string,
+  values?: Record<string, string | number>,
+  locale?: string | null,
+  options?: { form?: 'name' | 'short' },
+) => string;
 
 describe('display string lookups', () => {
   it('give an enum value the words the en-US module holds for it', () => {
@@ -46,6 +55,17 @@ describe('display string lookups', () => {
     expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short' })).toBe('Football');
     expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL)).toBe('American football');
     expect(strings.enumLabel('Sport', Sport.GOLF, { form: 'short' })).toBe(enUS.enum.Sport.GOLF);
+  });
+
+  it('give a French reader the French name, not the English short form, when the French entry has no short form', () => {
+    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short', locale: 'fr-FR' })).toBe('Football américain');
+    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short', locale: 'en-US' })).toBe('Football');
+  });
+
+  it('give any key\'s short form through displayString when asked, and the name otherwise', () => {
+    expect(lookup('word.championship', undefined, undefined, { form: 'short' })).toBe('Champ');
+    expect(lookup('word.championship')).toBe('Championship');
+    expect(displayString('error.CONTEST_FULL', undefined, undefined, { form: 'short' })).toBe(enUS.error.CONTEST_FULL);
   });
 
   it('pick the module by the language part of the locale, so fr-CA reads fr-FR and en-GB reads en-US', () => {
