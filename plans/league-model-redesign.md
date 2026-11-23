@@ -296,7 +296,7 @@ The current model was built one sport at a time and leans on code to look right:
     as 0), dropping the lowest 1;
   - stored on the roster row with the slot it is "as of";
   - blended with the position's `baselineRating` when the history is short;
-  - one global rule for every league (Derek 2026-11-22), so its numbers (4 games, drop 1,
+  - one global rule for every league (Derek 2026-11-23), so its numbers (4 games, drop 1,
     the baseline blend) are not a table; if a league ever needs different numbers, they
     become a profile that leagues pick.
 - **When ratings are computed**: when a field is built, and after each slot COMPLETES.
