@@ -606,11 +606,26 @@ Sync:
   - Order: 10c after 2, 6, 10 and 10b; before 14.
 
 Contest:
+- Contest scoring (Derek 2026-11-23, slices 15/19): `ParticipantContestScoringRule` (a sorted
+  list read only for its first row) and the template's scoring inside `configJson` are
+  replaced by one `ContestScoringConfiguration` row, pointed at by both
+  `ContestConfigTemplate` and `ContestConfiguration` (a contest copies its template's row).
+  Columns: `scoringDefinition` enum (`STROKES_TO_PAR_TOTAL`, renamed from
+  `GOLF_RELATIVE_TO_PAR_TOTAL`; `FINISH_POSITION_POINTS`; `KNOCKOUT_ROUND_POINTS`; new
+  `CORRECT_PICK` for pick'em and survivor; new `SQUARES_PERIOD_WIN`; `COMPOSITE_TOTAL`),
+  `tiebreakerKind` enum, and `settings` JSON validated by the definition's Zod schema.
+  Bracket and pick'em settings are `{ pointsPerWin, roundScaling, upsetBonus }`, where
+  `roundScaling` is `{ rule: NONE }` or `{ rule: MULTIPLY_EACH_ROUND, multiplier }` and
+  `upsetBonus` is `{ rule: NONE }` or `{ rule: SEED_DIFFERENCE, multiplier }`. Round n scores
+  `pointsPerWin × multiplier^(n-1)`, counted from the contest's first covered slot by a stored
+  round number on the slot definition (never list position). The positional `roundValues`
+  array and the placeholder `KNOCKOUT_ROUND_POINTS` on prediction contests are removed.
+  Templates set the defaults (brackets ×2, pick'em NONE).
 - Per-event entry state (`ContestEntryEvent`, `ContestEntryEventStanding`, the leaderboard
   snapshot's shown event, the squares draw's pending receipts) keys by `ContestSeasonSlot`;
   pick'em and survivor weeks are that slot, not round numbers worked out three ways
   (slices 15/17).
-- Knockout round values are rows per slot definition, not a positional array; a bracket's
+- A bracket's
   start is its first covered slot, not `startsAtRound` in config JSON; the final is the slot
   kind FINAL, never `rounds.at(-1)` or `roundCount-1` (slices 9/15/16).
 - One stored setup shape for template and contest, with "one default per scope" as a partial
