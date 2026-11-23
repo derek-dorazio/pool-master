@@ -53,7 +53,6 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SportEventParticipantRound`, `…GolfRound`, `…GolfStanding`, `…RaceResult` | removed | Replaced by Match sides, Game sides and Standing. |
 | none | `SportEventParticipantProviderMapping` | Provider ids that last one event (PGA team and pairing competitors). |
 | composite weights in code | `ScoringComposite` | Platform-level stat weights (Redzone, Hat Trick, …); a league picks one. |
-| none | `PlayerRatingProfile` | Platform-level rating weights; a league picks one. |
 | `ProviderSyncRun` | same name | One sync run. |
 | none | `ProviderSyncFinding` | A problem the sync found, with severity and status. |
 | `ContestSportEvent`, `squaresFromRound`, `bracketStartRound` | `ContestSeasonSlot` | The only record of which Season slots a contest covers. |
@@ -297,7 +296,9 @@ The current model was built one sport at a time and leans on code to look right:
     as 0), dropping the lowest 1;
   - stored on the roster row with the slot it is "as of";
   - blended with the position's `baselineRating` when the history is short;
-  - the weights live in a platform player rating profile that each league picks.
+  - one global rule for every league (Derek 2026-11-22), so its numbers (4 games, drop 1,
+    the baseline blend) are not a table; if a league ever needs different numbers, they
+    become a profile that leagues pick.
 - **When ratings are computed**: when a field is built, and after each slot COMPLETES.
   - Missing history is backfilled first, by a low-priority job that renews its lease and
     shares one provider rate budget.
@@ -570,7 +571,7 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
    `SportEventRoundMatch`, `SportEventRoundMatchGame` (+ `…GameProviderMapping`,
    `…GamePlayerStat`, `…GamePlayerScore`); `Provider`, `ProviderLeague`,
    `SportLeagueProviderMapping`, `ProviderSyncFinding`, `ScoringComposite`,
-   `PlayerRatingProfile`; contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`). Every provider key
+   contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`). Every provider key
    lives in a `…ProviderMapping` table.
 6. ~~Test data~~ Settled: test events in the current Season on flagged test slot rows (§2).
    the loader re-dates test events into it.
