@@ -638,6 +638,13 @@ Contest:
 - `Contest.startsAt` stops being a stored cutoff; the cutoff function is the one source, the
   API returns it, and the SQL that hides never-opening drafts calls the same rule; the web
   app's lock, entry, current-event and squares-game helpers read API fields (slices 16/18).
+- Tiebreaker game (Derek 2026-11-23, slices 10/17): a slot value,
+  `SportEventSlot.tiebreakerGameId`, shared by every contest covering the slot. Set at slot
+  release by one rule: latest scheduled start, ties to the lower Game id (a FINAL slot's
+  championship; a regular week's last kickoff). A root admin can change it in the event's
+  slot dialog until that Game starts (audited). If it is cancelled or moved out of the slot,
+  the rule picks again and raises a finding; guesses carry over. Replaces
+  `weekTiebreakerGame` and `rounds.at(-1)`.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
