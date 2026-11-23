@@ -625,6 +625,12 @@ In order:
     read sides.
 10b. Golf and racing on FIELD Matches: Game sides from the PGA round id, Standing from the
     feed, the cut, event-level competitor mapping; golf and race tables removed.
+10c. Sync scheduling on jobs (Derek 2026-11-23; absorbs #1835 and #1933): one scheduler
+    tick queues due work as jobs with id-based dedupe keys: events per league, field per event
+    whose next slot hasn't started, scores per Game due or in progress. Interval per sync kind
+    and season state (in season or offseason, from Season slot dates) in global settings.
+    "Sync now" on the event queues the same job. In-memory per-sport timers, string locks
+    and `scheduledSports` are removed.
 11. EventSeries removed; event page offers and templates point at slots.
 12. Sync matching by golf name, with the finding actions.
 13. Sync matching by date window and calendar week, with #1924's backend.
