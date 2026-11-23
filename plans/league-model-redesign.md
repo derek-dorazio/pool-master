@@ -630,7 +630,8 @@ In order:
     whose next slot hasn't started, scores per Game due or in progress. Interval per sync kind
     and season state (in season or offseason, from Season slot dates) in global settings.
     "Sync now" on the event queues the same job. In-memory per-sport timers, string locks
-    and `scheduledSports` are removed.
+    and `scheduledSports` are removed; the live sweep polls Games, not in-progress events,
+    and the "play is underway" heuristics go (S5).
 11. EventSeries removed; event page offers and templates point at slots.
 12. Sync matching by golf name, with the finding actions.
 13. Sync matching by date window and calendar week, with #1924's backend.
