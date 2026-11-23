@@ -10,7 +10,8 @@ See *Names* for every table, old and new.
 
 ## Names (settled with Derek 2026-11-22)
 
-Full-path names built from their owners. Today's `SportEvent` prefix is kept, so an event
+Full-path names built from their owners. Platform settings that a league picks are named
+`Platform…Profile` (Derek 2026-11-23). Today's `SportEvent` prefix is kept, so an event
 does not carry `Season` in its name: it gains a `seasonId` FK instead (Derek: a longer
 `SportLeagueSeasonEvent` would lengthen every event table's name). Every provider id or
 code lives only in a table whose name ends in `ProviderMapping`.
@@ -52,8 +53,10 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SportEventParticipantStanding`, `…GolfStanding` | `SportEventParticipantStanding` | Event result per field row: total, score to par, position, display position, status (CUT / WD / DQ). |
 | `SportEventParticipantRound`, `…GolfRound`, `…GolfStanding`, `…RaceResult` | removed | Replaced by Match sides, Game sides and Standing. |
 | none | `SportEventParticipantProviderMapping` | Provider ids that last one event (PGA team and pairing competitors). |
-| rating numbers in code | `PlayerRatingProfile` | Platform table of rating settings (games counted, lowest dropped, baseline blend), like `TierProfile`; each league picks one (`SportLeague.playerRatingProfileId`). |
-| composite weights in code | `ScoringComposite` | Platform-level stat weights (Redzone, Hat Trick, …); a league picks one. |
+| `TierProfile` | `PlatformTierProfile` | Platform tier settings; each league picks one (`platformTierProfileId`). |
+| `PricingProfile` | `PlatformPricingProfile` | Platform price settings; each league picks one (`platformPricingProfileId`). |
+| rating numbers in code | `PlatformRatingProfile` | Platform rating settings (games counted, lowest dropped, baseline blend); each league picks one (`platformRatingProfileId`). |
+| composite weights in code | `PlatformScoringProfile` | Platform stat weights (Redzone, Hat Trick, …); each league picks one (`platformScoringProfileId`). |
 | `ProviderSyncRun` | same name | One sync run. |
 | none | `ProviderSyncFinding` | A problem the sync found, with severity and status. |
 | `ContestSportEvent`, `squaresFromRound`, `bracketStartRound` | `ContestSeasonSlot` | The only record of which Season slots a contest covers. |
@@ -298,7 +301,7 @@ The current model was built one sport at a time and leans on code to look right:
   - stored on the roster row with the slot it is "as of";
   - blended with the position's `baselineRating` when the history is short;
   - its numbers (4 games, drop the lowest 1, the baseline blend) live in a platform
-    **PlayerRatingProfile** table, like TierProfile and PricingProfile, and each league
+    **PlatformRatingProfile** table, like PlatformTierProfile and PlatformPricingProfile, and each league
     picks one (Derek 2026-11-23: no hard-coded numbers). One profile is seeded.
 - **When ratings are computed**: when a field is built, and after each slot COMPLETES.
   - Missing history is backfilled first, by a low-priority job that renews its lease and
@@ -571,8 +574,8 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
    `SportEventSlotTier`, `SportEventSlotParticipantValuation`, `SportEventRound`,
    `SportEventRoundMatch`, `SportEventRoundMatchGame` (+ `…GameProviderMapping`,
    `…GamePlayerStat`, `…GamePlayerScore`); `Provider`, `ProviderLeague`,
-   `SportLeagueProviderMapping`, `ProviderSyncFinding`, `ScoringComposite`,
-   `PlayerRatingProfile`; contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`). Every provider key
+   `SportLeagueProviderMapping`, `ProviderSyncFinding`, `PlatformScoringProfile`,
+   `PlatformRatingProfile`, `PlatformTierProfile`, `PlatformPricingProfile`; contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`). Every provider key
    lives in a `…ProviderMapping` table.
 6. ~~Test data~~ Settled: test events in the current Season on flagged test slot rows (§2).
    the loader re-dates test events into it.
