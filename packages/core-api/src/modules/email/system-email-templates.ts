@@ -1867,7 +1867,7 @@ function renderContestStandingsEmail(
     nextRows.push([displayString('word.nextRound'), `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context)}`]);
   }
   if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
-    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);
+    nextRows.push([displayString('word.nextWeek'), `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);
   }
   const weekLeaders = moment.kind === StandingsMomentKind.PICK_EM_WEEK ? moment.weekLeaders : [];
   const weekLeadersTitle = moment.kind === StandingsMomentKind.PICK_EM_WEEK

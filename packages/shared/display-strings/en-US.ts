@@ -1096,6 +1096,12 @@ export const enUS = {
     gameNumber: { name: 'Game {{n}}', short: 'G{{n}}' },
     singleRace: 'Race',
     roundHeading: 'Round',
+    // A numbered part of a game or event; the short form heads a tight column or tags a box.
+    quarterNumber: { name: 'Quarter {{n}}', short: 'Q{{n}}' },
+    halfNumber: { name: 'Half {{n}}', short: 'H{{n}}' },
+    periodNumber: { name: 'Period {{n}}', short: 'P{{n}}' },
+    // A game's last scoring moment, overtime included.
+    finalPeriod: { name: 'Final', short: 'F' },
     // The periods a game is played in.
     quarter_one: 'quarter',
     quarter_other: 'quarters',
