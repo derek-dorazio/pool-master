@@ -1,4 +1,5 @@
-import { ContestFormat, ContestTemplateEventType, formatSelectionTypeName } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { formatSelectionTypeName } from '@poolmaster/shared/domain';
 import { useForm } from 'react-hook-form';
 import { DetailEditModal, FormField, Select, showToast, type Fact } from '@/features/shared/ui';
 import { updateContestConfigTemplate, type ContestConfigTemplateDto } from '@/lib/api';
@@ -10,17 +11,6 @@ import { useDetailEditDialog } from './use-detail-edit-dialog';
 import { contestTemplateUpdateBody, contestTemplateValuesOf, type TemplateValues } from './league-contest-template-form';
 
 const logger = getLogger().child({ feature: 'root-admin-league-page' });
-
-const CONTEST_FORMAT_LABELS: Record<ContestFormat, string> = {
-  [ContestFormat.ROSTER]: 'Roster',
-  [ContestFormat.PREDICTION]: 'Prediction',
-  [ContestFormat.SQUARES]: 'Squares',
-};
-
-const EVENT_TYPE_LABELS: Record<ContestTemplateEventType, string> = {
-  [ContestTemplateEventType.KNOCKOUT]: 'Playoffs and brackets',
-  [ContestTemplateEventType.WEEK]: 'A week of games',
-};
 
 /**
  * A contest template on the League page's Contest templates grid (⤢): all of it to read, then
@@ -50,9 +40,9 @@ export function LeagueContestTemplateDialog({ onClose, template }: { onClose: ()
 
   const facts: Fact[] = [
     { id: 'description', label: 'Description', value: template.description },
-    { id: 'contestType', label: 'Contest type', value: CONTEST_FORMAT_LABELS[template.contestFormat] },
+    { id: 'contestType', label: 'Contest type', value: enumLabel('ContestFormat', template.contestFormat) },
     { id: 'selectionType', label: 'Selection type', value: formatSelectionTypeName(template.selectionType) },
-    { id: 'events', label: 'Events', value: template.eventType ? EVENT_TYPE_LABELS[template.eventType] : 'Every event' },
+    { id: 'events', label: 'Events', value: template.eventType ? enumLabel('ContestTemplateEventType', template.eventType) : 'Every event' },
     { id: 'default', label: 'Default', value: template.isDefault ? 'Yes' : 'No', testId: 'root-admin-league-contest-template-default' },
     { id: 'status', label: 'Status', value: template.active ? 'On' : 'Off', testId: 'root-admin-league-contest-template-status' },
     { id: 'key', label: 'Key', value: template.templateKey },

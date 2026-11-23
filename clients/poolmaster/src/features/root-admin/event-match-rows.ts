@@ -1,12 +1,6 @@
-import { MatchResultSource, MatchSide } from '@poolmaster/shared/domain';
+import { MatchSide } from '@poolmaster/shared/domain';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { describeEntry, sideEntry } from './bracket-copy';
-
-/** Who set a match's result, as the Matches grid names it. */
-export const MATCH_RESULT_SOURCE_LABELS: Record<MatchResultSource, string> = {
-  [MatchResultSource.PROVIDER]: 'Feed',
-  [MatchResultSource.ADMIN]: 'Admin',
-};
 
 /** One row of the Event page's Matches grid: the match, its sides and score read flat. */
 export type EventMatchRow = {

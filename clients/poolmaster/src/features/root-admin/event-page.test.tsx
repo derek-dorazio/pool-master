@@ -688,7 +688,7 @@ describe('Event page ⚙ dialog', () => {
     const dialog = await openSettings();
     await userEvent.click(within(dialog).getByTestId('root-admin-sport-event-transition-IN_PROGRESS'));
     const modal = await screen.findByTestId('root-admin-sport-event-transition-modal');
-    expect(within(modal).getByTestId('root-admin-sport-event-transition-confirm')).toHaveTextContent('Move to In Progress');
+    expect(within(modal).getByTestId('root-admin-sport-event-transition-confirm')).toHaveTextContent('Move to In progress');
     await userEvent.click(within(modal).getByTestId('root-admin-sport-event-transition-confirm'));
 
     await waitFor(() => expect(transitionEventMock).toHaveBeenCalledWith(expect.objectContaining({

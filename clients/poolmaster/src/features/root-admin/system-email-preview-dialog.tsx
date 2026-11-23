@@ -1,7 +1,7 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { DateDisplay, QueryState, ReadOnlyDetailModal } from '@/features/shared/ui';
 import type { SystemEmailDto } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
-import { SYSTEM_EMAIL_LABELS } from './system-email-labels';
 import { useSystemEmailLatestSendQuery } from './use-system-emails';
 
 /**
@@ -12,7 +12,7 @@ import { useSystemEmailLatestSendQuery } from './use-system-emails';
  */
 export function SystemEmailPreviewDialog({ email, onClose }: { email: SystemEmailDto; onClose: () => void }) {
   const latestQuery = useSystemEmailLatestSendQuery(email.templateKey);
-  const { name } = SYSTEM_EMAIL_LABELS[email.templateKey];
+  const name = enumLabel('EmailTemplateKey', email.templateKey);
   const latest = latestQuery.data;
 
   return (

@@ -1,17 +1,18 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useState } from 'react';
 import { isMatchUnplayed, MatchResultSource, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, postponeEventMatch, recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, ConfirmDialog, formatDateTimeDisplay, InlineError, StatusBadge, TableCell, TableRow, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { bracketErrorMessages, feederOf, formsNoBracket, MATCH_ENDING_MARK, matchNoun, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, feederOf, formsNoBracket, matchEndingMark, matchNoun, sideEntry } from './bracket-copy';
 import { MatchScoresRow } from './match-scores-row';
 import { EarlyEndingResult } from './bracket-early-ending';
 import { type BracketContext, describePairing, describeSide, useMatchWrite } from './bracket-match-write';
 import { PairingEditor } from './bracket-pairing-editor';
 import { SpreadCell } from './bracket-spread-cell';
 import { TieResult } from './bracket-tie-result';
-import { MATCH_STATUS_LABEL, MATCH_STATUS_TONE } from './match-status';
+import { MATCH_STATUS_TONE } from './match-status';
 
 /**
  * One match of the bracket tab (#700). Before release an admin edits the pairing of any side no
@@ -91,7 +92,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
         ) : null}
         <TableCell className="text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</TableCell>
         <TableCell>
-          <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
+          <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{enumLabel('MatchStatus', match.status)}</StatusBadge>
           {match.status === MatchStatus.IN_PROGRESS && match.homeScore !== null && match.awayScore !== null ? (
             <p className="mt-1 text-xs text-muted-foreground" data-testid={`root-admin-bracket-live-${match.matchNumber}`}>
               {`${describeSide(match, MatchSide.AWAY, context)} ${match.awayScore}, ${describeSide(match, MatchSide.HOME, context)} ${match.homeScore}, from ${context.feedName}`}
@@ -111,7 +112,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
             <div className="flex flex-wrap gap-2">
               {([[MatchSide.HOME, home], [MatchSide.AWAY, away]] as const).map(([side, entry]) => {
                 const won = decided && match.winnerSide === side;
-                const mark = MATCH_ENDING_MARK[match.ending];
+                const mark = matchEndingMark(match.ending);
                 return (
                   <Button
                     aria-pressed={won}

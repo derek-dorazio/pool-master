@@ -43,62 +43,6 @@
     "PlanFeature",
     "PlanFeatureGroup"
   ],
-  "clients/poolmaster/src/features/root-admin/activity-labels.ts": [
-    "BackgroundJobKind",
-    "BackgroundJobType",
-    "BackgroundJobStatus",
-    "JobTrigger",
-    "JobErrorType"
-  ],
-  "clients/poolmaster/src/features/root-admin/email-send-result.ts": [
-    "EmailSkipReason"
-  ],
-  "clients/poolmaster/src/features/root-admin/event-field-columns.tsx": [
-    "ParticipantInactiveReason"
-  ],
-  "clients/poolmaster/src/features/root-admin/event-match-rows.ts": [
-    "MatchResultSource"
-  ],
-  "clients/poolmaster/src/features/root-admin/event-round-columns.tsx": [
-    "RoundStatus"
-  ],
-  "clients/poolmaster/src/features/root-admin/league-contest-template-dialog.tsx": [
-    "ContestFormat",
-    "ContestTemplateEventType"
-  ],
-  "clients/poolmaster/src/features/root-admin/league-event-columns.tsx": [
-    "SportEventReleaseMode"
-  ],
-  "clients/poolmaster/src/features/root-admin/league-participant-columns.tsx": [
-    "ParticipantAddedBy",
-    "ParticipantType"
-  ],
-  "clients/poolmaster/src/features/root-admin/league-syncs-text.ts": [
-    "ProviderSyncKind",
-    "ProviderSyncRunStatus"
-  ],
-  "clients/poolmaster/src/features/root-admin/match-status.ts": [
-    "MatchStatus"
-  ],
-  "clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx": [
-    "RaceResultOrderError"
-  ],
-  "clients/poolmaster/src/features/root-admin/race-result-upload.ts": [
-    "RaceResultStatus"
-  ],
-  "clients/poolmaster/src/features/root-admin/sport-league-overview-columns.tsx": [
-    "SportLeagueKind"
-  ],
-  "clients/poolmaster/src/features/root-admin/sport-league-overview-text.ts": [
-    "ProviderSyncKind",
-    "SportLeagueSyncHealth"
-  ],
-  "clients/poolmaster/src/features/root-admin/system-email-labels.ts": [
-    "EmailTemplateStatus"
-  ],
-  "clients/poolmaster/src/features/root-admin/tier-profile-format.ts": [
-    "TierProfileLastTier"
-  ],
   "clients/poolmaster/src/features/teams/invites-page-helpers.ts": [
     "EmailMessageStatus"
   ],

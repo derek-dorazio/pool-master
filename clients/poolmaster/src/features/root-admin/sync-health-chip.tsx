@@ -1,6 +1,6 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { SportLeagueSyncHealth } from '@poolmaster/shared/domain';
 import { Chip, type ChipProps } from '@/features/shared/ui';
-import { SYNC_HEALTH_LABELS } from './sport-league-overview-text';
 
 const SYNC_HEALTH_TONES: Record<SportLeagueSyncHealth, ChipProps['tone']> = {
   [SportLeagueSyncHealth.OK]: 'success',
@@ -11,5 +11,5 @@ const SYNC_HEALTH_TONES: Record<SportLeagueSyncHealth, ChipProps['tone']> = {
 
 /** A sync health as its chip: OK green, ERROR red, NOT RUN YET grey, OFF faded. */
 export function SyncHealthChip({ health }: { health: SportLeagueSyncHealth }) {
-  return <Chip tone={SYNC_HEALTH_TONES[health]}>{SYNC_HEALTH_LABELS[health]}</Chip>;
+  return <Chip tone={SYNC_HEALTH_TONES[health]}>{enumLabel('SportLeagueSyncHealth', health)}</Chip>;
 }

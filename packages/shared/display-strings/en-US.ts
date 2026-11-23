@@ -87,9 +87,9 @@ export const enUS = {
     },
     MatchEnding: {
       PLAYED: 'Played',
-      RETIREMENT: 'Retirement',
-      WALKOVER: 'Walkover',
-      DEFAULT: 'Default',
+      RETIREMENT: { name: 'Retirement', short: 'ret.' },
+      WALKOVER: { name: 'Walkover', short: 'w/o' },
+      DEFAULT: { name: 'Default', short: 'def.' },
     },
     BracketAdvancement: {
       FIXED: 'Fixed',
@@ -110,9 +110,9 @@ export const enUS = {
       DID_NOT_START: 'Did not start',
     },
     RaceResultRowError: {
-      DUPLICATE_PARTICIPANT: 'Duplicate participant',
-      POSITION_WITHOUT_FINISH: 'Position without finish',
-      FINISH_WITHOUT_POSITION: 'Finish without position',
+      DUPLICATE_PARTICIPANT: 'Named on another row too',
+      POSITION_WITHOUT_FINISH: 'A place, but it did not finish',
+      FINISH_WITHOUT_POSITION: 'Finished, but has no place',
     },
     RaceResultOrderError: {
       POSITIONS_INVALID: 'Positions invalid',
@@ -133,8 +133,8 @@ export const enUS = {
       SQUARES: 'Squares',
     },
     ContestTemplateEventType: {
-      KNOCKOUT: 'Playoffs',
-      WEEK: 'Weekly',
+      KNOCKOUT: { name: 'Playoffs and brackets', short: 'Playoffs' },
+      WEEK: { name: 'A week of games', short: 'Weekly' },
     },
     PickEmMode: {
       STRAIGHT_UP: 'Straight up',
@@ -176,8 +176,8 @@ export const enUS = {
       CLOSED: 'Closed',
     },
     SportEventSyncScope: {
-      NONE: 'None',
-      SCORES_ONLY: 'Scores only',
+      NONE: 'Manual',
+      SCORES_ONLY: 'Scores synced',
     },
     ProviderSyncRunStatus: {
       SUBMITTED: 'waiting',
@@ -211,7 +211,7 @@ export const enUS = {
       OVERDUE: 'Overdue',
     },
     SportEventReleaseMode: {
-      AUTO: 'Auto',
+      AUTO: { name: 'Automatic', short: 'Auto' },
       MANUAL: 'Manual',
     },
     SportEventReleaseAtKind: {
