@@ -165,7 +165,7 @@ describe('contest config template handlers', () => {
     expect(listTemplates).toHaveBeenCalledTimes(2);
   });
 
-  it.each([
+  it.each<[string, Error, number, string]>([
     ['a missing template with 404 CONTEST_CONFIG_TEMPLATE_NOT_FOUND', new ContestConfigTemplateNotFoundError('t1'), 404, 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND'],
     ['rules of another selection type with 422 CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH', new ContestConfigTemplateRulesMismatchError('TIERED', 'DRAFT'), 422, 'CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH'],
   ])('answers an update of %s', async (_label, error, status, code) => {
