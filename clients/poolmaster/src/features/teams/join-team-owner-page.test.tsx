@@ -331,7 +331,7 @@ describe('JoinTeamOwnerPage', () => {
     acceptTeamOwnerInvitationMock.mockResolvedValue({
       error: {
         error: {
-          code: 'INVITATION_NOT_ACTIVE',
+          code: 'SQUAD_OWNER_INVITATION_REVOKED',
           message: 'This team invitation is no longer active.',
         },
       },
@@ -342,7 +342,7 @@ describe('JoinTeamOwnerPage', () => {
     await screen.findByTestId('team-owner-invite-page');
     fireEvent.click(screen.getByTestId('team-invite-accept'));
 
-    await screen.findByText('This team invitation is no longer active.');
+    await screen.findByText('This invitation was cancelled.');
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'teamInvite.accept.failed',
@@ -562,7 +562,7 @@ describe('Joining a team as a co-owner from an invite link', () => {
 
   it('says the co-owner invitation could not be loaded and offers no join button when the preview fails', async () => {
     signIn();
-    getTeamOwnerInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'NOT_FOUND', message: 'Not found.' } }, status: 404 });
+    getTeamOwnerInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Not found.' } }, status: 404 });
 
     renderJoinTeamOwnerPage();
 

@@ -5,7 +5,7 @@ import { cancelEventMatch, clearEventMatchResult, postponeEventMatch, recordEven
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, ConfirmDialog, formatDateTimeDisplay, InlineError, StatusBadge, TableCell, TableRow, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { bracketErrorMessages, feederOf, formsNoBracket, matchEndingMark, sideEntry } from './bracket-copy';
+import { bracketErrors, feederOf, formsNoBracket, matchEndingMark, sideEntry } from './bracket-copy';
 import { MatchScoresRow } from './match-scores-row';
 import { EarlyEndingResult } from './bracket-early-ending';
 import { type BracketContext, describePairing, describeSide, useMatchWrite } from './bracket-match-write';
@@ -27,7 +27,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
   const [editing, setEditing] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const noun = context.vocabulary.match;
-  const errorCopy = bracketErrorMessages(context.vocabulary, match, context.bracket);
+  const errorCopy = bracketErrors(context.vocabulary, match, context.bracket);
 
   const result = useMatchWrite({
     context,
@@ -180,7 +180,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
           >
             {cancel.isError ? (
               <InlineError testId={`root-admin-bracket-cancel-error-${match.matchNumber}`}>
-                {extractErrorMessage(cancel.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be cancelled. Try again.` })}
+                {extractErrorMessage(cancel.error, { ...errorCopy, fallback: `This ${noun.one} could not be cancelled. Try again.` })}
               </InlineError>
             ) : null}
           </ConfirmDialog>
@@ -189,12 +189,12 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
           ) : null}
           {postpone.isError ? (
             <InlineError className="mt-2" testId={`root-admin-bracket-postpone-error-${match.matchNumber}`}>
-              {extractErrorMessage(postpone.error, { codeMessages: errorCopy, fallback: `This ${noun.one} could not be postponed. Try again.` })}
+              {extractErrorMessage(postpone.error, { ...errorCopy, fallback: `This ${noun.one} could not be postponed. Try again.` })}
             </InlineError>
           ) : null}
           {result.isError ? (
             <InlineError className="mt-2" testId={`root-admin-bracket-error-${match.matchNumber}`}>
-              {extractErrorMessage(result.error, { codeMessages: errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
+              {extractErrorMessage(result.error, { ...errorCopy, fallback: `This ${noun.one}'s result could not be saved. Try again.` })}
             </InlineError>
           ) : null}
         </TableCell>

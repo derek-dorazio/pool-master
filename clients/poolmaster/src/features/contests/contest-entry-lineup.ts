@@ -7,7 +7,6 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SelectionPickResponse, SelectionStateResponse } from '@/lib/api';
 import type { SelectionGroup } from './contest-entry-selection';
-import type { ErrorCodeMessages } from '@/lib/errors';
 
 type SelectionState = SelectionStateResponse;
 type BudgetLineupSummary = NonNullable<SelectionState['lineupSummary']>;
@@ -204,12 +203,3 @@ export function lineupRulesFor(selectionType: SelectionType): LineupRules | null
   return isRosterSelectionType(selectionType) ? LINEUP_RULES[selectionType] : null;
 }
 
-/**
- * Copy for the pick and submit refusals the entry page can meet. The codes are the contract;
- * the server's own sentences are a fallback for anything not listed.
- */
-export const CONTEST_ENTRY_CODE_MESSAGES: ErrorCodeMessages = {
-  ENTRY_OVER_BUDGET: 'Your picks cost more than the salary cap. Remove one to get under it, then submit.',
-  PRICE_MISSING: 'This pick has no price yet, so it can’t be chosen.',
-  SELECTION_DEALT_BY_DRAW: 'Picks in this contest are dealt by the commissioner’s draw, so they can’t be chosen.',
-};

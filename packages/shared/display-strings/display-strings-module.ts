@@ -134,7 +134,17 @@ export type EnumDisplayStrings = { readonly [E in SharedEnumName]: { readonly [V
 export type ErrorDisplayStrings = { readonly [C in ApiErrorCode]: string };
 
 /**
- * A display-string module. `word` holds generic words, with numbers or plurals in them
+ * A screen's own wording for some error codes, keyed by code then context
+ * (`errorContext.CONTEST_ENTRY_LOCKED.pickEm`, looked up as `error.CONTEST_ENTRY_LOCKED.pickEm`).
+ * A screen names its context; a code it has no wording for reads the code's `error` message.
+ */
+export type ErrorContextDisplayStrings = {
+  readonly [C in ApiErrorCode]?: { readonly [context: string]: string };
+};
+
+/**
+ * A display-string module. `errorContext` holds a screen's own wording of an error code; `word`
+ * holds generic words, with numbers or plurals in them
  * (`weekNumber: 'Week {{n}}'`, `round_one` / `round_other`), and the generic word for every sport
  * word role; `sport` holds the words that differ by sport, keyed by sport code then role
  * (`sport.GOLF.participant_one`), and a role a sport leaves out reads the generic word. Proper
@@ -143,6 +153,7 @@ export type ErrorDisplayStrings = { readonly [C in ApiErrorCode]: string };
 export type DisplayStringsModule = {
   readonly enum: EnumDisplayStrings;
   readonly error: ErrorDisplayStrings;
+  readonly errorContext: ErrorContextDisplayStrings;
   readonly word: { readonly [key: string]: DisplayEntry } & { readonly [K in SportWordEntryKey<GenericSportWordRole>]: DisplayEntry };
   readonly sport: { readonly [S in Sport]?: { readonly [K in SportWordEntryKey]?: DisplayEntry } };
 };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError, extractErrorMessage, hasErrorCode, isErrorEnvelope, throwApiError, type ErrorCodeMessages } from './errors';
+import { displayString } from '@poolmaster/shared/display-strings';
+import { ApiError, errorCodeMessage, extractErrorMessage, hasErrorCode, isErrorEnvelope, throwApiError } from './errors';
 
 function caught(run: () => never): Error {
   try {
@@ -28,20 +29,18 @@ describe('isErrorEnvelope', () => {
 });
 
 describe('ApiError', () => {
-  it('takes message, code and details from a backend error envelope and marks the message as the backend\'s own', () => {
+  it('takes message, code and details from a backend error envelope', () => {
     const err = new ApiError({ error: { code: 'NOT_FOUND', message: 'League not found.', details: { field: 'name' } } });
     expect(err).toBeInstanceOf(Error);
     expect(err.message).toBe('League not found.');
     expect(err.code).toBe('NOT_FOUND');
     expect(err.details).toEqual({ field: 'name' });
-    expect(err.hasOwnMessage).toBe(true);
   });
 
-  it('leaves code unset and uses the throw site fallback as a non-own message when the payload is not an envelope', () => {
+  it('leaves code unset and uses the throw site fallback as its message when the payload is not an envelope', () => {
     const err = new ApiError({ code: 'INTERNAL' }, 'League detail response is missing data.');
     expect(err.message).toBe('League detail response is missing data.');
     expect(err.code).toBeUndefined();
-    expect(err.hasOwnMessage).toBe(false);
   });
 
   it('uses the generic default message when neither an envelope nor a fallback is given', () => {
@@ -50,27 +49,43 @@ describe('ApiError', () => {
 });
 
 describe('extractErrorMessage', () => {
-  it('returns the codeMessages copy for an ApiError whose code is mapped', () => {
-    const err = new ApiError({ error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'Year has events.' } });
-    expect(
-      extractErrorMessage(err, {
-        codeMessages: { EVENT_YEAR_NOT_EMPTY: 'This tour already has tournaments in 2027.' },
-      }),
-    ).toBe('This tour already has tournaments in 2027.');
+  it('shows the code\'s display string, never the backend\'s own message', () => {
+    const err = new ApiError({ error: { code: 'CONTEST_FULL', message: 'contest 42 is at capacity (50/50)' } });
+    expect(extractErrorMessage(err)).toBe('This contest is full.');
+    expect(extractErrorMessage(err)).toBe(displayString('error.CONTEST_FULL'));
   });
 
-  it('returns the backend message for an ApiError whose code is not mapped', () => {
-    const err = new ApiError({ error: { code: 'OTHER', message: 'Backend says no.' } });
-    expect(extractErrorMessage(err, { codeMessages: { EVENT_YEAR_NOT_EMPTY: 'x' } })).toBe('Backend says no.');
+  it('shows the screen\'s context wording for a code it words, with the screen\'s words in its placeholders', () => {
+    const err = new ApiError({ error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'Year has events.' } });
+    expect(extractErrorMessage(err, {
+      context: 'leagueYear',
+      values: { sportLeagueName: 'PGA Tour', events: 'tournaments', year: 2027 },
+    })).toBe('PGA Tour already has tournaments in 2027.');
   });
 
-  it('refuses at typecheck copy keyed by a code the API never sends, such as a misspelled one', () => {
-    const messages: ErrorCodeMessages = {
-      // @ts-expect-error -- a misspelling of EVENT_YEAR_NOT_EMPTY is not one of the API's error codes
-      EVENT_YEAR_NOT_EMTPY: 'This tour already has tournaments in 2027.',
-    };
-    const err = new ApiError({ error: { code: 'EVENT_YEAR_NOT_EMPTY', message: 'Year has events.' } });
-    expect(extractErrorMessage(err, { codeMessages: messages })).toBe('Year has events.');
+  it('shows the code\'s own display string when the screen\'s context has no wording for that code', () => {
+    const err = new ApiError({ error: { code: 'CONTEST_FULL', message: 'Full.' } });
+    expect(extractErrorMessage(err, { context: 'leagueYear' })).toBe('This contest is full.');
+  });
+
+  it('tries a screen\'s contexts in order, so the first with wording for the code wins', () => {
+    const notPriced = new ApiError({ error: { code: 'CONTEST_EVENT_NOT_PRICED', message: 'x' } });
+    const locked = new ApiError({ error: { code: 'CONTEST_EVENTS_LOCKED', message: 'x' } });
+    const context = ['contestEvents', 'contestSetup'] as const;
+    expect(extractErrorMessage(notPriced, { context })).toBe('This event’s field has no prices yet, so it cannot hold a budget contest.');
+    expect(extractErrorMessage(locked, { context })).toBe('An event in this contest has started, so its events can no longer be removed.');
+  });
+
+  it('refuses at typecheck a context no screen wording names, such as a misspelled one', () => {
+    const err = new ApiError({ error: { code: 'CONTEST_FULL', message: 'Full.' } });
+    // @ts-expect-error -- not an error context in the display strings
+    expect(extractErrorMessage(err, { context: 'leagueYears' })).toBe('This contest is full.');
+  });
+
+  it('shows the caller fallback, not the backend message, for a code this build does not know', () => {
+    const err = new ApiError({ error: { code: 'A_CODE_FROM_A_NEWER_API', message: 'Backend says no.' } });
+    expect(extractErrorMessage(err, { fallback: 'We could not save that.' })).toBe('We could not save that.');
+    expect(extractErrorMessage(err)).toBe('Something went wrong. Please try again.');
   });
 
   it('returns the caller fallback, not the throw site diagnostic, for an ApiError built from a non-envelope payload', () => {
@@ -86,6 +101,14 @@ describe('extractErrorMessage', () => {
   it('returns the fallback, or the generic default, for null and undefined', () => {
     expect(extractErrorMessage(null, { fallback: 'Try later.' })).toBe('Try later.');
     expect(extractErrorMessage(undefined)).toBe('Something went wrong. Please try again.');
+  });
+});
+
+describe('errorCodeMessage', () => {
+  it('gives a code\'s words with no error in hand, from the screen\'s context first', () => {
+    expect(errorCodeMessage('CONTEST_FULL')).toBe('This contest is full.');
+    expect(errorCodeMessage('RACE_RESULT_ROWS_INVALID', { context: 'raceResult', values: { participant: 'driver' } }))
+      .toBe('A row does not match one driver in the field, or has a problem. Preview again to see which.');
   });
 });
 
@@ -110,10 +133,11 @@ describe('hasErrorCode', () => {
 });
 
 describe('throwApiError', () => {
-  it('throws an ApiError carrying the backend message for an error envelope', () => {
-    const err = caught(() => throwApiError({ error: { code: 'X', message: 'boom' } }));
+  it('throws an ApiError carrying the backend code and message for an error envelope', () => {
+    const err = caught(() => throwApiError({ error: { code: 'CONTEST_FULL', message: 'boom' } }));
     expect(err).toBeInstanceOf(ApiError);
-    expect(extractErrorMessage(err)).toBe('boom');
+    expect(err.message).toBe('boom');
+    expect(extractErrorMessage(err)).toBe('This contest is full.');
   });
 
   it('re-throws an already-real Error unchanged instead of double-wrapping it', () => {

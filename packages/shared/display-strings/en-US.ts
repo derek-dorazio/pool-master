@@ -808,7 +808,7 @@ export const enUS = {
     CONTEST_EXPANSION_CLOSED: 'This contest has stopped taking entries, so it can no longer be expanded.',
     CONTEST_EXPANSION_NOT_ABOVE_CAP: 'The contest already takes that many entries. Give a larger size.',
     CONTEST_FINAL: 'This contest is final, so how much it counts is fixed.',
-    CONTEST_FORMAT_MISMATCH: 'Only a bracket contest has a bracket leaderboard.',
+    CONTEST_FORMAT_MISMATCH: 'This contest is not played that way.',
     CONTEST_FORMAT_NOT_ALLOWED: 'This event does not offer that kind of contest.',
     CONTEST_FULL: 'This contest is full.',
     CONTEST_ID_REQUIRED: 'Contest id is required.',
@@ -1065,6 +1065,187 @@ export const enUS = {
     YEAR_REVIEW_ALREADY_SENT: 'The year in review has already been sent.',
     YEAR_REVIEW_NOTHING_TO_SEND: 'There is nothing to send in a year in review yet.',
     YEAR_REVIEW_NOT_OPEN: 'The year in review cannot be sent yet.',
+  },
+  /**
+   * A screen's own wording of an error code, by code then context: the screen passes its
+   * context to extractErrorMessage. Placeholders take the sport's words from the screen.
+   */
+  errorContext: {
+    BRACKET_INVALID: {
+      bracketAdmin: 'That pairing could not be saved. Each {{participant}} plays one opening {{match}}, and two different {{participants}} meet in a {{match}}.',
+      reseedSave: 'These {{matches}} could not be saved. Each {{participant}} left plays once, against a {{participant}} from its own side of the bracket, and a {{participant}} with a bye keeps its place.',
+      reseedSuggest: 'The {{participants}} left don\'t fit this round\'s {{matches}}. Check the results of the round before.',
+    },
+    BRACKET_MATCH_NOT_FOUND: {
+      bracketAdmin: 'That {{match}} is no longer in the bracket. Refresh the page.',
+    },
+    BRACKET_NOT_RESEEDED: {
+      bracketAdmin: 'This round\'s {{participants}} come from the {{matches}} before it, so it isn\'t reseeded.',
+    },
+    BRACKET_PARTICIPANT_ALREADY_PLAYED: {
+      bracketAdmin: 'That {{participant}}\'s {{match}} has started, so enter the withdrawal as a walkover.',
+    },
+    BRACKET_PLACE_NOT_FIRST_ROUND: {
+      bracketAdmin: 'That {{participant}} skipped the first round, so enter the withdrawal as a walkover.',
+    },
+    BRACKET_ROUND_ALREADY_PLAYED: {
+      bracketAdmin: 'A {{match}} of this round has started, so its {{matches}} can no longer change.',
+    },
+    BRACKET_ROUND_NOT_FINISHED: {
+      bracketAdmin: 'Every {{match}} of the round before needs a result before this round\'s {{matches}} are set.',
+    },
+    CONTEST_BRACKET_SINGLE_EVENT: {
+      contestSetup: 'A bracket contest covers one tournament, so it can’t take another event.',
+    },
+    CONTEST_BUDGET_SALARY_CAP_MISMATCH: {
+      contestEvents: 'These events have different salary caps, so they cannot share an open budget contest.',
+    },
+    CONTEST_BUDGET_UNFILLABLE: {
+      contestSetup: 'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
+    },
+    CONTEST_DRAW_FIELD_OUT_OF_RANGE: {
+      contestSetup: 'More scores count than the draw deals each entry. Lower Scores that count, or deal more per entry.',
+    },
+    CONTEST_DRAW_SINGLE_EVENT: {
+      contestSetup: 'A random draw deals one event’s field, so it can’t take another event.',
+    },
+    CONTEST_ENTRY_LOCKED: {
+      bracketEntry: 'The {{matches}} have started, so this bracket can no longer change.',
+      pickEm: 'The {{matches}} have started, so this can no longer change.',
+    },
+    CONTEST_EVENTS_LEAGUE_MISMATCH: {
+      contestEvents: 'Every event in a contest comes from the same league.',
+    },
+    CONTEST_EVENTS_LOCKED: {
+      contestEvents: 'An event in this contest has started, so its events can no longer be removed.',
+    },
+    CONTEST_EVENT_ALREADY_STARTED: {
+      contestSetup: 'This contest’s event has already started, so it can no longer be opened. Delete the draft instead.',
+    },
+    CONTEST_EVENT_NOT_A_BRACKET: {
+      contestSetup: 'This event’s games can’t be filled in as a bracket yet: every team of the round the bracket starts at must be set, and every game must lead to one final.',
+    },
+    CONTEST_EVENT_NOT_PRICED: {
+      contestSetup: 'This event’s field has no prices yet, so it cannot hold a budget contest.',
+    },
+    CONTEST_SQUARES_SINGLE_EVENT: {
+      contestSetup: 'A squares contest is played on one game, so it can’t take another event.',
+    },
+    EVENT_EDITION_ALREADY_EXISTS: {
+      createEvent: 'This {{sportLeague}} already has a {{year}} edition of this {{event}}.',
+    },
+    EVENT_PARTICIPANT_ALREADY_ON_FIELD: {
+      bracketAdmin: 'That {{participant}} is already in the {{event}}.',
+    },
+    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: {
+      bracketAdmin: 'That is a {{playIn}} place. Name its {{participant}} there instead.',
+    },
+    EVENT_PARTICIPANT_NOT_IN_BRACKET: {
+      bracketAdmin: 'That {{participant}} no longer has a place in the bracket. Refresh the page.',
+    },
+    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: {
+      bracketAdmin: 'That place is not a {{playIn}} place, so its {{participant}} can\'t be replaced.',
+    },
+    EVENT_YEAR_HAS_NO_EVENTS: {
+      leagueYear: '{{sportLeagueName}} has no {{events}} in {{year}}, so it cannot be the current year.',
+    },
+    EVENT_YEAR_NOT_EMPTY: {
+      leagueYear: '{{sportLeagueName}} already has {{events}} in {{year}}.',
+    },
+    INTERNAL_ERROR: {
+      eventTiers: 'The tiers may have saved, but placing the field in them failed. Save again to finish.',
+    },
+    MATCH_ALREADY_PLAYED: {
+      bracketAdmin: 'This {{match}} has a result. Clear it before cancelling the {{match}}.',
+    },
+    MATCH_ALREADY_STARTED: {
+      bracketAdmin: 'This {{match}} has started, so it can\'t be postponed.',
+    },
+    MATCH_CANCELLED: {
+      bracketAdmin: 'This {{match}} was cancelled, so it has no score.',
+    },
+    MATCH_IN_BRACKET: {
+      bracketAdmin: 'This {{match}} is part of a bracket, which can\'t lose a {{match}}. Change its time instead.',
+    },
+    MATCH_PERIOD_INVALID: {
+      bracketAdmin: 'This {{match}}\'s score at that point can\'t be entered here.',
+    },
+    MATCH_RESULT_INVALID: {
+      bracketAdmin: 'That result could not be saved. The winner\'s score is the higher, a {{tie}} has level scores, and a final score is never below an earlier one.',
+    },
+    MATCH_SIDES_NOT_SET: {
+      bracketAdmin: 'Both {{participants}} in this {{match}} aren\'t known yet. Enter the results of the {{matches}} before it first.',
+    },
+    MATCH_SPREAD_LOCKED: {
+      bracketAdmin: 'This {{match}} already has picks, so its spread can no longer change.',
+    },
+    MATCH_SPREAD_REQUIRED: {
+      bracketAdmin: 'The {{event}} has been released, so this {{match}}\'s spread can be changed but not cleared.',
+    },
+    PARTICIPANT_NOT_FOUND: {
+      bracketAdmin: 'That {{participant}} is no longer active. Pick another.',
+    },
+    PARTICIPANT_NOT_IN_SPORT_LEAGUE: {
+      replaceParticipant: 'That {{participant}} isn\'t on this {{sportLeague}}\'s roster, so they can\'t join this {{event}}. Pick another.',
+    },
+    PLAY_IN_SLOT_ALREADY_PLAYED: {
+      bracketAdmin: 'That place has already played a {{match}}, so its {{participant}} can\'t change.',
+    },
+    PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: {
+      pickEm: 'The week has started, so a pick can be changed to the other {{participant}} but not removed.',
+    },
+    PREDICTION_CONFIDENCE_INVALID: {
+      pickEm: 'Give each pick a different confidence value, from 1 up to the number of {{matches}}.',
+    },
+    PREDICTION_GAME_STARTED: {
+      gamePicks: 'That {{match}} has started, so its pick is locked.',
+    },
+    PREDICTION_ONE_PICK_REQUIRED: {
+      pickEm: 'Pick one {{participant}} to win this week, or in a playoff, this round.',
+    },
+    PREDICTION_TEAM_ALREADY_USED: {
+      pickEm: 'You picked that {{participant}} in another week or round. Each {{participant}} can be picked once.',
+    },
+    PREDICTION_TEAM_NOT_IN_GAME: {
+      bracketEntry: 'That {{participant}} can’t reach this {{match}} in your bracket any more. Your bracket has been refreshed.',
+    },
+    PREDICTION_TIEBREAKER_MISSING: {
+      bracketEntry: 'Enter your tiebreaker, the total {{scoreUnit}} of the final, before you submit.',
+      pickEm: 'Enter your tiebreaker, the total {{scoreUnit}} of the tiebreaker {{match}}, before you submit.',
+    },
+    PREDICTION_WEEK_INCOMPLETE: {
+      bracketEntry: 'Every {{match}} needs a pick before your bracket can be submitted.',
+      pickEm: 'Every {{match}} needs a pick before this week can be submitted.',
+    },
+    PROVIDER_LEAGUE_REFUSED: {
+      leagueYear: 'The provider refused {{sportLeagueName}}’s {{events}}: its current plan doesn’t include them.',
+    },
+    RACE_RESULT_FIELD_INCOMPLETE: {
+      raceResult: 'An official result needs every {{participant}} still in the field: a place for each finisher, or how its {{round}} ended.',
+    },
+    RACE_RESULT_POSITIONS_INVALID: {
+      raceResult: 'The places do not run 1, 2, 3 and on. Only a dead heat repeats a place, and the next place is then skipped (1, 2, 2, 4).',
+    },
+    RACE_RESULT_ROWS_INVALID: {
+      raceResult: 'A row does not match one {{participant}} in the field, or has a problem. Preview again to see which.',
+    },
+    SPORT_EVENT_ALREADY_STARTED: {
+      contestSetup: 'This event has already started, so a contest can no longer be made on it.',
+      createEvent: 'This {{event}} has already started, so it can’t be added.',
+    },
+    SPORT_EVENT_BRACKET_LOCKED: {
+      bracketAdmin: 'The {{event}} has been released, so its pairings are locked.',
+    },
+    SPORT_EVENT_MATCH_RESULT_LOCKED: {
+      bracketAdmin: 'This {{match}}\'s winner is already in its next {{match}}, which has a score. Clear that score first.',
+      bracketAdminNextMatch: 'This {{match}}\'s winner is already in {{match}} {{nextMatchNumber}}, which has a score. Clear {{match}} {{nextMatchNumber}}\'s score first.',
+    },
+    SPORT_EVENT_NOT_RELEASED: {
+      bracketAdmin: 'Release the {{event}} before entering results.',
+    },
+    SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: {
+      leagueYear: '{{sportLeagueName}} has no match keyword. Set it to the provider’s {{sportLeague}} name.',
+    },
   },
   word: {
     // Generic sport words: what `sportWord` reads for a role a sport has no entry of its own for.

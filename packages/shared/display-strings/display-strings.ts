@@ -27,12 +27,20 @@ type EnumKey = { [E in SharedEnumName]: `enum.${E}.${SharedEnums[E]}` }[SharedEn
 type ErrorKey = `error.${ApiErrorCode}`;
 type SectionKeys<T, Prefix extends string> = { [K in Extract<keyof T, string>]: `${Prefix}${PluralBase<K>}` }[Extract<keyof T, string>];
 type SportWords = typeof enUS.sport;
+type ErrorContexts = typeof enUS.errorContext;
+type ErrorContextKey = {
+  [C in Extract<keyof ErrorContexts, string>]: `error.${C}.${Extract<keyof ErrorContexts[C], string>}`;
+}[Extract<keyof ErrorContexts, string>];
+/** A screen's name for its own wording of some error codes: `'pickEm'`, `'bracketAdmin'`. */
+export type ErrorContext = {
+  [C in keyof ErrorContexts]: Extract<keyof ErrorContexts[C], string>;
+}[keyof ErrorContexts];
 type SportKey = { [S in Extract<keyof SportWords, string>]: SectionKeys<SportWords[S], `sport.${S}.`> }[Extract<keyof SportWords, string>];
 
 /** Every key a display string can be looked up by, by section; a wrong key fails the type check. */
 type KeysBySection = {
   enum: EnumKey;
-  error: ErrorKey;
+  error: ErrorKey | ErrorContextKey;
   word: SectionKeys<typeof enUS.word, 'word.'>;
   sport: SportKey;
 };
@@ -55,14 +63,16 @@ type ValuesIn<Section, Base extends string> = { readonly [P in Placeholders<Entr
 
 /**
  * The values one key's placeholders take, read off the en-US words (#1960): `{ n: number }` for
- * `word.weekNumber` ("Week {{n}}"), `{ count: number }` for a plural; nothing for a key without
- * placeholders. A missing or misspelt value fails the type check.
+ * `word.weekNumber` ("Week {{n}}"), `{ count: number }` for a plural, `{ match, … }` for a screen's
+ * error wording (`error.<CODE>.<context>`); nothing for a key without placeholders. A missing or misspelt value fails the type check.
  */
 export type DisplayStringValuesFor<K extends DisplayStringKey> = K extends `word.${infer Base}`
   ? ValuesIn<typeof enUS.word, Base>
   : K extends `sport.${infer S}.${infer Base}`
     ? S extends keyof SportWords ? ValuesIn<SportWords[S], Base> : never
-    : unknown;
+    : K extends `error.${infer C}.${infer Context}`
+      ? C extends keyof ErrorContexts ? ValuesIn<ErrorContexts[C], Context> : never
+      : unknown;
 
 /** `displayString`'s arguments after the key: values required exactly when the key has placeholders. */
 export type DisplayStringArgs<K extends DisplayStringKey> = keyof DisplayStringValuesFor<K> extends never
@@ -115,6 +125,9 @@ export function flattenDisplayStrings(module: DisplayStringsModule): Record<stri
     for (const [code, entry] of Object.entries(values as Record<string, DisplayEntry>)) add(`enum.${enumName}.${code}`, entry);
   }
   for (const [code, message] of Object.entries(module.error)) add(`error.${code}`, message);
+  for (const [code, contexts] of Object.entries(module.errorContext)) {
+    for (const [context, message] of Object.entries(contexts)) add(`error.${code}.${context}`, message);
+  }
   for (const [key, entry] of Object.entries(module.word)) add(`word.${key}`, entry);
   for (const [sport, roles] of Object.entries(module.sport)) {
     for (const [role, entry] of Object.entries(roles)) add(`sport.${sport}.${role}`, entry);
@@ -132,6 +145,8 @@ export type DisplayStrings = {
   readonly moduleLocaleFor: (locale?: string | null) => string;
   readonly displayString: <K extends DisplayStringKey>(key: K, ...args: DisplayStringArgs<K>) => string;
   readonly enumLabel: <E extends SharedEnumName>(enumName: E, code: SharedEnums[E], options?: EnumLabelOptions) => string;
+  /** Whether a key has words in the reader's language or the source language's. */
+  readonly hasDisplayString: (key: string, locale?: string | null) => boolean;
   readonly sportWord: SportWordLookup;
 };
 
@@ -200,6 +215,7 @@ export function createDisplayStrings(modules: Readonly<Record<string, DisplayStr
     moduleLocaleFor,
     displayString: (key, ...[values, locale, options]) => lookup(key, values as DisplayStringValues | undefined, locale, options?.form),
     enumLabel: (enumName, code, options) => lookup(`enum.${enumName}.${code}`, undefined, options?.locale, options?.form),
+    hasDisplayString: (key, locale) => instance.exists(key, { lng: moduleLocaleFor(locale) }),
     sportWord,
   };
 }
@@ -230,6 +246,14 @@ export const sportWord: SportWordLookup = ((source: SportWordSource, role: Sport
  */
 export function enumLabel<E extends SharedEnumName>(enumName: E, code: SharedEnums[E], options?: EnumLabelOptions): string {
   return appDisplayStrings.enumLabel(enumName, code, options);
+}
+
+/**
+ * Whether a key has words: a key built at run time, such as an error code the API sent with the
+ * screen's context (`error.CONTEST_ENTRY_LOCKED.pickEm`), is checked before it is looked up.
+ */
+export function hasDisplayString(key: string, locale?: string | null): boolean {
+  return appDisplayStrings.hasDisplayString(key, locale);
 }
 
 /** The locale tag of the module a reader's locale reads. */

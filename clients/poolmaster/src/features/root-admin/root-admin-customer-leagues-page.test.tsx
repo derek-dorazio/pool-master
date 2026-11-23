@@ -100,7 +100,7 @@ describe('RootAdminCustomerLeaguesPage', () => {
     mocks.listCustomerLeagues.mockResolvedValue({ error: { error: { code: 'CUSTOMERS_RATE_LIMITED', message: 'Too many reads; try again in a minute.' } } });
     renderPage();
 
-    expect(await screen.findByText('Too many reads; try again in a minute.')).toBeInTheDocument();
+    expect(await screen.findByText('Too many requests. Wait a minute and try again.')).toBeInTheDocument();
   });
 
   it('opens a league in view mode with its Details, an Actions row opening the league, and Close and Edit', async () => {
@@ -151,7 +151,7 @@ describe('RootAdminCustomerLeaguesPage', () => {
 
   it('sends only the plan when no extension is picked, and keeps a refused save in the form with its reason', async () => {
     mocks.listCustomerLeagues.mockResolvedValue({ data: { leagues: LEAGUES } });
-    mocks.updateLeaguePlan.mockResolvedValue({ error: { error: { code: 'LEAGUE_PLAN_INVALID', message: 'That plan cannot be set.' } } });
+    mocks.updateLeaguePlan.mockResolvedValue({ error: { error: { code: 'LEAGUE_PLAN_NOT_AVAILABLE', message: 'That plan cannot be set.' } } });
     renderPage();
 
     await openLeague('league-1');
@@ -160,7 +160,7 @@ describe('RootAdminCustomerLeaguesPage', () => {
     await waitFor(() => expect(screen.getByTestId('root-admin-customer-league-dialog-save')).toBeEnabled());
     fireEvent.click(screen.getByTestId('root-admin-customer-league-dialog-save'));
 
-    expect(await screen.findByText(/That plan cannot be set\./)).toBeInTheDocument();
+    expect(await screen.findByText(/That plan is not available yet\./)).toBeInTheDocument();
     expect(mocks.extendLeaguePlanRenewal).not.toHaveBeenCalled();
     expect(screen.getByTestId('root-admin-customer-league-dialog-save')).toBeInTheDocument();
   });
@@ -234,7 +234,7 @@ describe('RootAdminCustomerLeaguesPage', () => {
 
     fireEvent.click(screen.getByTestId('root-admin-customers-extend-previews-open'));
     fireEvent.click(await screen.findByTestId('root-admin-customers-extend-previews-submit'));
-    expect(await screen.findByText('Root admin access required')).toBeInTheDocument();
+    expect(await screen.findByText('Root-admin access is required.')).toBeInTheDocument();
     expect(mocks.extendRunningPlanRenewals).toHaveBeenCalledWith(expect.objectContaining({ body: { months: 1 } }));
 
     fireEvent.click(within(screen.getByTestId('root-admin-customers-extend-previews-dialog')).getByRole('button', { name: 'Cancel' }));

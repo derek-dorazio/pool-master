@@ -133,7 +133,7 @@ describe('plans/147 SportLeagueCalendarCard', () => {
     listEventYearsMock.mockResolvedValueOnce({ error: { error: { code: 'INTERNAL_ERROR', message: 'Years are unavailable.' } }, response: { status: 500 } });
     renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: null }));
 
-    expect(await screen.findByTestId('root-admin-sport-league-calendar-years-error')).toHaveTextContent('Years are unavailable.');
+    expect(await screen.findByTestId('root-admin-sport-league-calendar-years-error')).toHaveTextContent('Something went wrong. Please try again.');
     expect(screen.queryByTestId('root-admin-sport-league-calendar-year')).not.toBeInTheDocument();
     expect(listEventsMock).not.toHaveBeenCalled();
   });

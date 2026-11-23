@@ -46,9 +46,6 @@
   "clients/poolmaster/src/features/teams/my-team-owners-panel.tsx": [
     "SquadOwnerInvitationStatus"
   ],
-  "clients/poolmaster/src/lib/errors.ts": [
-    "ApiErrorCode"
-  ],
   "packages/core-api/src/modules/email/email-service.ts": [
     "EmailSkipReason"
   ],

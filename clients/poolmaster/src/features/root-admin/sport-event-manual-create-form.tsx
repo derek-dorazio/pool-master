@@ -191,9 +191,8 @@ export function SportEventManualCreateForm({
         {createMutation.isError ? (
           <InlineError>
             {extractErrorMessage(createMutation.error, {
-              codeMessages: {
-                EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNoun.one} already has a ${edition.eventYear} edition of this ${event.one}.`,
-              },
+              context: 'createEvent',
+              values: { sportLeague: sportLeagueNoun.one, year: edition.eventYear, event: event.one },
               fallback: `We could not create this ${event.one}.`,
             })}
           </InlineError>

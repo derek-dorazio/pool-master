@@ -549,7 +549,7 @@ describe('Commissioner tools › Invites: invite people', () => {
 
     await sendInviteTo('friend@example.com');
 
-    expect(await screen.findByText('This league is inactive and cannot send invitations.')).toBeInTheDocument();
+    expect(await screen.findByText('This league is inactive. Reactivate it before inviting or adding members.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Invite by email' })).toHaveValue('friend@example.com');
   });
 
@@ -593,7 +593,7 @@ describe('Commissioner tools › Invites: invite people', () => {
     renderInvitations();
     fireEvent.click(await screen.findByRole('button', { name: 'Create join link' }));
 
-    expect(await screen.findByText('This league is inactive and cannot create invite links.')).toBeInTheDocument();
+    expect(await screen.findByText('This league is inactive. Reactivate it before inviting or adding members.')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Join link' })).toHaveValue('');
   });
 

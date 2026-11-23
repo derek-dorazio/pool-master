@@ -64,7 +64,7 @@ describe('EarlyEndingResult', () => {
     expect(screen.getByTestId('root-admin-bracket-early-1-ending')).toHaveValue(MatchEnding.RETIREMENT);
     await userEvent.click(screen.getByTestId('root-admin-bracket-early-1-save'));
 
-    expect(await screen.findByTestId('root-admin-bracket-early-1-error')).toHaveTextContent('The bracket store is unavailable.');
+    expect(await screen.findByTestId('root-admin-bracket-early-1-error')).toHaveTextContent('Something went wrong. Please try again.');
     expect(mockLogger.warn).toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.getByTestId('root-admin-bracket-early-1')).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe('TieResult', () => {
     await waitFor(() => expect(recordEventMatchResultMock).toHaveBeenCalledWith(expect.objectContaining({
       body: { winnerSide: null, homeScore: 2, awayScore: 2 },
     })));
-    expect(await screen.findByTestId('root-admin-bracket-tie-1-error')).toHaveTextContent('Results are locked.');
+    expect(await screen.findByTestId('root-admin-bracket-tie-1-error')).toHaveTextContent('Something went wrong. Please try again.');
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByTestId('root-admin-bracket-tie-1-editor')).not.toBeInTheDocument();
   });
@@ -141,7 +141,7 @@ describe('PairingEditor', () => {
     await waitFor(() => expect(updateEventBracketMatchMock).toHaveBeenCalledWith(expect.objectContaining({
       body: { awaySportEventParticipantId: 'sep-2' },
     })));
-    expect(await screen.findByText('The draw is locked.')).toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument();
   });
 });
 

@@ -15,7 +15,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { buildLeagueAdminContestPath, buildLeagueAdminContestsPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ErrorState, FormPage } from '@/features/shared/ui';
-import { CONTEST_RELEASE_CODE_MESSAGES } from '../contest-release-messages';
 import { parseContestRules } from '../contest-rules-form';
 import { scoringSettingsUiFor } from '../contest-scoring-settings';
 import { MemberPreview } from '../member-preview';
@@ -150,7 +149,7 @@ export function CreateContestPage() {
     ?? errors.sportEventId?.message
     ?? (createMutation.isError
       ? extractErrorMessage(createMutation.error, {
-        codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+        context: 'contestSetup',
         fallback: 'We could not create that contest. Please try again.',
       })
       : null);

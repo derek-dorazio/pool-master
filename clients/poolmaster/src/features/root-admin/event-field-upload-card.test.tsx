@@ -179,7 +179,7 @@ describe('EventFieldUploadCard', () => {
     await waitFor(() => expect(screen.getByTestId('root-admin-event-field-upload-apply')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-event-field-upload-apply'));
 
-    expect(await screen.findByTestId('root-admin-event-field-upload-apply-error')).toHaveTextContent('cannot be applied');
+    expect(await screen.findByTestId('root-admin-event-field-upload-apply-error')).toHaveTextContent('Some rows do not name exactly one participant on the field.');
   });
 
   it('rejects a row that names no golfer before calling the server', async () => {

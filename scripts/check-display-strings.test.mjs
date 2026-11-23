@@ -19,6 +19,7 @@ const ERRORS = ['CONTEST_FULL'];
 const COMPLETE = {
   enum: { ContestStatus: { DRAFT: 'Set up', OPEN: 'Open' }, Sport: { GOLF: { name: 'Golf', short: 'Golf' } } },
   error: { CONTEST_FULL: 'This contest is full.' },
+  errorContext: {},
   word: {},
   sport: {},
 };
@@ -60,6 +61,28 @@ describe('check-display-strings (#1956)', () => {
   it('fails a new error code with no message, and a message for a code the API no longer sends', () => {
     assert.deepEqual(completenessFailures('en-US', COMPLETE, ENUMS, ['CONTEST_FULL', 'CUP_CROWNED']), ['en-US: error code CUP_CROWNED has no display string.']);
     assert.deepEqual(completenessFailures('en-US', COMPLETE, ENUMS, []), ['en-US: error CONTEST_FULL has a display string but is not an API error code.']);
+  });
+
+  it('fails a screen wording for a code the API no longer sends', () => {
+    const module = { ...COMPLETE, errorContext: { CUP_CROWNED: { cupPage: 'Crowned.' } } };
+    assert.deepEqual(completenessFailures('en-US', module, ENUMS, ERRORS), ['en-US: errorContext CUP_CROWNED has display strings but is not an API error code.']);
+  });
+
+  it('fails a context named short, which a lookup would read as a short form', () => {
+    const module = { ...COMPLETE, errorContext: { CONTEST_FULL: { short: 'Full.' } } };
+    assert.deepEqual(completenessFailures('en-US', module, ENUMS, ERRORS), ['en-US: errorContext CONTEST_FULL names a context "short", which a lookup would read as a short form. Rename the context.']);
+  });
+
+  it('lists a screen wording of an error code as error.<CODE>.<context>', () => {
+    const module = { ...COMPLETE, errorContext: { CONTEST_FULL: { joinContest: 'Full up.' } } };
+    assert.deepEqual(flatKeys(module).filter((key) => key.startsWith('error.')), ['error.CONTEST_FULL', 'error.CONTEST_FULL.joinContest']);
+  });
+
+  it('fails an error context no screen names, and passes one a screen passes by name', () => {
+    const module = { ...COMPLETE, errorContext: { CONTEST_FULL: { joinContest: 'Full up.', cupPage: 'Full.' } } };
+    assert.deepEqual(unusedKeyFailures(module, ["extractErrorMessage(error, { context: 'joinContest' })"]), [
+      'en-US: error context cupPage is named by no screen. Delete its errorContext entries, or pass it to extractErrorMessage.',
+    ]);
   });
 
   it('lists a module\'s keys flat, with a short form as its own key', () => {

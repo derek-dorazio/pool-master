@@ -24,10 +24,6 @@ const logger = getLogger().child({ feature: 'root-admin-event-tiers' });
  * Save writes the tiers, then places the field in them in a second write (the tier replace route).
  * An unexpected failure may be the second one, with the tiers already saved: Save again finishes it.
  */
-const SAVE_ERROR_MESSAGES = {
-  INTERNAL_ERROR: 'The tiers may have saved, but placing the field in them failed. Save again to finish.',
-} as const;
-
 /**
  * The event's own tiers, from ⚙ (#1890): an optional override of the tiers it copied from its
  * sport league's tier profile. Rename, reorder, add or remove them; Save places the field in the
@@ -71,7 +67,7 @@ export function EventTiersDialog({
     <FormModal
       canSave={form.formState.isValid && form.formState.isDirty && reassignChosen}
       error={saveMutation.error}
-      errorCodeMessages={SAVE_ERROR_MESSAGES}
+      errorContext="eventTiers"
       errorFallback="We could not save these tiers."
       isPending={saveMutation.isPending}
       onCancel={onClose}

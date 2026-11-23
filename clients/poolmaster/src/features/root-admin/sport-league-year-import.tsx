@@ -92,10 +92,8 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
         error={
           importMutation.isError
             ? extractErrorMessage(importMutation.error, {
-                codeMessages: {
-                  SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: `${sportLeague.name} has no match keyword. Set it to the provider’s ${sportLeagueNoun.one} name.`,
-                  PROVIDER_LEAGUE_REFUSED: `The provider refused ${sportLeague.name}’s ${event.many}: its current plan doesn’t include them.`,
-                },
+                context: 'leagueYear',
+                values: { sportLeagueName: sportLeague.name, events: event.many, sportLeague: sportLeagueNoun.one },
                 fallback: 'We could not import this year.',
               })
             : undefined

@@ -269,7 +269,7 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     acceptInvitationMock.mockResolvedValue({
       error: {
         error: {
-          code: 'INVITATION_ALREADY_ACCEPTED',
+          code: 'LEAGUE_INVITATION_ALREADY_ACCEPTED',
           message: 'This invitation has already been accepted.',
         },
       },
@@ -335,7 +335,7 @@ describe('Joining a league from an invite link', () => {
 
   it('says the invitation could not be loaded and offers no join button when the preview fails', async () => {
     signIn();
-    getInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'INVITATION_NOT_FOUND', message: 'Not found.' } }, status: 404 });
+    getInvitationPreviewMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Not found.' } }, status: 404 });
 
     renderJoinLeaguePage();
 

@@ -1,4 +1,4 @@
-import { displayString, sportWord } from '@poolmaster/shared/display-strings';
+import { displayString, type DisplayStringValues, sportWord } from '@poolmaster/shared/display-strings';
 import { eventSportDefinition, formatParticipantStatusLabel, type Sport, type SportDefinition, type SportNoun, sportNoun } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import type { SelectionParticipant } from './contest-entry-selection';
@@ -92,4 +92,15 @@ export function participantAffiliation(participant: Pick<SelectionParticipant, '
     return null;
   }
   return participant.role ? `${participant.team} · ${participant.role}` : participant.team;
+}
+
+/** The sport's words a game-picks screen's error wording takes (#700). */
+export function gamePickErrorValues(sport: Sport | null | undefined): DisplayStringValues {
+  const match = contestMatchNoun(sport);
+  return {
+    match: match.one,
+    matches: match.many,
+    participant: contestParticipantNoun(sport).one,
+    scoreUnit: contestScoreUnit(sport),
+  };
 }

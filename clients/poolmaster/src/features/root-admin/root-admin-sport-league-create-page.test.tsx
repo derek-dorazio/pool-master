@@ -141,7 +141,7 @@ describe('RootAdminSportLeagueCreatePage', () => {
   it('keeps the New tour page open with the server\'s reason when creating the tour is refused', async () => {
     seedProfiles();
     createSportLeagueMock.mockResolvedValue({
-      error: { error: { code: 'CONFLICT', message: 'A tour with this name already exists.' } },
+      error: { error: { code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS', message: 'A tour with this name already exists.' } },
       response: { status: 409 },
     });
     renderPage();
@@ -153,7 +153,7 @@ describe('RootAdminSportLeagueCreatePage', () => {
     await chooseProfiles();
     await userEvent.click(screen.getByTestId('root-admin-sport-league-list-new-save'));
 
-    expect(await screen.findByText('A tour with this name already exists.')).toBeInTheDocument();
+    expect(await screen.findByText('A sport league already uses that name.')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sport-league-create-page')).toBeInTheDocument();
   });
 

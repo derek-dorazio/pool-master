@@ -182,7 +182,7 @@ describe('RootAdminUnmappedParticipantsPage', () => {
 
   it('keeps Map competitor open with the server\'s reason when the mapping is refused', async () => {
     bindParticipantProviderMappingMock.mockResolvedValue({
-      error: { error: { code: 'CONFLICT', message: 'This participant already has a mapping for this provider.' } },
+      error: { error: { code: 'BAD_REQUEST', message: 'This participant already has a mapping for this provider.' } },
       response: { status: 409 },
     });
     renderPage(MAP_PATH);
@@ -197,7 +197,7 @@ describe('RootAdminUnmappedParticipantsPage', () => {
     fireEvent.click(screen.getByTestId('root-admin-unmapped-participant-map-save'));
 
     expect(
-      await screen.findByText('This participant already has a mapping for this provider.'),
+      await screen.findByText('The request is not valid. Check the details and try again.'),
     ).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-unmapped-participant-map-page')).toBeInTheDocument();
   });
