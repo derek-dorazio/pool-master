@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import type { EmailSuppressionReason } from '@poolmaster/shared/domain';
 import { AuthProvider } from '@poolmaster/shared/domain';
-import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useAuth } from '@/features/auth/auth-context';
 import { MyPaymentsSection } from '@/features/billing/payment-history-sections';
 import {
@@ -17,7 +16,7 @@ import {
 import { getLogger } from '@/lib/logger';
 import { useOwnEmailPreferences } from '../email-preferences';
 import { MyAccountAccountSection } from './my-account-account-section';
-import { EMAIL_SUPPRESSION_MESSAGES } from './my-account-helpers';
+import { EMAIL_SUPPRESSION_MESSAGES, SIGN_IN_METHOD_SENTENCES } from './my-account-helpers';
 import { MyAccountNotificationsSection } from './my-account-notifications-section';
 import { MyAccountPreferencesSection } from './my-account-preferences-section';
 import { MyAccountProfileSection } from './my-account-profile-section';
@@ -64,7 +63,7 @@ export function MyAccountPage() {
         meta={(
           <>
             <span>Member since {formatMonthYearDisplay(user.createdAt, displayPreferences, 'Unknown')}</span>
-            <span>Signs in with {enumLabel('AuthProvider', user.authProvider ?? AuthProvider.EMAIL)}</span>
+            <span>{SIGN_IN_METHOD_SENTENCES[user.authProvider ?? AuthProvider.EMAIL]}</span>
           </>
         )}
         status={isInactive ? <StatusBadge data-testid="my-account-inactive-status" tone="inactive">Inactive</StatusBadge> : undefined}

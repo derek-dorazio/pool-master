@@ -1,7 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { AuthProvider } from '@poolmaster/shared/domain';
-import { enumLabel } from '@poolmaster/shared/display-strings';
 import { mockApi } from '@/test/msw-api';
 import { buildEmailPreferences, primeMyAccount, renderMyAccount } from '@/test/my-account-harness';
 
@@ -23,7 +22,7 @@ describe('My account page', () => {
     const header = await screen.findByTestId('my-account-header');
     expect(within(header).getByRole('heading', { level: 1, name: 'My account' })).toBeVisible();
     expect(screen.getByTestId('my-account-header-meta')).toHaveTextContent('Member since Apr 2026');
-    expect(screen.getByTestId('my-account-header-meta')).toHaveTextContent(`Signs in with ${enumLabel('AuthProvider', AuthProvider.EMAIL)}`);
+    expect(screen.getByTestId('my-account-header-meta')).toHaveTextContent('Signs in with email');
     expect(screen.queryByText('EMAIL')).not.toBeInTheDocument();
   });
 

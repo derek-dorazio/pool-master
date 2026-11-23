@@ -1,5 +1,6 @@
 {
   "clients/poolmaster/src/features/account/my-account/my-account-helpers.ts": [
+    "AuthProvider",
     "EmailSuppressionReason"
   ],
   "clients/poolmaster/src/features/contest-types/sport-blurbs.ts": [
