@@ -155,6 +155,9 @@ with no English locale of its own, such as Brazil, writes European English en-15
 12-hour or 24-hour clock; en-US with the region's own clock when they have no locale or one with no
 region (#1055). `emailRecipientOf(user)` carries all three into a send, and `englishLocaleFor` in
 `@poolmaster/shared/domain` maps the locale, for the app as well.
+Words for codes (a trophy, a digest event's state, "This week") come from the display strings
+in the recipient's own locale, which the render context carries as `language`; the template
+data holds the code (`rules/ux-rules.md` §14 *System Email* item 10).
 
 ### Layout and Pictures
 

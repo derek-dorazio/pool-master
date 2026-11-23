@@ -703,6 +703,11 @@ export const enUS = {
       RUNNER_UP: 'Runner-up',
       THIRD: '3rd place',
     },
+    DigestEventState: {
+      CONTEST_SET_UP: 'Contest set up',
+      READY: 'Ready for contests',
+      NOT_READY: 'Not ready for contests yet',
+    },
     SummaryTile: {
       MOST_CHAMPIONSHIPS: 'Most championships',
       MOST_CUPS: 'Most cups',
@@ -1066,6 +1071,9 @@ export const enUS = {
     YEAR_REVIEW_NOTHING_TO_SEND: 'There is nothing to send in a year in review yet.',
     YEAR_REVIEW_NOT_OPEN: 'The year in review cannot be sent yet.',
   },
-  word: {},
+  word: {
+    thisWeek: 'This week',
+    nextWeek: 'Next week',
+  },
   sport: {},
 } as const satisfies DisplayStringsModule;

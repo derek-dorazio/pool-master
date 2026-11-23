@@ -1,6 +1,7 @@
-import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
+import type { CupTrophy, EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { CupTrophy, DEFAULT_DISPLAY_LOCALE, EmailCategory, BRAND_COLORS, PRODUCT_NAME, colorWithAlpha, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
+import { DEFAULT_DISPLAY_LOCALE, DigestEventState, EmailCategory, BRAND_COLORS, PRODUCT_NAME, colorWithAlpha, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -616,17 +617,6 @@ export interface LeaguePlanPreviewEndingEmailData {
   planUrl: string;
 }
 
-/** Where the league stands on an event in its weekly digest. */
-export const DigestEventState = {
-  /** The league already has a contest on it. */
-  CONTEST_SET_UP: 'CONTEST_SET_UP',
-  /** Released, with no contest yet: the digest links to Create contest. */
-  READY: 'READY',
-  /** Still a draft, so no contest can be set up on it yet. */
-  NOT_READY: 'NOT_READY',
-} as const;
-export type DigestEventState = (typeof DigestEventState)[keyof typeof DigestEventState];
-
 /** One event in a weekly digest; only a READY one has a Create contest link. */
 export type WeeklyDigestEvent = {
   eventName: string;
@@ -780,6 +770,11 @@ export interface EmailRenderContext {
   timeZone: string;
   /** BCP 47 locale dates are written in: English in the recipient's region (englishLocaleFor), or en-US when absent. */
   locale?: string;
+  /**
+   * The recipient's own locale, which picks the display-string module the email's words for
+   * codes are read from (`rules/ux-rules.md` §16); absent reads en-US.
+   */
+  language?: string;
   /** True for a 12-hour clock, false for 24-hour, absent for the locale's own. */
   hour12?: boolean;
   /**
@@ -791,6 +786,9 @@ export interface EmailRenderContext {
 
 /** How an email writes dates and times for its recipient. */
 type EmailDateStyle = Pick<EmailRenderContext, 'timeZone' | 'locale' | 'hour12'>;
+
+/** How an email writes dates, and the words for codes, for its recipient. */
+type EmailReaderStyle = EmailDateStyle & Pick<EmailRenderContext, 'language'>;
 
 type TemplateRenderer<Key extends SystemEmailTemplateKey> = (
   data: SystemEmailTemplateDataByKey[Key],
@@ -1866,7 +1864,7 @@ function renderContestStandingsEmail(
     nextRows.push(['Next round', `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context)}`]);
   }
   if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
-    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);
+    nextRows.push([displayString('word.nextWeek', undefined, context.language), `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);
   }
   const weekLeaders = moment.kind === StandingsMomentKind.PICK_EM_WEEK ? moment.weekLeaders : [];
   const weekLeadersTitle = moment.kind === StandingsMomentKind.PICK_EM_WEEK
@@ -2196,22 +2194,17 @@ function renderEventReadyForContestsEmail(
   });
 }
 
-const DIGEST_EVENT_STATE_LINE: Record<DigestEventState, string> = {
-  CONTEST_SET_UP: 'Contest set up',
-  READY: 'Ready for contests',
-  NOT_READY: 'Not ready for contests yet',
-};
-
 /** "Masters Tournament (PGA Tour), Apr 9, 2026, 8:00 AM EDT" */
 function digestEventHeading(event: WeeklyDigestEvent, dates: EmailDateStyle): string {
   return `${eventWithSportLeague(event.eventName, event.sportLeagueName)}, ${formatDay(event.startsAt, dates)}`;
 }
 
 /** One digest event as a row: a small crop of its sport's picture, then its heading and state. */
-function digestEventBlock(event: WeeklyDigestEvent, dates: EmailDateStyle): string {
+function digestEventBlock(event: WeeklyDigestEvent, dates: EmailReaderStyle): string {
+  const stateWords = enumLabel('DigestEventState', event.state, { locale: dates.language });
   const state = event.state === DigestEventState.READY
-    ? `${escapeHtml(DIGEST_EVENT_STATE_LINE.READY)}: <a href="${escapeAttribute(event.createContestUrl)}" style="color:${EMAIL_THEME.navy};">Create contest</a>`
-    : escapeHtml(DIGEST_EVENT_STATE_LINE[event.state]);
+    ? `${escapeHtml(stateWords)}: <a href="${escapeAttribute(event.createContestUrl)}" style="color:${EMAIL_THEME.navy};">Create contest</a>`
+    : escapeHtml(stateWords);
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 16px;">
     <tr>
       <td width="120" style="width:120px;padding:0 16px 0 0;vertical-align:top;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="120" height="48" style="display:block;width:120px;height:48px;border:0;border-radius:6px;"></td>
@@ -2228,10 +2221,11 @@ function digestEventTitle(event: WeeklyDigestEvent, dates: EmailDateStyle): stri
     : `<a href="${escapeAttribute(event.eventPageUrl)}" style="color:${EMAIL_THEME.navy};text-decoration:none;">${heading}</a>`;
 }
 
-function digestEventLines(event: WeeklyDigestEvent, dates: EmailDateStyle): string[] {
+function digestEventLines(event: WeeklyDigestEvent, dates: EmailReaderStyle): string[] {
+  const stateWords = enumLabel('DigestEventState', event.state, { locale: dates.language });
   const state = event.state === DigestEventState.READY
-    ? `${DIGEST_EVENT_STATE_LINE.READY}. Create contest: ${event.createContestUrl}`
-    : DIGEST_EVENT_STATE_LINE[event.state];
+    ? `${stateWords}. Create contest: ${event.createContestUrl}`
+    : stateWords;
   const page = event.eventPageUrl === null ? [] : [`${SEE_EVERY_WAY_TO_PLAY}: ${event.eventPageUrl}`];
   return [digestEventHeading(event, dates), state, ...page];
 }
@@ -2243,8 +2237,8 @@ function renderEventWeeklyDigestEmail(
   const count = data.thisWeek.length + data.nextWeek.length;
   const intro = `${count === 1 ? 'One event starts' : `${count} events start`} in the next two weeks in the sport leagues you get event emails for.`;
   const weeks = [
-    { title: 'This week', events: data.thisWeek },
-    { title: 'Next week', events: data.nextWeek },
+    { title: displayString('word.thisWeek', undefined, context.language), events: data.thisWeek },
+    { title: displayString('word.nextWeek', undefined, context.language), events: data.nextWeek },
   ].filter((week) => week.events.length > 0);
   return buildMessage(context, {
     templateKey: 'EVENT_WEEKLY_DIGEST',
@@ -2453,17 +2447,10 @@ function possessive(name: string): string {
   return name.endsWith('s') ? `${name}'` : `${name}'s`;
 }
 
-/** A trophy as the year in review names it. */
-const YEAR_IN_REVIEW_TROPHIES: Record<CupTrophy, string> = {
-  [CupTrophy.CHAMPION]: 'Champion',
-  [CupTrophy.RUNNER_UP]: 'Runner-up',
-  [CupTrophy.THIRD]: '3rd place',
-};
-
-/** "2026 NFL Cup: 2nd of 12, 180 points · Champion". */
-function yearInReviewPlaceLine(row: YearInReviewPlace): string {
+/** "2026 NFL Cup: 2nd of 12, 180 points · Champion", the trophy in its display string. */
+function yearInReviewPlaceLine(row: YearInReviewPlace, context: EmailRenderContext): string {
   const line = `${row.name}: ${row.place} of ${String(row.squadCount)}, ${row.points} points`;
-  return row.trophy === null ? line : `${line} · ${YEAR_IN_REVIEW_TROPHIES[row.trophy]}`;
+  return row.trophy === null ? line : `${line} · ${enumLabel('CupTrophy', row.trophy, { locale: context.language })}`;
 }
 
 function renderYearInReviewEmail(
@@ -2474,14 +2461,14 @@ function renderYearInReviewEmail(
   const lead = `Here's how ${data.squadName} did in ${data.leagueName} in ${year}.`;
   const championshipLine = data.championship === null
     ? `No championship contest counted for ${data.squadName} in ${year}.`
-    : yearInReviewPlaceLine(data.championship);
+    : yearInReviewPlaceLine(data.championship, context);
   const medals: Array<[string, string]> = [
     ['1sts', String(data.medals.firsts)],
     ['2nds', String(data.medals.seconds)],
     ['3rds', String(data.medals.thirds)],
     ['Contests played', String(data.medals.played)],
   ];
-  const cupLines = data.cups.map(yearInReviewPlaceLine);
+  const cupLines = data.cups.map((cup) => yearInReviewPlaceLine(cup, context));
   const buttonLabel = `See your ${year}`;
   return buildMessage(context, {
     templateKey: 'YEAR_IN_REVIEW',

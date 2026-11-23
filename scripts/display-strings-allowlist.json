@@ -108,12 +108,6 @@
   "clients/poolmaster/src/lib/errors.ts": [
     "ApiErrorCode"
   ],
-  "packages/core-api/src/modules/email/email-service.ts": [
-    "EmailSkipReason"
-  ],
-  "packages/core-api/src/modules/email/system-email-templates.ts": [
-    "CupTrophy"
-  ],
   "packages/shared/domain/contest-rules-text.ts": [
     "SelectionType",
     "PickEmMode"
