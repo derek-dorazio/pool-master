@@ -136,7 +136,8 @@ The current model was built one sport at a time and leans on code to look right:
     anything else is not synced. Each unmapped value raises one INFO finding per league and
     value (deduplicated, not per game), so a new format is seen once and never synced by
     default.
-- **SportLeaguePosition**: code, order, `isFieldEligible` and `baselineRating`, with provider
+- **SportLeaguePosition**: code, `displayOrder` (display only, never used to identify or
+  sequence play), `isFieldEligible` and `baselineRating`, with provider
   codes in **SportLeaguePositionProviderMapping**. The NFL's eligible positions are QB, RB, WR and TE.
 
 ## 2. Calendar (the real slots each Season)
@@ -327,7 +328,8 @@ The current model was built one sport at a time and leans on code to look right:
      match links, and a linked tournament matches by id from then on. **No match creates
      nothing**: it raises a finding with "link to existing" (adds a pattern) or "create
      new". Two matches raise an ERROR.
-   - No match at all is an ERROR finding.
+   - A value no mapping includes is not synced and raises one deduplicated INFO finding per
+     league and value (inclusion only, §1); waiving it marks it known and excluded.
    - Name matching happens only here, and only where the feed gives nothing better.
 3. **Events**: created and kept current in their Season (ADR 0011), and only for slots
    that one of the league's templates covers, so there are no empty weekly events.
