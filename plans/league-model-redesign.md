@@ -554,16 +554,48 @@ Sync:
 - Manual score-source linking (Derek 2026-11-23, slice 7): removed, with `syncScope` and
   admin-entered feed ids; a league is synced or off, so nothing is linked by hand.
 - Runs (slice 2): `ProviderSyncRun.payloadJson` stops driving behaviour (columns plus
-  findings); field sync has one `ProviderSyncKind`, not five names; logged-only anomalies and
+  findings); each sync kind has one name, `ProviderSyncKind`, used by jobs, runs, settings keys and the API; logged-only anomalies and
   the synthetic health check become finding kinds and a status computed from runs and jobs.
-- Field sync (slices 7/16) covers events whose next slot has not started, not "next 2 events
-  or 14 days"; job dedupe keys use ids, not provider id strings.
+- Field sync covers events whose next slot has not started, not "next 2 events or 14
+  days" (slice 10c); job dedupe keys and payloads use our own ids, not provider id strings.
 - Games (slice 10): webhooks route by GameProviderMapping (no prefix match, no fan-out to all
   leagues; an unknown id is a finding); `lastProviderNotificationAt` moves to the Game; the
   NCAA play-in placeholder participant becomes an empty Match side; field row metadata
   (seed, odds, play-in place) becomes columns.
 - Golf (slice 8): an unknown tour is a finding, not "all leagues".
 - The web app reads provider names from the API, not by id lookups in four places.
+- Implementation notes from the sync re-review (2026-11-23):
+  - Slice 1: only worker-role tasks call a provider; the Providers page and every API route
+    read health and counts from runs and jobs, never a live provider call.
+  - Slice 1: the adapter client does no retries of its own; cockatiel is the only retry layer.
+    A call refused by an open breaker or exhausted retries ends the job's try as
+    RATE_LIMITED, re-queued for when the breaker reopens, without counting toward attempts.
+  - Slice 1: stop reading `SPORT_DATA_DEFAULT_PROVIDER` and `SPORT_DATA_PROVIDER_BINDINGS_JSON`
+    in the same PR that removes the mock adapter; the Terraform variables and the QA mock
+    task are removed afterwards with the `apply-terraform` skill.
+  - Slice 1: functional and integration tests register a fake `SportDataProvider` from test
+    code through the app's provider-factory dependency; tests of manual linking are deleted
+    in slice 7.
+  - Slice 1: the migration deletes `ParticipantProviderMapping` and `ProviderSyncRun` rows
+    whose provider is `mock-contest-feed`; slice 7's migration deletes manual-admin event
+    links.
+  - Slice 1: the migration seeds the free-tier `requestsPerMinute`; the PR's post-deploy step
+    sets production's value on the Providers page before the Terraform binding is removed.
+  - Slice 1: `ParticipantProviderMapping` is unique on (provider, externalId, sport league,
+    participant type), so a raw team id and a raw player id cannot collide.
+  - Slice 1: webhooks for a Provider are on only when `webhooksEnabled` is true and its secret
+    is set; the flag without a secret raises an ERROR finding.
+  - Slice 1: `scheduledSports` and the Sports page's own schedule calculation and `nextRunAt`
+    are deleted; the webhook safety-net poll interval is a per-Provider column, read by the
+    10c tick; 10c owns every other interval.
+  - Slice 7: admin event creation stays only for flagged test slots, which have no provider
+    mapping.
+  - Slice 10: a tournament-level notification (golf) routes through
+    `SportEventProviderMapping` to that event's current round Game.
+  - Slice 10c: the field window rule (events whose next slot hasn't started) lands here;
+    earlier slices leave the old reader alone. Job payloads carry only our own ids (league,
+    event, Game) plus the Provider FK; the migration deletes queued jobs of retired types.
+  - Order: 10c after 2, 6, 10 and 10b; before 14.
 
 Contest:
 - Per-event entry state (`ContestEntryEvent`, `ContestEntryEventStanding`, the leaderboard
@@ -627,10 +659,11 @@ In order:
     feed, the cut, event-level competitor mapping; golf and race tables removed.
 10c. Sync scheduling on jobs (Derek 2026-11-23; absorbs #1835 and #1933): one scheduler
     tick queues due work as jobs with id-based dedupe keys: events per league, field per event
-    whose next slot hasn't started, scores per Game due or in progress. Interval per sync kind
+    whose next slot hasn't started, scores per event per tick covering that event's due or
+    in-progress Games in one provider call by game ids (dedupe key = event id). Interval per sync kind
     and season state (in season or offseason, from Season slot dates) in global settings.
     "Sync now" on the event queues the same job. In-memory per-sport timers, string locks
-    and `scheduledSports` are removed; the live sweep polls Games, not in-progress events,
+    are removed (`scheduledSports` already went in slice 1); the live sweep polls Games, not in-progress events,
     and the "play is underway" heuristics go (S5).
 11. EventSeries removed; event page offers and templates point at slots.
 12. Sync matching by golf name, with the finding actions.
