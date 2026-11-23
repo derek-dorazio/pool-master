@@ -808,7 +808,7 @@ export const enUS = {
     CONTEST_EXPANSION_CLOSED: 'This contest has stopped taking entries, so it can no longer be expanded.',
     CONTEST_EXPANSION_NOT_ABOVE_CAP: 'The contest already takes that many entries. Give a larger size.',
     CONTEST_FINAL: 'This contest is final, so how much it counts is fixed.',
-    CONTEST_FORMAT_MISMATCH: 'Only a bracket contest has a bracket leaderboard.',
+    CONTEST_FORMAT_MISMATCH: 'This contest is not played that way.',
     CONTEST_FORMAT_NOT_ALLOWED: 'This event does not offer that kind of contest.',
     CONTEST_FULL: 'This contest is full.',
     CONTEST_ID_REQUIRED: 'Contest id is required.',

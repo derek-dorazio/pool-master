@@ -88,8 +88,9 @@ export function completenessFailures(locale, module, enums, errorCodes) {
   for (const code of Object.keys(messages)) {
     if (!errorCodes.includes(code)) failures.push(`${locale}: error ${code} has a display string but is not an API error code.`);
   }
-  for (const code of Object.keys(module.errorContext ?? {})) {
+  for (const [code, contexts] of Object.entries(module.errorContext ?? {})) {
     if (!errorCodes.includes(code)) failures.push(`${locale}: errorContext ${code} has display strings but is not an API error code.`);
+    if ('short' in (contexts ?? {})) failures.push(`${locale}: errorContext ${code} names a context "short", which a lookup would read as a short form. Rename the context.`);
   }
   return failures;
 }

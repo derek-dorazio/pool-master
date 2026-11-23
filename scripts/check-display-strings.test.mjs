@@ -68,6 +68,11 @@ describe('check-display-strings (#1956)', () => {
     assert.deepEqual(completenessFailures('en-US', module, ENUMS, ERRORS), ['en-US: errorContext CUP_CROWNED has display strings but is not an API error code.']);
   });
 
+  it('fails a context named short, which a lookup would read as a short form', () => {
+    const module = { ...COMPLETE, errorContext: { CONTEST_FULL: { short: 'Full.' } } };
+    assert.deepEqual(completenessFailures('en-US', module, ENUMS, ERRORS), ['en-US: errorContext CONTEST_FULL names a context "short", which a lookup would read as a short form. Rename the context.']);
+  });
+
   it('lists a screen wording of an error code as error.<CODE>.<context>', () => {
     const module = { ...COMPLETE, errorContext: { CONTEST_FULL: { joinContest: 'Full up.' } } };
     assert.deepEqual(flatKeys(module).filter((key) => key.startsWith('error.')), ['error.CONTEST_FULL', 'error.CONTEST_FULL.joinContest']);

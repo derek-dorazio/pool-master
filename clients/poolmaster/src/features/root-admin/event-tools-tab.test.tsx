@@ -439,14 +439,14 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
     it('shows the server\'s reason in the confirmation when unlinking the score source is refused', async () => {
       seedLinked();
       unlinkEventScoreSourceMock.mockResolvedValue(
-        refusal('SPORT_EVENT_ALREADY_STARTED', 'A live tournament cannot be unlinked.', 409),
+        refusal('SPORT_EVENT_NOT_FOUND', 'Sport event evt-1 was not found.', 404),
       );
       renderPage();
 
       fireEvent.click(await screen.findByTestId('root-admin-sport-event-unlink-open'));
       fireEvent.click(await screen.findByTestId('root-admin-sport-event-unlink-confirm'));
 
-      expect(await screen.findByText('This event has already started, so it can no longer be released.')).toBeInTheDocument();
+      expect(await screen.findByText('Event not found.')).toBeInTheDocument();
     });
 
     it('closes the unlink confirmation from its close button without unlinking', async () => {
