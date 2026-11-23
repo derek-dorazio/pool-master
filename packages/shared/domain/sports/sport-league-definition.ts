@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { ParticipantType, SelectionType, type Sport, TournamentFormat } from '../enums';
 import { getSportDefinition } from './registry';
 import { ScoringFamily } from './scoring-family';
@@ -66,17 +67,10 @@ function statPoolDefinition(definition: SportDefinition, composite: SportComposi
     defaultRounds: composite.defaultGames,
     selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
     scoringDefinitions: ['COMPOSITE_TOTAL'],
-    shootout: null,
+    shootout: false,
     composite,
-    vocabulary: {
-      participant: { one: 'player', many: 'players' },
-      event: definition.vocabulary.event,
-      sportLeague: definition.vocabulary.sportLeague,
-      round: { one: 'game', many: 'games' },
-      withdrawn: definition.vocabulary.withdrawn,
-      eventStart: definition.vocabulary.eventStart,
-    },
-    roundLabel: (roundNumber) => `Game ${roundNumber}`,
+    wordOverrides: { participant: 'player', round: 'game' },
+    roundLabel: (roundNumber, _roundCount, locale) => displayString('word.gameNumber', { n: roundNumber }, locale),
   };
 }
 

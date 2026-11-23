@@ -10,7 +10,7 @@ import type {
   SportEventDto,
   SportEventParticipantDto,
 } from '@/lib/api';
-import { SportEventStatus, getSportDefinition, type AssertTrue, type ParticipantRoundStatus, type Sport } from '@poolmaster/shared/domain';
+import { type AssertTrue, type ParticipantRoundStatus, type Sport, SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -120,7 +120,7 @@ export function deriveSportEventReadiness(
     };
   }
   // A count of the event's participants, in its sport's words: "4 golfers", "1 horse".
-  const { participant } = getSportDefinition(tournament.sport).vocabulary;
+  const { participant } = sportVocabulary(tournament.sport);
   const participants = (count: number) => `${count} ${count === 1 ? participant.one : participant.many}`;
   const counts = tournament.adminCounts;
   // Unknown is not ready: without the counts the draft's tiers and prices can't be judged.

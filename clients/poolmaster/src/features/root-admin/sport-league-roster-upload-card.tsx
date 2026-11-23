@@ -8,7 +8,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportLeagueRankingUploadPreviewResponse } from '@/lib/api';
-import { sportPathSegment } from '@poolmaster/shared/domain';
+import { sportPathSegment, sportVocabulary } from '@poolmaster/shared/domain';
 import {
   ROSTER_UPLOAD_HEADERS,
   parseRosterUpload,
@@ -43,7 +43,7 @@ function describeRow(row: RosterPreviewRow['row']): string {
  */
 export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) {
   const { sport, definition } = useManagedSport();
-  const { participant } = definition.vocabulary;
+  const { participant } = sportVocabulary(definition);
   const sportLeague = useSportLeagueNoun(sport, leagueId);
   const logger = getLogger().child({
     feature: 'root-admin-sport-league-home-page',

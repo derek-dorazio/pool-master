@@ -1,5 +1,5 @@
 import type { Column, ColumnFiltersState, SortingState } from "@tanstack/react-table";
-import { CALENDAR_PERIOD_LABELS, resolveSpan, type CalendarPeriod, type DateSpan, type SpanUnit } from "./data-grid-date-spans";
+import { CALENDAR_PERIOD_WORDS, resolveSpan, type CalendarPeriod, type DateSpan, type SpanUnit } from "./data-grid-date-spans";
 import {
   columnTypeOf,
   type DataGridColumnType,
@@ -33,7 +33,7 @@ const ENUM_MATCHES: readonly EnumMatch[] = ["any", "all"];
 const NUMBER_MATCHES: readonly NumberMatch[] = ["between", "equals", "notEqual", "blank", "notBlank"];
 const RANGE_MATCHES: readonly DateRangeMatch[] = ["overlaps", "startsWithin", "endsWithin"];
 const SPAN_UNITS: readonly SpanUnit[] = ["m", "h", "d", "w"];
-const PERIODS = Object.keys(CALENDAR_PERIOD_LABELS) as CalendarPeriod[];
+const PERIODS = Object.keys(CALENDAR_PERIOD_WORDS) as CalendarPeriod[];
 
 /** The grid's state as its link parameter; null when there is nothing to keep. */
 export function encodeGridState(state: GridUrlState): string | null {

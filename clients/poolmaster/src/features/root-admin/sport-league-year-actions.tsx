@@ -1,3 +1,4 @@
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { cloneEventYear } from '@/lib/api';
 import { Button, ConfirmDialog, StatusBadge } from '@/features/shared/ui';
@@ -28,7 +29,7 @@ export function SportLeagueYearActions({
   sportLeague: SportLeagueDto;
 }) {
   const logger = getLogger().child({ feature: 'sport-league-year-actions' });
-  const { event } = useManagedSport().definition.vocabulary;
+  const { event } = sportVocabulary(useManagedSport().definition);
   const [setCurrentOpen, setSetCurrentOpen] = useState(false);
   const [cloneOpen, setCloneOpen] = useState(false);
   const targetYear = eventYear + 1;

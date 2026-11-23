@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
@@ -17,19 +18,8 @@ export const horseRacingSportDefinition: SportDefinition = {
   defaultRounds: 1,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
-  shootout: null,
+  shootout: false,
   composite: null,
-  vocabulary: {
-    participant: { one: 'horse', many: 'horses' },
-    event: { one: 'race', many: 'races' },
-    // Racing is run country by country, so a sport league is a racing circuit (plans/racing-sports.md §2.2).
-    sportLeague: { one: 'circuit', many: 'circuits' },
-    round: { one: 'race', many: 'races' },
-    withdrawn: 'Scratched',
-    eventStart: 'post time',
-    rider: 'Rider',
-    topPlaces: 'Win / Place / Show',
-  },
   // A horse race is one race; a meeting run as several numbered races would read "Race 2".
-  roundLabel: (roundNumber, roundCount) => (roundCount > 1 ? `Race ${roundNumber}` : 'Race'),
+  roundLabel: (roundNumber, roundCount, locale) => (roundCount > 1 ? displayString('word.raceNumber', { n: roundNumber }, locale) : displayString('word.singleRace', undefined, locale)),
 };

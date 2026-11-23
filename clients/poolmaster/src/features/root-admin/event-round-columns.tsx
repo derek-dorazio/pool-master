@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { RoundStatus, RoundStatusOrder } from '@poolmaster/shared/domain';
 import { StatusBadge, Text, type StatusBadgeProps } from '@/features/shared/ui';
@@ -27,7 +28,7 @@ const ROUND_STATUS_TONES: Record<RoundStatus, NonNullable<StatusBadgeProps['tone
 export function eventRoundColumns() {
   return [
     columnHelper.accessor('label', {
-      header: 'Round',
+      header: displayString('word.roundHeading'),
       meta: { info: 'The round, in the sport\'s words.', type: { kind: 'text' } },
       cell: ({ getValue }) => <Text variant="strong">{getValue()}</Text>,
     }),

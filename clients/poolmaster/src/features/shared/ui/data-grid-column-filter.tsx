@@ -1,3 +1,4 @@
+import { displayString } from "@poolmaster/shared/display-strings";
 import type { Column, Table } from "@tanstack/react-table";
 import { useState } from "react";
 import { DataGridDateFilter } from "./data-grid-date-filter";
@@ -203,7 +204,7 @@ function TextColumnFilter<TData>({ column, label, testId }: ColumnFilterProps<TD
           data-autofocus=""
           data-testid={`${testId}-term`}
           onChange={(event) => setTerm(event.target.value)}
-          placeholder={match === "startsWith" ? "Starts with" : "Contains"}
+          placeholder={displayString(match === "startsWith" ? "word.startsWith" : "word.contains")}
           value={term}
         />
         <MatchSelect
@@ -219,16 +220,16 @@ function TextColumnFilter<TData>({ column, label, testId }: ColumnFilterProps<TD
 }
 
 const TEXT_MATCHES: readonly DataGridOption[] = [
-  { value: "contains", label: "Contains" },
-  { value: "startsWith", label: "Starts with" },
+  { value: "contains", label: displayString("word.contains") },
+  { value: "startsWith", label: displayString("word.startsWith") },
 ];
 
 const NUMBER_MATCHES: readonly DataGridOption[] = [
-  { value: "between", label: "Between" },
-  { value: "equals", label: "Equals" },
-  { value: "notEqual", label: "Not equal" },
-  { value: "blank", label: "Is blank" },
-  { value: "notBlank", label: "Is not blank" },
+  { value: "between", label: displayString("word.between") },
+  { value: "equals", label: displayString("word.equals") },
+  { value: "notEqual", label: displayString("word.notEqual") },
+  { value: "blank", label: displayString("word.isBlank") },
+  { value: "notBlank", label: displayString("word.isNotBlank") },
 ];
 
 /**

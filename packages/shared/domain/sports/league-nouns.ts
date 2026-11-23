@@ -1,16 +1,22 @@
+import { displayString } from '../../display-strings/display-strings';
 import { SportLeagueNoun, type Sport } from '../enums';
-import { getSportDefinition } from './registry';
 import type { SportNoun } from './sport-definition';
-
-/** What each sport league noun reads as on screen. */
-export const SPORT_LEAGUE_NOUNS: Readonly<Record<SportLeagueNoun, SportNoun>> = {
-  [SportLeagueNoun.LEAGUE]: { one: 'league', many: 'leagues' },
-};
+import { sportNoun } from './sport-vocabulary';
 
 /**
  * What screens call one sport league: its own noun where it has one (#834: the NCAA's tennis
- * championships are leagues), else what its sport calls a sport league (the ATP is a tour).
+ * championships are leagues), else what its sport calls a sport league (the ATP is a tour). A
+ * league's own noun reads the generic `word.sportLeague`, the one noun `SportLeagueNoun` has.
  */
-export function sportLeagueNounOf(sport: Sport, leagueNoun: SportLeagueNoun | null): SportNoun {
-  return leagueNoun === null ? getSportDefinition(sport).vocabulary.sportLeague : SPORT_LEAGUE_NOUNS[leagueNoun];
+export function sportLeagueNounOf(sport: Sport, leagueNoun: SportLeagueNoun | null, locale?: string | null): SportNoun {
+  switch (leagueNoun) {
+    case null:
+      return sportNoun(sport, 'sportLeague', locale);
+    case SportLeagueNoun.LEAGUE:
+      return { one: displayLeague(1, locale), many: displayLeague(2, locale) };
+  }
+}
+
+function displayLeague(count: number, locale: string | null | undefined): string {
+  return displayString('word.sportLeague', { count }, locale);
 }

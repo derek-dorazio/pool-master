@@ -411,7 +411,7 @@ describe('MatchResultService shoot-outs (#791)', () => {
 
 describe('describeScoreProblem with shoot-outs (#791)', () => {
   // A test-only sport rule: no sport settles a level knockout by shoot-out until soccer.
-  const penalties = { inBracket: true, shootout: { label: 'pens' } };
+  const penalties = { inBracket: true, shootout: true };
   const level = { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 };
   const kicks = (homeShootoutScore: number | null, awayShootoutScore: number | null) => ({ homeShootoutScore, awayShootoutScore });
 
@@ -443,7 +443,7 @@ describe('describeScoreProblem with shoot-outs (#791)', () => {
   });
 
   it('refuses a shoot-out, and a level score, in a sport without shoot-outs', () => {
-    const noShootouts = { inBracket: true, shootout: null };
+    const noShootouts = { inBracket: true, shootout: false };
 
     expect(describeScoreProblem(level, kicks(3, 4), noShootouts)).toBe('this sport has no shoot-outs');
     expect(describeScoreProblem(level, kicks(null, null), noShootouts)).toBe('the winner\'s score must be higher than the loser\'s');
@@ -516,7 +516,7 @@ describe('MatchResultService matches that ended early (#704)', () => {
 });
 
 describe('describeScoreProblem for matches that ended early (#704)', () => {
-  const bracket = { inBracket: true, shootout: null };
+  const bracket = { inBracket: true, shootout: false };
   const noKicks = { homeShootoutScore: null, awayShootoutScore: null };
 
   it.each([MatchEnding.RETIREMENT, MatchEnding.DEFAULT])('accepts a %s whose winner\'s score is lower, level or missing', (ending) => {
@@ -533,8 +533,8 @@ describe('describeScoreProblem for matches that ended early (#704)', () => {
   it.each([
     ['a retirement with one score', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: null, ending: MatchEnding.RETIREMENT }, noKicks, bracket, 'give both scores or neither'],
     ['a walkover with scores', { winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 0, ending: MatchEnding.WALKOVER }, noKicks, bracket, 'a walkover has no score'],
-    ['a tie that ended early', { winnerSide: null, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, noKicks, { inBracket: false, shootout: null }, 'a tie is played to its end'],
-    ['a shoot-out after a retirement', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, { homeShootoutScore: 4, awayShootoutScore: 3 }, { inBracket: true, shootout: { label: 'pens' } }, 'a match that ended early has no shoot-out'],
+    ['a tie that ended early', { winnerSide: null, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, noKicks, { inBracket: false, shootout: false }, 'a tie is played to its end'],
+    ['a shoot-out after a retirement', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, { homeShootoutScore: 4, awayShootoutScore: 3 }, { inBracket: true, shootout: true }, 'a match that ended early has no shoot-out'],
   ])('refuses %s', (_label, result, shootout, rules, problem) => {
     expect(describeScoreProblem(result, shootout, rules)).toBe(problem);
   });

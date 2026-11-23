@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { getSportDefinition } from '@poolmaster/shared/domain';
@@ -97,7 +98,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
 
       {roundOptions.length > 0 ? (
         <SegmentedControl
-          aria-label="Round"
+          aria-label={displayString('word.roundHeading')}
           onChange={(value) => setRound(Number(value))}
           options={roundOptions}
           value={String(round)}

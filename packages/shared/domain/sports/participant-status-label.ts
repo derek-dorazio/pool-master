@@ -1,22 +1,16 @@
+import { sportWord } from '../../display-strings/display-strings';
 import { ParticipantInactiveReason, type Sport } from '../enums';
-import { getSportDefinition } from './registry';
 
 /**
  * A participant status as the audience reads it: `ELIMINATED` and `WITHDRAWN` take the sport's
- * own words ("Cut" in golf; "Scratched" for a withdrawn horse); every other status is
- * title-cased. A sport with no word for eliminated (a race knocks nobody out) reads it
- * generically, as does any status without a sport. The audience's word is applied here, once,
- * for every surface that shows it.
+ * own words ("Cut" in golf; "Scratched" for a withdrawn horse), or the generic word for a sport
+ * with none; every other status is title-cased, as is any status without a sport. The audience's
+ * word is applied here, once, for every surface that shows it.
  */
-export function formatParticipantStatusLabel(status: string, sport?: Sport | null): string {
+export function formatParticipantStatusLabel(status: string, sport?: Sport | null, locale?: string | null): string {
   if (sport) {
-    const { vocabulary } = getSportDefinition(sport);
-    if (status === ParticipantInactiveReason.ELIMINATED && vocabulary.eliminated !== undefined) {
-      return vocabulary.eliminated;
-    }
-    if (status === ParticipantInactiveReason.WITHDRAWN) {
-      return vocabulary.withdrawn;
-    }
+    if (status === ParticipantInactiveReason.ELIMINATED) return sportWord(sport, 'eliminated', { locale });
+    if (status === ParticipantInactiveReason.WITHDRAWN) return sportWord(sport, 'withdrawn', { locale });
   }
   return status
     .split('_')

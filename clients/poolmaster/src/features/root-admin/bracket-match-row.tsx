@@ -4,7 +4,7 @@ import { cancelEventMatch, clearEventMatchResult, postponeEventMatch, recordEven
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, ConfirmDialog, formatDateTimeDisplay, InlineError, StatusBadge, TableCell, TableRow, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { bracketErrorMessages, feederOf, formsNoBracket, MATCH_ENDING_MARK, matchNoun, sideEntry } from './bracket-copy';
+import { bracketErrorMessages, feederOf, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
 import { MatchScoresRow } from './match-scores-row';
 import { EarlyEndingResult } from './bracket-early-ending';
 import { type BracketContext, describePairing, describeSide, useMatchWrite } from './bracket-match-write';
@@ -25,7 +25,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
   const displayPreferences = useDisplayPreferences();
   const [editing, setEditing] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
-  const noun = matchNoun(context.vocabulary);
+  const noun = context.vocabulary.match;
   const errorCopy = bracketErrorMessages(context.vocabulary, match, context.bracket);
 
   const result = useMatchWrite({

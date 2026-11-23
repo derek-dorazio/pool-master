@@ -7,7 +7,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { bracketErrorMessages, describeEntry, matchNoun, offLeagueRosterMessages, replaceableEntries } from './bracket-copy';
+import { bracketErrorMessages, describeEntry, offLeagueRosterMessages, replaceableEntries } from './bracket-copy';
 import { candidatePrompt, useEventLeagueCandidatesQuery, useSportLeagueNoun } from './use-sport-catalog';
 
 const logger = getLogger().child({ feature: 'root-admin-withdrawals' });
@@ -37,7 +37,7 @@ export function WithdrawalsCard({
   const [withdrawnId, setWithdrawnId] = useState(NONE);
   const [replacementId, setReplacementId] = useState(NONE);
   const participant = vocabulary.participant;
-  const noun = matchNoun(vocabulary);
+  const noun = vocabulary.match;
   const replaceable = replaceableEntries(bracket, new Map(field.map((entry) => [entry.id, entry])));
   const candidatesQuery = useEventLeagueCandidatesQuery(event);
   const sportLeague = useSportLeagueNoun(event.sport, event.sportLeagueId);

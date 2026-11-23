@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { type MatchStatus, MatchStatusOrder } from '@poolmaster/shared/domain';
 import { StatusBadge, Text } from '@/features/shared/ui';
@@ -13,7 +14,7 @@ const columnHelper = createColumnHelper<EventMatchRow>();
 export function eventMatchColumns() {
   return [
     columnHelper.accessor('roundNumber', {
-      header: 'Round',
+      header: displayString('word.roundHeading'),
       meta: { info: 'The round the match is played in, first round first.', type: { kind: 'number' } },
       cell: ({ row }) => row.original.roundLabel,
     }),

@@ -1,4 +1,4 @@
-import { getSportDefinition, RaceResultOrderError, RaceResultStatus, type SportVocabulary } from '@poolmaster/shared/domain';
+import { RaceResultOrderError, RaceResultStatus, type SportVocabulary, sportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
@@ -109,7 +109,7 @@ function isStoredResultOfficial(field: readonly SportEventParticipantDto[]): boo
  * where it started and who rode it. Contest scoring counts it once it is official.
  */
 function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: readonly SportEventParticipantDto[] }) {
-  const { vocabulary } = getSportDefinition(event.sport);
+  const vocabulary = sportVocabulary(event.sport);
   const official = isStoredResultOfficial(field);
   const hasResults = field.some((entry) => entry.race !== null);
 
@@ -184,7 +184,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
  */
 function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; field: readonly SportEventParticipantDto[] }) {
   const logger = getLogger().child({ feature: 'root-admin-race-finishing-order' });
-  const { vocabulary } = getSportDefinition(event.sport);
+  const vocabulary = sportVocabulary(event.sport);
   const [chosenOfficial, setChosenOfficial] = useState<boolean | null>(null);
   const isOfficial = chosenOfficial ?? isStoredResultOfficial(field);
 
