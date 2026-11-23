@@ -613,7 +613,7 @@ Contest:
   Columns: `scoringDefinition` enum (`STROKES_TO_PAR_TOTAL`, renamed from
   `GOLF_RELATIVE_TO_PAR_TOTAL`; `FINISH_POSITION_POINTS`; `KNOCKOUT_ROUND_POINTS`; new
   `CORRECT_PICK` for pick'em and survivor; new `SQUARES_PERIOD_WIN`; `COMPOSITE_TOTAL`),
-  `tiebreakerKind` enum, and `settings` JSON validated by the definition's Zod schema.
+  and `settings` JSON validated by the definition's Zod schema (it includes the tiebreaker).
   Bracket and pick'em settings are `{ pointsPerWin, roundScaling, upsetBonus }`, where
   `roundScaling` is `{ rule: NONE }` or `{ rule: MULTIPLY_EACH_ROUND, multiplier }` and
   `upsetBonus` is `{ rule: NONE }` or `{ rule: SEED_DIFFERENCE, multiplier }`. Round n scores
@@ -638,6 +638,13 @@ Contest:
 - `Contest.startsAt` stops being a stored cutoff; the cutoff function is the one source, the
   API returns it, and the SQL that hides never-opening drafts calls the same rule; the web
   app's lock, entry, current-event and squares-game helpers read API fields (slices 16/18).
+- Tiebreaker (Derek 2026-11-23, slice 18): the kind and its range live in the scoring
+  configuration's settings, e.g. `"tiebreaker": { "kind": "WINNING_SCORE", "min": -30,
+  "max": 10 }` (so `tiebreakerKind` is not a separate column), seeded per league by
+  migration and returned by the API; the web app's `WINNING_SCORE_OPTIONS` goes. An entry's
+  guess is stored once, on its per-slot row (`ContestEntry.tiebreakerValue` goes). Entries
+  tied on score order by the closest guess to the feed's winning total to par; still tied
+  share the place (T1).
 - Tiebreaker game (Derek 2026-11-23, slices 10/17): a slot value,
   `SportEventSlot.tiebreakerGameId`, shared by every contest covering the slot. Set at slot
   release by one rule: latest scheduled start, ties to the lower Game id (a FINAL slot's
