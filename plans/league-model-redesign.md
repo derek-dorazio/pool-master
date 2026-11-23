@@ -739,6 +739,11 @@ Before this plan is deleted:
   recomputing a fact the feed supplies.
 - `testing-rules.md` §9B: pin a 150-golfer, 4-round leaderboard read.
 
+Display text that becomes a display string (coordinator note from the #1960 review,
+2026-11-23): a column that today holds display text and becomes a key holds an enum code
+mapped to a typed display-string key (for example through the typed `sportWord(sport, role)`
+helper), never a free key string.
+
 ### Docs that change with their slice
 
 - 1: provider settings out of `architecture-rules.md` §3/§6 and `service-rules.md` §1.
