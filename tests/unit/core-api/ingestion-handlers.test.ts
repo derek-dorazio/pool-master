@@ -103,7 +103,7 @@ describe('manual event sync handler', () => {
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'e1', submittedAt: AT.toISOString(), syncRuns: [{ id: 'run-1' }] } });
   });
 
-  it.each([
+  it.each<[string, Error, number, string]>([
     ['a sport with no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError(Sport.GOLF, 'feed'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
     ['a sport ingestion is not set up for with 422 SPORT_SYNC_NOT_CONFIGURED', new SportSyncNotConfiguredError(Sport.GOLF), 422, 'SPORT_SYNC_NOT_CONFIGURED'],
     ['a mock state the provider cannot play with 422 MOCK_EVENT_STATE_UNSUPPORTED', new MockEventStateUnsupportedError('feed'), 422, 'MOCK_EVENT_STATE_UNSUPPORTED'],

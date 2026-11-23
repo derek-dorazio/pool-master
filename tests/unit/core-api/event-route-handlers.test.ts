@@ -317,7 +317,7 @@ describe('field refresh from the provider', () => {
     expect(ingestion.syncEventData).not.toHaveBeenCalled();
   });
 
-  it.each([
+  it.each<[string, Error, number, string]>([
     ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF', 'mock-provider'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
     ['a sport ingestion is not set up for with 422 SPORT_SYNC_NOT_CONFIGURED', new SportSyncNotConfiguredError('GOLF'), 422, 'SPORT_SYNC_NOT_CONFIGURED'],
     ['a sync scope that leaves the field out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError(EVENT_ID, 'SCORES_ONLY', ['EVENTPARTICIPANTS']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],

@@ -70,7 +70,7 @@ describe('user handlers: the actor and the subject', () => {
     expect(mine.body).toMatchObject({ user: { id: 'user-1' } });
   });
 
-  it.each([
+  it.each<[string, Error, number, string]>([
     ['a user error', new UserOperationError('Not yours', 'ROOT_ADMIN_ACCESS_REQUIRED', 403), 403, 'ROOT_ADMIN_ACCESS_REQUIRED'],
     ['an auth error', new AuthError('Wrong password', 'INVALID_CREDENTIALS'), 401, 'INVALID_CREDENTIALS'],
   ])('answers %s with its own status and code', async (_label, error, status, code) => {
