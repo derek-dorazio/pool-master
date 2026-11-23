@@ -519,15 +519,63 @@ Each moves into the model in the slice named. None is new design; each follows a
   ProviderLeague (slice 1).
 - `ROUND_NAMES_FROM_FINAL` arrays ("Super Bowl", "Frozen Four", …) deleted; slot `name`
   holds proper names, generic words come from the display strings (slice 5).
-- `modules/golf/golf-seeding-algorithm.ts`: its invented `oddsToWin` stops (odds come only
-  from the feed, otherwise empty, and the tier order falls to seed then rank); pricing moves
-  to a PlatformPricingProfile function; the golf module is deleted (slice 3).
+- `modules/golf/golf-seeding-algorithm.ts`: its invented `oddsToWin` stops. Odds belong to
+  the feed and the sync and are stored unaltered, otherwise empty (Derek 2026-11-23: we only
+  derived odds to get tiers and prices, so we derive only those); the tier order falls to
+  seed then rank; pricing moves to a PlatformPricingProfile function; the golf module is
+  deleted (slice 3).
 - Web app: the leaderboard's `scoringFamily === HEAD_TO_HEAD` branch becomes an API field;
   `STAT_POOL_FORMULAS`, `clutch-card-copy.ts` and `BUILT_STAT_LINE_SPORTS` go with the Clutch
   Card rebuild, rendered from PlatformScoringProfile (slices 19 and 26).
 - URL segments (Derek 2026-11-23): stored `SportLeague.urlSegment` (`nfl`) and
   `Sport.urlSegment` (`football`) instead of building them from names or computing them in
   two places; event pages' `slug` is renamed `urlSegment` too (slice 3).
+
+## 9c. Sync and contest audits (2026-11-23)
+
+Two more read-only passes found these, each folded into a slice. Items still waiting on Derek
+are listed under Open questions.
+
+Sync:
+- Config moves onto Provider and ProviderLeague (slice 1): the per-sport `scheduledSports`
+  switch is deleted; webhook safety-net poll intervals, the default provider, provider
+  priority and adapter `sportsCovered` become rows; duplicated schedule defaults go;
+  sync jobs, runs and the rate budget carry a Provider FK; `MappingConfidence.HIGH` (unused)
+  goes; participant ids are the raw feed id, never prefixed with the league.
+- Runs (slice 2): `ProviderSyncRun.payloadJson` stops driving behaviour (columns plus
+  findings); field sync has one `ProviderSyncKind`, not five names; logged-only anomalies and
+  the synthetic health check become finding kinds and a status computed from runs and jobs.
+- Field sync (slices 7/16) covers events whose next slot has not started, not "next 2 events
+  or 14 days"; job dedupe keys use ids, not provider id strings.
+- Games (slice 10): webhooks route by GameProviderMapping (no prefix match, no fan-out to all
+  leagues; an unknown id is a finding); `lastProviderNotificationAt` moves to the Game; the
+  NCAA play-in placeholder participant becomes an empty Match side; field row metadata
+  (seed, odds, play-in place) becomes columns.
+- Golf (slice 8): an unknown tour is a finding, not "all leagues".
+- The web app reads provider names from the API, not by id lookups in four places.
+
+Contest:
+- Per-event entry state (`ContestEntryEvent`, `ContestEntryEventStanding`, the leaderboard
+  snapshot's shown event, the squares draw's pending receipts) keys by `ContestSeasonSlot`;
+  pick'em and survivor weeks are that slot, not round numbers worked out three ways
+  (slices 15/17).
+- Knockout round values are rows per slot definition, not a positional array; a bracket's
+  start is its first covered slot, not `startsAtRound` in config JSON; the final is the slot
+  kind FINAL, never `rounds.at(-1)` or `roundCount-1` (slices 9/15/16).
+- One stored setup shape for template and contest, with "one default per scope" as a partial
+  unique index on (league, selection type, coverage); copied and dead columns go
+  (`ContestConfiguration.selectionType`, `ContestEntryPick.contestFormat` and `period`,
+  `ContestPrizeDefinition`, unchecked `templateVersion`) (slices 3/11/15).
+- Budget salary cap is read from the first covered slot's pricing, not copied into config
+  JSON (slice 15).
+- `Contest.startsAt` stops being a stored cutoff; the cutoff function is the one source, the
+  API returns it, and the SQL that hides never-opening drafts calls the same rule; the web
+  app's lock, entry, current-event and squares-game helpers read API fields (slices 16/18).
+- Squares use side 1 and side 2 by side number, not away rows and home columns (slice 18).
+- `GOLF_RELATIVE_TO_PAR_TOTAL` is renamed for stroke play and reads Game sides; the web's
+  unplayed-round `'80'` and current-round derivation become API fields (slice 10b).
+- Event page offer copy moves out of `event-page-copy.ts` into offer or template data
+  (slice 11).
 
 ## 10. Slices
 
