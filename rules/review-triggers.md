@@ -390,8 +390,9 @@ Read every added or changed line for these, and report each one found:
 
 1. **Name matching** — a comparison, `includes`, `startsWith`, regex or keyword list applied
    to a `name`, `title`, `label` or display string; two records joined because their names
-   agree. Only a provider adapter may match a provider's string, and only through a mapping
-   table with a `WARNING`/`ERROR` finding for a miss.
+   agree. Only a provider adapter may match a provider's string, and only through an
+   inclusion-only mapping table whose miss raises the one deduplicated finding `domain-model-conventions-rules.md` §17 *Provider
+   keys live only in ProviderMapping tables* describes.
 2. **Id strings built or parsed** — a template literal or `join` producing an id or scope
    key; `split`, `match`, `replace`, `startsWith` or a regex on an id, slug or provider ref; a
    regex that chooses an adapter, reader or handler.
@@ -409,6 +410,23 @@ Read every added or changed line for these, and report each one found:
    return; a function that matches another under a different name; a "keep in sync with"
    comment. Search for the existing computation before accepting a new one, and name it in
    the finding.
+6. **A provider key outside a mapping table** — a new or newly read column holding a
+   provider's id or code (`externalId`, `…Ref`, `providerEventId`, a provider id prefix) on
+   a table whose name does not end in `…ProviderMapping`; a provider code in a constant; a
+   sync that falls back to a default for an unknown provider value instead of raising the
+   finding (`domain-model-conventions-rules.md` §17 *Provider keys live only in
+   ProviderMapping tables*).
+7. **An either/or parent pair** — two or more nullable foreign keys on one row of which
+   exactly one is meant to be set, or a check constraint saying so
+   (`domain-model-conventions-rules.md` §9 *No nullable either/or parents*). Name the shared parent they should point at instead.
+8. **A generic word stored as data** — a `label`, `displayName`, `…Names` or `name` column
+   (or migration rows) holding words every league shares ("Week 3", "Semifinal", "Final"),
+   or a proper name hard-coded in code (`domain-model-conventions-rules.md` §17 *Proper
+   names are data, generic words are strings*).
+9. **Recomputing a fact the feed supplies** — a total, position, tie marker, score to par,
+   status or cut worked out from stored rows when the provider sends it, or kept beside the
+   feed's value (`domain-model-conventions-rules.md` §17 *One computation per fact*: the
+   provider is the source of truth).
 
 For each finding, state **the model home it belongs in** (a column on a definition, a
 reference row, a mapping table, a field the API returns, one shared predicate) — "hard-coded"

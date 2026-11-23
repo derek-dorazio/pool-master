@@ -58,8 +58,18 @@ git diff origin/main...HEAD -U0 -- 'packages/*/src' packages/shared clients/pool
 ```
 
 A hit is a place to read, not a verdict; the calibration paragraph in §9 says what is fine.
-Then ask the question no search answers: **does this compute something the codebase already
-computes?** Search for the fact (the current season, whether an event is over, the final
+If the diff touches `schema.prisma` or a migration, also read every added column and model for
+a provider key outside a `…ProviderMapping` table, an either/or pair of nullable parents, and a
+generic word stored as data (`rules/review-triggers.md` §9 items 6 to 8):
+
+```bash
+git diff origin/main...HEAD -U0 -- packages/core-api/prisma \
+  | grep '^+' | grep -v '^+++' \
+  | grep -nE "externalId|Ref\b|provider[A-Z][A-Za-z]*Id|matchKeyword|[a-z]+Id +String\?|label|displayName|Names\b"
+```
+
+Then ask the questions no search answers: **does this compute something the codebase already
+computes, or something the feed already supplies?** Search for the fact (the current season, whether an event is over, the final
 round, a contest's event limit), not for the function name the author chose
 (`rules/domain-model-conventions-rules.md` §15 *Residue — The Right Mechanism, Built Then
 Bypassed*). On the web side, ask whether the screen is re-deriving what the API decides.

@@ -60,4 +60,5 @@ Not ADR candidates:
 - [ADR-0008 — Agent guidance is task-shaped and single-tool](./0008-single-tool-task-shaped-agent-guidance.md)
 - [ADR-0009 — Admin-authored events and score-only linking are the only provider pattern](./0009-admin-authored-events-score-only-linking.md) *(superseded by ADR-0011)*
 - [ADR-0010 — React Native with Expo for the iPhone and Android app](./0010-react-native-expo-for-mobile.md)
-- [ADR-0011 — Once a league's provider sync is live, the sync creates its events](./0011-provider-sync-creates-events.md) *(supersedes ADR-0009)*
+- [ADR-0011 — Once a league's provider sync is live, the sync creates its events](./0011-provider-sync-creates-events.md) *(supersedes ADR-0009; amended by ADR-0012)*
+- [ADR-0012 — Leagues have Seasons, Phases and Slots; contests cover slots; Clutch Card is a contest type](./0012-season-phase-slot-model-contests-cover-slots.md) *(amends ADR-0011)*
