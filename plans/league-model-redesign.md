@@ -701,6 +701,14 @@ Before this plan is deleted:
 ### Docs that change with their slice
 
 - 1: provider settings out of `architecture-rules.md` §3/§6 and `service-rules.md` §1.
+- 1 (S1, S2): the rate-limit quota and retry policy in `docs/LIVE-SPORTS-DATA-SYNC.md`;
+  `docs/EVENT-SETUP-PROCEDURES.md` loses mock linking and "Start live simulation"; the mock
+  provider's sections in `docs/CI-AND-QUALITY-GATES.md` and `docs/LOGGING-OPERATIONS.md` say
+  it no longer runs (deleted with the module by #1981).
+- 7 (S3): manual score-source linking out of `docs/EVENT-SETUP-PROCEDURES.md` and
+  `docs/SPORT-DATA-LOADING.md`.
+- 10c (S4, S5): the scheduler, job kinds, dedupe keys and season-state intervals in
+  `docs/LIVE-SPORTS-DATA-SYNC.md` and the generated background-jobs table.
 - 1b: retire the `add-clutch-card-league` skill and its AGENTS.md rows; Clutch Card lines in
   `architecture-rules.md` §4 and `ux-rules.md` §12/§13.
 - 5: rewrite the `add-sport` skill; the sport registry text in `architecture-rules.md` §4.
