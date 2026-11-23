@@ -9,6 +9,7 @@ import {
   sortByEnumOrder,
   type EnumOrder,
 } from '@poolmaster/shared/domain/enum-order';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
   ContestStatus,
   ContestStatusOrder,
@@ -31,12 +32,19 @@ describe('enum orders', () => {
     expect(sortByEnumOrder([Tone.LOUD, Tone.QUIET, Tone.MIDDLE], ToneOrder)).toEqual(['QUIET', 'MIDDLE', 'LOUD']);
   });
 
-  it('sorts an alphabetical order by the on-screen label, ignoring case, and by the value when no label is given', () => {
-    const labels: Record<Tone, string> = { LOUD: 'brash', QUIET: 'Calm', MIDDLE: 'average' };
-    const order: EnumOrder<Tone> = alphabeticalOrder();
+  it('sorts an alphabetical order A to Z by the display strings, not by the codes', () => {
+    const values = Object.values(enums.RecordType);
+    const sorted = sortByEnumOrder(values, enums.RecordTypeOrder);
 
-    expect(sortByEnumOrder(Object.values(Tone), order, (tone) => labels[tone])).toEqual(['MIDDLE', 'LOUD', 'QUIET']);
-    expect(sortByEnumOrder(Object.values(Tone), order)).toEqual(['LOUD', 'MIDDLE', 'QUIET']);
+    const words = sorted.map((value) => enumLabel('RecordType', value));
+    expect(words).toEqual([...words].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' })));
+    expect(sorted).not.toEqual([...values].sort());
+  });
+
+  it('sorts an alphabetical order by a given label instead, ignoring case, where a screen still keeps its own words', () => {
+    const labels: Record<string, string> = { TEAM: 'apple', INDIVIDUAL: 'Banana' };
+
+    expect(sortByEnumOrder(['INDIVIDUAL', 'TEAM'], alphabeticalOrder('ParticipantType'), (value) => labels[value])).toEqual(['TEAM', 'INDIVIDUAL']);
   });
 
   it('leaves the given array as it was', () => {
@@ -95,7 +103,7 @@ describe('every shared enum declares its order', () => {
       expect(Object.keys(order.orderIndex).sort()).toEqual(Object.values(values).sort());
       expect(new Set(Object.values(order.orderIndex)).size).toBe(Object.keys(values).length);
     } else {
-      expect(order).toEqual({ kind: 'alphabetical' });
+      expect(order).toEqual({ kind: 'alphabetical', enumName: name });
     }
   });
 

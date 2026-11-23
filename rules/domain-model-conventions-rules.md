@@ -226,8 +226,8 @@ that the values are:
 
 A new enum in `packages/shared/domain/enums.ts` states its order beside it, as
 `<Name>Order`: `explicitOrder({...})` giving every value its place, or
-`alphabeticalOrder()` when the set has no natural order and its values sort A to Z
-by the words the screen shows for them. Every list, grid, picker and sort uses that
+`alphabeticalOrder('<Name>')` when the set has no natural order and its values sort A
+to Z by their display strings, in the reader's language. Every list, grid, picker and sort uses that
 order through `compareByEnumOrder` or `sortByEnumOrder`; no consumer keeps a
 `Record<Enum, number>` rank map of its own. A screen that genuinely needs another
 order (the Home page's current contests, Open before Live) gets a named order beside
@@ -240,6 +240,15 @@ on the column sorts by declaration order. Where that order cannot match (reorder
 a Postgres enum's values is a migration with a type swap), no read orders by the
 column in SQL: the read sorts in code with `compareByEnumOrder`, and the enum is
 listed with its reason in the test's `SORTED_IN_CODE`.
+
+### Every enum value has its words in the display-string module
+
+The words shown for an enum value are not kept beside the enum or on any screen: every value of
+every enum in `enums.ts` has an entry in `packages/shared/display-strings/en-US.ts`, read
+through `enumLabel('<Name>', code)` (`rules/ux-rules.md` §16 *Display Strings*). A new enum
+is added to `SharedEnums` in `display-strings-module.ts` and given its words in the same
+change; the type check fails on a missing value, and `rules:check:display-strings` fails on an
+enum left out of `SharedEnums`. No code declares a `Record<Enum, string>` of its own.
 
 ### A yes/no field is a Boolean
 
@@ -777,7 +786,8 @@ phase or slot definitions (`rules/domain-model-concepts.md`). They are never a c
   copied per league with different literals.
 - **Instead:** add the property to the definition it describes and set it by migration
   (`rules/architecture-rules.md` §6 *Reference data goes in a migration*); the shared code
-  reads it. Labels for keys and codes are mapped on screen (§2 *Closed Sets Are Enums*).
+  reads it. The words for keys and codes live in the display-string module, keyed by the code
+  (`rules/ux-rules.md` §16 *Display Strings*); proper names are name columns on the model.
 - This is the data half of `rules/workflow-rules.md` §1 *One global solution, never one
   sport's*: a league's difference is data any league can carry, never a path one league takes.
   It extends the sport registry (`rules/architecture-rules.md` §4 *Sport extension*) to
