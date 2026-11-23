@@ -1,3 +1,4 @@
+import { displayString } from '@poolmaster/shared/display-strings';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -144,7 +145,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   // A used team names the week it was picked in; a week that is one of this playoff's rounds, by the round's name.
   const usedWeekName = (weekNumber: number) => {
     const round = isPlayoff ? eventPicks.survivor?.roundWeeks.find((week) => week.weekNumber === weekNumber)?.roundNumber : undefined;
-    return round === undefined ? `Week ${weekNumber}` : roundLabel(round, roundCount);
+    return round === undefined ? displayString('word.weekNumber', { n: weekNumber }) : roundLabel(round, roundCount);
   };
   const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound, roundCount)}` : `week ${eliminatedInWeek ?? ''}`;
   const roundNeedsPick = isPlayoff && round !== rounds.at(0) && canChangeWeek(gamePicks) && gamePicks.pickedCount === 0;
@@ -229,7 +230,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       <ContestEventSwitcher
         describe={(sportEvent) => (entrySummary ? CONTEST_ENTRY_STATUS_LABELS[entryEventStatus(entrySummary, sportEvent.sportEventId)] : null)}
         events={contest.sportEvents}
-        label="Week"
+        label={displayString('word.week')}
         onChange={switchWeek}
         testId="pick-em-week-switcher"
         value={sportEventId}

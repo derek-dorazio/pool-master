@@ -7,9 +7,13 @@
  *    type check could not ask for its words;
  * 2. a module misses a value of a shared enum or an API error code, or keeps one that no longer
  *    exists — each failure names the enum (or `error`) and the code;
- * 3. a `word.` or `sport.` key, or an error context (`error.<CODE>.<context>`), is used nowhere
- *    in the source, or a plural has `_one` without `_other`;
- * 4. a language's module does not have exactly the `en-US` keys;
+ * 3. a `word.` key, or an error context (`error.<CODE>.<context>`), is used nowhere in the
+ *    source, or a plural has `_one` without `_other`. A
+ *    `sport.<SPORT>.<role>` entry, and the generic `word.<role>` it falls back to, are read
+ *    through `sportWord` by role rather than by key, so they count as used when the role is a
+ *    `SportWordRole` (#1960); a role that is not one fails;
+ * 4. a language's module does not have exactly the `en-US` keys, or an entry's placeholders
+ *    (`{{n}}`) differ from the `en-US` entry's;
  * 5. a `Record<SharedEnum | ApiErrorCode, string>` is declared outside display-strings/ and is
  *    not on the allowlist (`scripts/display-strings-allowlist.json`), or the allowlist names a
  *    map that is gone — each migration ticket deletes its own entries until none are left.
@@ -27,6 +31,7 @@ export const MODULE_TYPES_FILE = 'packages/shared/display-strings/display-string
 export const ERROR_CODES_FILE = 'packages/shared/dto/api-error-codes.ts';
 export const DISPLAY_STRINGS_DIR = 'packages/shared/display-strings/';
 export const ALLOWLIST_FILE = 'scripts/display-strings-allowlist.json';
+export const SPORT_WORD_ROLES_FILE = 'packages/shared/display-strings/sport-word-roles.ts';
 export const SOURCE_LOCALE = 'en-US';
 const SOURCE = /^(packages|clients)\/.+\.(ts|tsx)$/;
 const EXEMPT = /(\.(test|spec|stories)\.tsx?$)|(\/generated\/)|(\/src\/test\/)/;
@@ -122,10 +127,12 @@ export function flatKeys(module) {
 const quoted = (text, value) => text.includes(`'${value}'`) || text.includes(`"${value}"`) || text.includes(`\`${value}\``);
 
 /**
- * 3: `word.` and `sport.` keys no source file uses (a plural counts as used through its base
- * key), error contexts no source file names, and plurals with `_one` but no `_other`.
+ * 3: `word.` keys no source file uses (a plural counts as used through its base key), sport
+ * word entries whose role is not a `SportWordRole`, error contexts no source file names, and plurals with `_one` but no `_other`.
+ * Sport word entries and the generic words of their roles are read by role (`sportWord`), so
+ * they count as used.
  */
-export function unusedKeyFailures(module, sourceTexts) {
+export function unusedKeyFailures(module, sourceTexts, sportWordRoles = []) {
   const keys = flatKeys(module).filter((key) => (key.startsWith('word.') || key.startsWith('sport.')) && !key.endsWith('.short'));
   const failures = [];
   const contexts = new Set(Object.values(module.errorContext ?? {}).flatMap((byContext) => Object.keys(byContext ?? {})));
@@ -134,8 +141,15 @@ export function unusedKeyFailures(module, sourceTexts) {
       failures.push(`${SOURCE_LOCALE}: error context ${context} is named by no screen. Delete its errorContext entries, or pass it to extractErrorMessage.`);
     }
   }
+  const roles = new Set(sportWordRoles);
   const bases = new Set(keys.map((key) => key.replace(PLURAL, '')));
   for (const base of bases) {
+    if (base.startsWith('sport.')) {
+      const role = base.split('.')[2];
+      if (!roles.has(role)) failures.push(`${SOURCE_LOCALE}: ${base} is not a sport word role. Add ${role} to SPORT_WORD_ROLES, or delete it.`);
+      continue;
+    }
+    if (roles.has(base.slice('word.'.length))) continue;
     if (!sourceTexts.some((text) => quoted(text, base))) {
       failures.push(`${SOURCE_LOCALE}: ${base} is used nowhere. Delete it, or use it through displayString.`);
     }
@@ -148,13 +162,46 @@ export function unusedKeyFailures(module, sourceTexts) {
   return failures;
 }
 
-/** 4: a language's keys against the source language's. */
+/** Every entry a module holds, flat, with its text: a short form under `<key>.short`. */
+export function flatEntries(module) {
+  const entries = {};
+  const add = (key, entry) => {
+    if (typeof entry === 'object' && entry !== null) {
+      entries[key] = entry.name;
+      entries[`${key}.short`] = entry.short;
+    } else {
+      entries[key] = entry;
+    }
+  };
+  for (const [enumName, values] of Object.entries(module.enum ?? {})) {
+    for (const [code, entry] of Object.entries(values)) add(`enum.${enumName}.${code}`, entry);
+  }
+  for (const [code, entry] of Object.entries(module.error ?? {})) add(`error.${code}`, entry);
+  for (const [key, entry] of Object.entries(module.word ?? {})) add(`word.${key}`, entry);
+  for (const [sport, roles] of Object.entries(module.sport ?? {})) {
+    for (const [role, entry] of Object.entries(roles ?? {})) add(`sport.${sport}.${role}`, entry);
+  }
+  return entries;
+}
+
+/** The placeholder names in one string, sorted: `['n']` for "Week {{n}}". */
+export function placeholdersOf(text) {
+  return [...new Set([...String(text).matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((match) => match[1]))].sort();
+}
+
+/** 4: a language's keys against the source language's, and each entry's placeholders against the source's. */
 export function parityFailures(locale, module, source) {
   const theirs = new Set(flatKeys(module));
   const ours = new Set(flatKeys(source));
+  const theirEntries = flatEntries(module);
+  const ourEntries = flatEntries(source);
+  const placeholderFailures = Object.keys(ourEntries)
+    .filter((key) => key in theirEntries && placeholdersOf(ourEntries[key]).join() !== placeholdersOf(theirEntries[key]).join())
+    .map((key) => `${locale}: ${key} has placeholders {${placeholdersOf(theirEntries[key]).join(', ')}}, but ${SOURCE_LOCALE} has {${placeholdersOf(ourEntries[key]).join(', ')}}.`);
   return [
     ...[...ours].filter((key) => !theirs.has(key)).map((key) => `${locale}: missing ${key}, which ${SOURCE_LOCALE} has.`),
     ...[...theirs].filter((key) => !ours.has(key)).map((key) => `${locale}: has ${key}, which ${SOURCE_LOCALE} does not.`),
+    ...placeholderFailures,
   ];
 }
 
@@ -206,6 +253,7 @@ async function main() {
   const enumsModule = await import(pathToFileURL(join(repoRoot, ENUMS_FILE)).href);
   const enums = enumsModule.default ?? enumsModule;
   const { DISPLAY_STRING_MODULES } = await import(pathToFileURL(join(repoRoot, DISPLAY_STRINGS_DIR, 'languages.ts')).href).then((loaded) => loaded.default ?? loaded);
+  const { SPORT_WORD_ROLES } = await import(pathToFileURL(join(repoRoot, SPORT_WORD_ROLES_FILE)).href).then((loaded) => loaded.default ?? loaded);
 
   const declared = sharedEnumNames(read(ENUMS_FILE));
   const enumValues = Object.fromEntries(declared.map((name) => [name, Object.values(enums[name])]));
@@ -224,7 +272,7 @@ async function main() {
   const failures = [
     ...unregisteredEnums(declared, registeredEnumNames(read(MODULE_TYPES_FILE))),
     ...Object.entries(DISPLAY_STRING_MODULES).flatMap(([locale, module]) => completenessFailures(locale, module, enumValues, errorCodes)),
-    ...unusedKeyFailures(source, texts),
+    ...unusedKeyFailures(source, texts, SPORT_WORD_ROLES),
     ...Object.entries(DISPLAY_STRING_MODULES)
       .filter(([locale]) => locale !== SOURCE_LOCALE)
       .flatMap(([locale, module]) => parityFailures(locale, module, source)),

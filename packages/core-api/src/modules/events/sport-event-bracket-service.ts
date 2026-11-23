@@ -39,17 +39,18 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   BracketAdvancement,
+  eventPlaysMatches,
   eventRoundLabel,
+  eventSportDefinition,
   getSportDefinition,
   isMatchUnplayed,
   MatchSide,
-  ParticipantStatus,
-  eventSportDefinition,
-  eventPlaysMatches,
-  SportEventStatus,
   type Participant,
+  ParticipantStatus,
   type SportEvent,
   type SportEventMatch,
+  SportEventStatus,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
 import type { JobsForWrite } from '../background-jobs/background-job-queue';
@@ -326,7 +327,7 @@ export class SportEventBracketService {
       }
     }
 
-    const { participant } = eventSportDefinition(event).vocabulary;
+    const { participant } = sportVocabulary(eventSportDefinition(event));
     const blockers: string[] = [];
     if (emptySides > 0) {
       blockers.push(`${emptySides} bracket place(s) have no ${participant.one} and no earlier match to fill them`);

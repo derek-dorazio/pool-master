@@ -63,7 +63,10 @@ export function errorCodeMessage(
   const contextKey = contexts
     .map((context) => `error.${code}.${context}`)
     .find((key) => hasDisplayString(key));
-  return displayString((contextKey ?? `error.${code}`) as DisplayStringKey, options?.values);
+  // The key is chosen at run time, so its placeholders cannot be checked here; each screen's
+  // values are typed where it builds them.
+  const lookUp = displayString as (key: DisplayStringKey, values?: DisplayStringValues) => string;
+  return lookUp((contextKey ?? `error.${code}`) as DisplayStringKey, options?.values);
 }
 
 /**

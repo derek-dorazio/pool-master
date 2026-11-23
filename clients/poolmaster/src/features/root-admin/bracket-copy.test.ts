@@ -1,4 +1,4 @@
-import { MatchEnding, Sport, SportLeagueNoun, getSportDefinition, sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { MatchEnding, Sport, SportLeagueNoun, sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { SportEventMatchDto } from '@/lib/api';
 import { errorCodeMessage } from '@/lib/errors';
@@ -74,7 +74,7 @@ describe('unfinishedBefore', () => {
 });
 
 describe('replacementErrors', () => {
-  const tennis = getSportDefinition(Sport.TENNIS).vocabulary;
+  const tennis = sportVocabulary(Sport.TENNIS);
 
   it('names a tour\'s roster for the ATP and a league\'s roster for the NCAA when a player is refused as off it', () => {
     expect(errorCodeMessage('PARTICIPANT_NOT_IN_SPORT_LEAGUE', replacementErrors(tennis, sportLeagueNounOf(Sport.TENNIS, null))))
@@ -90,7 +90,7 @@ describe('replacementErrors', () => {
 });
 
 describe('bracketErrors', () => {
-  const tennis = getSportDefinition(Sport.TENNIS).vocabulary;
+  const tennis = sportVocabulary(Sport.TENNIS);
 
   it('names the next match to clear when the admin\'s match feeds one, and says "its next match" when it feeds none known', () => {
     const divisional = match({ id: 'm-3', matchNumber: 3, roundNumber: 2, advancesToMatchId: 'm-5' });
@@ -106,7 +106,7 @@ describe('bracketErrors', () => {
 });
 
 describe('reseedErrors', () => {
-  const tennis = getSportDefinition(Sport.TENNIS).vocabulary;
+  const tennis = sportVocabulary(Sport.TENNIS);
 
   it('words a refused suggestion and a refused save of a reseeded round differently', () => {
     expect(errorCodeMessage('BRACKET_INVALID', reseedErrors(tennis, ReseedAction.SUGGEST)))

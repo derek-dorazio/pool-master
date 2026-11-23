@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { getSportDefinition, Sport } from '@poolmaster/shared/domain';
+import { Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import { PlayInPlacesCard } from './play-in-places-card';
 import { fieldEntryFixture, participantFixture, sportEventFixture } from './sport-test-fixtures';
 
@@ -14,7 +14,7 @@ describe('PlayInPlacesCard wording', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={queryClient}>
-        <PlayInPlacesCard event={sportEventFixture({ status: 'DRAFT' })} field={[sinner, qualifier]} vocabulary={getSportDefinition(sport).vocabulary} />
+        <PlayInPlacesCard event={sportEventFixture({ status: 'DRAFT' })} field={[sinner, qualifier]} vocabulary={sportVocabulary(sport)} />
       </QueryClientProvider>,
     );
   }

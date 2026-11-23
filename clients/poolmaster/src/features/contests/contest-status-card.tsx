@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, sportVocabulary } from '@poolmaster/shared/domain';
 import type { ContestDto, ContestManagementDetailDto, SportEventDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
@@ -25,7 +25,7 @@ import { useContestDrawState } from './use-contest-draw';
  */
 function entriesCloseAt(event: SportEventDto, secondChanceRoundName: string | null) {
   return secondChanceRoundName === null
-    ? `the ${getSportDefinition(event.sport).vocabulary.eventStart}`
+    ? `the ${sportVocabulary(event.sport).eventStart}`
     : `the first game of the ${secondChanceRoundName}`;
 }
 
@@ -56,7 +56,7 @@ function NotOpenCard({
             contestName={contest.name}
             event={event}
             leagueId={contest.leagueId}
-            participant={getSportDefinition(event.sport).vocabulary.participant}
+            participant={sportVocabulary(event.sport).participant}
             rulesError={null}
             selectionType={configuration.selectionType}
             surface="inverse"
@@ -113,7 +113,7 @@ function OpenCard({
     <LifecyclePanel
       actions={<ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />}
       help={secondChanceRoundName === null
-        ? `Entries close at the ${getSportDefinition(event.sport).vocabulary.eventStart}, ${formatDateTimeDisplay(event.startDate, displayPreferences)}. The contest goes live then and is final when the event ends.`
+        ? `Entries close at the ${sportVocabulary(event.sport).eventStart}, ${formatDateTimeDisplay(event.startDate, displayPreferences)}. The contest goes live then and is final when the event ends.`
         : (
           <span data-testid="contest-second-chance-close">
             {`Entries close at ${entriesCloseAt(event, secondChanceRoundName)}. The contest goes live then and is final when the event ends.`}
@@ -162,7 +162,7 @@ function DrawOpenCard({
   const drawState = useContestDrawState(contest.id);
   const drawnAt = contest.drawnAt;
 
-  const { eventStart, participant } = getSportDefinition(event.sport).vocabulary;
+  const { eventStart, participant } = sportVocabulary(event.sport);
   const startsAt = formatDateTimeDisplay(event.startDate, displayPreferences);
   const untilStart = { label: 'Until it starts', testId: 'contest-stat-until-close', value: formatTimeUntil(event.startDate) };
 

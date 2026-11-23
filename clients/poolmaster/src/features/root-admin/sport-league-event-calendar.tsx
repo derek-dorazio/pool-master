@@ -1,3 +1,4 @@
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import type { SportNoun } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
 import { DataGrid } from '@/features/shared/ui';
@@ -27,7 +28,7 @@ export function SportLeagueEventCalendar({
   tournaments: SportEventDto[];
 }) {
   const { sport, definition } = useManagedSport();
-  const { event } = definition.vocabulary;
+  const { event } = sportVocabulary(definition);
   const columns = useMemo(() => buildCalendarColumns(upperFirst(event.one)), [event.one]);
   return (
     <DataGrid

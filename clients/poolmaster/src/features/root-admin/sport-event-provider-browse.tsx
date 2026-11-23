@@ -1,4 +1,4 @@
-import { sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { createEventFromProviderEvent } from '@/lib/api';
@@ -63,7 +63,7 @@ export function SportEventProviderBrowse({
   });
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
-  const { event: eventNoun, round } = definition.vocabulary;
+  const { event: eventNoun, round } = sportVocabulary(definition);
 
   const [browseFrom, setBrowseFrom] = useState(() => defaultWindowValue(0, displayPreferences.timeZone));
   const [browseTo, setBrowseTo] = useState(() => defaultWindowValue(45, displayPreferences.timeZone));

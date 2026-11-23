@@ -8,7 +8,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { describeEntry, matchNoun, ReseedAction, reseededRounds, reseedErrors, roundStarted, unfinishedBefore } from './bracket-copy';
+import { describeEntry, ReseedAction, reseededRounds, reseedErrors, roundStarted, unfinishedBefore } from './bracket-copy';
 import type { BracketContext } from './bracket-match-write';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { upperFirst } from '@/lib/upper-first';
@@ -57,7 +57,7 @@ export function ReseedRoundsCard({
   return (
     <SectionCard headingLevel={3} padded testId="root-admin-reseed" title="Reseeded rounds">
       <p className="text-sm text-muted-foreground">
-        {`The ${team.many} left are paired by seed: the best seed left hosts the worst. Suggest the ${matchNoun(context.vocabulary).many}, change any that need it, then save them.`}
+        {`The ${team.many} left are paired by seed: the best seed left hosts the worst. Suggest the ${context.vocabulary.match.many}, change any that need it, then save them.`}
       </p>
       {rounds.map((roundNumber) => (
         <ReseedRound context={context} key={roundNumber} roundCount={roundCount} roundLabel={roundLabel} roundNumber={roundNumber} />
@@ -78,7 +78,7 @@ function ReseedRound({
   roundCount: number;
 }) {
   const { eventId, vocabulary, bracket, fieldById } = context;
-  const noun = matchNoun(vocabulary);
+  const noun = vocabulary.match;
   const team = vocabulary.participant;
   const [requested, setRequested] = useState(false);
   // The admin's changes over the suggestion, keyed `${matchNumber}-${side}`: the suggestion itself

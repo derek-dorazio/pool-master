@@ -1,3 +1,4 @@
+import { displayString } from "@poolmaster/shared/display-strings";
 import { Check } from "lucide-react";
 import { cn } from "./class-names";
 import { Text } from "./text";
@@ -18,11 +19,12 @@ const LINE_TONE: Record<StageTrackSurface, string> = {
   inverse: "bg-inverse-border",
 };
 
-const STATE_WORDS: Record<StageState, string> = {
-  done: "done",
-  current: "current stage",
-  upcoming: "to come",
-};
+/** How a screen reader hears each stage's state, after its label. */
+const STATE_WORDS = {
+  done: "word.stageDone",
+  current: "word.stageCurrent",
+  upcoming: "word.stageUpcoming",
+} as const satisfies Record<StageState, string>;
 
 /**
  * Where something is in a fixed run of stages, as a numbered stepper: a circle per stage with its
@@ -44,7 +46,7 @@ export function StageTrack({
   testId?: string;
 }) {
   return (
-    <ol aria-label="Stages" className="flex items-start" data-testid={testId}>
+    <ol aria-label={displayString("word.stages")} className="flex items-start" data-testid={testId}>
       {stages.map((stage, index) => {
         const state: StageState = index < currentIndex ? "done" : index === currentIndex ? "current" : "upcoming";
         return (
@@ -84,7 +86,7 @@ export function StageTrack({
               weight={state === "current" ? "bold" : "medium"}
             >
               {stage}
-              <span className="sr-only">{`, ${STATE_WORDS[state]}`}</span>
+              <span className="sr-only">{`, ${displayString(STATE_WORDS[state])}`}</span>
             </Text>
           </li>
         );

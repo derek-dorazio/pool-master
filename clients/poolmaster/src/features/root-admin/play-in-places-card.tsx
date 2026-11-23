@@ -15,11 +15,6 @@ const logger = getLogger().child({ feature: 'root-admin-play-in' });
 /** The select's value before an admin picks a row or a team. */
 const NONE = '';
 
-/** What the sport calls a field place filled after the draw is made (#704): "qualifier" in tennis. */
-function playInWord(vocabulary: SportVocabulary): string {
-  return vocabulary.playInPlace ?? 'play-in';
-}
-
 /**
  * Play-in places on the bracket tab (#709, #700). Before release an admin marks the field rows
  * that stand for a play-in pairing ("Texas / Xavier"); once released, each marked place takes its
@@ -39,7 +34,7 @@ export function PlayInPlacesCard({
   const released = event.status !== SportEventStatus.DRAFT;
   const places = field.filter((entry) => entry.isPlayInPlace);
   const team = vocabulary.participant;
-  const word = playInWord(vocabulary);
+  const word = vocabulary.playInPlace;
 
   if (released && places.length === 0) {
     return null;
@@ -101,7 +96,7 @@ function PlayInUnmarkButton({ eventId, row, vocabulary }: { eventId: string; row
         size="sm"
         variant="ghost"
       >
-        {`Remove ${playInWord(vocabulary)} mark`}
+        {`Remove ${vocabulary.playInPlace} mark`}
       </Button>
       {mutation.isError ? (
         <InlineError>
@@ -121,7 +116,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
   return (
     <div className="flex flex-wrap items-end gap-3">
       <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-        {`Mark a ${playInWord(vocabulary)} place`}
+        {`Mark a ${vocabulary.playInPlace} place`}
         <Select data-testid="root-admin-play-in-mark-select" onChange={(change) => setRowId(change.target.value)} value={rowId}>
           <option value={NONE}>{`Choose a ${vocabulary.participant.one}`}</option>
           {candidates.map((entry) => (
@@ -136,7 +131,7 @@ function PlayInMarker({ eventId, field, vocabulary }: { eventId: string; field: 
         size="sm"
         variant="secondary"
       >
-        {`Mark as ${playInWord(vocabulary)} place`}
+        {`Mark as ${vocabulary.playInPlace} place`}
       </Button>
       {mutation.isError ? (
         <InlineError className="w-full">
@@ -190,7 +185,7 @@ function PlayInWinnerPicker({
   return (
     <>
       <Select
-        aria-label={`Who fills ${place.participant.name}'s ${playInWord(vocabulary)} place`}
+        aria-label={`Who fills ${place.participant.name}'s ${vocabulary.playInPlace} place`}
         data-testid={`root-admin-play-in-winner-select-${place.id}`}
         disabled={!teamsQuery.data}
         onChange={(change) => setParticipantId(change.target.value)}

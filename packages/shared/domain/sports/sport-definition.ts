@@ -1,78 +1,13 @@
 import type { ParticipantScoringDefinitionId } from '../contest-scoring';
 import type { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import type { SportWordOverrides } from '../../display-strings/display-strings';
 import type { ScoringFamily } from './scoring-family';
 import type { SportComposite } from './sport-stats';
 
-/** A noun in its singular and plural, as the audience says it. */
+/** A noun in its singular and plural, as the audience says it, read from the display strings. */
 export interface SportNoun {
   one: string;
   many: string;
-}
-
-/** What a sport's audience calls things. Shared screens read these instead of saying "golfer". */
-export interface SportVocabulary {
-  /** One competitor: "golfer" / "golfers". */
-  participant: SportNoun;
-  /** One event a contest runs on: "tournament" / "tournaments" for golf, "race" / "races" for horse racing. */
-  event: SportNoun;
-  /**
-   * One sport league, the organiser whose events recur each year: "tour" / "tours" for golf (the
-   * PGA Tour), "circuit" / "circuits" for horse racing (US Thoroughbred), "series" / "series" for
-   * auto racing (NASCAR Cup Series), "tour" / "tours" for cycling (UCI WorldTour), "series" /
-   * "series" for running (World Marathon Majors).
-   */
-  sportLeague: SportNoun;
-  /** One scheduled stage of an event: "round" / "rounds". */
-  round: SportNoun;
-  /**
-   * The label for a participant knocked out of an event (`ELIMINATED`): "Cut" for golf. Absent
-   * for a sport where nobody is knocked out partway (a race): its readers handle the absence.
-   */
-  eliminated?: string;
-  /** The label for a participant withdrawn from an event (`WITHDRAWN`): "Withdrawn" for golf, "Scratched" for horse racing. */
-  withdrawn: string;
-  /**
-   * What the moment entries close is called: "first tee time" for golf, "start" for cycling. Copy
-   * reads it after "the" ("Entries close at the first tee time"), so it carries no article.
-   */
-  eventStart: string;
-  /**
-   * Who rides or drives each participant, as a race result's column header: "Rider" for horse
-   * racing. Absent for a sport whose result names nobody besides the participant (golf).
-   */
-  rider?: string;
-  /**
-   * What the audience calls the first three finishing places, as the points table's hint:
-   * "Win / Place / Show" for horse racing. Absent for a sport with no such name.
-   */
-  topPlaces?: string;
-  /**
-   * One head-to-head match of the event's bracket: "game" / "games" for basketball. Absent for a
-   * sport that plays no bracket; a bracket screen of a sport without one says "match".
-   */
-  match?: SportNoun;
-  /**
-   * What play after regulation time is called, read after "Final, " on the admin's final score
-   * ("Final, extra time included"): "extra time" for soccer. Absent reads "overtime".
-   */
-  overtime?: string;
-  /**
-   * What a game that ends level is called, as a result and a pick read it (#792): "Tie" for
-   * American football and hockey, "Draw" for soccer. Absent for a sport that plays no matches;
-   * a screen of a sport without one says "Tie".
-   */
-  tie?: string;
-  /**
-   * What a field place filled after the draw is made is called (#709), read before "place"
-   * ("Qualifier places", "Mark a qualifier place"): "qualifier" for tennis. Absent reads
-   * "play-in", as March Madness's First Four places are.
-   */
-  playInPlace?: string;
-  /**
-   * What one match's score counts, as a bracket's tiebreaker reads it ("total sets in the final"):
-   * "sets" for tennis, "goals" for soccer. Absent reads "points".
-   */
-  scoreUnit?: string;
 }
 
 /**
@@ -93,17 +28,8 @@ export interface SportPickEm {
 export interface SportMatchPeriods {
   /** How many periods a game has, overtime aside: 4 for American football. */
   count: number;
-  /** What one period is called: "quarter" / "quarters". */
+  /** What one period is called: "quarter" / "quarters", read from the display strings. */
   label: SportNoun;
-}
-
-/**
- * How a sport settles a knockout match level after extra time by a shoot-out (#791): penalties
- * in soccer. The shoot-out's scores are kept apart from the match score.
- */
-export interface SportShootout {
-  /** What a result's shoot-out is called after its scores: "pens" ("1-1 (4-3 pens)"). */
-  label: string;
 }
 
 /**
@@ -129,7 +55,12 @@ export interface SportDefinition {
    * set up and released, but contest management refuses a contest on them.
    */
   scoringDefinitions: readonly ParticipantScoringDefinitionId[];
-  vocabulary: SportVocabulary;
+  /**
+   * Roles this definition reads from another of its sport's roles (#1960): a championship stat
+   * pool's competitors are players and its rounds games. Absent reads every role as its own. The
+   * words themselves are display strings (`sportWord`, `sportVocabulary`), never registry data.
+   */
+  wordOverrides?: SportWordOverrides;
   /**
    * The periods a game is played in, for a sport that plays matches and keeps a score at the end
    * of each one (American football's quarters). A sport league may play another layout
@@ -145,13 +76,18 @@ export interface SportDefinition {
    */
   pickEm?: SportPickEm;
   /**
-   * Whether a bracket match level after extra time is settled by a shoot-out, and what screens
-   * call it; null for a sport whose knockout matches always end with one side ahead. A shoot-out
-   * is entered only on a bracket match of such a sport (`MatchResultService`).
+   * Whether a bracket match level after extra time is settled by a shoot-out (#791): penalties in
+   * soccer; false for a sport whose knockout matches always end with one side ahead. A shoot-out
+   * is entered only on a bracket match of such a sport (`MatchResultService`), and screens call it
+   * by the sport's `shootout` word.
    */
-  shootout: SportShootout | null;
-  /** How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. */
-  roundLabel: (roundNumber: number, roundCount: number) => string;
+  shootout: boolean;
+  /**
+   * How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. A round with no
+   * proper name reads a display string (`word.roundNumber`, `word.raceNumber`, `word.gameNumber`)
+   * in the reader's locale.
+   */
+  roundLabel: (roundNumber: number, roundCount: number, locale?: string | null) => string;
   /**
    * The sport's one composite score, for a sport whose championship has a stat pool (#932): Box
    * Score for baseball. A sport league whose scoring family is `COMPOSITE` plays it, read through

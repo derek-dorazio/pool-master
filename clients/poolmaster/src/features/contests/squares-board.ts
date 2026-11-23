@@ -6,7 +6,7 @@ import {
   assertNever,
   isMatchUnplayed, isSquaresRound, pluralize 
 } from '@poolmaster/shared/domain';
-import { displayString, type DisplayForm, type DisplayStringKey } from '@poolmaster/shared/display-strings';
+import { displayString, type DisplayForm } from '@poolmaster/shared/display-strings';
 import type {
   SportEventMatchDto,
   SportEventParticipantDto,
@@ -39,7 +39,7 @@ export function winningPeriodsByPlace(winners: readonly SquaresWinnerDto[]): Rea
 }
 
 /** The word for a numbered period of the game's layout: Quarter 2, Half 1, Period 3. */
-function periodNumberKey(layout: MatchPeriodLayout): DisplayStringKey {
+function periodNumberKey(layout: MatchPeriodLayout): 'word.quarterNumber' | 'word.halfNumber' | 'word.periodNumber' {
   switch (layout) {
     case MatchPeriodLayout.QUARTERS:
       return 'word.quarterNumber';

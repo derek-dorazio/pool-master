@@ -1,14 +1,15 @@
 import {
-  ParticipantType,
-  ScoringFamily,
-  SelectionType,
-  Sport,
-  TournamentFormat,
   contestTemplateEventTypeOf,
   eventPlaysMatches,
   eventSportDefinition,
   getSportDefinition,
+  ParticipantType,
+  ScoringFamily,
+  SelectionType,
+  Sport,
   sportLeagueDefinitionOf,
+  sportVocabulary,
+  TournamentFormat,
 } from '@poolmaster/shared/domain';
 
 // A sport league's definition (#934): its sport's, unless the league plays its sport's stat pool,
@@ -37,9 +38,10 @@ describe('sportLeagueDefinitionOf', () => {
       defaultRounds: 7,
       selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
       scoringDefinitions: ['COMPOSITE_TOTAL'],
-      shootout: null,
-      vocabulary: { participant: { one: 'player', many: 'players' }, round: { one: 'game', many: 'games' }, eventStart: 'first pitch' },
+      shootout: false,
+      wordOverrides: { participant: 'player', round: 'game' },
     });
+    expect(sportVocabulary(worldSeries)).toMatchObject({ participant: { one: 'player', many: 'players' }, round: { one: 'game', many: 'games' }, eventStart: 'first pitch' });
     expect(worldSeries.composite?.name).toBe('Box Score');
     expect(worldSeries.matchPeriodLayout).toBeUndefined();
     expect(worldSeries.roundLabel(3, 7)).toBe('Game 3');

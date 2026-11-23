@@ -48,10 +48,11 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's). Every league names a tier
      profile and a pricing profile (`tierProfileId`, `pricingProfileId`): the migration that seeds a new league
      points it at an existing profile, or adds one first (the College Football Playoff names "6 tiers of 2"). Its matches are `SportEventMatch` rows in the event core, not family tables.
-     A sport whose level match is settled by a shoot-out sets the definition's `shootout` (its
-     label, soccer's "pens"); every other sport sets it to null. The score stays level and the
-     shoot-out's winner goes through. A sport that calls overtime something else (soccer's
-     "extra time") sets `vocabulary.overtime`, which the final-score label reads.
+     A sport whose level match is settled by a shoot-out sets the definition's `shootout` to
+     true and gives the shoot-out its word (`sport.<SPORT>.shootout`, soccer's "pens"); every
+     other sport sets it to false. The score stays level and the shoot-out's winner goes
+     through. A sport that calls overtime something else (soccer's "extra time") gives
+     `sport.<SPORT>.overtime`, which the final-score label reads.
      A two-legged tie (the Champions League's) is one match scored on aggregate, scheduled at the
      first leg, with no period scores; it needs no model of its own. Nor does a series (MLS's
      best-of-three round one): one match scored in games won. Either one can't take a squares
@@ -98,7 +99,9 @@ In order:
    (same section).
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,
    scoring family, tournament format, default rounds, selection types, scoring
-   definitions, vocabulary and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
+   definitions and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
+   Its words go in the display strings, not the definition: a `sport.<SPORT>` entry in
+   `en-US.ts` for every role it uses (`rules/ux-rules.md` §16 *Display Strings*).
    A sport whose family lands before its scoring may register with no scoring definitions;
    contest create then refuses it until the scoring slice adds one.
 3. **Scoring definitions.** If the sport needs a new participant scoring definition, add it to
@@ -135,10 +138,10 @@ In order:
    (`rules/architecture-rules.md` §4 *Sport extension*).
 7. **Contract.** Any new DTO, route or error code goes through the `add-endpoint` skill and
    regenerates the SDK in the same slice.
-8. **Web app.** Copy and round labels come from the sport definition, admin screens
-   included: the definition's `name`, and the vocabulary's `participant`, `event`,
-   `sportLeague`, `round`, `withdrawn` and `eventStart` (and `eliminated`, only for a sport
-   that knocks participants out). A new family adds its leaderboard to `SCORING_FAMILY_UI`,
+8. **Web app.** Copy and round labels come from the sport definition and its words, admin
+   screens included: the definition's `name`, and `sportVocabulary`'s `participant`, `event`,
+   `sportLeague`, `round`, `withdrawn`, `eventStart` and `eliminated` (each the generic word
+   where the sport keeps none). A new family adds its leaderboard to `SCORING_FAMILY_UI`,
    including its `entryTiebreaker` (null when entries submit without one); a new scoring
    definition adds its contest-setup inputs to `SCORING_SETTINGS_UI`. Both are exhaustive
    records. Use the `add-frontend-feature` skill.
@@ -228,11 +231,11 @@ down: a lesson that was true mid-series may not be by the end.
 - **One sport per league.** F1, IndyCar and NASCAR are sport leagues of one auto racing sport,
   not three sports. A new sport is a new way of competing, not a new organiser.
 - **Golf words in shared screens.** "Golfer", "tee time", "to par" and "cut" in a shared
-  component are a vocabulary leak; read them from the sport definition.
+  component are a vocabulary leak; read them through `sportWord` or `sportVocabulary`.
 - **Sport words in a family's screens.** Two sports in one family can still say different
   things: horse racing has a "Rider" column and calls its top places "Win / Place / Show"
-  (`vocabulary.rider`, `vocabulary.topPlaces`). A word that differs between sports of the same
-  family belongs in the vocabulary, not hard-coded in the family's card or leaderboard.
+  (the optional `rider` and `topPlaces` roles). A word that differs between sports of the same
+  family belongs in the sport's display strings, not hard-coded in the family's card or leaderboard.
 - **Vocabulary words read inside a sentence.** Copy puts each word into a sentence of its own:
   `eventStart` follows "the" ("Entries close at the post time"), so "the start" would read "at
   the the start". Read where a word is used before choosing it, not only how the audience says it.
@@ -300,12 +303,12 @@ down: a lesson that was true mid-series may not be by the end.
   round on either side of its match (MLB's byes are home sides, the Champions League's away
   sides); the earlier round's winner fills the other side through `advancesTo`.
 - **Team words in a match sport's screens.** The bracket and survivor screens read the sport's
-  participant noun, its `vocabulary.match` ("match", else "game"), its `eventStart` and its
-  `vocabulary.scoreUnit` ("sets" for tennis, else "points") through the helpers in
+  participant noun, its `match` word ("match", else the generic word), its `eventStart` and its
+  `scoreUnit` ("sets" for tennis, else "points") through the helpers in
   `contest-sport.ts`. An individual sport in the head-to-head family shows any "team" left in
   copy at once; render one screen on the new sport and read it.
 - **A tie word for a sport that never ties.** Every head-to-head sport names a tie
-  (`vocabulary.tie`), tennis included, because the shared result and pick screens read it; the
+  (`sport.<SPORT>.tie`), tennis included, because the shared result and pick screens read it; the
   definition test refuses one without.
 - **A second tier layout for a variation.** Tiers live on the event and every contest shares
   them, so a variation that picks from fewer tiers (tennis's Seeds only, golf's Top four tiers)

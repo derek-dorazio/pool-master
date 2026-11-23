@@ -268,7 +268,7 @@ export const MatchPeriodLayoutOrder = alphabeticalOrder('MatchPeriodLayout');
 /**
  * What screens call a sport league when its sport's noun does not fit (#834): the NCAA Division I
  * tennis championships are leagues, where the ATP and the WTA are tours. A sport league with
- * none set takes its sport's (`SportVocabulary.sportLeague`); read through `sportLeagueNounOf`.
+ * none set takes its sport's (`sport.<SPORT>.sportLeague`); read through `sportLeagueNounOf`.
  */
 export const SportLeagueNoun = {
   LEAGUE: 'LEAGUE',

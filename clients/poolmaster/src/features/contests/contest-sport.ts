@@ -1,16 +1,9 @@
-import { eventSportDefinition, formatParticipantStatusLabel, getSportDefinition, type Sport, type SportDefinition, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
-import type { DisplayStringValues } from '@poolmaster/shared/display-strings';
+import { displayString, type DisplayStringValues, sportWord } from '@poolmaster/shared/display-strings';
+import { eventSportDefinition, formatParticipantStatusLabel, type Sport, type SportDefinition, type SportNoun, sportNoun } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import type { SelectionParticipant } from './contest-entry-selection';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type { EntryTiebreakerUi } from './scoring-family-ui/types';
-
-/**
- * What a contest's screens call a participant when the contest names no sport: the platform's
- * own word. Every contest created today runs on an event and so has a sport; this is the reading
- * of the `sport: null` the contest contract still allows, not a stand-in for one.
- */
-const PARTICIPANT_WITHOUT_SPORT: SportNoun = { one: 'participant', many: 'participants' };
 
 /**
  * The definition a contest plays (#936): its events' sport league's, so a World Series stat pool
@@ -25,22 +18,26 @@ export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'spor
   return eventSportDefinition({ sport: contest.sport, participantType: first?.participantType, scoringFamily: first?.scoringFamily });
 }
 
-/** "player" in a stat pool, "golfer" in golf: what a roster contest's screens call one pick. */
+/**
+ * "player" in a stat pool, "golfer" in golf: what a roster contest's screens call one pick. A
+ * contest with no sport reads the generic word: every contest created today runs on an event and
+ * so has a sport; this is the reading of the `sport: null` the contest contract still allows.
+ */
 export function contestRosterParticipantNoun(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportNoun {
-  return contestSportDefinition(contest)?.vocabulary.participant ?? PARTICIPANT_WITHOUT_SPORT;
+  return sportNoun(contestSportDefinition(contest), 'participant');
 }
 
 /** "golfer" for a golf contest, "horse" for a horse race: the contest's sport's word for a participant. */
 export function contestParticipantNoun(sport: Sport | null | undefined): SportNoun {
-  return sport ? getSportDefinition(sport).vocabulary.participant : PARTICIPANT_WITHOUT_SPORT;
+  return sportNoun(sport ?? null, 'participant');
 }
 
-/** What a contest's screens call one match when its sport names none (#704). */
-const MATCH_WITHOUT_WORD: SportNoun = { one: 'game', many: 'games' };
-
-/** What a contest's sport calls one match: "match" in tennis, "game" wherever the sport names none. */
+/**
+ * What a contest's sport calls one match: "match" in tennis, "game" in basketball (#704). A
+ * contest with no sport says "game".
+ */
 export function contestMatchNoun(sport: Sport | null | undefined): SportNoun {
-  return (sport ? getSportDefinition(sport).vocabulary.match : undefined) ?? MATCH_WITHOUT_WORD;
+  return sport ? sportNoun(sport, 'match') : sportNoun(null, 'game');
 }
 
 /**
@@ -48,32 +45,17 @@ export function contestMatchNoun(sport: Sport | null | undefined): SportNoun {
  * football, "first match" in tennis, "first game" for a contest with no sport.
  */
 export function contestEventStart(sport: Sport | null | undefined): string {
-  return sport ? getSportDefinition(sport).vocabulary.eventStart : 'first game';
+  return sport ? sportWord(sport, 'eventStart') : displayString('word.firstGame');
 }
 
 /** What a match's score counts, as a tiebreaker reads it: "sets" in tennis, "points" wherever the sport names none. */
 export function contestScoreUnit(sport: Sport | null | undefined): string {
-  return (sport ? getSportDefinition(sport).vocabulary.scoreUnit : undefined) ?? 'points';
+  return sportWord(sport ?? null, 'scoreUnit');
 }
 
-/**
- * The sport's words a game-pick contest's error wording takes (#718, #721; #704: a tennis
- * survivor pool picks players in matches): `{{match}}`, `{{matches}}`, `{{participant}}` and the
- * tiebreaker's `{{scoreUnit}}`.
- */
-export function gamePickErrorValues(sport: Sport | null | undefined): DisplayStringValues {
-  const match = contestMatchNoun(sport);
-  return { match: match.one, matches: match.many, participant: contestParticipantNoun(sport).one, scoreUnit: contestScoreUnit(sport) };
-}
-
-/** What a game that ends level is called (#792): "Draw" in soccer, "Tie" wherever the sport names none. */
-export function tieWord(vocabulary: SportVocabulary | undefined): string {
-  return vocabulary?.tie ?? 'Tie';
-}
-
-/** The tie word of a contest's sport, "Tie" for a contest with no sport. */
+/** The tie word of a contest's sport (#792): "Draw" in soccer, "Tie" wherever the sport names none. */
 export function contestTieLabel(sport: Sport | null | undefined): string {
-  return tieWord(sport ? getSportDefinition(sport).vocabulary : undefined);
+  return sportWord(sport ?? null, 'tie');
 }
 
 /**
@@ -110,4 +92,15 @@ export function participantAffiliation(participant: Pick<SelectionParticipant, '
     return null;
   }
   return participant.role ? `${participant.team} · ${participant.role}` : participant.team;
+}
+
+/** The sport's words a game-picks screen's error wording takes (#700). */
+export function gamePickErrorValues(sport: Sport | null | undefined): DisplayStringValues {
+  const match = contestMatchNoun(sport);
+  return {
+    match: match.one,
+    matches: match.many,
+    participant: contestParticipantNoun(sport).one,
+    scoreUnit: contestScoreUnit(sport),
+  };
 }

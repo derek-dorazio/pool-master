@@ -28,7 +28,7 @@ import {
   type LeaderboardPickRow,
   type LeaderboardView,
 } from './contest-leaderboard';
-import { ContestStatus, ScoringFamily, SelectionType, SportEventStatus, eventSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, eventSportDefinition, ScoringFamily, SelectionType, SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
 import { SquaresLeaderboard } from './squares-pages';
@@ -412,7 +412,7 @@ export function ContestLeaderboardPage() {
     roundName,
     formatStart: (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences),
   } : undefined, { isLive: contestQuery.data.status === ContestStatus.ACTIVE });
-  const participantNoun = eventSportDefinition(leaderboardQuery.data).vocabulary.participant;
+  const participantNoun = sportVocabulary(eventSportDefinition(leaderboardQuery.data)).participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const hasStatLines = view.entries.some((entry) => entry.picks.some((pick) => pick.statLine));
   const isMultiEvent = contest.sportEvents.length > 1;

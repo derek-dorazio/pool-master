@@ -1,4 +1,4 @@
-import { SUPPORTED_SPORTS, getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
+import { getSportDefinition, type Sport, sportPathSegment, sportVocabulary, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import type { PageLinkTab } from '@/features/shared/ui';
 import { upperFirst } from '@/lib/upper-first';
 
@@ -160,8 +160,8 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
 
 /** A sport's two lists, labelled in the sport's own words: "Tournaments", "Golfers". */
 const SPORT_LIST_LABELS = {
-  events: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.event.many),
-  participants: (sport: Sport) => upperFirst(getSportDefinition(sport).vocabulary.participant.many),
+  events: (sport: Sport) => upperFirst(sportVocabulary(sport).event.many),
+  participants: (sport: Sport) => upperFirst(sportVocabulary(sport).participant.many),
 } as const satisfies Record<string, (sport: Sport) => string>;
 
 function isSportListSegment(segment: string): segment is keyof typeof SPORT_LIST_LABELS {

@@ -412,8 +412,12 @@ filling them in rather than by finding guards scattered through the code:
 
 - **The sport registry** (`packages/shared/domain/sports/`) holds what is data: participant
   type, scoring family, default tournament format, default round count,
-  allowed selection types, scoring definitions, vocabulary and round labels (never a league's choice such as its tier
-  layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
+  allowed selection types, scoring definitions and round labels (never a league's choice such as its tier
+  layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). It holds
+  codes, never words: what a sport's audience calls things (golfer, tournament, "Cut") is a
+  display string, `sport.<SPORT>.<role>`, read through `sportWord` or `sportVocabulary`
+  (`rules/ux-rules.md` §16 *Display Strings*). A definition only names the roles it reads
+  from another (`wordOverrides`: a stat pool's players and games). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
   sport added to the enum fails the build until it has a definition. A sport is supported
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).

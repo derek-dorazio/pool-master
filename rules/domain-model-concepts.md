@@ -94,7 +94,7 @@ Two readings of this chain have both been held at once, so it is worth stating p
 - **A pick'em pick can be a tie** (#792) where the sport says its games can end level
   (`pickEm.tiePicks` on the sport definition): `predictedResult` `TIE` with no team, against
   `TEAM` with one. It is correct when the game ends level, and scores as a correct team pick
-  does. The screen calls it by the sport's word (`vocabulary.tie`: "Draw" in soccer, "Tie"
+  does. The screen calls it by the sport's word (`sport.<SPORT>.tie`: "Draw" in soccer, "Tie"
   elsewhere); the code term is always TIE. Only pick'em offers it: a survivor or bracket pick is
   always a team, and a survivor pick on a game that ends level is out. Only a game of a week can
   end level; a bracket match always has a winner.
@@ -167,7 +167,7 @@ a Team On Screen*.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball, soccer and tennis, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its sport definition's vocabulary | `SportLeague` |
+| `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball, soccer and tennis, and future sports. Says whether its participants are individuals or teams. Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its display strings (`sport.<SPORT>.<role>`, `rules/ux-rules.md` §16) | `SportLeague` |
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. A bracket league may name its own rounds (`roundNames`: the NBA's Conference Finals), shown in place of the sport's, and names one tier profile and one pricing profile (`tierProfileId`, `pricingProfileId`, #1844). Screens call it by its sport's word (a tennis tour) unless it has its own `noun` (#834: the NCAA's tennis championships are leagues; read through `sportLeagueNounOf`) | `League`, the office pool |
 | `TierProfile` | tier profile | A named tier layout, defined once for the platform (#1844): how many tiers a new event starts with, how many participants auto-tiering puts in each tier but the last, and whether the last takes everyone left or at most a cap (anyone beyond is in no tier and can't be picked). A field too small to reach the last tier is spread evenly, a rule fixed in code. Each sport league names one; an event records the layout it was last auto-tiered with (`SportEvent.tierConfig`) | The event's own `SportEventTier` rows, which an admin may still add or delete |
 | `PricingProfile` | pricing profile | A named set of the five budget pricing values (#1844: Standard, Small). Each sport league names one; a synced field never priced is priced with it, and the event records the values it was priced with (`SportEvent.pricingConfig`) | The event's recorded values, which a later profile edit never moves |

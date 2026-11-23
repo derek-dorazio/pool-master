@@ -1,12 +1,8 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { isMatchUnplayed, MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
-import { tieWord } from '@/features/contests/contest-sport';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { DisplayStringValues } from '@poolmaster/shared/display-strings';
 import type { ExtractErrorMessageOptions } from '@/lib/errors';
-
-/** What a bracket screen calls one match when the sport's vocabulary names none. */
-const MATCH: SportNoun = { one: 'match', many: 'matches' };
 
 /**
  * How a match that stopped early is marked beside its result (#704): the ending's short display
@@ -14,11 +10,6 @@ const MATCH: SportNoun = { one: 'match', many: 'matches' };
  */
 export function matchEndingMark(ending: MatchEnding): string | null {
   return ending === MatchEnding.PLAYED ? null : enumLabel('MatchEnding', ending, { form: 'short' });
-}
-
-/** One match of the sport's bracket as its screens say it: "game" for basketball. */
-export function matchNoun(vocabulary: SportVocabulary): SportNoun {
-  return vocabulary.match ?? MATCH;
 }
 
 /** A field row as the bracket names it: "(1) Duke", or just the name when it has no seed. */
@@ -68,15 +59,14 @@ export type BracketErrorOptions = Required<Pick<ExtractErrorMessageOptions, 'con
 
 /** The sport's words a bracket screen's error wording takes (#700). */
 function bracketErrorValues(vocabulary: SportVocabulary): DisplayStringValues {
-  const noun = matchNoun(vocabulary);
   return {
-    match: noun.one,
-    matches: noun.many,
+    match: vocabulary.match.one,
+    matches: vocabulary.match.many,
     participant: vocabulary.participant.one,
     participants: vocabulary.participant.many,
     event: vocabulary.event.one,
-    tie: tieWord(vocabulary).toLowerCase(),
-    playIn: vocabulary.playInPlace ?? 'play-in',
+    tie: vocabulary.tie.toLowerCase(),
+    playIn: vocabulary.playInPlace,
   };
 }
 
