@@ -1,7 +1,7 @@
 import { ContestStatus, SelectionType, formatDollars, type SportNoun } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ContestDto, SelectionStateResponse } from '@/lib/api';
 import type { StatStripItem } from '@/features/shared/ui';
-import { contestStatusLabel } from './contest-status';
 import type { SelectionGroup } from './contest-entry-selection';
 
 /** How many of the lineup's picks are still to make, in the contest's own word: "3 golfers still to pick". */
@@ -20,7 +20,7 @@ export function getContestPhaseLabel(contest: Pick<ContestDto, 'selectionType' |
       : 'Editable until the event starts';
   }
   // Still OPEN past its start means the event has teed off and the In Progress update is late.
-  return contest.status === ContestStatus.OPEN ? 'Entries closed' : contestStatusLabel(contest.status);
+  return contest.status === ContestStatus.OPEN ? 'Entries closed' : enumLabel('ContestStatus', contest.status);
 }
 
 type GroupProgress = Pick<SelectionGroup, 'picksFromGroup' | 'selectedParticipantIds'>;

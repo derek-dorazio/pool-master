@@ -1,8 +1,8 @@
 import { LEAGUE_PLANS, type LeaguePlan } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { z } from 'zod';
 import type { BillingConfig, ExpansionPrice, PlanConfig } from '@/lib/api';
 import { formatMoneyCents, formatNumber } from '@/features/shared/ui';
-import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 
 /** The most expansion bands a plan's list holds, as BILLING_CONFIG allows. */
 export const MAX_EXPANSION_BANDS = 10;
@@ -36,7 +36,7 @@ export function describeEntriesIncluded(entries: number | null, locale: string):
 export function planPriceRows(billing: BillingConfig, plans: PlanConfig, locale: string): PlanPriceRow[] {
   return LEAGUE_PLANS.map((plan) => ({
     plan,
-    label: LEAGUE_PLAN_LABEL[plan],
+    label: enumLabel('LeaguePlan', plan),
     yearlyCents: billing.planPrices[plan].yearlyCents,
     monthlyCents: billing.planPrices[plan].monthlyCents,
     entriesIncluded: plans.caps.ENTRIES_PER_CONTEST[plan],

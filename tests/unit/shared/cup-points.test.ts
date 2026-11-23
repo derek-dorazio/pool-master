@@ -3,6 +3,7 @@ import {
   CupWeight,
   cupFinishPoints,
   cupPlacePoints,
+  cupWeightRaisesPoints,
   rankCupTallies,
   squadContestFinishes,
 } from '@poolmaster/shared/domain';
@@ -90,5 +91,11 @@ describe('ranking cup totals (#841)', () => {
     expect(ranked.map((row) => [row.squadId, row.displayPosition])).toEqual([
       ['a', '1'], ['b', '2'], ['c', 'T3'], ['d', 'T3'], ['e', '5'],
     ]);
+  });
+});
+
+describe('cupWeightRaisesPoints', () => {
+  it('is true only for the weights that earn more than the table: BONUS and DOUBLE, not NORMAL or NOT_COUNTED', () => {
+    expect(Object.values(CupWeight).filter(cupWeightRaisesPoints)).toEqual([CupWeight.BONUS, CupWeight.DOUBLE]);
   });
 });

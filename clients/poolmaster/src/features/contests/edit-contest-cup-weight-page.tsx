@@ -1,4 +1,5 @@
 import { ContestStatus, PlanFeature, type CupWeight } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { setContestCupWeight, type ContestManagementDetailDto } from '@/lib/api';
@@ -105,7 +106,7 @@ function CupWeightForm({
               onSelect={() => setCupWeight(option)}
               testId={`edit-cup-weight-${option}`}
             >
-              <ChoiceCardText description={CUP_WEIGHT_COPY[option].description} label={CUP_WEIGHT_COPY[option].label} />
+              <ChoiceCardText description={CUP_WEIGHT_COPY[option].description} label={enumLabel('CupWeight', option)} />
             </ChoiceCard>
           ))}
         </div>

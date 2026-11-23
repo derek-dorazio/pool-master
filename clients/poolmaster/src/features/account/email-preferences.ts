@@ -8,27 +8,23 @@ import { SELF_USER_ID } from './user-routing';
 
 /**
  * Which categories of email a member gets (#844 slice 5): one switch per category, the same for
- * every league. Account and membership emails have no switch.
+ * every league. Account and membership emails have no switch. Each switch is named by
+ * `enumLabel('OptionalEmailCategory', …)`; these are its explanations, page sentences (#1962).
  */
-export const EMAIL_CATEGORY_LABELS: Record<OptionalEmailCategory, { label: string; description: string }> = {
+export const EMAIL_CATEGORY_COPY: Record<OptionalEmailCategory, { description: string }> = {
   [OptionalEmailCategory.COMMISSIONER_UPDATES]: {
-    label: 'Commissioner updates',
     description: 'For commissioners: new members, pending invitations, upcoming events to set up contests for, and settling up.',
   },
   [OptionalEmailCategory.CONTEST_UPDATES]: {
-    label: 'Contest updates',
     description: 'New contests, entry reminders before picks close, and changes to your picks.',
   },
   [OptionalEmailCategory.LIVE_STANDINGS]: {
-    label: 'Live standings',
     description: 'When a contest goes live, and the standings while it runs.',
   },
   [OptionalEmailCategory.RESULTS]: {
-    label: 'Results',
     description: 'Final standings and winners when a contest ends.',
   },
   [OptionalEmailCategory.RECEIPTS]: {
-    label: 'Entry receipts',
     description: 'A copy of your picks each time you submit them.',
   },
 };

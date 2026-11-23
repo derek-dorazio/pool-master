@@ -1,4 +1,4 @@
-import { displayString } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
@@ -33,8 +33,6 @@ import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel, gamePickErrorValues } from './contest-sport';
 import {
   canRenameEntries,
-  CONTEST_ENTRY_STATUS_LABELS,
-  contestStatusLabel,
 } from './contest-status';
 import { PickEmGames } from './pick-em-games';
 import {
@@ -216,7 +214,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       entry={entrySummary}
       leagueCode={leagueCode}
-      phase={contestStatusLabel(contest.status)}
+      phase={enumLabel('ContestStatus', contest.status)}
       rules={[
         ...(gamePicks.mode ? [formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })] : []),
         ...(isSurvivor ? [formatSelectionTypeName(gamePicks.selectionType)] : []),
@@ -228,7 +226,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     >
 
       <ContestEventSwitcher
-        describe={(sportEvent) => (entrySummary ? CONTEST_ENTRY_STATUS_LABELS[entryEventStatus(entrySummary, sportEvent.sportEventId)] : null)}
+        describe={(sportEvent) => (entrySummary ? enumLabel('ContestEntryStatus', entryEventStatus(entrySummary, sportEvent.sportEventId)) : null)}
         events={contest.sportEvents}
         label={displayString('word.week')}
         onChange={switchWeek}
@@ -301,7 +299,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           error={finishError}
           errorTestId="pick-em-submit-error"
           name={nameEditable ? { disabled: isFinishing, onChange: name.onChange, testId: 'contest-entry-name-input', value: name.value } : null}
-          status={canChange || isSubmitted ? entryFinishStatus({ closes, hint, isSubmitted, locks }) : CONTEST_ENTRY_STATUS_LABELS[gamePicks.status]}
+          status={canChange || isSubmitted ? entryFinishStatus({ closes, hint, isSubmitted, locks }) : enumLabel('ContestEntryStatus', gamePicks.status)}
           statusTestId="pick-em-finish-status"
           testId="pick-em-finish"
           title="Name and submit"

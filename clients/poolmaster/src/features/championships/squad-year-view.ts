@@ -1,4 +1,5 @@
-import { CupTrophy, TrophyKind } from '@poolmaster/shared/domain';
+import { TrophyKind } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ChampionshipStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadTrophyDto, SquadYearDto } from '@/lib/api';
 import { historyCupsOnShow, historyYearTitle } from './championship-view';
 import { formatCupPoints, formatCupPointsCount, formatPlace } from '@/features/shared/ui';
@@ -12,13 +13,6 @@ export const SQUAD_MEDAL_TILES: { key: string; label: string; count: (row: Champ
   { key: 'top-tens', label: 'Top tens', count: (row) => row.topTens },
   { key: 'played', label: 'Played', count: (row) => row.played },
 ];
-
-/** A cup trophy as a squad's cup row names it. */
-export const CUP_TROPHY_LABELS: Record<CupTrophy, string> = {
-  [CupTrophy.CHAMPION]: 'Champion',
-  [CupTrophy.RUNNER_UP]: 'Runner-up',
-  [CupTrophy.THIRD]: '3rd place',
-};
 
 /** The squad's championship line: its place of N and how far it is from 1st, or that nothing has counted. */
 export function describeSquadChampionship(championship: SquadChampionshipDto, locale: string): string {
@@ -40,12 +34,12 @@ export function describeSquadChampionship(championship: SquadChampionshipDto, lo
 /** A squad's cup line: its place of N and points, and its trophy once crowned. */
 export function describeSquadCup(cup: SquadCupDto, locale: string): string {
   const line = `${formatPlace(cup.standing)} of ${cup.squadCount} · ${formatCupPointsCount(cup.standing.points, locale)}`;
-  return cup.standing.trophy === null ? line : `${line} · ${CUP_TROPHY_LABELS[cup.standing.trophy]}`;
+  return cup.standing.trophy === null ? line : `${line} · ${enumLabel('CupTrophy', cup.standing.trophy)}`;
 }
 
 /** A trophy on the squad's shelf: "2025 NFL Cup · Champion". */
 export function describeSquadTrophy(trophy: SquadTrophyDto): string {
-  return `${trophy.name} · ${CUP_TROPHY_LABELS[trophy.trophy]}`;
+  return `${trophy.name} · ${enumLabel('CupTrophy', trophy.trophy)}`;
 }
 
 /** Whether a trophy is a league championship's, for its icon and link. */
@@ -69,7 +63,7 @@ export function describeSquadYearLine(year: SquadYearDto): { title: string; deta
     ...(year.championship && year.championship.standing.played > 0
       ? [`Championship ${formatPlace(year.championship.standing)} of ${year.championship.squadCount}`]
       : []),
-    ...cupsPlacedOnShow(year.cups).map((cup) => `${cup.name} ${cup.standing.trophy === null ? formatPlace(cup.standing) : CUP_TROPHY_LABELS[cup.standing.trophy].toLowerCase()}`),
+    ...cupsPlacedOnShow(year.cups).map((cup) => `${cup.name} ${cup.standing.trophy === null ? formatPlace(cup.standing) : enumLabel('CupTrophy', cup.standing.trophy).toLowerCase()}`),
   ];
   return { title: historyYearTitle(year), detail: parts.join(' · ') };
 }

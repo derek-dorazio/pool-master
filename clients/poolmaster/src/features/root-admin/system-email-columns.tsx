@@ -1,6 +1,6 @@
-import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { EmailTemplateStatusOrder, LEAGUE_PLANS, type EmailTemplateStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { SystemEmailDto } from '@/lib/api';
 import { EmailStatusChip } from './email-status-chip';
 import { EMAIL_AUDIENCE_LABELS, EmailAudienceOrder, type EmailAudience, EVERY_PLAN, planText, SYSTEM_EMAIL_LABELS } from './system-email-labels';

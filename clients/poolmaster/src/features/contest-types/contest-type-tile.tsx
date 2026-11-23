@@ -1,14 +1,9 @@
 import type { ContestConfigTemplateDto } from '@/lib/api';
-import { ContestTemplateEventType, formatSelectionTypeName } from '@poolmaster/shared/domain';
+import { formatSelectionTypeName } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { SELECTION_TYPE_ICONS } from '@/features/contests/selection-type-icons';
 import { Eyebrow, Heading, HelpTip, LinkButton, Text, Tile } from '@/features/shared/ui';
 import type { ContestTypeTile } from './contest-catalog';
-
-/** A kind of event as a tile names it beside its format, when its section offers the format on both. */
-const EVENT_KIND_NAMES: Record<ContestTemplateEventType, string> = {
-  [ContestTemplateEventType.WEEK]: 'Weekly',
-  [ContestTemplateEventType.KNOCKOUT]: 'Playoffs',
-};
 
 interface ContestTypeTileCardProps {
   tile: ContestTypeTile;
@@ -31,7 +26,7 @@ export function ContestTypeTileCard({ tile, createPathFor, testId }: ContestType
       <Eyebrow className="flex items-center gap-2" tone="muted">
         <Icon aria-hidden="true" className="h-4 w-4" />
         {tile.sharesFormat && featured.eventType
-          ? `${formatSelectionTypeName(tile.selectionType)} · ${EVENT_KIND_NAMES[featured.eventType]}`
+          ? `${formatSelectionTypeName(tile.selectionType)} · ${enumLabel('ContestTemplateEventType', featured.eventType, { form: 'short' })}`
           : formatSelectionTypeName(tile.selectionType)}
       </Eyebrow>
       <div className="space-y-1">

@@ -1,9 +1,9 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { eventSportDefinition, type SportComposite } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { applyEventGameStatLines, type GameStatLineUploadRequest, type SportEventDto } from '@/lib/api';
 import { Notice, Button, DataGrid, Input, SectionCard, SegmentedControl } from '@/features/shared/ui';
-import { SPORT_STAT_LABELS } from '@/features/contests/scoring-family-ui/stat-labels';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { QueryKeys } from '@/lib/query-keys';
@@ -45,8 +45,8 @@ function statLineColumns(composite: SportComposite) {
     }),
     ...composite.stats.map((stat) => columnHelper.display({
       id: stat,
-      header: SPORT_STAT_LABELS[stat].short,
-      meta: { info: SPORT_STAT_LABELS[stat].long },
+      header: enumLabel('SportStat', stat, { form: 'short' }),
+      meta: { info: enumLabel('SportStat', stat) },
       cell: ({ row, table }) => {
         const { draft, setDraft } = table.options.meta as GridMeta;
         const entry = row.original;
@@ -55,7 +55,7 @@ function statLineColumns(composite: SportComposite) {
           <div className="max-w-[5rem]">
             <Input
               aria-invalid={isStatInput(raw, stat) ? undefined : true}
-              aria-label={`${SPORT_STAT_LABELS[stat].long} for ${entry.playerName}`}
+              aria-label={`${enumLabel('SportStat', stat)} for ${entry.playerName}`}
               className="h-8"
               data-testid={`root-admin-stat-lines-${stat}-${entry.sportEventParticipantId}`}
               inputMode="numeric"

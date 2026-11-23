@@ -122,6 +122,7 @@ export type SharedEnums = {
   YearReviewStatus: Enums.YearReviewStatus;
   TierProfileLastTier: Enums.TierProfileLastTier;
   ChampionshipTile: Enums.ChampionshipTile;
+  SportStat: Enums.SportStat;
 };
 
 /** The name of a shared enum: `'ContestStatus'`. */

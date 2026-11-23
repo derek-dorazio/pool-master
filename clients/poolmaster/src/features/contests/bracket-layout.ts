@@ -7,6 +7,7 @@
  */
 import { PickOutcome } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { StatusBadgeProps } from '@/features/shared/ui';
 import type { PickEmGame } from './pick-em-week';
 
@@ -69,13 +70,6 @@ export function describeOpenSide(round: Pick<BracketRound, 'roundNumber'>, round
   return previous ? `${previous.label} winner` : 'To be decided';
 }
 
-const OUTCOME_LABELS: Record<PickOutcome, string> = {
-  CORRECT: 'Correct',
-  BUSTED: 'Busted',
-  PUSH: 'Push',
-  PENDING: 'Pending',
-};
-
 const OUTCOME_TONES: Record<PickOutcome, NonNullable<StatusBadgeProps['tone']>> = {
   CORRECT: 'success',
   BUSTED: 'danger',
@@ -89,8 +83,8 @@ export function describePickOutcome(pick: NonNullable<BracketGame['pick']>): { l
     return null;
   }
   const label = pick.outcome === PickOutcome.CORRECT && pick.points !== null
-    ? `${OUTCOME_LABELS[pick.outcome]} · ${formatPoints(pick.points)}`
-    : OUTCOME_LABELS[pick.outcome];
+    ? `${enumLabel('PickOutcome', pick.outcome)} · ${formatPoints(pick.points)}`
+    : enumLabel('PickOutcome', pick.outcome);
   return { label, tone: OUTCOME_TONES[pick.outcome] };
 }
 

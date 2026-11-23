@@ -1,5 +1,5 @@
 import { ContestStatusOrder, explicitOrderValues, type ContestStatus } from '@poolmaster/shared/domain';
-import { CONTEST_STATUS_LABELS } from './contest-status';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 
 /**
  * A contest's lifecycle as its commissioner follows it on Manage contest: set up, open for
@@ -8,9 +8,9 @@ import { CONTEST_STATUS_LABELS } from './contest-status';
  * each stage named by the status label every contest badge shows.
  */
 export const CONTEST_LIFECYCLE_STAGES: readonly string[] = explicitOrderValues(ContestStatusOrder)
-  .map((status) => CONTEST_STATUS_LABELS[status]);
+  .map((status) => enumLabel('ContestStatus', status));
 
 /** Where a contest is on the track: the stage's place, its name read from the status labels. */
 export function contestLifecycleStage(status: ContestStatus): { index: number; label: string } {
-  return { index: ContestStatusOrder.orderIndex[status], label: CONTEST_STATUS_LABELS[status] };
+  return { index: ContestStatusOrder.orderIndex[status], label: enumLabel('ContestStatus', status) };
 }

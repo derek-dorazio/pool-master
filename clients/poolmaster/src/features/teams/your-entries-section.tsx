@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
 import { currentContestEvent, entryEventStatus } from '@/features/contests/contest-events';
-import { CONTEST_ENTRY_STATUS_LABELS, areContestEntriesOpen } from '@/features/contests/contest-status';
+import { areContestEntriesOpen } from '@/features/contests/contest-status';
 import { orderCurrentContests } from '@/features/contests/current-contests';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { listedContestStartsAt } from '@/features/contests/use-contest-schedule';
@@ -84,9 +85,9 @@ function EntryRows({
         if (contest.status === ContestStatus.ACTIVE) {
           facts = place ? `Live · ${formatPlace(place)} of ${formatNumber(contest.entryCount ?? 0, locale)}` : 'Live';
         } else if (isOpen && startsAt) {
-          facts = <>{CONTEST_ENTRY_STATUS_LABELS[status]} · closes <DateDisplay timeStyle={null} tone="inherit" value={startsAt} /></>;
+          facts = <>{enumLabel('ContestEntryStatus', status)} · closes <DateDisplay timeStyle={null} tone="inherit" value={startsAt} /></>;
         } else {
-          facts = CONTEST_ENTRY_STATUS_LABELS[status];
+          facts = enumLabel('ContestEntryStatus', status);
         }
         return (
           <SectionRow

@@ -1,20 +1,10 @@
-import { CHAMPIONSHIP_MATRIX_PLACES, ChampionshipTile, ContestResultCount, CupStatus, SummaryTile } from '@poolmaster/shared/domain';
+import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus } from '@poolmaster/shared/domain';
 import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, HistoryCupDto, HistoryYearDto } from '@/lib/api';
 import { formatCupPointsCount, formatOrdinal } from '@/features/shared/ui';
 import { CUP_SHOWN_FROM_COUNTED, joinNames } from './cup-view';
 
 /** How many finishing places the finish matrix counts: 1st to 10th. */
 export const FINISH_MATRIX_PLACES = CHAMPIONSHIP_MATRIX_PLACES;
-
-/** Each medal tile's label. A `Record`, so a new tile needs its label. */
-export const CHAMPIONSHIP_TILE_LABELS: Record<ChampionshipTile, string> = {
-  [ChampionshipTile.MOST_FIRSTS]: 'Most 1sts',
-  [ChampionshipTile.MOST_SECONDS]: 'Most 2nds',
-  [ChampionshipTile.MOST_THIRDS]: 'Most 3rds',
-  [ChampionshipTile.MOST_PODIUMS]: 'Most podiums',
-  [ChampionshipTile.MOST_TOP_TENS]: 'Most top tens',
-  [ChampionshipTile.MOST_PLAYED]: 'Most played',
-};
 
 /** The squads in 1st, once any contest has counted; nobody leads a championship still at 0. */
 function championshipLeaders(championship: ChampionshipDto): ChampionshipStandingRowDto[] {
@@ -116,12 +106,6 @@ export function describeContestResult(contest: ContestResultSummaryDto): Contest
       return { badge: 'No result', note: 'Every event was cancelled, so nobody placed' };
   }
 }
-
-/** Each All years tile's label. A `Record`, so a new tile needs its label. */
-export const SUMMARY_TILE_LABELS: Record<SummaryTile, string> = {
-  [SummaryTile.MOST_CHAMPIONSHIPS]: 'Most championships',
-  [SummaryTile.MOST_CUPS]: 'Most cups',
-};
 
 /** A year as All years heads it: "2026 so far" while it runs. */
 export function historyYearTitle(year: Pick<HistoryYearDto, 'year' | 'isOver'>): string {

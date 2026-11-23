@@ -12,18 +12,6 @@ import { contestSchedule } from './use-contest-schedule';
  */
 export const CONTEST_POLL_INTERVAL_MS = 30_000;
 
-/**
- * What members read for each contest status, which is also its stage on Manage contest's
- * lifecycle track (Set up › Open › Live › Final). A `Record` over the enum, so adding a status
- * without a label fails the typecheck.
- */
-export const CONTEST_STATUS_LABELS: Record<ContestStatus, string> = {
-  DRAFT: 'Set up',
-  OPEN: 'Open',
-  ACTIVE: 'Live',
-  COMPLETED: 'Final',
-};
-
 /** The badge colour for each contest status; Live and Final get their own. */
 export const CONTEST_STATUS_TONES: Record<ContestStatus, NonNullable<StatusBadgeProps['tone']>> = {
   DRAFT: 'neutral',
@@ -32,23 +20,10 @@ export const CONTEST_STATUS_TONES: Record<ContestStatus, NonNullable<StatusBadge
   COMPLETED: 'final',
 };
 
-/**
- * What members read for each entry status (#481). A draft counts nowhere until it is submitted,
- * so its label says so rather than echoing the enum.
- */
-export const CONTEST_ENTRY_STATUS_LABELS: Record<ContestEntryStatus, string> = {
-  DRAFT: 'Not submitted',
-  SUBMITTED: 'Submitted',
-};
-
 export const CONTEST_ENTRY_STATUS_TONES: Record<ContestEntryStatus, NonNullable<StatusBadgeProps['tone']>> = {
   DRAFT: 'warning',
   SUBMITTED: 'success',
 };
-
-export function contestStatusLabel(status: ContestStatus) {
-  return CONTEST_STATUS_LABELS[status];
-}
 
 export function isHistoricalContest(status: ContestStatus) {
   return status === 'COMPLETED';

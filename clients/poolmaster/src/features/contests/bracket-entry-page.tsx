@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router';
 import { ContestEntryStatus, PredictedResult } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ContestDto } from '@/lib/api';
 import {
   Notice,
@@ -20,7 +21,7 @@ import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, gamePickErrorValues } from './contest-sport';
 import { firstContestEvent } from './contest-events';
-import { canRenameEntries, CONTEST_ENTRY_STATUS_LABELS, contestStatusLabel } from './contest-status';
+import { canRenameEntries } from './contest-status';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
 import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
@@ -119,7 +120,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       entry={entrySummary}
       leagueCode={leagueCode}
-      phase={isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
+      phase={isOpen ? `Open until ${closesAt}` : enumLabel('ContestStatus', contest.status)}
       status={status}
       statusLine={entryStatusLine({ closes: closesAt, isOpen: canPick, status })}
       testId="bracket-entry-page"
@@ -178,7 +179,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
               error={finishError}
               errorTestId="bracket-submit-error"
               name={nameEditable ? { disabled: isFinishing, onChange: name.onChange, testId: 'contest-entry-name-input', value: name.value } : null}
-              status={canPick ? entryFinishStatus({ closes: closesAt, hint, isSubmitted }) : CONTEST_ENTRY_STATUS_LABELS[gamePicks.status]}
+              status={canPick ? entryFinishStatus({ closes: closesAt, hint, isSubmitted }) : enumLabel('ContestEntryStatus', gamePicks.status)}
               statusTestId="bracket-finish-status"
               testId="bracket-finish"
               title="Name and submit"

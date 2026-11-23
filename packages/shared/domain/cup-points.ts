@@ -23,6 +23,11 @@ const WEIGHT_TENTHS: Record<CupWeight, number> = {
   [CupWeight.NOT_COUNTED]: 0,
 };
 
+/** Whether a weight earns more than the points table as it stands: BONUS and DOUBLE, not NORMAL. */
+export function cupWeightRaisesPoints(weight: CupWeight): boolean {
+  return WEIGHT_TENTHS[weight] > WEIGHT_TENTHS[CupWeight.NORMAL];
+}
+
 /** A league's points table: its scale, and for CUSTOM the commissioner's points for 1st, 2nd ... */
 export interface CupPointsTable {
   scale: CupPointsScale;

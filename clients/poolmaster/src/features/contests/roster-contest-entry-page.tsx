@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { getSelectionState, selectContestPick, submitContestEntry, unselectContestPick, updateContestEntry, type SelectionStateResponse } from '@/lib/api';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { ContestEntryStatus, SelectionType } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { getLogger } from '@/lib/logger';
 import { ErrorState, formatDateTimeDisplay, LoadingState, Notice, refetchFailed, StatStrip, Text, useDisplayPreferences } from '@/features/shared/ui';
 import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
@@ -20,7 +21,7 @@ import {
   rosterProgressItems,
 } from './contest-entry-helpers';
 import { TiebreakerField } from './contest-entry-selection';
-import { areContestEntriesOpen, CONTEST_ENTRY_STATUS_LABELS } from './contest-status';
+import { areContestEntriesOpen } from './contest-status';
 import { ContestEntryFrame } from './contest-header';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEntryTiebreaker, contestEventStart, contestRosterParticipantNoun } from './contest-sport';
@@ -546,11 +547,11 @@ export function RosterContestEntryPage() {
         describe={(sportEvent) => (
           picksHidden
             ? null
-            : CONTEST_ENTRY_STATUS_LABELS[
+            : enumLabel('ContestEntryStatus', 
               sportEvent.sportEventId === shownEventId || !entrySummary
                 ? entryStatus
                 : entryEventStatus(entrySummary, sportEvent.sportEventId)
-            ]
+            )
         )}
         events={contest.sportEvents}
         onChange={setRequestedEventId}
@@ -606,7 +607,7 @@ export function RosterContestEntryPage() {
           name={detailsEditable ? { disabled: isFinishing, onChange: setEntryNameDraft, testId: 'contest-entry-name-input', value: entryNameDraft } : null}
           status={isRandomDraw
             ? 'Nothing to submit: the draw picks for you'
-            : isEditable ? entryFinishStatus({ closes, hint: submitHint, isSubmitted }) : CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
+            : isEditable ? entryFinishStatus({ closes, hint: submitHint, isSubmitted }) : enumLabel('ContestEntryStatus', entryStatus)}
           statusTestId="contest-entry-finish-status"
           testId="contest-entry-finish"
           title={isRandomDraw ? 'Entry name' : 'Name and submit'}

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { CupPointsScale, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { updateLeagueCupSettings, type LeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { formPageSave } from '@/lib/form-page-save';
@@ -171,7 +172,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
               onSelect={() => form.setValue('cupPointsScale', option, { shouldDirty: true })}
               testId={`edit-championships-scale-${option}`}
             >
-              <ChoiceCardText description={CUP_POINTS_SCALE_COPY[option].description} label={CUP_POINTS_SCALE_COPY[option].label} />
+              <ChoiceCardText description={CUP_POINTS_SCALE_COPY[option].description} label={enumLabel('CupPointsScale', option)} />
             </ChoiceCard>
           ))}
         </div>

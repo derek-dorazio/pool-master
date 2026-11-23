@@ -1,7 +1,7 @@
 import { LeaguePlanOrder, type LeaguePlan } from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { formatMoneyCents } from '@/features/shared/ui';
-import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 import { describeEntriesIncluded, type PlanPriceRow } from './plan-price-rows';
 
 const columnHelper = createColumnHelper<PlanPriceRow>();
@@ -13,7 +13,7 @@ export function planPriceColumns(locale: string) {
       header: 'Plan',
       meta: {
         info: 'The league plan, lowest first.',
-        type: { kind: 'enum', order: LeaguePlanOrder, label: (plan) => LEAGUE_PLAN_LABEL[plan as LeaguePlan] },
+        type: { kind: 'enum', order: LeaguePlanOrder, label: (plan) => enumLabel('LeaguePlan', plan as LeaguePlan) },
       },
       cell: ({ row }) => row.original.label,
     }),
