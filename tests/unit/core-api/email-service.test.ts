@@ -8,6 +8,7 @@ import {
   type EmailSendInput,
   type MailDeliveryProviderName,
 } from '../../../packages/core-api/src/modules/email';
+import * as systemEmailTemplates from '../../../packages/core-api/src/modules/email/system-email-templates';
 import { fakeLogger } from '../../support/fake-logger';
 import { TEST_PLAN_ENTITLEMENTS, TEST_UNSUBSCRIBE } from '../../support/email-service';
 import { PlanEntitlementsService } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
@@ -256,6 +257,22 @@ describe('email service: what it queues', () => {
       expect.objectContaining({ action: 'email.send.unknownLocale' }),
       expect.any(String),
     );
+  });
+
+  it('renders with the recipient\'s own locale as the language its display strings are read in, and with none when the stored locale is not a language tag', async () => {
+    const render = jest.spyOn(systemEmailTemplates, 'renderSystemEmailTemplate');
+    try {
+      const email = service({ outbox: inMemoryEmailMessages() });
+
+      await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'berlin@gmail.com', userId: 'user-berlin', locale: 'de-DE' }));
+      await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'member@gmail.com', userId: 'user-1', locale: 'not a locale!' }));
+      await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'plain@gmail.com', userId: 'user-plain' }));
+
+      expect(render.mock.calls.map(([, , context]) => context.language)).toEqual(['de-DE', undefined, undefined]);
+      expect(render.mock.calls[0][2].locale).toBe('en-DE');
+    } finally {
+      render.mockRestore();
+    }
   });
 
   it('passes a failed outbox write on to the caller', async () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { displayString } from '@poolmaster/shared/display-strings';
 import {
   getSportDefinition,
   ScoringFamily,
@@ -109,6 +110,12 @@ describe('stroke-play leaderboard', () => {
     const board = strokePlayUi.leaderboard(golfLeaderboard, golf);
 
     expect(board.detailColumns.map((column) => column.label)).toEqual(['Thr', 'R1', 'R2']);
+  });
+
+  it('reads each round column\'s heading from the display strings\' short form for a numbered round', () => {
+    const board = strokePlayUi.leaderboard(golfLeaderboard, golf);
+
+    expect(board.detailColumns.slice(1).map((column) => column.label)).toEqual([1, 2].map((n) => displayString('word.roundNumber', { n }, undefined, { form: 'short' })));
   });
 
   it('formats the entry and pick totals against par through the scoring definition', () => {
