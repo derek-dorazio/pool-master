@@ -130,6 +130,8 @@ export function SquaresGrid({
                 const isLiveLine = live !== null && (live.rowIndex === rowIndex || live.columnIndex === columnIndex);
                 const numbers = numbersOf(rowIndex, columnIndex);
                 const tags = won.map((periodNumber) => squaresMomentTag(periodNumber, board.periodLayout));
+                // Two or more tags take Final's short form ("Q1/F"), so the tag stays inside its box on a phone.
+                const boxTags = won.map((periodNumber) => squaresMomentTag(periodNumber, board.periodLayout, 'short'));
                 const place = `Row ${rowIndex + 1}, column ${columnIndex + 1}`;
                 const facts = [numbers, tags.length > 0 ? `won ${tags.join(', ')}` : null, isNow ? 'winning now' : null]
                   .filter((part) => part !== null);
@@ -143,8 +145,7 @@ export function SquaresGrid({
                   : `${[`${place}: empty`, ...facts].join(', ')}${action === 'claim' ? '. Tap to claim.' : ''}`;
                 const look = boardCellClassName({ isEmpty: box === null, isMine: isMine || isLinked, isWon: won.length > 0, isNow, isOnLiveLine: isLiveLine });
                 const tag = tags.length > 0
-                  // Two or more tags shorten Final to F ("Q1/F"), so the tag stays inside its box on a phone.
-                  ? { label: tags.length > 1 ? tags.map((each) => (each === 'Final' ? 'F' : each)).join('/') : tags[0], tone: 'won' as const }
+                  ? { label: tags.length > 1 ? boxTags.join('/') : tags[0], tone: 'won' as const }
                   : isNow ? { label: 'Now', tone: 'now' as const } : undefined;
                 const content = <BoardCellContent code={box ? initials.get(box.contestEntryId) ?? '' : ''} tag={tag} />;
                 const marks = {

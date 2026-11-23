@@ -40,7 +40,7 @@ Two variables, each with one owner and one set of legal values (#184):
 | `POOLMASTER_ENVIRONMENT` | us | `development`, `test`, `ci`, `qa`, `staging`, `prod` | our code, only through `readAppEnv()` in `core/config.ts`, which returns the `AppEnvironment` enum |
 | `NODE_ENV` | Node and third-party libraries | `development`, `test`, `production` | libraries only |
 
-- Every environment-gated behaviour (secure cookies, mock-provider refusal, email defaults,
+- Every environment-gated behaviour (secure cookies, email defaults,
   the `env` field on log lines, `/version`) reads `readAppEnv()`. It throws when the
   variable is unset or names an unknown environment; there is no fallback.
 - `NODE_ENV` is not ours to repurpose. Terraform sets it to the literal `production` in
