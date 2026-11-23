@@ -450,10 +450,14 @@ slot) never need context to tell apart.
   column that picks one is `platform…ProfileId` (`PlatformTierProfile` and
   `SportLeague.platformTierProfileId`). A profile is defined once, at platform level, and
   shared; nothing sets it per sport.
-- **Settings copied from somewhere else are named `…Template`.** A row that is copied when
-  something is created, so that a later change to the source never rewrites what was copied,
-  says so in its name. A copy kept on the target row (a Season slot's series format, copied
-  from its definition) is a column, not a template table.
+- **A row of settings that is copied into something when it is created is named
+  `…Template`** (`ContestConfigTemplate`); the copy belongs to its target, so a later change
+  to the template never rewrites what was copied. A copy kept on the target row (a Season
+  slot's series format, copied from its definition) is a column there.
+- **A link table is named by its owner plus the target's distinguishing last words**, not the
+  target's full path: `SportEventSlot` links an event to its Season slots, and
+  `ContestSeasonSlot` links a contest to its covered Season slots (which also keeps it apart
+  from `ContestEntryPick.slot`). The plan or ADR that adds a link table settles its name.
 - **A provider key's table ends in `…ProviderMapping`** (§17 *Provider keys live only in
   ProviderMapping tables*).
 
@@ -790,8 +794,10 @@ by where it sits in an array or by counting.
   key. Order comes from enum order (§2 *Every enum declares its order*) plus a checked
   qualifier column where the enum repeats (a `WEEK` slot's `weekNumber`), or from a date
   where the order itself changes each Season (a tour's tournaments by their start). It is
-  used to *sort*, never to *identify*. A free `order` or `orderIndex` column that someone
-  must keep consistent by hand is a second copy of what the key and dates already say.
+  used to *sort*, never to *identify*. Nothing is identified or sequenced (which round
+  comes next, which slot is the final) by an `order` or `orderIndex` column kept by hand. A
+  display-only `displayOrder`, used only to list rows on screen (as on `Sport`,
+  `SportLeague` or a league's positions), is fine.
 - Positions shift the moment a provider adds a round, a league adds a play-in or a season is
   shorter; a key does not.
 
@@ -849,7 +855,10 @@ ids; the mapping points at it.
   deliberately excluded, and silences it. Two mapping rows matching one value is an `ERROR`,
   since the sync cannot choose between them.
 - **The provider's own words** (its status codes, its webhook event names) are parsed in its
-  adapter as data (*What stays in code*), with the same finding on a miss.
+  adapter as data (*What stays in code*). An unknown word about a thing we do sync (a status
+  code on a synced Game) is not an inclusion question, since that thing cannot be set
+  correctly: it raises a `WARNING` when the run can continue and an `ERROR` when it cannot,
+  deduplicated per league and value the same way, and it cannot be waived.
 - **Smell:** a column named `externalId`, `…Ref`, `providerEventId` or `providerId` +
   `externalId` on a table that is not a `…ProviderMapping`; an id prefix that says which
   provider an id came from; a provider code in a constant or a `Record`; a sync that falls

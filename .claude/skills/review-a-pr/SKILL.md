@@ -102,8 +102,9 @@ A re-review after fixes reads only the new commits, plus anything a merge from m
 - **Reviewing the hunk, not the codebase.** A constant that looks local may be the fourth
   copy. Search before accepting it.
 - **Accepting "the provider sends a name" as the end of the story.** It is acceptable only
-  inside the adapter, as a mapping table with a `WARNING` or `ERROR` finding for an unmatched
-  string; everything past the adapter is keyed.
+  inside the adapter, as an inclusion-only mapping table whose miss raises the finding
+  `rules/domain-model-conventions-rules.md` §17 *Provider keys live only in ProviderMapping
+  tables* describes; everything past the adapter is keyed.
 - **Waving through a positional pick because the array is sorted.** Sorting is fine; "the
   last one is the final" is identity by position.
 - **Letting a web helper mirror a server rule because it is small.** It is the copy that

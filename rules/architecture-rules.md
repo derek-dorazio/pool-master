@@ -369,6 +369,11 @@ fall back on.
 
 ### Sport extension
 
+> This section describes today's code. ADR 0012 and `domain-model-conventions-rules.md` §11
+> *Open-Ended Additive Substrate Design* replace it: Clutch Cards become a contest type on the
+> parent league (no round leagues), and every scoring family reads one shared result shape
+> rather than its own tables. It is rewritten by the slices of #1917 as they land.
+
 What differs between sports lives in exactly two places, so a new sport is added by
 filling them in rather than by finding guards scattered through the code:
 

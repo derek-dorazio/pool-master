@@ -384,17 +384,20 @@ above are flagged until they go. Exact columns are `schema.prisma` once each sli
 ```
 Definitions (timeless, per league, set by migration)
 SportLeague
+ ├─→ SportLeagueConference ─→ SportLeagueConferenceDivision
  ├─→ SportLeaguePhase          (PRESEASON | REGULAR | POSTSEASON; synced or not)
  │     └─→ SportLeaguePhaseSlot (a key, a kind, an optional proper name: WEEK 14, FINAL, a tournament)
  └─→ SportLeaguePosition       (QB, RB...; field eligibility)
 
 Calendar (one real Season)
 SportLeagueSeason ─→ SportLeagueSeasonPhase ─→ SportLeagueSeasonPhaseSlot (dates, status, series format)
- └─→ SportLeagueSeasonParticipantTeam (roster row: one per Season and player; team, position, rating)
+ ├─→ SportLeagueSeasonParticipantTeam (roster row: one per Season and player; team, position, rating)
+ └─→ SportLeagueSeasonTeamConference  (one per Season and team: its conference, and division if any)
 
 Events (what the feed reports)
 SportEvent (in one Season) ─→ SportEventSlot ─→ SportLeagueSeasonPhaseSlot   (a slot has at most one event)
- ├─→ SportEventParticipant     (the field: teams, and their eligible players)
+ ├─→ SportEventParticipant     (the field: its competitors, teams or players; in a team league
+ │                               offering Clutch Cards, also the teams' eligible players)
  └─→ SportEventRound           (a scoring unit on one of its event's slots; HEAD_TO_HEAD | FIELD)
        └─→ SportEventRoundMatch          (any meeting of 2 or more sides; a best-of series is one Match)
              ├─→ SportEventRoundMatchSide (a field row, or empty until known)
@@ -426,6 +429,7 @@ scoring). Every provider id lives in a `…ProviderMapping` table; `Provider` an
 | Game | One game played in a Match, with its date, status and each side's result | A Match, which may hold several Games |
 | Game side | A side's result in one Game: score, position, periods completed, status | The event result, which is the Standing |
 | Roster row | A player's team, position and rating in one Season | The event field row, which is the player in one event |
+| Conference, division | A league's grouping of its teams, defined once per league by migration; each Season places every team in a conference and, where the league has them, a division. Each has its own provider mapping | A Phase or a bracket region |
 | Covered slots | The Season slots a contest is played on, copied from its template when the contest is made | The contest's events, which are read through each slot's event |
 
 ### Verbs
@@ -446,5 +450,3 @@ Shapes agreed so that later work uses them, but not built now:
   as a team match-play pairing. Built when match play is synced.
 - **Injuries** (#1934): a player's availability. Until then injured and reserve players stay
   pickable.
-- **Conference and division grouping**: how a league's teams are grouped. Pending Derek's
-  decision; no shape is agreed, and nothing groups teams by name or by a constant meanwhile.
