@@ -69,8 +69,9 @@ State the trigger and one line of context. If none apply, write `None.`
 - A **migration that cannot be rolled back** without data loss. Also requires the
   blast-radius disclosure in `workflow-rules.md` §6.
 - A **backfill or one-time data operation** against production-shaped data.
-- A change to the **provider registry** or anything touching `ALLOW_MOCK_PROVIDERS` — a
-  misconfiguration here can silently downgrade an environment to fabricated data.
+- A change to the **provider registry** or to how a provider is selected or configured — a
+  misconfiguration here can silently leave an environment syncing nothing, or from the wrong
+  feed.
 
 ### Performance
 
@@ -316,9 +317,12 @@ classes; this is what is specific to *this* codebase.
 
 ### Provider discipline
 
-- Per `architecture-rules.md` §3 *Provider and Adapter Registry Discipline*: are mock
-  providers gated by `ALLOW_MOCK_PROVIDERS`? A misconfiguration here silently downgrades a
-  real environment to fabricated data, which looks like working software.
+- Per `architecture-rules.md` §3 *Provider and Adapter Registry Discipline*: does the diff
+  add any mock, simulated or replayed provider to production source, or let configuration
+  select one? Feed replays belong in test code. Fabricated data in a real environment looks
+  like working software.
+- Per `architecture-rules.md` §3 *Provider calls are rate limited and resilient*: does every
+  new provider call go through the governed client, with no retry loop or sleep of its own?
 
 ---
 

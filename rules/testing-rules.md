@@ -823,7 +823,7 @@ lower layers, stop expanding E2E and strengthen the lower-layer tests first.
 
 - Application seed flows are never a place for test fixtures. No agent may add QA data, functional-test data, E2E data, fake contests, fake odds, or fake results to `prisma/seed.ts` or any other application seed path.
 - Keep seed data limited to production-required bootstrap records and default configuration.
-- Non-production fixture catalogs belong behind dedicated test infrastructure such as `mock-contest-feed-provider`.
+- Non-production fixture catalogs, recorded provider payloads and fake provider servers belong in test code under `tests/`, injected by the test, never in a package that production source or configuration can select (`rules/architecture-rules.md` §3 *Provider and Adapter Registry Discipline*).
 
 ### Backend Functional API Tests
 
