@@ -447,6 +447,12 @@ describe('League page', () => {
     const dialog = await screen.findByTestId('root-admin-league-structure-position');
     expect(within(dialog).getByTestId('root-admin-league-structure-position-codes')).toHaveTextContent('No provider');
     expect(within(dialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(within(dialog).getByTestId('root-admin-league-structure-position-facts')).toHaveTextContent(/K.*No/);
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-position')).not.toBeInTheDocument());
+
+    await userEvent.click(within(rows[0]).getByRole('button', { name: 'Open details' }));
+    expect(await screen.findByTestId('root-admin-league-structure-position-facts')).toHaveTextContent(/QB.*Yes.*BALLDONTLIE nfl · QB/);
   });
 
   it('says the positions could not load while the league\'s phases and slots still show', async () => {
