@@ -67,6 +67,8 @@ describe('PrismaSportLeagueOverviewReader', () => {
     await event(tour.id, { championshipYear: 2026, startDate: days(-200), endDate: days(-196), status: 'COMPLETED' });
     await event(tour.id, { championshipYear: 2027, startDate: days(-20), endDate: days(-17), status: 'COMPLETED' });
     const next = await event(tour.id, { championshipYear: 2027, startDate: days(10), endDate: days(13) });
+    // Another series starting at the same time keeps the same next start.
+    await event(tour.id, { championshipYear: 2027, startDate: days(10), endDate: days(12) });
     await event(tour.id, { championshipYear: 2027, startDate: days(5), status: 'CANCELLED' });
     const held = await event(tour.id, { championshipYear: 2027, startDate: days(30), status: 'DRAFT' });
     await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] });
@@ -97,7 +99,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
       expect.objectContaining({ kind: ProviderSyncKind.SCORES, status: ProviderSyncRunStatus.COMPLETED, summary: null }),
     ]);
     expect(facts.heldEvents).toEqual([{ id: held.id, sportLeagueId: tour.id, name: held.name, checkedAt: NOW, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }]);
-    expect(facts.eventCounts.get(tour.id)).toBe(5);
+    expect(facts.eventCounts.get(tour.id)).toBe(6);
     // The season is the current Season's own span, set by migration, not one drawn from its events (#2003).
     expect(facts.currentSeasonSpans.get(tour.id)).toEqual({ start: currentSeason.startsAt, end: currentSeason.endsAt });
     expect(facts.currentSeasonSpans.has(other.id)).toBe(false);
