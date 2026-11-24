@@ -5,6 +5,7 @@
  * Covers ingestion jobs, pollLiveScores, runEventSync, scheduled routing, start/stop lifecycle.
  */
 
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { expect } from '@jest/globals';
 import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
@@ -51,7 +52,7 @@ function readerOf({ fields = [], live = [] }: { fields?: ScheduledEventRef[]; li
 
 function createMockCallbacks(): IngestionCallbacks {
   return {
-    onEventDetail: jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants: [] }),
+    onEventDetail: jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics() }),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
   };
 }
@@ -226,7 +227,7 @@ describe('IngestionScheduler', () => {
         getEventDetails: jest.fn().mockResolvedValue(detail),
       });
       const registry = createMockRegistry(provider);
-      mockCallbacks.onEventDetail = jest.fn().mockResolvedValue({ unlinkedRankedParticipants: [], writeDiagnostics: {
+      mockCallbacks.onEventDetail = jest.fn().mockResolvedValue({ writeDiagnostics: {
         summary: {
           total: 2,
           unchanged: 1,
@@ -285,28 +286,6 @@ describe('IngestionScheduler', () => {
         }),
       );
       expect(job.writeDiagnostics?.rows).toHaveLength(2);
-    });
-
-    it.each([
-      ['one ranked participant', [{ participantId: 'p-1', name: 'Luka Dončić', ranking: 2 }],
-        '1 ranked participant has no mock-provider mapping, so its scores will not reach it: Luka Dončić (rank 2). Merge or map each by hand.'],
-      ['two ranked participants, best rank first', [{ participantId: 'p-1', name: 'Jayson Tatum', ranking: 1 }, { participantId: 'p-2', name: 'Luka Dončić', ranking: 2 }],
-        '2 ranked participants have no mock-provider mapping, so its scores will not reach them: Jayson Tatum (rank 1), Luka Dončić (rank 2). Merge or map each by hand.'],
-      ['more ranked participants than the warning names, counting the rest',
-        Array.from({ length: 22 }, (_, index) => ({ participantId: `p-${String(index + 1)}`, name: `Golfer ${String(index + 1)}`, ranking: index + 1 })),
-        `22 ranked participants have no mock-provider mapping, so its scores will not reach them: ${Array.from({ length: 20 }, (_, index) => `Golfer ${String(index + 1)} (rank ${String(index + 1)})`).join(', ')} and 2 more. Merge or map each by hand.`],
-    ])('warns, naming them, when a field sync leaves %s of the field unlinked from the provider (#1664)', async (_label, unlinkedRankedParticipants, message) => {
-      const detail: SportEventDetail = {
-        externalId: 'evt-1', providerId: 'mock-provider', sport: 'GOLF', name: 'The Masters', startDate: new Date('2026-04-10T12:00:00.000Z'),
-        status: 'SCHEDULED', fieldLocked: false, metadata: {},
-        participants: [{ externalId: 'player-1', providerId: 'mock-provider', sport: 'GOLF', name: 'Player One', active: true, metadata: {} }],
-      };
-      const registry = createMockRegistry(fakeSportDataProvider({ getEventDetails: jest.fn().mockResolvedValue(detail) }));
-      mockCallbacks.onEventDetail = jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants });
-
-      const [job] = await new IngestionScheduler(registry, mockCallbacks).runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS'] });
-
-      expect(job.warnings).toEqual([{ code: 'RANKED_PARTICIPANTS_UNLINKED', message }]);
     });
 
     it('returns a COMPLETED job with no errors when the provider call succeeds', async () => {
@@ -660,9 +639,7 @@ describe('IngestionScheduler', () => {
         startedAt: null,
         completedAt: null,
         createdAt: now,
-        payload: {
-          requestedFeed: 'EVENTLIVESCORES',
-        },
+        ...syncRunOutcome(),
       };
       const syncRunLedger = {
         createSubmissions: jest.fn().mockResolvedValue([syncRun]),
@@ -687,7 +664,7 @@ describe('IngestionScheduler', () => {
 
       expect(syncRunLedger.createSubmissions).toHaveBeenCalledWith(expect.objectContaining({
         providerId: 'mock-provider',
-        runType: 'SCHEDULED_EVENT_SYNC',
+        trigger: JobTrigger.SCHEDULE,
         submittedAt: now,
         normalizedRequest: expect.objectContaining({
           source: 'SCHEDULED',
@@ -1247,7 +1224,7 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
       startedAt: null,
       completedAt: null,
       createdAt: now,
-      payload: { requestedFeed: 'EVENTLIVESCORES' as const },
+      ...syncRunOutcome(),
     };
     const syncRunLedger = {
       createSubmissions: jest.fn().mockResolvedValue([syncRun]),
@@ -1271,7 +1248,6 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
     expect(provider.getLiveScores).toHaveBeenCalledWith('live-event');
     expect(syncRunLedger.createSubmissions).toHaveBeenCalledWith(expect.objectContaining({
       providerId: 'mock-provider',
-      runType: 'WEBHOOK_EVENT_SYNC',
       trigger: JobTrigger.WEBHOOK,
       backgroundJobId: 'job-1',
       normalizedRequest: expect.objectContaining({

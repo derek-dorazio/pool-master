@@ -313,10 +313,8 @@ describe('SDK Functional: Root Admin', () => {
           status: 'COMPLETED',
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
           completedAt: new Date('2026-04-09T10:01:00.000Z'),
-          payloadJson: {
-            runType: 'EVENT_SYNC',
-            detail: 'Imported event and field snapshot.',
-          },
+          summary: 'Imported event and field snapshot.',
+          changedCount: 2,
           detailsJson: {
             jobPayload: {
               jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: 'GOLF',
@@ -334,10 +332,8 @@ describe('SDK Functional: Root Admin', () => {
           status: 'FAILED',
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
           completedAt: new Date('2026-04-08T10:00:30.000Z'),
-          payloadJson: {
-            runType: 'SCHEDULED_EVENT_SYNC',
-            detail: 'Transient timeout.',
-          },
+          summary: 'Transient timeout.',
+          errorCount: 1,
         },
       ],
     });
@@ -355,7 +351,7 @@ describe('SDK Functional: Root Admin', () => {
 
     expect(response.data?.syncRuns).toHaveLength(1);
     expect(response.data?.syncRuns[0]).toMatchObject({ providerId, providerName: 'BALLDONTLIE' });
-    expect(response.data?.syncRuns[0]?.payload.detail).toBe('Imported event and field snapshot.');
+    expect(response.data?.syncRuns[0]).toMatchObject({ summary: 'Imported event and field snapshot.', changedCount: 2, errorCount: 0 });
     expect(response.data?.syncRuns[0]).not.toHaveProperty('details');
 
     // Opening the run reads its detailed diagnostics, which the list leaves out (#1174).

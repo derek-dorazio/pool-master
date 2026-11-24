@@ -486,10 +486,22 @@ export interface IntermediatePrize {
 
 // --- Platform & Ingestion ---
 
+/** What a sync run did, as its columns hold it (#1999): its summary line, counts and errors. */
+export interface ProviderSyncRunOutcome {
+  /** One line for the sync history: what it did, or why it failed. */
+  summary: string;
+  /** Its numeric counts by name, for the root admin's diagnostics. */
+  stats: Record<string, number>;
+  /** The rows it created or updated; null until it completes, or when it counted none. */
+  changedCount: number | null;
+  /** The errors it hit; a FAILED run has at least one. */
+  errorCount: number;
+}
+
 /**
- * One feed's sync against a provider — the ingestion history. `payload` is the run's summary as
- * the ledger records it: request, feed, stats and outcome. Its detailed diagnostics are read one
- * run at a time, as a `ProviderSyncRunWithDetails`.
+ * One feed's sync against a provider — the ingestion history, with its outcome in columns
+ * (#1999). Its detailed diagnostics are read one run at a time, as a
+ * `ProviderSyncRunWithDetails`. A problem the sync found is a sync finding, not part of the run.
  */
 export interface ProviderSyncRun {
   id: string;
@@ -517,7 +529,10 @@ export interface ProviderSyncRun {
   startedAt: Date | null;
   completedAt: Date | null;
   createdAt: Date;
-  payload: Record<string, unknown>;
+  summary: string;
+  stats: Record<string, number>;
+  changedCount: number | null;
+  errorCount: number;
 }
 
 /**

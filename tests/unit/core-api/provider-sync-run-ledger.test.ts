@@ -1,7 +1,8 @@
+import type { FastifyBaseLogger } from 'fastify';
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { BackgroundJobType, JobTrigger, ProviderCode, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
-import { ProviderSyncRunLedger, readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { ProviderSyncRunLedger, feedOfSyncKind } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
@@ -21,9 +22,11 @@ function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRu
     startedAt: null,
     completedAt: null,
     createdAt: new Date('2026-05-30T12:00:00.000Z'),
-    payload: {
-      requestedFeed: 'EVENTPARTICIPANTS',
-    },
+    kind: 'FIELD',
+    summary: 'Submitted Field sync for event-1.',
+    stats: {},
+    changedCount: null,
+    errorCount: 0,
     ...overrides,
   };
 }
@@ -119,7 +122,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
   it('fills in the linked event and its sport league for a scheduled run whose caller named neither', async () => {
     const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'balldontlie', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'balldontlie', submittedAt: now, trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ sportEventId: 'sport-event-1', sportLeagueId: 'pga-tour' });
     expect(linkedEvents.findByProviderRef).toHaveBeenCalledWith('balldontlie', 'linked');
@@ -128,7 +131,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
   it('leaves both null for a provider event linked to no event of ours', async () => {
     const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'balldontlie', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'balldontlie', submittedAt: now, trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ sportEventId: null, sportLeagueId: null });
   });
@@ -140,7 +143,6 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
       normalizedRequest: scheduled('linked'),
       providerId: 'balldontlie',
       submittedAt: now,
-      runType: 'MANUAL_EVENT_SYNC',
       trigger: JobTrigger.ADMIN,
       sportEventId: 'named-event',
       sportLeagueId: 'named-league',
@@ -167,20 +169,19 @@ describe('ProviderSyncRunLedger', () => {
       normalizedRequest,
       providerId: 'balldontlie',
       submittedAt: now,
-      runType: 'MANUAL_EVENT_SYNC',
       trigger: JobTrigger.ADMIN,
       job: (written) => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { ids: written.map((run) => run.id) }, start: TEST_JOB_START }),
     });
 
     expect(syncRuns.create).not.toHaveBeenCalled();
-    expect(runs.map((run) => [run.status, readPayload(run).requestedFeed, run.createdAt, run.trigger])).toEqual([
-      ['SUBMITTED', 'EVENTPARTICIPANTS', now, JobTrigger.ADMIN],
-      ['SUBMITTED', 'EVENTLIVESCORES', now, JobTrigger.ADMIN],
+    expect(runs.map((run) => [run.status, run.kind, run.createdAt, run.trigger])).toEqual([
+      ['SUBMITTED', 'FIELD', now, JobTrigger.ADMIN],
+      ['SUBMITTED', 'SCORES', now, JobTrigger.ADMIN],
     ]);
     expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ payload: { ids: runs.map((run) => run.id) } })]);
   });
 
-  it('pool-master-rop.68.2.4 creates scheduled provider sync run rows with normalized request diagnostics', async () => {
+  it('creates a scheduled run SUBMITTED, of the kind its feed syncs, with a summary naming the provider event and no counts yet', async () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const normalizedRequest = new SyncOrchestrator({ now: () => now }).normalizeRequest({
       source: 'SCHEDULED',
@@ -203,7 +204,6 @@ describe('ProviderSyncRunLedger', () => {
       normalizedRequest,
       providerId: 'balldontlie',
       submittedAt: now,
-      runType: 'SCHEDULED_EVENT_SYNC',
       trigger: JobTrigger.SCHEDULE,
     });
 
@@ -214,29 +214,16 @@ describe('ProviderSyncRunLedger', () => {
       sportEventId: null,
       status: 'SUBMITTED',
       createdAt: now,
-      payload: expect.objectContaining({
-        runType: 'SCHEDULED_EVENT_SYNC',
-        requestedFeeds: ['EVENTPARTICIPANTS'],
-        requestedFeed: 'EVENTPARTICIPANTS',
-        requestPayload: {
-          sport: Sport.GOLF,
-          eventId: 'event-1',
-          source: 'SCHEDULED',
-          actor: { type: 'SYSTEM', name: 'scheduler' },
-          normalizedAt: '2026-05-30T12:00:00.000Z',
-        },
-        outcome: {
-          severity: 'SUCCESS',
-          summary: 'Submitted event participants sync for event-1.',
-          warnings: [],
-          errors: 0,
-        },
-      }),
+      kind: 'FIELD',
+      trigger: JobTrigger.SCHEDULE,
+      summary: 'Submitted Field sync for event-1.',
+      stats: {},
+      changedCount: null,
+      errorCount: 0,
     }));
-    expect(providerSyncRunCreate.mock.calls[0][0].payload).not.toHaveProperty('providerPayload');
   });
 
-  it('pool-master-rop.68.2.4 marks a provider sync run completed after a successful ingestion job', async () => {
+  it('marks a run IN_PROGRESS as it starts, then COMPLETED with its summary, counts and changed rows', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), findByBackgroundJobIds: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(), countFinishedByProvider: jest.fn() });
     const syncRun = createSyncRun();
@@ -248,13 +235,9 @@ describe('ProviderSyncRunLedger', () => {
       status: 'IN_PROGRESS',
       startedAt: expect.any(Date),
       completedAt: null,
-      payload: expect.objectContaining({
-        detail: 'Started event participants sync.',
-        outcome: expect.objectContaining({
-          severity: 'SUCCESS',
-          summary: 'Started event participants sync.',
-        }),
-      }),
+      summary: 'Started Field sync.',
+      changedCount: null,
+      errorCount: 0,
       details: {
         providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
       },
@@ -263,23 +246,18 @@ describe('ProviderSyncRunLedger', () => {
       status: 'COMPLETED',
       startedAt: expect.any(Date),
       completedAt: expect.any(Date),
-      payload: expect.objectContaining({
-        detail: 'Completed event participants sync for event-1 (3 records).',
-        outcome: expect.objectContaining({
-          severity: 'SUCCESS',
-          summary: 'Completed event participants sync for event-1 (3 records).',
-        }),
-        stats: {
-          events: 3,
-          writeRows: 3,
-          writeUnchanged: 1,
-          writeCreated: 1,
-          writeUpdated: 1,
-          writeDeleted: 0,
-        },
-        recordsProcessed: 3,
-        errors: 0,
-      }),
+      summary: 'Completed Field sync for event-1 (3 records).',
+      stats: {
+        events: 3,
+        writeRows: 3,
+        writeUnchanged: 1,
+        writeCreated: 1,
+        writeUpdated: 1,
+        writeDeleted: 0,
+      },
+      // The rows it created or updated; the unchanged one is not counted.
+      changedCount: 2,
+      errorCount: 0,
       details: expect.objectContaining({
         jobPayload: expect.objectContaining({
           jobType: 'EVENT_PARTICIPANTS_SYNC',
@@ -290,10 +268,6 @@ describe('ProviderSyncRunLedger', () => {
       }),
     }));
     const completed = providerSyncRunUpdate.mock.calls[1][1];
-    const completedPayload = readPayload(completed);
-    expect(completedPayload).not.toHaveProperty('writeDiagnostics');
-    expect(completedPayload).not.toHaveProperty('jobPayload');
-    expect(completedPayload).not.toHaveProperty('providerPayload');
     expect(completed.details?.['jobPayload']).not.toHaveProperty('writeDiagnostics');
   });
 
@@ -332,7 +306,7 @@ describe('ProviderSyncRunLedger', () => {
     });
   });
 
-  it('pool-master-rop.68.2.4 marks a provider sync run failed when the ingestion job returns FAILED', async () => {
+  it('marks a run FAILED, with the job\'s first error as its summary and no changed count, when the ingestion job fails', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), findByBackgroundJobIds: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(), countFinishedByProvider: jest.fn() });
     const syncRun = createSyncRun();
@@ -341,7 +315,6 @@ describe('ProviderSyncRunLedger', () => {
       recordsProcessed: 0,
       errors: 1,
       errorLog: [{ error: 'No provider registered', at: new Date('2026-05-30T12:00:02.000Z') }],
-      warnings: [{ code: 'NO_PROVIDER', message: 'No provider registered' }],
     });
 
     await expect(ledger.executeFeedRun(syncRun, async () => failedJob)).resolves.toBe(failedJob);
@@ -349,21 +322,13 @@ describe('ProviderSyncRunLedger', () => {
     expect(providerSyncRunUpdate).toHaveBeenNthCalledWith(2, syncRun.id, expect.objectContaining({
       status: 'FAILED',
       completedAt: expect.any(Date),
-      payload: expect.objectContaining({
-        detail: 'Failed event participants sync for event-1: No provider registered',
-        outcome: {
-          severity: 'ERROR',
-          summary: 'Failed event participants sync for event-1: No provider registered',
-          warnings: [{ code: 'NO_PROVIDER', message: 'No provider registered' }],
-          errors: 1,
-        },
-        recordsProcessed: 0,
-        errors: 1,
-      }),
+      summary: 'Failed Field sync for event-1: No provider registered',
+      changedCount: null,
+      errorCount: 1,
     }));
   });
 
-  it('pool-master-rop.68.2.4 marks a provider sync run failed and rethrows when execution throws', async () => {
+  it('marks a run FAILED with the error as its summary, and rethrows, when its feed throws', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), findByBackgroundJobIds: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(), countFinishedByProvider: jest.fn() });
     const syncRun = createSyncRun();
@@ -378,15 +343,9 @@ describe('ProviderSyncRunLedger', () => {
       status: 'FAILED',
       startedAt: expect.any(Date),
       completedAt: expect.any(Date),
-      payload: expect.objectContaining({
-        detail: 'Failed event participants sync.',
-        outcome: expect.objectContaining({
-          severity: 'ERROR',
-          summary: 'Failed event participants sync.',
-          errors: 1,
-        }),
-        errors: 1,
-      }),
+      summary: 'Failed Field sync: provider exploded',
+      changedCount: null,
+      errorCount: 1,
       details: {
         providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
         failurePayload: {
@@ -399,7 +358,7 @@ describe('ProviderSyncRunLedger', () => {
     }));
   });
 
-  it('pool-master-rop.68.2.4 can mark a submitted run failed without executing a job', async () => {
+  it('marks a submitted run FAILED without running its feed', async () => {
     const providerSyncRunUpdate = mockFn<ProviderSyncRunRepository['update']>(async () => undefined);
     const ledger = new ProviderSyncRunLedger({ create: jest.fn(), update: providerSyncRunUpdate, findAll: jest.fn(), findById: jest.fn(), findByBackgroundJobIds: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(), countFinishedByProvider: jest.fn() });
     const syncRun = createSyncRun();
@@ -410,10 +369,8 @@ describe('ProviderSyncRunLedger', () => {
       status: 'FAILED',
       startedAt: expect.any(Date),
       completedAt: expect.any(Date),
-      payload: expect.objectContaining({
-        detail: 'Failed event participants sync.',
-        errors: 1,
-      }),
+      summary: 'Failed Field sync: unsupported feed',
+      errorCount: 1,
       details: {
         providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
         failurePayload: {
@@ -424,5 +381,59 @@ describe('ProviderSyncRunLedger', () => {
         },
       },
     }));
+  });
+});
+
+describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\'s finding (#1999)', () => {
+  const linked = { sportLeagueId: 'nfl', sportEventId: 'week-1' };
+  // The runs' writes go nowhere: these tests read the checks only.
+  const syncRunsIgnoringWrites = () => ({ ...inMemorySyncRuns(), update: mockFn<ProviderSyncRunRepository['update']>(async () => undefined) });
+
+  it.each([
+    ['FIELD', 'NO_PROVIDER_PARTICIPANTS'],
+    ['SCORES', 'NO_PROVIDER_LIVE_SCORES'],
+  ] as const)('raises the %s run\'s %s finding on its event when the run warned of it', async (kind, findingKind) => {
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, undefined, findings);
+
+    await ledger.executeFeedRun(createSyncRun({ kind, ...linked }), async () => createJob({ warnings: [{ code: findingKind, message: 'Nothing came back.' }] }));
+
+    expect(findings.checkEvent).toHaveBeenCalledWith({ kind: findingKind, sportLeagueId: 'nfl', sportEventId: 'week-1', providerId: 'provider-row-1', found: true });
+  });
+
+  it('resolves the event\'s finding when a completed run did not warn of it', async () => {
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, undefined, findings);
+
+    await ledger.executeFeedRun(createSyncRun(linked), async () => createJob());
+
+    expect(findings.checkEvent).toHaveBeenCalledWith(expect.objectContaining({ kind: 'NO_PROVIDER_PARTICIPANTS', found: false }));
+  });
+
+  it('checks nothing for a run whose job failed, or a run linked to no event of ours', async () => {
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, undefined, findings);
+
+    await ledger.executeFeedRun(createSyncRun(linked), async () => createJob({ status: 'FAILED', errors: 1, errorLog: [{ error: 'down', at: new Date() }] }));
+    await ledger.executeFeedRun(createSyncRun(), async () => createJob());
+
+    expect(findings.checkEvent).not.toHaveBeenCalled();
+  });
+
+  it('returns the completed job and logs the failure when the findings check throws after the run is recorded', async () => {
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => { throw new Error('connection reset'); }) };
+    const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), logger as unknown as FastifyBaseLogger, undefined, findings);
+    const job = createJob();
+
+    await expect(ledger.executeFeedRun(createSyncRun(linked), async () => job)).resolves.toBe(job);
+
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.checkFailed' }), expect.any(String));
+  });
+});
+
+describe('feedOfSyncKind', () => {
+  it('names the provider feed an event sync of each kind reads, and none for a league\'s EVENTS sync', () => {
+    expect([feedOfSyncKind('FIELD'), feedOfSyncKind('SCORES'), feedOfSyncKind('EVENTS')]).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES', null]);
   });
 });

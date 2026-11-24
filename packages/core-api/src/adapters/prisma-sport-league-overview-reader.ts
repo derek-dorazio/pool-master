@@ -4,7 +4,7 @@
  * cannot group through a relation, so event reads group by series and the series are folded into
  * their sport league here.
  */
-import type { Prisma, PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type {
   SportLeagueEventYearSpan,
   SportLeagueLatestSyncRun,
@@ -85,7 +85,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
     if (keys.length === 0) return [];
     const rows = await this.prisma.providerSyncRun.findMany({
       where: { OR: keys },
-      select: { id: true, sportLeagueId: true, kind: true, status: true, createdAt: true, payloadJson: true },
+      select: { id: true, sportLeagueId: true, kind: true, status: true, createdAt: true, summary: true },
       orderBy: { id: 'asc' },
     });
     // Two runs written in the same instant: either is the latest; keep one.
@@ -94,19 +94,10 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
       if (row.sportLeagueId === null) continue;
       const key = `${row.sportLeagueId}:${row.kind}`;
       if (byKey.has(key)) continue;
-      byKey.set(key, { id: row.id, sportLeagueId: row.sportLeagueId, kind: row.kind, status: row.status, createdAt: row.createdAt, summary: outcomeSummary(row.payloadJson) });
+      byKey.set(key, { id: row.id, sportLeagueId: row.sportLeagueId, kind: row.kind, status: row.status, createdAt: row.createdAt, summary: row.summary === '' ? null : row.summary });
     }
     return [...byKey.values()];
   }
-}
-
-/** The run's `outcome.summary`, the line the sync history shows for it. */
-export function outcomeSummary(payload: Prisma.JsonValue): string | null {
-  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) return null;
-  const outcome = payload['outcome'];
-  if (typeof outcome !== 'object' || outcome === null || Array.isArray(outcome)) return null;
-  const summary = outcome['summary'];
-  return typeof summary === 'string' && summary !== '' ? summary : null;
 }
 
 /** Finds an event series' sport league among every series read. */

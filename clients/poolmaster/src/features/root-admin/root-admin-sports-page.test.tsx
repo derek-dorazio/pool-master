@@ -261,7 +261,7 @@ describe('RootAdminSportsPage', () => {
     getProviderSyncRunMock.mockResolvedValue({
       data: {
         id: 'run-field', providerId: 'balldontlie', sport: 'BASKETBALL', eventId: null, status: 'FAILED',
-        startedAt: null, completedAt: null, createdAt: '2026-11-18T18:02:00.000Z', payload: {}, details: null,
+        startedAt: null, completedAt: null, createdAt: '2026-11-18T18:02:00.000Z', summary: 'Failed event participants sync: provider unreachable', stats: {}, changedCount: null, errorCount: 1, details: null,
       },
     });
     renderPage();

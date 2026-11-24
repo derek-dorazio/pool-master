@@ -3,17 +3,14 @@ import {
   ExpandableRow,
   FactList,
   Heading,
-  Notice,
   QueryState,
   StatusBadge,
   Text,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import {
-  buildPayloadSummary,
   buildStatsSummary,
   formatJsonPayload,
-  getPayloadWarnings,
   type ProviderSyncRun,
   type ProviderSyncRunDetail,
 } from './root-admin-sync-utils';
@@ -47,7 +44,7 @@ function JsonBlock({ value }: { value: unknown }) {
 }
 
 /**
- * The body of a sync run's detail dialog: what the run did (summary, warnings, counts), each row
+ * The body of a sync run's detail dialog: what the run did (its summary and counts), each row
  * it changed with that row's JSON a click away, and each payload it captured. Every drill-down
  * opens in place, so no second dialog stacks on this one.
  */
@@ -64,19 +61,13 @@ export function SyncRunDetail({
   payloads: readonly CapturedPayload[];
   run: ProviderSyncRun;
 }) {
-  const warnings = getPayloadWarnings(run.payload);
-  const stats = buildStatsSummary(run.payload);
+  const stats = buildStatsSummary(run);
   const captured = payloads.filter((entry) => entry.payload !== null && entry.payload !== undefined);
 
   return (
     <div className="space-y-5" data-testid="root-admin-sync-run-detail">
       <div className="space-y-2">
-        <Text as="p" variant="strong">{buildPayloadSummary(run.payload)}</Text>
-        {warnings.map((warning, index) => (
-          <Notice key={`${warning.code}-${index}`} tone="warning">
-            {warning.message}
-          </Notice>
-        ))}
+        <Text as="p" variant="strong">{run.summary}</Text>
       </div>
 
       {stats.length > 0 ? (
@@ -138,7 +129,7 @@ export function SyncRunDetail({
             ))}
           </div>
         ) : (
-          <EmptyState body="No request, job, or provider payload was captured for this run." size="plain" />
+          <EmptyState body="No job or provider payload was captured for this run." size="plain" />
         )}
       </section>
     </div>

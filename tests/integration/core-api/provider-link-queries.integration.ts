@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { ProviderCode, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import {
@@ -52,7 +53,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
       status: overrides.status ?? ProviderSyncRunStatus.COMPLETED,
       startedAt: overrides.startedAt,
       completedAt: null,
-      payload: { label },
+      ...syncRunOutcome({ summary: label }),
       createdAt: overrides.createdAt,
     });
     await run('early', { createdAt: new Date('2026-05-01T01:00:00.000Z'), startedAt: new Date('2026-05-01T01:00:00.000Z') });
@@ -64,7 +65,7 @@ describe('ProviderSyncRunRepository.findAll', () => {
     return repo;
   }
 
-  const labels = (runs: Array<{ payload: Record<string, unknown> }>) => runs.map((run) => run.payload['label']);
+  const labels = (runs: Array<{ summary: string }>) => runs.map((run) => run.summary);
 
   it('keeps only runs created inside the window, most recently submitted first whatever their start', async () => {
     const repo = await seedRuns();
@@ -99,12 +100,12 @@ describe('ProviderSyncRunRepository.findAll', () => {
       autoLifecycleEnabled: true,
     });
     const linked = await repo.create({
-      ...SCHEDULED_SCORES_RUN, sportEventId: event.id, providerCode: ProviderCode.BALLDONTLIE,
-      status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, payload: {},
+      ...SCHEDULED_SCORES_RUN, sportEventId: event.id, providerCode: ProviderCode.BALLDONTLIE, 
+      status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
     const unlinked = await repo.create({
-      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE,
-      status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, payload: {},
+      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, 
+      status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
 
     expect(linked).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', sportEventId: event.id, eventId: event.externalId });
@@ -121,22 +122,25 @@ describe('ProviderSyncRunRepository details (#1174)', () => {
     status: ProviderSyncRunStatus.SUBMITTED,
     startedAt: null,
     completedAt: null,
-    payload: { requestedFeed: 'EVENTPARTICIPANTS' },
+    ...syncRunOutcome(),
   });
   const details = { jobPayload: { recordsProcessed: 3 }, writeDiagnostics: { summary: { total: 3 }, rows: [] } };
 
-  it('lists runs without their detailed diagnostics and reads one run with them', async () => {
+  it('lists runs with their outcome columns and without their detailed diagnostics, and reads one run with them', async () => {
     const run = await submitted();
     await repo().update(run.id, {
       status: ProviderSyncRunStatus.COMPLETED,
-      payload: { requestedFeed: 'EVENTPARTICIPANTS', detail: 'Done.' },
+      summary: 'Done.',
+      stats: { participantsReturned: 3 },
+      changedCount: 2,
+      errorCount: 0,
       details,
     });
 
     const [listed] = await repo().findAll({ createdFrom: new Date(0), createdTo: new Date(Date.now() + 60_000) });
     const read = await repo().findById(run.id);
 
-    expect(listed).toEqual(expect.objectContaining({ id: run.id, payload: { requestedFeed: 'EVENTPARTICIPANTS', detail: 'Done.' } }));
+    expect(listed).toEqual(expect.objectContaining({ id: run.id, summary: 'Done.', stats: { participantsReturned: 3 }, changedCount: 2, errorCount: 0 }));
     expect(listed).not.toHaveProperty('details');
     expect(read).toEqual(expect.objectContaining({ id: run.id, status: ProviderSyncRunStatus.COMPLETED, details }));
   });
@@ -150,9 +154,9 @@ describe('ProviderSyncRunRepository details (#1174)', () => {
 
   it('keeps the stored details when an update leaves them out', async () => {
     const run = await submitted();
-    await repo().update(run.id, { status: ProviderSyncRunStatus.IN_PROGRESS, payload: {}, details });
+    await repo().update(run.id, { status: ProviderSyncRunStatus.IN_PROGRESS, ...syncRunOutcome(), details });
 
-    await repo().update(run.id, { status: ProviderSyncRunStatus.COMPLETED, payload: { detail: 'Done.' } });
+    await repo().update(run.id, { status: ProviderSyncRunStatus.COMPLETED, ...syncRunOutcome({ summary: 'Done.', changedCount: 0 }) });
 
     expect((await repo().findById(run.id))?.details).toEqual(details);
   });

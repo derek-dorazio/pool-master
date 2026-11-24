@@ -80,7 +80,7 @@ describe('a row\'s sport is its sport league\'s (#2042)', () => {
     const [hockey, golf] = await Promise.all([fixtureTourId(prisma, Sport.HOCKEY), fixtureTourId(prisma, Sport.GOLF)]);
     await prisma.providerSyncRun.createMany({
       data: [hockey, golf].map((sportLeagueId) => ({
-        kind: 'EVENTS' as const, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, status: 'COMPLETED' as const, payloadJson: {},
+        kind: 'EVENTS' as const, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, status: 'COMPLETED' as const,
       })),
     });
 

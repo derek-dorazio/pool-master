@@ -14,7 +14,6 @@ import type {
   ProviderSyncRunDetailsDto,
   ProviderSyncRunDto,
 } from '@poolmaster/shared/dto';
-import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
 import {
   PROVIDER_LEAGUE_MINUTES_RANGE,
   PROVIDER_POLL_MINUTES_RANGE,
@@ -25,7 +24,6 @@ import {
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
 } from '@poolmaster/shared/domain';
-import type { FastifyBaseLogger } from 'fastify';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
   ProviderManualSyncSubmissionResult,
@@ -94,26 +92,7 @@ export function toProviderLeagueDto(league: ProviderLeagueSettings): ProviderLea
   };
 }
 
-/**
- * The stored payload is JSON from whichever release wrote the run. Its `requestPayload` is
- * typed in the contract, so it is parsed here: one written in an older shape is left out and
- * logged, rather than failing the serializer for every run in the list.
- */
-export function toProviderSyncRunDto(
-  run: ProviderSyncRun,
-  logger?: Pick<FastifyBaseLogger, 'warn'>,
-): ProviderSyncRunDto {
-  const { requestPayload: storedRequest, ...rest } = run.payload;
-  const parsedRequest = storedRequest === undefined
-    ? undefined
-    : ProviderSyncRequestPayloadDtoSchema.safeParse(storedRequest);
-  if (parsedRequest && !parsedRequest.success) {
-    logger?.warn({
-      action: 'ingestion.syncRun.requestPayloadSkipped',
-      data: { syncRunId: run.id },
-    }, 'Left a sync run\'s request payload out: it was stored in a shape the contract no longer has');
-  }
-  const payload = parsedRequest?.success ? { ...rest, requestPayload: parsedRequest.data } : rest;
+export function toProviderSyncRunDto(run: ProviderSyncRun): ProviderSyncRunDto {
   return {
     id: run.id,
     providerId: run.providerId,
@@ -129,17 +108,17 @@ export function toProviderSyncRunDto(
     startedAt: run.startedAt?.toISOString() ?? null,
     completedAt: run.completedAt?.toISOString() ?? null,
     createdAt: run.createdAt.toISOString(),
-    payload,
+    summary: run.summary,
+    stats: run.stats,
+    changedCount: run.changedCount,
+    errorCount: run.errorCount,
   };
 }
 
 /** One run with its detailed diagnostics; they are stored JSON, passed through as written. */
-export function toProviderSyncRunDetailDto(
-  run: ProviderSyncRunWithDetails,
-  logger?: Pick<FastifyBaseLogger, 'warn'>,
-): ProviderSyncRunDetailDto {
+export function toProviderSyncRunDetailDto(run: ProviderSyncRunWithDetails): ProviderSyncRunDetailDto {
   const details: ProviderSyncRunDetailsDto | null = run.details;
-  return { ...toProviderSyncRunDto(run, logger), details };
+  return { ...toProviderSyncRunDto(run), details };
 }
 
 export function toProviderManualSyncSubmissionResponse(

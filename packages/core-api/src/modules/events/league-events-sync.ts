@@ -25,6 +25,7 @@ import {
   type BackgroundJob,
   type BackgroundJobOutcome,
   type ProviderSyncRun,
+  type ProviderSyncRunOutcome,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
@@ -35,9 +36,6 @@ import { EventScoreSourceError, type EventScoreSourceService } from './event-sco
 import { SportEventError } from './errors';
 import { syncLeagueEventsJob, type SyncLeagueEventsJobPayload } from './league-events-sync-job';
 import type { ProviderEventYearImport, SportEventService } from './service';
-
-/** The run's payload `runType`, beside the feed runs' MANUAL, SCHEDULED and WEBHOOK event syncs. */
-export const LEAGUE_EVENTS_SYNC_RUN_TYPE = 'LEAGUE_EVENTS_SYNC';
 
 /**
  * The scheduled sync's years: this calendar year and the next, since a season that starts in the
@@ -120,7 +118,6 @@ export class LeagueEventsSync {
     // A try whose job another task has claimed stops before it records a run of its own.
     if (!await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
     const startedAt = this.now();
-    const basePayload = { runType: LEAGUE_EVENTS_SYNC_RUN_TYPE, eventYears: payload.eventYears };
     const providerId = selected.providerId;
     const run = await this.options.syncRuns.create({
       providerCode: selected.providerCode,
@@ -132,7 +129,7 @@ export class LeagueEventsSync {
       status: ProviderSyncRunStatus.IN_PROGRESS,
       startedAt,
       completedAt: null,
-      payload: { ...basePayload, ...progressPayload(sportLeague, [], payload.eventYears.length) },
+      ...progressOutcome(sportLeague, [], payload.eventYears.length),
       createdAt: startedAt,
     });
 
@@ -146,11 +143,11 @@ export class LeagueEventsSync {
         // poolmaster-allow-query-in-loop: the run's progress after each year
         await this.options.syncRuns.update(run.id, {
           status: ProviderSyncRunStatus.IN_PROGRESS,
-          payload: { ...basePayload, ...progressPayload(sportLeague, years, payload.eventYears.length) },
+          ...progressOutcome(sportLeague, years, payload.eventYears.length),
         });
       }
     } catch (error) {
-      await this.failRun(run, startedAt, basePayload, years, error);
+      await this.failRun(run, startedAt, years, error);
       this.options.logger?.error({
         action: 'events.leagueSync.failed',
         data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, error: errorMessage(error) },
@@ -166,13 +163,11 @@ export class LeagueEventsSync {
       status: ProviderSyncRunStatus.COMPLETED,
       startedAt,
       completedAt: this.now(),
-      payload: {
-        ...basePayload,
-        detail: `Synced ${sportLeague.name}'s events for ${payload.eventYears.join(' and ')}: ${String(counts.created)} created, ${String(counts.updated)} updated.`,
-        outcome: { severity: 'SUCCESS', summary: `${String(counts.created)} created, ${String(counts.updated)} updated, ${String(counts.skipped)} skipped.`, warnings: [], errors: 0 },
-        stats: counts,
-      },
-      details: { years: years.map(yearDetails) },
+      summary: `Synced ${sportLeague.name}'s events for ${payload.eventYears.join(' and ')}: ${String(counts.created)} created, ${String(counts.updated)} updated, ${String(counts.skipped)} skipped.`,
+      stats: counts,
+      changedCount: counts.created + counts.updated,
+      errorCount: 0,
+      details: { eventYears: payload.eventYears, years: years.map(yearDetails) },
     });
     this.options.logger?.info({
       action: 'events.leagueSync.completed',
@@ -200,11 +195,10 @@ export class LeagueEventsSync {
       await this.options.syncRuns.update(run.id, {
         status: ProviderSyncRunStatus.FAILED,
         completedAt: this.now(),
-        payload: {
-          ...run.payload,
-          detail: 'Interrupted: an earlier try of this sync stopped before it finished.',
-          outcome: { severity: 'ERROR', summary: 'Interrupted before it finished.', warnings: [], errors: 1 },
-        },
+        summary: 'Interrupted: an earlier try of this sync stopped before it finished.',
+        stats: run.stats,
+        changedCount: null,
+        errorCount: 1,
       });
     }
   }
@@ -212,7 +206,6 @@ export class LeagueEventsSync {
   private async failRun(
     run: ProviderSyncRun,
     startedAt: Date,
-    basePayload: Record<string, unknown>,
     years: readonly YearSync[],
     error: unknown,
   ): Promise<void> {
@@ -221,12 +214,10 @@ export class LeagueEventsSync {
       status: ProviderSyncRunStatus.FAILED,
       startedAt,
       completedAt: this.now(),
-      payload: {
-        ...basePayload,
-        detail: `Failed: ${message}`,
-        outcome: { severity: 'ERROR', summary: `Failed: ${message}`, warnings: [], errors: 1 },
-        stats: countsOf(years),
-      },
+      summary: `Failed: ${message}`,
+      stats: countsOf(years),
+      changedCount: null,
+      errorCount: 1,
       details: {
         years: years.map(yearDetails),
         failurePayload: {
@@ -256,15 +247,13 @@ function countsOf(years: readonly YearSync[]): { created: number; updated: numbe
   };
 }
 
-/** A running sync's payload: how far it has got. */
-function progressPayload(sportLeague: SportLeague, years: readonly YearSync[], yearCount: number): Record<string, unknown> {
-  const counts = countsOf(years);
-  const summary = `Syncing ${sportLeague.name}'s events: ${String(years.length)} of ${String(yearCount)} years done.`;
+/** A running sync's outcome so far: how far it has got. */
+function progressOutcome(sportLeague: SportLeague, years: readonly YearSync[], yearCount: number): ProviderSyncRunOutcome {
   return {
-    detail: summary,
-    outcome: { severity: 'SUCCESS', summary, warnings: [], errors: 0 },
-    stats: counts,
-    progress: { yearsDone: years.length, yearCount },
+    summary: `Syncing ${sportLeague.name}'s events: ${String(years.length)} of ${String(yearCount)} years done.`,
+    stats: { ...countsOf(years), yearsDone: years.length, yearCount },
+    changedCount: null,
+    errorCount: 0,
   };
 }
 

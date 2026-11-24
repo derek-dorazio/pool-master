@@ -1,15 +1,8 @@
-import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
-import {
-  getPayloadOutcome,
-  getPayloadWarnings,
-  type ProviderSyncRun,
-  type ProviderSyncRunDetails,
-  type ProviderSyncRunPayload,
-} from './root-admin-sync-utils';
+import type { ProviderSyncRunDetails } from './root-admin-sync-utils';
 import type { SyncRunEvidenceRow } from './sync-run-detail';
 
-// How a sync run reads in the Sync lists and its detail dialog: its status words and tone, its
-// event, its sort time and the rows it wrote.
+// How a sync run reads in the Sync lists and its detail dialog: its status tone, its event and
+// the rows it wrote.
 
 export function formatEventValue(eventId: string | null | undefined) {
   if (!eventId || eventId.trim().length === 0) {
@@ -33,38 +26,6 @@ export function getStatusTone(status: string) {
     default:
       return 'neutral';
   }
-}
-
-export function getRunStatusTone(run: ProviderSyncRun) {
-  // A failed run stays red: its warnings never soften the badge to amber.
-  const statusTone = getStatusTone(run.status);
-  if (statusTone === 'danger') {
-    return statusTone;
-  }
-
-  const warnings = getPayloadWarnings(run.payload);
-  const severity = getPayloadSeverity(run.payload);
-  if (severity === 'WARNING' || warnings.length > 0) {
-    return 'warning';
-  }
-  if (severity === 'ERROR') {
-    return 'danger';
-  }
-
-  return statusTone;
-}
-
-export function getRunStatusLabel(run: ProviderSyncRun) {
-  const warnings = getPayloadWarnings(run.payload);
-  if (run.status === ProviderSyncRunStatus.COMPLETED && (getPayloadSeverity(run.payload) === 'WARNING' || warnings.length > 0)) {
-    return 'COMPLETED WITH WARNINGS';
-  }
-
-  return run.status;
-}
-
-function getPayloadSeverity(payload: ProviderSyncRunPayload) {
-  return getPayloadOutcome(payload)?.severity ?? null;
 }
 
 export function buildRunEvidenceRows(details: ProviderSyncRunDetails | null | undefined): SyncRunEvidenceRow[] {

@@ -13,7 +13,6 @@ import {
 } from '../../../packages/core-api/src/mappers/ingestion.mapper';
 import type { ProviderManualSyncSubmissionResult } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderSyncRunStatus, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
-import { fakeLogger } from '../../support/fake-logger';
 
 function buildRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
@@ -27,13 +26,16 @@ function buildRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
     startedAt: null,
     completedAt: null,
     createdAt: new Date('2026-01-01T00:00:00Z'),
-    payload: { recordsProcessed: 0 },
+    summary: 'Submitted event live scores sync for event-1.',
+    stats: {},
+    changedCount: null,
+    errorCount: 0,
     ...overrides,
   };
 }
 
 describe('toProviderSyncRunDto', () => {
-  it('serializes dates to ISO strings, names the run\'s provider, and passes null start/completed through', () => {
+  it('serializes dates to ISO strings, names the run\'s provider, passes its outcome columns and null start/completed through', () => {
     expect(toProviderSyncRunDto(buildRun())).toEqual({
       id: 'run-1',
       providerId: 'provider-row-1',
@@ -49,7 +51,10 @@ describe('toProviderSyncRunDto', () => {
       startedAt: null,
       completedAt: null,
       createdAt: '2026-01-01T00:00:00.000Z',
-      payload: { recordsProcessed: 0 },
+      summary: 'Submitted event live scores sync for event-1.',
+      stats: {},
+      changedCount: null,
+      errorCount: 0,
     });
   });
 
@@ -63,38 +68,6 @@ describe('toProviderSyncRunDto', () => {
 
     expect(dto.startedAt).toBe('2026-01-01T00:01:00.000Z');
     expect(dto.completedAt).toBe('2026-01-01T00:02:00.000Z');
-  });
-});
-
-describe('toProviderSyncRunDto request payload', () => {
-  const requestPayload = {
-    sport: Sport.GOLF,
-    eventId: 'event-1',
-    source: 'MANUAL',
-    actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.test' },
-    normalizedAt: '2026-01-01T00:00:00.000Z',
-  };
-
-  it('publishes a stored request payload of the current shape, dropping keys the contract no longer has, such as a retired mockEventState', () => {
-    const logger = fakeLogger();
-
-    const dto = toProviderSyncRunDto(buildRun({ payload: { requestPayload: { ...requestPayload, workflowContext: {}, mockEventState: null } } }), logger);
-
-    expect(dto.payload.requestPayload).toEqual(requestPayload);
-    expect(logger.warn).not.toHaveBeenCalled();
-  });
-
-  it('leaves out and logs a stored request payload an older release wrote, so one old run cannot fail the whole list', () => {
-    const logger = fakeLogger();
-    const legacy = { sport: Sport.GOLF, eventId: 'event-1', source: 'MANUAL', actor: { type: 'ROOT_ADMIN', userId: 'admin-1' } };
-
-    const dto = toProviderSyncRunDto(buildRun({ payload: { requestPayload: legacy, recordsProcessed: 3 } }), logger);
-
-    expect(dto.payload).toEqual({ recordsProcessed: 3 });
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'ingestion.syncRun.requestPayloadSkipped' }),
-      expect.any(String),
-    );
   });
 });
 

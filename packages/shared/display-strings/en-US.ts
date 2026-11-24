@@ -267,6 +267,9 @@ export const enUS = {
       PROVIDER_RATE_LIMITED: 'Provider rate limiting',
       UNMAPPED_PARTICIPANT: 'Unmapped participant',
       WEBHOOK_SECRET_MISSING: 'Webhook secret not set',
+      NO_PROVIDER_PARTICIPANTS: 'No field from the provider',
+      NO_PROVIDER_LIVE_SCORES: 'No live scores from the provider',
+      GAMES_NOT_SYNCED: 'Games not synced',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

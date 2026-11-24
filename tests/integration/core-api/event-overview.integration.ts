@@ -60,7 +60,7 @@ async function seedSyncedEvent(golfers: number) {
     });
   }
   const failedRun = await prisma.providerSyncRun.create({
-    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, sportEventId: event.id, status: 'FAILED', payloadJson: {} },
+    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, sportEventId: event.id, status: 'FAILED' },
   });
   return { event, field, seenAt, failedRun, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }

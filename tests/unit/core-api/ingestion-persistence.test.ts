@@ -61,8 +61,7 @@ function linkedRow(overrides: Record<string, unknown> & { sport?: Sport } = {}) 
 
 /**
  * A Prisma double for one event's field sync: the event's two reads, one provider participant
- * already mapped to `participant-1`, that participant's stored field row, or none, and the
- * field's ranked rows the provider has no mapping for. Batched
+ * already mapped to `participant-1`, and that participant's stored field row, or none. Batched
  * writes run as Prisma runs a `$transaction` of them: all, in order.
  */
 function fieldSyncPrisma(options: {
@@ -71,8 +70,6 @@ function fieldSyncPrisma(options: {
   linkedEvent: Record<string, unknown> | null;
   fieldRow: Record<string, unknown> | null;
   createField?: jest.Mock;
-  /** The field's ranked rows with no mapping from the provider, as the read selects them. */
-  unlinkedRanked?: Array<{ ranking: number | null; participant: { id: string; name: string } }>;
 }) {
   return {
     sportEvent: {
@@ -95,10 +92,8 @@ function fieldSyncPrisma(options: {
     },
     participant: { update: jest.fn().mockResolvedValue({ id: 'participant-1' }) },
     sportEventParticipant: {
-      // The field's rows by participant, or, asked for ranked rows, the ranked ones with no mapping from the provider.
-      findMany: jest.fn(({ where }: { where: Record<string, unknown>; select?: unknown; orderBy?: unknown }) => Promise.resolve('ranking' in where
-        ? options.unlinkedRanked ?? []
-        : options.fieldRow ? [{ participantId: 'participant-1', ...options.fieldRow }] : [])),
+      // The field's rows by participant.
+      findMany: jest.fn(() => Promise.resolve(options.fieldRow ? [{ participantId: 'participant-1', ...options.fieldRow }] : [])),
       update: jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }),
       createManyAndReturn: options.createField ?? jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]),
     },
@@ -306,42 +301,6 @@ describe('IngestionPersistence', () => {
         }),
       }),
     ]);
-  });
-
-  it('lists the field\'s ranked participants the provider has no mapping for, read best rank first, with the sync\'s result (#1664)', async () => {
-    const detail: SportEventDetail = {
-      ...buildInProgressEvent(),
-      sport: Sport.BASKETBALL,
-      participants: [{ externalId: 'nba-player-1', providerId: 'balldontlie', sport: Sport.BASKETBALL, name: 'Jayson Tatum', active: true, metadata: {} }],
-    };
-    const prisma = fieldSyncPrisma({
-      externalId: 'nba-player-1',
-      eventRow: linkedRow({ sport: Sport.BASKETBALL }),
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: Sport.BASKETBALL } } } },
-      fieldRow: null,
-      unlinkedRanked: [{ ranking: 2, participant: { id: 'site-doncic', name: 'Luka Dončić' } }, { ranking: 5, participant: { id: 'site-brown', name: 'Jaylen Brown' } }],
-    });
-
-    const result = await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger()).persistEventDetailWithDiagnostics(detail);
-
-    expect(result.unlinkedRankedParticipants).toEqual([
-      { participantId: 'site-doncic', name: 'Luka Dončić', ranking: 2 },
-      { participantId: 'site-brown', name: 'Jaylen Brown', ranking: 5 },
-    ]);
-    expect(prisma.sportEventParticipant.findMany).toHaveBeenCalledWith({
-      where: { sportEventId: 'sport-event-1', ranking: { not: null }, participant: { providerMappings: { none: { provider: { code: ProviderCode.BALLDONTLIE } } } } },
-      select: { ranking: true, participant: { select: { id: true, name: true } } },
-      orderBy: [{ ranking: 'asc' }, { participant: { name: 'asc' } }],
-    });
-  });
-
-  it('lists no unlinked ranked participants for a provider event no event is linked to, since it writes no field', async () => {
-    const prisma = fieldSyncPrisma({ externalId: 'golfer-01', eventRow: linkedRow(), linkedEvent: null, fieldRow: null });
-
-    const result = await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger()).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [] });
-
-    expect(result.unlinkedRankedParticipants).toEqual([]);
-    expect(prisma.sportEventParticipant.findMany).not.toHaveBeenCalled();
   });
 
   // #698 — a released bracket's seeds are fixed: the field sync keeps the stored seed, while a

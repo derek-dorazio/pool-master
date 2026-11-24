@@ -10,6 +10,7 @@ import type {
   ProviderCode,
   ProviderSyncRun,
   ProviderSyncRunCounts,
+  ProviderSyncRunOutcome,
   ProviderSyncRunStatus,
   ProviderSyncRunWithDetails,
   Sport,
@@ -24,11 +25,10 @@ export type ProviderSyncRunCreate = Omit<ProviderSyncRun, 'id' | 'createdAt' | '
   createdAt?: Date;
 };
 
-export interface ProviderSyncRunUpdate {
+export interface ProviderSyncRunUpdate extends ProviderSyncRunOutcome {
   status: ProviderSyncRunStatus;
   startedAt?: Date | null;
   completedAt?: Date | null;
-  payload: Record<string, unknown>;
   /** The run's detailed diagnostics; omitted, the stored ones are kept. */
   details?: Record<string, unknown>;
   /** The background job running it (#1819), when a job picks up a run submitted before it; omitted, kept. */

@@ -35,6 +35,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
+import { freshEventEdition } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -123,6 +124,31 @@ describe('the sync findings table', () => {
     expect(statuses).toEqual(expect.arrayContaining([
       { id: resolved.id, status: ProviderSyncFindingStatus.OPEN, waiveNote: null },
       { id: waived.id, status: ProviderSyncFindingStatus.WAIVED, waiveNote: 'Amateur, never scored' },
+    ]));
+  });
+
+  it('resolves one event\'s open finding of a kind, leaving the same kind on another event open', async () => {
+    const prisma = getPrisma();
+    const provider = await balldontlie();
+    // One edition per event: a series has one event a year.
+    const event = async (name: string) => prisma.sportEvent.create({
+      data: { ...(await freshEventEdition(prisma)), externalId: `findings-${randomUUID()}`, providerId: 'integration-test', name, startDate: NOW },
+      select: { id: true, eventSeries: { select: { sportLeagueId: true } } },
+    });
+    const [week1, week2] = [await event('Week 1'), await event('Week 2')];
+    const { sportLeagueId } = week1.eventSeries;
+    const noField = (sportEventId: string): ProviderSyncFindingRaise => ({
+      kind: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS, severity: ProviderSyncFindingSeverity.WARNING, sportLeagueId, sportEventId, providerId: provider.id, providerValue: null, providerValueName: null,
+    });
+    await repository().raise([noField(week1.id), noField(week2.id)], NOW);
+
+    const resolved = await repository().resolveOpen({ kind: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS, sportLeagueId, sportEventId: week1.id, providerId: provider.id }, NOW);
+
+    expect(resolved).toBe(1);
+    const statuses = await prisma.providerSyncFinding.findMany({ where: { sportLeagueId, kind: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS }, select: { sportEventId: true, status: true } });
+    expect(statuses).toEqual(expect.arrayContaining([
+      { sportEventId: week1.id, status: ProviderSyncFindingStatus.RESOLVED },
+      { sportEventId: week2.id, status: ProviderSyncFindingStatus.OPEN },
     ]));
   });
 

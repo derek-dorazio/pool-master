@@ -69306,214 +69306,31 @@
             "format": "date-time",
             "description": "When the run was submitted."
           },
-          "payload": {
+          "summary": {
+            "type": "string",
+            "description": "One line for the sync history: what the run did, or why it failed."
+          },
+          "stats": {
             "type": "object",
-            "properties": {
-              "runType": {
-                "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
-                "type": "string"
-              },
-              "requestedFeeds": {
-                "description": "Feeds represented by the originating manual or scheduled sync request.",
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "EVENTPARTICIPANTS",
-                    "EVENTLIVESCORES"
-                  ],
-                  "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
-                }
-              },
-              "requestedFeed": {
-                "description": "Single feed represented by this sync run row.",
-                "type": "string",
-                "enum": [
-                  "EVENTPARTICIPANTS",
-                  "EVENTLIVESCORES"
-                ]
-              },
-              "requestPayload": {
-                "description": "The request that submitted the sync run.",
-                "type": "object",
-                "properties": {
-                  "sport": {
-                    "type": "string",
-                    "enum": [
-                      "GOLF",
-                      "HORSE_RACING",
-                      "AUTO_RACING",
-                      "CYCLING",
-                      "RUNNING",
-                      "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
-                      "HOCKEY",
-                      "BASEBALL",
-                      "SOCCER",
-                      "TENNIS"
-                    ]
-                  },
-                  "eventId": {
-                    "type": "string",
-                    "description": "Provider event identifier the sync was asked for."
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "SCHEDULED",
-                      "MANUAL",
-                      "WEBHOOK"
-                    ],
-                    "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
-                  },
-                  "actor": {
-                    "description": "Who asked for a sync.",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "SYSTEM"
-                            ]
-                          },
-                          "name": {
-                            "type": "string",
-                            "enum": [
-                              "scheduler",
-                              "webhook"
-                            ],
-                            "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "name"
-                        ],
-                        "additionalProperties": false,
-                        "description": "The system: the scheduler, or the provider webhook receiver."
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "ROOT_ADMIN"
-                            ]
-                          },
-                          "userId": {
-                            "type": "string",
-                            "description": "The root admin who asked for the sync."
-                          },
-                          "email": {
-                            "type": "string",
-                            "description": "Their email at the time, for the audit trail."
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "userId",
-                          "email"
-                        ],
-                        "additionalProperties": false,
-                        "description": "A root admin, for a MANUAL sync."
-                      }
-                    ]
-                  },
-                  "normalizedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the request was validated and normalized."
-                  }
-                },
-                "required": [
-                  "sport",
-                  "eventId",
-                  "source",
-                  "actor",
-                  "normalizedAt"
-                ],
-                "additionalProperties": false
-              },
-              "outcome": {
-                "description": "Admin-facing outcome and warning summary for the sync run.",
-                "type": "object",
-                "properties": {
-                  "severity": {
-                    "type": "string",
-                    "enum": [
-                      "SUCCESS",
-                      "WARNING",
-                      "ERROR"
-                    ],
-                    "description": "Admin-facing severity derived from run status, errors, and warnings."
-                  },
-                  "summary": {
-                    "type": "string",
-                    "description": "Human-readable root-admin summary of the sync outcome."
-                  },
-                  "warnings": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable warning code emitted by the ingestion/sync layer."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable warning detail for root-admin investigation."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
-                    },
-                    "description": "Warnings that did not fail the run but should be visible to an operator."
-                  },
-                  "errors": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991,
-                    "description": "Count of errors captured for the run."
-                  }
-                },
-                "required": [
-                  "severity",
-                  "summary",
-                  "warnings",
-                  "errors"
-                ],
-                "additionalProperties": false
-              },
-              "stats": {
-                "description": "Canonical numeric sync stats used by admin diagnostics.",
-                "type": "object",
-                "additionalProperties": {
-                  "type": "number"
-                }
-              },
-              "recordsProcessed": {
-                "description": "Legacy top-level processed-record count retained for summary compatibility.",
-                "type": "number"
-              },
-              "errors": {
-                "description": "Legacy top-level error count retained for summary compatibility.",
-                "type": "number"
-              },
-              "detail": {
-                "description": "Legacy human-readable detail retained for summary compatibility.",
-                "type": "string"
-              }
+            "additionalProperties": {
+              "type": "number"
             },
-            "additionalProperties": {},
-            "description": "Provider sync run summary with canonical stats and outcome."
+            "description": "The run's numeric counts by name, for diagnostics; empty until it reports any."
+          },
+          "changedCount": {
+            "description": "The rows the run created, updated or deleted; null until it completes, and for a failed run.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "errorCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run."
           }
         },
         "required": [
@@ -69531,10 +69348,13 @@
           "startedAt",
           "completedAt",
           "createdAt",
-          "payload"
+          "summary",
+          "stats",
+          "changedCount",
+          "errorCount"
         ],
         "additionalProperties": false,
-        "description": "One feed's sync against a provider, with its diagnostics."
+        "description": "One sync against a provider: its kind, status and outcome."
       },
       "ProviderSyncRunDetailDto": {
         "type": "object",
@@ -69654,214 +69474,31 @@
             "format": "date-time",
             "description": "When the run was submitted."
           },
-          "payload": {
+          "summary": {
+            "type": "string",
+            "description": "One line for the sync history: what the run did, or why it failed."
+          },
+          "stats": {
             "type": "object",
-            "properties": {
-              "runType": {
-                "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
-                "type": "string"
-              },
-              "requestedFeeds": {
-                "description": "Feeds represented by the originating manual or scheduled sync request.",
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "EVENTPARTICIPANTS",
-                    "EVENTLIVESCORES"
-                  ],
-                  "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
-                }
-              },
-              "requestedFeed": {
-                "description": "Single feed represented by this sync run row.",
-                "type": "string",
-                "enum": [
-                  "EVENTPARTICIPANTS",
-                  "EVENTLIVESCORES"
-                ]
-              },
-              "requestPayload": {
-                "description": "The request that submitted the sync run.",
-                "type": "object",
-                "properties": {
-                  "sport": {
-                    "type": "string",
-                    "enum": [
-                      "GOLF",
-                      "HORSE_RACING",
-                      "AUTO_RACING",
-                      "CYCLING",
-                      "RUNNING",
-                      "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
-                      "HOCKEY",
-                      "BASEBALL",
-                      "SOCCER",
-                      "TENNIS"
-                    ]
-                  },
-                  "eventId": {
-                    "type": "string",
-                    "description": "Provider event identifier the sync was asked for."
-                  },
-                  "source": {
-                    "type": "string",
-                    "enum": [
-                      "SCHEDULED",
-                      "MANUAL",
-                      "WEBHOOK"
-                    ],
-                    "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
-                  },
-                  "actor": {
-                    "description": "Who asked for a sync.",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "SYSTEM"
-                            ]
-                          },
-                          "name": {
-                            "type": "string",
-                            "enum": [
-                              "scheduler",
-                              "webhook"
-                            ],
-                            "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "name"
-                        ],
-                        "additionalProperties": false,
-                        "description": "The system: the scheduler, or the provider webhook receiver."
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "ROOT_ADMIN"
-                            ]
-                          },
-                          "userId": {
-                            "type": "string",
-                            "description": "The root admin who asked for the sync."
-                          },
-                          "email": {
-                            "type": "string",
-                            "description": "Their email at the time, for the audit trail."
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "userId",
-                          "email"
-                        ],
-                        "additionalProperties": false,
-                        "description": "A root admin, for a MANUAL sync."
-                      }
-                    ]
-                  },
-                  "normalizedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the request was validated and normalized."
-                  }
-                },
-                "required": [
-                  "sport",
-                  "eventId",
-                  "source",
-                  "actor",
-                  "normalizedAt"
-                ],
-                "additionalProperties": false
-              },
-              "outcome": {
-                "description": "Admin-facing outcome and warning summary for the sync run.",
-                "type": "object",
-                "properties": {
-                  "severity": {
-                    "type": "string",
-                    "enum": [
-                      "SUCCESS",
-                      "WARNING",
-                      "ERROR"
-                    ],
-                    "description": "Admin-facing severity derived from run status, errors, and warnings."
-                  },
-                  "summary": {
-                    "type": "string",
-                    "description": "Human-readable root-admin summary of the sync outcome."
-                  },
-                  "warnings": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "description": "Stable warning code emitted by the ingestion/sync layer."
-                        },
-                        "message": {
-                          "type": "string",
-                          "description": "Human-readable warning detail for root-admin investigation."
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Warning emitted for a provider sync run that completed but needs operator attention."
-                    },
-                    "description": "Warnings that did not fail the run but should be visible to an operator."
-                  },
-                  "errors": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991,
-                    "description": "Count of errors captured for the run."
-                  }
-                },
-                "required": [
-                  "severity",
-                  "summary",
-                  "warnings",
-                  "errors"
-                ],
-                "additionalProperties": false
-              },
-              "stats": {
-                "description": "Canonical numeric sync stats used by admin diagnostics.",
-                "type": "object",
-                "additionalProperties": {
-                  "type": "number"
-                }
-              },
-              "recordsProcessed": {
-                "description": "Legacy top-level processed-record count retained for summary compatibility.",
-                "type": "number"
-              },
-              "errors": {
-                "description": "Legacy top-level error count retained for summary compatibility.",
-                "type": "number"
-              },
-              "detail": {
-                "description": "Legacy human-readable detail retained for summary compatibility.",
-                "type": "string"
-              }
+            "additionalProperties": {
+              "type": "number"
             },
-            "additionalProperties": {},
-            "description": "Provider sync run summary with canonical stats and outcome."
+            "description": "The run's numeric counts by name, for diagnostics; empty until it reports any."
+          },
+          "changedCount": {
+            "description": "The rows the run created, updated or deleted; null until it completes, and for a failed run.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "errorCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run."
           },
           "details": {
             "description": "The run's detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission.",
@@ -70160,7 +69797,10 @@
           "startedAt",
           "completedAt",
           "createdAt",
-          "payload",
+          "summary",
+          "stats",
+          "changedCount",
+          "errorCount",
           "details"
         ],
         "additionalProperties": false,
@@ -70338,214 +69978,31 @@
                   "format": "date-time",
                   "description": "When the run was submitted."
                 },
-                "payload": {
+                "summary": {
+                  "type": "string",
+                  "description": "One line for the sync history: what the run did, or why it failed."
+                },
+                "stats": {
                   "type": "object",
-                  "properties": {
-                    "runType": {
-                      "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
-                      "type": "string"
-                    },
-                    "requestedFeeds": {
-                      "description": "Feeds represented by the originating manual or scheduled sync request.",
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "EVENTPARTICIPANTS",
-                          "EVENTLIVESCORES"
-                        ],
-                        "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
-                      }
-                    },
-                    "requestedFeed": {
-                      "description": "Single feed represented by this sync run row.",
-                      "type": "string",
-                      "enum": [
-                        "EVENTPARTICIPANTS",
-                        "EVENTLIVESCORES"
-                      ]
-                    },
-                    "requestPayload": {
-                      "description": "The request that submitted the sync run.",
-                      "type": "object",
-                      "properties": {
-                        "sport": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF",
-                            "HORSE_RACING",
-                            "AUTO_RACING",
-                            "CYCLING",
-                            "RUNNING",
-                            "BASKETBALL",
-                            "AMERICAN_FOOTBALL",
-                            "HOCKEY",
-                            "BASEBALL",
-                            "SOCCER",
-                            "TENNIS"
-                          ]
-                        },
-                        "eventId": {
-                          "type": "string",
-                          "description": "Provider event identifier the sync was asked for."
-                        },
-                        "source": {
-                          "type": "string",
-                          "enum": [
-                            "SCHEDULED",
-                            "MANUAL",
-                            "WEBHOOK"
-                          ],
-                          "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
-                        },
-                        "actor": {
-                          "description": "Who asked for a sync.",
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "SYSTEM"
-                                  ]
-                                },
-                                "name": {
-                                  "type": "string",
-                                  "enum": [
-                                    "scheduler",
-                                    "webhook"
-                                  ],
-                                  "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "name"
-                              ],
-                              "additionalProperties": false,
-                              "description": "The system: the scheduler, or the provider webhook receiver."
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ROOT_ADMIN"
-                                  ]
-                                },
-                                "userId": {
-                                  "type": "string",
-                                  "description": "The root admin who asked for the sync."
-                                },
-                                "email": {
-                                  "type": "string",
-                                  "description": "Their email at the time, for the audit trail."
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "userId",
-                                "email"
-                              ],
-                              "additionalProperties": false,
-                              "description": "A root admin, for a MANUAL sync."
-                            }
-                          ]
-                        },
-                        "normalizedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the request was validated and normalized."
-                        }
-                      },
-                      "required": [
-                        "sport",
-                        "eventId",
-                        "source",
-                        "actor",
-                        "normalizedAt"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "outcome": {
-                      "description": "Admin-facing outcome and warning summary for the sync run.",
-                      "type": "object",
-                      "properties": {
-                        "severity": {
-                          "type": "string",
-                          "enum": [
-                            "SUCCESS",
-                            "WARNING",
-                            "ERROR"
-                          ],
-                          "description": "Admin-facing severity derived from run status, errors, and warnings."
-                        },
-                        "summary": {
-                          "type": "string",
-                          "description": "Human-readable root-admin summary of the sync outcome."
-                        },
-                        "warnings": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "code": {
-                                "type": "string",
-                                "description": "Stable warning code emitted by the ingestion/sync layer."
-                              },
-                              "message": {
-                                "type": "string",
-                                "description": "Human-readable warning detail for root-admin investigation."
-                              }
-                            },
-                            "required": [
-                              "code",
-                              "message"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Warning emitted for a provider sync run that completed but needs operator attention."
-                          },
-                          "description": "Warnings that did not fail the run but should be visible to an operator."
-                        },
-                        "errors": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "Count of errors captured for the run."
-                        }
-                      },
-                      "required": [
-                        "severity",
-                        "summary",
-                        "warnings",
-                        "errors"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "stats": {
-                      "description": "Canonical numeric sync stats used by admin diagnostics.",
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "number"
-                      }
-                    },
-                    "recordsProcessed": {
-                      "description": "Legacy top-level processed-record count retained for summary compatibility.",
-                      "type": "number"
-                    },
-                    "errors": {
-                      "description": "Legacy top-level error count retained for summary compatibility.",
-                      "type": "number"
-                    },
-                    "detail": {
-                      "description": "Legacy human-readable detail retained for summary compatibility.",
-                      "type": "string"
-                    }
+                  "additionalProperties": {
+                    "type": "number"
                   },
-                  "additionalProperties": {},
-                  "description": "Provider sync run summary with canonical stats and outcome."
+                  "description": "The run's numeric counts by name, for diagnostics; empty until it reports any."
+                },
+                "changedCount": {
+                  "description": "The rows the run created, updated or deleted; null until it completes, and for a failed run.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "errorCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run."
                 }
               },
               "required": [
@@ -70563,10 +70020,13 @@
                 "startedAt",
                 "completedAt",
                 "createdAt",
-                "payload"
+                "summary",
+                "stats",
+                "changedCount",
+                "errorCount"
               ],
               "additionalProperties": false,
-              "description": "One feed's sync against a provider, with its diagnostics."
+              "description": "One sync against a provider: its kind, status and outcome."
             }
           }
         },
@@ -70735,214 +70195,31 @@
                   "format": "date-time",
                   "description": "When the run was submitted."
                 },
-                "payload": {
+                "summary": {
+                  "type": "string",
+                  "description": "One line for the sync history: what the run did, or why it failed."
+                },
+                "stats": {
                   "type": "object",
-                  "properties": {
-                    "runType": {
-                      "description": "Sync run source: a manual, scheduled or webhook-triggered event sync.",
-                      "type": "string"
-                    },
-                    "requestedFeeds": {
-                      "description": "Feeds represented by the originating manual or scheduled sync request.",
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "EVENTPARTICIPANTS",
-                          "EVENTLIVESCORES"
-                        ],
-                        "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
-                      }
-                    },
-                    "requestedFeed": {
-                      "description": "Single feed represented by this sync run row.",
-                      "type": "string",
-                      "enum": [
-                        "EVENTPARTICIPANTS",
-                        "EVENTLIVESCORES"
-                      ]
-                    },
-                    "requestPayload": {
-                      "description": "The request that submitted the sync run.",
-                      "type": "object",
-                      "properties": {
-                        "sport": {
-                          "type": "string",
-                          "enum": [
-                            "GOLF",
-                            "HORSE_RACING",
-                            "AUTO_RACING",
-                            "CYCLING",
-                            "RUNNING",
-                            "BASKETBALL",
-                            "AMERICAN_FOOTBALL",
-                            "HOCKEY",
-                            "BASEBALL",
-                            "SOCCER",
-                            "TENNIS"
-                          ]
-                        },
-                        "eventId": {
-                          "type": "string",
-                          "description": "Provider event identifier the sync was asked for."
-                        },
-                        "source": {
-                          "type": "string",
-                          "enum": [
-                            "SCHEDULED",
-                            "MANUAL",
-                            "WEBHOOK"
-                          ],
-                          "description": "Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498)."
-                        },
-                        "actor": {
-                          "description": "Who asked for a sync.",
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "SYSTEM"
-                                  ]
-                                },
-                                "name": {
-                                  "type": "string",
-                                  "enum": [
-                                    "scheduler",
-                                    "webhook"
-                                  ],
-                                  "description": "`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync."
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "name"
-                              ],
-                              "additionalProperties": false,
-                              "description": "The system: the scheduler, or the provider webhook receiver."
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "ROOT_ADMIN"
-                                  ]
-                                },
-                                "userId": {
-                                  "type": "string",
-                                  "description": "The root admin who asked for the sync."
-                                },
-                                "email": {
-                                  "type": "string",
-                                  "description": "Their email at the time, for the audit trail."
-                                }
-                              },
-                              "required": [
-                                "type",
-                                "userId",
-                                "email"
-                              ],
-                              "additionalProperties": false,
-                              "description": "A root admin, for a MANUAL sync."
-                            }
-                          ]
-                        },
-                        "normalizedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "description": "When the request was validated and normalized."
-                        }
-                      },
-                      "required": [
-                        "sport",
-                        "eventId",
-                        "source",
-                        "actor",
-                        "normalizedAt"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "outcome": {
-                      "description": "Admin-facing outcome and warning summary for the sync run.",
-                      "type": "object",
-                      "properties": {
-                        "severity": {
-                          "type": "string",
-                          "enum": [
-                            "SUCCESS",
-                            "WARNING",
-                            "ERROR"
-                          ],
-                          "description": "Admin-facing severity derived from run status, errors, and warnings."
-                        },
-                        "summary": {
-                          "type": "string",
-                          "description": "Human-readable root-admin summary of the sync outcome."
-                        },
-                        "warnings": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "code": {
-                                "type": "string",
-                                "description": "Stable warning code emitted by the ingestion/sync layer."
-                              },
-                              "message": {
-                                "type": "string",
-                                "description": "Human-readable warning detail for root-admin investigation."
-                              }
-                            },
-                            "required": [
-                              "code",
-                              "message"
-                            ],
-                            "additionalProperties": false,
-                            "description": "Warning emitted for a provider sync run that completed but needs operator attention."
-                          },
-                          "description": "Warnings that did not fail the run but should be visible to an operator."
-                        },
-                        "errors": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "Count of errors captured for the run."
-                        }
-                      },
-                      "required": [
-                        "severity",
-                        "summary",
-                        "warnings",
-                        "errors"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "stats": {
-                      "description": "Canonical numeric sync stats used by admin diagnostics.",
-                      "type": "object",
-                      "additionalProperties": {
-                        "type": "number"
-                      }
-                    },
-                    "recordsProcessed": {
-                      "description": "Legacy top-level processed-record count retained for summary compatibility.",
-                      "type": "number"
-                    },
-                    "errors": {
-                      "description": "Legacy top-level error count retained for summary compatibility.",
-                      "type": "number"
-                    },
-                    "detail": {
-                      "description": "Legacy human-readable detail retained for summary compatibility.",
-                      "type": "string"
-                    }
+                  "additionalProperties": {
+                    "type": "number"
                   },
-                  "additionalProperties": {},
-                  "description": "Provider sync run summary with canonical stats and outcome."
+                  "description": "The run's numeric counts by name, for diagnostics; empty until it reports any."
+                },
+                "changedCount": {
+                  "description": "The rows the run created, updated or deleted; null until it completes, and for a failed run.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "errorCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run."
                 }
               },
               "required": [
@@ -70960,10 +70237,13 @@
                 "startedAt",
                 "completedAt",
                 "createdAt",
-                "payload"
+                "summary",
+                "stats",
+                "changedCount",
+                "errorCount"
               ],
               "additionalProperties": false,
-              "description": "One feed's sync against a provider, with its diagnostics."
+              "description": "One sync against a provider: its kind, status and outcome."
             }
           }
         },
@@ -72104,7 +71384,10 @@
             "enum": [
               "PROVIDER_RATE_LIMITED",
               "UNMAPPED_PARTICIPANT",
-              "WEBHOOK_SECRET_MISSING"
+              "WEBHOOK_SECRET_MISSING",
+              "NO_PROVIDER_PARTICIPANTS",
+              "NO_PROVIDER_LIVE_SCORES",
+              "GAMES_NOT_SYNCED"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
           },
@@ -72320,7 +71603,10 @@
                   "enum": [
                     "PROVIDER_RATE_LIMITED",
                     "UNMAPPED_PARTICIPANT",
-                    "WEBHOOK_SECRET_MISSING"
+                    "WEBHOOK_SECRET_MISSING",
+                    "NO_PROVIDER_PARTICIPANTS",
+                    "NO_PROVIDER_LIVE_SCORES",
+                    "GAMES_NOT_SYNCED"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
                 },
@@ -72542,7 +71828,10 @@
                 "enum": [
                   "PROVIDER_RATE_LIMITED",
                   "UNMAPPED_PARTICIPANT",
-                  "WEBHOOK_SECRET_MISSING"
+                  "WEBHOOK_SECRET_MISSING",
+                  "NO_PROVIDER_PARTICIPANTS",
+                  "NO_PROVIDER_LIVE_SCORES",
+                  "GAMES_NOT_SYNCED"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
               },

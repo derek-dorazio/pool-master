@@ -359,7 +359,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     },
   };
 
-  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, new PrismaSportEventRepository(prisma));
+  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, new PrismaSportEventRepository(prisma), syncFindings);
   // A synced draft event is released on its own once its ready checks pass, in its league's window (#1823).
   const sportEventAutoReleaseScheduler = new SportEventAutoReleaseScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -374,7 +374,12 @@ export function buildApp(options: BuildAppOptions = {}) {
   });
   // A field sync's follow-ups, in its job: a synced league's event takes its games once its field
   // is in (ADR 0011, #1728), then its tiers and prices from that field (#1822, #1952).
-  const syncedFieldFollowUps = new SyncedFieldFollowUps({ providerGames: sportEventServices.providerGames, valuation: syncedFieldValuation });
+  const syncedFieldFollowUps = new SyncedFieldFollowUps({
+    providerGames: sportEventServices.providerGames,
+    valuation: syncedFieldValuation,
+    sportEvents: new PrismaSportEventRepository(prisma),
+    findings: syncFindings,
+  });
   // A sport league's events sync (#1819): the schedule and an admin's Sync now queue the same job.
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),

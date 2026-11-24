@@ -80,23 +80,9 @@ describe('IngestionService manual sync submission', () => {
       providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       providerName: 'BALLDONTLIE',
       status: 'SUBMITTED',
-      payload: expect.objectContaining({
-        requestedFeeds: ['EVENTLIVESCORES'],
-        requestedFeed: 'EVENTLIVESCORES',
-        requestPayload: expect.objectContaining({
-          sport: Sport.GOLF,
-          source: 'MANUAL',
-          actor: {
-            type: 'ROOT_ADMIN',
-            userId: 'admin-1',
-            email: 'admin@example.com',
-          },
-        }),
-      }),
+      kind: 'SCORES',
+      trigger: 'ADMIN',
     })]);
-    const payloadJson = syncRuns.rows[0].payload;
-    expect(payloadJson).not.toHaveProperty('source');
-    expect(payloadJson).not.toHaveProperty('actor');
     expect(scheduler.runEventSync).not.toHaveBeenCalled();
 
     const runner = new BackgroundJobRunner({
@@ -145,9 +131,9 @@ describe('IngestionService manual sync submission', () => {
 
     expect(scheduler.runEventSync).toHaveBeenCalledTimes(2);
     expect(scheduler.runEventSync).toHaveBeenLastCalledWith(expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
-    expect(syncRuns.rows.map((run) => [run.payload['requestedFeed'], run.status])).toEqual([
-      ['EVENTLIVESCORES', 'FAILED'],
-      ['EVENTPARTICIPANTS', 'COMPLETED'],
+    expect(syncRuns.rows.map((run) => [run.kind, run.status])).toEqual([
+      ['SCORES', 'FAILED'],
+      ['FIELD', 'COMPLETED'],
     ]);
     expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ status: 'SUCCEEDED', attempts: 1 })]);
   });

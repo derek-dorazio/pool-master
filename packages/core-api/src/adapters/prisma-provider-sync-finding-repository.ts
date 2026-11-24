@@ -50,6 +50,7 @@ export class PrismaProviderSyncFindingRepository implements ProviderSyncFindingR
         kind: filter.kind,
         status: ProviderSyncFindingStatus.OPEN,
         sportLeagueId: filter.sportLeagueId,
+        sportEventId: filter.sportEventId,
         providerId: filter.providerId,
         providerValue: filter.providerValue,
       },

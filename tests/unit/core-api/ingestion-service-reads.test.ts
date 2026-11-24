@@ -1,4 +1,5 @@
 import { expectDefined } from '../../support/expect-defined';
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { expect } from '@jest/globals';
 import { providerCodeOfSourceId } from '../../../packages/shared/domain/providers';
@@ -92,7 +93,7 @@ describe('IngestionService.listProviders', () => {
       const runs = syncRuns();
       const run = (status: 'COMPLETED' | 'FAILED' | 'IN_PROGRESS', createdAt: string) => runs.create({
         ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, status,
-        startedAt: null, completedAt: null, payload: {}, createdAt: new Date(createdAt),
+        startedAt: null, completedAt: null, ...syncRunOutcome(), createdAt: new Date(createdAt),
       });
       await run('COMPLETED', '2026-05-30T11:30:00.000Z');
       await run('COMPLETED', '2026-05-30T11:40:00.000Z');
@@ -273,7 +274,7 @@ describe('IngestionService.getSyncRun', () => {
     const run = {
       id: 'run-1', providerId: 'mock', sport: Sport.GOLF, eventId: 'event-1', status: 'COMPLETED' as const,
       startedAt: null, completedAt: null, createdAt: new Date('2026-05-30T12:00:00.000Z'),
-      payload: { requestedFeed: 'EVENTPARTICIPANTS' }, details: { jobPayload: { recordsProcessed: 3 } },
+      ...syncRunOutcome(), details: { jobPayload: { recordsProcessed: 3 } },
     };
     const runs = syncRuns({ findById: jest.fn().mockResolvedValue(run) });
 
@@ -398,12 +399,12 @@ describe('IngestionService manual sync job (#1441)', () => {
     const waiting = await runs.create({
       ...SCHEDULED_SCORES_RUN,
       providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
-      startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
+      startedAt: null, completedAt: null, kind: 'FIELD', ...syncRunOutcome(),
     });
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
       providerCode: ProviderCode.BALLDONTLIE, status: 'IN_PROGRESS',
-      startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
+      startedAt: new Date(), completedAt: null, ...syncRunOutcome(),
     });
 
     await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' }, { attempt: 2, jobId: 'job-1' });
@@ -426,7 +427,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
       providerCode: ProviderCode.BALLDONTLIE, status: 'IN_PROGRESS',
-      startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
+      startedAt: new Date(), completedAt: null, ...syncRunOutcome(),
     });
 
     await ingestion.runManualEventSync({ syncRunIds: [started.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' }, { attempt: 1, jobId: 'job-1' });
@@ -462,12 +463,12 @@ describe('IngestionService manual sync job (#1441)', () => {
     const failing = await runs.create({
       ...SCHEDULED_SCORES_RUN,
       providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
-      startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
+      startedAt: null, completedAt: null, kind: 'FIELD', ...syncRunOutcome(),
     });
     const healthy = await runs.create({
       ...SCHEDULED_SCORES_RUN,
       providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
-      startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
+      startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
     const payload = { syncRunIds: [failing.id, healthy.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' };
 

@@ -15,7 +15,7 @@
  * task holding that loop's job lock.
  */
 
-import { JobTrigger, ProviderSyncKind, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
+import { JobTrigger, ProviderSyncFindingKind, ProviderSyncKind, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
 import { INGESTION_SCHEDULE_SETTINGS } from '../../platform/ingestion-config-service';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import { SCHEDULE_RECHECK_MS, schedulePolicyDelayMs } from '../../../core/schedule-policy-delay';
@@ -74,8 +74,10 @@ export interface IngestionJobRecord {
   writeDiagnostics?: SyncWriteDiagnostics;
 }
 
+/** A problem a feed run found; one whose code is a finding kind is raised as that finding by the ledger. */
 export interface IngestionJobWarning {
-  code: string;
+  /** The finding kind the warning raises (#1999), typed so a renamed kind fails typecheck. */
+  code: ProviderSyncFindingKind;
   message: string;
 }
 
@@ -101,17 +103,12 @@ export interface EventSyncRequest {
   feeds: EventSyncFeed[];
 }
 
-/** A participant of the event's field with a ranking and no mapping from the event's provider (#1664). */
-export interface UnlinkedRankedParticipant {
-  participantId: string;
-  name: string;
-  ranking: number;
-}
-
-/** What writing a provider's event detail did: its write diagnostics, and the field's ranked participants the provider's names left unlinked. */
+/**
+ * What writing a provider's event detail did: its write diagnostics. A score the feed sends for a
+ * participant nothing maps is an UNMAPPED_PARTICIPANT finding (`publishLiveScoreUpdate`).
+ */
 export interface EventDetailPersisted {
   writeDiagnostics: SyncWriteDiagnostics;
-  unlinkedRankedParticipants: readonly UnlinkedRankedParticipant[];
 }
 
 export interface IngestionCallbacks {
@@ -384,7 +381,7 @@ export class IngestionScheduler {
         writeDiagnostics,
         warnings: updateCount === 0
           ? [{
-              code: 'NO_PROVIDER_LIVE_SCORES',
+              code: ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES,
               message: 'Provider returned no live-score updates for the requested event.',
             }]
           : [],
@@ -611,7 +608,7 @@ export class IngestionScheduler {
     const { scope } = normalized;
     return this.executeScheduledSyncRun(normalized, () =>
       this.pollLiveScores(scope.sport, scope.providerId, scope.eventId),
-    'WEBHOOK_EVENT_SYNC', { backgroundJobId: context.jobId, sportEventId: request.sportEventId, trigger: context.trigger });
+    { backgroundJobId: context.jobId, sportEventId: request.sportEventId, trigger: context.trigger });
   }
 
   private normalizeScheduledEventSync(input: {
@@ -636,7 +633,6 @@ export class IngestionScheduler {
   private async executeScheduledSyncRun(
     normalizedRequest: NormalizedSyncRequest,
     run: () => Promise<IngestionJobRecord>,
-    runType: 'SCHEDULED_EVENT_SYNC' | 'WEBHOOK_EVENT_SYNC' = 'SCHEDULED_EVENT_SYNC',
     scope: { backgroundJobId?: string; sportEventId?: string; trigger?: JobTrigger } = {},
   ): Promise<IngestionJobRecord> {
     const syncRunLedger = this.options.syncRunLedger;
@@ -648,7 +644,6 @@ export class IngestionScheduler {
       normalizedRequest,
       providerId: normalizedRequest.scope.providerId,
       submittedAt: this.getNow(),
-      runType,
       ...scope,
       // A scheduled run has no job; a webhook's run records its job's trigger (#1861).
       trigger: scope.trigger ?? JobTrigger.SCHEDULE,
@@ -681,13 +676,12 @@ export class IngestionScheduler {
         throw new Error(`Provider returned no event detail for event ${eventId}`);
       }
 
-      const { writeDiagnostics, unlinkedRankedParticipants } = await this.callbacks.onEventDetail(detail);
+      const { writeDiagnostics } = await this.callbacks.onEventDetail(detail);
       this.logger?.info({
         sport,
         eventId,
         providerId: provider.providerId,
         participantCount: detail.participants.length,
-        unlinkedRankedCount: unlinkedRankedParticipants.length,
       }, 'Completed participant sync for event');
       return {
         recordsProcessed: detail.participants.length,
@@ -698,15 +692,12 @@ export class IngestionScheduler {
           ...syncWriteStats(writeDiagnostics),
         },
         writeDiagnostics,
-        warnings: [
-          ...(detail.participants.length === 0
-            ? [{
-                code: 'NO_PROVIDER_PARTICIPANTS',
-                message: 'Provider returned event details with no participants.',
-              }]
-            : []),
-          ...(unlinkedRankedParticipants.length > 0 ? [unlinkedRankedWarning(provider.providerId, unlinkedRankedParticipants)] : []),
-        ],
+        warnings: detail.participants.length === 0
+          ? [{
+              code: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS,
+              message: 'Provider returned event details with no participants.',
+            }]
+          : [],
       };
     }, eventId);
   }
@@ -890,25 +881,6 @@ export class IngestionScheduler {
       return SCHEDULE_RECHECK_MS;
     }
   }
-}
-
-/** How many unlinked ranked participants the warning names before counting the rest, so a large field's warning stays readable. */
-export const UNLINKED_RANKED_NAMES_SHOWN = 20;
-
-/**
- * The warning a field sync gives when ranked participants of the field have no mapping from the
- * event's provider (#1664): the provider's box scores and results never reach them, so the root
- * admin merges or maps each by hand. Listed best rank first, the first `UNLINKED_RANKED_NAMES_SHOWN`
- * by name.
- */
-function unlinkedRankedWarning(providerId: string, participants: readonly UnlinkedRankedParticipant[]): IngestionJobWarning {
-  const named = participants.slice(0, UNLINKED_RANKED_NAMES_SHOWN).map((participant) => `${participant.name} (rank ${String(participant.ranking)})`).join(', ');
-  const more = participants.length - UNLINKED_RANKED_NAMES_SHOWN;
-  const names = more > 0 ? `${named} and ${String(more)} more` : named;
-  return {
-    code: 'RANKED_PARTICIPANTS_UNLINKED',
-    message: `${String(participants.length)} ranked participant${participants.length === 1 ? ' has' : 's have'} no ${providerId} mapping, so its scores will not reach ${participants.length === 1 ? 'it' : 'them'}: ${names}. Merge or map each by hand.`,
-  };
 }
 
 function resolveEventParticipantSyncWindow(
