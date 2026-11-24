@@ -15,8 +15,8 @@ import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpe
 
 /**
  * #623 — the horse racing journey (plans/racing-sports.md §9, slice 4): the root admin builds a
- * race on the shared Manage pages (a circuit, eight horses, the race, its field with odds, tiers
- * from those odds, prices) and releases it (act 1); a new commissioner creates a horse racing
+ * race on the shared Manage pages (a circuit, eight horses, the race, its seeded field, tiers
+ * from those seeds, prices) and releases it (act 1); a new commissioner creates a horse racing
  * contest on it with an edited points table (act 2); a new member joins by link and submits an
  * entry, with no tiebreaker to choose (act 3); and the root admin starts the race, loads its
  * official finishing order through the race results card, and completes it, which settles the
@@ -32,10 +32,9 @@ import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpe
 const HORSE_COUNT = 8;
 
 /**
- * Odds to win, by horse number (index 0 is horse 1). Ascending, so tiers from odds put horses
- * 1-3 in tier 1, 4-6 in tier 2 and 7-8 in tier 3.
+ * Each horse's seed is its horse number, so tiers in seed order put horses 1-3 in tier 1, 4-6 in
+ * tier 2 and 7-8 in tier 3. Odds are never typed: they come only from the feed.
  */
-const ODDS_TO_WIN: readonly number[] = [2.5, 3, 4.5, 6, 8, 12, 20, 33];
 const TIER_OF_HORSE: readonly number[] = [1, 1, 1, 2, 2, 2, 3, 3];
 
 /** The member's pick in each tier, by horse number: a second favourite, a mid-price, a longshot. */
@@ -115,7 +114,7 @@ function horseName(run: JourneyRun, horse: number): string {
   return `${run.playerNamePrefix} ${horse}`;
 }
 
-test('act 1: the root admin builds a race — circuit, eight horses, the race, its field with odds, tiers from odds and prices — and releases it', async ({ page }) => {
+test('act 1: the root admin builds a race — circuit, eight horses, the race, its seeded field, tiers from seeds and prices — and releases it', async ({ page }) => {
   test.setTimeout(180_000);
   const credentials = readAdminCredentials();
   admin = credentials;
@@ -208,7 +207,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
   });
 
-  const fieldEntryIds = await test.step('set each horse\'s odds to win in its Field dialog', async () => {
+  const fieldEntryIds = await test.step('set each horse\'s seed in its Field dialog', async () => {
     // The field read straight from the API, for the field-entry id of each horse (the golden
     // journey's tiers step has the reason it is not sniffed from the page).
     const fieldResponse = await page.request.get(`/api/v1/events/${raceId}/participants`);
@@ -223,13 +222,13 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     });
 
     for (const [index, entryId] of entryIds.entries()) {
-      await correctFieldParticipant(page, raceId, entryId, { oddsToWin: ODDS_TO_WIN[index] });
+      await correctFieldParticipant(page, raceId, entryId, { seedNumber: index + 1 });
     }
     return entryIds;
   });
   journey.fieldEntryIds = fieldEntryIds;
 
-  await test.step('tier the field from its odds: the three favourites, the middle three, the two longshots', async () => {
+  await test.step('tier the field in seed order: the top three seeds, the middle three, the bottom two', async () => {
     await page.getByTestId('root-admin-tier-auto-tiers').click();
     await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${raceId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {

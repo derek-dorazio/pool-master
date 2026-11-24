@@ -12415,23 +12415,6 @@ export type AddSportEventParticipantsResponse = {
 };
 
 /**
- * What seeding the field from the event's sport league did.
- */
-export type SeedSportEventParticipantsResponse = {
-    added: number;
-    /**
-     * Already on the field.
-     */
-    skipped: number;
-    /**
-     * Active affiliations considered.
-     */
-    total: number;
-    seedNumbersDerived: number;
-    oddsDerived: number;
-};
-
-/**
  * One save of the field grid.
  */
 export type UpdateSportEventParticipantsRequest = {
@@ -35249,49 +35232,6 @@ export type AddEventParticipantsResponses = {
 };
 
 export type AddEventParticipantsResponse = AddEventParticipantsResponses[keyof AddEventParticipantsResponses];
-
-export type SeedEventParticipantsData = {
-    body?: never;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/seed';
-};
-
-export type SeedEventParticipantsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type SeedEventParticipantsError = SeedEventParticipantsErrors[keyof SeedEventParticipantsErrors];
-
-export type SeedEventParticipantsResponses = {
-    /**
-     * What seeding the field from the event's sport league did.
-     */
-    200: SeedSportEventParticipantsResponse;
-};
-
-export type SeedEventParticipantsResponse = SeedEventParticipantsResponses[keyof SeedEventParticipantsResponses];
 
 export type RebuildEventLeaderboardsData = {
     body?: never;
