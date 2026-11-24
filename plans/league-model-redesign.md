@@ -727,8 +727,11 @@ Contest:
   contest (its Masters finishes by Season) reads the same rows through the covered slot; its
   team-page screen is #1996.
   Hall of Lame and the record book are unchanged apart from the year rename.
-- Perpetual trophies (Derek 2026-11-24, slice 20d): one per (League, `ContestConfigTemplate`),
-  a real FK replacing the event-series + selection-type key string; named from the template
+- Perpetual trophies (Derek 2026-11-24, slice 20d): one per (League, `ContestConfigTemplate`,
+  the slot definitions the contest covers) (Derek 2026-11-24: the Masters tiered trophy and
+  the Memorial tiered trophy are separate), stored as `PerpetualTrophy` (League FK, template
+  FK) with `PerpetualTrophySlotDefinition` child rows, replacing the event-series +
+  selection-type key string (no built id string); a contest without a template gets none; named from the template
   and sport league; one plate per Season with that Season's winners; "repeat winner" means
   consecutive Seasons. A contest whose covered slots are all `slotKind` WEEK gets none
   (replaces the `isWeekOfGames` game-count guess). A trophy shows from its first Season
