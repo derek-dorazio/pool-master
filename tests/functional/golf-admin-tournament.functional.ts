@@ -205,12 +205,13 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const fieldAdd = await addEventParticipants({ client: c, path: { eventId }, body: { participantIds: players.map((p) => p.id) } });
     expect(fieldAdd.response?.status).toBe(200);
     expect(expectDefined(fieldAdd.data).added).toBe(20);
-    const seeding = await applyEventParticipantUpload({
-      client: c,
-      path: { eventId },
-      body: { rows: players.map((p, index) => ({ participantId: p.id, ranking: p.rank, seedNumber: index + 1 })) },
-    });
-    expect(seeding.response?.status).toBe(200);
+    // Each row's distinct values cost a write of their own, so the 20 rows go up in two uploads of
+    // ten to stay inside the per-request query budget.
+    const seedRows = players.map((p, index) => ({ participantId: p.id, ranking: p.rank, seedNumber: index + 1 }));
+    for (const rows of [seedRows.slice(0, 10), seedRows.slice(10)]) {
+      const seeding = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows } });
+      expect(seeding.response?.status).toBe(200);
+    }
 
     let field = await listEventParticipants({ client: c, path: { eventId } });
     expect(expectDefined(field.data).participants.length).toBe(20);
