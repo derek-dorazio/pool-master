@@ -812,7 +812,10 @@ Contest:
   contest per major, and the Majors Cup (golf) or Grand Slam Cup (tennis) adds them up.
   Only pick'em and survivor (FROM_SLOT over WEEK events) span events; ALL_LISTED covers one
   event's slots. The events sync loads each Season's whole schedule ahead, so coverage is
-  fixed at creation from the Season's slots, with no "slot created" join handler.
+  fixed at creation from the Season's slots, with no "slot created" join handler. The
+  existing late-join job `ADD_RELEASED_EDITION_TO_CONTEST` (the release-into-template-contests
+  handler, `addReleasedEditionToContest`) is deleted in slice 15, or slice 11 if its templates
+  go first.
   Future rule (Derek 2026-11-24): if a field contest ever spans several events, it takes
   one set of picks made once ("Scottie Scheffler for the next three tournaments"), never a
   pick window per event. Not built now.
@@ -1250,6 +1253,10 @@ helper), never a free key string.
 - 5: rewrite the `add-sport` skill; the sport registry text in `architecture-rules.md` §4.
 - 6–7: the test-data shape in `architecture-rules.md` §6.
 - 11: rewrite the `add-event-page` skill; `ux-rules.md` §13 items 1–3 and §12 item 12.
+- 11 and 15 (no multi-tournament field pools): the majors-pool and multi-event lines in
+  `domain-model-concepts.md`, `ux-rules.md`, the `add-sport` skill, `docs/DOMAIN-OPERATIONS.md`,
+  `docs/EMAIL-DELIVERY.md`, `docs/EVENT-SETUP-PROCEDURES.md`, `docs/SPORT-DATA-LOADING.md` and
+  `docs/BACKGROUND-JOBS.md` (the `ADD_RELEASED_EDITION_TO_CONTEST` row).
 - 14: status bubbling and the handler map in `architecture-rules.md` §4.
 - Every sync slice: its part of `docs/LIVE-SPORTS-DATA-SYNC.md`, fully rewritten by 29.
 - 20: `docs/DOMAIN-OPERATIONS.md` championship section and rows 914–924;
