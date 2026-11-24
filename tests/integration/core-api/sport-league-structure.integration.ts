@@ -6,7 +6,7 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
-import { LeaguePhase, SeriesFormat, SlotKind, SlotPairing, SlotProviderMatchType, Sport } from '@poolmaster/shared/domain';
+import { LeaguePhase, MatchFormat, PeriodUnit, SeriesFormat, SlotKind, SlotPairing, SlotProviderMatchType, Sport } from '@poolmaster/shared/domain';
 import { SportLeagueStructureResponseSchema } from '@poolmaster/shared/dto';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
@@ -38,6 +38,7 @@ async function testLeague() {
 
 const SLOT_DEFAULTS = {
   awardsTrophy: false, squaresEligible: false, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+  matchFormat: MatchFormat.HEAD_TO_HEAD, canEndTied: false, periodUnit: PeriodUnit.QUARTER, periodCount: 4,
 } as const;
 
 describe('the seeded phase and slot definitions', () => {
@@ -86,6 +87,49 @@ describe('the seeded phase and slot definitions', () => {
   });
 });
 
+describe('how the seeded slot definitions are played (#2043)', () => {
+  /** Every seeded slot with its league's sport, name and scoring family. */
+  async function seededSlots() {
+    const slots = await getPrisma().sportLeaguePhaseSlot.findMany({
+      where: { sportLeague: { name: { not: { startsWith: 'Structure League' } } } },
+      select: {
+        key: true, seriesFormat: true, matchFormat: true, canEndTied: true, periodUnit: true, periodCount: true,
+        phase: { select: { phase: true } },
+        sportLeague: { select: { name: true, scoringFamily: true, sport: { select: { sport: true } } } },
+      },
+    });
+    return slots.map(({ phase, sportLeague, ...slot }) => ({ ...slot, phase: phase.phase, league: sportLeague.name, scoringFamily: sportLeague.scoringFamily, sport: sportLeague.sport.sport }));
+  }
+
+  it('meets two sides in every slot of a head-to-head league and ranks a whole field in every other league\'s', async () => {
+    const slots = await seededSlots();
+
+    expect(slots.length).toBeGreaterThan(0);
+    expect(slots.filter((slot) => (slot.scoringFamily === 'HEAD_TO_HEAD') !== (slot.matchFormat === MatchFormat.HEAD_TO_HEAD))).toEqual([]);
+  });
+
+  it('lets a soccer league\'s regular season, the legs of its two-legged ties and the NFL\'s regular season end level, never a one-game knockout or another league\'s game', async () => {
+    const slots = await seededSlots();
+    const tied = (league: string, key: string) => slots.find((slot) => slot.league === league && slot.key === key)?.canEndTied;
+
+    expect(slots.filter((slot) => slot.canEndTied && slot.sport !== Sport.SOCCER && !(slot.league === 'NFL' && slot.phase === LeaguePhase.REGULAR))).toEqual([]);
+    expect(slots.filter((slot) => slot.league === 'NFL' && slot.phase === LeaguePhase.REGULAR && !slot.canEndTied)).toEqual([]);
+    expect(slots.filter((slot) => slot.sport === Sport.SOCCER && slot.canEndTied !== (slot.phase === LeaguePhase.REGULAR || slot.seriesFormat === SeriesFormat.AGGREGATE))).toEqual([]);
+    expect([tied('Premier League', 'WEEK_1'), tied('UEFA Champions League', 'ROUND_OF_16'), tied('UEFA Champions League', 'FINAL'), tied('NFL', 'WEEK_1'), tied('NFL', 'FINAL')]).toEqual([true, true, false, true, false]);
+  });
+
+  it('plays the NFL in four quarters, men\'s college basketball in two halves, MLB in nine innings and the PGA TOUR over eighteen holes, and a race in no periods', async () => {
+    const slots = await seededSlots();
+    const periods = (sport: Sport, league: string) => [...new Set(slots.filter((slot) => slot.sport === sport && slot.league === league).map((slot) => `${String(slot.periodUnit)}:${String(slot.periodCount)}`))];
+
+    expect(periods(Sport.AMERICAN_FOOTBALL, 'NFL')).toEqual(['QUARTER:4']);
+    expect(periods(Sport.BASKETBALL, 'NCAA Division I Men')).toEqual(['HALF:2']);
+    expect(periods(Sport.BASEBALL, 'MLB')).toEqual(['INNING:9']);
+    expect(periods(Sport.GOLF, 'PGA TOUR')).toEqual(['HOLE:18']);
+    expect(periods(Sport.AUTO_RACING, 'Formula 1')).toEqual(['null:null']);
+  });
+});
+
 describe('the test fixture tour', () => {
   it('has a regular season of one tournament, as a seeded league has its definitions, however many first uses race', async () => {
     const [tourId] = await Promise.all([fixtureTourId(getPrisma()), fixtureTourId(getPrisma()), fixtureTourId(getPrisma())]);
@@ -109,6 +153,18 @@ describe('the database checks on slot definitions', () => {
       .rejects.toThrow(/sport_league_phase_slots_week_number/);
     await expect(slots.create({ data: { ...SLOT_DEFAULTS, sportLeagueId: league.id, sportLeaguePhaseId: phase.id, key: 'FINAL', slotKind: SlotKind.FINAL, weekNumber: 3 } }))
       .rejects.toThrow(/sport_league_phase_slots_week_number/);
+  });
+
+  it('refuse a period count with no unit, a unit with no count, and a game of no periods (#2043)', async () => {
+    const league = await testLeague();
+    const phase = await phaseOf(league.id);
+    const slots = getPrisma().sportLeaguePhaseSlot;
+    const slot = { ...SLOT_DEFAULTS, sportLeagueId: league.id, sportLeaguePhaseId: phase.id, key: 'FINAL', slotKind: SlotKind.FINAL };
+
+    await expect(slots.create({ data: { ...slot, periodUnit: null } })).rejects.toThrow(/sport_league_phase_slots_periods/);
+    await expect(slots.create({ data: { ...slot, periodCount: null } })).rejects.toThrow(/sport_league_phase_slots_periods/);
+    await expect(slots.create({ data: { ...slot, periodCount: 0 } })).rejects.toThrow(/sport_league_phase_slots_periods/);
+    await expect(slots.create({ data: { ...slot, periodUnit: null, periodCount: null } })).resolves.toEqual(expect.objectContaining({ periodUnit: null }));
   });
 
   it('refuse a best-of series of an even number of games, and a key that is not a code', async () => {

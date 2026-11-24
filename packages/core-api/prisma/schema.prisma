@@ -2591,6 +2591,23 @@ enum PrismaSlotProviderMatchType {
   CALENDAR_WEEK
 }
 
+/// How a slot's games are contested (#2043): two sides meeting, or a whole field ranked. Mirrors
+/// the domain `MatchFormat`.
+enum PrismaMatchFormat {
+  HEAD_TO_HEAD
+  FIELD
+}
+
+/// What a slot's games are played in (#2043); the words come from the display strings. Mirrors the
+/// domain `PeriodUnit`.
+enum PrismaPeriodUnit {
+  QUARTER
+  HALF
+  PERIOD
+  INNING
+  HOLE
+}
+
 /// One phase of a sport league's Seasons, timeless (#2002): set by migration, one row per phase
 /// the league plays. An unsynced phase (the NFL's PRESEASON) has no slots.
 model SportLeaguePhase {
@@ -2640,6 +2657,15 @@ model SportLeaguePhaseSlot {
   /// AGGREGATE.
   seriesGames        Int                @map("series_games")
   pairing            PrismaSlotPairing
+  /// Two sides meeting, or a whole field ranked (#2043); each Round copies it once events carry slots.
+  matchFormat        PrismaMatchFormat  @map("match_format")
+  /// Whether a game can finish level (#2043): a soccer league's regular season. A slot that cannot
+  /// is decided by overtime or a shoot-out.
+  canEndTied         Boolean            @map("can_end_tied")
+  /// What a game is played in (#2043). Null, with `periodCount`, for a game kept by no period.
+  periodUnit         PrismaPeriodUnit?  @map("period_unit")
+  /// How many periods a game has, overtime aside. Database check: set exactly when `periodUnit` is.
+  periodCount        Int?               @map("period_count")
   createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz
 

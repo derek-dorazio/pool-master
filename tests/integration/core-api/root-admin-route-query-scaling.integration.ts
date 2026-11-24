@@ -497,6 +497,7 @@ async function seedLeagueStructure(slots: number) {
       data: {
         sportLeagueId: sportLeague.id, sportLeaguePhaseId: phase.id, key: `WEEK_${String(week)}`, slotKind: 'WEEK', weekNumber: week,
         awardsTrophy: false, squaresEligible: true, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+        matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4,
         providerMappings: { create: { sportLeagueProviderMappingId: mappingId, matchType: 'CALENDAR_WEEK' } },
       },
     });

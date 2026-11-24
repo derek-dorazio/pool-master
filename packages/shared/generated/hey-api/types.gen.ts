@@ -9746,6 +9746,22 @@ export type SportLeagueSlotDefinitionDto = {
     seriesGames: number;
     pairing: 'FIXED' | 'RESEEDED';
     /**
+     * How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+     */
+    matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+    /**
+     * Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out.
+     */
+    canEndTied: boolean;
+    /**
+     * What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+     */
+    periodUnit: 'QUARTER' | 'HALF' | 'PERIOD' | 'INNING' | 'HOLE' | null;
+    /**
+     * How many periods a game has, overtime aside; null exactly when periodUnit is.
+     */
+    periodCount: number | null;
+    /**
      * By provider, then in the order the sync tries them.
      */
     providerMappings: Array<{
@@ -9807,6 +9823,22 @@ export type SportLeaguePhaseDefinitionDto = {
          */
         seriesGames: number;
         pairing: 'FIXED' | 'RESEEDED';
+        /**
+         * How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+         */
+        matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+        /**
+         * Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out.
+         */
+        canEndTied: boolean;
+        /**
+         * What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+         */
+        periodUnit: 'QUARTER' | 'HALF' | 'PERIOD' | 'INNING' | 'HOLE' | null;
+        /**
+         * How many periods a game has, overtime aside; null exactly when periodUnit is.
+         */
+        periodCount: number | null;
         /**
          * By provider, then in the order the sync tries them.
          */
@@ -9874,6 +9906,22 @@ export type SportLeagueStructureResponse = {
              */
             seriesGames: number;
             pairing: 'FIXED' | 'RESEEDED';
+            /**
+             * How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+             */
+            matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+            /**
+             * Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out.
+             */
+            canEndTied: boolean;
+            /**
+             * What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+             */
+            periodUnit: 'QUARTER' | 'HALF' | 'PERIOD' | 'INNING' | 'HOLE' | null;
+            /**
+             * How many periods a game has, overtime aside; null exactly when periodUnit is.
+             */
+            periodCount: number | null;
             /**
              * By provider, then in the order the sync tries them.
              */

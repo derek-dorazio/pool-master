@@ -1,10 +1,10 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
-import { LeaguePhaseOrder, SlotKindOrder, SlotPairingOrder, type LeaguePhase, type SlotKind, type SlotPairing } from '@poolmaster/shared/domain';
+import { LeaguePhaseOrder, MatchFormatOrder, SlotKindOrder, SlotPairingOrder, type LeaguePhase, type MatchFormat, type SlotKind, type SlotPairing } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { DataGrid, SectionCard, Text } from '@/features/shared/ui';
 import { LeagueSlotDialog } from './league-slot-dialog';
-import { mappingText, seriesText, type SlotDefinitionRow } from './league-structure-rows';
+import { mappingText, periodsText, seriesText, type SlotDefinitionRow } from './league-structure-rows';
 
 const columnHelper = createColumnHelper<SlotDefinitionRow>();
 
@@ -34,6 +34,21 @@ const slotColumns = [
     id: 'series',
     header: 'Series',
     meta: { info: 'How one meeting in the slot is decided, which each Season copies.', type: { kind: 'text' } },
+  }),
+  columnHelper.accessor('matchFormat', {
+    header: 'Format',
+    meta: { info: 'How the slot\'s games are contested: two sides meeting, or a whole field ranked.', type: { kind: 'enum', order: MatchFormatOrder, label: (format) => enumLabel('MatchFormat', format as MatchFormat) } },
+    cell: ({ getValue }) => enumLabel('MatchFormat', getValue()),
+  }),
+  columnHelper.accessor('canEndTied', {
+    header: 'Can tie',
+    meta: { info: 'Whether a game of the slot can finish level. One that cannot is decided by overtime or a shoot-out.', type: { kind: 'boolean' } },
+    cell: ({ getValue }) => (getValue() ? 'Yes' : 'No'),
+  }),
+  columnHelper.accessor((slot) => periodsText(slot), {
+    id: 'periods',
+    header: 'Periods',
+    meta: { info: 'What a game of the slot is played in, and how many, overtime aside.', type: { kind: 'text' } },
   }),
   columnHelper.accessor('pairing', {
     header: 'Pairing',

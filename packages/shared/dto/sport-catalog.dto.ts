@@ -13,6 +13,8 @@ import { registerSchema } from './schema-registry';
 import {
   AutoReleaseCheckOutcome,
   LeaguePhase,
+  MatchFormat,
+  PeriodUnit,
   SeriesFormat,
   SlotKind,
   SlotPairing,
@@ -380,6 +382,10 @@ export const SportLeagueSlotDefinitionDtoSchema = z.object({
   seriesFormat: z.enum(SeriesFormat),
   seriesGames: z.number().int().min(1).describe('Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.'),
   pairing: z.enum(SlotPairing),
+  matchFormat: z.enum(MatchFormat).describe('How the slot\'s games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.'),
+  canEndTied: z.boolean().describe('Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out.'),
+  periodUnit: z.enum(PeriodUnit).nullable().describe('What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).'),
+  periodCount: z.number().int().min(1).nullable().describe('How many periods a game has, overtime aside; null exactly when periodUnit is.'),
   providerMappings: z.array(SlotProviderMappingDtoSchema).describe('By provider, then in the order the sync tries them.'),
 }).describe('One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it.');
 export type SportLeagueSlotDefinitionDto = z.infer<typeof SportLeagueSlotDefinitionDtoSchema>;

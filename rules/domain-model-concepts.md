@@ -387,7 +387,8 @@ Definitions (timeless, per league, set by migration)
 SportLeague
  ├─→ SportLeagueConference ─→ SportLeagueConferenceDivision
  ├─→ SportLeaguePhase          (PRESEASON | REGULAR | POSTSEASON; synced or not)
- │     └─→ SportLeaguePhaseSlot (a key, a kind, an optional proper name: WEEK 14, FINAL, a tournament)
+ │     └─→ SportLeaguePhaseSlot (a key, a kind, an optional proper name: WEEK 14, FINAL, a tournament;
+ │           │                   its match format, whether a game can end tied, and its period unit and count)
  │           └─→ SportLeaguePhaseSlotProviderMapping (how one provider's games match it; inclusion only)
  └─→ SportLeaguePosition       (QB, RB...; field eligibility)
 
