@@ -345,8 +345,8 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_event_tiers', 3],
       ['SELECT sport_events', 3],
       ['SELECT sport_league_seasons', 1],
-      ['SELECT sport_leagues', 2],
-      ['SELECT sports', 1],
+      ['SELECT sport_leagues', 4],
+      ['SELECT sports', 4],
       ['SELECT users', 1],
       ['UPDATE contests', 1],
     ]);
@@ -729,7 +729,8 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 2],
-  ['SELECT sport_leagues', 2],
+  ['SELECT sport_leagues', 3],
+  ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
 ];
 
@@ -750,7 +751,8 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
   ['SELECT sport_league_seasons', 3],
-  ['SELECT sport_leagues', 3],
+  ['SELECT sport_leagues', 4],
+  ['SELECT sports', 4],
   ['UPDATE contests', 1],
   ['UPDATE sport_events', 1],
 ];

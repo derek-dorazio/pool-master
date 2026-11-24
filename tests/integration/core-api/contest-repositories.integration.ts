@@ -86,7 +86,8 @@ const PINNED_RELEASE_COUNTS: Array<[string, number]> = [
   ['SELECT event_series', 4],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 2],
-  ['SELECT sport_leagues', 2],
+  ['SELECT sport_leagues', 3], // each event's sport is read through its series' league since #2042 (#2089)
+  ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
 ];
 
