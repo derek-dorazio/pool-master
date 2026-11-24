@@ -716,7 +716,8 @@ Contest:
   survivor, bracket, Clutch Card); squares does not. Medals count gold, silver, bronze and
   top 10 (new) from these rows in one shared function, over every contest that writes them;
   cups and the Championship filter them by their own rules. A team's run in a recurring
-  contest (its Masters finishes by Season) reads the same rows through the covered slot.
+  contest (its Masters finishes by Season) reads the same rows through the covered slot; its
+  team-page screen is #1996.
   Hall of Lame and the record book are unchanged apart from the year rename.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
