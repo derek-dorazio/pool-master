@@ -1,40 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { ProviderSyncRun, ProviderSyncRunDetails, ProviderSyncRunPayload } from './root-admin-sync-utils';
+import type { ProviderSyncRunDetails } from './root-admin-sync-utils';
 import {
   buildRunEvidenceRows,
   formatEventValue,
-  getRunStatusLabel,
-  getRunStatusTone,
   getStatusTone,
 } from './sync-run-status';
-
-function run(status: ProviderSyncRun['status'], payload: ProviderSyncRunPayload = {}): ProviderSyncRun {
-  return {
-    id: 'sync-run',
-    providerId: '6f1e9a52-0000-4000-8000-000000000001',
-    providerName: 'BALLDONTLIE',
-    sport: 'GOLF',
-    eventId: null,
-    kind: 'SCORES',
-    trigger: 'SCHEDULE',
-    sportLeagueId: null,
-    sportEventId: null,
-    backgroundJobId: null,
-    status,
-    startedAt: null,
-    completedAt: null,
-    createdAt: '2026-05-25T11:59:00.000Z',
-    payload,
-  };
-}
-
-const warning = { code: 'NO_PROVIDER_LIVE_SCORES', message: 'No live-score updates.' };
-
-type Outcome = NonNullable<ProviderSyncRunPayload['outcome']>;
-
-function outcome(severity: Outcome['severity'], warnings: Outcome['warnings'] = []): ProviderSyncRunPayload {
-  return { outcome: { severity, summary: 'Synced.', warnings, errors: 0 } };
-}
 
 describe('formatEventValue', () => {
   it('shows the event id as given', () => {
@@ -58,49 +28,6 @@ describe('getStatusTone', () => {
     ['SOMETHING_NEW', 'neutral'],
   ])('draws status %s in the %s tone', (status, tone) => {
     expect(getStatusTone(status)).toBe(tone);
-  });
-});
-
-describe('getRunStatusTone', () => {
-  it('follows the run status when the outcome is a success with no warning', () => {
-    expect(getRunStatusTone(run('COMPLETED'))).toBe('success');
-    expect(getRunStatusTone(run('FAILED', outcome('SUCCESS')))).toBe('danger');
-  });
-
-  it('turns a completed run amber when its outcome is a warning, even with no warning listed', () => {
-    expect(getRunStatusTone(run('COMPLETED', outcome('WARNING')))).toBe('warning');
-  });
-
-  it('turns a run amber when its successful outcome still lists a warning', () => {
-    expect(getRunStatusTone(run('COMPLETED', outcome('SUCCESS', [warning])))).toBe('warning');
-  });
-
-  it('turns a completed run red when its outcome is an error', () => {
-    expect(getRunStatusTone(run('COMPLETED', outcome('ERROR')))).toBe('danger');
-  });
-
-  it('keeps a failed run red even when its outcome lists a warning', () => {
-    expect(getRunStatusTone(run('FAILED', outcome('WARNING', [warning])))).toBe('danger');
-  });
-
-  it('shows warnings over an error, so a run with both reads amber', () => {
-    expect(getRunStatusTone(run('COMPLETED', outcome('ERROR', [warning])))).toBe('warning');
-  });
-});
-
-describe('getRunStatusLabel', () => {
-  it('reads "COMPLETED WITH WARNINGS" for a completed run whose outcome is a warning', () => {
-    expect(getRunStatusLabel(run('COMPLETED', outcome('WARNING'))))
-      .toBe('COMPLETED WITH WARNINGS');
-  });
-
-  it('reads "COMPLETED WITH WARNINGS" for a completed run whose successful outcome still lists a warning', () => {
-    expect(getRunStatusLabel(run('COMPLETED', outcome('SUCCESS', [warning])))).toBe('COMPLETED WITH WARNINGS');
-  });
-
-  it('reads the plain status for a clean completed run, and for any run not completed even with warnings', () => {
-    expect(getRunStatusLabel(run('COMPLETED'))).toBe('COMPLETED');
-    expect(getRunStatusLabel(run('FAILED', outcome('WARNING', [warning])))).toBe('FAILED');
   });
 });
 

@@ -26,7 +26,6 @@ import type {
 } from '../core/provider-interface';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
-import type { EventDetailPersisted, UnlinkedRankedParticipant } from '../core/ingestion-scheduler';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { CdnInvalidator } from '../../../core/cdn-invalidator';
 import type { JobsForWrite } from '../../background-jobs/background-job-queue';
@@ -273,7 +272,7 @@ export class IngestionPersistence {
     eventsPersisted: number;
     participantsPersisted: number;
     sportEventParticipantsPersisted: number;
-  }> & Pick<EventDetailPersisted, 'unlinkedRankedParticipants'>> {
+  }>> {
     this.logger?.debug({
       providerId: detail.providerId,
       externalId: detail.externalId,
@@ -306,7 +305,6 @@ export class IngestionPersistence {
         count: 0,
         value: { eventsPersisted, participantsPersisted: 0, sportEventParticipantsPersisted: 0 },
         writeDiagnostics: summarizeSyncWriteRows(detailRows),
-        unlinkedRankedParticipants: [],
       };
     }
 
@@ -336,8 +334,6 @@ export class IngestionPersistence {
     }
     followUps.queued();
 
-    const unlinkedRankedParticipants = await this.findUnlinkedRankedParticipants(persistedEvent.id, detail.providerId);
-
     this.logger?.info({
       providerId: detail.providerId,
       externalId: detail.externalId,
@@ -345,7 +341,6 @@ export class IngestionPersistence {
       eventsPersisted,
       participantsPersisted,
       sportEventParticipantsPersisted,
-      unlinkedRankedCount: unlinkedRankedParticipants.length,
     }, 'Persisted event detail from ingestion');
 
     const value = {
@@ -357,24 +352,7 @@ export class IngestionPersistence {
       count: sportEventParticipantsPersisted,
       value,
       writeDiagnostics: summarizeSyncWriteRows(detailRows),
-      unlinkedRankedParticipants,
     };
-  }
-
-  /**
-   * The event's ranked participants with no mapping from its provider, best rank first (#1664): a
-   * star loaded from a data file whom the provider's field named some other way, or not at all.
-   * The provider's scores never reach them, so the sync run lists them for the root admin to merge
-   * or map by hand. One read.
-   */
-  private async findUnlinkedRankedParticipants(sportEventId: string, providerId: string): Promise<UnlinkedRankedParticipant[]> {
-    const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId, ranking: { not: null }, participant: { providerMappings: { none: { provider: { code: requireProviderCodeOfSourceId(providerId) } } } } },
-      select: { ranking: true, participant: { select: { id: true, name: true } } },
-      orderBy: [{ ranking: 'asc' }, { participant: { name: 'asc' } }],
-    });
-    // The read takes ranked rows only; the check narrows the type.
-    return rows.flatMap((row) => (row.ranking === null ? [] : [{ participantId: row.participant.id, name: row.participant.name, ranking: row.ranking }]));
   }
 
   /**

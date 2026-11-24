@@ -103,6 +103,7 @@ export type {
   PlatformRuntimeConfig,
   PlatformRuntimeConfigChange,
   ProviderSyncRun,
+  ProviderSyncRunOutcome,
   ProviderSyncRunWithDetails,
   SportConfig,
   Squad,

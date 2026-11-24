@@ -3,6 +3,7 @@
  * key a unique index and a job's commit is its caller's transaction's, so each is proved here
  * against the real table rather than a fake.
  */
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
@@ -431,9 +432,9 @@ describe('Activity reads and job results (#1819)', () => {
     const runs = new PrismaProviderSyncRunRepository(getAppPrisma());
     const mine = await runs.create({
       providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
-      status: 'COMPLETED', startedAt: null, completedAt: null, payload: {},
+      status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
-    await runs.create({ providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, payload: {} });
+    await runs.create({ providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome() });
 
     await expect(runs.findByBackgroundJobIds([job.id])).resolves.toEqual([expect.objectContaining({ id: mine.id, backgroundJobId: job.id })]);
     await expect(runs.findByBackgroundJobIds([])).resolves.toEqual([]);
@@ -441,14 +442,14 @@ describe('Activity reads and job results (#1819)', () => {
 });
 
 describe('manual sync runs and their job (#1441)', () => {
-  const run = (feed: string) => ({
+  const run = (summary: string) => ({
     providerCode: ProviderCode.BALLDONTLIE,
     sport: Sport.GOLF,
     ...SCHEDULED_SCORES_RUN,
     status: 'SUBMITTED' as const,
     startedAt: null,
     completedAt: null,
-    payload: { requestedFeed: feed },
+    ...syncRunOutcome({ summary }),
   });
 
   // Every run is keyed to the one Provider row (#2040), so the suite's runs are told apart by clearing them.
@@ -463,7 +464,7 @@ describe('manual sync runs and their job (#1441)', () => {
     const queue = new BackgroundJobQueue({ jobs: repository(), currentStart: testCurrentJobStart });
 
     const runs = await new PrismaProviderSyncRunRepository(getAppPrisma()).createWithJob(
-      [run('EVENTPARTICIPANTS'), run('EVENTLIVESCORES')],
+      [run('first'), run('second')],
       (written) => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
         syncRunIds: written.map((one) => one.id),
         sport: Sport.GOLF,
@@ -472,7 +473,7 @@ describe('manual sync runs and their job (#1441)', () => {
       }),
     );
 
-    expect(runs.map((written) => written.payload['requestedFeed'])).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES']);
+    expect(runs.map((written) => written.summary)).toEqual(['first', 'second']);
     const job = await getPrisma().backgroundJob.findFirstOrThrow();
     expect(job).toMatchObject({ type: BackgroundJobType.MANUAL_EVENT_SYNC, status: BackgroundJobStatus.QUEUED });
     expect(job.payload).toEqual({ syncRunIds: runs.map((written) => written.id), sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId: 'jobs-event' });
@@ -484,7 +485,7 @@ describe('manual sync runs and their job (#1441)', () => {
     const queue = new BackgroundJobQueue({ jobs: repository(), currentStart: testCurrentJobStart });
 
     await expect(new PrismaProviderSyncRunRepository(getAppPrisma()).createWithJob(
-      [run('EVENTPARTICIPANTS')],
+      [run('only')],
       () => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { syncRunIds: [], sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId: 'jobs-event' }),
     )).rejects.toThrow(/Invalid MANUAL_EVENT_SYNC job payload/);
 

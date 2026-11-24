@@ -41,8 +41,7 @@ import { SyncOrchestrator } from './core/sync-orchestrator';
 import {
   ProviderSyncRunLedger,
   SyncRunOutcomeUnrecordedError,
-  isEventSyncFeedType,
-  readPayload,
+  feedOfSyncKind,
 } from './persistence/provider-sync-run-ledger';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
@@ -386,7 +385,6 @@ export class IngestionService {
       normalizedRequest,
       providerId: provider.providerId,
       submittedAt,
-      runType: 'MANUAL_EVENT_SYNC',
       trigger: start.trigger,
       ...(linkedEvent && linkedEvent),
       // poolmaster-allow-direct-job: a root admin's manual event sync starts the job
@@ -453,9 +451,9 @@ export class IngestionService {
         this.logger?.info({ ...scope, syncRunId, status: syncRun?.status ?? null }, 'Skipped a manual sync run that is no longer submitted');
         continue;
       }
-      const { requestedFeed } = readPayload(syncRun);
-      if (!isEventSyncFeedType(requestedFeed)) {
-        await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported event sync feed: ${String(requestedFeed)}`));
+      const requestedFeed = feedOfSyncKind(syncRun.kind);
+      if (requestedFeed === null) {
+        await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported event sync kind: ${syncRun.kind}`));
         continue;
       }
 

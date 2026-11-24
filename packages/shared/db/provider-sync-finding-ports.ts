@@ -11,6 +11,7 @@ import type {
 export interface ProviderSyncFindingResolveFilter {
   kind: ProviderSyncFindingKind;
   sportLeagueId?: string;
+  sportEventId?: string;
   providerId?: string;
   providerValue?: string;
 }

@@ -104,6 +104,49 @@ export class ProviderSyncFindingService {
   }
 
   /**
+   * One event's check from a sync (#1999): a WARNING on the event when `found`, else its open
+   * finding of the kind resolves, since the sync that would raise it no longer does.
+   */
+  async checkEvent(input: {
+    kind: ProviderSyncFindingKind;
+    sportLeagueId: string;
+    sportEventId: string;
+    /** The Provider row (`providers.id`). */
+    providerId: string;
+    found: boolean;
+  }): Promise<void> {
+    if (input.found) {
+      await this.raise([{
+        kind: input.kind,
+        severity: ProviderSyncFindingSeverity.WARNING,
+        sportLeagueId: input.sportLeagueId,
+        sportEventId: input.sportEventId,
+        providerId: input.providerId,
+        providerValue: null,
+        providerValueName: null,
+      }]);
+      return;
+    }
+    await this.deps.repository.resolveOpen({
+      kind: input.kind,
+      sportLeagueId: input.sportLeagueId,
+      sportEventId: input.sportEventId,
+      providerId: input.providerId,
+    }, this.now());
+  }
+
+  /**
+   * `checkEvent` for a check that knows its provider by its source id (the feed's `providerId`).
+   * A feed with no Provider row (the QA mock feed, until #2039) checks nothing.
+   */
+  async checkEventOfSource(input: Omit<Parameters<ProviderSyncFindingService['checkEvent']>[0], 'providerId'> & { providerSourceId: string }): Promise<void> {
+    const { providerSourceId, ...check } = input;
+    const provider = this.providerOfSourceId(providerSourceId);
+    if (provider === undefined) return;
+    await this.checkEvent({ ...check, providerId: provider.id });
+  }
+
+  /**
    * A Provider whose webhooks are switched on while its signing secret is not set: an ERROR on
    * each league it syncs. Once its secret is set, or its webhooks are off, its findings resolve.
    * Checked when a worker task starts, since the secret is read from its environment.

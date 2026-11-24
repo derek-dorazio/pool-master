@@ -32,7 +32,7 @@ const LEAGUE_ROW = {
 };
 
 function runRow(kind: ProviderSyncKind, overrides: Record<string, unknown> = {}) {
-  return { id: `run-${kind}`, kind, status: ProviderSyncRunStatus.COMPLETED, createdAt: NOW, startedAt: NOW, payloadJson: {}, ...overrides };
+  return { id: `run-${kind}`, kind, status: ProviderSyncRunStatus.COMPLETED, createdAt: NOW, startedAt: NOW, summary: '', changedCount: null, ...overrides };
 }
 
 function prismaDouble(options: { league?: unknown } = {}) {
@@ -69,16 +69,16 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
     expect(prisma.providerSyncRun.findMany).not.toHaveBeenCalled();
   });
 
-  it('reads the league\'s own runs, keeps one run per kind, and counts a completed run\'s created and updated rows', async () => {
+  it('reads the league\'s own runs, keeps one run per kind, and shows a changed count for a completed run only', async () => {
     const prisma = prismaDouble();
     prisma.providerSyncRun.groupBy.mockResolvedValue([
       { kind: ProviderSyncKind.EVENTS, _max: { createdAt: NOW } },
       { kind: ProviderSyncKind.FIELD, _max: { createdAt: NOW } },
     ]);
     prisma.providerSyncRun.findMany.mockResolvedValue([
-      runRow(ProviderSyncKind.EVENTS, { payloadJson: { stats: { writeCreated: 2, writeUpdated: 3 }, outcome: { summary: 'Read 5 events.' } } }),
+      runRow(ProviderSyncKind.EVENTS, { summary: 'Read 5 events.', changedCount: 5 }),
       runRow(ProviderSyncKind.EVENTS, { id: 'run-EVENTS-twin' }),
-      runRow(ProviderSyncKind.FIELD, { status: ProviderSyncRunStatus.FAILED, payloadJson: { stats: { writeCreated: 1, writeUpdated: 1 } } }),
+      runRow(ProviderSyncKind.FIELD, { status: ProviderSyncRunStatus.FAILED, changedCount: 2 }),
     ]);
 
     const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
@@ -90,19 +90,14 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
     ]);
   });
 
-  it('counts no changed rows for a completed run whose payload names no stats, or stats that are not counts', async () => {
+  it('reads an empty summary as none', async () => {
     const prisma = prismaDouble();
     prisma.providerSyncRun.groupBy.mockResolvedValue([{ kind: ProviderSyncKind.EVENTS, _max: { createdAt: NOW } }]);
-    const payloads = ['not an object', [], { stats: 'none' }, { stats: [] }, { stats: { writeCreated: 1 } }, { stats: { writeCreated: '1', writeUpdated: 1 } }];
-    const reader = new PrismaSportLeaguePageReader(asPrismaClient(prisma));
+    prisma.providerSyncRun.findMany.mockResolvedValue([runRow(ProviderSyncKind.EVENTS)]);
 
-    const runs = [];
-    for (const payloadJson of payloads) {
-      prisma.providerSyncRun.findMany.mockResolvedValueOnce([runRow(ProviderSyncKind.EVENTS, { payloadJson })]);
-      runs.push(...(await reader.readSyncFacts('tour'))?.latestRuns ?? []);
-    }
+    const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
 
-    expect(runs.map((run) => run.changedCount)).toEqual(payloads.map(() => null));
+    expect(facts?.latestRuns).toEqual([expect.objectContaining({ summary: null })]);
   });
 });
 

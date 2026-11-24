@@ -11,7 +11,7 @@ import type {
   ProviderSyncRunRepository,
   ProviderSyncRunUpdate,
 } from '@poolmaster/shared/db';
-import { ProviderSyncRunStatus, type BackgroundJobRequest, type ProviderSyncRun, type ProviderSyncRunCounts, type ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import { ProviderSyncRunStatus, type BackgroundJobRequest, type ProviderSyncRun, type ProviderSyncRunCounts, type ProviderSyncRunOutcome, type ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
 
 export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepository {
@@ -87,7 +87,7 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
         status: update.status,
         startedAt: update.startedAt,
         completedAt: update.completedAt,
-        payloadJson: update.payload as Prisma.InputJsonValue,
+        ...outcomeData(update),
         ...(update.details && { detailsJson: update.details as Prisma.InputJsonValue }),
         ...(update.backgroundJobId !== undefined && { backgroundJobId: update.backgroundJobId }),
       },
@@ -115,7 +115,7 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
     if (!row) return null;
     return {
       ...toProviderSyncRun(row),
-      details: row.detailsJson === null ? null : toPayload(row.detailsJson),
+      details: row.detailsJson === null ? null : toDetails(row.detailsJson),
     };
   }
 
@@ -191,15 +191,32 @@ function toProviderSyncRun(row: RunRow): ProviderSyncRun {
     startedAt: row.startedAt,
     completedAt: row.completedAt,
     createdAt: row.createdAt,
-    payload: toPayload(row.payloadJson),
+    summary: row.summary,
+    stats: toStats(row.stats),
+    changedCount: row.changedCount,
+    errorCount: row.errorCount,
   };
 }
 
-function toPayload(payload: Prisma.JsonValue): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    return {};
-  }
-  return payload;
+function toDetails(details: Prisma.JsonValue): Record<string, unknown> {
+  if (!details || typeof details !== 'object' || Array.isArray(details)) return {};
+  return details;
+}
+
+/** The run's outcome columns, as a write sets them. */
+function outcomeData(outcome: ProviderSyncRunOutcome) {
+  return {
+    summary: outcome.summary,
+    stats: outcome.stats,
+    changedCount: outcome.changedCount,
+    errorCount: outcome.errorCount,
+  };
+}
+
+/** The stats column holds numbers by name; anything else in it is left out. */
+function toStats(stats: Prisma.JsonValue): Record<string, number> {
+  if (stats === null || typeof stats !== 'object' || Array.isArray(stats)) return {};
+  return Object.fromEntries(Object.entries(stats).filter((entry): entry is [string, number] => typeof entry[1] === 'number'));
 }
 
 function toCreateData(input: ProviderSyncRunCreate) {
@@ -214,7 +231,7 @@ function toCreateData(input: ProviderSyncRunCreate) {
     status: input.status,
     startedAt: input.startedAt,
     completedAt: input.completedAt,
-    payloadJson: input.payload as Prisma.InputJsonValue,
+    ...outcomeData(input),
     ...(input.createdAt && { createdAt: input.createdAt }),
   };
 }
