@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router';
-import { sportLeagueDefinitionOf, type Sport } from '@poolmaster/shared/domain';
+import type { Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
@@ -11,16 +11,15 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { contestEventsForTemplate } from '@/features/contests/contest-template-events';
 import { sportEventsQueryOptions } from '@/features/contests/sport-events-query';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
-import { Heading, Notice, PageHeader, QueryState, refetchFailed, SectionCard, Text } from '@/features/shared/ui';
+import { Heading, Notice, PageHeader, QueryState, refetchFailed, SectionCard } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildLeagueContestCatalog, contestTypeCount } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { EveryLeagueCard } from './every-league-card';
 import { SportChipRow } from './sport-chip-row';
-import { groupRounds, useSportLeagueChoice } from './sport-league-choice';
+import { useSportLeagueChoice } from './sport-league-choice';
 import { SportLeagueColumn } from './sport-league-column';
-import { STAT_POOL_CONTEST_TYPE, statPoolScoringLine } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
 
 /** The contest types' anchor, which a league picked further down the page scrolls back to. */
@@ -37,7 +36,7 @@ function scrollToTypes() {
  * types (#1716), since a contest is always created in one. A commissioner of an active league
  * gets a "Create this contest" link on each, opening Create contest on that template in that
  * sport league; every other member sees the same menu without them. The sport switch, a column of every sport and league on a computer and
- * chips on a phone as on How to Play (#1701), narrows it to one sport, league or playoff round,
+ * chips on a phone as on How to Play (#1701), narrows it to one sport or league,
  * and the choice is kept in the link.
  */
 export function LeagueContestTypesPage() {
@@ -53,24 +52,16 @@ export function LeagueContestTypesPage() {
     () => buildLeagueContestCatalog(templatesQuery.data ?? [], sportLeaguesQuery.data ?? []),
     [sportLeaguesQuery.data, templatesQuery.data],
   );
-  // The switch offers each sport's leagues, each playoff round under its season league (#1701),
-  // and counts the contest types the sport lists (#1716).
+  // The switch offers each sport's leagues (#1701), and counts the contest types the sport lists (#1716).
   const filterable = useMemo(() => catalog.map((sport) => ({
     ...sport,
     count: contestTypeCount(sport.groups),
-    leagues: groupRounds(sport.groups.map((group) => ({ ...group, id: group.sportLeagueId, parentId: group.parentSportLeagueId })))
-      .map(({ league, rounds }) => ({ slug: league.slug, name: league.name, rounds: rounds.map(({ slug, name }) => ({ slug, name })) })),
+    leagues: sport.groups.map(({ slug, name }) => ({ slug, name })),
   })), [catalog]);
   const choice = useSportLeagueChoice(filterable);
   const shownSports = choice.sport
-    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.leagueSlugs === null || choice.leagueSlugs.includes(group.slug)) }]
+    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.league === null || choice.league.slug === group.slug) }]
     : catalog;
-
-  // A championship stat pool league's group says it is a Clutch Card and how its stat is counted (#936).
-  const statPoolLines = useMemo(() => new Map((sportLeaguesQuery.data ?? []).flatMap((sportLeague) => {
-    const line = statPoolScoringLine(sportLeagueDefinitionOf(sportLeague.sport, sportLeague));
-    return line === null ? [] : [[sportLeague.id, `${STAT_POOL_CONTEST_TYPE}. Each star scores ${line}`] as const];
-  })), [sportLeaguesQuery.data]);
 
   // A commissioner's create links need each sport's events: a contest type with none coming up
   // says so instead of linking.
@@ -132,11 +123,6 @@ export function LeagueContestTypesPage() {
                   {sport.groups.map((group) => (
                     <div className="space-y-3" key={group.sportLeagueId}>
                       <Heading level={4} variant="eyebrow">{group.name}</Heading>
-                      {statPoolLines.has(group.sportLeagueId) ? (
-                        <Text as="p" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`} variant="meta">
-                          {statPoolLines.get(group.sportLeagueId)}
-                        </Text>
-                      ) : null}
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {group.tiles.map((tile) => (
                           <ContestTypeTileCard createPathFor={createPathFor(group.sportLeagueId)} key={tile.key} testId={`contest-type-${group.slug}`} tile={tile} />

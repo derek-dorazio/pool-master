@@ -344,70 +344,6 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-cta')).not.toBeInTheDocument();
   });
 
-  describe('a championship stat pool league', () => {
-    // The MLB postseason's bracket and the World Series' stat pool setups.
-    const BASEBALL = [
-      template('mlb-bracket', { sport: 'BASEBALL', sportLeagueId: 'mlb', selectionType: 'BRACKET', contestFormat: 'BRACKET', configuration: { selectionType: 'BRACKET', startsAtRound: 1, maxEntriesPerSquad: 1 } }),
-      template('world-series-tiered', { sport: 'BASEBALL', sportLeagueId: 'world-series' }),
-    ];
-    const BASEBALL_LEAGUES = [
-      sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB Postseason', displayOrder: 10 }),
-      sportLeagueFixture({ id: 'world-series', sport: 'BASEBALL', name: 'World Series', displayOrder: 20, participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE' }),
-    ];
-
-    it('shows the Clutch Card as one tile after the other ways to play, opening to its steps, Box Score as a stat line row and a link to the Clutch Card page', async () => {
-      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
-      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
-      renderPage('/how-to-play?sport=baseball&league=world-series');
-
-      const tile = await screen.findByTestId('how-to-play-clutch-card');
-      expect(screen.getByTestId('how-to-play-format-TIERED').compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(tile).toHaveTextContent('Clutch Card');
-      expect(screen.queryByTestId('how-to-play-clutch-card-details')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('how-to-play-format-BRACKET')).not.toBeInTheDocument();
-
-      fireEvent.click(screen.getByTestId('how-to-play-clutch-card-toggle'));
-      const details = screen.getByTestId('how-to-play-clutch-card-details');
-      expect(within(details).getAllByRole('listitem')).toHaveLength(4);
-      expect(within(details).getByTestId('how-to-play-clutch-card-stat-BASEBALL')).toHaveTextContent('Box ScoreBaseball');
-      expect(within(details).getByTestId('how-to-play-clutch-card-more')).toHaveAttribute('href', '/play/clutch-card');
-      expect(details).not.toHaveTextContent('total bases');
-    });
-
-    it('shows the Clutch Card with every sport shown, and opening another way to play closes it', async () => {
-      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
-      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
-      renderPage();
-
-      fireEvent.click(await screen.findByTestId('how-to-play-clutch-card-toggle'));
-      expect(screen.getByTestId('how-to-play-clutch-card-details')).toBeInTheDocument();
-
-      fireEvent.click(screen.getByTestId('how-to-play-format-BRACKET-toggle'));
-      expect(screen.queryByTestId('how-to-play-clutch-card-details')).not.toBeInTheDocument();
-      expect(screen.getByTestId('how-to-play-format-BRACKET-details')).toBeInTheDocument();
-    });
-
-    it('shows no Clutch Card on a league that plays its sport\'s own way', async () => {
-      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
-      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
-      renderPage('/how-to-play?sport=baseball&league=mlb-postseason');
-
-      expect(await screen.findByTestId('how-to-play-format-BRACKET')).toBeInTheDocument();
-      expect(screen.queryByTestId('how-to-play-clutch-card')).not.toBeInTheDocument();
-    });
-
-    it('opens Create contest on the stat pool league\'s Clutch Card setup for a commissioner', async () => {
-      signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })]);
-      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
-      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
-      renderPage('/how-to-play?sport=baseball');
-
-      fireEvent.click(await screen.findByTestId('how-to-play-clutch-card-toggle'));
-      expect(await screen.findByTestId('how-to-play-clutch-card-create'))
-        .toHaveAttribute('href', '/league/OFFICE/admin/contests/new?template=id-world-series-tiered');
-    });
-  });
-
   describe('Create contest inside a way to play', () => {
     it('opens Create contest in the one league a commissioner runs, on the chosen league\'s template', async () => {
       signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })]);
@@ -467,18 +403,15 @@ describe('How to Play', () => {
     });
   });
 
-  describe('a season league with playoff rounds', () => {
-    // The NHL's own tiered, the NHL's and the PWHL's survivor, and the Stanley Cup Final's stat pool tiered.
+  describe('a sport with several leagues', () => {
+    // The NHL's own tiered, and the NHL's and the PWHL's survivor.
     const HOCKEY = [
       template('nhl-tiered', { sport: 'HOCKEY', sportLeagueId: 'nhl' }),
       ...copiesFor(['nhl', 'pwhl'], 'hockey-survivor', { sport: 'HOCKEY', selectionType: 'SURVIVOR', contestFormat: 'SURVIVOR', configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 } }),
-      template('stanley-cup-final-tiered', { sport: 'HOCKEY', sportLeagueId: 'stanley-cup-final' }),
     ];
-    // Display order puts the rounds after every season league; the parent link still lists them under the NHL.
     const HOCKEY_LEAGUES = [
       sportLeagueFixture({ id: 'nhl', sport: 'HOCKEY', name: 'NHL', displayOrder: 10 }),
       sportLeagueFixture({ id: 'pwhl', sport: 'HOCKEY', name: 'PWHL', displayOrder: 20 }),
-      sportLeagueFixture({ id: 'stanley-cup-final', sport: 'HOCKEY', name: 'Stanley Cup Final', displayOrder: 50, participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE', parentSportLeagueId: 'nhl' }),
     ];
 
     beforeEach(() => {
@@ -486,65 +419,33 @@ describe('How to Play', () => {
       listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: HOCKEY_LEAGUES } });
     });
 
-    it('lists each round under the league its parent link names, after the league\'s regular season, and not after the other leagues', async () => {
+    it('lists the sport\'s leagues in display order, one line each with no level under them', async () => {
       renderPage('/how-to-play?sport=hockey');
 
-      expect(await waysToPlayHeading()).toHaveTextContent('3 ways to play hockey');
-      expect(columnLines()).toEqual(['All sports', 'Hockey 3', 'NHL', 'Regular season', 'Stanley Cup Final', 'PWHL']);
-      expect(within(leaguesColumn()).getByRole('link', { name: 'Stanley Cup Final' })).toHaveAttribute('href', '/how-to-play?sport=hockey&league=nhl&part=stanley-cup-final');
-      // On a phone the card lists the round right after its league.
-      expect(within(screen.getByTestId('how-to-play-every-league')).getByRole('navigation', { name: 'Hockey leagues' })).toHaveTextContent('NHLStanley Cup FinalPWHL');
+      expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play hockey');
+      expect(columnLines()).toEqual(['All sports', 'Hockey 2', 'NHL', 'PWHL']);
+      expect(within(leaguesColumn()).getByRole('link', { name: 'PWHL' })).toHaveAttribute('href', '/how-to-play?sport=hockey&league=pwhl');
+      expect(within(screen.getByTestId('how-to-play-every-league')).getByRole('navigation', { name: 'Hockey leagues' })).toHaveTextContent('NHLPWHL');
     });
 
-    it('shows a league with its rounds\' ways to play too: the Clutch Card on the NHL', async () => {
-      renderPage('/how-to-play?sport=hockey&league=nhl');
+    it('narrows to one league, named in the heading and as one clearable chip on a phone', async () => {
+      renderPage('/how-to-play?sport=hockey&league=pwhl');
 
-      expect(await waysToPlayHeading()).toHaveTextContent('3 ways to play NHL');
-      expect(chosenIn(leaguesColumn())).toEqual(['NHL']);
+      expect(await waysToPlayHeading()).toHaveTextContent('1 way to play PWHL');
+      expect(chosenIn(leaguesColumn())).toEqual(['PWHL']);
+      expect(screen.queryByTestId('how-to-play-format-TIERED')).not.toBeInTheDocument();
       expect(screen.getByTestId('how-to-play-format-SURVIVOR')).toBeInTheDocument();
-      expect(screen.getByTestId('how-to-play-clutch-card')).toBeInTheDocument();
-      // The league's own template leads its tile.
-      fireEvent.click(screen.getByTestId('how-to-play-format-TIERED-toggle'));
-      expect(screen.getByTestId('how-to-play-format-TIERED-details')).toHaveTextContent('nhl-tiered name.');
-    });
 
-    it('narrows to the regular season alone, with no Clutch Card', async () => {
-      renderPage('/how-to-play?sport=hockey&league=nhl&part=nhl');
-
-      expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play the NHL regular season');
-      expect(chosenIn(leaguesColumn())).toEqual(['Regular season']);
-      expect(screen.queryByTestId('how-to-play-clutch-card')).not.toBeInTheDocument();
-      expect(within(screen.getByTestId('how-to-play-sport-chips')).getByRole('link', { name: 'Clear NHL · Regular season' })).toHaveAttribute('href', '/how-to-play?sport=hockey');
-    });
-
-    it('narrows to one round, named in the heading and as one clearable chip on a phone', async () => {
-      renderPage('/how-to-play?sport=hockey&league=nhl&part=stanley-cup-final');
-
-      expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play the Stanley Cup Final');
-      expect(chosenIn(leaguesColumn())).toEqual(['Stanley Cup Final']);
-      expect(screen.queryByTestId('how-to-play-format-SURVIVOR')).not.toBeInTheDocument();
-      expect(screen.getByTestId('how-to-play-clutch-card')).toBeInTheDocument();
-      fireEvent.click(screen.getByTestId('how-to-play-format-TIERED-toggle'));
-      expect(screen.getByTestId('how-to-play-format-TIERED-details')).toHaveTextContent('stanley-cup-final-tiered name.');
-
-      fireEvent.click(within(screen.getByTestId('how-to-play-sport-chips')).getByRole('link', { name: 'Clear NHL · Stanley Cup Final' }));
+      fireEvent.click(within(screen.getByTestId('how-to-play-sport-chips')).getByRole('link', { name: 'Clear PWHL' }));
       expect(screen.getByTestId('location')).toHaveTextContent(/^\/how-to-play\?sport=hockey$/);
     });
 
-    it('drops a part the league does not have, back to the whole league', async () => {
-      renderPage('/how-to-play?sport=hockey&league=nhl&part=frozen-four');
+    it('leads a league\'s tile with its own template', async () => {
+      renderPage('/how-to-play?sport=hockey&league=nhl');
 
-      expect(await waysToPlayHeading()).toHaveTextContent('3 ways to play NHL');
-    });
-
-    it('gives the Clutch Card its new line on the tile, and how it plays once opened', async () => {
-      renderPage('/how-to-play?sport=hockey');
-
-      const tile = await screen.findByTestId('how-to-play-clutch-card');
-      expect(tile).toHaveTextContent('Who will come in clutch? Pick your stars.');
-      expect(tile).not.toHaveTextContent('Every game is a round');
-      fireEvent.click(screen.getByTestId('how-to-play-clutch-card-toggle'));
-      expect(screen.getByTestId('how-to-play-clutch-card-details')).toHaveTextContent('Every game is a round, and each star scores one stat in it.');
+      expect(await waysToPlayHeading()).toHaveTextContent('2 ways to play NHL');
+      fireEvent.click(screen.getByTestId('how-to-play-format-TIERED-toggle'));
+      expect(screen.getByTestId('how-to-play-format-TIERED-details')).toHaveTextContent('nhl-tiered name.');
     });
   });
 

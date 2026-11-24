@@ -20,12 +20,7 @@ const NOW = new Date('2027-04-15T12:00:00.000Z');
 const at = (iso: string) => new Date(iso);
 
 const LEAGUE_ROW = {
-  id: 'tour', isActive: true, parentSportLeagueId: null, scoringFamily: null, eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7,
-  sport: { sport: Sport.GOLF }, parentSportLeague: null,
-};
-const CLUTCH_ROW = {
-  ...LEAGUE_ROW, id: 'clutch', parentSportLeagueId: 'tour', scoringFamily: 'COMPOSITE', eventSyncProviderId: null,
-  parentSportLeague: { isActive: true, eventSyncProviderId: 'balldontlie' },
+  id: 'tour', isActive: true, eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, sport: { sport: Sport.GOLF },
 };
 
 function runRow(kind: ProviderSyncKind, overrides: Record<string, unknown> = {}) {
@@ -55,19 +50,19 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
 
   it('reads no runs when no run names the league, and keeps the league with its sport', async () => {
     const prisma = prismaDouble();
-    prisma.providerSyncRun.groupBy.mockResolvedValue([{ sportLeagueId: null, kind: ProviderSyncKind.EVENTS, _max: { createdAt: NOW } }, { sportLeagueId: 'tour', kind: ProviderSyncKind.FIELD, _max: { createdAt: null } }]);
+    prisma.providerSyncRun.groupBy.mockResolvedValue([{ kind: ProviderSyncKind.FIELD, _max: { createdAt: null } }]);
 
     const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
 
-    expect(facts).toEqual({ league: expect.objectContaining({ id: 'tour', sport: Sport.GOLF, parent: null }), latestRuns: [] });
+    expect(facts).toEqual({ league: { id: 'tour', sport: Sport.GOLF, isActive: true, eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7 }, latestRuns: [] });
     expect(prisma.providerSyncRun.findMany).not.toHaveBeenCalled();
   });
 
-  it('takes a Clutch Card\'s event list from its parent\'s runs, keeps one run per kind, and counts a completed run\'s created and updated rows', async () => {
-    const prisma = prismaDouble({ league: CLUTCH_ROW });
+  it('reads the league\'s own runs, keeps one run per kind, and counts a completed run\'s created and updated rows', async () => {
+    const prisma = prismaDouble();
     prisma.providerSyncRun.groupBy.mockResolvedValue([
-      { sportLeagueId: 'tour', kind: ProviderSyncKind.EVENTS, _max: { createdAt: NOW } },
-      { sportLeagueId: 'clutch', kind: ProviderSyncKind.FIELD, _max: { createdAt: NOW } },
+      { kind: ProviderSyncKind.EVENTS, _max: { createdAt: NOW } },
+      { kind: ProviderSyncKind.FIELD, _max: { createdAt: NOW } },
     ]);
     prisma.providerSyncRun.findMany.mockResolvedValue([
       runRow(ProviderSyncKind.EVENTS, { payloadJson: { stats: { writeCreated: 2, writeUpdated: 3 }, outcome: { summary: 'Read 5 events.' } } }),
@@ -75,11 +70,9 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
       runRow(ProviderSyncKind.FIELD, { status: ProviderSyncRunStatus.FAILED, payloadJson: { stats: { writeCreated: 1, writeUpdated: 1 } } }),
     ]);
 
-    const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('clutch');
+    const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
 
-    expect(prisma.providerSyncRun.groupBy).toHaveBeenCalledWith(expect.objectContaining({
-      where: { OR: [{ sportLeagueId: 'clutch', kind: { not: ProviderSyncKind.EVENTS } }, { sportLeagueId: 'tour', kind: ProviderSyncKind.EVENTS }] },
-    }));
+    expect(prisma.providerSyncRun.groupBy).toHaveBeenCalledWith(expect.objectContaining({ where: { sportLeagueId: 'tour' } }));
     expect(facts?.latestRuns).toEqual([
       expect.objectContaining({ id: 'run-EVENTS', summary: 'Read 5 events.', changedCount: 5 }),
       expect.objectContaining({ id: 'run-FIELD', changedCount: null }),
@@ -88,7 +81,7 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
 
   it('counts no changed rows for a completed run whose payload names no stats, or stats that are not counts', async () => {
     const prisma = prismaDouble();
-    prisma.providerSyncRun.groupBy.mockResolvedValue([{ sportLeagueId: 'tour', kind: ProviderSyncKind.EVENTS, _max: { createdAt: NOW } }]);
+    prisma.providerSyncRun.groupBy.mockResolvedValue([{ kind: ProviderSyncKind.EVENTS, _max: { createdAt: NOW } }]);
     const payloads = ['not an object', [], { stats: 'none' }, { stats: [] }, { stats: { writeCreated: 1 } }, { stats: { writeCreated: '1', writeUpdated: 1 } }];
     const reader = new PrismaSportLeaguePageReader(asPrismaClient(prisma));
 
@@ -195,13 +188,12 @@ describe('readOverdueCandidates', () => {
     expect(prisma.sportEventRound.findMany).not.toHaveBeenCalled();
   });
 
-  it('gives an event its own rounds with each round\'s latest match start, and a Clutch Card event only the parent rounds it covers', async () => {
+  it('gives each event its own rounds with each round\'s latest match start, and an event with no rounds none', async () => {
     const prisma = prismaDouble();
-    const base = { name: 'Event', sport: Sport.GOLF, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-10T00:00:00.000Z'), endDate: null, eventSeriesId: 'series-1', parentRoundNumbers: [] };
+    const base = { name: 'Event', sport: Sport.GOLF, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-10T00:00:00.000Z'), endDate: null, eventSeriesId: 'series-1' };
     prisma.sportEvent.findMany.mockResolvedValue([
-      { ...base, id: 'parent', parentEventId: null },
-      { ...base, id: 'card', parentEventId: 'parent', parentRoundNumbers: [2] },
-      { ...base, id: 'bare', parentEventId: null },
+      { ...base, id: 'parent' },
+      { ...base, id: 'bare' },
     ]);
     const round = (roundNumber: number) => ({ id: `r${String(roundNumber)}`, sportEventId: 'parent', roundNumber, scheduledDate: at(`2027-04-1${String(roundNumber)}T00:00:00.000Z`), scheduledEndAt: null });
     prisma.sportEventRound.findMany.mockResolvedValue([round(1), round(2)]);
@@ -212,7 +204,6 @@ describe('readOverdueCandidates', () => {
     expect(prisma.sportEvent.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ eventSeriesId: { in: ['series-1'] } }) }));
     expect(candidates.map((candidate) => [candidate.id, candidate.rounds.map((facts) => facts.latestMatchStart)])).toEqual([
       ['parent', [null, at('2027-04-12T18:00:00.000Z')]],
-      ['card', [at('2027-04-12T18:00:00.000Z')]],
       ['bare', []],
     ]);
   });

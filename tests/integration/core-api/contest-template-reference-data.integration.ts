@@ -535,8 +535,7 @@ const SOCCER_COMPETITIONS = [
 describe('Seeded soccer competitions and their knockout templates', () => {
   it('seeds the nine competitions as fixed brackets, the international ones reading the sport\'s round names, and the Premier League, played in weeks, read back through the sport league repository', async () => {
     const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
-    // The Clutch Card leagues of players (#994) are the stat pool block's below.
-    const leagues = (await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: soccer.id })).filter((league) => league.scoringFamily === null);
+    const leagues = await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: soccer.id });
     const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
     expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames])).toEqual([
@@ -814,7 +813,7 @@ describe('The seeded NFL league and its knockout templates', () => {
     ]);
   });
 
-  it('gives every seeded sport league its own place among its sport\'s leagues, the major professional leagues before the NCAA\'s and the championship stat pools last', async () => {
+  it('gives every seeded sport league its own place among its sport\'s leagues, the major professional leagues before the NCAA\'s', async () => {
     const leagues = await getPrisma().sportLeague.findMany({
       select: { name: true, displayOrder: true, sport: { select: { sport: true } } },
       orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
@@ -828,63 +827,27 @@ describe('The seeded NFL league and its knockout templates', () => {
       const orders = leagues.filter((league) => league.sport.sport === sport).map((league) => league.displayOrder);
       expect(new Set(orders).size).toBe(orders.length);
     }
-    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl', 'CFP Semifinals', 'CFP National Championship']);
-    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s Basketball National Championship', 'WNBA Semifinals', 'WNBA Finals']);
-    expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB', 'League Championship Series', 'World Series']);
+    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women']);
+    expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
     // #1716: horse racing's one league is reference data, as every other sport's leagues are.
     expect(namesBySport.get(Sport.HORSE_RACING)).toEqual(['US Thoroughbred']);
-    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final', 'Men\'s Frozen Four', 'Men\'s Hockey National Championship']);
-    expect(namesBySport.get(Sport.SOCCER)?.slice(-4)).toEqual(['Champions League Semifinals', 'Champions League Final', 'Women\'s World Cup Semifinals', 'Women\'s World Cup Final']);
+    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women']);
+    expect(namesBySport.get(Sport.SOCCER)?.slice(-2)).toEqual(['NCAA Division I Men', 'NCAA Division I Women']);
   });
 
-  it('names the season league of every seeded championship stat pool round, in its own sport, and leaves every season league without one', async () => {
-    const leagues = await getPrisma().sportLeague.findMany({
-      select: {
-        name: true,
-        scoringFamily: true,
-        sport: { select: { sport: true } },
-        parentSportLeague: { select: { name: true, parentSportLeagueId: true, sport: { select: { sport: true } } } },
-      },
-      orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
-    });
-    // A round is a championship stat pool league; every one names its parent, and nothing else does.
-    expect(leagues.filter((league) => (league.scoringFamily === 'COMPOSITE') !== (league.parentSportLeague !== null)).map((league) => league.name)).toEqual([]);
-    for (const league of leagues.filter((each) => each.parentSportLeague !== null)) {
-      expect(league.parentSportLeague?.sport.sport).toBe(league.sport.sport);
-      // One level only: a round's parent is a season league, never another round.
-      expect(league.parentSportLeague?.parentSportLeagueId).toBeNull();
-    }
-    const parentOf = (sport: Sport) => leagues
-      .filter((league) => league.sport.sport === sport && league.parentSportLeague !== null)
-      .map((league) => [league.name, league.parentSportLeague?.name]);
-    expect(parentOf(Sport.HOCKEY)).toEqual([
-      ['NHL Conference Finals', 'NHL'],
-      ['Stanley Cup Final', 'NHL'],
-      ['Men\'s Frozen Four', 'NCAA Division I Men'],
-      ['Men\'s Hockey National Championship', 'NCAA Division I Men'],
-    ]);
-    expect(parentOf(Sport.AMERICAN_FOOTBALL)).toEqual([
-      ['Championship Weekend', 'NFL'],
-      ['Super Bowl', 'NFL'],
-      ['CFP Semifinals', 'College Football Playoff'],
-      ['CFP National Championship', 'College Football Playoff'],
-    ]);
-    expect(parentOf(Sport.BASKETBALL)).toEqual([
-      ['NBA Conference Finals', 'NBA'],
-      ['NBA Finals', 'NBA'],
-      ['Men\'s Final Four', 'NCAA Division I Men'],
-      ['Men\'s Basketball National Championship', 'NCAA Division I Men'],
-      ['WNBA Semifinals', 'WNBA'],
-      ['WNBA Finals', 'WNBA'],
-    ]);
-    expect(parentOf(Sport.BASEBALL)).toEqual([['League Championship Series', 'MLB'], ['World Series', 'MLB']]);
-    expect(parentOf(Sport.SOCCER)).toEqual([
-      ['Champions League Semifinals', 'UEFA Champions League'],
-      ['Champions League Final', 'UEFA Champions League'],
-      ['Women\'s World Cup Semifinals', 'FIFA Women\'s World Cup'],
-      ['Women\'s World Cup Final', 'FIFA Women\'s World Cup'],
-    ]);
+  it('scores every seeded sport league by its own sport\'s family, so no league overrides how its sport is scored', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({ select: { name: true, scoringFamily: true, sport: { select: { sport: true } } } });
+
+    expect(leagues.filter((league) => league.scoringFamily !== null && league.scoringFamily !== getSportDefinition(league.sport.sport).scoringFamily)
+      .map((league) => `${league.sport.sport} ${league.name}`)).toEqual([]);
+  });
+
+  it('gives every seeded active event page with offers exactly one primary offer, whose edition dates the page', async () => {
+    const pages = await getPrisma().eventPage.findMany({ where: { isActive: true }, select: { slug: true, offers: { select: { isPrimary: true } } } });
+
+    expect(pages.filter((page) => page.offers.length > 0 && page.offers.filter((offer) => offer.isPrimary).length !== 1).map((page) => page.slug)).toEqual([]);
   });
 });
 
@@ -1226,91 +1189,5 @@ describe('Every seeded sport league\'s test data', () => {
     const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
 
     expect(leagues.map((league) => `${league.sport.sport} ${league.name}`).filter((key) => !covered.has(key))).toEqual([]);
-  });
-});
-
-
-// The championship stat pools (#934): one sport league per championship, of players scored by
-// the composite family, each with golf's three roster formats on the composite total.
-describe('The seeded championship stat pool leagues and their templates', () => {
-  const STAT_POOL_LEAGUES = [
-    { sport: Sport.BASEBALL, league: 'World Series', prefix: 'world-series', composite: 'box-score' },
-    { sport: Sport.BASKETBALL, league: 'NBA Finals', prefix: 'nba-finals', composite: 'triple-threat' },
-    { sport: Sport.HOCKEY, league: 'Stanley Cup Final', prefix: 'stanley-cup-final', composite: 'power-play' },
-    { sport: Sport.AMERICAN_FOOTBALL, league: 'Championship Weekend', prefix: 'championship-weekend', composite: 'redzone' },
-    { sport: Sport.AMERICAN_FOOTBALL, league: 'Super Bowl', prefix: 'super-bowl', composite: 'redzone' },
-    { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP Semifinals', prefix: 'cfp-semifinals', composite: 'redzone' },
-    { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP National Championship', prefix: 'cfp-national-championship', composite: 'redzone' },
-    { sport: Sport.BASKETBALL, league: 'Men\'s Final Four', prefix: 'mens-final-four', composite: 'triple-threat' },
-    { sport: Sport.BASKETBALL, league: 'Men\'s Basketball National Championship', prefix: 'mens-national-championship', composite: 'triple-threat' },
-    { sport: Sport.BASKETBALL, league: 'NBA Conference Finals', prefix: 'nba-conference-finals', composite: 'triple-threat' },
-    { sport: Sport.HOCKEY, league: 'NHL Conference Finals', prefix: 'nhl-conference-finals', composite: 'power-play' },
-    { sport: Sport.BASEBALL, league: 'League Championship Series', prefix: 'league-championship-series', composite: 'box-score' },
-    { sport: Sport.HOCKEY, league: 'Men\'s Frozen Four', prefix: 'mens-frozen-four', composite: 'power-play' },
-    { sport: Sport.HOCKEY, league: 'Men\'s Hockey National Championship', prefix: 'mens-hockey-national-championship', composite: 'power-play' },
-    { sport: Sport.SOCCER, league: 'Champions League Semifinals', prefix: 'champions-league-semifinals', composite: 'hat-trick' },
-    { sport: Sport.SOCCER, league: 'Champions League Final', prefix: 'champions-league-final', composite: 'hat-trick' },
-    { sport: Sport.SOCCER, league: 'Women\'s World Cup Semifinals', prefix: 'womens-world-cup-semifinals', composite: 'hat-trick' },
-    { sport: Sport.SOCCER, league: 'Women\'s World Cup Final', prefix: 'womens-world-cup-final', composite: 'hat-trick' },
-    { sport: Sport.BASKETBALL, league: 'WNBA Semifinals', prefix: 'wnba-semifinals', composite: 'triple-threat' },
-    { sport: Sport.BASKETBALL, league: 'WNBA Finals', prefix: 'wnba-finals', composite: 'triple-threat' },
-  ];
-  // A league's name is unique only within its sport, so a league is its sport and its name.
-  const bySportAndName = (left: { sport: string; league: string }, right: { sport: string; league: string }) =>
-    left.league.localeCompare(right.league) || left.sport.localeCompare(right.sport);
-
-  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games, the men\'s Frozen Four\'s too, the Champions League\'s and Women\'s World Cup\'s semifinals and finals, the NBA\'s and NHL\'s conference finals, the WNBA\'s semifinals and Finals and MLB\'s League Championship Series among them', async () => {
-    const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true } });
-
-    expect(leagues.map((league) => ({ sport: league.sport.sport, league: league.name, participantType: league.participantType, scoringFamily: league.scoringFamily }))
-      .sort(bySportAndName).map(({ sport, league, participantType, scoringFamily }) => [sport, league, participantType, scoringFamily])).toEqual(
-      [...STAT_POOL_LEAGUES].sort(bySportAndName)
-        .map(({ sport, league }) => [sport, league, 'INDIVIDUAL', 'COMPOSITE']),
-    );
-  });
-
-  it.each(STAT_POOL_LEAGUES)('gives $league a Tiered (6 tiers, best 4), a Budget (6 players, best 4) and a Quick pick (3 players) default, Tiered first, each scored by the composite total', async ({ sport, league, prefix, composite }) => {
-    const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE', sport: { sport } } },
-      orderBy: { sortOrder: 'asc' },
-    });
-
-    expect(templates.map((template) => [template.templateKey, template.eventType, template.isDefault])).toEqual([
-      [`${prefix}-tiered-${composite}`, null, true],
-      [`${prefix}-budget-${composite}`, null, true],
-      [`${prefix}-quick-pick-${composite}`, null, true],
-    ]);
-    const shapes = templates.map((template) => {
-      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
-      expect(rules.scoring).toEqual({ participantScoringDefinitionId: 'COMPOSITE_TOTAL', config: {} });
-      switch (rules.selectionType) {
-        case SelectionType.TIERED:
-          return [rules.picksPerTier, rules.countedScores];
-        case SelectionType.BUDGET_PICK:
-          return [rules.rosterSize, rules.countedScores];
-        case SelectionType.RANDOM_DRAW:
-          return [rules.picksPerEntry, rules.countedScores];
-        case SelectionType.SQUARES:
-        case SelectionType.PICK_EM:
-        case SelectionType.BRACKET:
-        case SelectionType.SURVIVOR:
-          return [rules.selectionType];
-      }
-    });
-    expect(shapes).toEqual([[1, 4], [6, 4], [3, 3]]);
-  });
-
-  it.each(STAT_POOL_LEAGUES)('names $league\'s setups and describes them with stars, never players, as the Clutch Card\'s copy calls them (#995)', async ({ sport, league }) => {
-    const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE', sport: { sport } } },
-      orderBy: { sortOrder: 'asc' },
-    });
-
-    expect(templates.map((template) => template.name)).toEqual([
-      'Tiered: 1 star per tier, best 4 count',
-      'Budget: 6 stars under the cap, best 4 count',
-      'Quick pick: 3 stars each, all count',
-    ]);
-    expect(templates.filter((template) => /player/i.test(template.description)).map((template) => template.templateKey)).toEqual([]);
   });
 });

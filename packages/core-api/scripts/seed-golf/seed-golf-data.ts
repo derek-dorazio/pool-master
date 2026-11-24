@@ -266,27 +266,3 @@ export function testEventTransitions(
   const steps: Array<typeof SportEventStatus.IN_PROGRESS | typeof SportEventStatus.COMPLETED> = event.status === SportEventStatus.SCHEDULED ? [SportEventStatus.IN_PROGRESS] : [];
   return ended ? [...steps, SportEventStatus.COMPLETED] : steps;
 }
-
-/** A season event on the site a test Clutch Card event could name as its parent (#1820). */
-export interface StoredParentCandidate {
-  id: string;
-  name: string;
-  rounds: number | null;
-  /** ISO start. */
-  startDate: string;
-}
-
-/**
- * The season event a test seed's Clutch Card event names as its parent (#1820): the latest-starting
- * test event ("Test- ...") of its league's parent league with the rounds the league covers, or null
- * when none is on the site yet. A test seed moves each event's dates on its own, so a test Clutch
- * Card event's start no longer falls within its season event's dates, and the server could not find
- * the parent by them; a real data file's events keep their dates, and the server finds theirs.
- */
-export function testSeedParentEventId(candidates: readonly StoredParentCandidate[], parentRoundNumbers: readonly number[]): string | null {
-  const lastRound = Math.max(...parentRoundNumbers);
-  const latest = candidates
-    .filter((event) => isTestEventName(event.name) && (event.rounds ?? 0) >= lastRound)
-    .reduce<StoredParentCandidate | null>((best, event) => (best === null || Date.parse(event.startDate) > Date.parse(best.startDate) ? event : best), null);
-  return latest?.id ?? null;
-}

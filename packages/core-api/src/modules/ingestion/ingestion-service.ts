@@ -26,7 +26,6 @@ import {
   type JobStart,
   type Sport,
   SportEventSyncScope,
-  isClutchCardLeague,
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
 } from '@poolmaster/shared/domain';
@@ -173,7 +172,7 @@ export interface IngestionServiceDependencies {
   participantMappings: ParticipantProviderMappingRepository;
   syncRuns: ProviderSyncRunRepository;
   /** The synced sport leagues, counted per provider on the provider list. */
-  sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
+  sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   /** The providers whose webhooks are on (`readWebhookProviderIds`). */
   webhookProviderIds: readonly string[];
   /** Background jobs that hit a provider's rate limit, counted per provider on the provider list. */
@@ -193,7 +192,7 @@ export class IngestionService {
   private readonly sportEvents: SportEventRepository;
   private readonly participantMappings: ParticipantProviderMappingRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
-  private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
+  private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   private readonly webhookProviderIds: ReadonlySet<string>;
   private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   private readonly now: () => Date;
@@ -328,7 +327,7 @@ export class IngestionService {
     const providers = this.registry.getAllProviders();
     const [eventSummaries, syncedLeagues, rateLimited] = await Promise.all([
       this.sportEvents.summarizeByProviders(providers.map((provider) => provider.providerId)),
-      this.sportLeagues.findEventSyncedWithClutchCards(),
+      this.sportLeagues.findEventSynced(),
       this.jobHistory.countByScope({ errorType: JobErrorType.RATE_LIMITED, since: new Date(this.now().getTime() - DAY_MS) }),
     ]);
     const syncedLeagueCounts = new Map<string, number>();
@@ -337,14 +336,6 @@ export class IngestionService {
       if (league.eventSyncProviderId) {
         syncedLeagueCounts.set(league.eventSyncProviderId, (syncedLeagueCounts.get(league.eventSyncProviderId) ?? 0) + 1);
         leagueProviders.set(league.id, league.eventSyncProviderId);
-      }
-    }
-    // A Clutch Card league's jobs belong to its parent's provider, whose sync creates its events;
-    // it is not a synced league of its own.
-    for (const league of syncedLeagues) {
-      const parentProviderId = league.parentSportLeagueId === null ? undefined : leagueProviders.get(league.parentSportLeagueId);
-      if (!league.eventSyncProviderId && isClutchCardLeague(league) && parentProviderId) {
-        leagueProviders.set(league.id, parentProviderId);
       }
     }
     const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
@@ -374,7 +365,7 @@ export class IngestionService {
 
   /**
    * Job counts per provider (#1881): a sport league's own jobs belong to the provider that syncs
-   * the league (a Clutch Card's, its parent's), and an event's jobs to the provider the event is
+   * the league, and an event's jobs to the provider the event is
    * linked to, read in one more query for all such events. A job on neither, on an unsynced
    * league or on an event no longer there counts for none.
    */

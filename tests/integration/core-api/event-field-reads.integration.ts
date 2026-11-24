@@ -138,7 +138,6 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_participant_race_results', 1],
       ['SELECT sport_event_participant_rounds', 1],
       ['SELECT sport_event_participant_standings', 1],
-      ['SELECT sport_event_participant_stat_lines', 1],
       ['SELECT sport_event_participant_valuations', 1],
       ['SELECT sport_event_participants', 1],
       ['SELECT sport_event_rounds', 1],
@@ -149,7 +148,7 @@ describe('An event\'s field', () => {
     const [anaRow, beaRow] = field;
     expect(anaRow.valuation).toMatchObject({ price: 12 });
     expect(anaRow.standing).toMatchObject({ standing: { position: 1 }, golf: { eventScoreToPar: -6, eventStrokes: 138 } });
-    expect(anaRow.rounds.map(({ round, golf, statLines }) => [round.roundNumber, golf?.strokes, statLines])).toEqual([[1, 68, []], [2, 70, []]]);
+    expect(anaRow.rounds.map(({ round, golf }) => [round.roundNumber, golf?.strokes])).toEqual([[1, 68], [2, 70]]);
     expect(anaRow.raceResult).toBeNull();
     expect(anaRow.matches).toEqual([]);
     expect(beaRow).toMatchObject({ valuation: null, standing: null, rounds: [] });

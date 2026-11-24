@@ -37,7 +37,6 @@ import {
   scoringSettingsUiFor,
 } from '../contest-scoring-settings';
 import { membersWillSeeRules } from '../members-will-see';
-import { statPoolContestName, statPoolScoringLine } from '../scoring-family-ui/stat-pool-copy';
 import { sportEventsQueryOptions } from '../sport-events-query';
 import { useActiveContestTemplatesQuery } from '../use-active-contest-templates-query';
 import { useEventRoundName } from '../use-bracket-round-label';
@@ -143,11 +142,9 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     [contestEvents, lockedEventIds],
   );
   const selectedEvent = selectableEvents.find((event) => event.id === sportEventId) ?? null;
-  // The chosen event's definition, its sport's until one is chosen: a stat pool event plays its
-  // sport's composite with players (#936), not its bracket.
+  // The chosen event's definition, its sport's until one is chosen.
   const sportDefinition = selectedEvent ? eventSportDefinition(selectedEvent) : getSportDefinition(sport);
   const { participant } = sportVocabulary(sportDefinition);
-  const statPoolScoring = statPoolScoringLine(sportDefinition);
   // The events that can start a requested template, whatever format the page is on, in the
   // requested sport league when the link names one.
   const requestedEvents = useMemo(
@@ -280,7 +277,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     setFormValues({
       sportEventId: event.id,
       startsAtRound: event.contestEligible ? '1' : '2',
-      // A stat pool event scores by its composite, whatever the sport's bracket scores by.
+      // The chosen scoring stays while the event offers it; otherwise the event's first.
       scoringDefinitionId: scoringDefinitions.includes(current) ? current : scoringDefinitions[0],
     });
   }, [form, setFormValues]);
@@ -415,12 +412,9 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     }
   }, [form, presets, setFormValues, tierCount]);
 
-  // The name follows the event and the rules until the commissioner types their own; a Clutch
-  // Card is "<event> Stars" whichever way its stars are picked (#995).
+  // The name follows the event and the rules until the commissioner types their own.
   const suggestedName = selectedEvent
-    ? statPoolScoring !== null
-      ? statPoolContestName(selectedEvent.name)
-      : suggestContestName(selectedEvent.name, selectionType, parsedRules.configuration, tierCount)
+    ? suggestContestName(selectedEvent.name, selectionType, parsedRules.configuration, tierCount)
     : '';
   useEffect(() => {
     if (!isNameEdited && suggestedName && form.getValues('contestName') !== suggestedName) {
@@ -462,7 +456,6 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     sportLeagueCap,
     sportLeaguesUsed,
     squaresGames,
-    statPoolScoring,
     templatesQuery,
     tierCount,
     values,

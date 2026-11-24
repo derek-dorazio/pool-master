@@ -6,7 +6,6 @@
  */
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
-  SportLeagueClutchCardEvent,
   SportLeagueEventYearSpan,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
@@ -20,9 +19,9 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
 
   async readFacts(now: Date): Promise<SportLeagueOverviewFacts> {
     const notCancelled = { not: SportEventStatus.CANCELLED };
-    const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, clutchCardRows, overdueCandidates] = await Promise.all([
+    const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, overdueCandidates] = await Promise.all([
       this.prisma.sportLeague.findMany({
-        select: { id: true, name: true, parentSportLeagueId: true, scoringFamily: true, eventSyncProviderId: true, isActive: true, sport: { select: { sport: true } } },
+        select: { id: true, name: true, eventSyncProviderId: true, isActive: true, sport: { select: { sport: true } } },
       }),
       this.latestSyncRuns(),
       this.prisma.sportEvent.findMany({
@@ -41,20 +40,11 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         where: { status: notCancelled, startDate: { gt: now } },
         _min: { startDate: true },
       }),
-      this.prisma.sportEvent.findMany({
-        where: { parentEventId: { not: null }, status: notCancelled },
-        select: { eventSeriesId: true, eventYear: true, parentEventId: true, parentRoundNumbers: true },
-      }),
       readOverdueCandidates(this.prisma, now),
     ]);
     // Read after the events, so every series an event read named is already there: a series is
     // written before its events.
     const leagueOfSeries = seriesLeagues(await this.prisma.eventSeries.findMany({ select: { id: true, sportLeagueId: true } }));
-    const parentEventIds = [...new Set(clutchCardRows.flatMap((row) => (row.parentEventId === null ? [] : [row.parentEventId])))];
-    const parentRounds = parentEventIds.length === 0 ? [] : await this.prisma.sportEventRound.findMany({
-      where: { sportEventId: { in: parentEventIds } },
-      select: { sportEventId: true, roundNumber: true, scheduledDate: true, scheduledEndAt: true },
-    });
 
     return {
       leagues: leagues.map(({ sport, ...league }) => ({ ...league, sport: sport.sport })),
@@ -67,7 +57,6 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
       eventCounts: eventCounts(yearGroups, leagueOfSeries),
       eventYearSpans: eventYearSpans(yearGroups, leagueOfSeries),
       nextEventStarts: earliestByLeague(nextGroups, leagueOfSeries),
-      clutchCardEvents: clutchCardEvents(clutchCardRows, parentRounds, leagueOfSeries),
       overdueCandidates: overdueCandidates.map(({ eventSeriesId, ...event }) => ({ ...event, sportLeagueId: leagueOfSeries(eventSeriesId) })),
     };
   }
@@ -178,19 +167,3 @@ function earliestByLeague(
   return earliest;
 }
 
-function clutchCardEvents(
-  rows: readonly { eventSeriesId: string; eventYear: number; parentEventId: string | null; parentRoundNumbers: number[] }[],
-  rounds: readonly { sportEventId: string; roundNumber: number; scheduledDate: Date; scheduledEndAt: Date | null }[],
-  leagueOfSeries: LeagueOfSeries,
-): SportLeagueClutchCardEvent[] {
-  const roundsByEvent = new Map<string, SportLeagueClutchCardEvent['parentRounds']>();
-  for (const { sportEventId, ...round } of rounds) {
-    const eventRounds = roundsByEvent.get(sportEventId);
-    if (eventRounds === undefined) roundsByEvent.set(sportEventId, [round]);
-    else eventRounds.push(round);
-  }
-  return rows.flatMap((row) => {
-    if (row.parentEventId === null) return [];
-    return [{ sportLeagueId: leagueOfSeries(row.eventSeriesId), eventYear: row.eventYear, parentRoundNumbers: row.parentRoundNumbers, parentRounds: roundsByEvent.get(row.parentEventId) ?? [] }];
-  });
-}

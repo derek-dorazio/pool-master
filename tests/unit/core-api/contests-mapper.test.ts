@@ -109,16 +109,16 @@ describe('toContestResponse events', () => {
       .toEqual([expect.objectContaining({ sportEventId: 'event-1', name: 'The Masters' })]);
   });
 
-  it('names a stat pool event\'s overrides on the contest\'s event, so a page reads the event\'s definition (players, games) rather than its sport\'s', () => {
+  it('names an event\'s overrides on the contest\'s event, so a page reads the event\'s definition rather than its sport\'s', () => {
     const worldSeries = {
       id: 'event-1', name: 'World Series', startDate: new Date('2026-10-23T00:08:00.000Z'), status: SportEventStatus.SCHEDULED,
-      participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE,
+      participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD,
     };
     const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents;
     const [statPoolEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), 20).contest.sportEvents;
 
     expect([golfEvent.participantType, golfEvent.scoringFamily]).toEqual([null, null]);
-    expect([statPoolEvent.participantType, statPoolEvent.scoringFamily]).toEqual([ParticipantType.INDIVIDUAL, ScoringFamily.COMPOSITE]);
+    expect([statPoolEvent.participantType, statPoolEvent.scoringFamily]).toEqual([ParticipantType.TEAM, ScoringFamily.HEAD_TO_HEAD]);
   });
 
   it('gives a single-contest read its entry cap, and a contest with no cap none', () => {
@@ -198,55 +198,6 @@ describe('toContestLeaderboardResponse', () => {
     expect([entry.picks[0].golf, entry.picks[0].race]).toEqual([null, { points: 5 }]);
     expect(entry.events).toEqual([{ sportEventId: 'event-1', totalScore: 8, position: 1, displayPosition: '1' }]);
   });
-
-  it('publishes a stat pool\'s overrides and each pick\'s points and per-game composites on the composite block, the other blocks null', () => {
-    const response = toContestLeaderboardResponse({
-      contestId: 'contest-1',
-      sportEventId: 'event-1',
-      sport: Sport.BASEBALL,
-      participantType: ParticipantType.INDIVIDUAL,
-      scoringFamily: ScoringFamily.COMPOSITE,
-      scoringDefinitionId: 'COMPOSITE_TOTAL',
-      countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
-      upsetBonus: false,
-      participants: [],
-      entries: [{
-        entryId: 'entry-1',
-        entryName: 'Blue Crew',
-        entryNumber: 1,
-        squadId: 'squad-1',
-        squadName: 'Blue Crew',
-        score: 19,
-        position: 1,
-        displayPosition: '1',
-        countingPickLimit: 4,
-        scoredPickCount: 1,
-        events: [{ sportEventId: 'event-1', score: 19, position: 1, displayPosition: '1' }],
-        picks: [{
-          pickId: 'pick-1',
-          sportEventParticipantId: 'sep-1',
-          pickedAt: new Date('2026-10-20T12:00:00.000Z'),
-          slot: null,
-          isCounting: true,
-          isDropped: false,
-          participant: {
-            sportEventParticipantId: 'sep-1',
-            name: 'Shohei Ohtani',
-            score: 19,
-            detail: { scoringFamily: ScoringFamily.COMPOSITE, gameScores: [{ roundNumber: 1, score: 2 }, { roundNumber: 3, score: 17 }] },
-            asOf: null,
-          },
-        }],
-      }],
-      asOf: null,
-    });
-
-    const parsed = ContestLeaderboardResponseSchema.parse(response);
-    expect([parsed.participantType, parsed.scoringFamily]).toEqual([ParticipantType.INDIVIDUAL, ScoringFamily.COMPOSITE]);
-    const [pick] = parsed.entries[0].picks;
-    expect([pick.golf, pick.race, pick.knockout]).toEqual([null, null, null]);
-    expect(pick.composite).toEqual({ points: 19, games: [{ roundNumber: 1, score: 2 }, { roundNumber: 3, score: 17 }] });
-  });
 });
 
 describe('toContestLeaderboardResponse per-sport pick detail', () => {
@@ -296,7 +247,7 @@ describe('toContestLeaderboardResponse per-sport pick detail', () => {
     }, AS_OF);
 
     const [pick] = response.entries[0].picks;
-    expect(pick).toEqual(expect.objectContaining({ golf: { scoreToPar: -6, unplayedRoundNumbers: [4] }, race: null, knockout: null, composite: null }));
+    expect(pick).toEqual(expect.objectContaining({ golf: { scoreToPar: -6, unplayedRoundNumbers: [4] }, race: null, knockout: null }));
     expect(response.asOf).toBe(AS_OF.toISOString());
   });
 
@@ -310,7 +261,7 @@ describe('toContestLeaderboardResponse per-sport pick detail', () => {
     }, null);
 
     const [pick] = response.entries[0].picks;
-    expect(pick).toEqual(expect.objectContaining({ golf: null, race: null, composite: null, knockout: { points: 7, wins: 2, upsetBonusPoints: 3, isAlive: false } }));
+    expect(pick).toEqual(expect.objectContaining({ golf: null, race: null, knockout: { points: 7, wins: 2, upsetBonusPoints: 3, isAlive: false } }));
     expect(response.asOf).toBeNull();
   });
 

@@ -1,7 +1,6 @@
 import { formatSelectionTypeName, type Sport } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { SPORT_BLURBS } from '@/features/contest-types/sport-blurbs';
-import { STAT_POOL_CONTEST_TYPE } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 
 /** One way to play as its card tells it: the contest type, a line on how it plays, a few facts. */
 export interface EventPageOfferCopy {
@@ -10,8 +9,6 @@ export interface EventPageOfferCopy {
   facts: readonly string[];
   /** When a NOT_YET offer opens, in words: "when the four teams are set". */
   opensWhen: string;
-  /** A contest type new this season gets a "New" badge. */
-  isNew?: boolean;
 }
 
 /** An event page's words (#1007): copy lives in the web app, keyed by the page's stored slug. */
@@ -48,13 +45,6 @@ export const EVENT_PAGE_COPY: Readonly<Partial<Record<Sport, Readonly<Record<str
       picksClose: 'Picks close at the first kickoff',
       leagueName: 'the NFL',
       offers: {
-        'championship-weekend-tiered-redzone': {
-          contestType: STAT_POOL_CONTEST_TYPE,
-          line: 'Pick your stars from the four teams. Each scores Redzone points in their game, and the best card wins.',
-          facts: ['Tiered, budget or quick pick', 'Live leaderboard for both games'],
-          opensWhen: 'when the four teams are set',
-          isNew: true,
-        },
         'nfl-bracket-second-chance-doubling': {
           contestType: 'Bracket',
           line: 'Call the last three games: both conference winners and the champion. Later rounds are worth more.',

@@ -3,7 +3,7 @@
  * Each offer used to read its series' editions, and then each edition's event, sports league,
  * sport and field count, on its own: about 6 statements an offer on every cache refill.
  *
- * The offers take the seeded Championship Weekend page's squares, bracket and Clutch Card offers in
+ * The offers take the seeded Championship Weekend page's squares and bracket offers in
  * turn, each on a series of its own with an edition next month, so every offer is shown and every
  * way of asking whether an offer could open is read with 2 offers and with 20. The pages
  * are kept by no cache here, so each run reads. `rules/testing-rules.md` §9B *Query Scaling
@@ -40,16 +40,15 @@ function removeScalingPages() {
 
 /**
  * The seeded Championship Weekend page's offers, squares first, then the bracket from the
- * conference round, then the Clutch Card. Each asks whether it could open its own way: squares by
- * the next game's kickoff, the bracket by its round's start and its games and field, the Clutch
- * Card by the event's start.
+ * conference round. Each asks whether it could open its own way: squares by the next game's
+ * kickoff, the bracket by its round's start and its games and field.
  */
 async function championshipWeekendOffers() {
   const offers = await getPrisma().eventPageOffer.findMany({
     where: { eventPage: { sport: Sport.AMERICAN_FOOTBALL, slug: 'championship-weekend' } },
     include: { template: { select: { selectionType: true } } },
   });
-  return [SelectionType.SQUARES, SelectionType.BRACKET, SelectionType.TIERED].map((selectionType) => {
+  return [SelectionType.SQUARES, SelectionType.BRACKET].map((selectionType) => {
     const offer = offers.find((each) => each.template.selectionType === selectionType);
     if (offer === undefined) throw new Error(`The Championship Weekend page has no ${selectionType} offer.`);
     return offer;

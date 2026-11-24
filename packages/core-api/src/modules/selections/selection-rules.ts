@@ -130,7 +130,7 @@ export function buildSelectionParticipants(input: {
   /**
    * The event, whose bracket seeds the room shows (#701). A golf or race field carries a seed
    * number too (its tour ranking order), which is no bracket seed, so only an event played as
-   * matches sends one: not a team sport's stat pool (#934). Null for a contest on no event.
+   * matches sends one. Null for a contest on no event.
    */
   event: SportLeagueEvent | null;
 }): SelectionParticipant[] {

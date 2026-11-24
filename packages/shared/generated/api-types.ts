@@ -2026,7 +2026,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event
-         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
+         * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -2071,7 +2071,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a sport event
-         * @description Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it, EVENT_HAS_CLUTCH_CARD_EVENTS while a Clutch Card event names it as its season event. Root admin only.
+         * @description Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. Root admin only.
          */
         delete: operations["deleteEvent"];
         options?: never;
@@ -2094,7 +2094,7 @@ export interface paths {
         put?: never;
         /**
          * Clone a sport league's event year forward
-         * @description Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. A Clutch Card league's event names its season event of the target year (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
+         * @description Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.
          */
         post: operations["cloneEventYear"];
         delete?: never;
@@ -2114,7 +2114,7 @@ export interface paths {
         put?: never;
         /**
          * Import a tour's event year from a provider
-         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, events whose start has passed, series that already have an edition that year, and Clutch Card events whose season event is not on the site (NO_PARENT_EVENT, #1820) are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
+         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
          */
         post: operations["importEventYearFromProvider"];
         delete?: never;
@@ -2134,7 +2134,7 @@ export interface paths {
         put?: never;
         /**
          * Create a sport event from a provider event
-         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.
+         * @description An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. Root admin only.
          */
         post: operations["createEventFromProviderEvent"];
         delete?: never;
@@ -2627,26 +2627,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/rounds/{roundNumber}/stat-lines": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Apply a game's stat lines
-         * @description Stores each player's line for the game (the round) exactly as sent, all or none; each row replaces the player's stored line, an empty one clears it, and players not named keep theirs. Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. 422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport's composite counts, is given twice, or is below 0 when it is not yards. 422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.
-         */
-        put: operations["applyEventGameStatLines"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/events/{eventId}/bracket": {
         parameters: {
             query?: never;
@@ -2912,7 +2892,7 @@ export interface paths {
         };
         /**
          * List every sport league with its health, issues and season
-         * @description The root admin's Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name, each Clutch Card straight after its parent league. Each row carries its kind, provider, sync health from the latest run of each of its syncs, its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.
+         * @description The root admin's Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name. Each row carries its provider, sync health from the latest run of each of its syncs, its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.
          */
         get: operations["listSportLeagueOverviews"];
         put?: never;
@@ -2936,7 +2916,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a sport league
-         * @description Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
+         * @description Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a participant: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.
          */
         delete: operations["deleteSportLeague"];
         options?: never;
@@ -2957,7 +2937,7 @@ export interface paths {
         };
         /**
          * List a sport league's syncs with their health, latest run and next run
-         * @description The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. A Clutch Card reports its parent league's event list sync, which creates its events. Health follows the Sports page's rule from that sync's latest run; the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.
+         * @description The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. Health follows the Sports page's rule from that sync's latest run; the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.
          */
         get: operations["listSportLeagueSyncs"];
         put?: never;
@@ -7142,10 +7122,6 @@ export interface components {
                         rule: "NONE";
                     };
                 };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -7189,10 +7165,6 @@ export interface components {
                         rule: "NONE";
                     };
                 };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -7236,10 +7208,6 @@ export interface components {
                         rule: "NONE";
                     };
                 };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -7286,10 +7254,6 @@ export interface components {
                         rule: "NONE";
                     };
                 };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -7331,10 +7295,6 @@ export interface components {
                         rule: "NONE";
                     };
                 };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -7376,10 +7336,6 @@ export interface components {
                         rule: "NONE";
                     };
                 };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -7423,10 +7379,6 @@ export interface components {
                         rule: "NONE";
                     };
                 };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                config: Record<string, never>;
             };
         };
         /** @description One inherited event tier and its participant assignments. */
@@ -7719,10 +7671,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7766,10 +7714,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7813,10 +7757,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7863,10 +7803,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7908,10 +7844,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7953,10 +7885,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -8000,10 +7928,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             };
         };
@@ -8276,10 +8200,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -8323,10 +8243,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -8370,10 +8286,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -8420,10 +8332,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -8465,10 +8373,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -8510,10 +8414,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -8557,10 +8457,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 };
             }[];
@@ -8622,10 +8518,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -8669,10 +8561,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -8716,10 +8604,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -8766,10 +8650,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -8811,10 +8691,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -8856,10 +8732,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -8903,10 +8775,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             };
         };
@@ -9003,10 +8871,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -9050,10 +8914,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -9097,10 +8957,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -9147,10 +9003,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -9192,10 +9044,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -9237,10 +9085,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -9284,10 +9128,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 };
             };
@@ -9872,24 +9712,17 @@ export interface components {
             /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
             displayName: string | null;
             /**
-             * @description Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+             * @description Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
              * @enum {string|null}
              */
             participantType: "INDIVIDUAL" | "TEAM" | null;
             /**
-             * @description How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+             * @description How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
              * @enum {string|null}
              */
-            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
             /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
             displayOrder: number | null;
-            /**
-             * Format: uuid
-             * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
-             */
-            parentSportLeagueId: string | null;
-            /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
-            parentRoundNumbers: number[];
             /** @description The sport league's participants. */
             participantCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -9978,24 +9811,17 @@ export interface components {
                 /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
                 displayName: string | null;
                 /**
-                 * @description Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @description Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
                  * @enum {string|null}
                  */
                 participantType: "INDIVIDUAL" | "TEAM" | null;
                 /**
-                 * @description How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @description How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
                  * @enum {string|null}
                  */
-                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
                 /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
                 displayOrder: number | null;
-                /**
-                 * Format: uuid
-                 * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
-                 */
-                parentSportLeagueId: string | null;
-                /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
-                parentRoundNumbers: number[];
                 /** @description The sport league's participants. */
                 participantCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -10075,24 +9901,17 @@ export interface components {
                 /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
                 displayName: string | null;
                 /**
-                 * @description Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @description Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
                  * @enum {string|null}
                  */
                 participantType: "INDIVIDUAL" | "TEAM" | null;
                 /**
-                 * @description How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @description How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
                  * @enum {string|null}
                  */
-                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
                 /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
                 displayOrder: number | null;
-                /**
-                 * Format: uuid
-                 * @description The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
-                 */
-                parentSportLeagueId: string | null;
-                /** @description The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request. */
-                parentRoundNumbers: number[];
                 /** @description The sport league's participants. */
                 participantCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -10171,17 +9990,7 @@ export interface components {
             /** @enum {string} */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             name: string;
-            /**
-             * Format: uuid
-             * @description The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.
-             */
-            parentSportLeagueId: string | null;
-            /**
-             * @description REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event.
-             * @enum {string}
-             */
-            kind: "REAL" | "CLUTCH_CARD";
-            /** @description The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does. */
+            /** @description The provider that syncs its events. Null when none does. */
             providerId: string | null;
             /** @description On: offered to customers and synced. Off: hidden and not synced. */
             isActive: boolean;
@@ -10219,7 +10028,7 @@ export interface components {
                         id: string;
                     };
                     /**
-                     * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                     * @description Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                      * @enum {string}
                      */
                     syncKind: "EVENTS" | "FIELD" | "SCORES";
@@ -10283,7 +10092,7 @@ export interface components {
                     };
                 }[];
             })[];
-            /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
+            /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events. */
             season: {
                 /**
                  * Format: date-time
@@ -10306,24 +10115,14 @@ export interface components {
         };
         /** @description The root admin's Sports page. */
         SportLeagueOverviewListResponse: {
-            /** @description Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league. */
+            /** @description Every sport league, on or off, never paged: by sport, most popular first, then by name. */
             sportLeagues: {
                 /** Format: uuid */
                 id: string;
                 /** @enum {string} */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 name: string;
-                /**
-                 * Format: uuid
-                 * @description The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.
-                 */
-                parentSportLeagueId: string | null;
-                /**
-                 * @description REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event.
-                 * @enum {string}
-                 */
-                kind: "REAL" | "CLUTCH_CARD";
-                /** @description The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does. */
+                /** @description The provider that syncs its events. Null when none does. */
                 providerId: string | null;
                 /** @description On: offered to customers and synced. Off: hidden and not synced. */
                 isActive: boolean;
@@ -10361,7 +10160,7 @@ export interface components {
                             id: string;
                         };
                         /**
-                         * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                         * @description Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                          * @enum {string}
                          */
                         syncKind: "EVENTS" | "FIELD" | "SCORES";
@@ -10425,7 +10224,7 @@ export interface components {
                         };
                     }[];
                 })[];
-                /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events. */
+                /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events. */
                 season: {
                     /**
                      * Format: date-time
@@ -10450,7 +10249,7 @@ export interface components {
         /** @description One of a sport league's syncs, as the League page's Syncs card shows it. */
         SportLeagueSyncDto: {
             /**
-             * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+             * @description The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
              * @enum {string}
              */
             kind: "EVENTS" | "FIELD" | "SCORES";
@@ -10499,7 +10298,7 @@ export interface components {
             /** @description One per sync kind, always all three: EVENTS, FIELD, SCORES. */
             syncs: {
                 /**
-                 * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+                 * @description The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
                  * @enum {string}
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
@@ -10620,7 +10419,7 @@ export interface components {
                         id: string;
                     };
                     /**
-                     * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                     * @description Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                      * @enum {string}
                      */
                     syncKind: "EVENTS" | "FIELD" | "SCORES";
@@ -10768,7 +10567,7 @@ export interface components {
                             id: string;
                         };
                         /**
-                         * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                         * @description Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                          * @enum {string}
                          */
                         syncKind: "EVENTS" | "FIELD" | "SCORES";
@@ -10864,7 +10663,7 @@ export interface components {
             /** @description Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs. */
             syncs: {
                 /**
-                 * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+                 * @description The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
                  * @enum {string}
                  */
                 kind: "EVENTS" | "FIELD" | "SCORES";
@@ -10937,7 +10736,7 @@ export interface components {
                         id: string;
                     };
                     /**
-                     * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                     * @description Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                      * @enum {string}
                      */
                     syncKind: "EVENTS" | "FIELD" | "SCORES";
@@ -11053,7 +10852,7 @@ export interface components {
                 /** @description Its FIELD then SCORES sync, each from the event's own latest run of that kind; the event list sync is the league's. Every row OFF for an event no provider syncs. */
                 syncs: {
                     /**
-                     * @description The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+                     * @description The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
                      * @enum {string}
                      */
                     kind: "EVENTS" | "FIELD" | "SCORES";
@@ -11126,7 +10925,7 @@ export interface components {
                             id: string;
                         };
                         /**
-                         * @description Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                         * @description Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                          * @enum {string}
                          */
                         syncKind: "EVENTS" | "FIELD" | "SCORES";
@@ -11572,27 +11371,15 @@ export interface components {
              */
             sportLeagueId: string;
             /**
-             * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+             * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
              * @enum {string|null}
              */
             participantType: "INDIVIDUAL" | "TEAM" | null;
             /**
-             * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+             * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
              * @enum {string|null}
              */
-            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
-            /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
-            parentEvent: {
-                /**
-                 * Format: uuid
-                 * @description The parent event's identifier.
-                 */
-                id: string;
-                /** @description The parent event's name, such as "MLB Postseason". */
-                name: string;
-            } | null;
-            /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
-            parentRoundNumbers: number[];
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
             /**
              * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
              * @enum {string}
@@ -11840,27 +11627,15 @@ export interface components {
                  */
                 sportLeagueId: string;
                 /**
-                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+                 * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
                  * @enum {string|null}
                  */
                 participantType: "INDIVIDUAL" | "TEAM" | null;
                 /**
-                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+                 * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
                  * @enum {string|null}
                  */
-                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
-                /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
-                parentEvent: {
-                    /**
-                     * Format: uuid
-                     * @description The parent event's identifier.
-                     */
-                    id: string;
-                    /** @description The parent event's name, such as "MLB Postseason". */
-                    name: string;
-                } | null;
-                /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
-                parentRoundNumbers: number[];
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -12103,27 +11878,15 @@ export interface components {
                  */
                 sportLeagueId: string;
                 /**
-                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+                 * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
                  * @enum {string|null}
                  */
                 participantType: "INDIVIDUAL" | "TEAM" | null;
                 /**
-                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+                 * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
                  * @enum {string|null}
                  */
-                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
-                /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
-                parentEvent: {
-                    /**
-                     * Format: uuid
-                     * @description The parent event's identifier.
-                     */
-                    id: string;
-                    /** @description The parent event's name, such as "MLB Postseason". */
-                    name: string;
-                } | null;
-                /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
-                parentRoundNumbers: number[];
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -12261,11 +12024,6 @@ export interface components {
             /** @description Round count; omitted, the sport's default round count (4 for golf). */
             rounds?: number;
             autoLifecycleEnabled?: boolean;
-            /**
-             * Format: uuid
-             * @description A Clutch Card event's season event, an event of its sport league's parent league with the rounds the league covers. Omitted, it is the one such event under way at startDate. 422 PARENT_EVENT_NOT_FOUND when there is none (create the season event first), PARENT_EVENT_AMBIGUOUS when there are several, PARENT_EVENT_MISMATCH when the named event is not one, PARENT_EVENT_NOT_ALLOWED when the sport league is not a Clutch Card league.
-             */
-            parentEventId?: string;
         };
         /** @description An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched. */
         CreateSportEventFromProviderEventRequest: {
@@ -12306,10 +12064,10 @@ export interface components {
             providerId: string;
         };
         /**
-         * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+         * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
          * @enum {string}
          */
-        ImportSportEventSkipReasonDto: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
+        ImportSportEventSkipReasonDto: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS";
         /** @description What an event-year import created and skipped. Running it again creates nothing new. */
         ImportSportEventYearFromProviderResponse: {
             /** @description The events created, in provider order. */
@@ -12427,27 +12185,15 @@ export interface components {
                  */
                 sportLeagueId: string;
                 /**
-                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+                 * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
                  * @enum {string|null}
                  */
                 participantType: "INDIVIDUAL" | "TEAM" | null;
                 /**
-                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+                 * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
                  * @enum {string|null}
                  */
-                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
-                /** @description A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded. */
-                parentEvent: {
-                    /**
-                     * Format: uuid
-                     * @description The parent event's identifier.
-                     */
-                    id: string;
-                    /** @description The parent event's name, such as "MLB Postseason". */
-                    name: string;
-                } | null;
-                /** @description The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null. */
-                parentRoundNumbers: number[];
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -12565,10 +12311,10 @@ export interface components {
                 externalId: string;
                 name: string;
                 /**
-                 * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+                 * @description ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
                  * @enum {string}
                  */
-                reason: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS" | "NO_PARENT_EVENT";
+                reason: "ALREADY_LINKED" | "ALREADY_STARTED" | "EDITION_EXISTS";
             }[];
         };
         /** @description Changes to an event; omitted fields are left alone. */
@@ -12958,16 +12704,6 @@ export interface components {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
-            /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
-            statLines: {
-                /**
-                 * @description One of the stats the sport's composite counts.
-                 * @enum {string}
-                 */
-                stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                /** @description The player's count of it in the game; below 0 only for yards. */
-                value: number;
-            }[];
         };
         /** @description A participant on an event's field, with everything the event records about them. */
         SportEventParticipantDto: {
@@ -13142,16 +12878,6 @@ export interface components {
                     scoreToPar: number;
                     thru: number | null;
                 } | null;
-                /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
-                statLines: {
-                    /**
-                     * @description One of the stats the sport's composite counts.
-                     * @enum {string}
-                     */
-                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                    /** @description The player's count of it in the game; below 0 only for yards. */
-                    value: number;
-                }[];
             }[];
             /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
             race: {
@@ -13357,16 +13083,6 @@ export interface components {
                         scoreToPar: number;
                         thru: number | null;
                     } | null;
-                    /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
-                    statLines: {
-                        /**
-                         * @description One of the stats the sport's composite counts.
-                         * @enum {string}
-                         */
-                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                        /** @description The player's count of it in the game; below 0 only for yards. */
-                        value: number;
-                    }[];
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
                 race: {
@@ -13615,16 +13331,6 @@ export interface components {
                         scoreToPar: number;
                         thru: number | null;
                     } | null;
-                    /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
-                    statLines: {
-                        /**
-                         * @description One of the stats the sport's composite counts.
-                         * @enum {string}
-                         */
-                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                        /** @description The player's count of it in the game; below 0 only for yards. */
-                        value: number;
-                    }[];
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
                 race: {
@@ -13816,10 +13522,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -13863,10 +13565,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -13910,10 +13608,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -13960,10 +13654,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -14005,10 +13695,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -14050,10 +13736,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -14097,10 +13779,6 @@ export interface components {
                             rule: "NONE";
                         };
                     };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                    config: Record<string, never>;
                 };
             };
             /**
@@ -14148,15 +13826,15 @@ export interface components {
              */
             status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             /**
-             * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
              * @enum {string|null}
              */
             participantType: "INDIVIDUAL" | "TEAM" | null;
             /**
-             * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
              * @enum {string|null}
              */
-            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
         };
         /** @description Request payload for setting the events a contest covers. */
         SetContestSportEventsRequest: {
@@ -14240,15 +13918,15 @@ export interface components {
                  */
                 status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /**
-                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                 * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
                  * @enum {string|null}
                  */
                 participantType: "INDIVIDUAL" | "TEAM" | null;
                 /**
-                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                 * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
                  * @enum {string|null}
                  */
-                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
             }[];
             /** @enum {string|null} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -14374,7 +14052,7 @@ export interface components {
             pickedAt: string;
         };
         /** @enum {string} */
-        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS" | "COMPOSITE_TOTAL";
+        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
         /** @description Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes. */
         ScoredContestEntryPickGolfDto: {
             /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
@@ -14421,18 +14099,6 @@ export interface components {
                 upsetBonusPoints: number;
                 /** @description False once the team has lost a match. */
                 isAlive: boolean;
-            } | null;
-            /** @description Present for a championship stat pool, scored by composite; null otherwise. */
-            composite: {
-                /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
-                points: number | null;
-                /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
-                games: {
-                    /** @description The game: the event's round number. */
-                    roundNumber: number;
-                    /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
-                    score: number;
-                }[];
             } | null;
         };
         /** @description One entry's standing in a contest leaderboard: its contest total, its result in each event, and its picks in the shown event. Each pick's score lives in its sport's block. */
@@ -14508,18 +14174,6 @@ export interface components {
                     /** @description False once the team has lost a match. */
                     isAlive: boolean;
                 } | null;
-                /** @description Present for a championship stat pool, scored by composite; null otherwise. */
-                composite: {
-                    /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
-                    points: number | null;
-                    /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
-                    games: {
-                        /** @description The game: the event's round number. */
-                        roundNumber: number;
-                        /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
-                        score: number;
-                    }[];
-                } | null;
             }[];
         };
         /** @description How an entry's picks combine into its total. */
@@ -14546,20 +14200,20 @@ export interface components {
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /**
-             * @description Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
+             * @description Who competes in the shown event, when its sport league overrides its sport. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
              * @enum {string|null}
              */
             participantType: "INDIVIDUAL" | "TEAM" | null;
             /**
-             * @description How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does.
+             * @description How the shown event is scored, when its sport league overrides its sport. Null scores as the sport does.
              * @enum {string|null}
              */
-            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
             /**
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
              */
-            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS" | "COMPOSITE_TOTAL";
+            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
             /** @description How an entry's picks combine into its total. */
             countingRule: {
                 /**
@@ -14747,16 +14401,6 @@ export interface components {
                         scoreToPar: number;
                         thru: number | null;
                     } | null;
-                    /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
-                    statLines: {
-                        /**
-                         * @description One of the stats the sport's composite counts.
-                         * @enum {string}
-                         */
-                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                        /** @description The player's count of it in the game; below 0 only for yards. */
-                        value: number;
-                    }[];
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
                 race: {
@@ -14860,18 +14504,6 @@ export interface components {
                         /** @description False once the team has lost a match. */
                         isAlive: boolean;
                     } | null;
-                    /** @description Present for a championship stat pool, scored by composite; null otherwise. */
-                    composite: {
-                        /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
-                        points: number | null;
-                        /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
-                        games: {
-                            /** @description The game: the event's round number. */
-                            roundNumber: number;
-                            /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
-                            score: number;
-                        }[];
-                    } | null;
                 }[];
             }[];
             /**
@@ -14917,15 +14549,15 @@ export interface components {
                      */
                     status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                     /**
-                     * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
                      * @enum {string|null}
                      */
                     participantType: "INDIVIDUAL" | "TEAM" | null;
                     /**
-                     * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
                      * @enum {string|null}
                      */
-                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -15002,15 +14634,15 @@ export interface components {
                      */
                     status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                     /**
-                     * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @description Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
                      * @enum {string|null}
                      */
                     participantType: "INDIVIDUAL" | "TEAM" | null;
                     /**
-                     * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @description How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
                      * @enum {string|null}
                      */
-                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -19942,26 +19574,6 @@ export interface components {
                 invalid: number;
             };
         };
-        /** @description One game's stat lines, or a correction to some of them: one row per player named. Players not named keep the line already stored. */
-        GameStatLineUploadRequest: {
-            rows: {
-                /**
-                 * Format: uuid
-                 * @description The player, by participant id; must be in the event's field.
-                 */
-                participantId: string;
-                /** @description The player's whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game. */
-                stats: {
-                    /**
-                     * @description One of the stats the sport's composite counts.
-                     * @enum {string}
-                     */
-                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                    /** @description The player's count of it in the game; below 0 only for yards. */
-                    value: number;
-                }[];
-            }[];
-        };
         /**
          * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
          * @enum {string}
@@ -21581,10 +21193,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -21628,10 +21236,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -21675,10 +21279,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -21725,10 +21325,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -21770,10 +21366,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -21815,10 +21407,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -21862,10 +21450,6 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                        config: Record<string, never>;
                     };
                 };
             };
@@ -22029,10 +21613,6 @@ export interface components {
                                     rule: "NONE";
                                 };
                             };
-                        } | {
-                            /** @enum {string} */
-                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                            config: Record<string, never>;
                         };
                     } | {
                         /** @enum {string} */
@@ -22076,10 +21656,6 @@ export interface components {
                                     rule: "NONE";
                                 };
                             };
-                        } | {
-                            /** @enum {string} */
-                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                            config: Record<string, never>;
                         };
                     } | {
                         /** @enum {string} */
@@ -22123,10 +21699,6 @@ export interface components {
                                     rule: "NONE";
                                 };
                             };
-                        } | {
-                            /** @enum {string} */
-                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                            config: Record<string, never>;
                         };
                     } | {
                         /** @enum {string} */
@@ -22173,10 +21745,6 @@ export interface components {
                                     rule: "NONE";
                                 };
                             };
-                        } | {
-                            /** @enum {string} */
-                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                            config: Record<string, never>;
                         };
                     } | {
                         /** @enum {string} */
@@ -22218,10 +21786,6 @@ export interface components {
                                     rule: "NONE";
                                 };
                             };
-                        } | {
-                            /** @enum {string} */
-                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                            config: Record<string, never>;
                         };
                     } | {
                         /** @enum {string} */
@@ -22263,10 +21827,6 @@ export interface components {
                                     rule: "NONE";
                                 };
                             };
-                        } | {
-                            /** @enum {string} */
-                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                            config: Record<string, never>;
                         };
                     } | {
                         /** @enum {string} */
@@ -22310,10 +21870,6 @@ export interface components {
                                     rule: "NONE";
                                 };
                             };
-                        } | {
-                            /** @enum {string} */
-                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                            config: Record<string, never>;
                         };
                     };
                 };
@@ -22480,10 +22036,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -22527,10 +22079,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -22574,10 +22122,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -22624,10 +22168,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -22669,10 +22209,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -22714,10 +22250,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -22761,10 +22293,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         };
                     };
@@ -22942,10 +22470,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -22989,10 +22513,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -23036,10 +22556,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -23086,10 +22602,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -23131,10 +22643,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -23176,10 +22684,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         } | {
                             /** @enum {string} */
@@ -23223,10 +22727,6 @@ export interface components {
                                         rule: "NONE";
                                     };
                                 };
-                            } | {
-                                /** @enum {string} */
-                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
-                                config: Record<string, never>;
                             };
                         };
                     };
@@ -34344,78 +33844,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RaceResultUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description An event's field. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    applyEventGameStatLines: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-                roundNumber: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GameStatLineUploadRequest"];
             };
         };
         responses: {

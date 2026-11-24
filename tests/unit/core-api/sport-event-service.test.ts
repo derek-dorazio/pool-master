@@ -17,7 +17,6 @@ import { createEventHandlers } from '../../../packages/core-api/src/modules/even
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { RaceResultService } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
-import { StatLineService } from '../../../packages/core-api/src/modules/scoring-families/composite/stat-line-service';
 import { MatchResultService } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
 import { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import { asFastifyRequest } from '../../support/fastify-doubles';
@@ -899,7 +898,6 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
         field: stubInstance(SportEventParticipantService, {}),
         golfScores: stubInstance(GolfScoreService, {}),
         raceResults: stubInstance(RaceResultService, {}),
-        statLines: stubInstance(StatLineService, {}),
         matchResults: stubInstance(MatchResultService, {}),
         sportLeagues: stubInstance(SportLeagueService, {}),
         providerGames: stubInstance(ProviderGameSlateService, {}),
@@ -972,7 +970,6 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
         field: stubInstance(SportEventParticipantService, {}),
         golfScores: stubInstance(GolfScoreService, {}),
         raceResults: stubInstance(RaceResultService, {}),
-        statLines: stubInstance(StatLineService, {}),
         matchResults: stubInstance(MatchResultService, {}),
         sportLeagues: stubInstance(SportLeagueService, {}),
         providerGames: stubInstance(ProviderGameSlateService, {}),

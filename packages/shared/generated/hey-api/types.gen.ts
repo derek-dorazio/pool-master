@@ -4182,11 +4182,6 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
-    } | {
-        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-        config: {
-            [key: string]: never;
-        };
     };
 } | {
     selectionType: 'BUDGET_PICK';
@@ -4247,11 +4242,6 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
-        };
-    } | {
-        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-        config: {
-            [key: string]: never;
         };
     };
 } | {
@@ -4314,11 +4304,6 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
-    } | {
-        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-        config: {
-            [key: string]: never;
-        };
     };
 } | {
     selectionType: 'PICK_EM';
@@ -4380,11 +4365,6 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
-    } | {
-        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-        config: {
-            [key: string]: never;
-        };
     };
 } | {
     selectionType: 'BRACKET';
@@ -4442,11 +4422,6 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
-    } | {
-        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-        config: {
-            [key: string]: never;
-        };
     };
 } | {
     selectionType: 'SQUARES';
@@ -4503,11 +4478,6 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
-        };
-    } | {
-        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-        config: {
-            [key: string]: never;
         };
     };
 } | {
@@ -4569,11 +4539,6 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
-        };
-    } | {
-        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-        config: {
-            [key: string]: never;
         };
     };
 };
@@ -5032,11 +4997,6 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -5097,11 +5057,6 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     } | {
@@ -5164,11 +5119,6 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -5230,11 +5180,6 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -5292,11 +5237,6 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'SQUARES';
@@ -5353,11 +5293,6 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     } | {
@@ -5419,11 +5354,6 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     };
@@ -5824,11 +5754,6 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'BUDGET_PICK';
@@ -5889,11 +5814,6 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         } | {
@@ -5956,11 +5876,6 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'PICK_EM';
@@ -6022,11 +5937,6 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'BRACKET';
@@ -6084,11 +5994,6 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'SQUARES';
@@ -6145,11 +6050,6 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         } | {
@@ -6211,11 +6111,6 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         };
@@ -6313,11 +6208,6 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -6378,11 +6268,6 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     } | {
@@ -6445,11 +6330,6 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -6511,11 +6391,6 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -6573,11 +6448,6 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'SQUARES';
@@ -6634,11 +6504,6 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     } | {
@@ -6700,11 +6565,6 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     };
@@ -6837,11 +6697,6 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'BUDGET_PICK';
@@ -6902,11 +6757,6 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         } | {
@@ -6969,11 +6819,6 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'PICK_EM';
@@ -7035,11 +6880,6 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'BRACKET';
@@ -7097,11 +6937,6 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'SQUARES';
@@ -7158,11 +6993,6 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         } | {
@@ -7224,11 +7054,6 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         };
@@ -7963,25 +7788,17 @@ export type SportLeagueDto = {
      */
     displayName: string | null;
     /**
-     * Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+     * Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
      */
     participantType: 'INDIVIDUAL' | 'TEAM' | null;
     /**
-     * How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+     * How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
     /**
      * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
      */
     displayOrder: number | null;
-    /**
-     * The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
-     */
-    parentSportLeagueId: string | null;
-    /**
-     * The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request.
-     */
-    parentRoundNumbers: Array<number>;
     /**
      * The sport league's participants.
      */
@@ -8091,25 +7908,17 @@ export type SportLeagueListResponse = {
          */
         displayName: string | null;
         /**
-         * Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+         * Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
          */
         participantType: 'INDIVIDUAL' | 'TEAM' | null;
         /**
-         * How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+         * How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         /**
          * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
          */
         displayOrder: number | null;
-        /**
-         * The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
-         */
-        parentSportLeagueId: string | null;
-        /**
-         * The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request.
-         */
-        parentRoundNumbers: Array<number>;
         /**
          * The sport league's participants.
          */
@@ -8206,25 +8015,17 @@ export type SportLeagueResponse = {
          */
         displayName: string | null;
         /**
-         * Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+         * Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
          */
         participantType: 'INDIVIDUAL' | 'TEAM' | null;
         /**
-         * How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+         * How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         /**
          * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
          */
         displayOrder: number | null;
-        /**
-         * The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.
-         */
-        parentSportLeagueId: string | null;
-        /**
-         * The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request.
-         */
-        parentRoundNumbers: Array<number>;
         /**
          * The sport league's participants.
          */
@@ -8318,15 +8119,7 @@ export type SportLeagueOverviewDto = {
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     name: string;
     /**
-     * The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.
-     */
-    parentSportLeagueId: string | null;
-    /**
-     * REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event.
-     */
-    kind: 'REAL' | 'CLUTCH_CARD';
-    /**
-     * The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.
+     * The provider that syncs its events. Null when none does.
      */
     providerId: string | null;
     /**
@@ -8372,7 +8165,7 @@ export type SportLeagueOverviewDto = {
                 id: string;
             };
             /**
-             * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+             * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
              */
             syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
         }>;
@@ -8446,7 +8239,7 @@ export type SportLeagueOverviewDto = {
         }>;
     }>;
     /**
-     * The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.
+     * The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.
      */
     season: {
         /**
@@ -8473,22 +8266,14 @@ export type SportLeagueOverviewDto = {
  */
 export type SportLeagueOverviewListResponse = {
     /**
-     * Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league.
+     * Every sport league, on or off, never paged: by sport, most popular first, then by name.
      */
     sportLeagues: Array<{
         id: string;
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         name: string;
         /**
-         * The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.
-         */
-        parentSportLeagueId: string | null;
-        /**
-         * REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event.
-         */
-        kind: 'REAL' | 'CLUTCH_CARD';
-        /**
-         * The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.
+         * The provider that syncs its events. Null when none does.
          */
         providerId: string | null;
         /**
@@ -8534,7 +8319,7 @@ export type SportLeagueOverviewListResponse = {
                     id: string;
                 };
                 /**
-                 * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                 * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                  */
                 syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
             }>;
@@ -8608,7 +8393,7 @@ export type SportLeagueOverviewListResponse = {
             }>;
         }>;
         /**
-         * The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.
+         * The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.
          */
         season: {
             /**
@@ -8636,7 +8421,7 @@ export type SportLeagueOverviewListResponse = {
  */
 export type SportLeagueSyncDto = {
     /**
-     * The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+     * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
      */
     kind: 'EVENTS' | 'FIELD' | 'SCORES';
     /**
@@ -8688,7 +8473,7 @@ export type SportLeagueSyncListResponse = {
      */
     syncs: Array<{
         /**
-         * The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+         * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
          */
         kind: 'EVENTS' | 'FIELD' | 'SCORES';
         /**
@@ -8813,7 +8598,7 @@ export type SportLeagueEventOverviewDto = {
                 id: string;
             };
             /**
-             * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+             * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
              */
             syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
         }>;
@@ -8977,7 +8762,7 @@ export type SportLeagueEventOverviewListResponse = {
                     id: string;
                 };
                 /**
-                 * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                 * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                  */
                 syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
             }>;
@@ -9088,7 +8873,7 @@ export type SportEventOverviewDto = {
      */
     syncs: Array<{
         /**
-         * The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+         * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
          */
         kind: 'EVENTS' | 'FIELD' | 'SCORES';
         /**
@@ -9165,7 +8950,7 @@ export type SportEventOverviewDto = {
                 id: string;
             };
             /**
-             * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+             * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
              */
             syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
         }>;
@@ -9298,7 +9083,7 @@ export type SportEventOverviewResponse = {
          */
         syncs: Array<{
             /**
-             * The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES).
+             * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
              */
             kind: 'EVENTS' | 'FIELD' | 'SCORES';
             /**
@@ -9375,7 +9160,7 @@ export type SportEventOverviewResponse = {
                     id: string;
                 };
                 /**
-                 * Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES).
+                 * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                  */
                 syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
             }>;
@@ -9943,30 +9728,13 @@ export type SportEventDto = {
      */
     sportLeagueId: string;
     /**
-     * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+     * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
      */
     participantType: 'INDIVIDUAL' | 'TEAM' | null;
     /**
-     * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+     * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
-    /**
-     * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
-     */
-    parentEvent: {
-        /**
-         * The parent event's identifier.
-         */
-        id: string;
-        /**
-         * The parent event's name, such as "MLB Postseason".
-         */
-        name: string;
-    } | null;
-    /**
-     * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
-     */
-    parentRoundNumbers: Array<number>;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
     /**
      * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
@@ -10309,30 +10077,13 @@ export type SportEventListResponse = {
          */
         sportLeagueId: string;
         /**
-         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM' | null;
         /**
-         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
-        /**
-         * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
-         */
-        parentEvent: {
-            /**
-             * The parent event's identifier.
-             */
-            id: string;
-            /**
-             * The parent event's name, such as "MLB Postseason".
-             */
-            name: string;
-        } | null;
-        /**
-         * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
-         */
-        parentRoundNumbers: Array<number>;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -10670,30 +10421,13 @@ export type SportEventResponse = {
          */
         sportLeagueId: string;
         /**
-         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM' | null;
         /**
-         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
-        /**
-         * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
-         */
-        parentEvent: {
-            /**
-             * The parent event's identifier.
-             */
-            id: string;
-            /**
-             * The parent event's name, such as "MLB Postseason".
-             */
-            name: string;
-        } | null;
-        /**
-         * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
-         */
-        parentRoundNumbers: Array<number>;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -10875,10 +10609,6 @@ export type CreateSportEventRequest = {
      */
     rounds?: number;
     autoLifecycleEnabled?: boolean;
-    /**
-     * A Clutch Card event's season event, an event of its sport league's parent league with the rounds the league covers. Omitted, it is the one such event under way at startDate. 422 PARENT_EVENT_NOT_FOUND when there is none (create the season event first), PARENT_EVENT_AMBIGUOUS when there are several, PARENT_EVENT_MISMATCH when the named event is not one, PARENT_EVENT_NOT_ALLOWED when the sport league is not a Clutch Card league.
-     */
-    parentEventId?: string;
 };
 
 /**
@@ -10938,9 +10668,9 @@ export type ImportSportEventYearFromProviderRequest = {
 };
 
 /**
- * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+ * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
  */
-export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
+export type ImportSportEventSkipReasonDto = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS';
 
 /**
  * What an event-year import created and skipped. Running it again creates nothing new.
@@ -11106,30 +10836,13 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         sportLeagueId: string;
         /**
-         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM' | null;
         /**
-         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
-        /**
-         * A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.
-         */
-        parentEvent: {
-            /**
-             * The parent event's identifier.
-             */
-            id: string;
-            /**
-             * The parent event's name, such as "MLB Postseason".
-             */
-            name: string;
-        } | null;
-        /**
-         * The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null.
-         */
-        parentRoundNumbers: Array<number>;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -11291,9 +11004,9 @@ export type ImportSportEventYearFromProviderResponse = {
         externalId: string;
         name: string;
         /**
-         * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it.
+         * ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score).
          */
-        reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' | 'NO_PARENT_EVENT';
+        reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS';
     }>;
 };
 
@@ -11808,19 +11521,6 @@ export type SportEventParticipantRoundDto = {
         scoreToPar: number;
         thru: number | null;
     } | null;
-    /**
-     * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
-     */
-    statLines: Array<{
-        /**
-         * One of the stats the sport's composite counts.
-         */
-        stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
-        /**
-         * The player's count of it in the game; below 0 only for yards.
-         */
-        value: number;
-    }>;
 };
 
 /**
@@ -12032,19 +11732,6 @@ export type SportEventParticipantDto = {
             scoreToPar: number;
             thru: number | null;
         } | null;
-        /**
-         * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
-         */
-        statLines: Array<{
-            /**
-             * One of the stats the sport's composite counts.
-             */
-            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
-            /**
-             * The player's count of it in the game; below 0 only for yards.
-             */
-            value: number;
-        }>;
     }>;
     /**
      * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -12298,19 +11985,6 @@ export type SportEventParticipantListResponse = {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
-            /**
-             * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
-             */
-            statLines: Array<{
-                /**
-                 * One of the stats the sport's composite counts.
-                 */
-                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
-                /**
-                 * The player's count of it in the game; below 0 only for yards.
-                 */
-                value: number;
-            }>;
         }>;
         /**
          * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -12633,19 +12307,6 @@ export type SportEventParticipantResponse = {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
-            /**
-             * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
-             */
-            statLines: Array<{
-                /**
-                 * One of the stats the sport's composite counts.
-                 */
-                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
-                /**
-                 * The player's count of it in the game; below 0 only for yards.
-                 */
-                value: number;
-            }>;
         }>;
         /**
          * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -12893,11 +12554,6 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -12958,11 +12614,6 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     } | {
@@ -13025,11 +12676,6 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -13091,11 +12737,6 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -13153,11 +12794,6 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     } | {
         selectionType: 'SQUARES';
@@ -13214,11 +12850,6 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
-            };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
             };
         };
     } | {
@@ -13281,11 +12912,6 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
-        } | {
-            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-            config: {
-                [key: string]: never;
-            };
         };
     };
     /**
@@ -13346,13 +12972,13 @@ export type ContestSportEventDto = {
      */
     status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
-     * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+     * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
      */
     participantType: 'INDIVIDUAL' | 'TEAM' | null;
     /**
-     * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+     * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
 };
 
 /**
@@ -13464,13 +13090,13 @@ export type ContestDto = {
          */
         status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
-         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM' | null;
         /**
-         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
     }>;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
@@ -13627,7 +13253,7 @@ export type ContestEntryParticipantDetailDto = {
     pickedAt: string;
 };
 
-export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS' | 'COMPOSITE_TOTAL';
+export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS';
 
 /**
  * Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes.
@@ -13713,28 +13339,6 @@ export type ScoredContestEntryPickDto = {
          * False once the team has lost a match.
          */
         isAlive: boolean;
-    } | null;
-    /**
-     * Present for a championship stat pool, scored by composite; null otherwise.
-     */
-    composite: {
-        /**
-         * The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.
-         */
-        points: number | null;
-        /**
-         * Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds.
-         */
-        games: Array<{
-            /**
-             * The game: the event's round number.
-             */
-            roundNumber: number;
-            /**
-             * The player's composite for the game, from its stat lines. Can be below 0 where yards are lost.
-             */
-            score: number;
-        }>;
     } | null;
 };
 
@@ -13874,28 +13478,6 @@ export type ContestEntryStandingDto = {
              */
             isAlive: boolean;
         } | null;
-        /**
-         * Present for a championship stat pool, scored by composite; null otherwise.
-         */
-        composite: {
-            /**
-             * The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.
-             */
-            points: number | null;
-            /**
-             * Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds.
-             */
-            games: Array<{
-                /**
-                 * The game: the event's round number.
-                 */
-                roundNumber: number;
-                /**
-                 * The player's composite for the game, from its stat lines. Can be below 0 where yards are lost.
-                 */
-                score: number;
-            }>;
-        } | null;
     }>;
 };
 
@@ -13934,17 +13516,17 @@ export type ContestLeaderboardResponse = {
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
+     * Who competes in the shown event, when its sport league overrides its sport. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
      */
     participantType: 'INDIVIDUAL' | 'TEAM' | null;
     /**
-     * How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does.
+     * How the shown event is scored, when its sport league overrides its sport. Null scores as the sport does.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
     /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
-    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS' | 'COMPOSITE_TOTAL';
+    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS';
     /**
      * How an entry's picks combine into its total.
      */
@@ -14175,19 +13757,6 @@ export type ContestLeaderboardResponse = {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
-            /**
-             * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
-             */
-            statLines: Array<{
-                /**
-                 * One of the stats the sport's composite counts.
-                 */
-                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
-                /**
-                 * The player's count of it in the game; below 0 only for yards.
-                 */
-                value: number;
-            }>;
         }>;
         /**
          * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -14363,28 +13932,6 @@ export type ContestLeaderboardResponse = {
                  */
                 isAlive: boolean;
             } | null;
-            /**
-             * Present for a championship stat pool, scored by composite; null otherwise.
-             */
-            composite: {
-                /**
-                 * The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.
-                 */
-                points: number | null;
-                /**
-                 * Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds.
-                 */
-                games: Array<{
-                    /**
-                     * The game: the event's round number.
-                     */
-                    roundNumber: number;
-                    /**
-                     * The player's composite for the game, from its stat lines. Can be below 0 where yards are lost.
-                     */
-                    score: number;
-                }>;
-            } | null;
         }>;
     }>;
     /**
@@ -14436,13 +13983,13 @@ export type ContestResponse = {
              */
             status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
             /**
-             * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
              */
             participantType: 'INDIVIDUAL' | 'TEAM' | null;
             /**
-             * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
              */
-            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
@@ -14533,13 +14080,13 @@ export type ContestListResponse = {
              */
             status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
             /**
-             * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
              */
             participantType: 'INDIVIDUAL' | 'TEAM' | null;
             /**
-             * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
              */
-            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
@@ -21365,31 +20912,6 @@ export type RaceResultPreviewResponse = {
 };
 
 /**
- * One game's stat lines, or a correction to some of them: one row per player named. Players not named keep the line already stored.
- */
-export type GameStatLineUploadRequest = {
-    rows: Array<{
-        /**
-         * The player, by participant id; must be in the event's field.
-         */
-        participantId: string;
-        /**
-         * The player's whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game.
-         */
-        stats: Array<{
-            /**
-             * One of the stats the sport's composite counts.
-             */
-            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
-            /**
-             * The player's count of it in the game; below 0 only for yards.
-             */
-            value: number;
-        }>;
-    }>;
-};
-
-/**
  * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
  */
 export type MatchStatusDto = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
@@ -23608,11 +23130,6 @@ export type EventPageOfferDto = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'BUDGET_PICK';
@@ -23673,11 +23190,6 @@ export type EventPageOfferDto = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         } | {
@@ -23740,11 +23252,6 @@ export type EventPageOfferDto = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'PICK_EM';
@@ -23806,11 +23313,6 @@ export type EventPageOfferDto = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'BRACKET';
@@ -23868,11 +23370,6 @@ export type EventPageOfferDto = {
                         rule: 'NONE';
                     };
                 };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
-                };
             };
         } | {
             selectionType: 'SQUARES';
@@ -23929,11 +23426,6 @@ export type EventPageOfferDto = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         } | {
@@ -23995,11 +23487,6 @@ export type EventPageOfferDto = {
                     } | {
                         rule: 'NONE';
                     };
-                };
-            } | {
-                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                config: {
-                    [key: string]: never;
                 };
             };
         };
@@ -24218,11 +23705,6 @@ export type EventPageDto = {
                             rule: 'NONE';
                         };
                     };
-                } | {
-                    participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                    config: {
-                        [key: string]: never;
-                    };
                 };
             } | {
                 selectionType: 'BUDGET_PICK';
@@ -24283,11 +23765,6 @@ export type EventPageDto = {
                         } | {
                             rule: 'NONE';
                         };
-                    };
-                } | {
-                    participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                    config: {
-                        [key: string]: never;
                     };
                 };
             } | {
@@ -24350,11 +23827,6 @@ export type EventPageDto = {
                             rule: 'NONE';
                         };
                     };
-                } | {
-                    participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                    config: {
-                        [key: string]: never;
-                    };
                 };
             } | {
                 selectionType: 'PICK_EM';
@@ -24416,11 +23888,6 @@ export type EventPageDto = {
                             rule: 'NONE';
                         };
                     };
-                } | {
-                    participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                    config: {
-                        [key: string]: never;
-                    };
                 };
             } | {
                 selectionType: 'BRACKET';
@@ -24478,11 +23945,6 @@ export type EventPageDto = {
                             rule: 'NONE';
                         };
                     };
-                } | {
-                    participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                    config: {
-                        [key: string]: never;
-                    };
                 };
             } | {
                 selectionType: 'SQUARES';
@@ -24539,11 +24001,6 @@ export type EventPageDto = {
                         } | {
                             rule: 'NONE';
                         };
-                    };
-                } | {
-                    participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                    config: {
-                        [key: string]: never;
                     };
                 };
             } | {
@@ -24605,11 +24062,6 @@ export type EventPageDto = {
                         } | {
                             rule: 'NONE';
                         };
-                    };
-                } | {
-                    participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                    config: {
-                        [key: string]: never;
                     };
                 };
             };
@@ -24833,11 +24285,6 @@ export type EventPageResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'BUDGET_PICK';
@@ -24898,11 +24345,6 @@ export type EventPageResponse = {
                             } | {
                                 rule: 'NONE';
                             };
-                        };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
                         };
                     };
                 } | {
@@ -24965,11 +24407,6 @@ export type EventPageResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'PICK_EM';
@@ -25031,11 +24468,6 @@ export type EventPageResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'BRACKET';
@@ -25093,11 +24525,6 @@ export type EventPageResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'SQUARES';
@@ -25154,11 +24581,6 @@ export type EventPageResponse = {
                             } | {
                                 rule: 'NONE';
                             };
-                        };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
                         };
                     };
                 } | {
@@ -25220,11 +24642,6 @@ export type EventPageResponse = {
                             } | {
                                 rule: 'NONE';
                             };
-                        };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
                         };
                     };
                 };
@@ -25463,11 +24880,6 @@ export type EventPageListResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'BUDGET_PICK';
@@ -25528,11 +24940,6 @@ export type EventPageListResponse = {
                             } | {
                                 rule: 'NONE';
                             };
-                        };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
                         };
                     };
                 } | {
@@ -25595,11 +25002,6 @@ export type EventPageListResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'PICK_EM';
@@ -25661,11 +25063,6 @@ export type EventPageListResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'BRACKET';
@@ -25723,11 +25120,6 @@ export type EventPageListResponse = {
                                 rule: 'NONE';
                             };
                         };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
-                        };
                     };
                 } | {
                     selectionType: 'SQUARES';
@@ -25784,11 +25176,6 @@ export type EventPageListResponse = {
                             } | {
                                 rule: 'NONE';
                             };
-                        };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
                         };
                     };
                 } | {
@@ -25850,11 +25237,6 @@ export type EventPageListResponse = {
                             } | {
                                 rule: 'NONE';
                             };
-                        };
-                    } | {
-                        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
-                        config: {
-                            [key: string]: never;
                         };
                     };
                 };
@@ -35432,50 +34814,6 @@ export type ApplyEventRaceResultsResponses = {
 };
 
 export type ApplyEventRaceResultsResponse = ApplyEventRaceResultsResponses[keyof ApplyEventRaceResultsResponses];
-
-export type ApplyEventGameStatLinesData = {
-    body: GameStatLineUploadRequest;
-    path: {
-        eventId: string;
-        roundNumber: number;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/rounds/{roundNumber}/stat-lines';
-};
-
-export type ApplyEventGameStatLinesErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ApplyEventGameStatLinesError = ApplyEventGameStatLinesErrors[keyof ApplyEventGameStatLinesErrors];
-
-export type ApplyEventGameStatLinesResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type ApplyEventGameStatLinesResponse = ApplyEventGameStatLinesResponses[keyof ApplyEventGameStatLinesResponses];
 
 export type GetEventBracketData = {
     body?: never;

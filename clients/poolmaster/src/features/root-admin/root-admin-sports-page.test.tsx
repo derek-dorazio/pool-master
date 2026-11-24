@@ -59,8 +59,6 @@ function overview(overrides: Partial<SportLeagueOverviewDto> = {}): SportLeagueO
     id: 'mlb',
     sport: 'BASEBALL',
     name: 'MLB',
-    parentSportLeagueId: null,
-    kind: 'REAL',
     providerId: 'balldontlie',
     isActive: true,
     syncHealth: 'OK',
@@ -72,11 +70,10 @@ function overview(overrides: Partial<SportLeagueOverviewDto> = {}): SportLeagueO
   };
 }
 
-/** Baseball with its World Series Clutch Card, basketball's NBA with issues and the NCAA, and golf's PWHL-like league that is off. */
+/** Baseball's MLB, basketball's NBA with issues and the NCAA, and golf's PWHL-like league that is off. */
 function overviews(): SportLeagueOverviewDto[] {
   return [
     overview(),
-    overview({ id: 'ws', name: 'World Series', parentSportLeagueId: 'mlb', kind: 'CLUTCH_CARD', eventCount: 1 }),
     overview({
       id: 'nba',
       sport: 'BASKETBALL',
@@ -145,15 +142,15 @@ describe('RootAdminSportsPage', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('lists the sport leagues in the order read, each Clutch Card indented right after its parent, and names each sport on its first row only', async () => {
+  it('lists the sport leagues in the order read and names each sport on its first row only', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     renderPage();
     await screen.findByTestId('root-admin-sports-row-mlb');
 
-    expect(rowNames()).toEqual(['MLB', '└World Series', 'NBA', "NCAA Men's Basketball"]);
+    expect(rowNames()).toEqual(['MLB', 'NBA', "NCAA Men's Basketball"]);
     const sportCells = within(screen.getByTestId('root-admin-sports-table')).getAllByRole('row').slice(1)
       .map((row) => within(row).getAllByRole('cell')[0].textContent);
-    expect(sportCells).toEqual(['Baseball', '', 'Basketball', '']);
+    expect(sportCells).toEqual(['Baseball', 'Basketball', '']);
   });
 
   it('heads the page Sports with its two tabs, Sport leagues marked and Profiles beside it', async () => {
@@ -166,13 +163,12 @@ describe('RootAdminSportsPage', () => {
     expect(screen.getByTestId('root-admin-sports-tab-profiles')).not.toHaveAttribute('aria-current');
   });
 
-  it('shows the count line of sports and sport leagues on, and a Clutch Card\'s provider as via its parent', async () => {
+  it('shows the count line of sports and sport leagues on, and each league\'s provider', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-sports-counts')).toHaveTextContent('3 sports · 4 of 5 sport leagues');
-    expect(within(await screen.findByTestId('root-admin-sports-row-ws')).getByText('via MLB')).toBeInTheDocument();
-    expect(within(screen.getByTestId('root-admin-sports-row-mlb')).getByText('BALLDONTLIE')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-sports-counts')).toHaveTextContent('3 sports · 3 of 4 sport leagues');
+    expect(within(await screen.findByTestId('root-admin-sports-row-mlb')).getByText('BALLDONTLIE')).toBeInTheDocument();
   });
 
   it('starts filtered to On, hiding an Off sport league until Off is ticked, and says so above the grid', async () => {
@@ -224,7 +220,7 @@ describe('RootAdminSportsPage', () => {
     expect(item).toHaveAttribute('href', '/manage/sports/basketball/events/evt-late');
   });
 
-  it('opens a failed sync\'s run from behind its chip, staying on the page', async () => {
+  it('opens a failed sync\'s run from behind its chip, staying on the page, and closes it again', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     getProviderSyncRunMock.mockResolvedValue({
       data: {
@@ -242,18 +238,21 @@ describe('RootAdminSportsPage', () => {
     expect(await screen.findByTestId('root-admin-sync-payload-modal')).toBeInTheDocument();
     expect(getProviderSyncRunMock).toHaveBeenCalledWith(expect.objectContaining({ path: { syncRunId: 'run-field' } }));
     expect(screen.queryByTestId('location')).not.toBeInTheDocument();
+
+    await userEvent.click(within(screen.getByTestId('root-admin-sync-payload-modal')).getAllByRole('button', { name: /close/i })[0]);
+    await waitFor(() => expect(screen.queryByTestId('root-admin-sync-payload-modal')).not.toBeInTheDocument());
   });
 
   it('opens a sport league\'s page from its row', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     renderPage();
 
-    await userEvent.click(within(await screen.findByTestId('root-admin-sports-row-ws')).getByText('Clutch Card'));
+    await userEvent.click(within(await screen.findByTestId('root-admin-sports-row-mlb')).getByText('BALLDONTLIE'));
 
-    expect(await screen.findByTestId('location')).toHaveTextContent('/manage/sports/baseball/leagues/ws');
+    expect(await screen.findByTestId('location')).toHaveTextContent('/manage/sports/baseball/leagues/mlb');
   });
 
-  it('opens a sport league\'s settings from its ⚙ without leaving the grid, showing them before Edit', async () => {
+  it('opens a sport league\'s settings from its ⚙ without leaving the grid, showing them before Edit, and closes back to the grid', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' }) } });
     listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
@@ -269,6 +268,9 @@ describe('RootAdminSportsPage', () => {
     expect(await screen.findByTestId('root-admin-sport-league-settings-tier-profile')).toHaveTextContent('4 tiers of 3');
     expect(screen.queryByTestId('root-admin-sport-league-settings-status-input')).not.toBeInTheDocument();
     expect(screen.queryByTestId('location')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByRole('button', { name: /close/i })[0]);
+    await waitFor(() => expect(screen.queryByText('MLB settings')).not.toBeInTheDocument());
   });
 
   it('saves only the settings changed on Edit, then shows them again', async () => {
@@ -384,7 +386,7 @@ describe('RootAdminSportsPage', () => {
 
 describe('sportsCountLine', () => {
   it('counts distinct sports and the sport leagues on out of all of them', () => {
-    expect(sportsCountLine(overviews())).toBe('3 sports · 4 of 5 sport leagues');
+    expect(sportsCountLine(overviews())).toBe('3 sports · 3 of 4 sport leagues');
     expect(sportsCountLine([overview()])).toBe('1 sport · 1 of 1 sport league');
   });
 });

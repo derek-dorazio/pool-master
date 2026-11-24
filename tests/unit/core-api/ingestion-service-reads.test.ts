@@ -12,7 +12,7 @@ import { memoizedRead, ReadMemoKey, runWithReadMemo } from '../../../packages/co
 import type { PrismaClient } from '@prisma/client';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
-import { ScoringFamily, Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
+import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
 import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
@@ -53,7 +53,7 @@ function service(
   const ingestion = new IngestionService({
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
-    sportLeagues: { findEventSyncedWithClutchCards: () => Promise.resolve([]) },
+    sportLeagues: { findEventSynced: () => Promise.resolve([]) },
     webhookProviderIds: [],
     jobHistory: { countByScope: () => Promise.resolve([]) },
     logger: fakeLogger(),
@@ -138,31 +138,26 @@ describe('IngestionService.listProviders', () => {
     const registry = registryWith(paced);
     registry.register(Sport.GOLF, unpaced, 'SECONDARY');
     const nba = buildSportLeague({ name: 'NBA', eventSyncProviderId: 'balldontlie' });
-    const findEventSyncedWithClutchCards = jest.fn().mockResolvedValue([
+    const findEventSynced = jest.fn().mockResolvedValue([
       buildSportLeague({ name: 'PGA TOUR', eventSyncProviderId: 'balldontlie' }),
       nba,
-      // A Clutch Card league is not a synced league of its own.
-      buildSportLeague({ name: 'NBA Clutch Card', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: nba.id }),
     ]);
 
-    const providers = await service({ registry, sportLeagues: { findEventSyncedWithClutchCards }, webhookProviderIds: ['balldontlie'] }).listProviders();
+    const providers = await service({ registry, sportLeagues: { findEventSynced }, webhookProviderIds: ['balldontlie'] }).listProviders();
 
-    expect(findEventSyncedWithClutchCards).toHaveBeenCalledTimes(1);
+    expect(findEventSynced).toHaveBeenCalledTimes(1);
     expect(providers).toEqual([
       expect.objectContaining({ providerId: 'balldontlie', requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 2 }),
       expect.objectContaining({ providerId: 'mock', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0 }),
     ]);
   });
 
-  it('counts each provider\'s rate-limited jobs of the last 24 hours: league jobs by the league\'s sync provider (a Clutch Card\'s by its parent\'s), event jobs by the event\'s provider', async () => {
+  it('counts each provider\'s rate-limited jobs of the last 24 hours: league jobs by the league\'s sync provider, event jobs by the event\'s provider', async () => {
     const registry = registryWith(fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }));
     registry.register(Sport.GOLF, fakeSportDataProvider({ providerId: 'mock', providerName: 'Mock' }), 'SECONDARY');
     const nba = buildSportLeague({ name: 'NBA', eventSyncProviderId: 'balldontlie' });
-    // Listed before its parent, as the read's name order can put it.
-    const clutchCard = buildSportLeague({ name: 'A NBA Clutch Card', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: nba.id });
     const countByScope = jest.fn().mockResolvedValue([
       { sportLeagueId: nba.id, sportEventId: null, count: 2 },
-      { sportLeagueId: clutchCard.id, sportEventId: null, count: 10 },
       { sportLeagueId: null, sportEventId: 'event-bdl', count: 3 },
       { sportLeagueId: null, sportEventId: 'event-mock', count: 1 },
       // Neither scope, an unsynced league and an event no longer there count for no provider.
@@ -178,7 +173,7 @@ describe('IngestionService.listProviders', () => {
     const providers = await service({
       registry,
       sportEvents: fakeSportEventRepo({ findLinks }),
-      sportLeagues: { findEventSyncedWithClutchCards: () => Promise.resolve([clutchCard, nba]) },
+      sportLeagues: { findEventSynced: () => Promise.resolve([nba]) },
       jobHistory: { countByScope },
       now: () => new Date('2026-11-19T12:00:00.000Z'),
     }).listProviders();
@@ -186,7 +181,7 @@ describe('IngestionService.listProviders', () => {
     expect(countByScope).toHaveBeenCalledWith({ errorType: 'RATE_LIMITED', since: new Date('2026-11-18T12:00:00.000Z') });
     expect(findLinks).toHaveBeenCalledWith(['event-bdl', 'event-mock', 'event-deleted']);
     expect(providers).toEqual([
-      expect.objectContaining({ providerId: 'balldontlie', rateLimitedJobsLast24h: 15 }),
+      expect.objectContaining({ providerId: 'balldontlie', rateLimitedJobsLast24h: 5 }),
       expect.objectContaining({ providerId: 'mock', rateLimitedJobsLast24h: 1 }),
     ]);
   });

@@ -32,7 +32,7 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
   };
 }
 
-/** Championship Weekend as the API sends it: its Clutch Card still to open, its bracket and squares open. */
+/** Championship Weekend as the API sends it: its bracket still to open, its squares open. */
 export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}): EventPageDto {
   return {
     id: 'page-cw',
@@ -42,15 +42,15 @@ export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}
     isActive: true,
     redirectTo: null,
     offers: [
-      offerFixture('championship-weekend-tiered-redzone', {
-        sportLeagueName: 'Championship Weekend',
-        eventSeriesName: 'Conference Championships',
+      offerFixture('nfl-bracket-second-chance-doubling', {
+        sportLeagueName: 'NFL',
+        eventSeriesName: 'NFL Playoffs',
         isPrimary: true,
         state: 'NOT_YET',
-        sortOrder: 1,
-        edition: { sportEventId: 'event-cw', name: 'Conference Championships', eventYear: 2027, startDate: '2027-01-24T20:00:00.000Z', endDate: null },
+        startsAtRound: 3,
+        sortOrder: 2,
+        edition: { sportEventId: 'event-cw', name: 'NFL Playoffs', eventYear: 2027, startDate: '2027-01-24T20:00:00.000Z', endDate: null },
       }),
-      offerFixture('nfl-bracket-second-chance-doubling', { startsAtRound: 3, sortOrder: 2 }),
       offerFixture('nfl-squares', { sortOrder: 3 }),
     ],
     ...overrides,

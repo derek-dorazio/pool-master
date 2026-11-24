@@ -34,7 +34,7 @@ export function DetailsPeek({
   testId: string;
   /**
    * `icon` is the (i) after a thing's name; `text` makes a value itself the way in, dotted
-   * underneath, such as a game's score on a stat pool leaderboard opening that game's stats.
+   * underneath, such as a team's wins on a leaderboard opening the games it played.
    * `cell` makes a whole board cell the way in, such as a squares box opening its holder: the
    * `icon` is the cell's content, which draws its own look.
    */

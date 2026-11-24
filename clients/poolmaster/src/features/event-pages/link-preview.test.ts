@@ -26,7 +26,7 @@ describe('Event page link previews', () => {
       title: 'Championship Weekend',
       imageFile: 'american-football-championship-weekend.jpg',
       eyebrow: 'NFL conference championships',
-      contestTypes: ['Clutch Card', 'Bracket', 'Squares'],
+      contestTypes: ['Bracket', 'Squares'],
     });
   });
 

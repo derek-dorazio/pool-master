@@ -5,15 +5,11 @@ import {
   getSportDefinition,
   ParticipantType,
   ScoringFamily,
-  SelectionType,
   Sport,
   sportLeagueDefinitionOf,
-  sportVocabulary,
-  TournamentFormat,
 } from '@poolmaster/shared/domain';
 
-// A sport league's definition (#934): its sport's, unless the league plays its sport's stat pool,
-// a field of players scored by the composite family in golf's shape.
+// A sport league's definition (#934): its sport's, with the participant type the league sets.
 
 describe('sportLeagueDefinitionOf', () => {
   it('gives a sport league with no overrides its sport\'s definition, unchanged', () => {
@@ -27,48 +23,26 @@ describe('sportLeagueDefinitionOf', () => {
       .toEqual([ParticipantType.TEAM, ScoringFamily.STROKE_PLAY, ['GOLF_RELATIVE_TO_PAR_TOTAL']]);
   });
 
-  it('plays a composite league of a team sport as its stat pool: players, roster formats only, the composite total, no matches, games for rounds', () => {
-    const worldSeries = sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE });
-
-    expect(worldSeries).toMatchObject({
-      sport: Sport.BASEBALL,
-      participantType: ParticipantType.INDIVIDUAL,
-      scoringFamily: ScoringFamily.COMPOSITE,
-      tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
-      defaultRounds: 7,
-      selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
-      scoringDefinitions: ['COMPOSITE_TOTAL'],
-      shootout: false,
-      wordOverrides: { participant: 'player', round: 'game' },
-    });
-    expect(sportVocabulary(worldSeries)).toMatchObject({ participant: { one: 'player', many: 'players' }, round: { one: 'game', many: 'games' }, eventStart: 'first pitch' });
-    expect(worldSeries.composite?.name).toBe('Box Score');
-    expect(worldSeries.matchPeriodLayout).toBeUndefined();
-    expect(worldSeries.roundLabel(3, 7)).toBe('Game 3');
+  it('keeps the sport\'s definition for a league that names its sport\'s own family', () => {
+    expect(sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: null, scoringFamily: ScoringFamily.HEAD_TO_HEAD })).toBe(getSportDefinition(Sport.BASEBALL));
   });
 
-  it('schedules an NFL stat pool event for one game, its week\'s', () => {
-    expect(sportLeagueDefinitionOf(Sport.AMERICAN_FOOTBALL, { participantType: null, scoringFamily: ScoringFamily.COMPOSITE }).defaultRounds).toBe(1);
-  });
-
-  it('refuses a composite league of a sport with no composite, and any other family a sport is not scored by', () => {
-    expect(() => sportLeagueDefinitionOf(Sport.GOLF, { participantType: null, scoringFamily: ScoringFamily.COMPOSITE }))
-      .toThrow('A GOLF sport league cannot be scored by COMPOSITE');
+  it('refuses any family a sport is not scored by, as a broken reference row', () => {
+    expect(() => sportLeagueDefinitionOf(Sport.GOLF, { participantType: null, scoringFamily: ScoringFamily.HEAD_TO_HEAD }))
+      .toThrow('A GOLF sport league cannot be scored by HEAD_TO_HEAD');
     expect(() => sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: null, scoringFamily: ScoringFamily.STROKE_PLAY }))
       .toThrow('A BASEBALL sport league cannot be scored by STROKE_PLAY');
   });
 });
 
 describe('An event read through its sport league', () => {
-  const worldSeriesGame = { sport: Sport.BASEBALL, participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE };
-
-  it('plays no matches in a stat pool, though its sport\'s other leagues play a bracket', () => {
-    expect([eventPlaysMatches(worldSeriesGame), eventPlaysMatches({ sport: Sport.BASEBALL })]).toEqual([false, true]);
-    expect(eventSportDefinition(worldSeriesGame).scoringFamily).toBe(ScoringFamily.COMPOSITE);
+  it('reads its sport\'s definition, with the participant type the event carries', () => {
+    expect(eventSportDefinition({ sport: Sport.BASEBALL })).toBe(getSportDefinition(Sport.BASEBALL));
+    expect(eventSportDefinition({ sport: Sport.GOLF, participantType: ParticipantType.TEAM }).participantType).toBe(ParticipantType.TEAM);
   });
 
-  it('is no kind of match event for a template, so a stat pool takes templates that name no kind of event', () => {
-    expect(contestTemplateEventTypeOf({ ...worldSeriesGame, rounds: 7 })).toBeNull();
+  it('plays matches when its sport does, and is the kind of match event its sport\'s format names', () => {
+    expect([eventPlaysMatches({ sport: Sport.BASEBALL }), eventPlaysMatches({ sport: Sport.GOLF })]).toEqual([true, false]);
     expect(contestTemplateEventTypeOf({ sport: Sport.BASEBALL, rounds: 4 })).toBe('KNOCKOUT');
   });
 });

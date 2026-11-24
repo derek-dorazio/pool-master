@@ -56,8 +56,9 @@ The ideas that matter for this, in plain words, each with what Poolmaster does n
 
 A fan's "event" does not map to one series. Championship Weekend is three things in the model:
 
-- **Clutch Card** runs on the *Championship Weekend* sport league, a player-stats league with
-  one event a season (`plans/championship-stat-pools.md` §3).
+- **Clutch Card** ran on the *Championship Weekend* sport league, a player-stats league with
+  one event a season. That league and its offer were removed with the old Clutch Card leagues
+  (#1998); the Clutch Card returns as a contest type in the league model redesign.
 - **Bracket** and **Squares** run on the *NFL* sport league's `NFL Playoffs` series, one
   knockout event. Squares takes one game of it; a bracket can start at a later round once the
   knockout is under way (#721, "second-chance bracket").

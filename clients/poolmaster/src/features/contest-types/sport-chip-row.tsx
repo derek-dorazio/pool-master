@@ -3,11 +3,11 @@ import { sportLeagueChoiceLabel, sportLeagueChoiceSearch, sportSlug, type Filter
 
 /**
  * The sport switch on a phone (#1701): every sport on one scrolling row of chips. A chosen league
- * or round (picked in the "Every league you can run" card) stands in its sport's place as one
- * chip, "NHL · Stanley Cup Final", whose × goes back to the sport.
+ * (picked in the "Every league you can run" card) stands in its sport's place as one chip, "NHL",
+ * whose × goes back to the sport.
  */
 export function SportChipRow({ choice, className, onPick, sports, testId }: {
-  choice: Pick<SportLeagueChoice<FilterableSport>, 'sport' | 'league' | 'partSlug'>;
+  choice: Pick<SportLeagueChoice<FilterableSport>, 'sport' | 'league'>;
   className?: string;
   onPick?: () => void;
   sports: readonly FilterableSport[];

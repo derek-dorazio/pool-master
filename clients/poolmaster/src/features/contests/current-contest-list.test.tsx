@@ -19,7 +19,7 @@ const draftEntry = buildContest({ id: 'draft-entry', name: 'PGA Budget', status:
 const full = buildContest({ id: 'full', name: 'Masters Tiered', status: ContestStatus.OPEN, entriesPerContest: 100, entryCount: 100, ...onEvent });
 const fullAndIn = buildContest({ id: 'full-in', name: 'Daytona Budget', status: ContestStatus.OPEN, entriesPerContest: 2, entryCount: 2, ...onEvent });
 const live = buildContest({ id: 'live', name: 'Week 12 Pick\'em', status: ContestStatus.ACTIVE, entryCount: 14 });
-const liveNotIn = buildContest({ id: 'live-not-in', name: 'NHL Clutch Card', status: ContestStatus.ACTIVE, entryCount: 9 });
+const liveNotIn = buildContest({ id: 'live-not-in', name: 'NHL Playoffs pool', status: ContestStatus.ACTIVE, entryCount: 9 });
 const setUp = buildContest({ id: 'set-up', name: 'Super Bowl Squares', status: ContestStatus.DRAFT, sportEvents: [buildContestSportEvent({ startDate: '2027-01-20T12:00:00.000Z' })] });
 
 function entry(contestId: string, id = `${contestId}-1`, status: ContestEntryStatus = ContestEntryStatus.SUBMITTED): ContestEntryDto {

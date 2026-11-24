@@ -150,9 +150,9 @@ describe('League › Contest types', () => {
       template('horse-racing-tiered', { id: 'tpl-horse-tiered', sport: 'HORSE_RACING', sportLeagueId: THOROUGHBRED, eventType: null }),
     ];
     const GOLF_LEAGUES = [
-      { id: PGA, name: 'PGA TOUR', sport: 'GOLF', participantType: null, scoringFamily: null, isActive: true, displayOrder: 10, parentSportLeagueId: null },
-      { id: LPGA, name: 'LPGA Tour', sport: 'GOLF', participantType: null, scoringFamily: null, isActive: true, displayOrder: 20, parentSportLeagueId: null },
-      { id: THOROUGHBRED, name: 'US Thoroughbred', sport: 'HORSE_RACING', participantType: null, scoringFamily: null, isActive: true, displayOrder: 10, parentSportLeagueId: null },
+      { id: PGA, name: 'PGA TOUR', sport: 'GOLF', participantType: null, scoringFamily: null, isActive: true, displayOrder: 10 },
+      { id: LPGA, name: 'LPGA Tour', sport: 'GOLF', participantType: null, scoringFamily: null, isActive: true, displayOrder: 20 },
+      { id: THOROUGHBRED, name: 'US Thoroughbred', sport: 'HORSE_RACING', participantType: null, scoringFamily: null, isActive: true, displayOrder: 10 },
     ];
     /** A PGA TOUR tournament coming up; nothing on the LPGA Tour yet. */
     const PGA_EVENT = { ...NFL_WEEK, id: 'pga-event', sport: 'GOLF', name: 'The Players', participantCount: 144, rounds: 4, sportLeagueId: PGA };
@@ -245,30 +245,6 @@ describe('League › Contest types', () => {
     expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
   });
 
-  it('lists a playoff round under its season league, and choosing the league shows the round\'s group with its own', async () => {
-    primeMocks('MEMBER');
-    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [
-      ...TEMPLATES,
-      template('super-bowl-tiered', { id: 'tpl-super-bowl', sportLeagueId: 'super-bowl' }),
-    ] } });
-    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
-      { id: NFL, name: 'NFL', sport: 'AMERICAN_FOOTBALL', participantType: null, scoringFamily: null, isActive: true, parentSportLeagueId: null },
-      { id: 'super-bowl', name: 'Super Bowl', sport: 'AMERICAN_FOOTBALL', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE', isActive: true, parentSportLeagueId: NFL },
-      { id: NBA, name: 'NBA', sport: 'BASKETBALL', participantType: null, scoringFamily: null, isActive: true, parentSportLeagueId: null },
-    ] } });
-    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football&league=nfl');
-
-    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
-    expect(football).toHaveTextContent('super-bowl-tiered name');
-    expect(football).toHaveTextContent('nfl-tiered-doubling name');
-    const column = screen.getByRole('navigation', { name: 'Sports and leagues' });
-    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Basketball 1', 'American football 3', 'NFL', 'Regular season', 'Super Bowl']);
-
-    fireEvent.click(within(column).getByRole('link', { name: 'Super Bowl' }));
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('super-bowl-tiered name');
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toHaveTextContent('nfl-tiered-doubling name');
-  });
-
   it('names the kind of event beside the format where a league offers one format on both, so the weekly and playoff Survivor read apart', async () => {
     primeMocks('MEMBER');
     const survivor = { contestFormat: 'PREDICTION', selectionType: 'SURVIVOR', configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 } };
@@ -303,20 +279,6 @@ describe('League › Contest types', () => {
     expect(variations).not.toHaveTextContent('nfl-tiered-doubling-upset-bonus description.');
     fireEvent.click(within(variations).getByRole('button', { name: 'How nfl-tiered-doubling-upset-bonus name works' }));
     expect(screen.getByTestId('contest-type-nfl-nfl-tiered-doubling-upset-bonus-help-callout')).toHaveTextContent('nfl-tiered-doubling-upset-bonus description.');
-  });
-
-  it('says a stat pool league\'s group is a Clutch Card and how its players score, and nothing of the kind on its sport\'s own league', async () => {
-    primeMocks('MEMBER');
-    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [...TEMPLATES, template('nba-finals-tiered', { id: 'tpl-nba-finals', sport: 'BASKETBALL', sportLeagueId: 'nba-finals', eventType: null })] } });
-    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
-      { id: NBA, name: 'NBA', sport: 'BASKETBALL', participantType: null, scoringFamily: null, isActive: true },
-      { id: 'nba-finals', name: 'NBA Finals', sport: 'BASKETBALL', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE', isActive: true },
-    ] } });
-    renderPage();
-
-    expect(await screen.findByTestId('contest-types-stat-pool-nba-finals'))
-      .toHaveTextContent('Clutch Card. Each star scores Triple Threat: points + rebounds + assists, each game.');
-    expect(screen.queryByTestId(`contest-types-stat-pool-${NBA}`)).not.toBeInTheDocument();
   });
 
   it('gives the commissioner of an inactive league the menu without any create links, with a notice that it can run them once active again', async () => {

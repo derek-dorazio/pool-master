@@ -38,7 +38,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 const SQUARES = '/start?sport=american-football&page=championship-weekend&template=template-nfl-squares';
-const CLUTCH_CARD = '/start?sport=american-football&page=championship-weekend&template=template-championship-weekend-tiered-redzone';
+const BRACKET = '/start?sport=american-football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
 
 function LocationProbe() {
   const location = useLocation();
@@ -105,10 +105,10 @@ describe('Start from an event page', () => {
   it('takes the commissioner of one league to its home when the offer is not open yet', async () => {
     primeLeagues([leagueRun('OFFICE')]);
 
-    renderStart(CLUTCH_CARD);
+    renderStart(BRACKET);
 
     expect(await screen.findByText(/^\/league\/OFFICE\?/)).toHaveTextContent(
-      '/league/OFFICE?sport=american-football&page=championship-weekend&template=template-championship-weekend-tiered-redzone',
+      '/league/OFFICE?sport=american-football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling',
     );
   });
 

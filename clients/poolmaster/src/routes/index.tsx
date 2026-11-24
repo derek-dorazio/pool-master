@@ -16,8 +16,7 @@ import { CupSquadPointsPage } from '@/features/championships/cup-squad-points-pa
 import { PointsRacePage } from '@/features/championships/points-race-page';
 import { TrophyCasePage } from '@/features/championships/trophy-case-page';
 import { HowToPlayPage } from '@/features/contest-types/how-to-play-page';
-import { EventPage } from '@/features/event-pages/event-page';
-import { ClutchCardPage } from '@/features/event-pages/clutch-card-page';
+import { EventPage, MovedPage } from '@/features/event-pages/event-page';
 import { StartPage } from '@/features/event-pages/start-page';
 import { LeagueContestTypesPage } from '@/features/contest-types/league-contest-types-page';
 import { CreateContestPage } from '@/features/contests/create-contest/create-contest-page';
@@ -114,8 +113,9 @@ export const router = createBrowserRouter([
         element: <PublicPlansPage />,
       },
       {
+        // The Clutch Card's address is kept (ux-rules §13 item 7) and shows inactive until it returns as a contest type (#2054).
         path: 'play/clutch-card',
-        element: <ClutchCardPage />,
+        element: <MovedPage />,
       },
       {
         path: 'play/:sport/:pageSlug',

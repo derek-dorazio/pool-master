@@ -27,8 +27,7 @@ export function definitionPlaysMatches(definition: SportDefinition): boolean {
 }
 
 /**
- * Whether the event is played as matches, by its sport league's definition (#934): a team sport's
- * stat pool league plays no matches, though its sport does.
+ * Whether the event is played as matches, by its sport league's definition (#934).
  */
 export function eventPlaysMatches(event: SportLeagueEvent): boolean {
   return definitionPlaysMatches(eventSportDefinition(event));

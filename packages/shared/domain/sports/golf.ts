@@ -13,6 +13,5 @@ export const golfSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
   shootout: false,
-  composite: null,
   roundLabel: (roundNumber, _roundCount, locale) => displayString('word.roundNumber', { n: roundNumber }, locale),
 };

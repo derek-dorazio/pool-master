@@ -444,15 +444,10 @@ administration area (root admin included), reusing the same shared components.
    what the picks cost of the cap), or nothing for a random draw. Once live or final it
    is the leaderboard: the counting rule ("Best 4 of 6 golfers count") shows once
    in the header, never on each entry, and an opened entry lists every pick, the
-   ones outside the count struck through and in italics. A Clutch Card's entry bar
-   carries one Stats switch (the viewer's own start on, "Show all stats" turns it on
-   for every opened entry): it adds each player's line for the current or latest
-   game under their name ("G4: 15 pts · 6 reb · 4 ast", struck through too when the
-   pick does not count). A series has one column of scores per game, each score a
-   `DetailsPeek` on that game's stats, and DNP for a game missed; a single game has
-   Tot only. A team-picks board's Status is a chip, "In" or "Out · <round>" with
-   the round's full name; the same Stats switch puts each team's latest game under
-   its name ("Elite Eight: beat Tennessee 69–50"); Wins is a `DetailsPeek` on every
+   ones outside the count struck through and in italics. A team-picks board's Status
+   is a chip, "In" or "Out · <round>" with the round's full name; its entry bar carries
+   one Stats switch (the viewer's own start on, "Show all stats" turns it on for every
+   opened entry) that puts each team's latest game under its name ("Elite Eight: beat Tennessee 69–50"); Wins is a `DetailsPeek` on every
    game played and, for a team still in, its next one; the Upset column shows only
    when the contest has the bonus on, as "+3". No pick row opens on its own. Rows open and close with the shared `ExpandableRow`, the
    viewer's own start open, and "Show all details" / "Hide all details" above the
@@ -502,11 +497,8 @@ administration area (root admin included), reusing the same shared components.
     `<Format>: <how you pick>, <how it scores>`, the format named as
     `formatSelectionTypeName` names it ("Tiered: 1 golfer per tier, best 4
     count", "Bracket: full bracket, doubling + upset bonus"), with digits, the
-    sport's own noun (a Clutch Card's setups call their players stars:
-    "Tiered: 1 star per tier, best 4 count"), under 60 characters and no full
-    stop; a template covering several events puts its scope after the format
-    ("Tiered majors pool: …"). A Clutch Card contest itself is named "<event>
-    Stars", which Create contest suggests whatever its format.
+    sport's own noun, under 60 characters and no full stop; a template covering
+    several events puts its scope after the format ("Tiered majors pool: …").
     The description is one or two plain sentences of at most 220 characters,
     how an entry picks and then how it scores, with no setup words (template,
     preset, config). Every sport league has exactly one default for each format
@@ -520,13 +512,10 @@ administration area (root admin included), reusing the same shared components.
     illustrated card, on the first screen (#1701). On a computer the cards sit
     beside a column listing every sport with its count of the contest types the
     page lists with it chosen (ways to play here; #1716), the chosen
-    sport opened to its leagues, each season league with its regular season and
-    its playoff rounds indented under it by the round's `parentSportLeagueId`
-    (never by matching names); on a phone the column is one row of sport chips
+    sport opened to its leagues; on a phone the column is one row of sport chips
     above the cards, and an "Every league you can run" card below them lists
-    every league and round as chips that pick it and scroll back up. Choosing
-    narrows the cards to a sport, a league with its rounds, or one part of a
-    league; the heading counts them ("6 ways to play hockey"), the sport's line
+    every league as chips that pick it and scroll back up. Choosing narrows the
+    cards to a sport or a league; the heading counts them ("6 ways to play hockey"), the sport's line
     sits behind its (?), and the chosen league's default templates lead the
     cards (#878). How a pool runs is one slim strip of three steps, and Coming
     up follows the cards. A card's line fits two lines on a phone card; its
@@ -539,10 +528,7 @@ administration area (root admin included), reusing the same shared components.
     Create from a section starts on that league (#1716). Every template is one
     sport league's (#1825), seeded by migration: a setup two leagues share, such
     as golf's on the PGA TOUR and the LPGA Tour, is a copy per league, and there
-    is no create or copy-from in the UI. The Clutch Card is one more card
-    among them, shown while a shown league is a stat pool's: its line and steps,
-    each sport's stat line (Box Score, Redzone) as a small tile, and a link to
-    `/play/clutch-card` for the rest; no per-league formula list. An open card
+    is no create or copy-from in the UI. An open card
     offers Create contest to a signed-in viewer who runs an active league, on
     the shown league's default (with every sport shown, the most popular sport's
     first league's), asking which league when they run several (#1104). Sports run most popular first
@@ -550,8 +536,7 @@ administration area (root admin included), reusing the same shared components.
     by their `displayOrder`: major professional leagues first, then the NCAA's.
     A league whose name alone doesn't say the sport ("NCAA Division I Men") gets
     a `displayName` with its reference data, and every seeded league gets a
-    `displayOrder` there, and every playoff round its `parentSportLeagueId` (the
-    seeded-template integration test checks both); a league's Contest
+    `displayOrder` there (the seeded-template integration test checks it); a league's Contest
     types page shows every sport league's tiles, with "Create this contest"
     links for its commissioners. Both read the templates, so a new template or
     sport shows up there with no copy change. The hand-written parts are
@@ -616,7 +601,7 @@ administration area (root admin included), reusing the same shared components.
     and the contest lifecycle panel's), the signed-out home's sign-in card,
     the invite join card (`PublicInviteJoinPage`) and the event pages' own
     panels: the photo hero, an event page's offer cards and next-up card,
-    the Clutch Card page's points and the Start page's card (#1638). The Coming up cards are content, on member pages
+    and the Start page's card (#1638). The Coming up cards are content, on member pages
     too, and keep the content corner. The ESLint rule `poolmaster/no-panel-corner` fails
     `radius="panel"` anywhere else (#1697); its ignores in `eslint.config.js`
     are this list, so a new panel adds its file to both in the same PR. A box telling the user something
@@ -660,10 +645,8 @@ An event page (`/play/<sport>/<slug>`) is the public page for one event a fan wo
 (Championship Weekend, the Super Bowl), whatever sport leagues and series run it. It is the
 landing page that ads, emails and shared links point at.
 
-`/play/clutch-card` sits beside them: the Clutch Card's own page, one contest type across
-every title round. It follows the same copy and button rules, and shows a round as available
-only while that round's stat pool sport league is active, linking it to the event page that
-offers it.
+`/play/clutch-card` keeps its address (item 7) and shows as an inactive page linking to How to
+Play until the Clutch Card returns as a contest type (#2054).
 
 1. **Hand-picked, not generated.** A page exists because someone chose it: its row and its
    offers are reference data in a migration (`rules/architecture-rules.md` §6 *Reference data
@@ -673,29 +656,25 @@ offers it.
 2. **Each offer opens on its own.** An offer shows open, or "opens soon" with when, from Create
    contest's own checks on the series' next edition; one with no edition left is left out. A
    page's words never claim an offer is open.
-3. **A stat pool covers one playoff round.** A Clutch Card offer is on a sport league whose
-   events are one round (Championship Weekend's two games, then the Super Bowl's one), never
-   several, so a round people pick separately gets its own page. A bracket offer is the
-   exception by nature: it runs from its starting round to the final.
-4. **Words live in the web app.** A page's name, eyebrow, hook line, when picks close, the
+3. **Words live in the web app.** A page's name, eyebrow, hook line, when picks close, the
    league named in its "not affiliated" footer, and each offer's card (contest type, one line,
    two facts, when it opens) are in `EVENT_PAGE_COPY`, keyed by sport and the page's stored
    slug. A page without copy still renders, its name from the slug, its hook from its sport's
    How to Play line and each card from the selection type's name and the template's
    description, but a page ships with copy.
-5. **Real names on our pages, generic names in ads.** Our pages name the real event. Copy
+4. **Real names on our pages, generic names in ads.** Our pages name the real event. Copy
    anywhere, ads included, never says "fantasy", "bet", "odds", "props", "win cash" or "prizes",
    and never shows league or team logos or player photos.
-6. **Every page with copy has its link preview.** Its 1200 by 630 image is committed in the web
+5. **Every page with copy has its link preview.** Its 1200 by 630 image is committed in the web
    app's `public/og/`, drawn from the tile layout by `scripts/render-link-preview-images.mjs`
    and kept small enough for WhatsApp (about 300 KB); a unit test fails while one is missing.
    The deploy writes the page's shell with its Open Graph tags, and CloudFront serves it only
    to link-preview crawlers. Search crawlers and people get the app.
-7. **The hero shows the sport's photo.** A page opens with its sport's 1200 by 480 header
+6. **The hero shows the sport's photo.** A page opens with its sport's 1200 by 480 header
    image, the same file the email about its events uses (`sportHeaderImagePath`), so one photo
    per sport serves both and a new sport's photo arrives with its email header. No other
    in-app page carries these photos: setup and league pages stay compact.
-8. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
+7. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
    ads and other people's chats. A page that ends is made inactive, and may redirect to the
    page that replaces it.
 
@@ -741,7 +720,7 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    no event slogan and no player photo appears in any email. The trademark check before the
    first paid ad or production launch covers these emails too.
 6. **Real event names, and the disclaimer.** Emails name the real event, as our event pages do
-   (§13 item 5). Every email that names a sport league says in its footer "Not affiliated with
+   (§13 item 4). Every email that names a sport league says in its footer "Not affiliated with
    {league} or any sports league."
 7. **Built for mail clients.** Tables with inline styles, no flex, grid or media queries; every
    image has a fixed size, `display:block` and empty alt text. The plain-text twin carries the
@@ -843,8 +822,8 @@ sends codes and numbers, never these words.
    (`sport-word-roles.ts`). A sport has an entry for every role it uses; a role it leaves out
    reads the generic `word.<role>` (a sport that plays no bracket says "match"), and an
    optional role with no generic word (`rider`, `topPlaces`, `shootout`) reads as absent, so
-   the screen leaves the thing out. A call site passes the sport (or a sport league definition,
-   whose `wordOverrides` reads a stat pool's players and games) and never builds a key.
+   the screen leaves the thing out. A call site passes the sport (or a sport league definition)
+   and never builds a key.
    `sportVocabulary(source, locale)` gives every role at once for a screen that reads many.
    A new role goes in `SportWordRole` and, unless optional, in `word.` too.
 8. **Sorting follows the words.** An enum with `alphabeticalOrder` sorts by its display

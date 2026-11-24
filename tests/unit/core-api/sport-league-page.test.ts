@@ -12,7 +12,6 @@ import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
-  ScoringFamily,
   Sport,
   SportEventReleaseAtKind,
   SportEventReleaseMode,
@@ -59,8 +58,8 @@ const SCHEDULE: IngestionScheduleConfig = {
 
 function league(overrides: Partial<SportLeaguePageLeague> = {}): SportLeaguePageLeague {
   return {
-    id: 'mlb', sport: Sport.BASEBALL, isActive: true, parentSportLeagueId: null, scoringFamily: null,
-    eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, parent: null, ...overrides,
+    id: 'mlb', sport: Sport.BASEBALL, isActive: true,
+    eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, ...overrides,
   };
 }
 
@@ -134,13 +133,6 @@ describe('buildSportLeagueSyncs', () => {
     expect(off.map((sync) => sync.health)).toEqual([SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF]);
     expect(unsynced.every((sync) => sync.health === SportLeagueSyncHealth.OFF && sync.nextRunAt === null)).toBe(true);
     expect(unscheduled.every((sync) => sync.nextRunAt === null)).toBe(true);
-  });
-
-  it('takes a Clutch Card\'s provider from its parent league, whose event list sync creates its events', () => {
-    const clutchCard = league({ id: 'ws', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: 'mlb', eventSyncProviderId: null, parent: { isActive: true, eventSyncProviderId: 'balldontlie' } });
-    const syncs = buildSportLeagueSyncs(clutchCard, [run(ProviderSyncKind.EVENTS, { id: 'mlb-events' })], context);
-
-    expect(syncs[0]).toMatchObject({ health: SportLeagueSyncHealth.OK, lastRun: { id: 'mlb-events' } });
   });
 
   it('sends each sync in the shape the contract declares', () => {

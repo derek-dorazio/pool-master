@@ -89,7 +89,7 @@ export function buildLeaderboardView(
   context?: LeaderboardContext,
   { isLive = false }: { /** The contest is live (ACTIVE): only then does an unscored board stand level at 0. */ isLive?: boolean } = {},
 ): LeaderboardView {
-  // The shown event's definition: a stat pool plays its sport's composite, not its bracket.
+  // The shown event's definition.
   const sport = eventSportDefinition(response);
   const family = getScoringFamilyUi(sport).leaderboard(response, sport, context);
   const scoringDefinition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];

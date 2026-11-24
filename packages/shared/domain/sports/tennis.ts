@@ -34,7 +34,6 @@ export const tennisSportDefinition: SportDefinition = {
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // A tennis match always has a winner: no level score to settle.
   shootout: false,
-  composite: null,
   // A Slam's seven rounds read First round to Fourth round, then Quarterfinals, Semifinals,
   // Final; a 64 draw's six the same, with no Fourth round.
   roundLabel: (roundNumber, roundCount, locale) => {

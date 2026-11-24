@@ -181,7 +181,6 @@ function writeFor(
 ): (() => Promise<LiveScorePersistenceResult>) | null {
   if (writer.category === 'GOLF' && result.category === 'GOLF') return () => writer.persist(deps, event, result);
   if (writer.category === 'GAME' && result.category === 'GAME') return () => writer.persist(deps, event, result);
-  if (writer.category === 'STAT_LINE' && result.category === 'STAT_LINE') return () => writer.persist(deps, event, result);
   return null;
 }
 

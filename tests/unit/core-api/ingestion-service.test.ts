@@ -23,7 +23,7 @@ function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
     jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs, currentStart: testCurrentJobStart }),
-    sportLeagues: { findEventSyncedWithClutchCards: () => Promise.resolve([]) },
+    sportLeagues: { findEventSynced: () => Promise.resolve([]) },
     webhookProviderIds: [],
     jobHistory: { countByScope: () => Promise.resolve([]) },
     ...overrides,

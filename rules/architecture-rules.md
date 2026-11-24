@@ -416,25 +416,18 @@ filling them in rather than by finding guards scattered through the code:
   layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). It holds
   codes, never words: what a sport's audience calls things (golfer, tournament, "Cut") is a
   display string, `sport.<SPORT>.<role>`, read through `sportWord` or `sportVocabulary`
-  (`rules/ux-rules.md` §16 *Display Strings*). A definition only names the roles it reads
-  from another (`wordOverrides`: a stat pool's players and games). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
+  (`rules/ux-rules.md` §16 *Display Strings*). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
   sport added to the enum fails the build until it has a definition. A sport is supported
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).
-  A sport league may play its sport differently: a championship stat pool league (the World
-  Series under baseball) overrides its sport's participant type and scoring family
-  (`SportLeague.participantType`, `SportLeague.scoringFamily`, null keeping the sport's), and
-  plays its sport's stat pool definition: players, golf's roster formats and shape, scored by
-  the sport's composite. Every event carries its league's overrides, so a reader of an event's
-  selection types, scoring definitions, family, tiers, rounds or whether it plays matches reads
-  `eventSportDefinition(event)` (or `eventPlaysMatches(event)`), never `getSportDefinition(event.sport)`.
-  A Clutch Card league's events are rounds of its season league's event (#1820): the league
-  names the season league and which rounds (`SportLeague.parentSportLeagueId`,
-  `parentRoundNumbers`, reference data), and every Clutch Card event names its season event
-  (`SportEvent.parentEvent`). Every creation path finds it through `findClutchCardParents`, by
-  the dates (the season event under way at the Clutch Card event's start) or as the caller names
-  it, and refuses a Clutch Card event it cannot link; no other league's event has a parent. A
-  season event a Clutch Card event names cannot be deleted.
+  A sport league may set its own participant type (`SportLeague.participantType`, null keeping
+  the sport's); its scoring family is always its sport's, and a league row naming another
+  family is a broken reference row that `sportLeagueDefinitionOf` refuses. Every event carries
+  its league's overrides, so a reader of an event's selection types, scoring definitions,
+  family, tiers, rounds or whether it plays matches reads `eventSportDefinition(event)` (or
+  `eventPlaysMatches(event)`), never `getSportDefinition(event.sport)`. No event has a parent
+  event: the old Clutch Card round leagues were removed (#1998), and the Clutch Card returns as
+  a contest type on the parent league.
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
   shown. Several sports share a family (golf is stroke play; basketball, American football,
   hockey, baseball, soccer and tennis are head to head; races are finish position), and each family owns one set of result
@@ -448,9 +441,7 @@ filling them in rather than by finding guards scattered through the code:
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score
   with a detail keyed by family, and declares the one live-score category it accepts, or none.
   Built: stroke play (golf), finish position (horse racing, auto racing, cycling, running),
-  head to head (basketball, scored by knockout round points) and composite (the championship
-  stat pools, a family a sport league names rather than a sport, whose results are stat lines
-  extending each participant round). Head to head's results are its
+  and head to head (basketball, scored by knockout round points). Head to head's results are its
   bracket (`SportEventMatch`), part of the event core rather than a family extension table,
   since pick'em reads the same matches. Finish position's admin results entry (the finishing
   order) and head to head's match results live in their folders; golf's score corrections predate the

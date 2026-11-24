@@ -127,13 +127,12 @@ describe('Sport and SportLeague repositories', () => {
       .resolves.toMatchObject({ matchKeyword: 'EPL' });
   });
 
-  it('sets american football\'s College Football Playoff sport league\'s match keyword to CFP, and leaves the CFP Clutch Card leagues without one', async () => {
+  it('sets american football\'s College Football Playoff sport league\'s match keyword to CFP', async () => {
     const sports = new PrismaSportRepository(getAppPrisma());
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());
     const leagueOf = async (name: string) => leagues.findBySportAndName((await sports.findBySport(Sport.AMERICAN_FOOTBALL))?.id ?? '', name);
 
     await expect(leagueOf('College Football Playoff')).resolves.toMatchObject({ matchKeyword: 'CFP' });
-    await expect(leagueOf('CFP Semifinals')).resolves.toMatchObject({ matchKeyword: null });
   });
 
   it('seeds soccer\'s FIFA World Cup sport league with the match keyword FIFAWC', async () => {
@@ -166,15 +165,6 @@ describe('Sport and SportLeague repositories', () => {
 
     await expect(leagues.findBySportAndName((await sports.findBySport(Sport.HOCKEY))?.id ?? '', 'NHL'))
       .resolves.toMatchObject({ matchKeyword: 'NHL' });
-  });
-
-  it('seeds the NBA Finals and NBA Conference Finals Clutch Card leagues with their round\'s name as match keyword, so each imports only its own round', async () => {
-    const sports = new PrismaSportRepository(getAppPrisma());
-    const leagues = new PrismaSportLeagueRepository(getAppPrisma());
-    const basketballId = (await sports.findBySport(Sport.BASKETBALL))?.id ?? '';
-
-    await expect(leagues.findBySportAndName(basketballId, 'NBA Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Finals' });
-    await expect(leagues.findBySportAndName(basketballId, 'NBA Conference Finals')).resolves.toMatchObject({ matchKeyword: 'NBA Conference Finals' });
   });
 
   it('seeds baseball\'s MLB sport league with the match keyword MLB', async () => {
@@ -237,23 +227,20 @@ describe('Sport and SportLeague repositories', () => {
     await expect(sportLeagues.findByIds([])).resolves.toEqual([]);
   });
 
-  it('reads the event-synced sport leagues with the active Clutch Cards under them, leaving out an inactive Clutch Card, one under an unsynced league and a child league that is no Clutch Card (#1881)', async () => {
+  it('reads the active event-synced sport leagues, leaving out an unsynced league and an inactive synced one', async () => {
     const sport = await golfSport();
     const prisma = getPrisma();
     const tag = randomUUID().slice(0, 8);
     const league = async (name: string, data: Record<string, unknown> = {}) => prisma.sportLeague.create({
       data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `${tag} ${name}`, matchKeyword: `${tag}${name}`, ...data },
     });
-    const synced = await league('Synced', { eventSyncProviderId: 'balldontlie' });
-    const unsynced = await league('Unsynced');
-    await league('Synced Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: synced.id });
-    await league('Inactive Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: synced.id, isActive: false });
-    await league('Unsynced Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: unsynced.id });
-    await league('Plain child', { parentSportLeagueId: synced.id });
+    await league('Synced', { eventSyncProviderId: 'balldontlie' });
+    await league('Unsynced');
+    await league('Inactive Synced', { eventSyncProviderId: 'balldontlie', isActive: false });
 
-    const rows = await new PrismaSportLeagueRepository(getAppPrisma()).findEventSyncedWithClutchCards();
+    const rows = await new PrismaSportLeagueRepository(getAppPrisma()).findEventSynced();
 
-    expect(rows.filter((row) => row.name.startsWith(tag)).map((row) => row.name)).toEqual([`${tag} Synced`, `${tag} Synced Clutch Card`]);
+    expect(rows.filter((row) => row.name.startsWith(tag)).map((row) => row.name)).toEqual([`${tag} Synced`]);
   });
 
   it('records the sport league\'s current event year through update (plans/147 decision 6)', async () => {

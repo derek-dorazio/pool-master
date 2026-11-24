@@ -115,28 +115,6 @@ async function seedSportLeagueEvents(events: number) {
   return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
-/**
- * A root admin, and `events` World Series Clutch Card events, each naming a season event of its own
- * in the MLB as its parent (#1820), so the parent names read with the events scale too.
- */
-async function seedClutchCardEvents(events: number) {
-  const prisma = getPrisma();
-  const baseball = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASEBALL } });
-  const league = (name: string) => prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: baseball.id, name } } });
-  const [mlb, worldSeries] = [await league('MLB'), await league('World Series')];
-  for (let index = 0; index < events; index += 1) {
-    const suffix = randomUUID().slice(0, 8);
-    const startDate = new Date(Date.now() + (31 + index) * DAY);
-    const event = (sportLeagueId: string, name: string, extra: object) => prisma.eventSeries.create({ data: { sportLeagueId, name } })
-      .then((series) => prisma.sportEvent.create({
-        data: { eventSeriesId: series.id, eventYear: startDate.getUTCFullYear(), externalId: `scaling-${randomUUID()}`, providerId: 'integration-test', sport: Sport.BASEBALL, name, startDate, ...extra },
-      }));
-    const season = await event(mlb.id, `Scaling Postseason ${suffix}`, { rounds: 4 });
-    await event(worldSeries.id, `Scaling World Series ${suffix}`, { rounds: 7, parentEventId: season.id, parentRoundNumbers: [4] });
-  }
-  return { sportLeague: worldSeries, rootAdmin: await createTestUser({ isRootAdmin: true }) };
-}
-
 /** A root admin, and a golf event with `rounds` scheduled rounds a day apart. */
 async function seedEventRounds(rounds: number) {
   const prisma = getPrisma();
@@ -258,15 +236,6 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       seed: seedSportLeagueEvents,
       call: ({ sportLeague, rootAdmin }) => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin),
       rowsShown: (response) => okBody(response, SportEventListResponseSchema).events.length,
-    });
-  });
-
-  it("GET a Clutch Card league's events: the same statements for 2 events, each naming its season event, as for 20", async () => {
-    await expectConstantQueries({
-      route: 'GET /api/v1/events/',
-      seed: seedClutchCardEvents,
-      call: ({ sportLeague, rootAdmin }) => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin),
-      rowsShown: (response) => okBody(response, SportEventListResponseSchema).events.filter((event) => event.parentEvent !== null).length,
     });
   });
 

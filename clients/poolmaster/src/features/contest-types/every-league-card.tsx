@@ -2,8 +2,8 @@ import { ChoiceChips, Heading, SectionBody, SectionCard } from '@/features/share
 import { sportLeagueChoiceSearch, sportSlug, type FilterableSport } from './sport-league-choice';
 
 /**
- * Every sport's leagues and playoff rounds as chips, on a phone below what they narrow (#1701):
- * the full list of what can be run, each chip a link that picks that league or round. `onPick`
+ * Every sport's leagues as chips, on a phone below what they narrow (#1701): the full list of
+ * what can be run, each chip a link that picks that league. `onPick`
  * runs as one is followed, to scroll back up to what it narrows.
  */
 export function EveryLeagueCard({ className, onPick, sports, testId }: {
@@ -22,16 +22,13 @@ export function EveryLeagueCard({ className, onPick, sports, testId }: {
                 <Heading level={3} variant="eyebrow">{name}</Heading>
                 <ChoiceChips
                   aria-label={`${name} leagues`}
-                  items={leagues.flatMap((league) => [
-                    { isChosen: false, label: league.name, onClick: onPick, testId: `${testId}-${sportSlug(sport)}-${league.slug}`, to: sportLeagueChoiceSearch(sport, league.slug) },
-                    ...league.rounds.map((round) => ({
-                      isChosen: false,
-                      label: round.name,
-                      onClick: onPick,
-                      testId: `${testId}-${sportSlug(sport)}-${league.slug}-${round.slug}`,
-                      to: sportLeagueChoiceSearch(sport, league.slug, round.slug),
-                    })),
-                  ])}
+                  items={leagues.map((league) => ({
+                    isChosen: false,
+                    label: league.name,
+                    onClick: onPick,
+                    testId: `${testId}-${sportSlug(sport)}-${league.slug}`,
+                    to: sportLeagueChoiceSearch(sport, league.slug),
+                  }))}
                   layout="wrap"
                 />
               </div>

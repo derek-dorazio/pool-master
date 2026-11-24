@@ -35,8 +35,6 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     noun: null,
     displayName: null,
     displayOrder: null,
-    parentSportLeagueId: null,
-    parentRoundNumbers: [],
     currentEventYear: null,
     isActive: true,
     eventSyncProviderId: null,
@@ -435,13 +433,13 @@ describe('SportLeagueService — deleting a sport league (#1400)', () => {
 
   it('refuses with 409 SPORT_LEAGUE_IN_USE naming every use the locked count found', async () => {
     const { service } = buildService({
-      sportLeagues: { deleteUnlessUsed: jest.fn().mockResolvedValue({ sportEventCount: 3, contestTemplateCount: 1, eventPageOfferCount: 2, cupCount: 1, roundCount: 2, participantCount: 144 }) },
+      sportLeagues: { deleteUnlessUsed: jest.fn().mockResolvedValue({ sportEventCount: 3, contestTemplateCount: 1, eventPageOfferCount: 2, cupCount: 1, participantCount: 144 }) },
     });
 
     await expect(service.deleteSportLeague('sl-pga')).rejects.toMatchObject({
       code: 'SPORT_LEAGUE_IN_USE',
       statusCode: 409,
-      message: 'PGA Tour still has 3 events, 1 contest setup, 2 event page offers, 1 league cup, 2 playoff rounds, 144 participants, so it cannot be deleted.',
+      message: 'PGA Tour still has 3 events, 1 contest setup, 2 event page offers, 1 league cup, 144 participants, so it cannot be deleted.',
     });
   });
 

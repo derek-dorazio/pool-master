@@ -25,8 +25,6 @@ export interface ContestCatalogLeague {
   name: string;
   /** Its name in the page's link: `?sport=golf&league=pga-tour`. */
   slug: string;
-  /** The season league it is a playoff round of (#1701), or null. */
-  parentSportLeagueId: string | null;
   tiles: ContestTypeTile[];
 }
 
@@ -103,7 +101,6 @@ export function buildLeagueContestCatalog(
           sportLeagueId: sportLeague.id,
           name: sportLeague.displayName ?? sportLeague.name,
           slug: catalogSlug(sportLeague.name),
-          parentSportLeagueId: sportLeague.parentSportLeagueId,
           tiles: toTiles(sportLeague.id, offeredIn(sportLeague, definition, sportTemplates), definition.selectionTypes),
         };
       })
@@ -119,9 +116,7 @@ export interface PublicCatalogLeague {
   name: string;
   /** Its name in the page's link: `?sport=basketball&league=wnba`. */
   slug: string;
-  /** The season league it is a playoff round of (#1701: the NHL for the Stanley Cup Final), or null. */
-  parentSportLeagueId: string | null;
-  /** What it plays: its sport's definition, or a stat pool's for a championship stat pool league (#936). */
+  /** What it plays: its sport's definition, with what the league overrides. */
   definition: SportDefinition;
   groups: ContestTypeTile[];
 }
@@ -162,10 +157,7 @@ function activeSportLeaguesOf(sport: Sport, sportLeagues: readonly SportLeagueDt
     .sort(bySportLeagueDisplayOrder);
 }
 
-/**
- * The templates a contest in a sport league can be created from: its own, in the formats it plays
- * (a World Series stat pool takes none of baseball's brackets).
- */
+/** The templates a contest in a sport league can be created from: its own, in the formats it plays. */
 function offeredIn(sportLeague: SportLeagueDto, definition: SportDefinition, sportTemplates: readonly ContestConfigTemplateDto[]) {
   return sportTemplates.filter((template) => template.sportLeagueId === sportLeague.id
     && definition.selectionTypes.includes(template.selectionType));
@@ -175,7 +167,7 @@ function offeredIn(sportLeague: SportLeagueDto, definition: SportDefinition, spo
  * The public How to Play page's catalog: each sport, the most popular first, with its formats,
  * one tile each, led by the format's default of the first sport league to offer it; then each of
  * its active sport leagues in display order, with the formats it offers, its own templates leading
- * its sport's, and the definition it plays (a stat pool's for the World Series). A sport league that offers none is left out, as is a sport with no templates
+ * its sport's, and the definition it plays. A sport league that offers none is left out, as is a sport with no templates
  * or with no active sport league: one whose every league is switched off (#1812) gets no chip.
  */
 export function buildPublicContestCatalog(
@@ -197,7 +189,6 @@ export function buildPublicContestCatalog(
           sportLeagueId: sportLeague.id,
           name: sportLeague.displayName ?? sportLeague.name,
           slug: catalogSlug(sportLeague.name),
-          parentSportLeagueId: sportLeague.parentSportLeagueId,
           definition: leagueDefinition,
           groups: toFormatTiles(
             `${sport}/${sportLeague.id}`,

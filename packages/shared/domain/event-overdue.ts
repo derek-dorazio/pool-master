@@ -44,10 +44,7 @@ export interface OverdueRoundFacts {
   latestMatchStart: Date | null;
 }
 
-/**
- * What it takes to judge one event. A Clutch Card event's rounds are the rounds of its parent
- * event it covers, since it plays none of its own (#1820).
- */
+/** What it takes to judge one event. */
 export interface OverdueEventFacts {
   id: string;
   name: string;

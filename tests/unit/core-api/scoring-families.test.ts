@@ -4,7 +4,6 @@ import {
   SPORT_DEFINITIONS,
   ScoringFamily,
   SportEventStatus,
-  Sport,
   assertNever,
   eventSportDefinition,
   type ContestScoringSettings,
@@ -24,8 +23,6 @@ function defaultScoring(event: SportLeagueEvent): ContestScoringSettings {
   switch (participantScoringDefinitionId) {
     case 'GOLF_RELATIVE_TO_PAR_TOTAL':
       return { participantScoringDefinitionId, config: {} };
-    case 'COMPOSITE_TOTAL':
-      return { participantScoringDefinitionId, config: {} };
     case 'FINISH_POSITION_POINTS':
       return { participantScoringDefinitionId, config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 } };
     case 'KNOCKOUT_ROUND_POINTS':
@@ -35,15 +32,14 @@ function defaultScoring(event: SportLeagueEvent): ContestScoringSettings {
   }
 }
 
-/** An event of each family: a sport's that names it, else a sport league's that does (composite: a World Series stat pool). */
-const EVENT_BY_SCORING_FAMILY = new Map<ScoringFamily, SportLeagueEvent>([
-  ...Object.values(SPORT_DEFINITIONS).map((definition) => [definition.scoringFamily, { sport: definition.sport }] as const),
-  [ScoringFamily.COMPOSITE, { sport: Sport.BASEBALL, scoringFamily: ScoringFamily.COMPOSITE }],
-]);
+/** An event of each family: one of a sport whose definition names it. */
+const EVENT_BY_SCORING_FAMILY = new Map<ScoringFamily, SportLeagueEvent>(
+  Object.values(SPORT_DEFINITIONS).map((definition) => [definition.scoringFamily, { sport: definition.sport }] as const),
+);
 
 describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
   const module = getScoringFamilyModule(family);
-  // A family is only reached through an event whose sport league names it, so it is exercised as one.
+  // A family is only reached through an event whose sport names it, so it is exercised as one.
   const event = expectDefined(EVENT_BY_SCORING_FAMILY.get(family), `an event scored by ${family}`);
 
   it('scores an empty field as no participants', () => {

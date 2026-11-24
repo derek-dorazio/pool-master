@@ -109,7 +109,6 @@ function fakes() {
     },
     golfScores: { previewRoundScores: fn([]), applyRoundScores: fn(undefined), updateRoundScore: fn(undefined) },
     raceResults: { previewResults: fn({ rows: [], orderErrors: [] }), applyResults: fn(undefined) },
-    statLines: { applyGameLines: fn(undefined) },
     matchResults: {
       recordResult: fn([]), clearResult: fn([]), recordPeriodScore: fn([]), clearPeriodScore: fn([]), cancelMatch: fn([]), postponeMatch: fn([]),
     },
@@ -468,20 +467,18 @@ describe('rounds, field and tiers', () => {
 describe('results', () => {
   const roundParams = { eventId: EVENT_ID, roundNumber: 2 };
 
-  it('previews and applies golf round scores, race results and stat lines, answering an apply with the field', async () => {
+  it('previews and applies golf round scores, race results, answering an apply with the field', async () => {
     const { services, handlers } = fakes();
 
     const golfPreview = await callHandler(handlers.previewGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } }));
     const golfApplied = await callHandler(handlers.applyGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } }));
     const racePreview = await callHandler(handlers.previewRaceResults, stubRequest({ params, body: { rows: [] } }));
     const raceApplied = await callHandler(handlers.applyRaceResults, stubRequest({ params, body: { rows: [] } }));
-    const lines = await callHandler(handlers.applyGameStatLines, stubRequest({ params: roundParams, body: { rows: [] } }));
 
     expect(golfPreview.body).toMatchObject({ rows: [], rollup: { total: 0 } });
     expect(services.golfScores.applyRoundScores).toHaveBeenCalledWith(EVENT_ID, 2, []);
     expect(racePreview.body).toMatchObject({ rows: [], orderErrors: [] });
-    expect(services.statLines.applyGameLines).toHaveBeenCalledWith(EVENT_ID, 2, []);
-    for (const reply of [golfApplied, raceApplied, lines]) {
+    for (const reply of [golfApplied, raceApplied]) {
       expect(reply.body).toMatchObject({ participants: [{ id: 'sep-1' }] });
     }
   });

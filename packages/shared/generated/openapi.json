@@ -8998,27 +8998,6 @@
                       "config"
                     ],
                     "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "participantScoringDefinitionId": {
-                        "type": "string",
-                        "enum": [
-                          "COMPOSITE_TOTAL"
-                        ]
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
-                      }
-                    },
-                    "required": [
-                      "participantScoringDefinitionId",
-                      "config"
-                    ],
-                    "additionalProperties": false
                   }
                 ]
               }
@@ -9201,27 +9180,6 @@
                         ],
                         "additionalProperties": false,
                         "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                      }
-                    },
-                    "required": [
-                      "participantScoringDefinitionId",
-                      "config"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "participantScoringDefinitionId": {
-                        "type": "string",
-                        "enum": [
-                          "COMPOSITE_TOTAL"
-                        ]
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -9418,27 +9376,6 @@
                       "config"
                     ],
                     "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "participantScoringDefinitionId": {
-                        "type": "string",
-                        "enum": [
-                          "COMPOSITE_TOTAL"
-                        ]
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
-                      }
-                    },
-                    "required": [
-                      "participantScoringDefinitionId",
-                      "config"
-                    ],
-                    "additionalProperties": false
                   }
                 ]
               }
@@ -9621,27 +9558,6 @@
                         ],
                         "additionalProperties": false,
                         "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                      }
-                    },
-                    "required": [
-                      "participantScoringDefinitionId",
-                      "config"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "participantScoringDefinitionId": {
-                        "type": "string",
-                        "enum": [
-                          "COMPOSITE_TOTAL"
-                        ]
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -9832,27 +9748,6 @@
                       "config"
                     ],
                     "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "participantScoringDefinitionId": {
-                        "type": "string",
-                        "enum": [
-                          "COMPOSITE_TOTAL"
-                        ]
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
-                      }
-                    },
-                    "required": [
-                      "participantScoringDefinitionId",
-                      "config"
-                    ],
-                    "additionalProperties": false
                   }
                 ]
               }
@@ -10028,27 +9923,6 @@
                         ],
                         "additionalProperties": false,
                         "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                      }
-                    },
-                    "required": [
-                      "participantScoringDefinitionId",
-                      "config"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "participantScoringDefinitionId": {
-                        "type": "string",
-                        "enum": [
-                          "COMPOSITE_TOTAL"
-                        ]
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -10235,27 +10109,6 @@
                         ],
                         "additionalProperties": false,
                         "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                      }
-                    },
-                    "required": [
-                      "participantScoringDefinitionId",
-                      "config"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "participantScoringDefinitionId": {
-                        "type": "string",
-                        "enum": [
-                          "COMPOSITE_TOTAL"
-                        ]
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -11223,27 +11076,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -11426,27 +11258,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -11643,27 +11454,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -11846,27 +11636,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -12057,27 +11826,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -12253,27 +12001,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -12460,27 +12187,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -13368,27 +13074,6 @@
                                 "config"
                               ],
                               "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "participantScoringDefinitionId": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMPOSITE_TOTAL"
-                                  ]
-                                },
-                                "config": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
-                                }
-                              },
-                              "required": [
-                                "participantScoringDefinitionId",
-                                "config"
-                              ],
-                              "additionalProperties": false
                             }
                           ]
                         }
@@ -13571,27 +13256,6 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                }
-                              },
-                              "required": [
-                                "participantScoringDefinitionId",
-                                "config"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "participantScoringDefinitionId": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMPOSITE_TOTAL"
-                                  ]
-                                },
-                                "config": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
                                 }
                               },
                               "required": [
@@ -13788,27 +13452,6 @@
                                 "config"
                               ],
                               "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "participantScoringDefinitionId": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMPOSITE_TOTAL"
-                                  ]
-                                },
-                                "config": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
-                                }
-                              },
-                              "required": [
-                                "participantScoringDefinitionId",
-                                "config"
-                              ],
-                              "additionalProperties": false
                             }
                           ]
                         }
@@ -13991,27 +13634,6 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                }
-                              },
-                              "required": [
-                                "participantScoringDefinitionId",
-                                "config"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "participantScoringDefinitionId": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMPOSITE_TOTAL"
-                                  ]
-                                },
-                                "config": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
                                 }
                               },
                               "required": [
@@ -14202,27 +13824,6 @@
                                 "config"
                               ],
                               "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "participantScoringDefinitionId": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMPOSITE_TOTAL"
-                                  ]
-                                },
-                                "config": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
-                                }
-                              },
-                              "required": [
-                                "participantScoringDefinitionId",
-                                "config"
-                              ],
-                              "additionalProperties": false
                             }
                           ]
                         }
@@ -14398,27 +13999,6 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                }
-                              },
-                              "required": [
-                                "participantScoringDefinitionId",
-                                "config"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "participantScoringDefinitionId": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMPOSITE_TOTAL"
-                                  ]
-                                },
-                                "config": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
                                 }
                               },
                               "required": [
@@ -14605,27 +14185,6 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                }
-                              },
-                              "required": [
-                                "participantScoringDefinitionId",
-                                "config"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "participantScoringDefinitionId": {
-                                  "type": "string",
-                                  "enum": [
-                                    "COMPOSITE_TOTAL"
-                                  ]
-                                },
-                                "config": {
-                                  "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
                                 }
                               },
                               "required": [
@@ -14887,27 +14446,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -15090,27 +14628,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -15307,27 +14824,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -15510,27 +15006,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -15721,27 +15196,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -15917,27 +15371,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -16124,27 +15557,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -16453,27 +15865,6 @@
                               "config"
                             ],
                             "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
                           }
                         ]
                       }
@@ -16656,27 +16047,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -16873,27 +16243,6 @@
                               "config"
                             ],
                             "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
                           }
                         ]
                       }
@@ -17076,27 +16425,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -17287,27 +16615,6 @@
                               "config"
                             ],
                             "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
                           }
                         ]
                       }
@@ -17483,27 +16790,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -17690,27 +16976,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -18984,7 +18249,7 @@
             ]
           },
           "participantType": {
-            "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.",
+            "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
             "type": [
               "string",
               "null"
@@ -18996,7 +18261,7 @@
             ]
           },
           "scoringFamily": {
-            "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.",
+            "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
             "type": [
               "string",
               "null"
@@ -19005,7 +18270,6 @@
               "STROKE_PLAY",
               "FINISH_POSITION",
               "HEAD_TO_HEAD",
-              "COMPOSITE",
               null
             ]
           },
@@ -19017,23 +18281,6 @@
             ],
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
-          },
-          "parentSportLeagueId": {
-            "description": "The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "parentRoundNumbers": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
-            },
-            "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
           },
           "participantCount": {
             "type": "integer",
@@ -19079,8 +18326,6 @@
           "participantType",
           "scoringFamily",
           "displayOrder",
-          "parentSportLeagueId",
-          "parentRoundNumbers",
           "participantCount",
           "sportEventCount",
           "createdAt",
@@ -19258,7 +18503,7 @@
                   ]
                 },
                 "participantType": {
-                  "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.",
+                  "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
                   "type": [
                     "string",
                     "null"
@@ -19270,7 +18515,7 @@
                   ]
                 },
                 "scoringFamily": {
-                  "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.",
+                  "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
                   "type": [
                     "string",
                     "null"
@@ -19279,7 +18524,6 @@
                     "STROKE_PLAY",
                     "FINISH_POSITION",
                     "HEAD_TO_HEAD",
-                    "COMPOSITE",
                     null
                   ]
                 },
@@ -19291,23 +18535,6 @@
                   ],
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
-                },
-                "parentSportLeagueId": {
-                  "description": "The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid"
-                },
-                "parentRoundNumbers": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991
-                  },
-                  "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
                 },
                 "participantCount": {
                   "type": "integer",
@@ -19353,8 +18580,6 @@
                 "participantType",
                 "scoringFamily",
                 "displayOrder",
-                "parentSportLeagueId",
-                "parentRoundNumbers",
                 "participantCount",
                 "sportEventCount",
                 "createdAt",
@@ -19511,7 +18736,7 @@
                 ]
               },
               "participantType": {
-                "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.",
+                "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
                 "type": [
                   "string",
                   "null"
@@ -19523,7 +18748,7 @@
                 ]
               },
               "scoringFamily": {
-                "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.",
+                "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
                 "type": [
                   "string",
                   "null"
@@ -19532,7 +18757,6 @@
                   "STROKE_PLAY",
                   "FINISH_POSITION",
                   "HEAD_TO_HEAD",
-                  "COMPOSITE",
                   null
                 ]
               },
@@ -19544,23 +18768,6 @@
                 ],
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
-              },
-              "parentSportLeagueId": {
-                "description": "The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men's Frozen Four. Null for a league that is no other's round. Set with the league's reference data, never by a request.",
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "format": "uuid"
-              },
-              "parentRoundNumbers": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "description": "The rounds of its parent league's season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league's reference data, never by a request."
               },
               "participantCount": {
                 "type": "integer",
@@ -19606,8 +18813,6 @@
               "participantType",
               "scoringFamily",
               "displayOrder",
-              "parentSportLeagueId",
-              "parentRoundNumbers",
               "participantCount",
               "sportEventCount",
               "createdAt",
@@ -19768,24 +18973,8 @@
           "name": {
             "type": "string"
           },
-          "parentSportLeagueId": {
-            "description": "The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.",
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "REAL",
-              "CLUTCH_CARD"
-            ],
-            "description": "REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event."
-          },
           "providerId": {
-            "description": "The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.",
+            "description": "The provider that syncs its events. Null when none does.",
             "type": [
               "string",
               "null"
@@ -19870,7 +19059,7 @@
                               "FIELD",
                               "SCORES"
                             ],
-                            "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                            "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                           }
                         },
                         "required": [
@@ -20063,7 +19252,7 @@
             "description": "Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
           },
           "season": {
-            "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.",
+            "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.",
             "type": [
               "object",
               "null"
@@ -20105,8 +19294,6 @@
           "id",
           "sport",
           "name",
-          "parentSportLeagueId",
-          "kind",
           "providerId",
           "isActive",
           "syncHealth",
@@ -20149,24 +19336,8 @@
                 "name": {
                   "type": "string"
                 },
-                "parentSportLeagueId": {
-                  "description": "The season league it is a round of: a Clutch Card's parent league, the NHL for the Stanley Cup Final. Null for a league that is no other's round.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "uuid"
-                },
-                "kind": {
-                  "type": "string",
-                  "enum": [
-                    "REAL",
-                    "CLUTCH_CARD"
-                  ],
-                  "description": "REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card's stat pool league, whose events are rounds of its parent league's season event."
-                },
                 "providerId": {
-                  "description": "The provider that syncs its events; a Clutch Card's parent league's, since its parent's event list sync creates its events. Null when none does.",
+                  "description": "The provider that syncs its events. Null when none does.",
                   "type": [
                     "string",
                     "null"
@@ -20251,7 +19422,7 @@
                                     "FIELD",
                                     "SCORES"
                                   ],
-                                  "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                                  "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                                 }
                               },
                               "required": [
@@ -20444,7 +19615,7 @@
                   "description": "Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
                 },
                 "season": {
-                  "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card's spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.",
+                  "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.",
                   "type": [
                     "object",
                     "null"
@@ -20486,8 +19657,6 @@
                 "id",
                 "sport",
                 "name",
-                "parentSportLeagueId",
-                "kind",
                 "providerId",
                 "isActive",
                 "syncHealth",
@@ -20499,7 +19668,7 @@
               "additionalProperties": false,
               "description": "One sport league on the root admin's Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts."
             },
-            "description": "Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league."
+            "description": "Every sport league, on or off, never paged: by sport, most popular first, then by name."
           }
         },
         "required": [
@@ -20518,7 +19687,7 @@
               "FIELD",
               "SCORES"
             ],
-            "description": "The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
+            "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
           },
           "health": {
             "type": "string",
@@ -20634,7 +19803,7 @@
                     "FIELD",
                     "SCORES"
                   ],
-                  "description": "The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
+                  "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
                 },
                 "health": {
                   "type": "string",
@@ -20929,7 +20098,7 @@
                               "FIELD",
                               "SCORES"
                             ],
-                            "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                            "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                           }
                         },
                         "required": [
@@ -21338,7 +20507,7 @@
                                     "FIELD",
                                     "SCORES"
                                   ],
-                                  "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                                  "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                                 }
                               },
                               "required": [
@@ -21623,7 +20792,7 @@
                     "FIELD",
                     "SCORES"
                   ],
-                  "description": "The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
+                  "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
                 },
                 "health": {
                   "type": "string",
@@ -21791,7 +20960,7 @@
                               "FIELD",
                               "SCORES"
                             ],
-                            "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                            "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                           }
                         },
                         "required": [
@@ -22116,7 +21285,7 @@
                         "FIELD",
                         "SCORES"
                       ],
-                      "description": "The event list (EVENTS, a Clutch Card's parent's, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
+                      "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
                     },
                     "health": {
                       "type": "string",
@@ -22284,7 +21453,7 @@
                                   "FIELD",
                                   "SCORES"
                                 ],
-                                "description": "Which sync failed: the event list (EVENTS, a Clutch Card's parent's), the field (FIELD) or live scores and results (SCORES)."
+                                "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                               }
                             },
                             "required": [
@@ -23645,7 +22814,7 @@
             "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
           },
           "participantType": {
-            "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.",
+            "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
             "type": [
               "string",
               "null"
@@ -23657,7 +22826,7 @@
             ]
           },
           "scoringFamily": {
-            "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.",
+            "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
             "type": [
               "string",
               "null"
@@ -23666,41 +22835,8 @@
               "STROKE_PLAY",
               "FINISH_POSITION",
               "HEAD_TO_HEAD",
-              "COMPOSITE",
               null
             ]
-          },
-          "parentEvent": {
-            "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "description": "The parent event's identifier."
-              },
-              "name": {
-                "type": "string",
-                "description": "The parent event's name, such as \"MLB Postseason\"."
-              }
-            },
-            "required": [
-              "id",
-              "name"
-            ],
-            "additionalProperties": false
-          },
-          "parentRoundNumbers": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
-            },
-            "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
           },
           "syncScope": {
             "type": "string",
@@ -24095,8 +23231,6 @@
           "sportLeagueId",
           "participantType",
           "scoringFamily",
-          "parentEvent",
-          "parentRoundNumbers",
           "syncScope",
           "providerSynced",
           "autoLifecycleEnabled",
@@ -24485,7 +23619,7 @@
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.",
+                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
                   "type": [
                     "string",
                     "null"
@@ -24497,7 +23631,7 @@
                   ]
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.",
+                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
                   "type": [
                     "string",
                     "null"
@@ -24506,41 +23640,8 @@
                     "STROKE_PLAY",
                     "FINISH_POSITION",
                     "HEAD_TO_HEAD",
-                    "COMPOSITE",
                     null
                   ]
-                },
-                "parentEvent": {
-                  "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The parent event's identifier."
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "The parent event's name, such as \"MLB Postseason\"."
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name"
-                  ],
-                  "additionalProperties": false
-                },
-                "parentRoundNumbers": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991
-                  },
-                  "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
                 },
                 "syncScope": {
                   "type": "string",
@@ -24935,8 +24036,6 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
-                "parentEvent",
-                "parentRoundNumbers",
                 "syncScope",
                 "providerSynced",
                 "autoLifecycleEnabled",
@@ -25312,7 +24411,7 @@
                 "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
               },
               "participantType": {
-                "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.",
+                "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
                 "type": [
                   "string",
                   "null"
@@ -25324,7 +24423,7 @@
                 ]
               },
               "scoringFamily": {
-                "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.",
+                "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
                 "type": [
                   "string",
                   "null"
@@ -25333,41 +24432,8 @@
                   "STROKE_PLAY",
                   "FINISH_POSITION",
                   "HEAD_TO_HEAD",
-                  "COMPOSITE",
                   null
                 ]
-              },
-              "parentEvent": {
-                "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "The parent event's identifier."
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "The parent event's name, such as \"MLB Postseason\"."
-                  }
-                },
-                "required": [
-                  "id",
-                  "name"
-                ],
-                "additionalProperties": false
-              },
-              "parentRoundNumbers": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
               },
               "syncScope": {
                 "type": "string",
@@ -25762,8 +24828,6 @@
               "sportLeagueId",
               "participantType",
               "scoringFamily",
-              "parentEvent",
-              "parentRoundNumbers",
               "syncScope",
               "providerSynced",
               "autoLifecycleEnabled",
@@ -25827,11 +24891,6 @@
           },
           "autoLifecycleEnabled": {
             "type": "boolean"
-          },
-          "parentEventId": {
-            "description": "A Clutch Card event's season event, an event of its sport league's parent league with the rounds the league covers. Omitted, it is the one such event under way at startDate. 422 PARENT_EVENT_NOT_FOUND when there is none (create the season event first), PARENT_EVENT_AMBIGUOUS when there are several, PARENT_EVENT_MISMATCH when the named event is not one, PARENT_EVENT_NOT_ALLOWED when the sport league is not a Clutch Card league.",
-            "type": "string",
-            "format": "uuid"
           }
         },
         "required": [
@@ -25942,10 +25001,9 @@
         "enum": [
           "ALREADY_LINKED",
           "ALREADY_STARTED",
-          "EDITION_EXISTS",
-          "NO_PARENT_EVENT"
+          "EDITION_EXISTS"
         ],
-        "description": "ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it."
+        "description": "ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
       },
       "ImportSportEventYearFromProviderResponse": {
         "type": "object",
@@ -26267,7 +25325,7 @@
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.",
+                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
                   "type": [
                     "string",
                     "null"
@@ -26279,7 +25337,7 @@
                   ]
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.",
+                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
                   "type": [
                     "string",
                     "null"
@@ -26288,41 +25346,8 @@
                     "STROKE_PLAY",
                     "FINISH_POSITION",
                     "HEAD_TO_HEAD",
-                    "COMPOSITE",
                     null
                   ]
-                },
-                "parentEvent": {
-                  "description": "A Clutch Card event's season event: the event of its sport league's parent league whose rounds it covers, such as the MLB Postseason for the World Series. Null on any other event, and on a Clutch Card event created before parents were recorded whose season event was never loaded.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The parent event's identifier."
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "The parent event's name, such as \"MLB Postseason\"."
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name"
-                  ],
-                  "additionalProperties": false
-                },
-                "parentRoundNumbers": {
-                  "type": "array",
-                  "items": {
-                    "type": "integer",
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991
-                  },
-                  "description": "The rounds of parentEvent this Clutch Card event covers, first to last: 4 for the World Series of the MLB Postseason. Empty when parentEvent is null."
                 },
                 "syncScope": {
                   "type": "string",
@@ -26717,8 +25742,6 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
-                "parentEvent",
-                "parentRoundNumbers",
                 "syncScope",
                 "providerSynced",
                 "autoLifecycleEnabled",
@@ -26752,10 +25775,9 @@
                   "enum": [
                     "ALREADY_LINKED",
                     "ALREADY_STARTED",
-                    "EDITION_EXISTS",
-                    "NO_PARENT_EVENT"
+                    "EDITION_EXISTS"
                   ],
-                  "description": "ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score). NO_PARENT_EVENT: a Clutch Card event whose season event is not on the site yet, or is not one event; importing again once it is creates it."
+                  "description": "ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
                 }
               },
               "required": [
@@ -27870,51 +26892,6 @@
               "thru"
             ],
             "additionalProperties": false
-          },
-          "statLines": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "stat": {
-                  "type": "string",
-                  "enum": [
-                    "TOTAL_BASES",
-                    "RUNS",
-                    "RUNS_BATTED_IN",
-                    "WALKS",
-                    "STOLEN_BASES",
-                    "POINTS",
-                    "REBOUNDS",
-                    "ASSISTS",
-                    "GOALS",
-                    "SHOTS_ON_GOAL",
-                    "SHOTS_ON_TARGET",
-                    "PASSING_TOUCHDOWNS",
-                    "RUSHING_TOUCHDOWNS",
-                    "RECEIVING_TOUCHDOWNS",
-                    "RECEPTIONS",
-                    "PASSING_YARDS",
-                    "RUSHING_YARDS",
-                    "RECEIVING_YARDS"
-                  ],
-                  "description": "One of the stats the sport's composite counts."
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "The player's count of it in the game; below 0 only for yards."
-                }
-              },
-              "required": [
-                "stat",
-                "value"
-              ],
-              "additionalProperties": false,
-              "description": "Composite extension of a participant round: one stat of a stat pool player's game."
-            },
-            "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
           }
         },
         "required": [
@@ -27923,8 +26900,7 @@
           "roundNumber",
           "status",
           "completedAt",
-          "golf",
-          "statLines"
+          "golf"
         ],
         "additionalProperties": false,
         "description": "A field row's part in one round."
@@ -28394,51 +27370,6 @@
                     "thru"
                   ],
                   "additionalProperties": false
-                },
-                "statLines": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "stat": {
-                        "type": "string",
-                        "enum": [
-                          "TOTAL_BASES",
-                          "RUNS",
-                          "RUNS_BATTED_IN",
-                          "WALKS",
-                          "STOLEN_BASES",
-                          "POINTS",
-                          "REBOUNDS",
-                          "ASSISTS",
-                          "GOALS",
-                          "SHOTS_ON_GOAL",
-                          "SHOTS_ON_TARGET",
-                          "PASSING_TOUCHDOWNS",
-                          "RUSHING_TOUCHDOWNS",
-                          "RECEIVING_TOUCHDOWNS",
-                          "RECEPTIONS",
-                          "PASSING_YARDS",
-                          "RUSHING_YARDS",
-                          "RECEIVING_YARDS"
-                        ],
-                        "description": "One of the stats the sport's composite counts."
-                      },
-                      "value": {
-                        "type": "integer",
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991,
-                        "description": "The player's count of it in the game; below 0 only for yards."
-                      }
-                    },
-                    "required": [
-                      "stat",
-                      "value"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Composite extension of a participant round: one stat of a stat pool player's game."
-                  },
-                  "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                 }
               },
               "required": [
@@ -28447,8 +27378,7 @@
                 "roundNumber",
                 "status",
                 "completedAt",
-                "golf",
-                "statLines"
+                "golf"
               ],
               "additionalProperties": false,
               "description": "A field row's part in one round."
@@ -29018,51 +27948,6 @@
                           "thru"
                         ],
                         "additionalProperties": false
-                      },
-                      "statLines": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "stat": {
-                              "type": "string",
-                              "enum": [
-                                "TOTAL_BASES",
-                                "RUNS",
-                                "RUNS_BATTED_IN",
-                                "WALKS",
-                                "STOLEN_BASES",
-                                "POINTS",
-                                "REBOUNDS",
-                                "ASSISTS",
-                                "GOALS",
-                                "SHOTS_ON_GOAL",
-                                "SHOTS_ON_TARGET",
-                                "PASSING_TOUCHDOWNS",
-                                "RUSHING_TOUCHDOWNS",
-                                "RECEIVING_TOUCHDOWNS",
-                                "RECEPTIONS",
-                                "PASSING_YARDS",
-                                "RUSHING_YARDS",
-                                "RECEIVING_YARDS"
-                              ],
-                              "description": "One of the stats the sport's composite counts."
-                            },
-                            "value": {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991,
-                              "description": "The player's count of it in the game; below 0 only for yards."
-                            }
-                          },
-                          "required": [
-                            "stat",
-                            "value"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Composite extension of a participant round: one stat of a stat pool player's game."
-                        },
-                        "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                       }
                     },
                     "required": [
@@ -29071,8 +27956,7 @@
                       "roundNumber",
                       "status",
                       "completedAt",
-                      "golf",
-                      "statLines"
+                      "golf"
                     ],
                     "additionalProperties": false,
                     "description": "A field row's part in one round."
@@ -29817,51 +28701,6 @@
                         "thru"
                       ],
                       "additionalProperties": false
-                    },
-                    "statLines": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "stat": {
-                            "type": "string",
-                            "enum": [
-                              "TOTAL_BASES",
-                              "RUNS",
-                              "RUNS_BATTED_IN",
-                              "WALKS",
-                              "STOLEN_BASES",
-                              "POINTS",
-                              "REBOUNDS",
-                              "ASSISTS",
-                              "GOALS",
-                              "SHOTS_ON_GOAL",
-                              "SHOTS_ON_TARGET",
-                              "PASSING_TOUCHDOWNS",
-                              "RUSHING_TOUCHDOWNS",
-                              "RECEIVING_TOUCHDOWNS",
-                              "RECEPTIONS",
-                              "PASSING_YARDS",
-                              "RUSHING_YARDS",
-                              "RECEIVING_YARDS"
-                            ],
-                            "description": "One of the stats the sport's composite counts."
-                          },
-                          "value": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "The player's count of it in the game; below 0 only for yards."
-                          }
-                        },
-                        "required": [
-                          "stat",
-                          "value"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Composite extension of a participant round: one stat of a stat pool player's game."
-                      },
-                      "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                     }
                   },
                   "required": [
@@ -29870,8 +28709,7 @@
                     "roundNumber",
                     "status",
                     "completedAt",
-                    "golf",
-                    "statLines"
+                    "golf"
                   ],
                   "additionalProperties": false,
                   "description": "A field row's part in one round."
@@ -30586,27 +29424,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -30789,27 +29606,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -31006,27 +29802,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -31209,27 +29984,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -31420,27 +30174,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -31616,27 +30349,6 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -31830,27 +30542,6 @@
                           "config"
                         ],
                         "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "participantScoringDefinitionId": {
-                            "type": "string",
-                            "enum": [
-                              "COMPOSITE_TOTAL"
-                            ]
-                          },
-                          "config": {
-                            "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": [
-                          "participantScoringDefinitionId",
-                          "config"
-                        ],
-                        "additionalProperties": false
                       }
                     ]
                   }
@@ -31966,7 +30657,7 @@
             "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
           },
           "participantType": {
-            "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
+            "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
             "type": [
               "string",
               "null"
@@ -31978,7 +30669,7 @@
             ]
           },
           "scoringFamily": {
-            "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
+            "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
             "type": [
               "string",
               "null"
@@ -31987,7 +30678,6 @@
               "STROKE_PLAY",
               "FINISH_POSITION",
               "HEAD_TO_HEAD",
-              "COMPOSITE",
               null
             ]
           }
@@ -32216,7 +30906,7 @@
                   "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
+                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
                   "type": [
                     "string",
                     "null"
@@ -32228,7 +30918,7 @@
                   ]
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
+                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
                   "type": [
                     "string",
                     "null"
@@ -32237,7 +30927,6 @@
                     "STROKE_PLAY",
                     "FINISH_POSITION",
                     "HEAD_TO_HEAD",
-                    "COMPOSITE",
                     null
                   ]
                 }
@@ -32640,8 +31329,7 @@
         "enum": [
           "GOLF_RELATIVE_TO_PAR_TOTAL",
           "FINISH_POSITION_POINTS",
-          "KNOCKOUT_ROUND_POINTS",
-          "COMPOSITE_TOTAL"
+          "KNOCKOUT_ROUND_POINTS"
         ]
       },
       "ScoredContestEntryPickGolfDto": {
@@ -32800,56 +31488,6 @@
               "isAlive"
             ],
             "additionalProperties": false
-          },
-          "composite": {
-            "description": "Present for a championship stat pool, scored by composite; null otherwise.",
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "points": {
-                "description": "The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "games": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "roundNumber": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 9007199254740991,
-                      "description": "The game: the event's round number."
-                    },
-                    "score": {
-                      "type": "integer",
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991,
-                      "description": "The player's composite for the game, from its stat lines. Can be below 0 where yards are lost."
-                    }
-                  },
-                  "required": [
-                    "roundNumber",
-                    "score"
-                  ],
-                  "additionalProperties": false,
-                  "description": "One game a stat pool player played, and their composite in it."
-                },
-                "description": "Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds."
-              }
-            },
-            "required": [
-              "points",
-              "games"
-            ],
-            "additionalProperties": false
           }
         },
         "required": [
@@ -32861,8 +31499,7 @@
           "isDropped",
           "golf",
           "race",
-          "knockout",
-          "composite"
+          "knockout"
         ],
         "additionalProperties": false,
         "description": "One pick on a contest entry, with whether it counts."
@@ -33104,56 +31741,6 @@
                     "isAlive"
                   ],
                   "additionalProperties": false
-                },
-                "composite": {
-                  "description": "Present for a championship stat pool, scored by composite; null otherwise.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "points": {
-                      "description": "The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.",
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991
-                    },
-                    "games": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "roundNumber": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 9007199254740991,
-                            "description": "The game: the event's round number."
-                          },
-                          "score": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "The player's composite for the game, from its stat lines. Can be below 0 where yards are lost."
-                          }
-                        },
-                        "required": [
-                          "roundNumber",
-                          "score"
-                        ],
-                        "additionalProperties": false,
-                        "description": "One game a stat pool player played, and their composite in it."
-                      },
-                      "description": "Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds."
-                    }
-                  },
-                  "required": [
-                    "points",
-                    "games"
-                  ],
-                  "additionalProperties": false
                 }
               },
               "required": [
@@ -33165,8 +31752,7 @@
                 "isDropped",
                 "golf",
                 "race",
-                "knockout",
-                "composite"
+                "knockout"
               ],
               "additionalProperties": false,
               "description": "One pick on a contest entry, with whether it counts."
@@ -33254,7 +31840,7 @@
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
           "participantType": {
-            "description": "Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.",
+            "description": "Who competes in the shown event, when its sport league overrides its sport. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.",
             "type": [
               "string",
               "null"
@@ -33266,7 +31852,7 @@
             ]
           },
           "scoringFamily": {
-            "description": "How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does.",
+            "description": "How the shown event is scored, when its sport league overrides its sport. Null scores as the sport does.",
             "type": [
               "string",
               "null"
@@ -33275,7 +31861,6 @@
               "STROKE_PLAY",
               "FINISH_POSITION",
               "HEAD_TO_HEAD",
-              "COMPOSITE",
               null
             ]
           },
@@ -33284,8 +31869,7 @@
             "enum": [
               "GOLF_RELATIVE_TO_PAR_TOTAL",
               "FINISH_POSITION_POINTS",
-              "KNOCKOUT_ROUND_POINTS",
-              "COMPOSITE_TOTAL"
+              "KNOCKOUT_ROUND_POINTS"
             ],
             "description": "The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds."
           },
@@ -33794,51 +32378,6 @@
                           "thru"
                         ],
                         "additionalProperties": false
-                      },
-                      "statLines": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "stat": {
-                              "type": "string",
-                              "enum": [
-                                "TOTAL_BASES",
-                                "RUNS",
-                                "RUNS_BATTED_IN",
-                                "WALKS",
-                                "STOLEN_BASES",
-                                "POINTS",
-                                "REBOUNDS",
-                                "ASSISTS",
-                                "GOALS",
-                                "SHOTS_ON_GOAL",
-                                "SHOTS_ON_TARGET",
-                                "PASSING_TOUCHDOWNS",
-                                "RUSHING_TOUCHDOWNS",
-                                "RECEIVING_TOUCHDOWNS",
-                                "RECEPTIONS",
-                                "PASSING_YARDS",
-                                "RUSHING_YARDS",
-                                "RECEIVING_YARDS"
-                              ],
-                              "description": "One of the stats the sport's composite counts."
-                            },
-                            "value": {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991,
-                              "description": "The player's count of it in the game; below 0 only for yards."
-                            }
-                          },
-                          "required": [
-                            "stat",
-                            "value"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Composite extension of a participant round: one stat of a stat pool player's game."
-                        },
-                        "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                       }
                     },
                     "required": [
@@ -33847,8 +32386,7 @@
                       "roundNumber",
                       "status",
                       "completedAt",
-                      "golf",
-                      "statLines"
+                      "golf"
                     ],
                     "additionalProperties": false,
                     "description": "A field row's part in one round."
@@ -34189,56 +32727,6 @@
                           "isAlive"
                         ],
                         "additionalProperties": false
-                      },
-                      "composite": {
-                        "description": "Present for a championship stat pool, scored by composite; null otherwise.",
-                        "type": [
-                          "object",
-                          "null"
-                        ],
-                        "properties": {
-                          "points": {
-                            "description": "The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.",
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          },
-                          "games": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "roundNumber": {
-                                  "type": "integer",
-                                  "minimum": 1,
-                                  "maximum": 9007199254740991,
-                                  "description": "The game: the event's round number."
-                                },
-                                "score": {
-                                  "type": "integer",
-                                  "minimum": -9007199254740991,
-                                  "maximum": 9007199254740991,
-                                  "description": "The player's composite for the game, from its stat lines. Can be below 0 where yards are lost."
-                                }
-                              },
-                              "required": [
-                                "roundNumber",
-                                "score"
-                              ],
-                              "additionalProperties": false,
-                              "description": "One game a stat pool player played, and their composite in it."
-                            },
-                            "description": "Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds."
-                          }
-                        },
-                        "required": [
-                          "points",
-                          "games"
-                        ],
-                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -34250,8 +32738,7 @@
                       "isDropped",
                       "golf",
                       "race",
-                      "knockout",
-                      "composite"
+                      "knockout"
                     ],
                     "additionalProperties": false,
                     "description": "One pick on a contest entry, with whether it counts."
@@ -34392,7 +32879,7 @@
                       "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                     },
                     "participantType": {
-                      "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
+                      "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
                       "type": [
                         "string",
                         "null"
@@ -34404,7 +32891,7 @@
                       ]
                     },
                     "scoringFamily": {
-                      "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
+                      "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
                       "type": [
                         "string",
                         "null"
@@ -34413,7 +32900,6 @@
                         "STROKE_PLAY",
                         "FINISH_POSITION",
                         "HEAD_TO_HEAD",
-                        "COMPOSITE",
                         null
                       ]
                     }
@@ -34663,7 +33149,7 @@
                         "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                       },
                       "participantType": {
-                        "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
+                        "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
                         "type": [
                           "string",
                           "null"
@@ -34675,7 +33161,7 @@
                         ]
                       },
                       "scoringFamily": {
-                        "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
+                        "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
                         "type": [
                           "string",
                           "null"
@@ -34684,7 +33170,6 @@
                           "STROKE_PLAY",
                           "FINISH_POSITION",
                           "HEAD_TO_HEAD",
-                          "COMPOSITE",
                           null
                         ]
                       }
@@ -49601,83 +48086,6 @@
         "additionalProperties": false,
         "description": "A dry run of a race result. Nothing is written."
       },
-      "GameStatLineUploadRequest": {
-        "type": "object",
-        "properties": {
-          "rows": {
-            "minItems": 1,
-            "maxItems": 200,
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "participantId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The player, by participant id; must be in the event's field."
-                },
-                "stats": {
-                  "maxItems": 18,
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "stat": {
-                        "type": "string",
-                        "enum": [
-                          "TOTAL_BASES",
-                          "RUNS",
-                          "RUNS_BATTED_IN",
-                          "WALKS",
-                          "STOLEN_BASES",
-                          "POINTS",
-                          "REBOUNDS",
-                          "ASSISTS",
-                          "GOALS",
-                          "SHOTS_ON_GOAL",
-                          "SHOTS_ON_TARGET",
-                          "PASSING_TOUCHDOWNS",
-                          "RUSHING_TOUCHDOWNS",
-                          "RECEIVING_TOUCHDOWNS",
-                          "RECEPTIONS",
-                          "PASSING_YARDS",
-                          "RUSHING_YARDS",
-                          "RECEIVING_YARDS"
-                        ],
-                        "description": "One of the stats the sport's composite counts."
-                      },
-                      "value": {
-                        "type": "integer",
-                        "minimum": -9999,
-                        "maximum": 9999,
-                        "description": "The player's count of it in the game; below 0 only for yards."
-                      }
-                    },
-                    "required": [
-                      "stat",
-                      "value"
-                    ],
-                    "additionalProperties": false,
-                    "description": "One stat of the line."
-                  },
-                  "description": "The player's whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game."
-                }
-              },
-              "required": [
-                "participantId",
-                "stats"
-              ],
-              "additionalProperties": false,
-              "description": "One player's line for the game. It replaces the line stored for the player in the game."
-            }
-          }
-        },
-        "required": [
-          "rows"
-        ],
-        "additionalProperties": false,
-        "description": "One game's stat lines, or a correction to some of them: one row per player named. Players not named keep the line already stored."
-      },
       "MatchStatusDto": {
         "type": "string",
         "enum": [
@@ -55647,27 +54055,6 @@
                               "config"
                             ],
                             "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
                           }
                         ]
                       }
@@ -55850,27 +54237,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -56067,27 +54433,6 @@
                               "config"
                             ],
                             "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
                           }
                         ]
                       }
@@ -56270,27 +54615,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -56481,27 +54805,6 @@
                               "config"
                             ],
                             "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
                           }
                         ]
                       }
@@ -56677,27 +54980,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -56884,27 +55166,6 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                              }
-                            },
-                            "required": [
-                              "participantScoringDefinitionId",
-                              "config"
-                            ],
-                            "additionalProperties": false
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "participantScoringDefinitionId": {
-                                "type": "string",
-                                "enum": [
-                                  "COMPOSITE_TOTAL"
-                                ]
-                              },
-                              "config": {
-                                "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -57406,27 +55667,6 @@
                                     "config"
                                   ],
                                   "additionalProperties": false
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "participantScoringDefinitionId": {
-                                      "type": "string",
-                                      "enum": [
-                                        "COMPOSITE_TOTAL"
-                                      ]
-                                    },
-                                    "config": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
-                                    }
-                                  },
-                                  "required": [
-                                    "participantScoringDefinitionId",
-                                    "config"
-                                  ],
-                                  "additionalProperties": false
                                 }
                               ]
                             }
@@ -57609,27 +55849,6 @@
                                       ],
                                       "additionalProperties": false,
                                       "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                    }
-                                  },
-                                  "required": [
-                                    "participantScoringDefinitionId",
-                                    "config"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "participantScoringDefinitionId": {
-                                      "type": "string",
-                                      "enum": [
-                                        "COMPOSITE_TOTAL"
-                                      ]
-                                    },
-                                    "config": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
                                     }
                                   },
                                   "required": [
@@ -57826,27 +56045,6 @@
                                     "config"
                                   ],
                                   "additionalProperties": false
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "participantScoringDefinitionId": {
-                                      "type": "string",
-                                      "enum": [
-                                        "COMPOSITE_TOTAL"
-                                      ]
-                                    },
-                                    "config": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
-                                    }
-                                  },
-                                  "required": [
-                                    "participantScoringDefinitionId",
-                                    "config"
-                                  ],
-                                  "additionalProperties": false
                                 }
                               ]
                             }
@@ -58029,27 +56227,6 @@
                                       ],
                                       "additionalProperties": false,
                                       "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                    }
-                                  },
-                                  "required": [
-                                    "participantScoringDefinitionId",
-                                    "config"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "participantScoringDefinitionId": {
-                                      "type": "string",
-                                      "enum": [
-                                        "COMPOSITE_TOTAL"
-                                      ]
-                                    },
-                                    "config": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
                                     }
                                   },
                                   "required": [
@@ -58240,27 +56417,6 @@
                                     "config"
                                   ],
                                   "additionalProperties": false
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "participantScoringDefinitionId": {
-                                      "type": "string",
-                                      "enum": [
-                                        "COMPOSITE_TOTAL"
-                                      ]
-                                    },
-                                    "config": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
-                                    }
-                                  },
-                                  "required": [
-                                    "participantScoringDefinitionId",
-                                    "config"
-                                  ],
-                                  "additionalProperties": false
                                 }
                               ]
                             }
@@ -58436,27 +56592,6 @@
                                       ],
                                       "additionalProperties": false,
                                       "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                    }
-                                  },
-                                  "required": [
-                                    "participantScoringDefinitionId",
-                                    "config"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "participantScoringDefinitionId": {
-                                      "type": "string",
-                                      "enum": [
-                                        "COMPOSITE_TOTAL"
-                                      ]
-                                    },
-                                    "config": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
                                     }
                                   },
                                   "required": [
@@ -58643,27 +56778,6 @@
                                       ],
                                       "additionalProperties": false,
                                       "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                    }
-                                  },
-                                  "required": [
-                                    "participantScoringDefinitionId",
-                                    "config"
-                                  ],
-                                  "additionalProperties": false
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "participantScoringDefinitionId": {
-                                      "type": "string",
-                                      "enum": [
-                                        "COMPOSITE_TOTAL"
-                                      ]
-                                    },
-                                    "config": {
-                                      "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
                                     }
                                   },
                                   "required": [
@@ -59183,27 +57297,6 @@
                                         "config"
                                       ],
                                       "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "participantScoringDefinitionId": {
-                                          "type": "string",
-                                          "enum": [
-                                            "COMPOSITE_TOTAL"
-                                          ]
-                                        },
-                                        "config": {
-                                          "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
-                                        }
-                                      },
-                                      "required": [
-                                        "participantScoringDefinitionId",
-                                        "config"
-                                      ],
-                                      "additionalProperties": false
                                     }
                                   ]
                                 }
@@ -59386,27 +57479,6 @@
                                           ],
                                           "additionalProperties": false,
                                           "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                        }
-                                      },
-                                      "required": [
-                                        "participantScoringDefinitionId",
-                                        "config"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "participantScoringDefinitionId": {
-                                          "type": "string",
-                                          "enum": [
-                                            "COMPOSITE_TOTAL"
-                                          ]
-                                        },
-                                        "config": {
-                                          "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
                                         }
                                       },
                                       "required": [
@@ -59603,27 +57675,6 @@
                                         "config"
                                       ],
                                       "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "participantScoringDefinitionId": {
-                                          "type": "string",
-                                          "enum": [
-                                            "COMPOSITE_TOTAL"
-                                          ]
-                                        },
-                                        "config": {
-                                          "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
-                                        }
-                                      },
-                                      "required": [
-                                        "participantScoringDefinitionId",
-                                        "config"
-                                      ],
-                                      "additionalProperties": false
                                     }
                                   ]
                                 }
@@ -59806,27 +57857,6 @@
                                           ],
                                           "additionalProperties": false,
                                           "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                        }
-                                      },
-                                      "required": [
-                                        "participantScoringDefinitionId",
-                                        "config"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "participantScoringDefinitionId": {
-                                          "type": "string",
-                                          "enum": [
-                                            "COMPOSITE_TOTAL"
-                                          ]
-                                        },
-                                        "config": {
-                                          "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
                                         }
                                       },
                                       "required": [
@@ -60017,27 +58047,6 @@
                                         "config"
                                       ],
                                       "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "participantScoringDefinitionId": {
-                                          "type": "string",
-                                          "enum": [
-                                            "COMPOSITE_TOTAL"
-                                          ]
-                                        },
-                                        "config": {
-                                          "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
-                                        }
-                                      },
-                                      "required": [
-                                        "participantScoringDefinitionId",
-                                        "config"
-                                      ],
-                                      "additionalProperties": false
                                     }
                                   ]
                                 }
@@ -60213,27 +58222,6 @@
                                           ],
                                           "additionalProperties": false,
                                           "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                        }
-                                      },
-                                      "required": [
-                                        "participantScoringDefinitionId",
-                                        "config"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "participantScoringDefinitionId": {
-                                          "type": "string",
-                                          "enum": [
-                                            "COMPOSITE_TOTAL"
-                                          ]
-                                        },
-                                        "config": {
-                                          "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
                                         }
                                       },
                                       "required": [
@@ -60420,27 +58408,6 @@
                                           ],
                                           "additionalProperties": false,
                                           "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                        }
-                                      },
-                                      "required": [
-                                        "participantScoringDefinitionId",
-                                        "config"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "participantScoringDefinitionId": {
-                                          "type": "string",
-                                          "enum": [
-                                            "COMPOSITE_TOTAL"
-                                          ]
-                                        },
-                                        "config": {
-                                          "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
                                         }
                                       },
                                       "required": [
@@ -60997,27 +58964,6 @@
                                           "config"
                                         ],
                                         "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "participantScoringDefinitionId": {
-                                            "type": "string",
-                                            "enum": [
-                                              "COMPOSITE_TOTAL"
-                                            ]
-                                          },
-                                          "config": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                          }
-                                        },
-                                        "required": [
-                                          "participantScoringDefinitionId",
-                                          "config"
-                                        ],
-                                        "additionalProperties": false
                                       }
                                     ]
                                   }
@@ -61200,27 +59146,6 @@
                                             ],
                                             "additionalProperties": false,
                                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                          }
-                                        },
-                                        "required": [
-                                          "participantScoringDefinitionId",
-                                          "config"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "participantScoringDefinitionId": {
-                                            "type": "string",
-                                            "enum": [
-                                              "COMPOSITE_TOTAL"
-                                            ]
-                                          },
-                                          "config": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
                                           }
                                         },
                                         "required": [
@@ -61417,27 +59342,6 @@
                                           "config"
                                         ],
                                         "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "participantScoringDefinitionId": {
-                                            "type": "string",
-                                            "enum": [
-                                              "COMPOSITE_TOTAL"
-                                            ]
-                                          },
-                                          "config": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                          }
-                                        },
-                                        "required": [
-                                          "participantScoringDefinitionId",
-                                          "config"
-                                        ],
-                                        "additionalProperties": false
                                       }
                                     ]
                                   }
@@ -61620,27 +59524,6 @@
                                             ],
                                             "additionalProperties": false,
                                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                          }
-                                        },
-                                        "required": [
-                                          "participantScoringDefinitionId",
-                                          "config"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "participantScoringDefinitionId": {
-                                            "type": "string",
-                                            "enum": [
-                                              "COMPOSITE_TOTAL"
-                                            ]
-                                          },
-                                          "config": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
                                           }
                                         },
                                         "required": [
@@ -61831,27 +59714,6 @@
                                           "config"
                                         ],
                                         "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "participantScoringDefinitionId": {
-                                            "type": "string",
-                                            "enum": [
-                                              "COMPOSITE_TOTAL"
-                                            ]
-                                          },
-                                          "config": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                          }
-                                        },
-                                        "required": [
-                                          "participantScoringDefinitionId",
-                                          "config"
-                                        ],
-                                        "additionalProperties": false
                                       }
                                     ]
                                   }
@@ -62027,27 +59889,6 @@
                                             ],
                                             "additionalProperties": false,
                                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                          }
-                                        },
-                                        "required": [
-                                          "participantScoringDefinitionId",
-                                          "config"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "participantScoringDefinitionId": {
-                                            "type": "string",
-                                            "enum": [
-                                              "COMPOSITE_TOTAL"
-                                            ]
-                                          },
-                                          "config": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
                                           }
                                         },
                                         "required": [
@@ -62234,27 +60075,6 @@
                                             ],
                                             "additionalProperties": false,
                                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
-                                          }
-                                        },
-                                        "required": [
-                                          "participantScoringDefinitionId",
-                                          "config"
-                                        ],
-                                        "additionalProperties": false
-                                      },
-                                      {
-                                        "type": "object",
-                                        "properties": {
-                                          "participantScoringDefinitionId": {
-                                            "type": "string",
-                                            "enum": [
-                                              "COMPOSITE_TOTAL"
-                                            ]
-                                          },
-                                          "config": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
                                           }
                                         },
                                         "required": [
@@ -81961,7 +79781,7 @@
         "tags": [
           "Events"
         ],
-        "description": "An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.",
+        "description": "An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -82229,7 +80049,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it, EVENT_HAS_CLUTCH_CARD_EVENTS while a Clutch Card event names it as its season event. Root admin only.",
+        "description": "Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -82295,7 +80115,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. A Clutch Card league's event names its season event of the target year (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.",
+        "description": "Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -82377,7 +80197,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, events whose start has passed, series that already have an edition that year, and Clutch Card events whose season event is not on the site (NO_PARENT_EVENT, #1820) are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.",
+        "description": "Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -82449,7 +80269,7 @@
         "tags": [
           "Events"
         ],
-        "description": "An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. A Clutch Card league's event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.",
+        "description": "An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -84910,108 +82730,6 @@
         }
       }
     },
-    "/api/v1/events/{eventId}/rounds/{roundNumber}/stat-lines": {
-      "put": {
-        "operationId": "applyEventGameStatLines",
-        "summary": "Apply a game's stat lines",
-        "tags": [
-          "Events"
-        ],
-        "description": "Stores each player's line for the game (the round) exactly as sent, all or none; each row replaces the player's stored line, an empty one clears it, and players not named keep theirs. Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. 422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport's composite counts, is given twice, or is below 0 when it is not yards. 422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GameStatLineUploadRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "eventId",
-            "required": true
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "in": "path",
-            "name": "roundNumber",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "An event's field.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/events/{eventId}/bracket": {
       "get": {
         "operationId": "getEventBracket",
@@ -86476,7 +84194,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "The root admin's Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name, each Clutch Card straight after its parent league. Each row carries its kind, provider, sync health from the latest run of each of its syncs, its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.",
+        "description": "The root admin's Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name. Each row carries its provider, sync health from the latest run of each of its syncs, its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.",
         "responses": {
           "200": {
             "description": "The root admin's Sports page.",
@@ -86639,7 +84357,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a playoff round naming it as its season league: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.",
+        "description": "Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league's muted sport leagues. 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league's cup or a participant: delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -86695,7 +84413,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. A Clutch Card reports its parent league's event list sync, which creates its events. Health follows the Sports page's rule from that sync's latest run; the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.",
+        "description": "The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. Health follows the Sports page's rule from that sync's latest run; the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.",
         "parameters": [
           {
             "schema": {

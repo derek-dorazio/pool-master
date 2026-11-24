@@ -237,7 +237,6 @@ export function CreateContestPage() {
         ScoringFields={draft.scoringSettingsUi.Fields}
         scoringError={draft.parsedScoring.error}
         sportDefinition={draft.sportDefinition}
-        statPoolScoring={draft.statPoolScoring}
         tierCount={draft.tierCount}
         values={values}
       />

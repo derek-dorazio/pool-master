@@ -6,7 +6,7 @@ import { QueryKeys } from '@/lib/query-keys';
 
 /**
  * Every sport league's overview row for the Sports page (#1847): health, issues, season, next
- * event and event count, grouped by sport with each Clutch Card after its parent. All of them,
+ * event and event count, grouped by sport. All of them,
  * never paged.
  */
 export function useSportLeagueOverviewsQuery() {

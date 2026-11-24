@@ -14,7 +14,7 @@ import {
   sportWord,
   type DisplayStringsModule,
 } from '@poolmaster/shared/display-strings';
-import { ContestStatus, ScoringFamily, Sport, SUPPORTED_SPORTS, sportLeagueDefinitionOf } from '@poolmaster/shared/domain';
+import { ContestStatus, Sport, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 
 /** A second language for the lookups to choose between: French words for two entries, and a plural. */
 const frFR: DisplayStringsModule = {
@@ -201,13 +201,6 @@ describe('sport words (#1960)', () => {
     expect(sportWord(Sport.HORSE_RACING, 'topPlaces')).toBe('Win / Place / Show');
     expect(sportWord(Sport.BASKETBALL, 'shootout')).toBeUndefined();
     expect(sportWord(Sport.SOCCER, 'shootout')).toBe('pens');
-  });
-
-  it('read a definition\'s overridden roles from the roles it names: a stat pool\'s players and games', () => {
-    const statPool = sportLeagueDefinitionOf(Sport.SOCCER, { participantType: null, scoringFamily: ScoringFamily.COMPOSITE });
-    expect(sportWord(statPool, 'participant', { count: 2 })).toBe('players');
-    expect(sportWord(statPool, 'round', { count: 1 })).toBe('match');
-    expect(sportWord(statPool, 'event')).toBe('tournament');
   });
 
   it('read only the generic words for no sport', () => {

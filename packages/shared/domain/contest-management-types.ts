@@ -63,9 +63,8 @@ export interface SportEvent extends DomainEntity {
    */
   squaresFromRound?: number;
   /**
-   * The series' sport league's participant type and scoring family when not its sport's (#934: a
-   * championship stat pool's players, scored by the composite family), read through the series
-   * like `sportLeagueId`; absent plays the sport's. Read through `eventSportDefinition`.
+   * The series' sport league's participant type and scoring family when not its sport's (#934),
+   * read through the series like `sportLeagueId`; absent plays the sport's. Read through `eventSportDefinition`.
    */
   participantType?: ParticipantType | null;
   scoringFamily?: ScoringFamily | null;
@@ -90,24 +89,10 @@ export interface SportEvent extends DomainEntity {
    */
   tierConfig?: EventTierConfig;
   /**
-   * A Clutch Card event's parent (#1820): the season event of its sport league's parent league
-   * whose rounds it covers (the World Series round of the MLB Postseason). Absent on any other
-   * event, and on a Clutch Card event created before #1820 whose parent was never loaded.
-   */
-  parentEvent?: SportEventParent;
-  /**
    * The latest automatic release check (#1847): when the release job last judged the event, and
    * whether it released or held it. Unset until the first check, and after a release by hand.
    */
   autoReleaseCheck?: AutoReleaseCheck;
-}
-
-/** The season event a Clutch Card event is rounds of, and which rounds (#1820). */
-export interface SportEventParent {
-  id: string;
-  name: string;
-  /** The parent event's rounds the Clutch Card event covers, first to last; never empty. */
-  roundNumbers: readonly number[];
 }
 
 /**

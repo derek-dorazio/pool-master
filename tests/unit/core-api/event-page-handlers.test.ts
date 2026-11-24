@@ -16,7 +16,7 @@ import { etagPlugin } from '../../../packages/core-api/src/plugins/etag-support'
 const STAMP = new Date('2026-10-01T00:00:00.000Z');
 const PAGE: EventPage = { id: 'page-cw', sport: Sport.AMERICAN_FOOTBALL, slug: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
 const OFFER: EventPageOffer = {
-  id: 'clutch-card',
+  id: 'tiered',
   eventPageId: PAGE.id,
   sportLeagueId: 'cw',
   sportLeagueName: 'Championship Weekend',

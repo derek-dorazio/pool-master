@@ -1,9 +1,7 @@
 import {
   getSportDefinition,
-  ScoringFamily,
   SelectionType,
   Sport,
-  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
@@ -32,17 +30,6 @@ describe('definitionOfEvent', () => {
   it('uses the sport\'s own definition until an event is chosen', () => {
     expect(definitionOfEvent(Sport.GOLF, undefined, '')).toBe(getSportDefinition(Sport.GOLF));
     expect(definitionOfEvent(Sport.GOLF, [event({ id: 'other', sport: Sport.GOLF })], 'missing')).toBe(getSportDefinition(Sport.GOLF));
-  });
-
-  it('uses the chosen event\'s definition, so a stat pool event plays players by its composite, not its sport\'s bracket', () => {
-    const definition = definitionOfEvent(
-      Sport.BASKETBALL,
-      [event({ id: 'finals', scoringFamily: ScoringFamily.COMPOSITE, sport: Sport.BASKETBALL })],
-      'finals',
-    );
-
-    expect(definition.scoringDefinitions).toEqual(['COMPOSITE_TOTAL']);
-    expect(sportVocabulary(definition).participant.many).toBe('players');
   });
 });
 
