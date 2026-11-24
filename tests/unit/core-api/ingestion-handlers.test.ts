@@ -16,7 +16,6 @@ import { EventScoreSourceError } from '../../../packages/core-api/src/modules/ev
 import { SyncRequestValidationError } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { createIngestionHandlers } from '../../../packages/core-api/src/modules/ingestion/handler';
 import {
-  MockEventStateUnsupportedError,
   ProviderSyncRunNotFoundError,
   SportEventSyncScopeError,
   SportProviderNotFoundError,
@@ -162,16 +161,15 @@ describe('manual event sync handler', () => {
     const fake = service();
 
     const reply = await callHandler(handlersOver(fake).submitEventSync, stubRequest({
-      params, body: { providerId: 'feed', feeds: ['SCORES'], mockEventState: 'LIVE' }, authUser: admin, contextLogger: false,
+      params, body: { providerId: 'feed', feeds: ['SCORES'] }, authUser: admin, contextLogger: false,
     }));
 
-    expect(fake.syncEventData).toHaveBeenCalledWith({ sport: Sport.GOLF, providerId: 'feed', eventId: 'e1', feeds: ['SCORES'], mockEventState: 'LIVE' }, 'admin', 'admin@example.test');
+    expect(fake.syncEventData).toHaveBeenCalledWith({ sport: Sport.GOLF, providerId: 'feed', eventId: 'e1', feeds: ['SCORES'] }, 'admin', 'admin@example.test');
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'e1', submittedAt: AT.toISOString(), syncRuns: [{ id: 'run-1' }] } });
   });
 
   it.each<[string, Error, number, string]>([
     ['a sport with no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError(Sport.GOLF, 'feed'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
-    ['a mock state the provider cannot play with 422 MOCK_EVENT_STATE_UNSUPPORTED', new MockEventStateUnsupportedError('feed'), 422, 'MOCK_EVENT_STATE_UNSUPPORTED'],
     ['a feed the event\'s sync scope leaves out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError('e1', 'SCORES_ONLY', ['FIELD']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],
   ])('refuses a sync for %s', async (_label, error, status, code) => {
     const handlers = handlersOver(service({ syncEventData: () => Promise.reject(error) }));

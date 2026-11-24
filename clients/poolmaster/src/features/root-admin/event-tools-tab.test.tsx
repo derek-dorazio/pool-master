@@ -7,19 +7,17 @@ import { EventToolsTab } from './event-tools-tab';
 import { EventTabOutlet } from './test/event-tab-outlet';
 import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 
-// plans/124 §6.3 — the Event page's Tools tab: linking a manual event to a provider's scores,
-// and that provider's live simulation (pool-master-3dg, #1890).
+// plans/124 §6.3 — the Event page's Tools tab: linking a manual event to a provider's scores
+// (pool-master-3dg, #1890).
 
 const {
   listSportLeaguesMock,
   getEventMock,
-  getEventLiveSimulationMock,
   listEventRoundsMock,
   linkEventScoreSourceMock,
   listProviderCatalogEventsMock,
   listProvidersMock,
   releaseEventMock,
-  startEventLiveSimulationMock,
   transitionEventMock,
   unlinkEventScoreSourceMock,
   updateEventMock,
@@ -38,13 +36,11 @@ const {
   return {
     listSportLeaguesMock: vi.fn(),
     getEventMock: vi.fn(),
-    getEventLiveSimulationMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
     linkEventScoreSourceMock: vi.fn(),
     listProviderCatalogEventsMock: vi.fn(),
     listProvidersMock: vi.fn(),
     releaseEventMock: vi.fn(),
-    startEventLiveSimulationMock: vi.fn(),
     transitionEventMock: vi.fn(),
     unlinkEventScoreSourceMock: vi.fn(),
     updateEventMock: vi.fn(),
@@ -56,13 +52,11 @@ const {
 bindApiMocks({
   listSportLeagues: listSportLeaguesMock,
   getEvent: getEventMock,
-  getEventLiveSimulation: getEventLiveSimulationMock,
   listEventRounds: listEventRoundsMock,
   linkEventScoreSource: linkEventScoreSourceMock,
   listProviderCatalogEvents: listProviderCatalogEventsMock,
   listProviders: listProvidersMock,
   releaseEvent: releaseEventMock,
-  startEventLiveSimulation: startEventLiveSimulationMock,
   transitionEvent: transitionEventMock,
   unlinkEventScoreSource: unlinkEventScoreSourceMock,
   updateEvent: updateEventMock,
@@ -136,7 +130,7 @@ function refusal(code: string, message: string, status = 422) {
   return { error: { error: { code, message } }, response: { status } };
 }
 
-describe('The Event page\'s Tools tab: the score source link and its live simulation', () => {
+describe('The Event page\'s Tools tab: the score source link', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
@@ -219,124 +213,6 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
     );
   });
 
-  describe('live simulation', () => {
-    function seedLinked(supportsLiveSimulation: boolean) {
-      seedDefaults();
-      getEventMock.mockResolvedValue({
-        data: {
-          event: tournament({ syncScope: 'SCORES_ONLY', providerId: 'mock-contest-feed', externalId: 'mock-weekend' }),
-        },
-      });
-      listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation }] },
-      });
-      getEventLiveSimulationMock.mockResolvedValue(notRunning);
-    }
-
-    const notRunning = {
-      error: { error: { code: 'LIVE_SIMULATION_NOT_RUNNING', message: 'No live simulation is running for this event.' } },
-      response: { status: 404 },
-    };
-
-    function simulationStatus(currentRound: number) {
-      return {
-        data: {
-          sportEventId: 'tour-1',
-          startsAt: '2026-10-06T12:00:00.000Z',
-          endsAt: '2026-10-06T13:20:00.000Z',
-          minutesPerRound: 20,
-          phase: 'IN_PROGRESS',
-          currentRound,
-        },
-      };
-    }
-
-    it('starts the score source\'s live simulation and says which round is under way', async () => {
-      seedLinked(true);
-      startEventLiveSimulationMock.mockResolvedValue(simulationStatus(1));
-      renderPage();
-
-      const start = await screen.findByTestId('root-admin-golf-tournament-live-simulation-start');
-      await waitFor(() => expect(getEventLiveSimulationMock).toHaveBeenCalled());
-      expect(screen.queryByTestId('root-admin-golf-tournament-live-simulation-status')).not.toBeInTheDocument();
-      getEventLiveSimulationMock.mockResolvedValue(simulationStatus(1));
-      fireEvent.click(start);
-
-      await waitFor(() =>
-        expect(startEventLiveSimulationMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'tour-1' }, body: {} })),
-      );
-      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status'))
-        .toHaveTextContent('Round 1 of 4 is under way, 20 minutes per round');
-    });
-
-    it('shows a simulation that is already running when the page loads, without pressing start', async () => {
-      seedLinked(true);
-      getEventLiveSimulationMock.mockResolvedValue(simulationStatus(3));
-      renderPage();
-
-      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status'))
-        .toHaveTextContent('Round 3 of 4 is under way');
-      expect(getEventLiveSimulationMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'tour-1' } }));
-      expect(startEventLiveSimulationMock).not.toHaveBeenCalled();
-    });
-
-    it('links an unlinked tournament to its own simulated event, sandbox-<event id>, in one click', async () => {
-      seedDefaults();
-      listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
-      });
-      linkEventScoreSourceMock.mockResolvedValue({
-        data: { event: tournament({ syncScope: 'SCORES_ONLY', providerId: 'mock-contest-feed', externalId: 'sandbox-tour-1' }) },
-      });
-      renderPage();
-
-      fireEvent.click(await screen.findByTestId('root-admin-sport-event-link-simulated'));
-
-      await waitFor(() =>
-        expect(linkEventScoreSourceMock).toHaveBeenCalledWith({
-          path: { eventId: 'tour-1' },
-          body: { providerId: 'mock-contest-feed', externalId: 'sandbox-tour-1' },
-        }),
-      );
-    });
-
-    it('offers no simulated-event link when no golf provider can simulate', async () => {
-      seedDefaults();
-      listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'real-golf', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: false }] },
-      });
-      renderPage();
-
-      expect(await screen.findByTestId('root-admin-sport-event-link-open')).toBeInTheDocument();
-      await waitFor(() => expect(listProvidersMock).toHaveBeenCalled());
-      expect(screen.queryByTestId('root-admin-sport-event-link-simulated')).not.toBeInTheDocument();
-    });
-
-    it('offers no live simulation when the linked provider cannot simulate', async () => {
-      seedLinked(false);
-      renderPage();
-
-      expect(await screen.findByTestId('root-admin-sport-event-unlink-open')).toBeInTheDocument();
-      await waitFor(() => expect(listProvidersMock).toHaveBeenCalled());
-      expect(screen.queryByTestId('root-admin-golf-tournament-live-simulation-start')).not.toBeInTheDocument();
-      expect(getEventLiveSimulationMock).not.toHaveBeenCalled();
-    });
-
-    it('shows the server\'s reason when the simulation is refused', async () => {
-      seedLinked(true);
-      startEventLiveSimulationMock.mockResolvedValue({
-        error: { error: { code: 'PROVIDER_EVENT_NOT_FOUND', message: 'Provider mock-contest-feed has no event mock-weekend.' } },
-        response: { status: 404 },
-      });
-      renderPage();
-
-      fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-live-simulation-start'));
-
-      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-error'))
-        .toHaveTextContent('The provider has no such event.');
-    });
-  });
-
   it('shows the server\'s reason inside the picker when linking a provider event is refused', async () => {
     seedDefaults();
     listProvidersMock.mockResolvedValue({
@@ -403,22 +279,6 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
     expect(linkEventScoreSourceMock).not.toHaveBeenCalled();
   });
 
-  it('shows the server\'s reason under the buttons when linking to a simulated event is refused', async () => {
-    seedDefaults();
-    listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
-    });
-    linkEventScoreSourceMock.mockResolvedValue(
-      refusal('EXTERNAL_EVENT_ALREADY_LINKED', 'This tournament is already linked to a score source.', 409),
-    );
-    renderPage();
-
-    fireEvent.click(await screen.findByTestId('root-admin-sport-event-link-simulated'));
-
-    expect(await screen.findByTestId('root-admin-sport-event-link-error')).toHaveTextContent(
-      'Another event is already linked to that provider event.',
-    );
-  });
 
   describe('a linked score source', () => {
     function seedLinked() {
@@ -429,11 +289,8 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
         },
       });
       listProvidersMock.mockResolvedValue({
-        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
+        data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
       });
-      getEventLiveSimulationMock.mockResolvedValue(
-        refusal('LIVE_SIMULATION_NOT_RUNNING', 'No live simulation is running for this event.', 404),
-      );
     }
 
     it('shows the server\'s reason in the confirmation when unlinking the score source is refused', async () => {
@@ -463,93 +320,37 @@ describe('The Event page\'s Tools tab: the score source link and its live simula
       expect(unlinkEventScoreSourceMock).not.toHaveBeenCalled();
     });
 
-    it('says when a finished simulation ended instead of naming a round', async () => {
-      seedLinked();
-      getEventLiveSimulationMock.mockResolvedValue({
-        data: {
-          sportEventId: 'tour-1',
-          startsAt: '2026-05-01T12:00:00.000Z',
-          endsAt: '2026-05-01T13:20:00.000Z',
-          minutesPerRound: 20,
-          phase: 'COMPLETED',
-          currentRound: null,
-        },
-      });
-      renderPage();
-
-      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status'))
-        .toHaveTextContent(/^Simulation finished at /);
-    });
-
-    it('says the simulation starts shortly while no round is under way yet', async () => {
-      seedLinked();
-      getEventLiveSimulationMock.mockResolvedValue({
-        data: {
-          sportEventId: 'tour-1',
-          startsAt: '2026-05-01T12:00:00.000Z',
-          endsAt: '2026-05-01T13:20:00.000Z',
-          minutesPerRound: 20,
-          phase: 'SCHEDULED',
-          currentRound: null,
-        },
-      });
-      renderPage();
-
-      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status'))
-        .toHaveTextContent('Simulation starts shortly, 20 minutes per round');
-    });
-
-    it('shows the server\'s reason when the simulation status cannot be read', async () => {
-      seedLinked();
-      getEventLiveSimulationMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'The simulation clock is unavailable.', 500));
-      renderPage();
-
-      expect(await screen.findByTestId('root-admin-golf-tournament-live-simulation-status-error'))
-        .toHaveTextContent('Something went wrong. Please try again.');
-    });
-
-    it('disables the start button and reads "Starting…" while the simulation start is in flight', async () => {
-      seedLinked();
-      startEventLiveSimulationMock.mockReturnValue(new Promise(() => undefined));
-      renderPage();
-
-      fireEvent.click(await screen.findByTestId('root-admin-golf-tournament-live-simulation-start'));
-
-      await waitFor(() =>
-        expect(screen.getByTestId('root-admin-golf-tournament-live-simulation-start')).toHaveTextContent('Starting…'),
-      );
-      expect(screen.getByTestId('root-admin-golf-tournament-live-simulation-start')).toBeDisabled();
-    });
-
-    it('offers no live simulation when the provider list cannot be read', async () => {
-      seedLinked();
-      listProvidersMock.mockResolvedValue(refusal('INTERNAL_ERROR', 'Provider registry unavailable.', 500));
-      renderPage();
-
-      expect(await screen.findByTestId('root-admin-sport-event-unlink-open')).toBeInTheDocument();
-      await waitFor(() => expect(listProvidersMock).toHaveBeenCalled());
-      expect(screen.queryByTestId('root-admin-golf-tournament-live-simulation')).not.toBeInTheDocument();
-      expect(getEventLiveSimulationMock).not.toHaveBeenCalled();
-    });
   });
 
-  it('opens the provider picker without an earlier simulated-link refusal still showing in it', async () => {
+  it('opens the provider picker again without an earlier refusal still showing in it', async () => {
     seedDefaults();
     listProvidersMock.mockResolvedValue({
-      data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], supportsLiveSimulation: true }] },
+      data: { providers: [{ providerId: 'feed-a', sportsCovered: ['GOLF'], primaryForSports: ['GOLF'] }] },
     });
-    listProviderCatalogEventsMock.mockResolvedValue({ data: { events: [] } });
-    linkEventScoreSourceMock.mockResolvedValue({
-      error: { error: { code: 'PROVIDER_EVENT_NOT_FOUND', message: 'Simulated event refused.' } },
-      response: { status: 404 },
+    listProviderCatalogEventsMock.mockResolvedValue({
+      data: {
+        events: [{
+          externalId: 'weekend-open',
+          name: 'Weekend Open',
+          startDate: '2026-05-07T12:00:00.000Z',
+          endDate: '2026-05-10T22:00:00.000Z',
+          status: 'SCHEDULED',
+        }],
+      },
     });
+    linkEventScoreSourceMock.mockResolvedValue(refusal('PROVIDER_EVENT_NOT_FOUND', 'Provider feed-a has no event weekend-open.', 404));
     renderPage();
 
-    fireEvent.click(await screen.findByTestId('root-admin-sport-event-link-simulated'));
-    expect(await screen.findByTestId('root-admin-sport-event-link-error')).toHaveTextContent('The provider has no such event.');
+    fireEvent.click(await screen.findByTestId('root-admin-sport-event-link-open'));
+    const modal = await screen.findByTestId('root-admin-sport-event-link-modal');
+    fireEvent.click(await within(modal).findByTestId('root-admin-sport-event-link-option-weekend-open'));
+    fireEvent.click(within(modal).getByTestId('root-admin-sport-event-link-modal-apply'));
+    expect(await within(modal).findByText('The provider has no such event.')).toBeInTheDocument();
+    fireEvent.click(within(modal).getByRole('button', { name: /^Close / }));
+    await waitFor(() => expect(screen.queryByTestId('root-admin-sport-event-link-modal')).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByTestId('root-admin-sport-event-link-open'));
-    const modal = await screen.findByTestId('root-admin-sport-event-link-modal');
-    expect(within(modal).queryByText('The provider has no such event.')).not.toBeInTheDocument();
+    const reopened = await screen.findByTestId('root-admin-sport-event-link-modal');
+    expect(within(reopened).queryByText('The provider has no such event.')).not.toBeInTheDocument();
   });
 });

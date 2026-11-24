@@ -12,7 +12,7 @@ import type { SportDataProvider } from './provider-interface';
 /**
  * PRIMARY is the provider a sport's catalog browse and new links default to; a sport has at
  * most one. SECONDARY providers also serve the sport, for the events linked to them, so two
- * providers can feed the same sport at once (the QA mock beside BALLDONTLIE, #1495).
+ * providers can feed the same sport at once (#1495).
  */
 export type ProviderPriority = 'PRIMARY' | 'SECONDARY';
 

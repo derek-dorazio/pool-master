@@ -1,6 +1,5 @@
 import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, type SportEvent } from '@poolmaster/shared/domain';
 import {
-  mapLiveSimulationToResponse,
   mapProviderEventYearImportToResponse,
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
@@ -191,7 +190,7 @@ describe('SportEvent next statuses on the wire', () => {
   });
 });
 
-describe('the event\'s rounds, tiers, years, live simulation and year import on the wire', () => {
+describe('the event\'s rounds, tiers, years and year import on the wire', () => {
   const AT = new Date('2026-04-09T12:00:00.000Z');
 
   it('sends a round\'s scheduled end as ISO, and a round with none as null', () => {
@@ -226,11 +225,6 @@ describe('the event\'s rounds, tiers, years, live simulation and year import on 
 
     expect(mapSportEventYearsToResponse(years)).toEqual({ years: [2026, 2025] });
     expect(mapSportEventYearsToResponse(years).years).not.toBe(years);
-  });
-
-  it('sends a live simulation\'s window as ISO with its phase and round', () => {
-    expect(mapLiveSimulationToResponse('e1', { startsAt: AT, endsAt: AT, minutesPerRound: 5, phase: 'RUNNING', currentRound: 2 } as never))
-      .toEqual({ sportEventId: 'e1', startsAt: AT.toISOString(), endsAt: AT.toISOString(), minutesPerRound: 5, phase: 'RUNNING', currentRound: 2 });
   });
 
   it('sends a year import\'s created events in full and each skipped one\'s id, name and reason only', () => {

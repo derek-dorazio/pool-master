@@ -24,6 +24,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
+import { pinMockFeedEventState } from './mock-feed';
 
 // plans/124 §8 — pool-master-cs8. The provider-linked half of the golf-admin
 // epic, which the flagship scenario (golf-admin-tournament.functional.ts)
@@ -283,7 +284,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(new Date(expectDefined(usOpen).startDate).getUTCFullYear()).toBe(2026);
 
     // A league narrows the browse only to the provider league its selected mapping names (#1997);
-    // the mock feed has no Provider row, so this league names none and the browse is unnarrowed.
+    // the test's fake feed has no Provider row, so this league names none and the browse is unnarrowed.
     const filtered = await listProviderCatalogEvents({
       client: admin,
       path: { providerId: MOCK_PROVIDER_ID },
@@ -412,10 +413,11 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
     // --- 3c. One manual EVENTLIVESCORES sync tick -> R1 scores via sync -
     const db = getFunctionalPrisma();
+    await pinMockFeedEventState(MOCK_EVENT_EXTERNAL_ID, 'golf-r1-complete');
     const r1Sync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
-      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-r1-complete' },
+      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'] },
     });
     expect(r1Sync.response?.status).toBe(202);
     await waitForSyncRuns(expectDefined(r1Sync.data).syncRuns.map((r) => r.id));
@@ -463,10 +465,11 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     const roundsBeforeFinalSync = await db.sportEventRound.count({ where: { sportEventId: eventId } });
     expect(roundsBeforeFinalSync).toBe(4);
 
+    await pinMockFeedEventState(MOCK_EVENT_EXTERNAL_ID, 'golf-completed');
     const finalSync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
-      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-completed' },
+      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'] },
     });
     expect(finalSync.response?.status).toBe(202);
     await waitForSyncRuns(expectDefined(finalSync.data).syncRuns.map((r) => r.id));
@@ -509,10 +512,11 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
 
     // The mock externalId no longer resolves to any SportEvent row: the tick
     // is accepted but persists nothing against the now-unlinked tournament.
+    await pinMockFeedEventState(MOCK_EVENT_EXTERNAL_ID, 'golf-late-correction');
     const staleSync = await submitEventSync({
       client: admin,
       path: { sport: 'GOLF', eventId: MOCK_EVENT_EXTERNAL_ID },
-      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'], mockEventState: 'golf-late-correction' },
+      body: { providerId: MOCK_PROVIDER_ID, feeds: ['EVENTLIVESCORES'] },
     });
     expect(staleSync.response?.status).toBe(202);
     await waitForSyncRuns(expectDefined(staleSync.data).syncRuns.map((r) => r.id));

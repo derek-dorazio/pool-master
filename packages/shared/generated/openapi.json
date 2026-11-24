@@ -25956,71 +25956,6 @@
         "additionalProperties": false,
         "description": "Links an event to a provider event for scores."
       },
-      "StartSportEventLiveSimulationRequest": {
-        "type": "object",
-        "properties": {
-          "minutesPerRound": {
-            "description": "How long each of the four simulated rounds lasts. Defaults to the provider's own default (20 on the mock feed).",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 1440
-          }
-        },
-        "additionalProperties": false,
-        "description": "Starts, or restarts from round 1, the score source's simulated live scoring for a linked event."
-      },
-      "SportEventLiveSimulationResponse": {
-        "type": "object",
-        "properties": {
-          "sportEventId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "startsAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When simulated round 1 started."
-          },
-          "endsAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When simulated round 4 finishes; scores stop changing after this."
-          },
-          "minutesPerRound": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "phase": {
-            "type": "string",
-            "enum": [
-              "SCHEDULED",
-              "IN_PROGRESS",
-              "COMPLETED"
-            ],
-            "description": "Where the simulation is on its own clock."
-          },
-          "currentRound": {
-            "description": "The round being played now; null before the start and after the finish.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 4
-          }
-        },
-        "required": [
-          "sportEventId",
-          "startsAt",
-          "endsAt",
-          "minutesPerRound",
-          "phase",
-          "currentRound"
-        ],
-        "additionalProperties": false,
-        "description": "A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS."
-      },
       "SportEventRoundDto": {
         "type": "object",
         "properties": {
@@ -66949,25 +66884,6 @@
               "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
             },
             "description": "Feed types to run for a specific event sync request."
-          },
-          "mockEventState": {
-            "description": "Optional mock-provider-only event state override for manual QA event syncs.",
-            "type": "string",
-            "enum": [
-              "open",
-              "locked",
-              "live",
-              "completed",
-              "golf-pre-live",
-              "golf-r1-in-progress",
-              "golf-r1-complete",
-              "golf-r2-complete",
-              "golf-correction",
-              "golf-r4-complete-pending-final",
-              "golf-playoff",
-              "golf-completed",
-              "golf-late-correction"
-            ]
           }
         },
         "required": [
@@ -67300,10 +67216,6 @@
             "maximum": 9007199254740991,
             "description": "The provider's events that are scheduled or in progress."
           },
-          "supportsLiveSimulation": {
-            "type": "boolean",
-            "description": "True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can."
-          },
           "requestsPerMinute": {
             "description": "The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced.",
             "type": [
@@ -67330,7 +67242,7 @@
             "description": "Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to."
           },
           "settings": {
-            "description": "The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).",
+            "description": "The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row.",
             "type": [
               "object",
               "null"
@@ -67502,7 +67414,6 @@
           "sportsCovered",
           "primaryForSports",
           "activeEventCount",
-          "supportsLiveSimulation",
           "requestsPerMinute",
           "webhooksEnabled",
           "syncedSportLeagueCount",
@@ -68028,10 +67939,6 @@
                   "maximum": 9007199254740991,
                   "description": "The provider's events that are scheduled or in progress."
                 },
-                "supportsLiveSimulation": {
-                  "type": "boolean",
-                  "description": "True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can."
-                },
                 "requestsPerMinute": {
                   "description": "The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced.",
                   "type": [
@@ -68058,7 +67965,7 @@
                   "description": "Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to."
                 },
                 "settings": {
-                  "description": "The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).",
+                  "description": "The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row.",
                   "type": [
                     "object",
                     "null"
@@ -68230,7 +68137,6 @@
                 "sportsCovered",
                 "primaryForSports",
                 "activeEventCount",
-                "supportsLiveSimulation",
                 "requestsPerMinute",
                 "webhooksEnabled",
                 "syncedSportLeagueCount",
@@ -68577,29 +68483,6 @@
                       }
                     ]
                   },
-                  "mockEventState": {
-                    "description": "The mock feed state a manual QA sync asked for; null otherwise.",
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "enum": [
-                      "open",
-                      "locked",
-                      "live",
-                      "completed",
-                      "golf-pre-live",
-                      "golf-r1-in-progress",
-                      "golf-r1-complete",
-                      "golf-r2-complete",
-                      "golf-correction",
-                      "golf-r4-complete-pending-final",
-                      "golf-playoff",
-                      "golf-completed",
-                      "golf-late-correction",
-                      null
-                    ]
-                  },
                   "normalizedAt": {
                     "type": "string",
                     "format": "date-time",
@@ -68611,7 +68494,6 @@
                   "eventId",
                   "source",
                   "actor",
-                  "mockEventState",
                   "normalizedAt"
                 ],
                 "additionalProperties": false
@@ -68937,29 +68819,6 @@
                       }
                     ]
                   },
-                  "mockEventState": {
-                    "description": "The mock feed state a manual QA sync asked for; null otherwise.",
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "enum": [
-                      "open",
-                      "locked",
-                      "live",
-                      "completed",
-                      "golf-pre-live",
-                      "golf-r1-in-progress",
-                      "golf-r1-complete",
-                      "golf-r2-complete",
-                      "golf-correction",
-                      "golf-r4-complete-pending-final",
-                      "golf-playoff",
-                      "golf-completed",
-                      "golf-late-correction",
-                      null
-                    ]
-                  },
                   "normalizedAt": {
                     "type": "string",
                     "format": "date-time",
@@ -68971,7 +68830,6 @@
                   "eventId",
                   "source",
                   "actor",
-                  "mockEventState",
                   "normalizedAt"
                 ],
                 "additionalProperties": false
@@ -69630,29 +69488,6 @@
                             }
                           ]
                         },
-                        "mockEventState": {
-                          "description": "The mock feed state a manual QA sync asked for; null otherwise.",
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "enum": [
-                            "open",
-                            "locked",
-                            "live",
-                            "completed",
-                            "golf-pre-live",
-                            "golf-r1-in-progress",
-                            "golf-r1-complete",
-                            "golf-r2-complete",
-                            "golf-correction",
-                            "golf-r4-complete-pending-final",
-                            "golf-playoff",
-                            "golf-completed",
-                            "golf-late-correction",
-                            null
-                          ]
-                        },
                         "normalizedAt": {
                           "type": "string",
                           "format": "date-time",
@@ -69664,7 +69499,6 @@
                         "eventId",
                         "source",
                         "actor",
-                        "mockEventState",
                         "normalizedAt"
                       ],
                       "additionalProperties": false
@@ -70039,29 +69873,6 @@
                             }
                           ]
                         },
-                        "mockEventState": {
-                          "description": "The mock feed state a manual QA sync asked for; null otherwise.",
-                          "type": [
-                            "string",
-                            "null"
-                          ],
-                          "enum": [
-                            "open",
-                            "locked",
-                            "live",
-                            "completed",
-                            "golf-pre-live",
-                            "golf-r1-in-progress",
-                            "golf-r1-complete",
-                            "golf-r2-complete",
-                            "golf-correction",
-                            "golf-r4-complete-pending-final",
-                            "golf-playoff",
-                            "golf-completed",
-                            "golf-late-correction",
-                            null
-                          ]
-                        },
                         "normalizedAt": {
                           "type": "string",
                           "format": "date-time",
@@ -70073,7 +69884,6 @@
                         "eventId",
                         "source",
                         "actor",
-                        "mockEventState",
                         "normalizedAt"
                       ],
                       "additionalProperties": false
@@ -81510,190 +81320,6 @@
             }
           },
           "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/events/{eventId}/live-simulation": {
-      "get": {
-        "operationId": "getEventLiveSimulation",
-        "summary": "Get the simulated live scoring running for an event",
-        "tags": [
-          "Events"
-        ],
-        "description": "Root admin only. The simulation started by startEventLiveSimulation, with its current round; poll it to watch the simulation advance. 404 LIVE_SIMULATION_NOT_RUNNING when none is running: never started, or the provider restarted and forgot it.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "eventId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventLiveSimulationResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "operationId": "startEventLiveSimulation",
-        "summary": "Start simulated live scoring from the event's score source",
-        "tags": [
-          "Events"
-        ],
-        "description": "Root admin only. For testing a live contest: asks the linked provider to play the event's four rounds forward on its own clock, hole by hole; calling again restarts from round 1. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS. Only providers whose summary has supportsLiveSimulation (the QA mock feed) accept it.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartSportEventLiveSimulationRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "eventId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventLiveSimulationResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

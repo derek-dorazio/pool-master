@@ -122,7 +122,7 @@ import {
 } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
-import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
+import { registerConfiguredProviders, type SportDataProviderFactory } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
 import { JobLeaderboardRebuilds, leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
@@ -145,7 +145,12 @@ import {
   readBackgroundJobPollMs,
 } from './modules/background-jobs';
 
-export function buildApp() {
+export interface BuildAppOptions {
+  /** Builds the sport data providers from the Provider rows; a test passes its own fake (#2039). */
+  readonly buildSportDataProviders?: SportDataProviderFactory;
+}
+
+export function buildApp(options: BuildAppOptions = {}) {
   const app = Fastify({
     logger: createFastifyLoggerOptions('core-api'),
     trustProxy: readTrustProxy(),
@@ -527,7 +532,7 @@ export function buildApp() {
     // leagues read takes effect when the task next starts, the rest on the next read (#1997).
     await providerSettings.load();
     providerSettings.start();
-    registerConfiguredProviders(registry, providerSettings, process.env, app.log);
+    registerConfiguredProviders(registry, providerSettings, process.env, app.log, options.buildSportDataProviders);
     providerWebhooks.warnFlagsWithoutSecret(app.log);
 
     // An API-only task (#1186) serves requests and leaves everything below to the worker.

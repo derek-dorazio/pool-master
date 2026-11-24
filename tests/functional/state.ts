@@ -10,6 +10,8 @@ export interface FunctionalServerState {
   mailInboxUrl?: string;
   /** Where the suite takes the requests over the query budget (#1244); absent on an older daemon. */
   queryBudgetUrl?: string;
+  /** The mock contest feed the fake provider reads, with its pin route (#2039); absent on an older daemon. */
+  mockFeedUrl?: string;
 }
 
 /** The `APP_BASE_URL` the functional server runs with, so tests can assert exact email links. */

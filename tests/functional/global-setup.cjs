@@ -160,6 +160,8 @@ function writeRunState(serverState, runId) {
       mailInboxUrl: serverState.mailInboxUrl,
       // #1244 — where the suite takes the daemon's over-budget requests: tests/functional/query-budget-check.ts.
       queryBudgetUrl: serverState.queryBudgetUrl,
+      // #2039 — where tests pin a mock feed event's state: tests/functional/mock-feed.ts.
+      mockFeedUrl: serverState.mockFeedUrl,
       runId,
     }),
   );
