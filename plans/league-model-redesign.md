@@ -696,6 +696,18 @@ Contest:
   Cards run there. `Cup` keys on (League, Season, cup definition); a contest counts in every
   cup whose coverage holds its slot. The contest's `cupWeight` stays the commissioner's only
   override. Replaces the per-contest-only counting of today.
+- Championship year (Derek 2026-11-24, slices 6/20): `SportLeagueSeason.championshipYear`,
+  NOT NULL, explicit on every Season and set by migration, never computed: the year the
+  Season is named for (NFL 2025 → 2025, Super Bowl included; NBA, NHL, NCAA basketball and
+  European soccer 2025-26 → 2026; golf, tennis, racing, MLB → the calendar year). Each
+  contest copies it at creation (`Contest.championshipYear`), so settlement timing can't
+  move a contest across New Year. Because it is set by migration, Seasons are added by
+  migration; a Season the feed reports that has no row raises an ERROR finding and is not
+  synced until the migration lands. `LeagueYearFinish.year` and `LeagueYearReview.year`
+  become `championshipYear`, read from the contest. A championship year closes when every
+  contest assigned to it is final (not on 31 December). History lists contests by the
+  calendar year they completed. The plan's earlier "LeagueYearFinish → Season FK" is
+  replaced.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
