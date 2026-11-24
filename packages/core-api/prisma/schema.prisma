@@ -2554,6 +2554,7 @@ model SportLeaguePositionProviderMapping {
 
   @@unique([sportLeagueProviderMappingId, providerCode])
   @@index([sportLeagueId, sportLeaguePositionId])
+  @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_position_provider_mappings_provider_mapping_idx")
   @@map("sport_league_position_provider_mappings")
 }
 

@@ -54,7 +54,7 @@ export function RootAdminParticipantCreatePage() {
       // poolmaster-allow-list-lookup: the league picker's own list, already on screen
       const league = (leaguesQuery.data ?? []).find((row) => row.id === values.sportLeagueId);
       if (!league) {
-        throw new Error(`The chosen ${sportLeague.one} is not one of ${definition.name.toLowerCase()}'s.`);
+        throw new Error(`Sport league ${values.sportLeagueId} is not in the loaded league list.`);
       }
       const response = await createParticipant({
         body: {

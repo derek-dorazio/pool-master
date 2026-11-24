@@ -62,6 +62,8 @@ CREATE UNIQUE INDEX "sport_league_positions_sport_league_id_id_key" ON "sport_le
 
 CREATE INDEX "sport_league_position_provider_mappings_sport_league_id_spo_idx" ON "sport_league_position_provider_mappings"("sport_league_id", "sport_league_position_id");
 
+CREATE INDEX "sport_league_position_provider_mappings_provider_mapping_idx" ON "sport_league_position_provider_mappings"("sport_league_id", "sport_league_provider_mapping_id");
+
 CREATE UNIQUE INDEX "sport_league_position_provider_mappings_sport_league_provid_key" ON "sport_league_position_provider_mappings"("sport_league_provider_mapping_id", "provider_code");
 
 ALTER TABLE "sport_league_positions" ADD CONSTRAINT "sport_league_positions_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE CASCADE ON UPDATE CASCADE;

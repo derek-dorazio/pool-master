@@ -8,7 +8,9 @@ import type { EntryTiebreakerUi } from './scoring-family-ui/types';
 /**
  * The definition a contest plays (#936): its events' sport league's. A contest covers one sport
  * league, so its first event's participant type and scoring family are every event's. Null for a
- * contest with no sport or no event.
+ * contest with no sport or no event: how a contest is scored is its sport league's fact (#2001),
+ * read off its events, and without one there is no league to read it from. Every contest is
+ * created on at least one event; the contest read lists none only when its events are gone.
  */
 export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportLeagueDefinition | null {
   const first = contest.sportEvents.at(0);
@@ -19,12 +21,13 @@ export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'spor
 }
 
 /**
- * "team" in basketball, "golfer" in golf: what a roster contest's screens call one pick. A
- * contest with no sport reads the generic word: every contest created today runs on an event and
- * so has a sport; this is the reading of the `sport: null` the contest contract still allows.
+ * "team" in basketball, "golfer" in golf: what a roster contest's screens call one pick. It is the
+ * sport's word, so a contest whose events are not listed keeps it. A contest with no sport reads
+ * the generic word: every contest created today runs on an event and so has a sport; this is the
+ * reading of the `sport: null` the contest contract still allows.
  */
 export function contestRosterParticipantNoun(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportNoun {
-  return sportNoun(contestSportDefinition(contest), 'participant');
+  return sportNoun(contest.sport ?? null, 'participant');
 }
 
 /** "golfer" for a golf contest, "horse" for a horse race: the contest's sport's word for a participant. */
@@ -59,8 +62,9 @@ export function contestTieLabel(sport: Sport | null | undefined): string {
 }
 
 /**
- * The tiebreaker a contest's entries predict, from its scoring family: a golf entry's winning
- * score against par, none for a race. A contest with no sport asks for none.
+ * The tiebreaker a contest's entries predict, from its sport league's scoring family: a golf
+ * entry's winning score against par, none for a race. A contest with no sport or no listed event
+ * asks for none, since the family is read off its events.
  */
 export function contestEntryTiebreaker(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): EntryTiebreakerUi | null {
   const definition = contestSportDefinition(contest);
