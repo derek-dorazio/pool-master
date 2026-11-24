@@ -16,6 +16,10 @@ made-up odds, loaded a few re-dated "Test-" events at a time. It goes in through
 API as the Manage screens, and no migration, deploy or reset loads it. Every run reads the
 site's environment from `/version` first and refuses anything but QA or a local or test site.
 
+A league switched off for want of a feed keeps its file, and the file still loads: the loader
+signs in as a root admin, who sees inactive leagues, so its events can be tried by hand while
+members never see them. The league comes back on by migration once a provider feeds it (#2072).
+
 - **QA:** *Actions → Load test data → Run workflow*, choosing the branch that has the file,
   the `file` (a path inside `packages/core-api/scripts/seed-golf/`, default
   `golf-2026.json`) or `all_test_data`, and the `mode`. It signs in as the E2E root admin.
