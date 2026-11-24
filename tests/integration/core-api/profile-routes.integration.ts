@@ -92,7 +92,7 @@ describe('Contract verification (tier and pricing profiles)', () => {
     expect(listResponse.statusCode).toBe(200);
     const listed = PlatformTierProfileListResponseSchema.parse(listResponse.json());
     expect(listed.platformTierProfiles.find((profile) => profile.id === platformTierProfile.id)).toMatchObject({ name, sportLeagueCount: 1 });
-    expect(listed.platformTierProfiles.find((profile) => profile.name === '6 tiers of 10')?.sportLeagueCount).toBeGreaterThan(0);
+    expect(listed.platformTierProfiles.find((profile) => profile.code === 'TIERS_6_OF_10')?.sportLeagueCount).toBeGreaterThan(0);
 
     const updated = await send('PUT', `/api/v1/tier-profiles/${platformTierProfile.id}`, rootAdmin, tierWrite(name, { tierCount: 4, tierSize: 8 }));
     expect(updated.statusCode).toBe(200);

@@ -639,12 +639,12 @@ describe('Seeded tennis tours and their knockout templates', () => {
     const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
     expect(tennis.participantType).toBe('INDIVIDUAL');
-    const platformTierProfileNames = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.name]));
-    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, platformTierProfileNames.get(league.platformTierProfileId)])).toEqual([
-      ['ATP', 'FIXED', [], '6 tiers of 8'],
-      ['NCAA Division I Men', 'FIXED', ncaaRounds, '6 tiers of 8'],
-      ['NCAA Division I Women', 'FIXED', ncaaRounds, '6 tiers of 8'],
-      ['WTA', 'FIXED', [], '6 tiers of 8'],
+    const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
+    expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, platformTierProfileCodes.get(league.platformTierProfileId)])).toEqual([
+      ['ATP', 'FIXED', [], 'TIERS_6_OF_8'],
+      ['NCAA Division I Men', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
+      ['NCAA Division I Women', 'FIXED', ncaaRounds, 'TIERS_6_OF_8'],
+      ['WTA', 'FIXED', [], 'TIERS_6_OF_8'],
     ]);
   });
 
@@ -1028,10 +1028,10 @@ describe('The seeded College Football Playoff league and its knockout templates'
       sportLeagues.findBySportAndName(football.id, 'NFL'),
     ]);
 
-    const platformTierProfileNames = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.name]));
-    expect([cfp?.bracketAdvancement, cfp?.roundNames, platformTierProfileNames.get(cfp?.platformTierProfileId ?? '')]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], '6 tiers of 2']);
+    const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
+    expect([cfp?.bracketAdvancement, cfp?.roundNames, platformTierProfileCodes.get(cfp?.platformTierProfileId ?? '')]).toEqual(['FIXED', ['First Round', 'Quarterfinals', 'Semifinals', 'National Championship'], 'TIERS_6_OF_2']);
     // The NFL keeps the sport's round names and football's seven tiers of two.
-    expect([nfl?.roundNames, platformTierProfileNames.get(nfl?.platformTierProfileId ?? '')]).toEqual([[], '7 tiers of 2']);
+    expect([nfl?.roundNames, platformTierProfileCodes.get(nfl?.platformTierProfileId ?? '')]).toEqual([[], 'TIERS_7_OF_2']);
   });
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default, picking one team from each of six tiers', async () => {

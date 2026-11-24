@@ -132,7 +132,6 @@ describe('An event\'s field', () => {
     expect(statementCounts(statements)).toEqual([
       ['SELECT event_series', 1],
       ['SELECT participants', 1],
-      ['SELECT sport_event_round_matches', 2],
       ['SELECT sport_event_participant_golf_rounds', 1],
       ['SELECT sport_event_participant_golf_standings', 1],
       ['SELECT sport_event_participant_race_results', 1],
@@ -140,6 +139,7 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_participant_standings', 1],
       ['SELECT sport_event_participant_valuations', 1],
       ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_round_matches', 2],
       ['SELECT sport_event_rounds', 1],
       ['SELECT sport_events', 1],
       ['SELECT sport_leagues', 1],
