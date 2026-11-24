@@ -808,6 +808,9 @@ Contest:
 - Crowning cups plan feature (Derek 2026-11-24, slice 20f): cups crown automatically on
   every plan, so the CUP_CROWNING plan feature, its gate, its plan-list label and its
   pricing-table row are removed.
+- Championship tab medals (Derek 2026-11-24, slice 20e): on the Championship tab the medal
+  tiles and the matrix follow the Championship's counting profile; the squad page's
+  all-time medals count every finish and are labelled "All contests". The API returns both.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
