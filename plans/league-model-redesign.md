@@ -610,7 +610,7 @@ Sync:
   - Order: 10c after 2, 6, 10 and 10b; before 14.
 
 Contest:
-- Contest scoring (Derek 2026-11-23, slices 15/19): `ParticipantContestScoringRule` (a sorted
+- Contest scoring (Derek 2026-11-23, slice 18b): `ParticipantContestScoringRule` (a sorted
   list read only for its first row) and the template's scoring inside `configJson` are
   replaced by one `ContestScoringConfiguration` row, pointed at by both
   `ContestConfigTemplate` and `ContestConfiguration` (a contest copies its template's row).
@@ -750,7 +750,7 @@ Contest:
 
 ## 10. Slices
 
-Live state is in the sub-issues of #1917. Each slice is 1–3 hours and carries in its own PR:
+Live state is in the sub-issues of #1917 (slice N is the ticket titled "League model N"). Each slice is 1–3 hours and carries in its own PR:
 
 - its tests: query-scaling cases for list GETs, contract verification, and failing tests
   first for defects;
