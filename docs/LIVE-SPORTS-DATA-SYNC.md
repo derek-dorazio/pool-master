@@ -68,6 +68,8 @@ Providers are configuration, read once at boot by `registerConfiguredProviders`
 
 A sport's leagues are read one by one: a league the vendor plan refuses (401/403) or whose read
 fails is logged as `balldontlie.league.unavailable` and left out, so its neighbours still list.
+A league the provider rate limits is never left out: the read throws its RATE_LIMITED refusal,
+so the job is deferred rather than syncing a partial list (*Rate limit and retries* below).
 
 **The schedule** is the `INGESTION_SCHEDULE_CONFIG` settings group
 (`platform/ingestion-config-service.ts`), edited on the root admin's Providers page. One schedule

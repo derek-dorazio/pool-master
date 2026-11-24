@@ -225,7 +225,7 @@ describe('background job runner (#1440)', () => {
         calls += 1;
         if (calls <= 5) {
           const deferUntil = new Date(now().getTime() + 2 * MINUTE);
-          return Promise.reject(new Error('feed failed', { cause: new ProviderRateLimitedError('BALLDONTLIE', deferUntil, 'its circuit is open') }));
+          return Promise.reject(new Error('feed failed', { cause: new ProviderRateLimitedError('test-provider', deferUntil, 'its circuit is open') }));
         }
         return Promise.resolve({ changedCount: 1 });
       },
@@ -236,7 +236,7 @@ describe('background job runner (#1440)', () => {
     await runner.drain();
 
     expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.QUEUED, runAt: new Date(START + 2 * MINUTE), attempts: 0, errorType: JobErrorType.RATE_LIMITED });
-    expect(only(jobs).lastError).toContain('BALLDONTLIE is rate limiting PoolMaster');
+    expect(only(jobs).lastError).toContain('test-provider is rate limiting PoolMaster');
     expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.deferred' }), expect.any(String));
 
     // Turned away more times than the job's attempts allow, it still runs once the provider answers.
@@ -254,7 +254,7 @@ describe('background job runner (#1440)', () => {
   });
 
   it('fails a permanent failure for good even when its cause was a rate limit, so a refused league is never deferred forever', async () => {
-    const cause = new ProviderRateLimitedError('BALLDONTLIE', new Date(START + MINUTE), 'still 429 after every retry');
+    const cause = new ProviderRateLimitedError('test-provider', new Date(START + MINUTE), 'still 429 after every retry');
     const { jobs, runner, queue } = setup({ handler: () => Promise.reject(new PermanentBackgroundJobError('gone', { cause })) });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
 
@@ -267,7 +267,7 @@ describe('background job runner (#1440)', () => {
     const { jobs, runner, queue, logger } = setup({
       handler: () => {
         jobs.rows[0].attempts += 1;
-        return Promise.reject(new ProviderRateLimitedError('BALLDONTLIE', new Date(START + MINUTE), 'its circuit is open'));
+        return Promise.reject(new ProviderRateLimitedError('test-provider', new Date(START + MINUTE), 'its circuit is open'));
       },
     });
     await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());

@@ -31,6 +31,8 @@ export interface BalldontliePage<Row> {
 }
 
 export interface BalldontlieClientOptions {
+  /** The provider's id (the adapter's `providerId`), naming it on a rate-limit refusal. */
+  providerId: string;
   baseUrl: string;
   apiKey: string;
   /** The plan's limit: 5 on the free plan, 60 on ALL-STAR, 600 on GOAT and All-Access. */
@@ -108,7 +110,7 @@ export class BalldontlieClient {
 
   constructor(private readonly options: BalldontlieClientOptions) {
     this.policy = new ProviderCallPolicy({
-      providerId: 'BALLDONTLIE',
+      providerId: options.providerId,
       requestsPerMinute: options.requestsPerMinute,
       maxTasks: options.maxTasks ?? 1,
       ...(options.now && { now: options.now }),

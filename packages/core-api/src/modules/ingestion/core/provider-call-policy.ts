@@ -162,6 +162,9 @@ export class ProviderCallPolicy {
       halfOpenAfter: PROVIDER_BREAKER_OPEN_MS,
       breaker: new ConsecutiveBreaker(PROVIDER_BREAKER_CONSECUTIVE_429S),
     });
+    // The real clock, not the injected `now`: cockatiel decides when the circuit half-opens from
+    // Date.now(), so the time a refused job is deferred to must be read from the same clock. The
+    // injected clock paces requests only.
     breaker.onBreak(() => { this.openedAt = Date.now(); });
     const retries = retry(handleWhen(isWorthRetrying), {
       maxAttempts: PROVIDER_CALL_MAX_RETRIES,

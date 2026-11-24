@@ -11,6 +11,7 @@ import {
 import { ProviderPayloadRecorder } from '../../../../packages/core-api/src/modules/ingestion/adapters/provider-payload-recorder';
 import { pgaTournamentListSchema } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-contract';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { BALLDONTLIE_PROVIDER_ID } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-mapping';
 
 const BASE_URL = 'https://api.balldontlie.example';
 const rowsSchema = z.object({
@@ -56,6 +57,7 @@ function setup(
   }) as typeof fetch;
   const payloads = new ProviderPayloadRecorder('balldontlie.request');
   const client = new BalldontlieClient({
+    providerId: BALLDONTLIE_PROVIDER_ID,
     baseUrl: `${BASE_URL}/`,
     apiKey: 'test-key',
     requestsPerMinute: 60,
@@ -110,6 +112,7 @@ describe('BalldontlieClient', () => {
     restore = harness.restore;
     const waits: number[] = [];
     const client = new BalldontlieClient({
+      providerId: BALLDONTLIE_PROVIDER_ID,
       baseUrl: BASE_URL,
       apiKey: 'k',
       requestsPerMinute: 60,
@@ -135,9 +138,9 @@ describe('BalldontlieClient', () => {
 
   it('refuses a rate limit that is not a whole number of at least one', () => {
     const payloads = new ProviderPayloadRecorder('balldontlie.request');
-    expect(() => new BalldontlieClient({ baseUrl: BASE_URL, apiKey: 'k', requestsPerMinute: 0, payloads }))
-      .toThrow('BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not 0.');
-    expect(() => new BalldontlieClient({ baseUrl: BASE_URL, apiKey: 'k', requestsPerMinute: 2.5, payloads }))
+    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, baseUrl: BASE_URL, apiKey: 'k', requestsPerMinute: 0, payloads }))
+      .toThrow('balldontlie requestsPerMinute must be a whole number of at least 1, not 0.');
+    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, baseUrl: BASE_URL, apiKey: 'k', requestsPerMinute: 2.5, payloads }))
       .toThrow('not 2.5');
   });
 
@@ -212,7 +215,7 @@ describe('BalldontlieClient', () => {
       const { error } = await settle(harness.client.get('/a', {}, rowsSchema));
 
       expect(error).toBeInstanceOf(ProviderRateLimitedError);
-      expect(error).toMatchObject({ providerId: 'BALLDONTLIE', jobErrorType: JobErrorType.RATE_LIMITED, cause: expect.objectContaining({ status: 429 }) });
+      expect(error).toMatchObject({ providerId: BALLDONTLIE_PROVIDER_ID, jobErrorType: JobErrorType.RATE_LIMITED, cause: expect.objectContaining({ status: 429 }) });
       expect(harness.sent).toHaveLength(4);
     });
 
@@ -350,6 +353,7 @@ describe('BalldontlieClient', () => {
     }) as typeof fetch;
     restore = () => { global.fetch = originalFetch; };
     const client = new BalldontlieClient({
+      providerId: BALLDONTLIE_PROVIDER_ID,
       baseUrl: BASE_URL,
       apiKey: 'k',
       requestsPerMinute: 6_000,
