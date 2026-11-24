@@ -247,6 +247,39 @@ describe('ProviderSyncFindingService rate-limit findings', () => {
   });
 });
 
+describe('ProviderSyncFindingService event checks (#1999)', () => {
+  const check = { kind: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS, sportLeagueId: 'nfl', sportEventId: 'week-1', providerId: PROVIDER.id };
+
+  it('raises a WARNING on the event when the sync found the problem', async () => {
+    const { findings, table } = service();
+
+    await findings.checkEvent({ ...check, found: true });
+
+    expect(table.raised).toEqual([[{ ...check, severity: ProviderSyncFindingSeverity.WARNING, providerValue: null, providerValueName: null }]]);
+    expect(table.resolved).toEqual([]);
+  });
+
+  it('resolves the event\'s open finding of the kind, and only that event\'s, when the sync did not find it', async () => {
+    const { findings, table } = service();
+
+    await findings.checkEvent({ ...check, found: false });
+
+    expect(table.raised).toEqual([]);
+    expect(table.resolved).toEqual([check]);
+  });
+
+  it('checks an event for a feed known by its source id under the feed\'s Provider row, and checks nothing for a feed with none', async () => {
+    const { findings, table } = service();
+    const bySource = { kind: check.kind, sportLeagueId: check.sportLeagueId, sportEventId: check.sportEventId };
+
+    await findings.checkEventOfSource({ ...bySource, providerSourceId: providerSourceIdOf(PROVIDER.code), found: false });
+    await findings.checkEventOfSource({ ...bySource, providerSourceId: 'mock-contest-feed', found: true });
+
+    expect(table.resolved).toEqual([check]);
+    expect(table.raised).toEqual([]);
+  });
+});
+
 describe('ProviderSyncFindingService reads', () => {
   it('lists every finding and answers one by id', async () => {
     const table = inMemoryFindings([finding()]);

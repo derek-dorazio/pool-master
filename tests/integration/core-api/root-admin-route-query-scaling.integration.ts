@@ -194,7 +194,7 @@ async function seedSyncRuns(runs: number) {
       providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       sport: Sport.GOLF,
       status: ProviderSyncRunStatus.COMPLETED,
-      payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
+      summary: 'Completed event participants sync.',
     })),
   });
   return createTestUser({ isRootAdmin: true });
@@ -228,7 +228,7 @@ async function seedLeagueActivity(jobs: number) {
       await prisma.providerSyncRun.create({
         data: {
           kind: 'EVENTS', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id,
-          backgroundJobId: job.id, status: ProviderSyncRunStatus.COMPLETED, payloadJson: { runType: 'LEAGUE_EVENTS_SYNC' },
+          backgroundJobId: job.id, status: ProviderSyncRunStatus.COMPLETED, summary: 'Synced the league\'s events.',
         },
       });
     }
@@ -277,7 +277,7 @@ async function seedSyncRunDetails(rows: number) {
       providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       sport: Sport.GOLF,
       status: ProviderSyncRunStatus.COMPLETED,
-      payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
+      summary: 'Completed event participants sync.',
       detailsJson: {
         writeDiagnostics: {
           summary: { total: rows, unchanged: 0, created: rows, updated: 0, deleted: 0 },
@@ -379,8 +379,8 @@ async function seedSportLeagueOverviews(leagues: number) {
     });
     await prisma.providerSyncRun.createMany({
       data: [
-        { kind: 'EVENTS', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.FAILED, payloadJson: { outcome: { summary: 'Interrupted before it finished.' } } },
-        { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, payloadJson: {} },
+        { kind: 'EVENTS', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.', errorCount: 1 },
+        { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED },
       ],
     });
   }
@@ -447,7 +447,7 @@ async function seedLeagueEventOverviews(events: number) {
     const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL' } });
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });
     await prisma.providerSyncRun.create({
-      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, sportEventId: event.id, status: ProviderSyncRunStatus.FAILED, payloadJson: {} },
+      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, sportEventId: event.id, status: ProviderSyncRunStatus.FAILED },
     });
   }
   return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
@@ -644,7 +644,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     await prisma.providerSyncRun.createMany({
       data: Array.from({ length: 20 }, (_, index) => ({
         kind: (['EVENTS', 'FIELD', 'SCORES'] as const)[index % 3], trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF,
-        sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, createdAt: new Date(Date.now() - index * 60_000), payloadJson: {},
+        sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, createdAt: new Date(Date.now() - index * 60_000),
       })),
     });
     const rootAdmin = await createTestUser({ isRootAdmin: true });

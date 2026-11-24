@@ -4,6 +4,9 @@
  * this file is outside that builder so the follow-ups lint rule reads it.
  */
 
+import type { SportEventRepository } from '@poolmaster/shared/db';
+import { ProviderSyncFindingKind } from '@poolmaster/shared/domain';
+import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
 import { DISCARD_BACKGROUND_JOB, type BackgroundJobAnswer } from '../background-jobs/background-job-outcome';
 import type { ProviderGameSlateOutcome, ProviderGameSlateService } from './provider-game-slate';
 import type { SyncEventGamesAndTiersJobPayload } from './synced-field-follow-up-job';
@@ -28,15 +31,20 @@ function valuedCount(valuation: FieldValuationOutcome): number {
 export interface SyncedFieldFollowUpsDeps {
   providerGames: Pick<ProviderGameSlateService, 'afterFieldLoad'>;
   valuation: Pick<SyncedFieldValuationService, 'afterFieldLoad'>;
+  /** The event's sport league, for its GAMES_NOT_SYNCED finding. */
+  sportEvents: Pick<SportEventRepository, 'findById'>;
+  findings: Pick<ProviderSyncFindingService, 'checkEventOfSource'>;
 }
 
 /**
  * The SYNC_EVENT_GAMES_AND_TIERS job's handler: the provider's games first, so a draft's tiers and
  * prices come from a field whose games are in, then the tiers and prices. Each step reads the
  * event as it stands when the job runs and writes only what differs, so a retry or a repeat
- * changes nothing more. A step that fails is logged and reported as a warning in the job's result, not
- * thrown, as it was on the field sync's run: the field is written, and the next field sync tries
- * again. A run that changed nothing and has nothing to report leaves no Activity row (#1865).
+ * changes nothing more. A step that fails is logged, not thrown: the field is written, and the
+ * next field sync tries again. Games the provider listed that were not synced are a
+ * GAMES_NOT_SYNCED finding on the event (#1999), resolved once a later run syncs them; the tier
+ * and price warnings stay in the job's result. A run that changed nothing and has nothing to
+ * report leaves no Activity row (#1865).
  */
 export class SyncedFieldFollowUps {
   constructor(private readonly deps: SyncedFieldFollowUpsDeps) {}
@@ -54,15 +62,25 @@ export class SyncedFieldFollowUps {
     // swallows the error), so whether the provider listed any tells the two apart.
     const listed = payload.games !== undefined || payload.bracket !== undefined;
     const gamesFailed = listed && slate === null;
-    const warnings = [
-      ...(gamesFailed ? [{ code: 'GAMES_NOT_SYNCED', message: 'The provider\'s games were not synced to the event; the next field sync tries again.' }] : []),
-      ...valuationWarnings,
-    ];
+    if (listed) await this.checkGames(payload, gamesFailed);
     const changedCount = gamesChanged(slate) + valuedCount(valuation);
-    if (changedCount === 0 && warnings.length === 0) return DISCARD_BACKGROUND_JOB;
+    if (changedCount === 0 && !gamesFailed && valuationWarnings.length === 0) return DISCARD_BACKGROUND_JOB;
     return {
       changedCount,
-      result: { games: slate ?? { outcome: gamesFailed ? 'FAILED' : 'NO_GAMES_LISTED' }, stats, warnings },
+      result: { games: slate ?? { outcome: gamesFailed ? 'FAILED' : 'NO_GAMES_LISTED' }, stats, warnings: valuationWarnings },
     };
+  }
+
+  /** The event's GAMES_NOT_SYNCED finding: raised when the listed games failed to sync, resolved when they synced. */
+  private async checkGames(payload: SyncEventGamesAndTiersJobPayload, gamesFailed: boolean): Promise<void> {
+    const event = await this.deps.sportEvents.findById(payload.sportEventId);
+    if (event === null) return;
+    await this.deps.findings.checkEventOfSource({
+      kind: ProviderSyncFindingKind.GAMES_NOT_SYNCED,
+      sportLeagueId: event.sportLeagueId,
+      sportEventId: event.id,
+      providerSourceId: payload.providerId,
+      found: gamesFailed,
+    });
   }
 }

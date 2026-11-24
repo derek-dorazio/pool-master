@@ -33,7 +33,7 @@ function createMockProvider(overrides: Partial<SportDataProvider> = {}): SportDa
 
 function createMockCallbacks(overrides: Partial<IngestionCallbacks> = {}): IngestionCallbacks {
   return {
-    onEventDetail: jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants: [] }),
+    onEventDetail: jest.fn().mockResolvedValue({ writeDiagnostics: emptySyncWriteDiagnostics() }),
     onLiveScores: jest.fn().mockResolvedValue(emptyLiveScorePersistenceResult()),
     ...overrides,
   };

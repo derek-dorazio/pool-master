@@ -77,7 +77,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
     const other = await sportLeague('Page Other Tour', { synced: true });
     const run = (sportLeagueId: string, kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date) => ({
       kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId, status, createdAt,
-      payloadJson: { stats: { writeCreated: 2, writeUpdated: 3 } },
+      changedCount: 5,
     });
     await getPrisma().providerSyncRun.createMany({
       data: [
@@ -118,7 +118,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
     await getPrisma().sportEventParticipant.create({ data: { sportEventId: released.id, participantId: golfer.id } });
     const synced = fromNow(-2 * HOUR_MS);
     await getPrisma().providerSyncRun.create({
-      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced, payloadJson: {} },
+      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced },
     });
 
     const response = await get(`/api/v1/sport-leagues/${tour.id}/events/overview`);

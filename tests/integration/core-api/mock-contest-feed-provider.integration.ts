@@ -28,7 +28,7 @@ import {
 } from '../helpers';
 import { startMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
 import { linkedProviderEvent } from '../../support/event-edition';
-import { readStoredSyncRunDetails, readStoredSyncRunPayload } from '../../support/sync-run-payload';
+import { readStoredSyncRunDetails } from '../../support/sync-run-payload';
 import {
   PrismaBackgroundJobRepository,
   PrismaProviderSyncRunRepository,
@@ -185,7 +185,7 @@ async function waitForProviderSyncRuns(ids: string[]) {
     if (rows.length === ids.length && terminalRows.length === ids.length) {
       const failedRun = rows.find((row) => row.status === 'FAILED');
       if (failedRun) {
-        throw new Error(`Provider sync run ${failedRun.id} failed: ${JSON.stringify({ payload: failedRun.payloadJson, details: failedRun.detailsJson })}`);
+        throw new Error(`Provider sync run ${failedRun.id} failed: ${JSON.stringify({ summary: failedRun.summary, details: failedRun.detailsJson })}`);
       }
       return rows.sort((left, right) => (idOrder.get(left.id) ?? 0) - (idOrder.get(right.id) ?? 0));
     }
@@ -203,14 +203,12 @@ async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expect
     const rows = await getPrisma().providerSyncRun.findMany({
       where: { providerId: providerIdToFind }, include: { sportEvent: { select: { externalId: true } } },
     });
-    const scheduledRows = rows.filter((run) =>
-      readStoredSyncRunPayload(run.payloadJson)?.requestPayload?.source === 'SCHEDULED',
-    );
+    const scheduledRows = rows.filter((run) => run.trigger === 'SCHEDULE');
     const terminalRows = scheduledRows.filter((row) => row.status === 'COMPLETED' || row.status === 'FAILED');
     if (scheduledRows.length >= expectedRunCount && terminalRows.length >= expectedRunCount) {
       const failedRun = scheduledRows.find((row) => row.status === 'FAILED');
       if (failedRun) {
-        throw new Error(`Scheduled provider sync run ${failedRun.id} failed: ${JSON.stringify({ payload: failedRun.payloadJson, details: failedRun.detailsJson })}`);
+        throw new Error(`Scheduled provider sync run ${failedRun.id} failed: ${JSON.stringify({ summary: failedRun.summary, details: failedRun.detailsJson })}`);
       }
       return scheduledRows;
     }
@@ -790,7 +788,7 @@ describe('mock contest feed provider event-first verification', () => {
       rootAdmin.user.email,
     );
     const fieldRuns = await waitForProviderSyncRuns(manualFieldRefresh.syncRuns.map((run) => run.id));
-    expect(fieldRuns[0].payloadJson).toEqual(expect.objectContaining({ requestedFeed: 'EVENTPARTICIPANTS' }));
+    expect(fieldRuns[0]).toMatchObject({ kind: 'FIELD', changedCount: 0 });
     expect(fieldRuns[0].detailsJson).toEqual(expect.objectContaining({
       jobPayload: expect.objectContaining({ status: 'COMPLETED' }),
       // A refresh of an unchanged field counts all 80 golfers and stores none of their rows (#1174).
@@ -823,13 +821,10 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scheduledScottieEventParticipant.ranking).toBe(1);
     expect(scheduledScottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
 
-    const scheduledRunPayloads = scheduledRuns.map((run) => readStoredSyncRunPayload(run.payloadJson));
     expect(scheduledRuns.map((run) => run.sportEvent?.externalId).filter((id): id is string => Boolean(id))).toEqual([
       'golf-genesis-scottish-open-2026',
     ]);
-    expect(scheduledRunPayloads.map((payload) => String(payload?.requestedFeed))).toEqual([
-      'EVENTPARTICIPANTS',
-    ]);
+    expect(scheduledRuns.map((run) => run.kind)).toEqual(['FIELD']);
 
     const scheduledPayloadPaths = scheduledRuns
       .flatMap((run) => providerPayloadPaths(run.detailsJson));

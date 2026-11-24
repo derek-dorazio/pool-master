@@ -593,6 +593,9 @@ enum PrismaProviderSyncFindingKind {
   PROVIDER_RATE_LIMITED
   UNMAPPED_PARTICIPANT
   WEBHOOK_SECRET_MISSING
+  NO_PROVIDER_PARTICIPANTS
+  NO_PROVIDER_LIVE_SCORES
+  GAMES_NOT_SYNCED
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -2722,8 +2725,14 @@ model ProviderSyncRun {
   status          PrismaProviderSyncRunStatus
   startedAt       DateTime?                   @map("started_at") @db.Timestamptz
   completedAt     DateTime?                   @map("completed_at") @db.Timestamptz
-  /// The run's summary: request, feed, outcome and stats. The sync history lists it.
-  payloadJson     Json                        @default("{}") @map("payload_json")
+  /// What the run did, in one line for the sync history (#1999).
+  summary         String                      @default("")
+  /// Its numeric counts by name, for the root admin's diagnostics. Display only: nothing reads a count from it.
+  stats           Json                        @default("{}")
+  /// The rows it created or updated; null until it completes, or when it counted none.
+  changedCount    Int?                        @map("changed_count")
+  /// The errors it hit; a FAILED run has at least one.
+  errorCount      Int                         @default(0) @map("error_count")
   /// The run's detailed diagnostics: the changed rows, the job record and the raw provider
   /// payload. Read one run at a time; the nightly cleanup clears it 30 days after submission
   /// and deletes the run after a year (#1174).

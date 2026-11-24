@@ -2,6 +2,7 @@
  * #1174 — the nightly cleanup's sync-run steps against Postgres: a run's detailed diagnostics are
  * cleared 30 days after submission, and the run itself is deleted a year after it.
  */
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { Prisma } from '@prisma/client';
 import { ProviderCode, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
@@ -36,23 +37,20 @@ async function seedRun(label: string, createdAt: Date, details: object | null = 
     status: ProviderSyncRunStatus.COMPLETED,
     startedAt: null,
     completedAt: null,
-    payload: { detail: label },
+    ...syncRunOutcome({ summary: label }),
     createdAt,
   });
   if (details) {
-    await repo.update(run.id, { status: ProviderSyncRunStatus.COMPLETED, payload: { detail: label }, details: { ...details } });
+    await repo.update(run.id, { status: ProviderSyncRunStatus.COMPLETED, ...syncRunOutcome({ summary: label }), details: { ...details } });
   }
   return run.id;
 }
 
-async function detailsByLabel(): Promise<Record<string, { details: Prisma.JsonValue; payload: Prisma.JsonValue }>> {
-  const rows = await getPrisma().providerSyncRun.findMany({ select: { detailsJson: true, payloadJson: true } });
-  const byLabel: Record<string, { details: Prisma.JsonValue; payload: Prisma.JsonValue }> = {};
-  for (const row of rows) {
-    // A run's label is its payload's detail, which retention keeps.
-    const label = (row.payloadJson as { detail?: string } | null)?.detail ?? '';
-    byLabel[label] = { details: row.detailsJson, payload: row.payloadJson };
-  }
+async function detailsByLabel(): Promise<Record<string, { details: Prisma.JsonValue }>> {
+  const rows = await getPrisma().providerSyncRun.findMany({ select: { detailsJson: true, summary: true } });
+  const byLabel: Record<string, { details: Prisma.JsonValue }> = {};
+  // A run's label is its summary, which retention keeps.
+  for (const row of rows) byLabel[row.summary] = { details: row.detailsJson };
   return byLabel;
 }
 
@@ -66,9 +64,9 @@ describe('sync-run details retention (#1174)', () => {
 
     expect(cleared).toBe(2);
     expect(await detailsByLabel()).toEqual({
-      'submitted-31-days-ago': { details: null, payload: { detail: 'submitted-31-days-ago' } },
-      'submitted-36-days-ago': { details: null, payload: { detail: 'submitted-36-days-ago' } },
-      'submitted-29-days-ago': { details: DETAILS, payload: { detail: 'submitted-29-days-ago' } },
+      'submitted-31-days-ago': { details: null },
+      'submitted-36-days-ago': { details: null },
+      'submitted-29-days-ago': { details: DETAILS },
     });
   });
 
@@ -79,7 +77,7 @@ describe('sync-run details retention (#1174)', () => {
 
     expect(cleared).toBe(1);
     expect(await detailsByLabel()).toEqual({
-      'submitted-60-days-ago': { details: null, payload: { detail: 'submitted-60-days-ago' } },
+      'submitted-60-days-ago': { details: null },
     });
   });
 
@@ -123,7 +121,7 @@ describe('PrismaProviderSyncRunRepository.countFinishedByProvider (#1999)', () =
     const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
     const write = (status: ProviderSyncRunStatus, createdAt: Date) => repo.create({
       ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status,
-      startedAt: null, completedAt: null, payload: {}, createdAt,
+      startedAt: null, completedAt: null, ...syncRunOutcome(), createdAt,
     });
     const since = new Date(NOW.getTime() - 60 * 60_000);
     await write(ProviderSyncRunStatus.COMPLETED, new Date(since.getTime() + 60_000));

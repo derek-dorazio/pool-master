@@ -1,8 +1,9 @@
-import { type Prisma } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncRunCreate, ProviderSyncRunRepository, SportEventRepository } from '@poolmaster/shared/db';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import type { ProviderSyncRunCreate, ProviderSyncRunRepository, ProviderSyncRunUpdate, SportEventRepository } from '@poolmaster/shared/db';
 import {
   IngestionJobStatus,
+  ProviderSyncFindingKind,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   type JobTrigger,
@@ -10,22 +11,15 @@ import {
   type ProviderSyncRun,
   requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
-import type { ProviderSyncRequestPayloadDto, ProviderSyncRunPayloadDto } from '@poolmaster/shared/dto';
-import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
+import type { IngestionFeedType, IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
-import type { SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
+import { syncChangedRows, type SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
+import type { ProviderSyncFindingService } from '../findings/provider-sync-finding-service';
 
 /** Detailed diagnostics already written for a run; a failure keeps their provider payload. */
 interface DetailsToRewrite {
   providerPayload?: unknown;
 }
-
-type SyncOutcomePayload = Prisma.InputJsonObject & {
-  severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-  summary: string;
-  warnings: Prisma.InputJsonArray;
-  errors: number;
-};
 
 /**
  * A feed's run whose outcome could not be written, so it is still IN_PROGRESS (#1445): unlike a
@@ -43,12 +37,14 @@ export class ProviderSyncRunLedger {
   /**
    * `linkedEvents` finds the event of ours a provider event is linked to, so a run whose caller
    * did not name its event and sport league still records them (#1847): the Sports page reads
-   * each sport league's runs by them.
+   * each sport league's runs by them. `findings` takes each completed run's check of its event
+   * (#1999): a field with no participants, or a scores sync with no updates.
    */
   constructor(
     private readonly syncRuns: ProviderSyncRunRepository,
     private readonly logger?: FastifyBaseLogger,
     private readonly linkedEvents?: Pick<SportEventRepository, 'findByProviderRef'>,
+    private readonly findings?: Pick<ProviderSyncFindingService, 'checkEvent'>,
   ) {}
 
   async createSubmissions(input: SubmissionInput): Promise<ProviderSyncRun[]> {
@@ -87,23 +83,17 @@ export class ProviderSyncRunLedger {
     options: { backgroundJobId?: string } = {},
   ): Promise<IngestionJobRecord> {
     const startedAt = new Date();
-    // Every run the ledger creates names its feed; the caller has already checked it.
-    const requestedFeed = readPayload(syncRun).requestedFeed as IngestionFeedType;
-    const startedPayload = {
-      ...syncRun.payload,
-      detail: `Started ${formatFeedLabel(requestedFeed)} sync.`,
-      outcome: buildSyncOutcome({
-        status: 'IN_PROGRESS',
-        summary: `Started ${formatFeedLabel(requestedFeed)} sync.`,
-      }),
-    };
-    const startedDetails = { providerPayload: uncapturedProviderPayload(requestedFeed) };
+    const label = syncLabel(syncRun.kind);
+    const startedDetails = { providerPayload: uncapturedProviderPayload(feedOfSyncKind(syncRun.kind)) };
 
-    await this.updateSyncRun(syncRun.id, {
-      status: 'IN_PROGRESS',
+    await this.syncRuns.update(syncRun.id, {
+      status: ProviderSyncRunStatus.IN_PROGRESS,
       startedAt,
       completedAt: null,
-      payload: startedPayload,
+      summary: `Started ${label} sync.`,
+      stats: {},
+      changedCount: null,
+      errorCount: 0,
       details: startedDetails,
       ...(options.backgroundJobId !== undefined && { backgroundJobId: options.backgroundJobId }),
     });
@@ -111,112 +101,84 @@ export class ProviderSyncRunLedger {
       syncRunId: syncRun.id,
       providerId: syncRun.providerId,
       sport: syncRun.sport,
-      eventId: syncRun.eventId,
-      requestedFeed,
+      kind: syncRun.kind,
       startedAt: startedAt.toISOString(),
     }, 'Provider sync feed run started');
 
+    let job: IngestionJobRecord;
     try {
       const result = await run();
-      const job = Array.isArray(result) ? result.at(0) : result;
-      if (!job) {
+      const first = Array.isArray(result) ? result.at(0) : result;
+      if (!first) {
         throw new Error('Sync execution completed without an ingestion job result.');
       }
-      const completedAt = new Date();
-      const status: ProviderSyncRun['status'] = job.status === IngestionJobStatus.FAILED ? ProviderSyncRunStatus.FAILED : ProviderSyncRunStatus.COMPLETED;
-      const detail = buildSyncRunDetail(job, syncRun.eventId);
-      const payload = {
-        ...startedPayload,
-        detail,
-        outcome: buildSyncOutcome({
-          status,
-          summary: detail,
-          warnings: job.warnings,
-          errors: job.errors,
-        }),
-        stats: job.stats ?? {},
-        recordsProcessed: job.recordsProcessed,
-        errors: job.errors,
-      };
-
-      await this.updateSyncRun(syncRun.id, {
-        status,
+      job = first;
+      await this.syncRuns.update(syncRun.id, {
+        ...completedOutcome(job, syncRun),
         startedAt,
-        completedAt,
-        payload,
+        completedAt: new Date(),
         details: {
           providerPayload: job.providerPayload ?? startedDetails.providerPayload,
           jobPayload: toSerializableJob(job),
           writeDiagnostics: keepChangedRows(job.writeDiagnostics),
         },
       });
-
-      if (status === 'FAILED') {
-        this.logger?.error(
-          {
-            syncRunId: syncRun.id,
-            providerId: syncRun.providerId,
-            sport: syncRun.sport,
-            eventId: syncRun.eventId,
-            job: toSerializableJob(job),
-          },
-          'Provider sync feed run failed.',
-        );
-      } else {
-        this.logger?.info(
-          {
-            syncRunId: syncRun.id,
-            providerId: syncRun.providerId,
-            sport: syncRun.sport,
-            eventId: syncRun.eventId,
-            job: toSerializableJob(job),
-          },
-          'Provider sync feed run completed.',
-        );
-      }
-
-      return job;
     } catch (error) {
       // Failed executions do not have a trustworthy completed write set. Keep
       // writeDiagnostics reserved for normalized rows that were actually
       // compared and returned by a completed persistence callback.
       try {
-        await this.failSubmittedRun(syncRun, error, startedAt, startedPayload, startedDetails);
+        await this.failSubmittedRun(syncRun, error, startedAt, startedDetails);
       } catch (recordError) {
         // The run is left IN_PROGRESS: the caller must know, so a retry can mark it (#1445).
         throw new SyncRunOutcomeUnrecordedError(syncRun.id, recordError);
       }
       throw error;
     }
+
+    const logEntry = { syncRunId: syncRun.id, providerId: syncRun.providerId, sport: syncRun.sport, kind: syncRun.kind, job: toSerializableJob(job) };
+    if (job.status === IngestionJobStatus.FAILED) {
+      this.logger?.error(logEntry, 'Provider sync feed run failed.');
+    } else {
+      this.logger?.info(logEntry, 'Provider sync feed run completed.');
+      await this.checkEvent(syncRun, job);
+    }
+    return job;
+  }
+
+  /**
+   * A completed run's check of its event (#1999): the problem its kind looks for (a field with
+   * no participants, a scores sync with no updates) is raised as a finding when the run warned of
+   * it, and resolved when it did not. A run with no event or league of ours checks nothing.
+   */
+  private async checkEvent(syncRun: ProviderSyncRun, job: IngestionJobRecord): Promise<void> {
+    const kind = EVENT_CHECK_OF_SYNC_KIND[syncRun.kind];
+    if (this.findings === undefined || kind === undefined || syncRun.sportLeagueId === null || syncRun.sportEventId === null) return;
+    await this.findings.checkEvent({
+      kind,
+      sportLeagueId: syncRun.sportLeagueId,
+      sportEventId: syncRun.sportEventId,
+      providerId: syncRun.providerId,
+      found: (job.warnings ?? []).some((warning) => warning.code === kind),
+    });
   }
 
   async failSubmittedRun(
     syncRun: ProviderSyncRun,
     error: unknown,
     startedAt: Date | null = new Date(),
-    payload: Record<string, unknown> = syncRun.payload,
     details: DetailsToRewrite = {},
   ): Promise<void> {
-    const { requestedFeed } = readPayload(syncRun);
-    const completedAt = new Date();
-    const updatedPayload = {
-      ...payload,
-      detail: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-      outcome: buildSyncOutcome({
-        status: 'FAILED',
-        summary: `Failed ${formatFeedLabel(requestedFeed as IngestionFeedType)} sync.`,
-        errors: 1,
-      }),
-      errors: 1,
-    };
-
-    await this.updateSyncRun(syncRun.id, {
-      status: 'FAILED',
+    await this.syncRuns.update(syncRun.id, {
+      status: ProviderSyncRunStatus.FAILED,
       startedAt,
-      completedAt,
-      payload: updatedPayload,
+      completedAt: new Date(),
+      summary: `Failed ${syncLabel(syncRun.kind)} sync: ${errorMessageOf(error)}`,
+      stats: syncRun.stats,
+      changedCount: null,
+      errorCount: 1,
       details: {
-        providerPayload: details.providerPayload ?? uncapturedProviderPayload(requestedFeed),
+        providerPayload: details.providerPayload ?? uncapturedProviderPayload(feedOfSyncKind(syncRun.kind)),
         failurePayload: {
           error: toJsonSafeErrorPayload(error),
         },
@@ -228,39 +190,33 @@ export class ProviderSyncRunLedger {
         syncRunId: syncRun.id,
         providerId: syncRun.providerId,
         sport: syncRun.sport,
-        eventId: syncRun.eventId,
+        kind: syncRun.kind,
         error: toJsonSafeErrorPayload(error),
       },
       'Provider sync feed run failed unexpectedly.',
     );
   }
-
-  private async updateSyncRun(
-    syncRunId: string,
-    update: {
-      status: ProviderSyncRun['status'];
-      startedAt?: Date | null;
-      completedAt?: Date | null;
-      payload: Record<string, unknown>;
-      details: Record<string, unknown>;
-      backgroundJobId?: string;
-    },
-  ): Promise<void> {
-    await this.syncRuns.update(syncRunId, update);
-  }
 }
 
-function mapJobTypeToFeed(jobType: IngestionJobRecord['jobType']): IngestionFeedType {
-  switch (jobType) {
-    case 'EVENT_PARTICIPANTS_SYNC':
-      return 'EVENTPARTICIPANTS';
-    case 'EVENT_LIVE_SCORES_SYNC':
-      return 'EVENTLIVESCORES';
-  }
+/** The outcome of a run whose feed answered: COMPLETED with what it changed, or FAILED as the feed's job failed. */
+function completedOutcome(job: IngestionJobRecord, syncRun: ProviderSyncRun): ProviderSyncRunUpdate {
+  const failed = job.status === IngestionJobStatus.FAILED;
+  const label = syncLabel(syncRun.kind);
+  const target = syncRun.sportEventId ?? job.eventExternalId ?? job.sport;
+  return {
+    status: failed ? ProviderSyncRunStatus.FAILED : ProviderSyncRunStatus.COMPLETED,
+    summary: failed
+      ? `Failed ${label} sync for ${target}: ${job.errorLog[0]?.error ?? 'Unknown ingestion failure'}`
+      : `Completed ${label} sync for ${target} (${String(job.recordsProcessed)} records).`,
+    stats: job.stats ?? {},
+    changedCount: failed ? null : syncChangedRows(job.writeDiagnostics),
+    errorCount: failed ? Math.max(job.errors, 1) : job.errors,
+  };
 }
 
 /** The provider payload a run records until the provider call captures the raw one. */
-function uncapturedProviderPayload(feed: unknown): Record<string, unknown> {
+function uncapturedProviderPayload(feed: IngestionFeedType | null): Record<string, unknown> | undefined {
+  if (feed === null) return undefined;
   return {
     operation: feed,
     rawCaptured: false,
@@ -279,10 +235,6 @@ function keepChangedRows(diagnostics: SyncWriteDiagnostics | undefined): SyncWri
     summary: diagnostics.summary,
     rows: diagnostics.rows.filter((row) => row.disposition !== 'UNCHANGED'),
   };
-}
-
-function buildSubmittedSyncRunDetail(feed: IngestionFeedType, eventId: string): string {
-  return `Submitted ${formatFeedLabel(feed)} sync for ${eventId}.`;
 }
 
 function toJsonSafeErrorPayload(error: unknown): Record<string, unknown> {
@@ -313,94 +265,42 @@ function toSerializableJob(job: IngestionJobRecord): Record<string, unknown> {
   };
 }
 
-function buildSyncOutcome(input: {
-  status: ProviderSyncRun['status'];
-  summary: string;
-  warnings?: IngestionJobRecord['warnings'];
-  errors?: number;
-}): SyncOutcomePayload {
-  const warnings = input.warnings ?? [];
-  const errorCount = input.errors ?? 0;
-  const severity = input.status === ProviderSyncRunStatus.FAILED || errorCount > 0
-    ? 'ERROR'
-    : warnings.length > 0
-      ? 'WARNING'
-      : 'SUCCESS';
-
-  return {
-    severity,
-    summary: input.summary,
-    warnings: warnings.map((warning) => ({
-      code: warning.code,
-      message: warning.message,
-    })),
-    errors: errorCount,
-  };
+/** A run's sync, as its summary line names it: the kind's display label. */
+function syncLabel(kind: ProviderSyncKind): string {
+  return enumLabel('ProviderSyncKind', kind);
 }
 
-function formatFeedLabel(feed: IngestionFeedType): string {
-  switch (feed) {
-    case 'EVENTPARTICIPANTS':
-      return 'event participants';
-    case 'EVENTLIVESCORES':
-      return 'event live scores';
-  }
+function errorMessageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
-function buildSyncRunDetail(
-  job: IngestionJobRecord,
-  eventId: string | null,
-): string {
-  const target = eventId ?? job.eventExternalId ?? job.sport;
-  const feed = formatFeedLabel(mapJobTypeToFeed(job.jobType));
-  if (job.status === IngestionJobStatus.FAILED) {
-    const error = job.errorLog[0]?.error ?? 'Unknown ingestion failure';
-    return `Failed ${feed} sync for ${target}: ${error}`;
-  }
-
-  return `Completed ${feed} sync for ${target} (${job.recordsProcessed} records).`;
-}
-
-/** The published request payload, less the scope fields the caller adds alongside. */
-function buildNormalizedSyncRequestContext(
-  normalized: NormalizedSyncRequest,
-): Omit<ProviderSyncRequestPayloadDto, 'sport' | 'eventId'> {
-  return {
-    source: normalized.source,
-    actor: normalized.actor,
-    normalizedAt: normalized.normalizedAt.toISOString(),
-  };
-}
-
-/**
- * The run's payload in the shape the ledger writes it (the payload DTO's keys). The
- * stored JSON is not re-validated on read, so a reader still checks a value before it
- * relies on it, as `isEventSyncFeedType` does for the feed.
- */
-export function readPayload(syncRun: Pick<ProviderSyncRun, 'payload'>): ProviderSyncRunPayloadDto {
-  return syncRun.payload;
-}
-
-export function isEventSyncFeedType(
-  feed: unknown,
-): feed is EventSyncRequest['feeds'][number] {
-  return feed === 'EVENTPARTICIPANTS'
-    || feed === 'EVENTLIVESCORES';
-}
-
-/** What started a feed run, as its payload's `runType` has always named it. */
-export type FeedRunType = 'MANUAL_EVENT_SYNC' | 'SCHEDULED_EVENT_SYNC' | 'WEBHOOK_EVENT_SYNC';
-
-const FEED_KINDS: Record<IngestionFeedType, ProviderSyncKind> = {
+const FEED_KINDS: Readonly<Record<IngestionFeedType, ProviderSyncKind>> = {
   EVENTPARTICIPANTS: ProviderSyncKind.FIELD,
   EVENTLIVESCORES: ProviderSyncKind.SCORES,
+};
+
+/** The provider feed an event sync run of this kind reads; null for a kind no event feed runs (EVENTS). */
+export function feedOfSyncKind(kind: ProviderSyncKind): IngestionFeedType | null {
+  switch (kind) {
+    case ProviderSyncKind.FIELD:
+      return 'EVENTPARTICIPANTS';
+    case ProviderSyncKind.SCORES:
+      return 'EVENTLIVESCORES';
+    case ProviderSyncKind.EVENTS:
+      return null;
+  }
+}
+
+/** The finding each event sync's run checks its event for (#1999). */
+const EVENT_CHECK_OF_SYNC_KIND: Readonly<Partial<Record<ProviderSyncKind, ProviderSyncFindingKind>>> = {
+  [ProviderSyncKind.FIELD]: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS,
+  [ProviderSyncKind.SCORES]: ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES,
 };
 
 interface SubmissionInput {
   normalizedRequest: NormalizedSyncRequest;
   providerId: string;
   submittedAt: Date;
-  runType: FeedRunType;
   /** What started the runs (#1861): the job's trigger when a job runs them, else the request's or the schedule's. */
   trigger: JobTrigger;
   /** The job the runs are created in, when one is (a webhook's sync, #1819). */
@@ -413,34 +313,24 @@ interface SubmissionInput {
 /** One SUBMITTED run per requested feed, as the sync history shows it before it starts. */
 function submissionRuns(input: SubmissionInput): ProviderSyncRunCreate[] {
   const { sport, eventId, feeds } = input.normalizedRequest.scope;
-  const requestContext = buildNormalizedSyncRequestContext(input.normalizedRequest);
-  return feeds.map((feed) => ({
-    providerCode: requireProviderCodeOfSourceId(input.providerId),
-    sport,
-    kind: FEED_KINDS[feed],
-    trigger: input.trigger,
-    sportLeagueId: input.sportLeagueId ?? null,
-    sportEventId: input.sportEventId ?? null,
-    backgroundJobId: input.backgroundJobId ?? null,
-    status: 'SUBMITTED',
-    startedAt: null,
-    completedAt: null,
-    payload: {
-      runType: input.runType,
-      requestedFeeds: feeds,
-      requestedFeed: feed,
-      requestPayload: {
-        sport,
-        eventId,
-        ...requestContext,
-      } satisfies ProviderSyncRequestPayloadDto,
+  return feeds.map((feed) => {
+    const kind = FEED_KINDS[feed];
+    return {
+      providerCode: requireProviderCodeOfSourceId(input.providerId),
+      sport,
+      kind,
+      trigger: input.trigger,
+      sportLeagueId: input.sportLeagueId ?? null,
+      sportEventId: input.sportEventId ?? null,
+      backgroundJobId: input.backgroundJobId ?? null,
+      status: ProviderSyncRunStatus.SUBMITTED,
+      startedAt: null,
+      completedAt: null,
+      summary: `Submitted ${syncLabel(kind)} sync for ${eventId}.`,
       stats: {},
-      outcome: buildSyncOutcome({
-        status: 'SUBMITTED',
-        summary: buildSubmittedSyncRunDetail(feed, eventId),
-      }),
-      detail: buildSubmittedSyncRunDetail(feed, eventId),
-    },
-    createdAt: input.submittedAt,
-  }));
+      changedCount: null,
+      errorCount: 0,
+      createdAt: input.submittedAt,
+    };
+  });
 }

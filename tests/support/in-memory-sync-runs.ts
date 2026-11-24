@@ -50,7 +50,10 @@ export function inMemorySyncRuns(jobs: InMemoryBackgroundJobs = inMemoryBackgrou
       if (!row) return Promise.reject(new Error(`No sync run ${id}`));
       Object.assign(row, {
         status: update.status,
-        payload: update.payload,
+        summary: update.summary,
+        stats: update.stats,
+        changedCount: update.changedCount,
+        errorCount: update.errorCount,
         ...(update.startedAt !== undefined && { startedAt: update.startedAt }),
         ...(update.completedAt !== undefined && { completedAt: update.completedAt }),
         ...(update.backgroundJobId !== undefined && { backgroundJobId: update.backgroundJobId }),

@@ -206,9 +206,7 @@ A participant the site holds by name with no mapping stays beside the new one: m
 bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`).
 A feed id the live scores name that no participant of the league is mapped to raises an
 `UNMAPPED_PARTICIPANT` sync finding (see *Sync findings* below); its Map participant action binds
-it and resolves the finding. The
-field's ranked rows with no mapping are listed in a `RANKED_PARTICIPANTS_UNLINKED` warning on the
-run. Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
+it and resolves the finding. Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
 The mapping's sport league and participant type keep a team and a player with the same raw id
 apart.
 
@@ -233,8 +231,8 @@ warning on the job; the field is written regardless.
 
 After each field load, its job's first step, `ProviderGameSlateService.afterFieldLoad`
 (`events/provider-game-slate.ts`), turns the provider's games into the event's matches. A game is matched to a stored match by its
-two teams. Nothing loads while a team is missing from the field; a refused load is logged, is a
-`GAMES_NOT_SYNCED` warning on the job, and
+two teams. Nothing loads while a team is missing from the field; a refused load is logged, raises
+a `GAMES_NOT_SYNCED` finding on the event (resolved once a later load syncs the games), and
 never fails the field sync. Spreads stay the admin's. Each round with kickoffs starts at its
 earliest one.
 
@@ -274,7 +272,10 @@ never replace a multi-round event's bracket; a draft only takes their kickoffs.
 Every sync writes a `provider_sync_runs` row with its **kind** (`EVENTS`, `FIELD`, `SCORES`),
 its **trigger** (`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER`, `SYSTEM`; a job's own when a job
 ran it), its sport league and event (looked up from the linked event when the caller named
-none), and the job that ran it. Each background job records the same trigger and who started it
+none), and the job that ran it. Its outcome is in columns (#1999): a one-line `summary`, its
+numeric `stats`, `changed_count` (rows created, updated or deleted, once it completes) and
+`error_count` (at least one on a FAILED run). Who asked is the trigger; nothing else of the
+request is kept. The detailed diagnostics (`details_json`) are kept 30 days. Each background job records the same trigger and who started it
 ("Started by" on screen). The root admin's shared Activity grid (`GET /api/v1/activity`) lists
 jobs with their runs, and the Sports, League and Event pages read each league's and event's
 latest run per kind for its sync health.
@@ -327,7 +328,13 @@ column. Each finding names its sport league; its event, Provider row and the fee
   answer, *Rate limit and retries* above), `UNMAPPED_PARTICIPANT` (WARNING, raised by the live
   scores writer; its action is the Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR,
   raised per synced league when a worker task starts with the Provider's webhooks on and no
-  signing secret; resolved once it is set).
+  signing secret; resolved once it is set). Three are checked on an event by each sync that
+  could see them, raised as a WARNING when it does and resolved when a later one does not:
+  `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
+  `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
+  field's follow-up job could not load the games the provider listed). The ledger turns a feed
+  run's warning into its finding, so a run carries no warnings of its own; the tier and price
+  warnings stay in the follow-up job's result.
 - **Alert.** An ERROR that opens logs `ingestion.syncFinding.errorOpened`; a CloudWatch metric
   filter and alarm (`infrastructure/terraform/monitoring.tf`) send it to the alerts topic.
 - **Retention.** The nightly cleanup deletes RESOLVED findings 90 days after they were resolved,

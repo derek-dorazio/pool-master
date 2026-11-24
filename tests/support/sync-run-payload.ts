@@ -1,18 +1,9 @@
-import type {
-  IngestionFeedType,
-  IngestionJobProviderPayload,
-} from '../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
-import type { ProviderSyncRequestPayloadDto } from '@poolmaster/shared/dto';
+import type { IngestionJobProviderPayload } from '../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { ProviderSyncRunOutcome } from '@poolmaster/shared/domain';
 
-/**
- * A provider sync run's summary payload as the ledger writes it, for tests that read it back
- * from the database or from a repository call. Nothing validates the JSON on the way back, so
- * this is the shape a test expects to find, not a guarantee.
- */
-export interface StoredSyncRunPayload {
-  runType?: string;
-  requestedFeed?: IngestionFeedType;
-  requestPayload?: Partial<ProviderSyncRequestPayloadDto>;
+/** The outcome of a run that has not reported one yet, for tests that write runs by hand. */
+export function syncRunOutcome(overrides: Partial<ProviderSyncRunOutcome> = {}): ProviderSyncRunOutcome {
+  return { summary: 'Submitted.', stats: {}, changedCount: null, errorCount: 0, ...overrides };
 }
 
 /** A provider sync run's detailed diagnostics as the ledger writes them (#1174). */
@@ -20,13 +11,6 @@ export interface StoredSyncRunDetails {
   providerPayload?: IngestionJobProviderPayload;
   jobPayload?: unknown;
   writeDiagnostics?: unknown;
-}
-
-/** The payload JSON of a stored sync run, or null when the column holds no object. */
-export function readStoredSyncRunPayload(payloadJson: unknown): StoredSyncRunPayload | null {
-  return payloadJson && typeof payloadJson === 'object' && !Array.isArray(payloadJson)
-    ? payloadJson
-    : null;
 }
 
 /** The details JSON of a stored sync run, or null when the column holds none. */

@@ -28123,7 +28123,7 @@ export type ProviderListResponse = {
 };
 
 /**
- * One feed's sync against a provider, with its diagnostics.
+ * One sync against a provider: its kind, status and outcome.
  */
 export type ProviderSyncRunDto = {
     id: string;
@@ -28174,109 +28174,23 @@ export type ProviderSyncRunDto = {
      */
     createdAt: string;
     /**
-     * Provider sync run summary with canonical stats and outcome.
+     * One line for the sync history: what the run did, or why it failed.
      */
-    payload: {
-        /**
-         * Sync run source: a manual, scheduled or webhook-triggered event sync.
-         */
-        runType?: string;
-        /**
-         * Feeds represented by the originating manual or scheduled sync request.
-         */
-        requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
-        /**
-         * Single feed represented by this sync run row.
-         */
-        requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-        /**
-         * The request that submitted the sync run.
-         */
-        requestPayload?: {
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-            /**
-             * Provider event identifier the sync was asked for.
-             */
-            eventId: string;
-            /**
-             * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
-             */
-            source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
-            /**
-             * Who asked for a sync.
-             */
-            actor: {
-                type: 'SYSTEM';
-                /**
-                 * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
-                 */
-                name: 'scheduler' | 'webhook';
-            } | {
-                type: 'ROOT_ADMIN';
-                /**
-                 * The root admin who asked for the sync.
-                 */
-                userId: string;
-                /**
-                 * Their email at the time, for the audit trail.
-                 */
-                email: string;
-            };
-            /**
-             * When the request was validated and normalized.
-             */
-            normalizedAt: string;
-        };
-        /**
-         * Admin-facing outcome and warning summary for the sync run.
-         */
-        outcome?: {
-            /**
-             * Admin-facing severity derived from run status, errors, and warnings.
-             */
-            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-            /**
-             * Human-readable root-admin summary of the sync outcome.
-             */
-            summary: string;
-            /**
-             * Warnings that did not fail the run but should be visible to an operator.
-             */
-            warnings: Array<{
-                /**
-                 * Stable warning code emitted by the ingestion/sync layer.
-                 */
-                code: string;
-                /**
-                 * Human-readable warning detail for root-admin investigation.
-                 */
-                message: string;
-            }>;
-            /**
-             * Count of errors captured for the run.
-             */
-            errors: number;
-        };
-        /**
-         * Canonical numeric sync stats used by admin diagnostics.
-         */
-        stats?: {
-            [key: string]: number;
-        };
-        /**
-         * Legacy top-level processed-record count retained for summary compatibility.
-         */
-        recordsProcessed?: number;
-        /**
-         * Legacy top-level error count retained for summary compatibility.
-         */
-        errors?: number;
-        /**
-         * Legacy human-readable detail retained for summary compatibility.
-         */
-        detail?: string;
-        [key: string]: unknown;
+    summary: string;
+    /**
+     * The run's numeric counts by name, for diagnostics; empty until it reports any.
+     */
+    stats: {
+        [key: string]: number;
     };
+    /**
+     * The rows the run created, updated or deleted; null until it completes, and for a failed run.
+     */
+    changedCount: number | null;
+    /**
+     * The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run.
+     */
+    errorCount: number;
 };
 
 /**
@@ -28331,109 +28245,23 @@ export type ProviderSyncRunDetailDto = {
      */
     createdAt: string;
     /**
-     * Provider sync run summary with canonical stats and outcome.
+     * One line for the sync history: what the run did, or why it failed.
      */
-    payload: {
-        /**
-         * Sync run source: a manual, scheduled or webhook-triggered event sync.
-         */
-        runType?: string;
-        /**
-         * Feeds represented by the originating manual or scheduled sync request.
-         */
-        requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
-        /**
-         * Single feed represented by this sync run row.
-         */
-        requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-        /**
-         * The request that submitted the sync run.
-         */
-        requestPayload?: {
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-            /**
-             * Provider event identifier the sync was asked for.
-             */
-            eventId: string;
-            /**
-             * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
-             */
-            source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
-            /**
-             * Who asked for a sync.
-             */
-            actor: {
-                type: 'SYSTEM';
-                /**
-                 * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
-                 */
-                name: 'scheduler' | 'webhook';
-            } | {
-                type: 'ROOT_ADMIN';
-                /**
-                 * The root admin who asked for the sync.
-                 */
-                userId: string;
-                /**
-                 * Their email at the time, for the audit trail.
-                 */
-                email: string;
-            };
-            /**
-             * When the request was validated and normalized.
-             */
-            normalizedAt: string;
-        };
-        /**
-         * Admin-facing outcome and warning summary for the sync run.
-         */
-        outcome?: {
-            /**
-             * Admin-facing severity derived from run status, errors, and warnings.
-             */
-            severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-            /**
-             * Human-readable root-admin summary of the sync outcome.
-             */
-            summary: string;
-            /**
-             * Warnings that did not fail the run but should be visible to an operator.
-             */
-            warnings: Array<{
-                /**
-                 * Stable warning code emitted by the ingestion/sync layer.
-                 */
-                code: string;
-                /**
-                 * Human-readable warning detail for root-admin investigation.
-                 */
-                message: string;
-            }>;
-            /**
-             * Count of errors captured for the run.
-             */
-            errors: number;
-        };
-        /**
-         * Canonical numeric sync stats used by admin diagnostics.
-         */
-        stats?: {
-            [key: string]: number;
-        };
-        /**
-         * Legacy top-level processed-record count retained for summary compatibility.
-         */
-        recordsProcessed?: number;
-        /**
-         * Legacy top-level error count retained for summary compatibility.
-         */
-        errors?: number;
-        /**
-         * Legacy human-readable detail retained for summary compatibility.
-         */
-        detail?: string;
-        [key: string]: unknown;
+    summary: string;
+    /**
+     * The run's numeric counts by name, for diagnostics; empty until it reports any.
+     */
+    stats: {
+        [key: string]: number;
     };
+    /**
+     * The rows the run created, updated or deleted; null until it completes, and for a failed run.
+     */
+    changedCount: number | null;
+    /**
+     * The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run.
+     */
+    errorCount: number;
     /**
      * The run's detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission.
      */
@@ -28664,109 +28492,23 @@ export type ProviderSyncRunListResponse = {
          */
         createdAt: string;
         /**
-         * Provider sync run summary with canonical stats and outcome.
+         * One line for the sync history: what the run did, or why it failed.
          */
-        payload: {
-            /**
-             * Sync run source: a manual, scheduled or webhook-triggered event sync.
-             */
-            runType?: string;
-            /**
-             * Feeds represented by the originating manual or scheduled sync request.
-             */
-            requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
-            /**
-             * Single feed represented by this sync run row.
-             */
-            requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-            /**
-             * The request that submitted the sync run.
-             */
-            requestPayload?: {
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
-                 * Provider event identifier the sync was asked for.
-                 */
-                eventId: string;
-                /**
-                 * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
-                 */
-                source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
-                /**
-                 * Who asked for a sync.
-                 */
-                actor: {
-                    type: 'SYSTEM';
-                    /**
-                     * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
-                     */
-                    name: 'scheduler' | 'webhook';
-                } | {
-                    type: 'ROOT_ADMIN';
-                    /**
-                     * The root admin who asked for the sync.
-                     */
-                    userId: string;
-                    /**
-                     * Their email at the time, for the audit trail.
-                     */
-                    email: string;
-                };
-                /**
-                 * When the request was validated and normalized.
-                 */
-                normalizedAt: string;
-            };
-            /**
-             * Admin-facing outcome and warning summary for the sync run.
-             */
-            outcome?: {
-                /**
-                 * Admin-facing severity derived from run status, errors, and warnings.
-                 */
-                severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-                /**
-                 * Human-readable root-admin summary of the sync outcome.
-                 */
-                summary: string;
-                /**
-                 * Warnings that did not fail the run but should be visible to an operator.
-                 */
-                warnings: Array<{
-                    /**
-                     * Stable warning code emitted by the ingestion/sync layer.
-                     */
-                    code: string;
-                    /**
-                     * Human-readable warning detail for root-admin investigation.
-                     */
-                    message: string;
-                }>;
-                /**
-                 * Count of errors captured for the run.
-                 */
-                errors: number;
-            };
-            /**
-             * Canonical numeric sync stats used by admin diagnostics.
-             */
-            stats?: {
-                [key: string]: number;
-            };
-            /**
-             * Legacy top-level processed-record count retained for summary compatibility.
-             */
-            recordsProcessed?: number;
-            /**
-             * Legacy top-level error count retained for summary compatibility.
-             */
-            errors?: number;
-            /**
-             * Legacy human-readable detail retained for summary compatibility.
-             */
-            detail?: string;
-            [key: string]: unknown;
+        summary: string;
+        /**
+         * The run's numeric counts by name, for diagnostics; empty until it reports any.
+         */
+        stats: {
+            [key: string]: number;
         };
+        /**
+         * The rows the run created, updated or deleted; null until it completes, and for a failed run.
+         */
+        changedCount: number | null;
+        /**
+         * The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run.
+         */
+        errorCount: number;
     }>;
 };
 
@@ -28833,109 +28575,23 @@ export type ProviderManualSyncSubmissionResponse = {
          */
         createdAt: string;
         /**
-         * Provider sync run summary with canonical stats and outcome.
+         * One line for the sync history: what the run did, or why it failed.
          */
-        payload: {
-            /**
-             * Sync run source: a manual, scheduled or webhook-triggered event sync.
-             */
-            runType?: string;
-            /**
-             * Feeds represented by the originating manual or scheduled sync request.
-             */
-            requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
-            /**
-             * Single feed represented by this sync run row.
-             */
-            requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-            /**
-             * The request that submitted the sync run.
-             */
-            requestPayload?: {
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
-                 * Provider event identifier the sync was asked for.
-                 */
-                eventId: string;
-                /**
-                 * Who asked for the sync: the scheduler, a root admin, or a provider's webhook saying something happened in the event (#1498).
-                 */
-                source: 'SCHEDULED' | 'MANUAL' | 'WEBHOOK';
-                /**
-                 * Who asked for a sync.
-                 */
-                actor: {
-                    type: 'SYSTEM';
-                    /**
-                     * `scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.
-                     */
-                    name: 'scheduler' | 'webhook';
-                } | {
-                    type: 'ROOT_ADMIN';
-                    /**
-                     * The root admin who asked for the sync.
-                     */
-                    userId: string;
-                    /**
-                     * Their email at the time, for the audit trail.
-                     */
-                    email: string;
-                };
-                /**
-                 * When the request was validated and normalized.
-                 */
-                normalizedAt: string;
-            };
-            /**
-             * Admin-facing outcome and warning summary for the sync run.
-             */
-            outcome?: {
-                /**
-                 * Admin-facing severity derived from run status, errors, and warnings.
-                 */
-                severity: 'SUCCESS' | 'WARNING' | 'ERROR';
-                /**
-                 * Human-readable root-admin summary of the sync outcome.
-                 */
-                summary: string;
-                /**
-                 * Warnings that did not fail the run but should be visible to an operator.
-                 */
-                warnings: Array<{
-                    /**
-                     * Stable warning code emitted by the ingestion/sync layer.
-                     */
-                    code: string;
-                    /**
-                     * Human-readable warning detail for root-admin investigation.
-                     */
-                    message: string;
-                }>;
-                /**
-                 * Count of errors captured for the run.
-                 */
-                errors: number;
-            };
-            /**
-             * Canonical numeric sync stats used by admin diagnostics.
-             */
-            stats?: {
-                [key: string]: number;
-            };
-            /**
-             * Legacy top-level processed-record count retained for summary compatibility.
-             */
-            recordsProcessed?: number;
-            /**
-             * Legacy top-level error count retained for summary compatibility.
-             */
-            errors?: number;
-            /**
-             * Legacy human-readable detail retained for summary compatibility.
-             */
-            detail?: string;
-            [key: string]: unknown;
+        summary: string;
+        /**
+         * The run's numeric counts by name, for diagnostics; empty until it reports any.
+         */
+        stats: {
+            [key: string]: number;
         };
+        /**
+         * The rows the run created, updated or deleted; null until it completes, and for a failed run.
+         */
+        changedCount: number | null;
+        /**
+         * The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run.
+         */
+        errorCount: number;
     }>;
 };
 
@@ -29382,7 +29038,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -29466,7 +29122,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -29554,7 +29210,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */

@@ -2,24 +2,24 @@
  * pool-master-rop.68.2.6 — scheduled/manual sync equivalence coverage.
  *
  * These tests prove that equivalent scheduled and manual sync requests persist
- * the same provider_sync_runs diagnostics after removing the deliberately
- * different source, actor, and runType fields.
+ * the same provider_sync_runs outcome and diagnostics: who asked is the run's trigger, not part
+ * of what it records.
  */
 
 import { JobTrigger, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
-import { ProviderSyncRunLedger, type FeedRunType } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type {
   IngestionFeedType,
   IngestionJobRecord,
 } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import type { StoredSyncRunDetails, StoredSyncRunPayload } from '../../support/sync-run-payload';
+import type { StoredSyncRunDetails } from '../../support/sync-run-payload';
 import { TEST_PROVIDER_ROWS } from '../../support/balldontlie-provider-rows';
 
-/** A run's summary and its detailed diagnostics, read together. */
-type StoredSyncRun = StoredSyncRunPayload & StoredSyncRunDetails;
+/** A run's outcome and its detailed diagnostics, read together. */
+type StoredSyncRun = Pick<ProviderSyncRun, 'summary' | 'stats' | 'changedCount' | 'errorCount'> & StoredSyncRunDetails;
 
 function createLedgerStore() {
   const rows = new Map<string, ProviderSyncRun>();
@@ -51,7 +51,10 @@ function createLedgerStore() {
         status: update.status,
         startedAt: update.startedAt ?? current.startedAt,
         completedAt: update.completedAt ?? current.completedAt,
-        payload: update.payload,
+        summary: update.summary,
+        stats: update.stats,
+        changedCount: update.changedCount,
+        errorCount: update.errorCount,
       });
       if (update.details) details.set(id, update.details);
     }),
@@ -142,19 +145,8 @@ function clonePayload(payload: unknown): StoredSyncRun {
   return JSON.parse(JSON.stringify(payload)) as StoredSyncRun;
 }
 
-function stripAllowedSourceDifferences(payload: unknown): StoredSyncRun {
-  const clone = clonePayload(payload);
-  delete clone.runType;
-  if (clone.requestPayload) {
-    delete clone.requestPayload.source;
-    delete clone.requestPayload.actor;
-  }
-  return clone;
-}
-
 async function runAndReadPayload(input: {
   normalizedRequest: NormalizedSyncRequest;
-  runType: FeedRunType;
   job: IngestionJobRecord;
 }): Promise<unknown> {
   const { ledger, rowFor, detailsFor } = createLedgerStore();
@@ -162,7 +154,6 @@ async function runAndReadPayload(input: {
     normalizedRequest: input.normalizedRequest,
     providerId: 'balldontlie',
     submittedAt: new Date('2026-05-30T12:00:00.000Z'),
-    runType: input.runType,
     trigger: JobTrigger.SCHEDULE,
   });
   const syncRun = syncRuns.at(0);
@@ -171,11 +162,12 @@ async function runAndReadPayload(input: {
   }
 
   await ledger.executeFeedRun(syncRun, async () => input.job);
-  return { ...rowFor(syncRun).payload, ...detailsFor(syncRun) };
+  const { summary, stats, changedCount, errorCount } = rowFor(syncRun);
+  return { summary, stats, changedCount, errorCount, ...detailsFor(syncRun) };
 }
 
 describe('sync orchestration equivalence', () => {
-  it('pool-master-rop.68.2.6 persists equivalent scheduled and manual event field diagnostics', async () => {
+  it('records the same outcome and diagnostics for equivalent scheduled and manual field syncs', async () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const job = createJob({
       jobType: 'EVENT_PARTICIPANTS_SYNC',
@@ -195,21 +187,15 @@ describe('sync orchestration equivalence', () => {
 
     const scheduledPayload = await runAndReadPayload({
       normalizedRequest: createEventRequest({ source: 'SCHEDULED', feed: 'EVENTPARTICIPANTS', now }),
-      runType: 'SCHEDULED_EVENT_SYNC',
       job,
     });
     const manualPayload = await runAndReadPayload({
       normalizedRequest: createEventRequest({ source: 'MANUAL', feed: 'EVENTPARTICIPANTS', now }),
-      runType: 'MANUAL_EVENT_SYNC',
       job,
     });
 
-    expect(stripAllowedSourceDifferences(scheduledPayload)).toEqual(stripAllowedSourceDifferences(manualPayload));
+    expect(clonePayload(scheduledPayload)).toEqual(clonePayload(manualPayload));
     expect(clonePayload(scheduledPayload)).toMatchObject({
-      requestPayload: {
-        eventId: 'event-1',
-        source: 'SCHEDULED',
-      },
       providerPayload: {
         operation: 'EVENTPARTICIPANTS',
         rawCaptured: true,
@@ -220,10 +206,9 @@ describe('sync orchestration equivalence', () => {
         participantsReturned: 0,
       },
     });
-    expect(clonePayload(scheduledPayload).requestPayload).not.toHaveProperty('effectiveWindow');
   });
 
-  it('pool-master-rop.68.2.6 persists equivalent scheduled and manual failed live-score diagnostics', async () => {
+  it('records the same failed outcome and diagnostics for equivalent scheduled and manual live-score syncs', async () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const job = createJob({
       jobType: 'EVENT_LIVE_SCORES_SYNC',
@@ -239,22 +224,18 @@ describe('sync orchestration equivalence', () => {
 
     const scheduledPayload = await runAndReadPayload({
       normalizedRequest: createEventRequest({ source: 'SCHEDULED', feed: 'EVENTLIVESCORES', now }),
-      runType: 'SCHEDULED_EVENT_SYNC',
       job,
     });
     const manualPayload = await runAndReadPayload({
       normalizedRequest: createEventRequest({ source: 'MANUAL', feed: 'EVENTLIVESCORES', now }),
-      runType: 'MANUAL_EVENT_SYNC',
       job,
     });
 
-    expect(stripAllowedSourceDifferences(scheduledPayload)).toEqual(stripAllowedSourceDifferences(manualPayload));
+    expect(clonePayload(scheduledPayload)).toEqual(clonePayload(manualPayload));
     expect(clonePayload(scheduledPayload)).toMatchObject({
-      outcome: {
-        severity: 'ERROR',
-        summary: 'Failed event live scores sync for event-1: Provider returned no live scores',
-        errors: 1,
-      },
+      summary: 'Failed Live scores and results sync for event-1: Provider returned no live scores',
+      changedCount: null,
+      errorCount: 1,
       providerPayload: {
         operation: 'EVENTLIVESCORES',
         rawCaptured: true,

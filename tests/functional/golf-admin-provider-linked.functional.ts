@@ -108,7 +108,7 @@ async function waitForSyncRuns(ids: string[]): Promise<void> {
     if (rows.length === ids.length && terminal.length === ids.length) {
       const failed = rows.find((r) => r.status === 'FAILED');
       if (failed) {
-        throw new Error(`Sync run ${failed.id} FAILED: ${JSON.stringify({ payload: failed.payloadJson, details: failed.detailsJson })}`);
+        throw new Error(`Sync run ${failed.id} FAILED: ${JSON.stringify({ summary: failed.summary, details: failed.detailsJson })}`);
       }
       return;
     }
