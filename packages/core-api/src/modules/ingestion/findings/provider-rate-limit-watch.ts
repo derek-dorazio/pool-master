@@ -86,16 +86,17 @@ export class ProviderRateLimitWatch {
     const streak = this.streakOf(code);
     const now = this.now();
     streak.since ??= now;
-    const elapsedMs = now - streak.since;
+    const since = streak.since;
+    const elapsedMs = now - since;
     const crossed = this.thresholdsMs(code).some((threshold) => threshold > streak.checkedMs && threshold <= elapsedMs);
     if (!crossed) return;
     streak.checkedMs = elapsedMs;
     this.queue(code, streak, async () => {
       try {
-        await this.raise(code, streak, elapsedMs);
+        await this.raise(code, streak, since, elapsedMs);
       } catch (error) {
-        // The next refusal tries again.
-        streak.checkedMs = -1;
+        // The next refusal tries again, if it is still the same streak.
+        if (streak.since === since) streak.checkedMs = -1;
         throw error;
       }
     });
@@ -130,8 +131,13 @@ export class ProviderRateLimitWatch {
     return [PROVIDER_RATE_LIMITED_WARNING_AFTER_MS, ...this.deps.providers.enabledLeagues(code).map((league) => league.quietAfterMinutes * 60_000)];
   }
 
-  /** Raises each of the Provider's leagues whose severity the streak has changed. */
-  private async raise(code: ProviderCode, streak: Streak, elapsedMs: number): Promise<void> {
+  /**
+   * Raises each of the Provider's leagues whose severity the streak begun at `since` has changed.
+   * Work queued for a streak that has since ended is dropped, before the read and after it, so a
+   * flapping Provider's old raise never lands on, or is recorded against, the next streak.
+   */
+  private async raise(code: ProviderCode, streak: Streak, since: number, elapsedMs: number): Promise<void> {
+    if (streak.since !== since) return;
     const provider = this.deps.providers.byCode(code);
     if (provider === undefined) return;
     const quietMinutesOf = new Map(this.deps.providers.enabledLeagues(code).map((league) => [league.id, league.quietAfterMinutes] as const));
@@ -146,9 +152,11 @@ export class ProviderRateLimitWatch {
       changed.push({ sportLeagueId: league.id, severity });
     }
     if (changed.length === 0) return;
-    // The streak ended while the leagues were read: its answer has resolved, and nothing is raised.
-    if (streak.since === null) return;
+    // The streak ended while the leagues were read: its answer resolves, and nothing is raised.
+    if (streak.since !== since) return;
     await this.deps.findings.raiseProviderRateLimited({ providerId: provider.id, leagues: changed });
+    // An answer during the write queues its resolve after this; the next streak starts from nothing.
+    if (streak.since !== since) return;
     for (const league of changed) streak.raised.set(league.sportLeagueId, league.severity);
     streak.mayHaveOpen = true;
   }
