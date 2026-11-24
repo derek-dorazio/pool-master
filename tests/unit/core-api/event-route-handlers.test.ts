@@ -127,8 +127,6 @@ function fakes() {
     listTourEventsForYear: fn([]),
     linkScoreSource: fn(undefined),
     unlinkScoreSource: fn(undefined),
-    startLiveSimulation: fn({ startsAt: AT, endsAt: AT, minutesPerRound: 5, phase: 'RUNNING', currentRound: 1 }),
-    getLiveSimulation: fn({ startsAt: AT, endsAt: AT, minutesPerRound: 5, phase: 'RUNNING', currentRound: 1 }),
   };
   const eventOverviews = { getEventOverview: fn<SportEventOverview | null>(EVENT_OVERVIEW) };
   const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedFeeds: ['EVENTPARTICIPANTS'], submittedAt: AT, syncRuns: [] }) };
@@ -282,17 +280,6 @@ describe('event writes', () => {
     expect([moved.body, unlinked.body]).toEqual([expect.objectContaining({ event: expect.objectContaining({ id: EVENT_ID }) as unknown }), expect.objectContaining({ event: expect.anything() as unknown })]);
   });
 
-  it('starts a live simulation at the body\'s pace, or the default with no body, and reads one', async () => {
-    const { scoreSource, handlers } = fakes();
-
-    const started = await callHandler(handlers.startLiveSimulation, stubRequest({ params, body: { minutesPerRound: 5 } }));
-    await callHandler(handlers.startLiveSimulation, stubRequest({ params }));
-    const read = await callHandler(handlers.getLiveSimulation, stubRequest({ params }));
-
-    expect(scoreSource.startLiveSimulation.mock.calls).toEqual([[EVENT_ID, { minutesPerRound: 5 }], [EVENT_ID, { minutesPerRound: undefined }]]);
-    expect(started.body).toMatchObject({ sportEventId: EVENT_ID, startsAt: ISO, phase: 'RUNNING' });
-    expect(read.body).toMatchObject({ sportEventId: EVENT_ID, currentRound: 1 });
-  });
 });
 
 describe('field refresh from the provider', () => {

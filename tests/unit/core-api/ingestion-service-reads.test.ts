@@ -94,7 +94,7 @@ describe('IngestionService.listProviders', () => {
       expect.objectContaining({
         providerId: 'alpha', status: 'DEGRADED', errorRate: 0.2, latencyMs: 900,
         lastEventAt: new Date('2026-05-01T00:00:00.000Z'), activeEventCount: 0,
-        sportsCovered: [Sport.GOLF], supportsLiveSimulation: false,
+        sportsCovered: [Sport.GOLF],
       }),
     ]);
   });
@@ -303,16 +303,6 @@ describe('IngestionService.syncEventData refusals', () => {
     expect(runs.createWithJob).not.toHaveBeenCalled();
   });
 
-  it('refuses a mock event state for a provider that has no mock controls, and records no run', async () => {
-    const runs = syncRuns();
-    const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn() });
-
-    await expect(service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs })
-      .syncEventData({ ...REQUEST, mockEventState: 'live' }, 'admin', 'a@x.test'))
-      .rejects.toMatchObject({ name: 'MockEventStateUnsupportedError' });
-    expect(runs.createWithJob).not.toHaveBeenCalled();
-    expect(runs.jobs.rows).toEqual([]);
-  });
 });
 
 describe('IngestionService manual sync job (#1441)', () => {

@@ -53,12 +53,6 @@ declare global {
       AWS_ACCESS_KEY_ID?: string;
       AWS_SECRET_ACCESS_KEY?: string;
 
-      // core-api sport-data provider bindings
-      SPORT_DATA_DEFAULT_PROVIDER?: string;
-      SPORT_DATA_PROVIDER_BINDINGS_JSON?: string;
-      SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME?: string;
-      SPORT_DATA_MOCK_PROVIDER_OVERRIDE_REASON?: string;
-
       // mock-contest-feed-provider
       SCENARIO_DIR?: string;
 

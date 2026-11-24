@@ -71,7 +71,6 @@ describe('IngestionService manual sync submission', () => {
       providerId: 'mock-contest-feed',
       eventId: '  golf-open-championship-2026  ',
       feeds: ['EVENTLIVESCORES', 'EVENTLIVESCORES'],
-      mockEventState: 'live',
     }, 'admin-1', 'admin@example.com');
 
     expect(result.eventId).toBe('golf-open-championship-2026');
@@ -91,14 +90,12 @@ describe('IngestionService manual sync submission', () => {
             userId: 'admin-1',
             email: 'admin@example.com',
           },
-          mockEventState: 'live',
         }),
       }),
     })]);
     const payloadJson = syncRuns.rows[0].payload;
     expect(payloadJson).not.toHaveProperty('source');
     expect(payloadJson).not.toHaveProperty('actor');
-    expect(payloadJson).not.toHaveProperty('mockEventState');
     expect(scheduler.runEventSync).not.toHaveBeenCalled();
 
     const runner = new BackgroundJobRunner({
@@ -111,7 +108,6 @@ describe('IngestionService manual sync submission', () => {
       providerId: 'mock-contest-feed',
       eventId: 'golf-open-championship-2026',
       feeds: ['EVENTLIVESCORES'],
-      mockEventState: 'live',
     });
   });
 

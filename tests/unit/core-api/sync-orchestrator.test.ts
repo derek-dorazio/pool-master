@@ -25,7 +25,7 @@ describe('SyncOrchestrator request model', () => {
     name: 'scheduler',
   } as const;
 
-  it('pool-master-rop.68.2.1: normalizes manual event sync mock override into provider options', () => {
+  it('pool-master-rop.68.2.1: normalizes a manual event sync: trims the event id and drops repeated feeds', () => {
     const normalized = normalizeSyncRequest({
       source: 'MANUAL',
       actor: rootAdminActor,
@@ -35,7 +35,6 @@ describe('SyncOrchestrator request model', () => {
         providerId: 'mock-provider',
         eventId: '  golf-open-championship-2026  ',
         feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
-        mockEventState: 'live',
       },
     }, { now: () => new Date('2026-05-30T12:00:00.000Z') });
 
@@ -48,12 +47,10 @@ describe('SyncOrchestrator request model', () => {
       providerId: 'mock-provider',
       eventId: 'golf-open-championship-2026',
       feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
-      mockEventState: 'live',
-      providerOptions: { mockEventState: 'live' },
     });
   });
 
-  it('normalizes a scheduled event sync with the system actor and no provider options', () => {
+  it('normalizes a scheduled event sync with the system actor', () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const orchestrator = new SyncOrchestrator({ now: () => now });
 
@@ -78,8 +75,6 @@ describe('SyncOrchestrator request model', () => {
         providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
         feeds: ['EVENTLIVESCORES'],
-        mockEventState: undefined,
-        providerOptions: undefined,
       },
       normalizedAt: now,
     });
@@ -196,19 +191,6 @@ describe('SyncOrchestrator request model', () => {
         feeds: ['EVENTLIVESCORES'],
       },
     }), 'INVALID_EVENT_ID');
-
-    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
-      source: 'SCHEDULED',
-      actor: schedulerActor,
-      scope: {
-        type: 'EVENT',
-        sport: Sport.GOLF,
-        providerId: 'mock-provider',
-        eventId: 'golf-open-championship-2026',
-        feeds: ['EVENTLIVESCORES'],
-        mockEventState: 'live',
-      },
-    }), 'MOCK_EVENT_STATE_REQUIRES_MANUAL_SOURCE');
   });
 });
 

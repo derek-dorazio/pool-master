@@ -31,7 +31,6 @@ import {
   providerSourceIdOf,
 } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
-import { supportsLiveSimulation, supportsMockEventStateControls } from './core/provider-interface';
 import type {
   EventSyncRequest,
   IngestionFeedType,
@@ -70,7 +69,6 @@ export interface ProviderSummary {
   /** The covered sports this provider is the default for (catalog browse, new links). */
   primaryForSports: Sport[];
   activeEventCount: number;
-  supportsLiveSimulation: boolean;
   /** The request rate its adapter holds to, a minute; null when the adapter does not pace itself. */
   requestsPerMinute: number | null;
   /** Whether its webhooks are on: switched on for it and its signing secret set. */
@@ -79,7 +77,7 @@ export interface ProviderSummary {
   syncedSportLeagueCount: number;
   /** Its jobs that ended on its rate limit, or wait to retry after it, in the last 24 hours (#1881). */
   rateLimitedJobsLast24h: number;
-  /** Its Provider row and leagues, with whether its signing secret is set; null for a provider with no row (the QA mock feed). */
+  /** Its Provider row and leagues, with whether its signing secret is set; null for a provider running without a row. */
   settings: (ProviderSettings & { webhookSecretSet: boolean }) | null;
 }
 
@@ -121,13 +119,6 @@ export class ProviderSyncRunNotFoundError extends Error {
   constructor(syncRunId: string) {
     super(`No sync run ${syncRunId}`);
     this.name = 'ProviderSyncRunNotFoundError';
-  }
-}
-
-export class MockEventStateUnsupportedError extends Error {
-  constructor(providerId: string) {
-    super(`Provider ${providerId} does not support mock event state controls`);
-    this.name = 'MockEventStateUnsupportedError';
   }
 }
 
@@ -283,7 +274,6 @@ export class IngestionService {
         sportsCovered,
         primaryForSports: sportsCovered.filter((sport) => this.registry.getProvider(sport)?.providerId === providerId),
         activeEventCount: events?.activeEventCount ?? 0,
-        supportsLiveSimulation: provider !== null && supportsLiveSimulation(provider),
         requestsPerMinute: row?.requestsPerMinute ?? provider?.requestsPerMinute ?? null,
         webhooksEnabled: row !== undefined && this.webhooks.isOn(row),
         syncedSportLeagueCount: syncedLeagueCounts.get(providerId) ?? 0,
@@ -357,9 +347,6 @@ export class IngestionService {
       );
       throw new SportProviderNotFoundError(request.sport, request.providerId);
     }
-    if (request.mockEventState && !supportsMockEventStateControls(provider)) {
-      throw new MockEventStateUnsupportedError(provider.providerId);
-    }
     const normalizedRequest = this.syncOrchestrator.normalizeRequest({
       source: 'MANUAL',
       actor: {
@@ -373,7 +360,6 @@ export class IngestionService {
         providerId: provider.providerId,
         eventId: request.eventId,
         feeds: request.feeds,
-        mockEventState: request.mockEventState,
       },
     });
     const normalizedScope = normalizedRequest.scope;
@@ -388,7 +374,6 @@ export class IngestionService {
       sport: normalizedScope.sport,
       eventId: normalizedScope.eventId,
       requestedFeeds: normalizedScope.feeds,
-      mockEventState: normalizedScope.mockEventState ?? null,
       providerId: provider.providerId,
       rootAdminUserId,
     }, 'Submitting manual event sync');
@@ -408,7 +393,6 @@ export class IngestionService {
         sport: normalizedScope.sport,
         providerId: normalizedScope.providerId,
         eventId: normalizedScope.eventId,
-        mockEventState: normalizedScope.mockEventState,
         ...(linkedEvent && { sportEventId: linkedEvent.sportEventId }),
       }, { start }),
     });
@@ -419,7 +403,6 @@ export class IngestionService {
       eventId: normalizedScope.eventId,
       providerId: provider.providerId,
       requestedFeeds: normalizedScope.feeds,
-      mockEventState: normalizedScope.mockEventState ?? null,
       syncRunIds: syncRuns.map((run) => run.id),
     }, 'Submitted manual event sync');
 
@@ -447,7 +430,7 @@ export class IngestionService {
     if (!scheduler) {
       throw new Error('Ingestion scheduler is required for manual event sync');
     }
-    const scope = { sport: payload.sport, providerId: payload.providerId, eventId: payload.eventId, mockEventState: payload.mockEventState ?? null };
+    const scope = { sport: payload.sport, providerId: payload.providerId, eventId: payload.eventId };
     this.logger?.debug({ ...scope, syncRunIds: payload.syncRunIds }, 'Executing submitted manual event sync');
     const stored = new Map((await this.syncRuns.findManyByIds(payload.syncRunIds)).map((run) => [run.id, run]));
     // Runs whose outcome the ledger could not write: the job fails after the rest have run.
@@ -481,7 +464,6 @@ export class IngestionService {
             providerId: payload.providerId,
             eventId: payload.eventId,
             feeds: [requestedFeed],
-            mockEventState: payload.mockEventState,
           }),
           { backgroundJobId: context.jobId },
         );

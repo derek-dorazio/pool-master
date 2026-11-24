@@ -2,11 +2,6 @@ import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type {
   DateRange,
-  LiveSimulationOptions,
-  LiveSimulationPhase,
-  LiveSimulationStatus,
-  ProviderEventSyncOptions,
-  ProviderLiveSimulationControls,
   ProviderHealthStatus,
   ProviderParticipant,
   ProviderPayloadCapture,
@@ -15,28 +10,22 @@ import type {
   SportDataProvider,
   SportEvent,
   SportEventDetail,
-} from '../core/provider-interface';
-// pool-master-rop.78.13 — consume the generated mock-contest-feed SDK
-// types instead of the hand-rolled response interfaces. The SDK is the
-// single source of truth for the mock-feed contract; replacing the
-// hand-rolled types with these aliases prevents future drift between
-// the adapter and the OpenAPI spec.
+} from '../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type {
   ListMockContestFeedScenariosResponse,
   ListMockContestFeedScenarioEventsResponse,
   GetMockContestFeedScenarioEventDetailResponse,
   GetMockContestFeedScoresSnapshotResponse,
-  GetMockContestFeedLiveReplayResponse,
-  StartMockContestFeedLiveReplayResponse,
 } from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
-import { errorMessage } from '../../../core/error-message';
-import { ProviderPayloadRecorder } from './provider-payload-recorder';
+import { errorMessage } from '../../packages/core-api/src/core/error-message';
+import { ProviderPayloadRecorder } from '../../packages/core-api/src/modules/ingestion/adapters/provider-payload-recorder';
+import type { FastifyInstance } from 'fastify';
+import { mockEventStateKinds, type MockEventStateKind } from '../../packages/mock-contest-feed-provider/src/contracts';
 
 type ScenarioSummaryResponse = ListMockContestFeedScenariosResponse;
 type EventListResponse = ListMockContestFeedScenarioEventsResponse;
 type EventDetailResponse = GetMockContestFeedScenarioEventDetailResponse;
 type ScoresSnapshotResponse = GetMockContestFeedScoresSnapshotResponse;
-type LiveReplayResponse = StartMockContestFeedLiveReplayResponse;
 
 type SupportedMockSport = ScenarioSummaryResponse['scenarios'][number]['sport'];
 type ContestantRecord = NonNullable<
@@ -55,14 +44,38 @@ type ContestantDelta = NonNullable<
  */
 const eventDetailFetchConcurrency = 8;
 
-export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics, ProviderLiveSimulationControls {
+/** An event state the mock feed can pin an event to, as its `mockEventState` query names them. */
+export type MockFeedEventState = MockEventStateKind;
+
+/**
+ * A fake sport data provider for functional and integration tests (#2039): it reads the mock
+ * contest feed (packages/mock-contest-feed-provider) over HTTP and maps it to the provider
+ * interface, as the production adapter it replaced did. It lives in test code only; the app takes
+ * it through `buildApp({ buildSportDataProviders })`. A test pins an event to a scripted state
+ * with `pinEventState`, which the mock feed answers through its own `mockEventState` query.
+ */
+export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics {
   readonly providerId = 'mock-contest-feed';
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered: Sport[] = [Sport.GOLF];
   private readonly payloads = new ProviderPayloadRecorder('mock-contest-feed.request');
   private readonly scenarioIdByEventId = new Map<string, string>();
 
-  constructor(private readonly baseUrl: string) {}
+  /** `pinnedStates` may be shared with `servePinControls`, so another process can pin through HTTP. */
+  constructor(
+    private readonly baseUrl: string,
+    private readonly pinnedStates: Map<string, MockFeedEventState> = new Map(),
+  ) {}
+
+  /** Answers the event's detail and scores in this scripted state until cleared. */
+  pinEventState(eventId: string, state: MockFeedEventState): void {
+    this.pinnedStates.set(eventId, state);
+  }
+
+  /** Answers the event as the mock feed loads it again. */
+  clearEventState(eventId: string): void {
+    this.pinnedStates.delete(eventId);
+  }
 
   clearProviderPayloads(): void {
     this.payloads.clearProviderPayloads();
@@ -83,10 +96,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     return events.filter((event) => isEventWithinDateRange(event.startDate.toISOString(), dateRange));
   }
 
-  async getEventDetails(
-    eventId: string,
-    options?: ProviderEventSyncOptions,
-  ): Promise<SportEventDetail | null> {
+  async getEventDetails(eventId: string): Promise<SportEventDetail | null> {
     const match = await this.findEventById(eventId);
     if (!match) {
       return null;
@@ -95,7 +105,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const detail = await this.fetchJson<EventDetailResponse>(
       withMockEventState(
         `/v1/scenarios/${match.scenarioId}/events/${eventId}/detail`,
-        options,
+        this.pinnedStates.get(eventId),
       ),
     );
     const participants = resolveParticipants(detail);
@@ -134,50 +144,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
   // requirements/product-requirements/features/contest-event-feed-integration/overview.md
   // — an earlier attempt put per-state scoring logic here and got it
   // backwards.
-  /**
-   * Starts the mock's time-driven live replay for one golf event (#382): from now on, its
-   * `/scores` moves hole by hole on the replay clock.
-   */
-  async startLiveSimulation(
-    eventId: string,
-    options: LiveSimulationOptions,
-  ): Promise<LiveSimulationStatus | null> {
-    const match = await this.findEventById(eventId);
-    if (!match) {
-      return null;
-    }
-
-    const replay = await this.sendJson<LiveReplayResponse>(
-      'PUT',
-      `/v1/scenarios/${match.scenarioId}/events/${eventId}/replay`,
-      options.minutesPerRound === undefined ? {} : { minutesPerRound: options.minutesPerRound },
-    );
-    return toLiveSimulationStatus(replay);
-  }
-
-  /** The mock answers 404 when no replay is running for the event; that maps to null. */
-  async getLiveSimulation(eventId: string): Promise<LiveSimulationStatus | null> {
-    const match = await this.findEventById(eventId);
-    if (!match) {
-      return null;
-    }
-
-    const path = `/v1/scenarios/${match.scenarioId}/events/${eventId}/replay`;
-    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}${path}`);
-    if (response.status === 404) {
-      return null;
-    }
-    if (!response.ok) {
-      throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
-    }
-    const replay = await this.readJson<GetMockContestFeedLiveReplayResponse>(path, response);
-    return toLiveSimulationStatus(replay);
-  }
-
-  async getLiveScores(
-    eventId: string,
-    options?: ProviderEventSyncOptions,
-  ): Promise<LiveScoreResult> {
+  async getLiveScores(eventId: string): Promise<LiveScoreResult> {
     const empty: LiveScoreResult = { category: 'GOLF', externalEventId: eventId, rounds: [] };
     const match = await this.findEventById(eventId);
     if (!match) {
@@ -187,7 +154,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     const liveScores = await this.fetchJson<ScoresSnapshotResponse>(
       withMockEventState(
         `/v1/scenarios/${match.scenarioId}/events/${eventId}/scores`,
-        options,
+        this.pinnedStates.get(eventId),
       ),
     );
 
@@ -295,16 +262,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
 
     const scenarios = await this.fetchJson<ScenarioSummaryResponse>('/v1/scenarios');
 
-    // #402 — the mock answers any `sandbox-<id>` in its sandbox scenario without listing it,
-    // so it is matched before listing every scenario's events, and cached like a listed one.
-    if (
-      eventId.startsWith(sandboxEventIdPrefix)
-      && scenarios.scenarios.some((scenario) => scenario.scenarioId === sandboxScenarioId)
-    ) {
-      this.scenarioIdByEventId.set(eventId, sandboxScenarioId);
-      return { scenarioId: sandboxScenarioId };
-    }
-
     for (const scenario of scenarios.scenarios) {
       const events = await this.fetchJson<EventListResponse>(
         `/v1/scenarios/${scenario.scenarioId}/events`,
@@ -316,19 +273,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
     }
 
     return null;
-  }
-
-  private async sendJson<T>(method: 'PUT', path: string, body: unknown): Promise<T> {
-    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}${path}`, {
-      method,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      throw new Error(`Mock contest feed request failed: ${response.status} ${response.statusText}`);
-    }
-
-    return this.readJson<T>(path, response);
   }
 
   private async fetchJson<T>(path: string): Promise<T> {
@@ -357,20 +301,13 @@ function isEventWithinDateRange(startsAt: string, dateRange?: DateRange): boolea
   return startTime >= dateRange.from.getTime() && startTime <= dateRange.to.getTime();
 }
 
-/**
- * The mock's sandbox scenario and event-id prefix (#402). Copies live in the mock's
- * scenario-store.ts and the web app's sport-event-score-source-card.tsx; rename all three.
- */
-const sandboxScenarioId = 'golf-sandbox';
-const sandboxEventIdPrefix = 'sandbox-';
-
-function withMockEventState(path: string, options?: ProviderEventSyncOptions): string {
-  if (!options?.mockEventState) {
+function withMockEventState(path: string, state: MockFeedEventState | undefined): string {
+  if (!state) {
     return path;
   }
 
   const separator = path.includes('?') ? '&' : '?';
-  return `${path}${separator}mockEventState=${encodeURIComponent(options.mockEventState)}`;
+  return `${path}${separator}mockEventState=${encodeURIComponent(state)}`;
 }
 
 /**
@@ -548,23 +485,28 @@ function mergeContestantView(
   return Array.from(merged.values());
 }
 
-function toLiveSimulationStatus(replay: LiveReplayResponse): LiveSimulationStatus {
-  return {
-    startsAt: new Date(replay.startsAt),
-    endsAt: new Date(replay.endsAt),
-    minutesPerRound: replay.minutesPerRound,
-    phase: toLiveSimulationPhase(replay.phase),
-    currentRound: replay.currentRound,
-  };
-}
+/** Where `servePinControls` answers: PUT pins an event's state, DELETE clears it. */
+export const PIN_CONTROL_PATH = '/test/event-states/:eventId';
 
-function toLiveSimulationPhase(phase: LiveReplayResponse['phase']): LiveSimulationPhase {
-  switch (phase) {
-    case 'scheduled':
-      return 'SCHEDULED';
-    case 'in_progress':
-      return 'IN_PROGRESS';
-    case 'completed':
-      return 'COMPLETED';
-  }
+/**
+ * Serves the pins on a test server (the functional daemon's copy of the mock feed), so a test in
+ * another process pins an event's state before it submits a sync. Test code only.
+ */
+export function servePinControls(app: FastifyInstance, pinnedStates: Map<string, MockFeedEventState>): void {
+  app.put<{ Params: { eventId: string }; Body: { state: MockFeedEventState } }>(PIN_CONTROL_PATH, {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['state'],
+        properties: { state: { type: 'string', enum: [...mockEventStateKinds] } },
+      },
+    },
+  }, async (request, reply) => {
+    pinnedStates.set(request.params.eventId, request.body.state);
+    return reply.code(204).send();
+  });
+  app.delete<{ Params: { eventId: string } }>(PIN_CONTROL_PATH, async (request, reply) => {
+    pinnedStates.delete(request.params.eventId);
+    return reply.code(204).send();
+  });
 }

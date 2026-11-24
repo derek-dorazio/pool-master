@@ -147,9 +147,13 @@ Rules:
   logging, and tests together.
 - Missing provider configuration surfaces as disabled ingestion or a typed
   startup/configuration error, never as a fallback to another provider or to fabricated data.
-- *Status:* `packages/mock-contest-feed-provider` and its QA service task predate this rule.
-  The QA task is disabled; the wiring, mock-state branches and the root admin live simulation
-  tool leave production source with the provider table (#1917), and the module itself is
+- **Tests inject their fake provider through the app.** `buildApp` takes a provider factory
+  (`buildSportDataProviders`); production passes none and builds from the Provider rows, and a
+  functional or integration test passes one that adds its fake. No environment variable selects
+  a provider.
+- *Status:* `packages/mock-contest-feed-provider` predates this rule. It is test infrastructure
+  only: production source never imports it (ESLint `no-restricted-imports` on
+  `packages/core-api/src`), the QA deploy no longer ships it (#2039), and the module itself is
   removed by #1981. Add nothing new that uses it.
 
 ### Provider calls are rate limited and resilient

@@ -2207,30 +2207,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/live-simulation": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get the simulated live scoring running for an event
-         * @description Root admin only. The simulation started by startEventLiveSimulation, with its current round; poll it to watch the simulation advance. 404 LIVE_SIMULATION_NOT_RUNNING when none is running: never started, or the provider restarted and forgot it.
-         */
-        get: operations["getEventLiveSimulation"];
-        put?: never;
-        /**
-         * Start simulated live scoring from the event's score source
-         * @description Root admin only. For testing a live contest: asks the linked provider to play the event's four rounds forward on its own clock, hole by hole; calling again restarts from round 1. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS. Only providers whose summary has supportsLiveSimulation (the QA mock feed) accept it.
-         */
-        post: operations["startEventLiveSimulation"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/events/{eventId}/rounds": {
         parameters: {
             query?: never;
@@ -12597,34 +12573,6 @@ export interface components {
             providerId: string;
             /** @description From a provider catalog browse. */
             externalId: string;
-        };
-        /** @description Starts, or restarts from round 1, the score source's simulated live scoring for a linked event. */
-        StartSportEventLiveSimulationRequest: {
-            /** @description How long each of the four simulated rounds lasts. Defaults to the provider's own default (20 on the mock feed). */
-            minutesPerRound?: number;
-        };
-        /** @description A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS. */
-        SportEventLiveSimulationResponse: {
-            /** Format: uuid */
-            sportEventId: string;
-            /**
-             * Format: date-time
-             * @description When simulated round 1 started.
-             */
-            startsAt: string;
-            /**
-             * Format: date-time
-             * @description When simulated round 4 finishes; scores stop changing after this.
-             */
-            endsAt: string;
-            minutesPerRound: number;
-            /**
-             * @description Where the simulation is on its own clock.
-             * @enum {string}
-             */
-            phase: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
-            /** @description The round being played now; null before the start and after the finish. */
-            currentRound: number | null;
         };
         /** @description A scheduled round of an event: its own date, and where its results stand. */
         SportEventRoundDto: {
@@ -24170,11 +24118,6 @@ export interface components {
             providerId: string;
             /** @description Feed types to run for a specific event sync request. */
             feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
-            /**
-             * @description Optional mock-provider-only event state override for manual QA event syncs.
-             * @enum {string}
-             */
-            mockEventState?: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction";
         };
         /** @description One of a provider's own leagues (#1997). */
         ProviderLeagueDto: {
@@ -24294,8 +24237,6 @@ export interface components {
             primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
             /** @description The provider's events that are scheduled or in progress. */
             activeEventCount: number;
-            /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
-            supportsLiveSimulation: boolean;
             /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
             requestsPerMinute: number | null;
             /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
@@ -24304,7 +24245,7 @@ export interface components {
             syncedSportLeagueCount: number;
             /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
             rateLimitedJobsLast24h: number;
-            /** @description The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed). */
+            /** @description The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row. */
             settings: {
                 /**
                  * Format: uuid
@@ -24548,8 +24489,6 @@ export interface components {
                 primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description The provider's events that are scheduled or in progress. */
                 activeEventCount: number;
-                /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
-                supportsLiveSimulation: boolean;
                 /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
                 requestsPerMinute: number | null;
                 /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
@@ -24558,7 +24497,7 @@ export interface components {
                 syncedSportLeagueCount: number;
                 /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
                 rateLimitedJobsLast24h: number;
-                /** @description The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed). */
+                /** @description The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row. */
                 settings: {
                     /**
                      * Format: uuid
@@ -24745,11 +24684,6 @@ export interface components {
                         email: string;
                     };
                     /**
-                     * @description The mock feed state a manual QA sync asked for; null otherwise.
-                     * @enum {string|null}
-                     */
-                    mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
-                    /**
                      * Format: date-time
                      * @description When the request was validated and normalized.
                      */
@@ -24877,11 +24811,6 @@ export interface components {
                         /** @description Their email at the time, for the audit trail. */
                         email: string;
                     };
-                    /**
-                     * @description The mock feed state a manual QA sync asked for; null otherwise.
-                     * @enum {string|null}
-                     */
-                    mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
                     /**
                      * Format: date-time
                      * @description When the request was validated and normalized.
@@ -25140,11 +25069,6 @@ export interface components {
                             email: string;
                         };
                         /**
-                         * @description The mock feed state a manual QA sync asked for; null otherwise.
-                         * @enum {string|null}
-                         */
-                        mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
-                        /**
                          * Format: date-time
                          * @description When the request was validated and normalized.
                          */
@@ -25284,11 +25208,6 @@ export interface components {
                             /** @description Their email at the time, for the audit trail. */
                             email: string;
                         };
-                        /**
-                         * @description The mock feed state a manual QA sync asked for; null otherwise.
-                         * @enum {string|null}
-                         */
-                        mockEventState: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction" | null;
                         /**
                          * Format: date-time
                          * @description When the request was validated and normalized.
@@ -33036,153 +32955,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    getEventLiveSimulation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventLiveSimulationResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    startEventLiveSimulation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["StartSportEventLiveSimulationRequest"];
-            };
-        };
-        responses: {
-            /** @description A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventLiveSimulationResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
                 headers: {
                     [name: string]: unknown;
                 };

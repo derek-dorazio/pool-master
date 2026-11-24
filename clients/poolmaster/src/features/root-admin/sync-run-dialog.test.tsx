@@ -60,7 +60,6 @@ const REQUEST_PAYLOAD = {
   eventId: 'masters-2026',
   source: 'MANUAL',
   actor: { type: 'ROOT_ADMIN', userId: 'root-admin-1', email: 'root@example.test' },
-  mockEventState: null,
   normalizedAt: '2026-04-09T10:00:00.000Z',
 };
 

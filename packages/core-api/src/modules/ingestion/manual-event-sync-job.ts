@@ -5,7 +5,6 @@
 
 import { z } from 'zod';
 import { Sport } from '@poolmaster/shared/domain';
-import { MockEventStateSchema } from '@poolmaster/shared/dto';
 
 export const ManualEventSyncJobPayloadSchema = z.object({
   syncRunIds: z.array(z.uuid()).min(1),
@@ -15,6 +14,5 @@ export const ManualEventSyncJobPayloadSchema = z.object({
   eventId: z.string().min(1),
   /** The PoolMaster event linked to it, when known when queued (#1819): Activity's scope. */
   sportEventId: z.string().min(1).optional(),
-  mockEventState: MockEventStateSchema.optional(),
 });
 export type ManualEventSyncJobPayload = z.infer<typeof ManualEventSyncJobPayloadSchema>;

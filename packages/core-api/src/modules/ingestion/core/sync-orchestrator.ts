@@ -1,6 +1,5 @@
 import type { Sport } from '@poolmaster/shared/domain';
-import type { IngestionFeedType, MockEventState, SyncRequestSource } from '@poolmaster/shared/dto';
-import type { ProviderEventSyncOptions } from './provider-interface';
+import type { IngestionFeedType, SyncRequestSource } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
 /**
@@ -43,7 +42,6 @@ export interface EventSyncScopeInput {
   providerId: string;
   eventId: string;
   feeds: readonly IngestionFeedType[];
-  mockEventState?: MockEventState;
 }
 
 export type SyncScopeInput = EventSyncScopeInput;
@@ -60,8 +58,6 @@ export interface NormalizedEventSyncScope {
   providerId: string;
   eventId: string;
   feeds: EventSyncFeed[];
-  mockEventState?: MockEventState;
-  providerOptions?: ProviderEventSyncOptions;
 }
 
 export type NormalizedSyncScope = NormalizedEventSyncScope;
@@ -79,8 +75,7 @@ export type SyncRequestValidationCode =
   | 'WEBHOOK_REQUIRES_WEBHOOK_ACTOR'
   | 'EMPTY_FEED_LIST'
   | 'INVALID_EVENT_FEED'
-  | 'INVALID_EVENT_ID'
-  | 'MOCK_EVENT_STATE_REQUIRES_MANUAL_SOURCE';
+  | 'INVALID_EVENT_ID';
 
 export class SyncRequestValidationError extends Error {
   /** Activity's Error column (#1861). */
@@ -131,23 +126,12 @@ function normalizeScope(request: SyncOrchestratorRequest): NormalizedSyncScope {
     );
   }
 
-  if (request.scope.mockEventState && request.source !== 'MANUAL') {
-    throw new SyncRequestValidationError(
-      'MOCK_EVENT_STATE_REQUIRES_MANUAL_SOURCE',
-      'Mock event-state overrides are only valid for manual event sync requests.',
-    );
-  }
-
   return {
     type: 'EVENT',
     sport: request.scope.sport,
     providerId: request.scope.providerId,
     eventId,
     feeds: normalizeEventFeeds(request.scope.feeds),
-    mockEventState: request.scope.mockEventState,
-    providerOptions: request.scope.mockEventState
-      ? { mockEventState: request.scope.mockEventState }
-      : undefined,
   };
 }
 
