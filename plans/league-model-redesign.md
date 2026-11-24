@@ -709,6 +709,15 @@ Contest:
   contest assigned to it is final (not on 31 December). History lists contests by the
   calendar year they completed. The plan's earlier "LeagueYearFinish → Season FK" is
   replaced.
+- Finishes and medals (Derek 2026-11-24, slice 20): `LeagueYearFinish` is renamed
+  `ContestSquadFinish` (one row per team per settled contest, from its best entry: place,
+  tied, ranked entries, weight, points, `championshipYear` copied from the contest). Every
+  contest type with a finishing order writes them (tiered, budget, quick pick, pick'em,
+  survivor, bracket, Clutch Card); squares does not. Medals count gold, silver, bronze and
+  top 10 (new) from these rows in one shared function, over every contest that writes them;
+  cups and the Championship filter them by their own rules. A team's run in a recurring
+  contest (its Masters finishes by Season) reads the same rows through the covered slot.
+  Hall of Lame and the record book are unchanged apart from the year rename.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
