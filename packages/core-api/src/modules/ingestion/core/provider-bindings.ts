@@ -4,6 +4,7 @@ import type { ProviderRegistry } from './provider-registry';
 import { BALLDONTLIE_PROVIDER_ID, BalldontlieAdapter, MockContestFeedAdapter } from '../adapters';
 import { AppEnvironment, isDeployedEnvironment, readAppEnv } from '../../../core/config';
 import { errorMessage } from '../../../core/error-message';
+import { readBackgroundJobMaxTasks } from '../../background-jobs/background-job-runner';
 
 export interface ProviderBinding {
   readonly baseUrl?: string;
@@ -42,7 +43,13 @@ const providerFactories: Readonly<Partial<Record<string, ProviderFactory>>> = {
     if (!apiKey) {
       throw new Error(`Provider "${BALLDONTLIE_PROVIDER_ID}" requires the BALLDONTLIE_API_KEY environment variable.`);
     }
-    return new BalldontlieAdapter({ baseUrl: binding.baseUrl, apiKey, requestsPerMinute: binding.requestsPerMinute, ...(logger && { logger }) });
+    return new BalldontlieAdapter({
+      baseUrl: binding.baseUrl,
+      apiKey,
+      requestsPerMinute: binding.requestsPerMinute,
+      maxTasks: readBackgroundJobMaxTasks(env),
+      ...(logger && { logger }),
+    });
   },
 };
 

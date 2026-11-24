@@ -49,6 +49,7 @@ import {
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
 import { syncChangedRows } from './core/sync-write-diagnostics';
+import { jobDeferredUntilOf } from '../background-jobs/job-error-type';
 
 /** The window the provider list counts rate-limited jobs over (#1881). */
 const DAY_MS = 24 * 3_600_000;
@@ -566,6 +567,10 @@ export class IngestionService {
         );
         changedCount += syncChangedRows(record.writeDiagnostics);
       } catch (error) {
+        // The provider turned the feed away for now (league model 1c): its run is marked FAILED
+        // as rate limited, and the job is queued again for when the provider will answer, so the
+        // runs still SUBMITTED run then rather than be refused one after another now.
+        if (jobDeferredUntilOf(error) !== null) throw error;
         if (error instanceof SyncRunOutcomeUnrecordedError) {
           unrecorded.push(syncRun.id);
           this.logger?.error({ ...scope, syncRunId: syncRun.id, requestedFeed, error }, 'Manual event sync feed failed and its run could not be marked FAILED; the job will be retried');

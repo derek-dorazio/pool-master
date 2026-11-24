@@ -189,6 +189,7 @@ job runs outside any request: its own reads, no request query budget.
 | The handler throws | `QUEUED` again, due 1, 5 then 30 minutes later; on the fourth failure, `FAILED` |
 | Its stored payload fails its schema | `FAILED` at once: every try would fail alike |
 | The handler throws `PermanentBackgroundJobError` | `FAILED` at once |
+| The handler throws an error that asks to run later (`deferUntil`, such as a provider's `ProviderRateLimitedError`) | `QUEUED` again, due then, with the attempt handed back: the try never counts toward its four, and its error and type stay for Activity |
 | Its task stops mid-run | still `RUNNING` until the lease ends, then due again on any task |
 | Its leases lapsed on every try | `FAILED` |
 | A try outlives its lease and another task claims it | the newer attempt's outcome: each mark is fenced to the attempt that claimed it, so the late one writes nothing |
