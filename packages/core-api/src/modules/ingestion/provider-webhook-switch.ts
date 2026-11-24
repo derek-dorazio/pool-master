@@ -9,7 +9,10 @@ import { providerSourceIdOf, type ProviderCode, type ProviderSettings } from '@p
 import { providerByCode } from './provider-settings-store';
 
 /** Each provider's webhook signing secret, by its code; a provider with none set is left out. */
-export type ProviderWebhookSecrets = Readonly<Partial<Record<ProviderCode, string>>>;
+export type ProviderWebhookSecrets = Readonly<Partial<Record<ProviderCode, WebhookSigningSecret>>>;
+
+/** A webhook signing secret, from Secrets Manager: a credential, not a display word. */
+type WebhookSigningSecret = string;
 
 export class ProviderWebhookSwitch {
   constructor(

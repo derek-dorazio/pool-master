@@ -14,7 +14,10 @@ export const MANUAL_ADMIN_PROVIDER_ID = 'manual-admin';
  * its Provider code: the adapter's own id. It goes when those columns become Provider foreign
  * keys (league model slices 1e and 7).
  */
-const PROVIDER_SOURCE_IDS: Readonly<Record<ProviderCode, string>> = {
+/** A provider id as its events carry it (`balldontlie`): an id, not a display word. */
+type ProviderSourceId = string;
+
+const PROVIDER_SOURCE_IDS: Readonly<Record<ProviderCode, ProviderSourceId>> = {
   [ProviderCode.BALLDONTLIE]: 'balldontlie',
 };
 
