@@ -1,7 +1,8 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, BracketAdvancement, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, BracketAdvancement, ParticipantInactiveReason, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
@@ -802,18 +803,18 @@ describe('Participant and provider-mapping repositories — additions', () => {
     const { participants, mappings } = repos();
     const [ana] = await createParticipants(['Ana']);
     await getPrisma().participantProviderMapping.create({
-      data: { participantId: ana.id, sportLeagueId: ana.sportLeagueId, providerId: 'integration-test', externalId: 'pg-1', confidence: 'EXACT' },
+      data: { participantId: ana.id, sportLeagueId: ana.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'pg-1' },
     });
 
     await expect(participants.findByIds([ana.id, randomUUID()])).resolves.toEqual([expect.objectContaining({ id: ana.id })]);
     await expect(mappings.findByParticipant(ana.id)).resolves.toEqual([expect.objectContaining({ externalId: 'pg-1' })]);
-    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: ana.sportLeagueId }, ['pg-1', 'pg-2'])).resolves.toEqual([
+    await expect(mappings.findByProviderExternalIds(ProviderCode.BALLDONTLIE, { sportLeagueId: ana.sportLeagueId }, ['pg-1', 'pg-2'])).resolves.toEqual([
       expect.objectContaining({ participantId: ana.id }),
     ]);
-    await expect(mappings.findByProviderExternalIds('integration-test', { sport: Sport.GOLF }, ['pg-1'])).resolves.toEqual([
+    await expect(mappings.findByProviderExternalIds(ProviderCode.BALLDONTLIE, { sport: Sport.GOLF }, ['pg-1'])).resolves.toEqual([
       expect.objectContaining({ participantId: ana.id }),
     ]);
-    await expect(mappings.findByProviderExternalIds('integration-test', { sport: Sport.TENNIS }, ['pg-1'])).resolves.toEqual([]);
+    await expect(mappings.findByProviderExternalIds(ProviderCode.BALLDONTLIE, { sport: Sport.TENNIS }, ['pg-1'])).resolves.toEqual([]);
   });
 });
 

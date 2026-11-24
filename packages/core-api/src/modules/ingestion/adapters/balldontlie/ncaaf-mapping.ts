@@ -13,8 +13,7 @@
  * playoff teams (2025: Indiana v Ohio State, the Big Ten title), and read with the bracket it
  * would link to the later playoff match between the same two teams.
  *
- * Team ids are prefixed (`ncaaf-team-12`): a bare number would collide with another sport's.
- * Each team carries the league's keyword in `metadata.tour`, so it links by name only to the
+ * Team ids are the provider's own (`participantFeedId`, #2040). Each team carries the league's keyword in `metadata.tour`, so it links by name only to the
  * site's teams in the College Football Playoff league.
  */
 
@@ -25,6 +24,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { NcaafGame, NcaafTeam } from './ncaaf-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { participantFeedId } from './participant-feed-id';
 
 export const NCAAF_GAMES_PATH = '/ncaaf/v1/games';
 export const NCAAF_TEAMS_PATH = '/ncaaf/v1/teams';
@@ -88,9 +88,6 @@ export function parseCfpScope(eventId: string): CfpScope | null {
   return match ? { season: Number(match[1]) } : null;
 }
 
-export function ncaafTeamExternalId(teamId: number): string {
-  return `ncaaf-team-${String(teamId)}`;
-}
 
 /** A field the document leaves optional but without which a row cannot be used. */
 function required<Value>(value: Value | undefined, path: string, row: string, field: string): Value {
@@ -139,7 +136,7 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], windowC
 export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderParticipant {
   const id = required(team.id, path, 'a team', 'id');
   return {
-    externalId: ncaafTeamExternalId(id),
+    externalId: participantFeedId(id),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.AMERICAN_FOOTBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
@@ -176,8 +173,8 @@ export function toCfpGameScoreUpdates(games: readonly NcaafGame[]): GameScoreUpd
     const started = hasStarted(state);
     return [{
       externalGameId: String(required(game.id, NCAAF_GAMES_PATH, name, 'id')),
-      homeTeamExternalId: ncaafTeamExternalId(home),
-      awayTeamExternalId: ncaafTeamExternalId(visitor),
+      homeTeamExternalId: participantFeedId(home),
+      awayTeamExternalId: participantFeedId(visitor),
       state,
       homeScore: started ? game.home_score ?? null : null,
       awayScore: started ? game.away_score ?? null : null,

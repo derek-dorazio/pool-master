@@ -25,7 +25,7 @@ export type EventFieldUploadPreviewRow = SportEventParticipantUploadPreviewRespo
 export type EventFieldUploadValues = NonNullable<EventFieldUploadPreviewRow['after']>;
 
 export const EVENT_FIELD_UPLOAD_HEADERS = [
-  'externalId',
+  'participantId',
   'playerName',
   'ranking',
   'oddsToWin',
@@ -124,7 +124,7 @@ export function eventFieldUploadTemplateRows(
   entries: readonly SportEventParticipantDto[],
 ): Array<Array<string | number>> {
   return entries.map((entry) => [
-    entry.participant.externalId ?? '',
+    entry.participant.id,
     entry.participant.name,
     entry.ranking ?? '',
     entry.oddsToWin ?? '',

@@ -291,9 +291,10 @@ export type ProviderSyncRunDetailsDto = z.infer<typeof ProviderSyncRunDetailsDto
 
 export const ProviderSyncRunDtoSchema = z.object({
   id: z.string(),
-  providerId: z.string(),
+  providerId: z.uuid().describe('The Provider the run read.'),
+  providerName: z.string().describe('That Provider\'s name.'),
   sport: SportDtoSchema,
-  eventId: z.string().nullable().describe('Provider event identifier when the run was narrowed to one event; null for a whole-sport run.'),
+  eventId: z.string().nullable().describe('The provider\'s id for the run\'s event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.'),
   kind: ProviderSyncKindSchema,
   trigger: JobTriggerSchema,
   sportLeagueId: z.uuid().nullable().describe('The sport league an EVENTS run synced, or a FIELD or SCORES run\'s event\'s league, where known.'),
@@ -318,7 +319,7 @@ export const LeagueEventsSyncRequestSchema = z.object({
 export type LeagueEventsSyncRequest = z.infer<typeof LeagueEventsSyncRequestSchema>;
 
 export const ProviderSyncRunListQuerySchema = z.object({
-  providerId: z.string().optional(),
+  providerId: z.uuid().optional().describe('Only the runs of this Provider.'),
   sport: SportDtoSchema.optional(),
   status: ProviderSyncRunStatusSchema.optional(),
   from: DateTimeSchema.optional().describe('Earliest submission time to include. Defaults to 6 hours before `to`.'),
@@ -343,7 +344,7 @@ export type ProviderManualSyncSubmissionResponse = z.infer<typeof ProviderManual
 // --- Unmapped provider participants ---
 
 export const UnmappedProviderParticipantDtoSchema = z.object({
-  providerId: z.string(),
+  providerId: z.uuid().describe('The Provider that reports the competitor: what binding it to a participant names.'),
   providerName: z.string(),
   externalId: z.string().describe('The provider\'s identifier for the competitor.'),
   externalName: z.string().describe('The competitor\'s name as the provider reports it.'),
@@ -352,7 +353,7 @@ export const UnmappedProviderParticipantDtoSchema = z.object({
 export type UnmappedProviderParticipantDto = z.infer<typeof UnmappedProviderParticipantDtoSchema>;
 
 export const UnmappedProviderParticipantListQuerySchema = z.object({
-  providerId: z.string().optional().describe('Only this provider\'s competitors; the other providers are not asked.'),
+  providerId: z.uuid().optional().describe('Only this Provider\'s competitors; the other providers are not asked.'),
   externalId: z.string().optional().describe('Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.'),
 }).describe('Filters for the unmapped-competitor list. With neither, every provider\'s unmapped competitors.');
 export type UnmappedProviderParticipantListQuery = z.infer<typeof UnmappedProviderParticipantListQuerySchema>;

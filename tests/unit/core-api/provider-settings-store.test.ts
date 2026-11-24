@@ -21,6 +21,14 @@ describe('ProviderSettingsStore (#1997)', () => {
     expect(store.enabledLeagues(ProviderCode.BALLDONTLIE)).toHaveLength(BALLDONTLIE_TEST_LEAGUES.length);
   });
 
+  it('finds the Provider row of an adapter by its feed\'s source id, and nothing for a source id no Provider row has', async () => {
+    const store = storeOf(() => Promise.resolve([balldontlieTestProvider()]));
+    await store.load();
+
+    expect(store.bySourceId('balldontlie')?.code).toBe(ProviderCode.BALLDONTLIE);
+    expect(store.bySourceId('mock-contest-feed')).toBeUndefined();
+  });
+
   it('lists only a provider\'s enabled leagues, and none for a provider with no row', async () => {
     const leagues = BALLDONTLIE_TEST_LEAGUES.map((league) => (league.code === 'mlb' ? { ...league, isEnabled: false } : league));
     const store = storeOf(() => Promise.resolve([balldontlieTestProvider({ leagues })]));

@@ -3,6 +3,7 @@ import { BracketAdvancement, ProviderCode, Sport } from '@poolmaster/shared/doma
 import type { Participant, SportLeague } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
+  fakeParticipantProviderMappingRepo,
   fakeParticipantRepo,
   fakeSportEventRepo,
   fakeSportLeagueRepo,
@@ -83,6 +84,7 @@ function buildService(overrides: {
   sportLeagues?: Parameters<typeof fakeSportLeagueRepo>[0];
   sportEvents?: Parameters<typeof fakeSportEventRepo>[0];
   participants?: Parameters<typeof fakeParticipantRepo>[0];
+  mappings?: Parameters<typeof fakeParticipantProviderMappingRepo>[0];
   providers?: SportDataProviderLookup;
   platformTierProfiles?: { findById: jest.Mock };
   platformPricingProfiles?: { findById: jest.Mock };
@@ -97,6 +99,7 @@ function buildService(overrides: {
     }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     participants: fakeParticipantRepo(overrides.participants),
+    mappings: fakeParticipantProviderMappingRepo(overrides.mappings),
     providers: overrides.providers ?? registeredProviders({}),
     platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
     platformPricingProfiles: overrides.platformPricingProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: 'Standard' })) },
@@ -350,14 +353,15 @@ describe('SportLeagueService — the sport league\'s participants', () => {
 });
 
 describe('SportLeagueService — ranking upload', () => {
-  it('resolves by participantId, then externalId, then exact case-insensitive name, within the sport league', async () => {
+  it('resolves by participantId, then a feed id one of its provider mappings holds, then exact case-insensitive name, within the sport league', async () => {
     const candidates = [
       participant('p-1', 'Scottie Scheffler'),
-      { ...participant('p-2', 'Rory McIlroy'), externalId: 'owgr-2' },
+      participant('p-2', 'Rory McIlroy'),
       participant('p-3', 'Jon Rahm'),
     ];
     const findMatchingAny = jest.fn().mockImplementation(async (sportLeagueId: string) => (sportLeagueId === 'sl-pga' ? candidates : []));
-    const { service } = buildService({ participants: { findMatchingAny } });
+    const findByParticipantIds = jest.fn().mockResolvedValue([{ participantId: 'p-2', externalId: 'owgr-2' }]);
+    const { service } = buildService({ participants: { findMatchingAny }, mappings: { findByParticipantIds } });
 
     const preview = await service.previewRankingUpload('sl-pga', [
       { participantId: 'p-1', externalId: 'ignored', ranking: 1 },

@@ -364,6 +364,7 @@ export function fakeParticipantProviderMappingRepo(
   return {
     // findByProvider is a single row per the port; findByParticipant is a collection.
     findByParticipant: many(),
+    findByParticipantIds: many(),
     findByProviderExternalIds: many(),
     findByProviderAndSportLeague: many(),
     bind: echoCreate('participant-provider-mapping'),

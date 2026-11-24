@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   BackgroundJobStatus,
   BackgroundJobType,
+  ProviderCode,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   JobTrigger,
@@ -17,6 +18,7 @@ import { buildProviderMapping, buildSportLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryBackgroundJobs, jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 
 // A sport league's events sync (#1819): what its job does with the provider's events, the run it
 // records, how a failure ends it, and the two triggers (the schedule and an admin's Sync now)
@@ -224,7 +226,8 @@ describe('LeagueEventsSync', () => {
       const [run] = syncRuns.rows;
       expect(syncRuns.rows).toHaveLength(1);
       expect(run).toMatchObject({
-        providerId: 'balldontlie',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+        providerName: 'BALLDONTLIE',
         sport: Sport.GOLF,
         eventId: null,
         kind: ProviderSyncKind.EVENTS,
@@ -313,7 +316,7 @@ describe('LeagueEventsSync', () => {
       const { sync, syncRuns } = build({ leagues: [pga] });
       const jobId = randomUUID();
       const stale = await syncRuns.create({
-        providerId: 'balldontlie', sport: Sport.GOLF, eventId: null, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.SCHEDULE,
+        providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.SCHEDULE,
         sportLeagueId: pga.id, sportEventId: null, backgroundJobId: jobId, status: ProviderSyncRunStatus.IN_PROGRESS,
         startedAt: NOW, completedAt: null, payload: {},
       });

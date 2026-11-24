@@ -141,11 +141,11 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
 
       expect(detail).toMatchObject({ externalId: 'epl-2026-matchweek-11', sport: Sport.SOCCER, participantCount: 10, rounds: 1, status: 'IN_PROGRESS', metadata: { tour: 'EPL', season: 2026 } });
       expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.name])).toEqual([
-        ['epl-team-12', 'Manchester City'],
-        ['epl-team-9', 'Fulham'],
+        ['12', 'Manchester City'],
+        ['9', 'Fulham'],
       ]);
       expect(detail?.games).toHaveLength(5);
-      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: 'epl-team-12', awayTeamExternalId: 'epl-team-9', isNeutralSite: false });
+      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '12', awayTeamExternalId: '9', isNeutralSite: false });
       expect(detail?.games?.[0].externalGameId).toMatch(/^\d+$/);
       expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
       expect(requestLine(harness.api)).toEqual(['/epl/v2/matches?season=2026&per_page=100', '/epl/v2/teams?season=2026']);
@@ -167,8 +167,8 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
     const teams = await harness.adapter.getParticipants(Sport.SOCCER);
 
     expect(teams).toHaveLength(14);
-    expect(teams[0]).toMatchObject({ externalId: 'epl-team-1', name: 'Arsenal', metadata: { tour: 'EPL' } });
-    expect(teams[10]).toMatchObject({ externalId: 'fifa-wc-team-9', name: 'Argentina', metadata: { tour: 'FIFAWC' } });
+    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Arsenal', metadata: { tour: 'EPL' } });
+    expect(teams[10]).toMatchObject({ externalId: '9', name: 'Argentina', metadata: { tour: 'FIFAWC' } });
     expect([...requestLine(harness.api)].sort()).toEqual(['/epl/v2/teams?season=2026', '/fifa/worldcup/v1/teams?']);
   });
 

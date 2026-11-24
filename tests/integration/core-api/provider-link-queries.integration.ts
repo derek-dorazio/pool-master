@@ -21,6 +21,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { leagueProfiles } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 
 // Sync-run history and score-source links, which only the HTTP contract tests reached before
 // (#508): which runs each filter keeps and in what order, and what a link or unlink writes.
@@ -40,44 +41,73 @@ describe('ProviderSyncRunRepository.findAll', () => {
     const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
     const run = (
       label: string,
-      overrides: { providerId?: string; sport?: Sport; status?: ProviderSyncRunStatus; createdAt: Date; startedAt: Date | null },
+      overrides: { sport?: Sport; status?: ProviderSyncRunStatus; createdAt: Date; startedAt: Date | null },
     ) => repo.create({
       ...SCHEDULED_SCORES_RUN,
-      providerId: overrides.providerId ?? 'feed-a',
+      providerCode: ProviderCode.BALLDONTLIE,
       sport: overrides.sport ?? Sport.GOLF,
-      eventId: label,
       status: overrides.status ?? ProviderSyncRunStatus.COMPLETED,
       startedAt: overrides.startedAt,
       completedAt: null,
-      payload: {},
+      payload: { label },
       createdAt: overrides.createdAt,
     });
     await run('early', { createdAt: new Date('2026-05-01T01:00:00.000Z'), startedAt: new Date('2026-05-01T01:00:00.000Z') });
     await run('late', { createdAt: new Date('2026-05-01T02:00:00.000Z'), startedAt: new Date('2026-05-01T05:00:00.000Z') });
-    await run('other-feed', { providerId: 'feed-b', createdAt: new Date('2026-05-01T03:00:00.000Z'), startedAt: new Date('2026-05-01T03:00:00.000Z') });
+    await run('other-sport', { sport: Sport.TENNIS, createdAt: new Date('2026-05-01T03:00:00.000Z'), startedAt: new Date('2026-05-01T03:00:00.000Z') });
     await run('failed', { status: ProviderSyncRunStatus.FAILED, createdAt: new Date('2026-05-01T06:00:00.000Z'), startedAt: new Date('2026-05-01T02:00:00.000Z') });
     await run('before-window', { createdAt: new Date('2026-04-30T23:59:00.000Z'), startedAt: new Date('2026-04-30T23:59:00.000Z') });
     await run('after-window', { createdAt: new Date('2026-05-02T00:01:00.000Z'), startedAt: new Date('2026-05-02T00:01:00.000Z') });
     return repo;
   }
 
-  const eventIds = (runs: Array<{ eventId: string | null }>) => runs.map((run) => run.eventId);
+  const labels = (runs: Array<{ payload: Record<string, unknown> }>) => runs.map((run) => run.payload['label']);
 
   it('keeps only runs created inside the window, most recently submitted first whatever their start', async () => {
     const repo = await seedRuns();
 
     const runs = await repo.findAll({ createdFrom: windowStart, createdTo: windowEnd });
 
-    expect(eventIds(runs)).toEqual(['failed', 'other-feed', 'late', 'early']);
+    expect(labels(runs)).toEqual(['failed', 'other-sport', 'late', 'early']);
   });
 
   it('narrows the window to one provider, one sport or one status', async () => {
     const repo = await seedRuns();
     const window = { createdFrom: windowStart, createdTo: windowEnd };
 
-    expect(eventIds(await repo.findAll({ ...window, providerId: 'feed-b' }))).toEqual(['other-feed']);
-    expect(eventIds(await repo.findAll({ ...window, sport: Sport.GOLF }))).toEqual(['failed', 'other-feed', 'late', 'early']);
-    expect(eventIds(await repo.findAll({ ...window, status: ProviderSyncRunStatus.FAILED }))).toEqual(['failed']);
+    expect(labels(await repo.findAll({ ...window, providerId: BALLDONTLIE_TEST_PROVIDER_ID }))).toEqual(['failed', 'other-sport', 'late', 'early']);
+    expect(labels(await repo.findAll({ ...window, providerId: randomUUID() }))).toEqual([]);
+    expect(labels(await repo.findAll({ ...window, sport: Sport.GOLF }))).toEqual(['failed', 'late', 'early']);
+    expect(labels(await repo.findAll({ ...window, status: ProviderSyncRunStatus.FAILED }))).toEqual(['failed']);
+  });
+
+  it('names each run\'s Provider row, and reads its event id from the sport event it is linked to', async () => {
+    const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
+    const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
+      ...(await freshEventEdition(getPrisma())),
+      externalId: `feed-event-${randomUUID().slice(0, 8)}`,
+      providerId: SYNCED_PROVIDER_ID,
+      sport: Sport.GOLF,
+      name: `Run Event ${randomUUID().slice(0, 8)}`,
+      startDate: new Date('2026-06-04T12:00:00.000Z'),
+      endDate: new Date('2026-06-07T12:00:00.000Z'),
+      status: 'SCHEDULED',
+      rounds: 4,
+      syncScope: 'NONE',
+      autoLifecycleEnabled: true,
+    });
+    const linked = await repo.create({
+      ...SCHEDULED_SCORES_RUN, sportEventId: event.id, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF,
+      status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, payload: {},
+    });
+    const unlinked = await repo.create({
+      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF,
+      status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, payload: {},
+    });
+
+    expect(linked).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', sportEventId: event.id, eventId: event.externalId });
+    expect(unlinked).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', sportEventId: null, eventId: null });
+    await expect(repo.findById(linked.id)).resolves.toMatchObject({ providerName: 'BALLDONTLIE', eventId: event.externalId });
   });
 });
 
@@ -85,9 +115,8 @@ describe('ProviderSyncRunRepository details (#1174)', () => {
   const repo = () => new PrismaProviderSyncRunRepository(getAppPrisma());
   const submitted = () => repo().create({
     ...SCHEDULED_SCORES_RUN,
-    providerId: 'feed-a',
+    providerCode: ProviderCode.BALLDONTLIE,
     sport: Sport.GOLF,
-    eventId: 'details-event',
     status: ProviderSyncRunStatus.SUBMITTED,
     startedAt: null,
     completedAt: null,

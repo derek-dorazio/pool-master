@@ -16,7 +16,6 @@ export function mapParticipantToDto(participant: Participant) {
     ranking: participant.ranking,
     name: participant.name,
     participantType: participant.participantType,
-    externalId: participant.externalId,
     firstName: participant.firstName,
     lastName: participant.lastName,
     shortName: participant.shortName,
@@ -33,7 +32,8 @@ export function mapParticipantToDto(participant: Participant) {
     },
     photoUrl: participant.photoUrl,
     photoLastUpdated: toIso(participant.photoLastUpdated),
-    externalIds: participant.externalIds,
+    // Deprecated and always empty (#2040): kept so the response keeps its shape.
+    externalIds: {},
     createdAt: participant.createdAt.toISOString(),
     updatedAt: participant.updatedAt.toISOString(),
   };
@@ -44,9 +44,10 @@ export function mapParticipantProviderMappingToDto(mapping: ParticipantProviderM
     id: mapping.id,
     participantId: mapping.participantId,
     sportLeagueId: mapping.sportLeagueId,
+    participantType: mapping.participantType,
     providerId: mapping.providerId,
+    providerName: mapping.providerName,
     externalId: mapping.externalId,
-    confidence: mapping.confidence,
     mappedAt: mapping.mappedAt.toISOString(),
   };
 }

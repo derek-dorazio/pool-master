@@ -7,13 +7,21 @@ import type {
   BackgroundJobRequest,
   PlatformRuntimeConfig,
   PlatformRuntimeConfigChange,
+  ProviderCode,
   ProviderSyncRun,
   ProviderSyncRunStatus,
   ProviderSyncRunWithDetails,
   Sport,
 } from '../domain';
 
-export type ProviderSyncRunCreate = Omit<ProviderSyncRun, 'id' | 'createdAt'> & { createdAt?: Date };
+/**
+ * A run to write. Its provider is named by its Provider code, which the write keys to the Provider
+ * row (#2040); its event is `sportEventId`, whose provider id the run reads back as `eventId`.
+ */
+export type ProviderSyncRunCreate = Omit<ProviderSyncRun, 'id' | 'createdAt' | 'providerId' | 'providerName' | 'eventId'> & {
+  providerCode: ProviderCode;
+  createdAt?: Date;
+};
 
 export interface ProviderSyncRunUpdate {
   status: ProviderSyncRunStatus;

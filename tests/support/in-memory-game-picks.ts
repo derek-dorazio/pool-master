@@ -60,7 +60,6 @@ export class InMemoryGamePicks {
       name,
       participantType: 'TEAM',
       status: ParticipantStatus.ACTIVE,
-      externalIds: {},
       createdAt: T0,
       updatedAt: T0,
     } as Participant;

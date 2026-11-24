@@ -16,6 +16,7 @@ import type {
 } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { StoredSyncRunDetails, StoredSyncRunPayload } from '../../support/sync-run-payload';
+import { TEST_PROVIDER_ROWS } from '../../support/balldontlie-provider-rows';
 
 /** A run's summary and its detailed diagnostics, read together. */
 type StoredSyncRun = StoredSyncRunPayload & StoredSyncRunDetails;
@@ -27,8 +28,12 @@ function createLedgerStore() {
 
   const syncRuns: ProviderSyncRunRepository = {
     create: jest.fn(async (input) => {
+      const { providerCode, ...rest } = input;
       const row: ProviderSyncRun = {
-        ...input,
+        ...rest,
+        providerId: TEST_PROVIDER_ROWS[providerCode].id,
+        providerName: TEST_PROVIDER_ROWS[providerCode].name,
+        eventId: null,
         id: `sync-run-${nextId}`,
         createdAt: input.createdAt ?? new Date(),
       };
@@ -87,7 +92,7 @@ function createEventRequest(input: {
     scope: {
       type: 'EVENT',
       sport: Sport.GOLF,
-      providerId: 'mock-provider',
+      providerId: 'balldontlie',
       eventId: 'event-1',
       feeds: [input.feed],
     },
@@ -106,7 +111,7 @@ function createJob(input: {
 }): IngestionJobRecord {
   return {
     jobType: input.jobType,
-    providerId: 'mock-provider',
+    providerId: 'balldontlie',
     sport: Sport.GOLF,
     eventExternalId: input.eventId,
     status: input.status ?? 'COMPLETED',
@@ -122,7 +127,7 @@ function createJob(input: {
       rawCaptured: true,
       rawTruncated: false,
       raw: [{
-        operation: 'mock-contest-feed.request',
+        operation: 'balldontlie.request',
         path: `/v1/test/${input.feed}`,
         capturedAt: '2026-05-30T12:00:02.000Z',
         raw: { feed: input.feed },
@@ -155,7 +160,7 @@ async function runAndReadPayload(input: {
   const { ledger, rowFor, detailsFor } = createLedgerStore();
   const syncRuns = await ledger.createSubmissions({
     normalizedRequest: input.normalizedRequest,
-    providerId: 'mock-provider',
+    providerId: 'balldontlie',
     submittedAt: new Date('2026-05-30T12:00:00.000Z'),
     runType: input.runType,
     trigger: JobTrigger.SCHEDULE,
@@ -254,7 +259,7 @@ describe('sync orchestration equivalence', () => {
         operation: 'EVENTLIVESCORES',
         rawCaptured: true,
         raw: [{
-          operation: 'mock-contest-feed.request',
+          operation: 'balldontlie.request',
           path: '/v1/test/EVENTLIVESCORES',
         }],
       },

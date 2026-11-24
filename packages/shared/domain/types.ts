@@ -30,7 +30,6 @@ import type {
   LeaguePlan,
   LeagueMembershipStatus,
   LeagueRole,
-  MappingConfidence,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   JobTrigger,
@@ -229,7 +228,6 @@ export interface Participant extends DomainEntity {
   ranking: number | null;
   name: string;
   participantType: ParticipantType;
-  externalId?: string;
 
   // Enriched profile fields
   firstName?: string;
@@ -243,7 +241,6 @@ export interface Participant extends DomainEntity {
   injuryStatus: InjuryStatus;
   photoUrl?: string;
   photoLastUpdated?: Date;
-  externalIds: Record<string, string>;
 }
 
 /** Injury or availability status captured for a participant. */
@@ -255,14 +252,22 @@ export interface InjuryStatus {
   source?: string;
 }
 
-/** Mapping between a provider participant and an internal participant. */
+/**
+ * A provider's id for a participant (#2040): the only place a participant's feed id is kept. Unique
+ * per provider, sport league and kind of participant, so `externalId` is the provider's raw id.
+ */
 export interface ParticipantProviderMapping extends DomainEntity {
   participantId: string;
   /** The participant's sport league: a feed id names one participant per sport league (#1853). */
   sportLeagueId: string;
+  /** The participant's kind: a team id and a player id the feed numbers alike never collide. */
+  participantType: ParticipantType;
+  /** The Provider row's id. */
   providerId: string;
+  /** That Provider's name, read with the mapping. */
+  providerName: string;
+  /** The provider's own id for the participant, never prefixed. */
   externalId: string;
-  confidence: MappingConfidence;
   mappedAt: Date;
 }
 
@@ -479,15 +484,21 @@ export interface IntermediatePrize {
 // --- Platform & Ingestion ---
 
 /**
- * One feed's sync against a provider — the ingestion history. `eventId` is the provider's
- * event identifier when the run was narrowed to one event, null for a whole-sport run.
- * `payload` is the run's summary as the ledger records it: request, feed, stats and outcome.
- * Its detailed diagnostics are read one run at a time, as a `ProviderSyncRunWithDetails`.
+ * One feed's sync against a provider — the ingestion history. `payload` is the run's summary as
+ * the ledger records it: request, feed, stats and outcome. Its detailed diagnostics are read one
+ * run at a time, as a `ProviderSyncRunWithDetails`.
  */
 export interface ProviderSyncRun {
   id: string;
+  /** The Provider row the run read (#2040). */
   providerId: string;
+  /** That Provider's name, read with the run. */
+  providerName: string;
   sport: Sport;
+  /**
+   * The provider's id for the run's event, read through `sportEventId` (#2040): null for a
+   * whole-sport run, and for a run of a provider event linked to no event of ours.
+   */
   eventId: string | null;
   /** What the run syncs and what started it (#1819). */
   kind: ProviderSyncKind;

@@ -16982,21 +16982,26 @@
             "format": "uuid",
             "description": "The participant's sport league: a feed id names one participant per sport league."
           },
-          "providerId": {
-            "type": "string",
-            "description": "The provider that knows the participant by externalId."
-          },
-          "externalId": {
-            "type": "string"
-          },
-          "confidence": {
+          "participantType": {
             "type": "string",
             "enum": [
-              "EXACT",
-              "HIGH",
-              "MANUAL"
+              "INDIVIDUAL",
+              "TEAM"
             ],
-            "description": "How the identity was matched."
+            "description": "The participant's kind: a team id and a player id the feed numbers alike never collide."
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Provider that knows the participant by externalId."
+          },
+          "providerName": {
+            "type": "string",
+            "description": "That provider's name."
+          },
+          "externalId": {
+            "type": "string",
+            "description": "The provider's own id for the participant, never prefixed."
           },
           "mappedAt": {
             "type": "string",
@@ -17008,9 +17013,10 @@
           "id",
           "participantId",
           "sportLeagueId",
+          "participantType",
           "providerId",
+          "providerName",
           "externalId",
-          "confidence",
           "mappedAt"
         ],
         "additionalProperties": false,
@@ -17037,21 +17043,26 @@
                   "format": "uuid",
                   "description": "The participant's sport league: a feed id names one participant per sport league."
                 },
-                "providerId": {
-                  "type": "string",
-                  "description": "The provider that knows the participant by externalId."
-                },
-                "externalId": {
-                  "type": "string"
-                },
-                "confidence": {
+                "participantType": {
                   "type": "string",
                   "enum": [
-                    "EXACT",
-                    "HIGH",
-                    "MANUAL"
+                    "INDIVIDUAL",
+                    "TEAM"
                   ],
-                  "description": "How the identity was matched."
+                  "description": "The participant's kind: a team id and a player id the feed numbers alike never collide."
+                },
+                "providerId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Provider that knows the participant by externalId."
+                },
+                "providerName": {
+                  "type": "string",
+                  "description": "That provider's name."
+                },
+                "externalId": {
+                  "type": "string",
+                  "description": "The provider's own id for the participant, never prefixed."
                 },
                 "mappedAt": {
                   "type": "string",
@@ -17063,9 +17074,10 @@
                 "id",
                 "participantId",
                 "sportLeagueId",
+                "participantType",
                 "providerId",
+                "providerName",
                 "externalId",
-                "confidence",
                 "mappedAt"
               ],
               "additionalProperties": false,
@@ -17084,8 +17096,8 @@
         "properties": {
           "providerId": {
             "type": "string",
-            "minLength": 1,
-            "description": "The provider whose identifier this binds."
+            "format": "uuid",
+            "description": "The Provider whose identifier this binds."
           },
           "externalId": {
             "type": "string",
@@ -17105,8 +17117,8 @@
         "properties": {
           "providerId": {
             "type": "string",
-            "minLength": 1,
-            "description": "The provider whose identities to list."
+            "format": "uuid",
+            "description": "The Provider whose identities to list."
           },
           "sportLeagueId": {
             "type": "string",
@@ -17140,21 +17152,26 @@
                 "format": "uuid",
                 "description": "The participant's sport league: a feed id names one participant per sport league."
               },
-              "providerId": {
-                "type": "string",
-                "description": "The provider that knows the participant by externalId."
-              },
-              "externalId": {
-                "type": "string"
-              },
-              "confidence": {
+              "participantType": {
                 "type": "string",
                 "enum": [
-                  "EXACT",
-                  "HIGH",
-                  "MANUAL"
+                  "INDIVIDUAL",
+                  "TEAM"
                 ],
-                "description": "How the identity was matched."
+                "description": "The participant's kind: a team id and a player id the feed numbers alike never collide."
+              },
+              "providerId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The Provider that knows the participant by externalId."
+              },
+              "providerName": {
+                "type": "string",
+                "description": "That provider's name."
+              },
+              "externalId": {
+                "type": "string",
+                "description": "The provider's own id for the participant, never prefixed."
               },
               "mappedAt": {
                 "type": "string",
@@ -17166,9 +17183,10 @@
               "id",
               "participantId",
               "sportLeagueId",
+              "participantType",
               "providerId",
+              "providerName",
               "externalId",
-              "confidence",
               "mappedAt"
             ],
             "additionalProperties": false,
@@ -17215,7 +17233,7 @@
             "description": "Whether the participant is an individual or team."
           },
           "externalId": {
-            "description": "Primary provider identifier when one exists.",
+            "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
             "type": "string"
           },
           "firstName": {
@@ -17316,7 +17334,7 @@
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Map of provider identifiers keyed by provider code."
+            "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
           },
           "createdAt": {
             "type": "string",
@@ -17409,7 +17427,7 @@
                   "description": "Whether the participant is an individual or team."
                 },
                 "externalId": {
-                  "description": "Primary provider identifier when one exists.",
+                  "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
                   "type": "string"
                 },
                 "firstName": {
@@ -17510,7 +17528,7 @@
                   "additionalProperties": {
                     "type": "string"
                   },
-                  "description": "Map of provider identifiers keyed by provider code."
+                  "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
                 },
                 "createdAt": {
                   "type": "string",
@@ -17584,7 +17602,7 @@
                 "description": "Whether the participant is an individual or team."
               },
               "externalId": {
-                "description": "Primary provider identifier when one exists.",
+                "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
                 "type": "string"
               },
               "firstName": {
@@ -17685,7 +17703,7 @@
                 "additionalProperties": {
                   "type": "string"
                 },
-                "description": "Map of provider identifiers keyed by provider code."
+                "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
               },
               "createdAt": {
                 "type": "string",
@@ -17748,10 +17766,6 @@
             ],
             "description": "Whether the participant is one person or a team."
           },
-          "externalId": {
-            "description": "Primary provider identifier.",
-            "type": "string"
-          },
           "firstName": {
             "description": "First name when the participant is a person.",
             "type": "string",
@@ -17781,13 +17795,6 @@
             "description": "Current team affiliation.",
             "type": "string",
             "maxLength": 255
-          },
-          "externalIds": {
-            "description": "Map of provider identifiers keyed by provider code.",
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
           }
         },
         "required": [
@@ -17900,17 +17907,6 @@
           "photoUrl": {
             "description": "Participant image URL.",
             "type": "string"
-          },
-          "externalId": {
-            "description": "Primary provider identifier.",
-            "type": "string"
-          },
-          "externalIds": {
-            "description": "Map of provider identifiers keyed by provider code.",
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
           }
         },
         "additionalProperties": false,
@@ -21248,7 +21244,7 @@
             ]
           },
           "tierOrderBasis": {
-            "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.",
+            "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.",
             "type": [
               "string",
               "null"
@@ -21257,7 +21253,6 @@
               "ODDS",
               "SEED",
               "RANKING",
-              "NAME",
               null
             ]
           },
@@ -21732,7 +21727,7 @@
                 ]
               },
               "tierOrderBasis": {
-                "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.",
+                "description": "The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.",
                 "type": [
                   "string",
                   "null"
@@ -21741,7 +21736,6 @@
                   "ODDS",
                   "SEED",
                   "RANKING",
-                  "NAME",
                   null
                 ]
               },
@@ -26683,7 +26677,6 @@
               "AUTO_ODDS",
               "AUTO_SEED",
               "AUTO_RANKING",
-              "AUTO_NAME",
               "MANUAL",
               null
             ]
@@ -26704,7 +26697,6 @@
               "AUTO_ODDS",
               "AUTO_SEED",
               "AUTO_RANKING",
-              "AUTO_NAME",
               "MANUAL",
               null
             ]
@@ -26991,7 +26983,7 @@
                 "description": "Whether the participant is an individual or team."
               },
               "externalId": {
-                "description": "Primary provider identifier when one exists.",
+                "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
                 "type": "string"
               },
               "firstName": {
@@ -27092,7 +27084,7 @@
                 "additionalProperties": {
                   "type": "string"
                 },
-                "description": "Map of provider identifiers keyed by provider code."
+                "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
               },
               "createdAt": {
                 "type": "string",
@@ -27157,7 +27149,6 @@
                   "AUTO_ODDS",
                   "AUTO_SEED",
                   "AUTO_RANKING",
-                  "AUTO_NAME",
                   "MANUAL",
                   null
                 ]
@@ -27178,7 +27169,6 @@
                   "AUTO_ODDS",
                   "AUTO_SEED",
                   "AUTO_RANKING",
-                  "AUTO_NAME",
                   "MANUAL",
                   null
                 ]
@@ -27569,7 +27559,7 @@
                       "description": "Whether the participant is an individual or team."
                     },
                     "externalId": {
-                      "description": "Primary provider identifier when one exists.",
+                      "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
                       "type": "string"
                     },
                     "firstName": {
@@ -27670,7 +27660,7 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Map of provider identifiers keyed by provider code."
+                      "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
                     },
                     "createdAt": {
                       "type": "string",
@@ -27735,7 +27725,6 @@
                         "AUTO_ODDS",
                         "AUTO_SEED",
                         "AUTO_RANKING",
-                        "AUTO_NAME",
                         "MANUAL",
                         null
                       ]
@@ -27756,7 +27745,6 @@
                         "AUTO_ODDS",
                         "AUTO_SEED",
                         "AUTO_RANKING",
-                        "AUTO_NAME",
                         "MANUAL",
                         null
                       ]
@@ -28322,7 +28310,7 @@
                     "description": "Whether the participant is an individual or team."
                   },
                   "externalId": {
-                    "description": "Primary provider identifier when one exists.",
+                    "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
                     "type": "string"
                   },
                   "firstName": {
@@ -28423,7 +28411,7 @@
                     "additionalProperties": {
                       "type": "string"
                     },
-                    "description": "Map of provider identifiers keyed by provider code."
+                    "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
                   },
                   "createdAt": {
                     "type": "string",
@@ -28488,7 +28476,6 @@
                       "AUTO_ODDS",
                       "AUTO_SEED",
                       "AUTO_RANKING",
-                      "AUTO_NAME",
                       "MANUAL",
                       null
                     ]
@@ -28509,7 +28496,6 @@
                       "AUTO_ODDS",
                       "AUTO_SEED",
                       "AUTO_RANKING",
-                      "AUTO_NAME",
                       "MANUAL",
                       null
                     ]
@@ -31999,7 +31985,7 @@
                       "description": "Whether the participant is an individual or team."
                     },
                     "externalId": {
-                      "description": "Primary provider identifier when one exists.",
+                      "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
                       "type": "string"
                     },
                     "firstName": {
@@ -32100,7 +32086,7 @@
                       "additionalProperties": {
                         "type": "string"
                       },
-                      "description": "Map of provider identifiers keyed by provider code."
+                      "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
                     },
                     "createdAt": {
                       "type": "string",
@@ -32165,7 +32151,6 @@
                         "AUTO_ODDS",
                         "AUTO_SEED",
                         "AUTO_RANKING",
-                        "AUTO_NAME",
                         "MANUAL",
                         null
                       ]
@@ -32186,7 +32171,6 @@
                         "AUTO_ODDS",
                         "AUTO_SEED",
                         "AUTO_RANKING",
-                        "AUTO_NAME",
                         "MANUAL",
                         null
                       ]
@@ -68267,7 +68251,13 @@
             "type": "string"
           },
           "providerId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid",
+            "description": "The Provider the run read."
+          },
+          "providerName": {
+            "type": "string",
+            "description": "That Provider's name."
           },
           "sport": {
             "type": "string",
@@ -68286,7 +68276,7 @@
             ]
           },
           "eventId": {
-            "description": "Provider event identifier when the run was narrowed to one event; null for a whole-sport run.",
+            "description": "The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.",
             "type": [
               "string",
               "null"
@@ -68580,6 +68570,7 @@
         "required": [
           "id",
           "providerId",
+          "providerName",
           "sport",
           "eventId",
           "kind",
@@ -68603,7 +68594,13 @@
             "type": "string"
           },
           "providerId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid",
+            "description": "The Provider the run read."
+          },
+          "providerName": {
+            "type": "string",
+            "description": "That Provider's name."
           },
           "sport": {
             "type": "string",
@@ -68622,7 +68619,7 @@
             ]
           },
           "eventId": {
-            "description": "Provider event identifier when the run was narrowed to one event; null for a whole-sport run.",
+            "description": "The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.",
             "type": [
               "string",
               "null"
@@ -69197,6 +69194,7 @@
         "required": [
           "id",
           "providerId",
+          "providerName",
           "sport",
           "eventId",
           "kind",
@@ -69218,7 +69216,9 @@
         "type": "object",
         "properties": {
           "providerId": {
-            "type": "string"
+            "description": "Only the runs of this Provider.",
+            "type": "string",
+            "format": "uuid"
           },
           "sport": {
             "type": "string",
@@ -69272,7 +69272,13 @@
                   "type": "string"
                 },
                 "providerId": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Provider the run read."
+                },
+                "providerName": {
+                  "type": "string",
+                  "description": "That Provider's name."
                 },
                 "sport": {
                   "type": "string",
@@ -69291,7 +69297,7 @@
                   ]
                 },
                 "eventId": {
-                  "description": "Provider event identifier when the run was narrowed to one event; null for a whole-sport run.",
+                  "description": "The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.",
                   "type": [
                     "string",
                     "null"
@@ -69585,6 +69591,7 @@
               "required": [
                 "id",
                 "providerId",
+                "providerName",
                 "sport",
                 "eventId",
                 "kind",
@@ -69657,7 +69664,13 @@
                   "type": "string"
                 },
                 "providerId": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Provider the run read."
+                },
+                "providerName": {
+                  "type": "string",
+                  "description": "That Provider's name."
                 },
                 "sport": {
                   "type": "string",
@@ -69676,7 +69689,7 @@
                   ]
                 },
                 "eventId": {
-                  "description": "Provider event identifier when the run was narrowed to one event; null for a whole-sport run.",
+                  "description": "The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.",
                   "type": [
                     "string",
                     "null"
@@ -69970,6 +69983,7 @@
               "required": [
                 "id",
                 "providerId",
+                "providerName",
                 "sport",
                 "eventId",
                 "kind",
@@ -70015,7 +70029,9 @@
         "type": "object",
         "properties": {
           "providerId": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid",
+            "description": "The Provider that reports the competitor: what binding it to a participant names."
           },
           "providerName": {
             "type": "string"
@@ -70059,8 +70075,9 @@
         "type": "object",
         "properties": {
           "providerId": {
-            "description": "Only this provider's competitors; the other providers are not asked.",
-            "type": "string"
+            "description": "Only this Provider's competitors; the other providers are not asked.",
+            "type": "string",
+            "format": "uuid"
           },
           "externalId": {
             "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.",
@@ -70079,7 +70096,9 @@
               "type": "object",
               "properties": {
                 "providerId": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Provider that reports the competitor: what binding it to a participant names."
                 },
                 "providerName": {
                   "type": "string"
@@ -82539,7 +82558,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.",
+        "description": "Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.",
         "requestBody": {
           "required": true,
           "content": {
@@ -82715,7 +82734,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0.",
+        "description": "Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.",
         "requestBody": {
           "required": true,
           "content": {
@@ -86460,12 +86479,12 @@
           {
             "schema": {
               "type": "string",
-              "minLength": 1
+              "format": "uuid"
             },
             "in": "query",
             "name": "providerId",
             "required": true,
-            "description": "The provider whose identities to list."
+            "description": "The Provider whose identities to list."
           },
           {
             "schema": {
@@ -87819,11 +87838,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "in": "query",
             "name": "providerId",
-            "required": false
+            "required": false,
+            "description": "Only the runs of this Provider."
           },
           {
             "schema": {
@@ -88186,12 +88207,13 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "in": "query",
             "name": "providerId",
             "required": false,
-            "description": "Only this provider's competitors; the other providers are not asked."
+            "description": "Only this Provider's competitors; the other providers are not asked."
           },
           {
             "schema": {

@@ -1,13 +1,13 @@
 /**
- * The participant route handlers (#1482), called with a stand-in service and provider registry:
+ * The participant route handlers (#1482), called with a stand-in service:
  * the filters a list needs, the 404s for a missing participant or provider, and that an error the
  * handler does not own reaches the global error handler unchanged.
  */
 import { expect } from '@jest/globals';
 import { InjuryStatusCode, ParticipantStatus } from '@poolmaster/shared/domain';
-import type { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { createParticipantHandlers } from '../../../packages/core-api/src/modules/participants/handler';
-import { ParticipantNotFoundError, type ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
+import { ParticipantNotFoundError, ProviderNotFoundError, type ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import { callHandler, stubRequest } from '../../support/handler-call';
 
 const AT = new Date('2026-04-10T12:00:00.000Z');
@@ -19,11 +19,11 @@ const participant = {
   participantType: 'INDIVIDUAL',
   status: ParticipantStatus.ACTIVE,
   injuryStatus: { status: InjuryStatusCode.HEALTHY },
-  externalIds: {},
   createdAt: AT,
   updatedAt: AT,
 };
-const mapping = { id: 'm1', participantId: 'p1', providerId: 'feed', externalId: 'x1', confidence: 'EXACT', mappedAt: AT };
+const PROVIDER_ROW_ID = BALLDONTLIE_TEST_PROVIDER_ID;
+const mapping = { id: 'm1', participantId: 'p1', sportLeagueId: 'pga', participantType: 'INDIVIDUAL', providerId: PROVIDER_ROW_ID, providerName: 'BALLDONTLIE', externalId: 'x1', mappedAt: AT };
 
 function service(overrides: Record<string, unknown> = {}) {
   return {
@@ -38,8 +38,7 @@ function service(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
-const registry = { getProviderById: (id: string) => (id === 'feed' ? {} : undefined) } as unknown as ProviderRegistry;
-const handlersOver = (fake: ReturnType<typeof service>) => createParticipantHandlers(fake as unknown as ParticipantService, registry);
+const handlersOver = (fake: ReturnType<typeof service>) => createParticipantHandlers(fake as unknown as ParticipantService);
 
 describe('participant search', () => {
   it('refuses a list with neither a sport nor a long enough search term with 400 SEARCH_TERM_REQUIRED', async () => {
@@ -76,39 +75,38 @@ describe('participant provider mappings', () => {
     const found = await callHandler(handlers.listProviderMappings, stubRequest({ params: { id: 'p1' } }));
     const missing = await callHandler(handlers.listProviderMappings, stubRequest({ params: { id: 'nope' } }));
 
-    expect(found.body).toMatchObject({ providerMappings: [{ providerId: 'feed', externalId: 'x1' }] });
+    expect(found.body).toMatchObject({ providerMappings: [{ providerId: PROVIDER_ROW_ID, providerName: 'BALLDONTLIE', externalId: 'x1' }] });
     expect(missing).toMatchObject({ statusCode: 404, body: { error: { code: 'PARTICIPANT_NOT_FOUND' } } });
   });
 
   it('lists the feed ids a provider has mapped among one sport league\'s participants, for the test data loader to match players by', async () => {
     const fake = service();
 
-    const reply = await callHandler(handlersOver(fake).listSportLeagueProviderMappings, stubRequest({ query: { providerId: 'feed', sportLeagueId: 'pga' } }));
+    const reply = await callHandler(handlersOver(fake).listSportLeagueProviderMappings, stubRequest({ query: { providerId: PROVIDER_ROW_ID, sportLeagueId: 'pga' } }));
 
-    expect(fake.listSportLeagueProviderMappings).toHaveBeenCalledWith('feed', 'pga');
-    expect(reply.body).toMatchObject({ providerMappings: [{ participantId: 'p1', providerId: 'feed', externalId: 'x1' }] });
+    expect(fake.listSportLeagueProviderMappings).toHaveBeenCalledWith(PROVIDER_ROW_ID, 'pga');
+    expect(reply.body).toMatchObject({ providerMappings: [{ participantId: 'p1', providerId: PROVIDER_ROW_ID, externalId: 'x1' }] });
   });
 
-  it('binds a mapping to a registered provider', async () => {
+  it('binds a mapping to a Provider row, answering with the mapping and its provider\'s name', async () => {
     const fake = service();
 
-    const reply = await callHandler(handlersOver(fake).bindProviderMapping, stubRequest({ params: { id: 'p1' }, body: { providerId: 'feed', externalId: 'x1' } }));
+    const reply = await callHandler(handlersOver(fake).bindProviderMapping, stubRequest({ params: { id: 'p1' }, body: { providerId: PROVIDER_ROW_ID, externalId: 'x1' } }));
 
-    expect(fake.bindProviderMapping).toHaveBeenCalledWith('p1', 'feed', 'x1');
-    expect(reply.body).toMatchObject({ providerMapping: { providerId: 'feed' } });
+    expect(fake.bindProviderMapping).toHaveBeenCalledWith('p1', PROVIDER_ROW_ID, 'x1');
+    expect(reply.body).toMatchObject({ providerMapping: { providerId: PROVIDER_ROW_ID, providerName: 'BALLDONTLIE', participantType: 'INDIVIDUAL' } });
   });
 
-  it('refuses a mapping to a provider that is not registered with 404 PROVIDER_NOT_FOUND and binds nothing', async () => {
-    const fake = service();
+  it('answers a mapping to an id that names no Provider row with 404 PROVIDER_NOT_FOUND', async () => {
+    const fake = service({ bindProviderMapping: jest.fn(() => Promise.reject(new ProviderNotFoundError('gone'))) });
 
     const reply = await callHandler(handlersOver(fake).bindProviderMapping, stubRequest({ params: { id: 'p1' }, body: { providerId: 'gone', externalId: 'x1' } }));
 
     expect(reply).toMatchObject({ statusCode: 404, body: { error: { code: 'PROVIDER_NOT_FOUND' } } });
-    expect(fake.bindProviderMapping).not.toHaveBeenCalled();
   });
 
   it('answers binding to a missing participant with 404, and passes any other failure on', async () => {
-    const request = () => stubRequest({ params: { id: 'p1' }, body: { providerId: 'feed', externalId: 'x1' } });
+    const request = () => stubRequest({ params: { id: 'p1' }, body: { providerId: PROVIDER_ROW_ID, externalId: 'x1' } });
     const missing = handlersOver(service({ bindProviderMapping: () => Promise.reject(new ParticipantNotFoundError('p1')) }));
     const broken = handlersOver(service({ bindProviderMapping: () => Promise.reject(boom) }));
 
@@ -136,11 +134,11 @@ describe('participant detail, create, update and delete', () => {
 
   it('creates a participant from the body\'s fields with 201', async () => {
     const fake = service();
-    const body = { sportLeagueId: 'pga', name: 'Scottie Scheffler', participantType: 'INDIVIDUAL', firstName: 'Scottie', externalIds: { feed: 'x1' } };
+    const body = { sportLeagueId: 'pga', name: 'Scottie Scheffler', participantType: 'INDIVIDUAL', firstName: 'Scottie' };
 
     const reply = await callHandler(handlersOver(fake).createParticipant, stubRequest({ body, contextLogger: false }));
 
-    expect(fake.create).toHaveBeenCalledWith(expect.objectContaining({ sportLeagueId: 'pga', name: 'Scottie Scheffler', firstName: 'Scottie', externalIds: { feed: 'x1' } }));
+    expect(fake.create).toHaveBeenCalledWith(expect.objectContaining({ sportLeagueId: 'pga', name: 'Scottie Scheffler', firstName: 'Scottie' }));
     expect(reply).toMatchObject({ statusCode: 201, body: { participant: { id: 'p1' } } });
   });
 

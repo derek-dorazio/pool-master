@@ -110,14 +110,14 @@ describe('BalldontlieAdapter (NHL)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a finished postseason with its sixteen teams, by the league\'s prefixed ids and tour', async () => {
+    it('gives a finished postseason with its sixteen teams, by the feed\'s raw ids and the league\'s tour', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('nhl-2024-postseason');
 
       expect(detail).toMatchObject({ externalId: 'nhl-2024-postseason', sport: Sport.HOCKEY, status: 'COMPLETED', participantCount: 16, fieldLocked: true });
-      expect(detail?.participants[0]).toMatchObject({ externalId: 'nhl-team-1', name: 'Washington Capitals', metadata: { tour: 'NHL', abbreviation: 'WSH' } });
+      expect(detail?.participants[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', metadata: { tour: 'NHL', abbreviation: 'WSH' } });
       expect(requestLine(harness.api)).toEqual(['/nhl/v1/games?seasons=2024&postseason=true&per_page=100', '/nhl/v1/standings?season=2024']);
     });
 
@@ -127,7 +127,7 @@ describe('BalldontlieAdapter (NHL)', () => {
 
       const detail = await harness.adapter.getEventDetails('nhl-2024-postseason');
 
-      const team = (id: number) => `nhl-team-${String(id)}`;
+      const team = (id: number) => String(id);
       // Atlantic: Toronto v Ottawa (a wild card), Tampa Bay v Florida. Metropolitan: Washington v
       // Montreal, Carolina v New Jersey. Central: Winnipeg v St. Louis, Dallas v Colorado. Pacific:
       // Vegas v Minnesota, Los Angeles v Edmonton.
@@ -177,8 +177,8 @@ describe('BalldontlieAdapter (NHL)', () => {
     const teams = await harness.adapter.getParticipants(Sport.HOCKEY);
 
     expect(teams).toHaveLength(16);
-    expect(teams.map((team) => team.externalId)).not.toContain('nhl-team-45');
-    expect(teams[0]).toMatchObject({ externalId: 'nhl-team-1', name: 'Washington Capitals', sport: Sport.HOCKEY, metadata: { tour: 'NHL' } });
+    expect(teams.map((team) => team.externalId)).not.toContain('45');
+    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', sport: Sport.HOCKEY, metadata: { tour: 'NHL' } });
     expect(requestLine(harness.api)).toEqual(['/nhl/v1/teams?per_page=100']);
   });
 
@@ -190,9 +190,9 @@ describe('BalldontlieAdapter (NHL)', () => {
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'nhl-2025-postseason' });
     expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
-      ['2025030111', 'nhl-team-3', ProviderGameState.FINAL, 3, 2],
-      ['2025030121', 'nhl-team-11', ProviderGameState.IN_PROGRESS, 1, 1],
-      ['2025030131', 'nhl-team-15', ProviderGameState.SCHEDULED, null, null],
+      ['2025030111', '3', ProviderGameState.FINAL, 3, 2],
+      ['2025030121', '11', ProviderGameState.IN_PROGRESS, 1, 1],
+      ['2025030131', '15', ProviderGameState.SCHEDULED, null, null],
     ]);
   });
 

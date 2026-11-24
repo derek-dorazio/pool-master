@@ -89,7 +89,7 @@ export type SyncedPrices =
 /** What tiering and pricing a synced field did, or why it did neither. */
 export type SyncedFieldValuation =
   | { outcome: 'VALUED'; sportEventId: string; tiers: SyncedTiers; prices: SyncedPrices }
-  | { outcome: 'SKIPPED'; reason: 'LOCKED' | 'NO_FIELD' };
+  | { outcome: 'SKIPPED'; reason: 'LOCKED' | 'NO_FIELD' | 'NO_ORDER' };
 
 /** Whether the event's tiers and prices may still change: only while it is a draft (#431). The one lock rule. */
 export function areTiersAndPricesEditable(event: SportEvent): boolean {
@@ -251,10 +251,15 @@ export class SportEventTierService {
       this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no tiers yet');
       return;
     }
-    const [{ ordered, source }, profile] = await Promise.all([
+    const [order, profile] = await Promise.all([
       this.orderedActiveField(event.id),
       this.requirePlatformTierProfile(event),
     ]);
+    if (order === 'NO_FIELD') {
+      this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no active field participants');
+      return;
+    }
+    const { ordered, source } = requireFieldOrder(order, event.id);
     const { placements, tierConfig, spread } = tierPlacements(profile, tiers, ordered, source, tierSize);
     await this.deps.valuations.assignEventTiers({ sportEventId: event.id, tierConfig, assignments: placements });
     this.deps.logger?.info(
@@ -377,11 +382,12 @@ export class SportEventTierService {
     if (problem) {
       throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
     }
-    const { ordered, source } = await this.orderedActiveField(sportEventId);
-    if (ordered.length === 0) {
+    const order = await this.orderedActiveField(sportEventId);
+    if (order === 'NO_FIELD') {
       this.deps.logger?.warn({ sportEventId }, 'Cannot auto-assign prices — the event has no active field participants');
       return [];
     }
+    const { ordered, source } = requireFieldOrder(order, sportEventId);
     const assignments = pricePlacements(ordered, source, pricingConfig);
     await this.deps.valuations.assignEventPrices({ sportEventId, pricingConfig, assignments });
 
@@ -424,14 +430,15 @@ export class SportEventTierService {
     if (problem) {
       throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
     }
-    const [{ ordered, source, basis }, tiers, valuations] = await Promise.all([
+    const [order, tiers, valuations] = await Promise.all([
       this.orderedActiveField(event.id),
       this.deps.tiers.findBySportEvent(event.id),
       this.deps.valuations.findBySportEvent(event.id),
     ]);
-    if (ordered.length === 0) {
-      return { outcome: 'SKIPPED', reason: 'NO_FIELD' };
+    if (order === 'NO_FIELD' || order === 'NO_ORDER') {
+      return { outcome: 'SKIPPED', reason: order };
     }
+    const { ordered, source, basis } = order;
     const stored = new Map(valuations.map((valuation) => [valuation.sportEventParticipantId, valuation]));
 
     let tiersResult: SyncedTiers;
@@ -474,16 +481,18 @@ export class SportEventTierService {
 
   /**
    * The event's active field in its one order (#1807), the order tiers and prices are both filled
-   * in, and the source the value that decided it records.
+   * in, and the source the value that decided it records. NO_FIELD with no active participant;
+   * NO_ORDER when none has odds, a seed or a rank (#2040): such a field has no order.
    */
-  private async orderedActiveField(sportEventId: string): Promise<{ ordered: SportEventParticipant[]; source: ValuationSource; basis: FieldOrderBasis }> {
+  private async orderedActiveField(sportEventId: string): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
     const active = (await this.deps.field.findBySportEvent(sportEventId))
       .filter((entry) => entry.isActive)
       // A full tie keeps this order, so the result never depends on how the rows were read.
       .sort((left, right) => left.participantId.localeCompare(right.participantId));
     const nameOf = new Map((active.length === 0 ? [] : await this.deps.participants.findByIds(active.map((entry) => entry.participantId)))
       .map((participant) => [participant.id, participant.name]));
-    const { ordered, decision } = orderField(active.map((entry) => ({
+    if (active.length === 0) return 'NO_FIELD';
+    const order = orderField(active.map((entry) => ({
       entry,
       oddsToWin: entry.oddsToWin,
       seedNumber: entry.seedNumber,
@@ -491,6 +500,8 @@ export class SportEventTierService {
       // Every field row names a participant (a foreign key), so a missing name only ties.
       name: nameOf.get(entry.participantId) ?? '',
     })));
+    if (order === null) return 'NO_ORDER';
+    const { ordered, decision } = order;
     return { ordered: ordered.map((row) => row.entry), source: SOURCE_BY_BASIS[decision.basis], basis: decision.basis };
   }
 
@@ -529,8 +540,26 @@ const SOURCE_BY_BASIS: Record<FieldOrderBasis, ValuationSource> = {
   [FieldOrderBasis.ODDS]: ValuationSource.AUTO_ODDS,
   [FieldOrderBasis.SEED]: ValuationSource.AUTO_SEED,
   [FieldOrderBasis.RANKING]: ValuationSource.AUTO_RANKING,
-  [FieldOrderBasis.NAME]: ValuationSource.AUTO_NAME,
 };
+
+/** An event's active field in its one order, and the value that decided it. */
+interface FieldOrder {
+  ordered: SportEventParticipant[];
+  source: ValuationSource;
+  basis: FieldOrderBasis;
+}
+
+/** The field's order for an auto-assign button: 409 FIELD_HAS_NO_ORDER when no participant has odds, a seed or a rank (#2040). */
+function requireFieldOrder(order: FieldOrder | 'NO_ORDER', sportEventId: string): FieldOrder {
+  if (order === 'NO_ORDER') {
+    throw new SportEventError(
+      `Sport event ${sportEventId}'s field has no odds, seeds or ranks to put it in order, so it cannot be tiered or priced automatically.`,
+      'FIELD_HAS_NO_ORDER',
+      409,
+    );
+  }
+  return order;
+}
 
 /**
  * Each ordered field row's tier by the tier profile (`placeInTiers`), or none beyond a capped last

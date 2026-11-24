@@ -23,7 +23,7 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
   const service = new SportEventParticipantService({
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
-    participants: store.participantRepo(),
+    participants: store.participantRepo(), mappings: store.mappingRepo(),
     matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     domainEvents,
     random: () => 0.5,
@@ -87,7 +87,7 @@ describe('SportEventParticipantService — the field viewers share', () => {
     const serviceSharing = () => new SportEventParticipantService({ domainEvents: testDomainEvents(),
       sportEvents: context.store.sportEventRepo(),
       field: context.store.fieldRepo(),
-      participants: context.store.participantRepo(),
+      participants: context.store.participantRepo(), mappings: context.store.mappingRepo(),
       matches: context.store.matchRepo(), tiers: context.store.tierRepo(), valuations: context.store.valuationRepo(),
       fieldCache,
       now: () => now,
@@ -206,7 +206,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const field = store.fieldRepo();
     const updateMany = jest.spyOn(field, 'updateMany');
     const service = new SportEventParticipantService({ domainEvents: testDomainEvents(),
-      sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(),
+      sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(), mappings: store.mappingRepo(),
       matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(), random: () => 0.5,
     });
     const same = store.addToField(event.id, store.addParticipant(sport.id, 'Same').id, { ranking: 4, oddsToWin: 20 });
@@ -489,7 +489,7 @@ describe('SportEventParticipantService — field upload', () => {
     const guarded = new SportEventParticipantService({ domainEvents: testDomainEvents(),
       sportEvents: store.sportEventRepo(),
       field: fieldRepo,
-      participants: store.participantRepo(),
+      participants: store.participantRepo(), mappings: store.mappingRepo(),
       matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     });
 

@@ -7,7 +7,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { seriesNamed } from '../../support/sport-event-rows';
-import { BracketAdvancement, Sport, SPORTS_BY_POPULARITY, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
+import { BracketAdvancement, ProviderCode, Sport, SPORTS_BY_POPULARITY, TournamentFormat, getSportDefinition } from '@poolmaster/shared/domain';
 import {
   PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
@@ -20,6 +20,7 @@ import {
 } from '../../../packages/core-api/src/adapters';
 import { freshEventEdition } from '../../support/event-edition';
 import { leagueProfiles } from '../../support/league-profiles';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { participantLeagueId } from '../../support/participant-league';
 
 // The catalog and event-core ports against real Postgres: each query returns the right
@@ -61,7 +62,11 @@ async function createParticipant(sportId: string, name: string, externalId?: str
 
 async function createLeagueParticipant(sportLeagueId: string, name: string, externalId?: string) {
   return getPrisma().participant.create({
-    data: { sportLeagueId, name, participantType: 'INDIVIDUAL', ...(externalId ? { externalId } : {}) },
+    data: {
+      sportLeagueId, name, participantType: 'INDIVIDUAL',
+      // A feed id is a provider mapping's (#2040).
+      ...(externalId && { providerMappings: { create: { sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId } } }),
+    },
   });
 }
 
@@ -413,7 +418,6 @@ describe('ParticipantRepository — search and matching', () => {
       role: 'GOLFER',
       status: 'ACTIVE',
       injuryStatus: { status: 'HEALTHY' },
-      externalIds: { owgr: '12' },
     });
     const updated = await participants.update(created.id, { name: 'Ludvig Åberg', status: 'INACTIVE' });
 
@@ -425,7 +429,6 @@ describe('ParticipantRepository — search and matching', () => {
       nationality: 'SWE',
       role: 'GOLFER',
       injuryStatus: { status: 'HEALTHY' },
-      externalIds: { owgr: '12' },
     }));
     await expect(participants.findById(created.id)).resolves.toEqual(updated);
     await expect(participants.findById(randomUUID())).resolves.toBeNull();
@@ -446,7 +449,7 @@ describe('ParticipantRepository — search and matching', () => {
     const sport = await golfSport();
     const participants = new PrismaParticipantRepository(getAppPrisma());
     const created = await participants.create({
-      sportLeagueId: await participantLeagueId(getPrisma(), sport.id), ranking: null, name: 'Old Name', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' }, externalIds: {},
+      sportLeagueId: await participantLeagueId(getPrisma(), sport.id), ranking: null, name: 'Old Name', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' },
     });
     const expectedReturn = new Date('2026-06-01T00:00:00.000Z');
     const injuryUpdatedAt = new Date('2026-05-20T00:00:00.000Z');
@@ -464,14 +467,11 @@ describe('ParticipantRepository — search and matching', () => {
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
       photoUrl: 'https://example.test/photo.jpg',
       photoLastUpdated,
-      externalIds: { owgr: '99' },
-      externalId: 'owgr-new',
     });
 
     expect(updated).toEqual(expect.objectContaining({
       name: 'New Name', firstName: 'New', lastName: 'Name', shortName: 'N. Name', nationality: 'USA', role: 'GOLFER',
       teamAffiliation: 'Team Blue', status: 'INACTIVE', photoUrl: 'https://example.test/photo.jpg', photoLastUpdated,
-      externalIds: { owgr: '99' }, externalId: 'owgr-new',
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
     }));
     await expect(participants.findById(created.id)).resolves.toEqual(updated);
@@ -482,7 +482,7 @@ describe('ParticipantRepository — search and matching', () => {
     const participants = new PrismaParticipantRepository(getAppPrisma());
     const free = await createParticipant(sport.id, 'Free Golfer');
     await new PrismaParticipantProviderMappingRepository(getAppPrisma())
-      .bind({ providerId: 'integration-test', externalId: 'feed-free', confidence: 'MANUAL', participantId: free.id, sportLeagueId: free.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+      .bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'feed-free', participantId: free.id, sportLeagueId: free.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
     const fielded = await createParticipant(sport.id, 'Fielded Golfer');
     const event = await createEvent('delete-participant');
     await getPrisma().sportEventParticipant.create({ data: { sportEventId: event.id, participantId: fielded.id } });
@@ -502,30 +502,57 @@ describe('ParticipantRepository — search and matching', () => {
     const [first, second] = [await createParticipant(sport.id, 'First'), await createParticipant(sport.id, 'Second')];
     const lcs = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: 'Other league', bracketAdvancement: BracketAdvancement.FIXED });
     const elsewhere = await createLeagueParticipant(lcs.id, 'First elsewhere');
-    const identity = { providerId: 'integration-test', externalId: 'feed-42', confidence: 'MANUAL' as const };
+    const identity = { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL' as const, externalId: 'feed-42' };
 
     await mappings.bind({ ...identity, participantId: first.id, sportLeagueId: first.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
     const moved = await mappings.bind({ ...identity, participantId: second.id, sportLeagueId: second.sportLeagueId, mappedAt: new Date('2026-05-02T00:00:00.000Z') });
     await mappings.bind({ ...identity, participantId: elsewhere.id, sportLeagueId: lcs.id, mappedAt: new Date('2026-05-03T00:00:00.000Z') });
 
-    expect(moved).toMatchObject({ participantId: second.id, externalId: 'feed-42' });
+    expect(moved).toMatchObject({ participantId: second.id, externalId: 'feed-42', providerName: 'BALLDONTLIE', participantType: 'INDIVIDUAL' });
     await expect(mappings.findByParticipant(first.id)).resolves.toEqual([]);
-    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: second.sportLeagueId }, ['feed-42'])).resolves.toEqual([
+    await expect(mappings.findByProviderExternalIds(ProviderCode.BALLDONTLIE, { sportLeagueId: second.sportLeagueId }, ['feed-42'])).resolves.toEqual([
       expect.objectContaining({ participantId: second.id, mappedAt: new Date('2026-05-02T00:00:00.000Z') }),
     ]);
-    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: lcs.id }, ['feed-42'])).resolves.toEqual([
+    await expect(mappings.findByProviderExternalIds(ProviderCode.BALLDONTLIE, { sportLeagueId: lcs.id }, ['feed-42'])).resolves.toEqual([
       expect.objectContaining({ participantId: elsewhere.id }),
     ]);
-    await expect(mappings.findByProviderAndSportLeague('integration-test', lcs.id)).resolves.toEqual([expect.objectContaining({ participantId: elsewhere.id })]);
+    await expect(mappings.findByProviderAndSportLeague(BALLDONTLIE_TEST_PROVIDER_ID, lcs.id)).resolves.toEqual([expect.objectContaining({ participantId: elsewhere.id })]);
+    await expect(mappings.findByParticipantIds([second.id, elsewhere.id])).resolves.toEqual(expect.arrayContaining([
+      expect.objectContaining({ participantId: second.id, externalId: 'feed-42' }),
+      expect.objectContaining({ participantId: elsewhere.id, externalId: 'feed-42' }),
+    ]));
+  });
+
+  it('keeps a team and a player of one league apart when the feed gives them the same raw id, since a mapping is unique per participant type', async () => {
+    const sport = await golfSport();
+    const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
+    const [team, player] = [await createParticipant(sport.id, 'Raw Team'), await createParticipant(sport.id, 'Raw Player')];
+    const raw = { providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: '17', mappedAt: new Date('2026-05-01T00:00:00.000Z') };
+
+    await mappings.bind({ ...raw, participantType: 'TEAM', participantId: team.id, sportLeagueId: team.sportLeagueId });
+    await mappings.bind({ ...raw, participantType: 'INDIVIDUAL', participantId: player.id, sportLeagueId: player.sportLeagueId });
+
+    await expect(mappings.findByParticipantIds([team.id, player.id])).resolves.toHaveLength(2);
+  });
+
+  it('binds nothing and answers null for a provider id that names no Provider row', async () => {
+    const sport = await golfSport();
+    const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
+    const participant = await createParticipant(sport.id, 'Unknown Provider');
+
+    await expect(mappings.bind({
+      providerId: randomUUID(), participantType: 'INDIVIDUAL', externalId: 'feed-x', participantId: participant.id, sportLeagueId: participant.sportLeagueId, mappedAt: new Date(),
+    })).resolves.toBeNull();
+    await expect(mappings.findByParticipant(participant.id)).resolves.toEqual([]);
   });
 
   it('reads no provider identities when asked about no external ids, though the provider has some', async () => {
     const sport = await golfSport();
     const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
     const participant = await createParticipant(sport.id, 'Unasked');
-    await mappings.bind({ providerId: 'integration-test', externalId: 'feed-7', confidence: 'MANUAL', participantId: participant.id, sportLeagueId: participant.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
+    await mappings.bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'feed-7', participantId: participant.id, sportLeagueId: participant.sportLeagueId, mappedAt: new Date('2026-05-01T00:00:00.000Z') });
 
-    await expect(mappings.findByProviderExternalIds('integration-test', { sportLeagueId: participant.sportLeagueId }, [])).resolves.toEqual([]);
+    await expect(mappings.findByProviderExternalIds(ProviderCode.BALLDONTLIE, { sportLeagueId: participant.sportLeagueId }, [])).resolves.toEqual([]);
   });
 });
 

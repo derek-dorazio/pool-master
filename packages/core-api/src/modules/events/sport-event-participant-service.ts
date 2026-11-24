@@ -31,6 +31,7 @@ import type {
   SportEventParticipantValuationRepository,
   SportEventRepository,
   SportEventTierRepository,
+  ParticipantProviderMappingRepository,
 } from '@poolmaster/shared/db';
 import {
   getSportDefinition,
@@ -46,6 +47,7 @@ import { DomainEventType, type DomainEvents } from '../domain-events';
 import { deriveSeedNumbersAndOdds } from '../golf/golf-seeding-algorithm';
 import {
   matchAmong,
+  feedIdsOfCandidates,
   resolveParticipantRow,
   type ParticipantRowIdentifiers,
   type ParticipantRowResolution,
@@ -172,6 +174,8 @@ export interface SportEventParticipantServiceDeps {
   sportEvents: SportEventRepository;
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
+  /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
+  mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   /** The event's tiers and valuations, read when a save moves a participant into another tier. */
   tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
@@ -410,7 +414,8 @@ export class SportEventParticipantService implements EventFieldReads {
     const field = await this.deps.field.findBySportEvent(sportEventId);
     const participants = await this.deps.participants.findByIds(field.map((entry) => entry.participantId));
     const entryByParticipantId = new Map(field.map((entry) => [entry.participantId, entry]));
-    const resolved = await Promise.all(rows.map((row) => resolveParticipantRow(row, matchAmong(participants))));
+    const feedIds = await feedIdsOfCandidates(rows, participants, this.deps.mappings);
+    const resolved = await Promise.all(rows.map((row) => resolveParticipantRow(row, matchAmong(participants, feedIds))));
 
     const rowNumbersByParticipant = new Map<string, number[]>();
     resolved.forEach((result, index) => {

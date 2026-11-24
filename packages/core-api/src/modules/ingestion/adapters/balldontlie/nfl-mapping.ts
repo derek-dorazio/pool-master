@@ -6,8 +6,8 @@
  * (`nfl-2026-postseason`, the playoff bracket). The scope id is the event's externalId, and a
  * match takes its result from the game an admin links it to.
  *
- * Team ids are prefixed (`nfl-team-12`): a provider's participant ids share one namespace across
- * its sports, and a bare number would collide with a golfer's.
+ * Team ids are the provider's own (`participantFeedId`, #2040): a mapping is kept per sport
+ * league and kind of participant, so a bare number never collides with a golfer's.
  */
 
 import { MatchSide, Sport } from '@poolmaster/shared/domain';
@@ -17,6 +17,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import { NflSeasonType, type NflGame, type NflStanding, type NflTeam } from './nfl-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { participantFeedId } from './participant-feed-id';
 
 /**
  * The tour name events carry in `metadata.tour`, for display; the NFL
@@ -74,9 +75,6 @@ export function seasonTypeOf(scope: NflScope): NflSeasonType {
   return scope.kind === NflScopeKind.POSTSEASON ? NflSeasonType.POSTSEASON : NflSeasonType.REGULAR_SEASON;
 }
 
-export function nflTeamExternalId(teamId: number): string {
-  return `nfl-team-${String(teamId)}`;
-}
 
 const GAMES_PATH = '/nfl/v1/games';
 
@@ -141,7 +139,7 @@ export function toNflTeamParticipant(team: NflTeam, path: string): ProviderParti
     throw new BalldontlieContractError(path, [`a team has no ${team.id === undefined ? 'id' : 'full_name'}`]);
   }
   return {
-    externalId: nflTeamExternalId(team.id),
+    externalId: participantFeedId(team.id),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.AMERICAN_FOOTBALL,
     name: team.full_name,
@@ -174,8 +172,8 @@ function toNflScheduledGame(game: NflGame): ProviderScheduledGame {
   return {
     externalGameId: String(required(game.id, game.id, 'id')),
     roundNumber: 1,
-    homeTeamExternalId: nflTeamExternalId(required(required(game.home_team, game.id, 'home_team').id, game.id, 'home_team.id')),
-    awayTeamExternalId: nflTeamExternalId(required(required(game.visitor_team, game.id, 'visitor_team').id, game.id, 'visitor_team.id')),
+    homeTeamExternalId: participantFeedId(required(required(game.home_team, game.id, 'home_team').id, game.id, 'home_team.id')),
+    awayTeamExternalId: participantFeedId(required(required(game.visitor_team, game.id, 'visitor_team').id, game.id, 'visitor_team.id')),
     scheduledAt: new Date(required(game.date, game.id, 'date')),
     isNeutralSite: false,
   };
@@ -274,7 +272,7 @@ export function toNflPostseasonGames(games: readonly NflGame[], fieldTeamIds: Re
   const decided = games.filter((game) => {
     const home = game.home_team?.id;
     const away = game.visitor_team?.id;
-    return home !== undefined && away !== undefined && fieldTeamIds.has(nflTeamExternalId(home)) && fieldTeamIds.has(nflTeamExternalId(away));
+    return home !== undefined && away !== undefined && fieldTeamIds.has(participantFeedId(home)) && fieldTeamIds.has(participantFeedId(away));
   });
   const weekOf = (game: NflGame): number => required(game.week, game.id, 'week');
   const weeks = [...new Set(decided.map(weekOf))].sort((left, right) => left - right);
@@ -295,8 +293,8 @@ export function toGameScoreUpdates(games: readonly NflGame[]): GameScoreUpdate[]
     const started = hasStarted(state);
     return [{
       externalGameId: String(required(game.id, game.id, 'id')),
-      homeTeamExternalId: nflTeamExternalId(home),
-      awayTeamExternalId: nflTeamExternalId(visitor),
+      homeTeamExternalId: participantFeedId(home),
+      awayTeamExternalId: participantFeedId(visitor),
       state,
       homeScore: started ? game.home_team_score ?? null : null,
       awayScore: started ? game.visitor_team_score ?? null : null,

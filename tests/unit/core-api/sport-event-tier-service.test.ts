@@ -414,7 +414,7 @@ describe('SportEventTierService — one order for tiers and prices', () => {
     expect(store.valuationRows.every((row) => row.tierAssignedSource === 'AUTO_SEED' && row.priceAssignedSource === 'AUTO_SEED')).toBe(true);
   });
 
-  it('orders a field with nothing but names by name, recording name as the source', async () => {
+  it('refuses to tier or price a field with nothing but names with 409 FIELD_HAS_NO_ORDER, writing nothing, since a name orders nothing', async () => {
     const { store, event, service } = setup();
     await store.addTiers(event.id, tierDefinitions(2));
     const sportId = 'sport-golf';
@@ -422,11 +422,9 @@ describe('SportEventTierService — one order for tiers and prices', () => {
       store.addToField(event.id, store.addParticipant(sportId, name).id);
     }
 
-    const groups = await service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 });
-
-    const nameOf = new Map(store.participants.map((participant) => [participant.id, participant.name]));
-    expect(groups.map((group) => group.participants.map((placement) => nameOf.get(placement.participantId)))).toEqual([['Alpha'], ['Bravo', 'Charlie']]);
-    expect(store.valuationRows.every((row) => row.tierAssignedSource === 'AUTO_NAME')).toBe(true);
+    await expect(service.autoAssignTiers({ sportEventId: event.id, tierSize: 1 })).rejects.toMatchObject({ code: 'FIELD_HAS_NO_ORDER', statusCode: 409 });
+    await expect(service.autoAssignPrices({ sportEventId: event.id, pricingConfig: standardEventPricing() })).rejects.toMatchObject({ code: 'FIELD_HAS_NO_ORDER', statusCode: 409 });
+    expect(store.valuationRows).toEqual([]);
   });
 });
 

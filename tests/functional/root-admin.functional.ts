@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../support/balldontlie-provider-rows';
 import { randomUUID } from 'node:crypto';
 import { SelectionType } from '@poolmaster/shared/domain';
 import {
@@ -92,7 +93,7 @@ describe('SDK Functional: Root Admin', () => {
         eventId: 'masters-2026',
       },
       body: {
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         feeds: ['EVENTLIVESCORES'],
       },
     });
@@ -293,7 +294,9 @@ describe('SDK Functional: Root Admin', () => {
       displayName: 'Root Admin Sync History User',
     });
     await promoteToRootAdmin(user);
-    const providerId = `functional-provider-${randomUUID()}`;
+    // Every run is keyed to a Provider row (#2040), so this test's runs are told apart by a window of their own.
+    const providerId = BALLDONTLIE_TEST_PROVIDER_ID;
+    const submittedAt = new Date(Date.UTC(2001, 0, 1) + Math.floor(Math.random() * 365 * 24 * 3_600_000));
     const completedRunId = randomUUID();
 
     await getFunctionalPrisma().providerSyncRun.createMany({
@@ -304,7 +307,7 @@ describe('SDK Functional: Root Admin', () => {
           id: completedRunId,
           providerId,
           sport: 'GOLF',
-          eventId: 'masters-2026',
+          createdAt: submittedAt,
           status: 'COMPLETED',
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
           completedAt: new Date('2026-04-09T10:01:00.000Z'),
@@ -314,7 +317,7 @@ describe('SDK Functional: Root Admin', () => {
           },
           detailsJson: {
             jobPayload: {
-              jobType: 'EVENT_PARTICIPANTS_SYNC', providerId, sport: 'GOLF',
+              jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: 'GOLF',
               status: 'COMPLETED', recordsProcessed: 2, errors: 0, errorLog: [],
             },
           },
@@ -325,7 +328,7 @@ describe('SDK Functional: Root Admin', () => {
           id: randomUUID(),
           providerId,
           sport: 'GOLF',
-          eventId: 'masters-2026',
+          createdAt: submittedAt,
           status: 'FAILED',
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
           completedAt: new Date('2026-04-08T10:00:30.000Z'),
@@ -343,12 +346,13 @@ describe('SDK Functional: Root Admin', () => {
         providerId,
         sport: 'GOLF',
         status: 'COMPLETED',
+        from: new Date(submittedAt.getTime() - 1).toISOString(),
+        to: new Date(submittedAt.getTime() + 1).toISOString(),
       },
     });
 
-    // #205 — no `from`/`to`: the default window (the last 6 hours) holds both rows just written.
     expect(response.data?.syncRuns).toHaveLength(1);
-    expect(response.data?.syncRuns[0]?.providerId).toBe(providerId);
+    expect(response.data?.syncRuns[0]).toMatchObject({ providerId, providerName: 'BALLDONTLIE' });
     expect(response.data?.syncRuns[0]?.payload.detail).toBe('Imported event and field snapshot.');
     expect(response.data?.syncRuns[0]).not.toHaveProperty('details');
 
@@ -359,6 +363,8 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(runResponse.response?.status).toBe(200);
     expect(runResponse.data?.details?.jobPayload).toMatchObject({ recordsProcessed: 2 });
+    // Runs linked to no event are not the shared cleanup's, so this test's go here.
+    await getFunctionalPrisma().providerSyncRun.deleteMany({ where: { providerId, createdAt: submittedAt } });
   });
 
   it('answers 404 PROVIDER_NOT_FOUND when a root admin browses an unknown provider\'s catalog', async () => {

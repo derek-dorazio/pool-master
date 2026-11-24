@@ -1,6 +1,6 @@
 /**
  * The one order a field is tiered and priced in (#1807): odds, then seed, then rank, decided for
- * the whole field by the first value every participant has, then name.
+ * the whole field by the first value every participant has, then name; no order without any value.
  */
 import { FieldOrderBasis, fieldOrderDecision, orderField, type OrderableFieldEntry } from '@poolmaster/shared/domain';
 
@@ -8,7 +8,12 @@ function entry(name: string, values: Omit<OrderableFieldEntry, 'name'> = {}): Or
   return { name, ...values };
 }
 
-const names = (field: readonly OrderableFieldEntry[]) => orderField(field).ordered.map((row) => row.name);
+const ordered = (field: readonly OrderableFieldEntry[]) => {
+  const order = orderField(field);
+  if (order === null) throw new Error('The field has no order.');
+  return order;
+};
+const names = (field: readonly OrderableFieldEntry[]) => ordered(field).ordered.map((row) => row.name);
 
 describe('orderField — one order for tiers and prices', () => {
   it('orders by odds, shortest first, when every participant has odds, whatever their seeds and ranks say', () => {
@@ -19,7 +24,7 @@ describe('orderField — one order for tiers and prices', () => {
     ];
 
     expect(names(field)).toEqual(['Favourite', 'Middle', 'Long']);
-    expect(orderField(field).decision).toEqual({ basis: FieldOrderBasis.ODDS, coversField: true });
+    expect(ordered(field).decision).toEqual({ basis: FieldOrderBasis.ODDS, coversField: true });
   });
 
   it('orders by seed when not every participant has odds, and a participant\'s odds never lift it above a better seed', () => {
@@ -41,7 +46,7 @@ describe('orderField — one order for tiers and prices', () => {
     ];
 
     expect(names(field)).toEqual(['Rank 3', 'Rank 12', 'Rank 40']);
-    expect(fieldOrderDecision(field).basis).toBe(FieldOrderBasis.RANKING);
+    expect(fieldOrderDecision(field)?.basis).toBe(FieldOrderBasis.RANKING);
   });
 
   it('breaks a tie on the deciding value by the later values in turn, then by name', () => {
@@ -66,14 +71,15 @@ describe('orderField — one order for tiers and prices', () => {
     expect(fieldOrderDecision(field)).toEqual({ basis: FieldOrderBasis.ODDS, coversField: false });
   });
 
-  it('puts a field with no odds, seeds or ranks in name order', () => {
+  it('gives a field with no odds, seeds or ranks no order at all, since a name orders nothing', () => {
     const field = [entry('Charlie'), entry('alpha'), entry('Bravo')];
 
-    expect(names(field)).toEqual(['alpha', 'Bravo', 'Charlie']);
-    expect(fieldOrderDecision(field)).toEqual({ basis: FieldOrderBasis.NAME, coversField: true });
+    expect(orderField(field)).toBeNull();
+    expect(fieldOrderDecision(field)).toBeNull();
   });
 
-  it('orders an empty field as empty, by name', () => {
-    expect(orderField([])).toEqual({ ordered: [], decision: { basis: FieldOrderBasis.NAME, coversField: true } });
+  it('gives an empty field no order', () => {
+    expect(orderField([])).toBeNull();
+    expect(fieldOrderDecision([])).toBeNull();
   });
 });

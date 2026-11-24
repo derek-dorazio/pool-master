@@ -10,9 +10,9 @@ export const MANUAL_ADMIN_PROVIDER_ID = 'manual-admin';
 
 
 /**
- * The id each provider's events, participants and runs still carry as `providerId` (#1997), by
- * its Provider code: the adapter's own id. It goes when those columns become Provider foreign
- * keys (league model slices 1e and 7).
+ * The id each provider's events still carry as `providerId` (#1997), by its Provider code: the
+ * adapter's own id. Participant mappings, sync runs and sync jobs hold a Provider foreign key
+ * (#2040); the events' copy goes in league model slice 7.
  */
 /** A provider id as its events carry it (`balldontlie`): an id, not a display word. */
 type ProviderSourceId = string;
@@ -32,6 +32,17 @@ export function providerSourceIdOf(code: ProviderCode): string {
  */
 export function providerCodeOfSourceId(providerId: string): ProviderCode | undefined {
   return (Object.keys(PROVIDER_SOURCE_IDS) as ProviderCode[]).find((code) => PROVIDER_SOURCE_IDS[code] === providerId);
+}
+
+/**
+ * The Provider code of the adapter whose feed carries `providerId` (#2040): every participant
+ * mapping, sync run and sync job is keyed to a Provider row, so an adapter with none can write
+ * none of them. Throws for one.
+ */
+export function requireProviderCodeOfSourceId(providerId: string): ProviderCode {
+  const code = providerCodeOfSourceId(providerId);
+  if (code === undefined) throw new Error(`Provider ${providerId} has no Provider row.`);
+  return code;
 }
 
 /**

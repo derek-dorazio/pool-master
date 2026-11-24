@@ -152,19 +152,6 @@ export const FormTrendOrder = explicitOrder<FormTrend>({
   [FormTrend.FALLING]: 2,
 });
 
-export const MappingConfidence = {
-  EXACT: 'EXACT',
-  HIGH: 'HIGH',
-  MANUAL: 'MANUAL',
-} as const;
-export type MappingConfidence = (typeof MappingConfidence)[keyof typeof MappingConfidence];
-/** The order the values are declared in. */
-export const MappingConfidenceOrder = explicitOrder<MappingConfidence>({
-  [MappingConfidence.EXACT]: 0,
-  [MappingConfidence.HIGH]: 1,
-  [MappingConfidence.MANUAL]: 2,
-});
-
 // --- Contest Pool ---
 
 export const PoolType = {
@@ -1168,14 +1155,14 @@ export const ColorSchemeOrder = explicitOrder<ColorScheme>({
 
 /**
  * How a SportEventParticipantValuation's tier/price was set. See plans/124 §4.5. An automatic one
- * names the value that decided the field's order (#1807, `orderField`): odds, seed, rank, or,
- * with none of them in the field, the name.
+ * names the value that decided the field's order (#1807, `orderField`): the feed's odds, the seed
+ * or the rank. A field with none of them is never tiered or priced automatically (#2040): a name
+ * orders nothing (`rules/domain-model-conventions-rules.md` §17).
  */
 export const ValuationSource = {
   AUTO_ODDS: 'AUTO_ODDS',
   AUTO_SEED: 'AUTO_SEED',
   AUTO_RANKING: 'AUTO_RANKING',
-  AUTO_NAME: 'AUTO_NAME',
   MANUAL: 'MANUAL',
 } as const;
 export type ValuationSource = (typeof ValuationSource)[keyof typeof ValuationSource];
@@ -1184,8 +1171,7 @@ export const ValuationSourceOrder = explicitOrder<ValuationSource>({
   [ValuationSource.AUTO_ODDS]: 0,
   [ValuationSource.AUTO_SEED]: 1,
   [ValuationSource.AUTO_RANKING]: 2,
-  [ValuationSource.AUTO_NAME]: 3,
-  [ValuationSource.MANUAL]: 4,
+  [ValuationSource.MANUAL]: 3,
 });
 
 export const GolfCategoryKey = {

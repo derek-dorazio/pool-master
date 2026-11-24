@@ -6,7 +6,6 @@ import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { cleanupFreshEventEditions } from '../support/event-edition';
 const FUNCTIONAL_TEST_EMAIL_DOMAIN = '@functional.test';
 const FUNCTIONAL_TEST_PROVIDER_IDS = ['functional-test', 'integration-test'] as const;
-const FUNCTIONAL_PROVIDER_PREFIX = 'functional-provider-';
 
 export interface FunctionalServerState {
   pid: number;
@@ -541,6 +540,8 @@ export async function cleanupFunctionalData(): Promise<void> {
   }
   await cleanupSportEventParticipantArtifacts(database, providerSportEventParticipantIds);
   if (providerSportEventIds.length > 0) {
+    // A run names a Provider row (#2040), so the test's runs are the ones of its events, gone first.
+    await database.providerSyncRun.deleteMany({ where: { sportEventId: { in: providerSportEventIds } } });
     await database.sportEvent.deleteMany({
       where: {
         id: {
@@ -550,22 +551,6 @@ export async function cleanupFunctionalData(): Promise<void> {
     });
   }
   await cleanupFreshEventEditions(database);
-  await database.providerSyncRun.deleteMany({
-    where: {
-      OR: [
-        {
-          providerId: {
-            in: [...FUNCTIONAL_TEST_PROVIDER_IDS],
-          },
-        },
-        {
-          providerId: {
-            startsWith: FUNCTIONAL_PROVIDER_PREFIX,
-          },
-        },
-      ],
-    },
-  });
   if (providerParticipantIds.length > 0) {
     await database.participantProviderMapping.deleteMany({
       where: {

@@ -277,7 +277,8 @@ describe('events routes', () => {
         },
       });
       const entry = await prisma.sportEventParticipant.create({
-        data: { sportEventId: eventId, participantId, isActive: true },
+        // A rank gives the field an order to tier and price by (#2040: never by name).
+        data: { sportEventId: eventId, participantId, isActive: true, ranking: 1 },
       });
       if (options.tiered) {
         const tier = await prisma.sportEventTier.create({
@@ -338,7 +339,7 @@ describe('events routes', () => {
       });
       expect(pricesRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(pricesRes.json()).success).toBe(true);
-      expect(pricesRes.json()).toMatchObject({ participants: [{ valuation: { price: 12000, priceAssignedSource: 'AUTO_NAME' } }] });
+      expect(pricesRes.json()).toMatchObject({ participants: [{ valuation: { price: 12000, priceAssignedSource: 'AUTO_RANKING' } }] });
 
       const releaseRes = await getApp().inject({
         method: 'POST',

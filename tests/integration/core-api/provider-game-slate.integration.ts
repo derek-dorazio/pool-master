@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { MatchSide, Sport, SportEventStatus } from '@poolmaster/shared/domain';
@@ -54,7 +55,7 @@ async function syncedWeek() {
     // poolmaster-allow-query-in-loop: four test fixture teams
     const team = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' } });
     // poolmaster-allow-query-in-loop: four test fixture teams
-    await prisma.participantProviderMapping.create({ data: { participantId: team.id, sportLeagueId: team.sportLeagueId, providerId: PROVIDER, externalId: `${event.externalId}-${name}`, confidence: 'EXACT' } });
+    await prisma.participantProviderMapping.create({ data: { participantId: team.id, sportLeagueId: team.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId: `${event.externalId}-${name}` } });
     // poolmaster-allow-query-in-loop: four test fixture teams
     const row = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id } });
     field[name] = row.id;
@@ -140,7 +141,7 @@ describe('Provider game slate (#1728)', () => {
       // poolmaster-allow-query-in-loop: seven test fixture teams
       const participant = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Seed ${seed} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' } });
       // poolmaster-allow-query-in-loop: seven test fixture teams
-      await prisma.participantProviderMapping.create({ data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: PROVIDER, externalId: team(seed), confidence: 'EXACT' } });
+      await prisma.participantProviderMapping.create({ data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId: team(seed) } });
       // poolmaster-allow-query-in-loop: seven test fixture teams
       row.set(seed, (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, seedNumber: seed } })).id);
     }

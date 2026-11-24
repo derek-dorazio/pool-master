@@ -8,7 +8,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BracketAdvancement, MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
+import { BracketAdvancement, MatchSide, MatchStatus, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject, type LoadRow } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { seedDateOffsetDays, shiftedEventDates } from '../../packages/core-api/scripts/seed-golf/seed-golf-data';
@@ -78,7 +78,7 @@ async function cleanup(): Promise<void> {
   await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   // The run's players, and every participant of the run's leagues (#1853: each belongs to one).
-  const participantWhere = { OR: [{ externalId: { startsWith: RUN } }, { sportLeagueId: { in: leagueIds } }] };
+  const participantWhere = { OR: [{ name: { startsWith: RUN } }, { sportLeagueId: { in: leagueIds } }] };
   await db.participantProviderMapping.deleteMany({ where: { participant: participantWhere } });
   await db.participant.deleteMany({ where: participantWhere });
   await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
@@ -199,7 +199,7 @@ describe('Loading a golf test seed through the admin API', () => {
   it('skips everything on a second run, keeping a tour ranking an admin changed by hand', async () => {
     const league = expectDefined(await leagueNamed(tour));
     const db = getFunctionalPrisma();
-    const golferOne = await db.participant.findFirstOrThrow({ where: { externalId: `${prefix}-p1` } });
+    const golferOne = await db.participant.findFirstOrThrow({ where: { name: `${prefix} Golfer 1` } });
     await db.participant.update({ where: { id: golferOne.id }, data: { ranking: 99 } });
 
     const second = await loadSportData(parsed(seed), { getClient, now: NOW, mode: LoadMode.APPLY });
@@ -259,8 +259,9 @@ describe('Loading a golf test seed through the admin API', () => {
 describe('Binding a test player\'s feed ids as the test seed loads', () => {
   const prefix = `${RUN}-feed`;
   const tour = `Feed Tour ${prefix}`;
-  // The provider the functional server registers; a mapping names a registered provider.
-  const provider = 'mock-contest-feed';
+  // A test data file names a feed id by its provider's code; the mapping keys it to that Provider row (#2040).
+  const provider = ProviderCode.BALLDONTLIE;
+  const providerRowId = async () => (await getFunctionalPrisma().provider.findUniqueOrThrow({ where: { code: provider } })).id;
   const feedId = (id: string) => `${prefix}-${id}`;
   const getClient = () => Promise.resolve(admin.client);
   // Two golfers are too few to release; the drafts are enough to see who is fielded.
@@ -279,10 +280,10 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
       }],
     }],
   });
-  const mappingOf = (id: string) => getFunctionalPrisma().participantProviderMapping.findFirst({ where: { providerId: provider, externalId: feedId(id) } });
+  const mappingOf = (id: string) => getFunctionalPrisma().participantProviderMapping.findFirst({ where: { provider: { code: provider }, externalId: feedId(id) } });
 
   afterAll(async () => {
-    await getFunctionalPrisma().participantProviderMapping.deleteMany({ where: { providerId: provider, externalId: { startsWith: prefix } } });
+    await getFunctionalPrisma().participantProviderMapping.deleteMany({ where: { provider: { code: provider }, externalId: { startsWith: prefix } } });
   });
 
   it('reports a feed id to bind in a dry run without binding it, then binds it to the player it creates, and skips it on a second run', async () => {
@@ -293,8 +294,8 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     await expect(mappingOf('golfer-1')).resolves.toBeNull();
 
     await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, release: false });
-    const golferOne = await getFunctionalPrisma().participant.findFirstOrThrow({ where: { externalId: `${prefix}-new-p1` } });
-    await expect(mappingOf('golfer-1')).resolves.toMatchObject({ participantId: golferOne.id, confidence: 'MANUAL' });
+    const golferOne = await getFunctionalPrisma().participant.findFirstOrThrow({ where: { name: `${prefix}-new Golfer 1` } });
+    await expect(mappingOf('golfer-1')).resolves.toMatchObject({ participantId: golferOne.id, providerId: await providerRowId(), participantType: 'INDIVIDUAL' });
 
     const second = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.APPLY, release: false });
     expect(changes(second).filter((row) => row.subject === LoadSubject.PLAYER)).toEqual([]);
@@ -306,8 +307,8 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     const league = `${tour} known`;
     // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
     const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), sportId: golfSportId, name: league } });
-    const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL', externalId: `${RUN}-synced` } });
-    await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: provider, externalId: feedId('golfer-2'), confidence: 'EXACT' } });
+    const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL' } });
+    await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: await providerRowId(), participantType: 'INDIVIDUAL', externalId: feedId('golfer-2') } });
 
 
     const rows = await loadSportData(parsed(seed('known', [undefined, { [provider]: feedId('golfer-2') }])), { getClient, now: NOW, mode: LoadMode.APPLY, release: false });
@@ -315,7 +316,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     expect(changes(rows).filter((row) => row.subject === LoadSubject.PLAYER)).toEqual([
       { sportLeague: league, subject: LoadSubject.PLAYER, action: LoadAction.ADD, name: `${prefix}-known Golfer 1`, detail: 'ranked 1' },
     ]);
-    await expect(db.participant.count({ where: { externalId: `${prefix}-known-p2` } })).resolves.toBe(0);
+    await expect(db.participant.count({ where: { name: `${prefix}-known Golfer 2` } })).resolves.toBe(0);
     const event = expectDefined((await eventsOf(expectDefined(await leagueNamed(league)).id, 2026))[0]);
     expect((await fieldOf(event.id)).has(`${prefix} Synced Spelling`)).toBe(true);
   });

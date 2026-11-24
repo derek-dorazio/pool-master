@@ -5,7 +5,7 @@
  */
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderSettingsRepository } from '@poolmaster/shared/db';
-import type { ProviderCode, ProviderLeagueSettings, ProviderSettings } from '@poolmaster/shared/domain';
+import { providerCodeOfSourceId, type ProviderCode, type ProviderLeagueSettings, type ProviderSettings } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 
 /** How often a task reads the provider rows again. */
@@ -49,6 +49,16 @@ export class ProviderSettingsStore {
   /** The provider with this code; undefined when it has no row. */
   byCode(code: ProviderCode): ProviderSettings | undefined {
     return providerByCode(this.providers, code);
+  }
+
+  /**
+   * The Provider row of the adapter whose feed carries this source id (`balldontlie`), which every
+   * provider mapping, sync run and sync job is keyed to (#2040); undefined for an adapter with no
+   * Provider row.
+   */
+  bySourceId(sourceId: string): ProviderSettings | undefined {
+    const code = providerCodeOfSourceId(sourceId);
+    return code === undefined ? undefined : this.byCode(code);
   }
 
   /** A provider's enabled leagues. */

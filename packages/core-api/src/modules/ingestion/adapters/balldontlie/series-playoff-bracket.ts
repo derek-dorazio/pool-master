@@ -18,7 +18,8 @@
 
 import { MatchSide } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../core/provider-interface';
-import { BracketShapeKind, pairOf, playoffsTeamExternalId, type DivisionBracketConference, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
+import { BracketShapeKind, pairOf, type DivisionBracketConference, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
+import { participantFeedId } from './participant-feed-id';
 
 /** A team's seed rank within its group (a conference, or the whole league), by its vendor id. */
 export type PlayoffSeedRanks = ReadonlyMap<number, number>;
@@ -170,11 +171,11 @@ export function toPlayoffsBracket(league: PlayoffsLeague, games: readonly Playof
   if (shape === undefined) return null;
   const firstRound = playoffSeries(games).filter((series) => series.round === 1);
   if (firstRound.length !== league.rounds[0].seriesCount) return null;
-  if (shape.kind === BracketShapeKind.BYES) return byeBracket(league, shape.leagues, firstRound, ranks, teams);
+  if (shape.kind === BracketShapeKind.BYES) return byeBracket(shape.leagues, firstRound, ranks, teams);
   const slots = shape.kind === BracketShapeKind.SEEDED
     ? seededSlots(league, shape.groups, firstRound, ranks)
     : divisionSlots(league, shape.conferences, firstRound, ranks);
-  return slots === null ? null : linkBracket(league, slots);
+  return slots === null ? null : linkBracket(slots);
 }
 
 /**
@@ -185,14 +186,12 @@ export function toPlayoffsBracket(league: PlayoffsLeague, games: readonly Playof
  * league's seeds, and `teams` names the league each top seed plays in; null unless each league's
  * first round is its 4 v 5 and 3 v 6 and both its top seeds are among `teams`.
  */
-function byeBracket(
-  league: PlayoffsLeague,
-  leagues: ReadonlyArray<{ name: string; label: string }>,
+function byeBracket(leagues: ReadonlyArray<{ name: string; label: string }>,
   firstRound: readonly PlayoffSeries[],
   ranks: PlayoffSeedRanks,
   teams: readonly PlayoffTeam[],
 ): ProviderBracketMatch[] | null {
-  const team = (each: PlayoffTeam) => playoffsTeamExternalId(league, each.id);
+  const team = (each: PlayoffTeam) => participantFeedId(each.id);
   const count = leagues.length;
   const match = (matchNumber: number, roundNumber: number, regionLabel: string | null, fill: Partial<ProviderBracketMatch> = {}): ProviderBracketMatch => ({
     matchNumber, roundNumber, homeTeamExternalId: null, awayTeamExternalId: null, isNeutralSite: false, scheduledAt: null, advancesTo: null, regionLabel, ...fill,
@@ -227,8 +226,8 @@ function byeBracket(
 }
 
 /** The first round's matches numbered in order, each two consecutive ones' winners meeting next, to the final. */
-function linkBracket(league: PlayoffsLeague, slots: readonly FirstRoundSlot[]): ProviderBracketMatch[] {
-  const team = (each: PlayoffTeam) => playoffsTeamExternalId(league, each.id);
+function linkBracket(slots: readonly FirstRoundSlot[]): ProviderBracketMatch[] {
+  const team = (each: PlayoffTeam) => participantFeedId(each.id);
   /** Each match with the best seed in the half it heads, to say which side hosts the next. */
   let previous: Array<{ match: ProviderBracketMatch; bestSeed: number }> = slots.map((slot, index) => ({
     bestSeed: slot.bestSeed,
@@ -279,12 +278,12 @@ function linkBracket(league: PlayoffsLeague, slots: readonly FirstRoundSlot[]): 
  * its home half at home), whoever has home court, since its sides come from the links and the
  * slate would otherwise read a swap; without one, Game 1's home team is at home.
  */
-export function toPlayoffSeriesGames(league: PlayoffsLeague, games: readonly PlayoffGame[], bracket: readonly ProviderBracketMatch[] | null): ProviderScheduledGame[] {
+export function toPlayoffSeriesGames(games: readonly PlayoffGame[], bracket: readonly ProviderBracketMatch[] | null): ProviderScheduledGame[] {
   const sideOf = bracketSides(bracket ?? []);
   return playoffSeries(games).map((series) => {
     const first = series.games[0];
-    const home = playoffsTeamExternalId(league, first.home.id);
-    const away = playoffsTeamExternalId(league, first.away.id);
+    const home = participantFeedId(first.home.id);
+    const away = participantFeedId(first.away.id);
     const flip = series.round > 1 && sideOf(series.round, home) === MatchSide.AWAY && sideOf(series.round, away) === MatchSide.HOME;
     return {
       externalGameId: String(first.id),

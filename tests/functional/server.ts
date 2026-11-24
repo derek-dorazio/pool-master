@@ -156,10 +156,11 @@ async function main(): Promise<void> {
   // The fake serves golf first, ahead of any provider the Provider rows build (#2039).
   const mockProviderBaseUrl = await startMockContestFeedProviderForDaemon();
   const app = buildApp({
-    buildSportDataProviders: (rows, env, logger) => [
-      new MockContestFeedAdapter(mockProviderBaseUrl, pinnedMockFeedStates),
-      ...buildProvidersFromRows(rows, env, logger),
-    ],
+    // The fake answers as BALLDONTLIE (#2040), so it stands in for the adapter that row would build.
+    buildSportDataProviders: (rows, env, logger) => {
+      const fake = new MockContestFeedAdapter(mockProviderBaseUrl, pinnedMockFeedStates);
+      return [fake, ...buildProvidersFromRows(rows, env, logger).filter((provider) => provider.providerId !== fake.providerId)];
+    },
   });
   observeQueryBudget(app, queryBudgetRecorder);
 

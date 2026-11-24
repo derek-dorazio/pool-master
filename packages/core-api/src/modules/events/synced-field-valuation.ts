@@ -56,7 +56,6 @@ const BASIS_WORD: Record<FieldOrderBasis, string> = {
   [FieldOrderBasis.ODDS]: 'Odds',
   [FieldOrderBasis.SEED]: 'Seed',
   [FieldOrderBasis.RANKING]: 'Rank',
-  [FieldOrderBasis.NAME]: 'Name',
 };
 
 /**
@@ -69,6 +68,9 @@ export function fieldValuationReport(outcome: FieldValuationOutcome): FieldValua
     return { stats: {}, warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: `Tiers and prices were not made from the field: ${outcome.message}` }] };
   }
   if (outcome.outcome === 'SKIPPED') {
+    if (outcome.reason === 'NO_ORDER') {
+      return { stats: {}, warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: no participant has odds, a seed or a rank to put it in order.' }] };
+    }
     return { stats: outcome.reason === 'LOCKED' ? { tiersAndPricesLocked: 1 } : {}, warnings: [] };
   }
   const stats: Record<string, number> = {};

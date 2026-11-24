@@ -70,6 +70,9 @@ const created = {
 async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
+  // The run's players, read before its fields go (the loader finds a player by name, #2040).
+  const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
+    .map((row) => row.participantId);
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
@@ -86,8 +89,8 @@ async function cleanup(): Promise<void> {
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
-  const seededIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((row) => row.id);
-  await db.participant.deleteMany({ where: { id: { in: seededIds } } });
+  // Only those no other event's field still holds.
+  await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
   if (created.sportLeagueIds.size) {
     await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
   }

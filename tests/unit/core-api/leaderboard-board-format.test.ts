@@ -26,8 +26,11 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   6: 'e4195bfd7a7880779571958590df34a806cb9cf92a95c8b3d0d211a2133bf29b',
   // The old Clutch Card leagues removed: a pick carries no composite block.
   7: 'f2763f53932748563e612cd03bf7c36a7a7253c809fe7f74758b143a61f47f99',
+  // #2040: AUTO_NAME leaves the valuation sources. A narrowing, so a format-7 task still serves a
+  // format-8 board; participants keep their deprecated, always-empty externalIds.
+  8: '4da23d0c552682230276679f528469edafebffb7a52380e4adaa408d7c9227b2',
   // League model 3 (#2000): SportEventMatchDto renamed SportEventRoundMatchDto; the fields are the same.
-  8: '2635302c43a4f87735ebcfea92e9ea5025baeff26a2dfbc04f6c79867ad40763',
+  9: '39e1f479550d5d8165a2637da525300e23b9c80b0b46195c5e4e89888d417fd7',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

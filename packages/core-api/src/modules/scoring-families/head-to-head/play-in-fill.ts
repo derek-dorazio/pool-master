@@ -13,7 +13,7 @@
  * not name. Once the place is filled, both sides of its match are teams the provider names, so
  * the game links and scores like any other, in the same sync.
  */
-import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { requireProviderCodeOfSourceId, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ParticipantProviderMappingRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -57,7 +57,7 @@ export async function fillPlayInPlaces(
   const placeIds = new Set(field.filter((row) => row.isPlayInPlace).map((row) => row.id));
   if (placeIds.size === 0) return;
   const teamIds = [...new Set(winnerGames.flatMap((each) => [each.winnerExternalId, each.opponentExternalId]))];
-  const mappings = await deps.mappings.findByProviderExternalIds(deps.providerId, { sportEventId }, teamIds);
+  const mappings = await deps.mappings.findByProviderExternalIds(requireProviderCodeOfSourceId(deps.providerId), { sportEventId }, teamIds);
   const participantOf = new Map(mappings.map((mapping) => [mapping.externalId, mapping.participantId]));
   const rowOfParticipant = new Map(field.map((row) => [row.participantId, row.id]));
 

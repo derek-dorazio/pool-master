@@ -94,10 +94,10 @@ describe('a Premier League matchweek as an event', () => {
 });
 
 describe('Premier League teams', () => {
-  it('lists a team under its prefixed id and name, carrying the league\'s keyword', () => {
+  it('lists a team under its raw feed id and name, carrying the league\'s keyword', () => {
     const [arsenal] = teams2026;
     expect(toEplTeamParticipant(arsenal)).toEqual({
-      externalId: 'epl-team-1',
+      externalId: '1',
       providerId: 'balldontlie',
       sport: Sport.SOCCER,
       name: 'Arsenal',
@@ -114,10 +114,10 @@ describe('Premier League teams', () => {
 
   it('gives a matchweek\'s teams once each, in the order they first play, named from the season\'s teams', () => {
     expect(toEplFieldParticipants([cityFulham, arsenalChelsea, cityFulham], teams2026).map((team) => [team.externalId, team.name])).toEqual([
-      ['epl-team-12', 'Manchester City'],
-      ['epl-team-9', 'Fulham'],
-      ['epl-team-1', 'Arsenal'],
-      ['epl-team-6', 'Chelsea'],
+      ['12', 'Manchester City'],
+      ['9', 'Fulham'],
+      ['1', 'Arsenal'],
+      ['6', 'Chelsea'],
     ]);
   });
 
@@ -130,12 +130,12 @@ describe('Premier League teams', () => {
 describe('Premier League match scores', () => {
   it('gives every match\'s teams, state and score, a draw as level scores, leaving out an unknown state', () => {
     expect(toEplGameScoreUpdates([...matchweek11, ...matchweek12])).toEqual([
-      { externalGameId: '900111', homeTeamExternalId: 'epl-team-12', awayTeamExternalId: 'epl-team-9', state: ProviderGameState.FINAL, homeScore: 2, awayScore: 1 },
-      { externalGameId: '900112', homeTeamExternalId: 'epl-team-1', awayTeamExternalId: 'epl-team-6', state: ProviderGameState.FINAL, homeScore: 1, awayScore: 1 },
-      { externalGameId: '900113', homeTeamExternalId: 'epl-team-11', awayTeamExternalId: 'epl-team-8', state: ProviderGameState.IN_PROGRESS, homeScore: 1, awayScore: 0 },
-      { externalGameId: '900114', homeTeamExternalId: 'epl-team-4', awayTeamExternalId: 'epl-team-10', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
-      { externalGameId: '900115', homeTeamExternalId: 'epl-team-2', awayTeamExternalId: 'epl-team-17', state: ProviderGameState.POSTPONED, homeScore: null, awayScore: null },
-      { externalGameId: '900121', homeTeamExternalId: 'epl-team-1', awayTeamExternalId: 'epl-team-12', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { externalGameId: '900111', homeTeamExternalId: '12', awayTeamExternalId: '9', state: ProviderGameState.FINAL, homeScore: 2, awayScore: 1 },
+      { externalGameId: '900112', homeTeamExternalId: '1', awayTeamExternalId: '6', state: ProviderGameState.FINAL, homeScore: 1, awayScore: 1 },
+      { externalGameId: '900113', homeTeamExternalId: '11', awayTeamExternalId: '8', state: ProviderGameState.IN_PROGRESS, homeScore: 1, awayScore: 0 },
+      { externalGameId: '900114', homeTeamExternalId: '4', awayTeamExternalId: '10', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { externalGameId: '900115', homeTeamExternalId: '2', awayTeamExternalId: '17', state: ProviderGameState.POSTPONED, homeScore: null, awayScore: null },
+      { externalGameId: '900121', homeTeamExternalId: '1', awayTeamExternalId: '12', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
     ]);
   });
 

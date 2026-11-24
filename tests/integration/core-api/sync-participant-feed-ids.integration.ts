@@ -6,6 +6,7 @@
  * data participant whose feed id the Load test data run bound is the row the sync fields, so the
  * two never make a duplicate.
  */
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'crypto';
 import { expect } from '@jest/globals';
@@ -18,7 +19,8 @@ import type { ProviderParticipant, SportEventDetail } from '../../../packages/co
 import { linkedProviderEvent } from '../../support/event-edition';
 import { leagueProfiles } from '../../support/league-profiles';
 
-const PROVIDER = 'TEST_PROVIDER_1850';
+// A feed's participants are mapped to its Provider row (#2040), so the suite syncs as BALLDONTLIE.
+const PROVIDER = 'balldontlie';
 const NAME_PREFIX = 'Feed Id 1850 ';
 
 beforeAll(async () => {
@@ -29,7 +31,7 @@ afterAll(async () => {
   await prisma.sportEventParticipant.deleteMany({ where: { sportEvent: { providerId: PROVIDER } } });
   await prisma.sportEventRound.deleteMany({ where: { sportEvent: { providerId: PROVIDER } } });
   await prisma.sportEvent.deleteMany({ where: { providerId: PROVIDER } });
-  await prisma.participantProviderMapping.deleteMany({ where: { providerId: PROVIDER } });
+  await prisma.participantProviderMapping.deleteMany({ where: { participant: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
   await prisma.eventSeries.deleteMany({ where: { sportLeague: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.sportLeague.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
@@ -62,7 +64,7 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
 
 const sync = (detail: SportEventDetail) => new IngestionPersistence(getAppPrisma(), testDomainEvents()).persistEventDetailWithDiagnostics(detail);
 const mappingOf = (externalId: string, sportLeagueId: string) => getPrisma().participantProviderMapping.findUnique({
-  where: { providerId_externalId_sportLeagueId: { providerId: PROVIDER, externalId, sportLeagueId } },
+  where: { providerId_externalId_sportLeagueId_participantType: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId, sportLeagueId, participantType: 'INDIVIDUAL' } },
 });
 const fieldOfEvent = (sportEventId: string) => getPrisma().sportEventParticipant.findMany({ where: { sportEventId }, select: { participantId: true, ranking: true } });
 
@@ -85,7 +87,7 @@ describe('a field sync records when it last saw each participant in the feed (#1
     const { golfer, detail, sportLeagueId } = await fieldOf();
     const absent = await prisma.participant.create({ data: { sportLeagueId, name: `${golfer.name} absent`, participantType: 'INDIVIDUAL' } });
     const seenLongAgo = new Date('2026-01-01T00:00:00.000Z');
-    await prisma.participantProviderMapping.create({ data: { participantId: absent.id, sportLeagueId, providerId: PROVIDER, externalId: `absent-${golfer.externalId}`, lastSeenAt: seenLongAgo } });
+    await prisma.participantProviderMapping.create({ data: { participantId: absent.id, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: `absent-${golfer.externalId}`, lastSeenAt: seenLongAgo } });
 
     await sync(detail);
 
@@ -95,7 +97,7 @@ describe('a field sync records when it last saw each participant in the feed (#1
 });
 
 describe('the sync matches feed participants by feed id only, within the event\'s sport league (#1850, #1853)', () => {
-  it('creates a new golfer of the event\'s sport league, with an EXACT mapping and on the field, for a feed id no participant is mapped to, though the league holds an unmapped golfer of the same name', async () => {
+  it('creates a new golfer of the event\'s sport league, with a mapping to its feed id and on the field, for a feed id no participant is mapped to, though the league holds an unmapped golfer of the same name', async () => {
     const prisma = getPrisma();
     const { golfer, detail, event, sportLeagueId } = await fieldOf();
     const sameName = await prisma.participant.create({ data: { sportLeagueId, name: golfer.name, participantType: 'INDIVIDUAL' } });
@@ -104,7 +106,7 @@ describe('the sync matches feed participants by feed id only, within the event\'
 
     const mapping = await mappingOf(golfer.externalId, sportLeagueId);
     await expect(prisma.participant.findUniqueOrThrow({ where: { id: mapping?.participantId ?? 'none' } })).resolves.toMatchObject({ sportLeagueId });
-    expect(mapping).toMatchObject({ confidence: 'EXACT' });
+    expect(mapping).toMatchObject({ participantType: 'INDIVIDUAL', providerId: BALLDONTLIE_TEST_PROVIDER_ID });
     expect(mapping?.participantId).not.toBe(sameName.id);
     await expect(fieldOfEvent(event.id)).resolves.toEqual([{ participantId: mapping?.participantId, ranking: 7 }]);
     await expect(prisma.participantProviderMapping.count({ where: { participantId: sameName.id } })).resolves.toBe(0);
@@ -147,9 +149,9 @@ describe('the sync matches feed participants by feed id only, within the event\'
     const prisma = getPrisma();
     const { golfer, detail, event, sportLeagueId } = await fieldOf();
     // As the loader writes a test player: created in its league under the file's spelling, then its feed id bound.
-    const seeded = await prisma.participant.create({ data: { sportLeagueId, name: `${golfer.name} (test spelling)`, participantType: 'INDIVIDUAL', externalId: 'test-file-key' } });
+    const seeded = await prisma.participant.create({ data: { sportLeagueId, name: `${golfer.name} (test spelling)`, participantType: 'INDIVIDUAL' } });
     const participants = new ParticipantService(new PrismaParticipantRepository(getAppPrisma()), new PrismaParticipantProviderMappingRepository(getAppPrisma()));
-    await participants.bindProviderMapping(seeded.id, PROVIDER, golfer.externalId);
+    await participants.bindProviderMapping(seeded.id, BALLDONTLIE_TEST_PROVIDER_ID, golfer.externalId);
 
     await sync(detail);
 

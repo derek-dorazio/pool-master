@@ -3,6 +3,7 @@
  * series and provider identities go with it, and a sport league a contest setup
  * still offers is refused. Against real Postgres, through the app; no mocks.
  */
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { randomUUID } from 'node:crypto';
 import { Sport } from '@poolmaster/shared/domain';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto';
@@ -85,7 +86,7 @@ async function golferWithIdentities(size: number): Promise<string> {
   const sportLeagueId = await participantLeagueId(prisma, sportId);
   for (let index = 0; index < size; index += 1) {
     await prisma.participantProviderMapping.create({
-      data: { participantId, sportLeagueId, providerId: `delete-scaling-${index}`, externalId: randomUUID(), confidence: 'MANUAL' },
+      data: { participantId, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: randomUUID() },
     });
   }
   return participantId;

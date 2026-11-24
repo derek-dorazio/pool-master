@@ -1,4 +1,4 @@
-import { ProviderGameState, type SportEventRoundMatch, type SportEventParticipant } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderGameState, type SportEventRoundMatch, type SportEventParticipant } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import { fillPlayInPlaces, type PlayInFillDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/play-in-fill';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
@@ -80,7 +80,7 @@ describe('filling a play-in place from the provider\'s First Four winner', () =>
 
     expect(fillPlayInSlot).toHaveBeenCalledTimes(1);
     expect(fillPlayInSlot).toHaveBeenCalledWith(EVENT_ID, 'sep-PLAYIN16', 'p-UMBC');
-    expect(findByProviderExternalIds).toHaveBeenCalledWith('balldontlie', { sportEventId: EVENT_ID }, ['bdl-UMBC', 'bdl-HOU']);
+    expect(findByProviderExternalIds).toHaveBeenCalledWith(ProviderCode.BALLDONTLIE, { sportEventId: EVENT_ID }, ['bdl-UMBC', 'bdl-HOU']);
   });
 
   it('finds the place whichever side the provider lists the winner on, and whichever side of the match the place is', async () => {

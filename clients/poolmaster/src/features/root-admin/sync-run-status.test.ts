@@ -11,7 +11,8 @@ import {
 function run(status: ProviderSyncRun['status'], payload: ProviderSyncRunPayload = {}): ProviderSyncRun {
   return {
     id: 'sync-run',
-    providerId: 'balldontlie',
+    providerId: '6f1e9a52-0000-4000-8000-000000000001',
+    providerName: 'BALLDONTLIE',
     sport: 'GOLF',
     eventId: null,
     kind: 'SCORES',

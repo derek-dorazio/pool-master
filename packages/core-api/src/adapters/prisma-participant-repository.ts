@@ -42,7 +42,8 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         sportLeagueId,
         OR: queries.map((query) => ({
           ...(query.id !== undefined && { id: query.id }),
-          ...(query.externalId !== undefined && { externalId: query.externalId }),
+          // A feed id is the provider's, kept only on the participant's provider mappings (#2040).
+          ...(query.externalId !== undefined && { providerMappings: { some: { sportLeagueId, externalId: query.externalId } } }),
           ...(query.name !== undefined && { name: { equals: query.name, mode: 'insensitive' as const } }),
         })),
       },
@@ -122,9 +123,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         ...(updates.injuryStatus !== undefined && { injuryStatus: updates.injuryStatus as object }),
         ...(updates.photoUrl !== undefined && { photoUrl: updates.photoUrl }),
         ...(updates.photoLastUpdated !== undefined && { photoLastUpdated: updates.photoLastUpdated }),
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed: Prisma's JSON input type has an index signature this interface lacks; the rule misreads it inside the conditional spread.
-        ...(updates.externalIds !== undefined && { externalIds: updates.externalIds as object }),
-        ...(updates.externalId !== undefined && { externalId: updates.externalId }),
       },
     });
     return mapToParticipant(row);
@@ -151,7 +149,6 @@ export function mapToParticipant(row: {
   ranking: number | null;
   name: string;
   participantType: ParticipantType;
-  externalId: string | null;
   firstName: string | null;
   lastName: string | null;
   shortName: string | null;
@@ -162,7 +159,6 @@ export function mapToParticipant(row: {
   injuryStatus: unknown;
   photoUrl: string | null;
   photoLastUpdated: Date | null;
-  externalIds: unknown;
   createdAt: Date;
   updatedAt: Date;
 }): Participant {
@@ -172,7 +168,6 @@ export function mapToParticipant(row: {
     ranking: row.ranking,
     name: row.name,
     participantType: row.participantType,
-    externalId: row.externalId ?? undefined,
     firstName: row.firstName ?? undefined,
     lastName: row.lastName ?? undefined,
     shortName: row.shortName ?? undefined,
@@ -183,7 +178,6 @@ export function mapToParticipant(row: {
     injuryStatus: toInjuryStatus(row.injuryStatus),
     photoUrl: row.photoUrl ?? undefined,
     photoLastUpdated: row.photoLastUpdated ?? undefined,
-    externalIds: (row.externalIds ?? {}) as Record<string, string>,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -210,7 +204,6 @@ function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdA
     ranking: participant.ranking,
     name: participant.name,
     participantType: participant.participantType,
-    externalId: participant.externalId,
     firstName: participant.firstName,
     lastName: participant.lastName,
     shortName: participant.shortName,
@@ -221,6 +214,5 @@ function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdA
     injuryStatus: participant.injuryStatus as object,
     photoUrl: participant.photoUrl,
     photoLastUpdated: participant.photoLastUpdated,
-    externalIds: participant.externalIds as object,
   };
 }
