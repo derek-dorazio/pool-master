@@ -348,10 +348,6 @@ export const enUS = {
       DRAFT: 'Not submitted',
       SUBMITTED: 'Submitted',
     },
-    PrizePayoutType: {
-      FIXED_AMOUNT: 'Fixed amount',
-      PERCENTAGE: 'Percentage',
-    },
     LeagueRole: {
       COMMISSIONER: 'Commissioner',
       MEMBER: 'Member',

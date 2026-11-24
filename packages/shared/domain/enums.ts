@@ -1232,15 +1232,6 @@ export const ContestEntryStatusOrder = explicitOrder<ContestEntryStatus>({
   [ContestEntryStatus.SUBMITTED]: 1,
 });
 
-/** How a prize definition's payout is expressed. */
-export const PrizePayoutType = {
-  FIXED_AMOUNT: 'FIXED_AMOUNT',
-  PERCENTAGE: 'PERCENTAGE',
-} as const;
-export type PrizePayoutType = (typeof PrizePayoutType)[keyof typeof PrizePayoutType];
-/** No natural order: A to Z by its display strings. */
-export const PrizePayoutTypeOrder = alphabeticalOrder('PrizePayoutType');
-
 // --- League ---
 
 export const LeagueRole = {

@@ -81,7 +81,6 @@ export type SharedEnums = {
   ParticipantStandingStatus: Enums.ParticipantStandingStatus;
   ContestStatus: Enums.ContestStatus;
   ContestEntryStatus: Enums.ContestEntryStatus;
-  PrizePayoutType: Enums.PrizePayoutType;
   LeagueRole: Enums.LeagueRole;
   LeagueMembershipStatus: Enums.LeagueMembershipStatus;
   LeagueIconKey: Enums.LeagueIconKey;
