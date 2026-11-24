@@ -25,10 +25,7 @@ import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '..
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
   ProviderLeagueRefusedError,
-  supportsLiveSimulation,
   type DateRange,
-  type LiveSimulationOptions,
-  type LiveSimulationStatus,
   type SportEvent as ProviderCatalogSportEvent,
 } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
@@ -282,75 +279,6 @@ export class EventScoreSourceService {
     }));
 
     this.logger?.info({ sportEventId }, 'Unlinked sport event score source');
-  }
-
-  /**
-   * Asks the event's linked score source to play its live scoring forward on the
-   * provider's own clock (#382), so a live contest's leaderboard can be exercised without a
-   * real tournament in progress. Scores still arrive through the normal live-score sync.
-   * 409 EVENT_NOT_LINKED for an unlinked event; 422 LIVE_SIMULATION_UNSUPPORTED when the
-   * provider has no simulation (every real provider).
-   */
-  async startLiveSimulation(sportEventId: string, options: LiveSimulationOptions): Promise<LiveSimulationStatus> {
-    const { existing, provider } = await this.requireSimulatingProvider(sportEventId);
-    const status = await provider.startLiveSimulation(existing.externalId, options);
-    if (!status) {
-      throw new EventScoreSourceError(
-        `Provider ${existing.providerId} has no event ${existing.externalId}.`,
-        'PROVIDER_EVENT_NOT_FOUND',
-        404,
-      );
-    }
-
-    this.logger?.info(
-      {
-        sportEventId,
-        providerId: existing.providerId,
-        externalId: existing.externalId,
-        startsAt: status.startsAt.toISOString(),
-        minutesPerRound: status.minutesPerRound,
-      },
-      'Started provider live simulation',
-    );
-    return status;
-  }
-
-  /**
-   * The simulation the event's score source is running now, so Tournament Home can show its
-   * round as it advances. 404 LIVE_SIMULATION_NOT_RUNNING when none is (never started, or
-   * the mock restarted); the same 409/422 as `startLiveSimulation` otherwise.
-   */
-  async getLiveSimulation(sportEventId: string): Promise<LiveSimulationStatus> {
-    const { existing, provider } = await this.requireSimulatingProvider(sportEventId);
-    const status = await provider.getLiveSimulation(existing.externalId);
-    if (!status) {
-      throw new EventScoreSourceError(
-        `No live simulation is running for sport event ${sportEventId}.`,
-        'LIVE_SIMULATION_NOT_RUNNING',
-        404,
-      );
-    }
-    return status;
-  }
-
-  private async requireSimulatingProvider(sportEventId: string) {
-    const existing = await this.requireSportEvent(sportEventId);
-    if (existing.syncScope === SportEventSyncScope.NONE) {
-      throw new EventScoreSourceError(`Sport event ${sportEventId} is not linked to a provider.`, 'EVENT_NOT_LINKED', 409);
-    }
-
-    const provider = this.providerRegistry.getProviderById(existing.providerId);
-    if (!provider) {
-      throw new EventScoreSourceError(`Provider ${existing.providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
-    }
-    if (!supportsLiveSimulation(provider)) {
-      throw new EventScoreSourceError(
-        `Provider ${existing.providerId} cannot simulate live scoring.`,
-        'LIVE_SIMULATION_UNSUPPORTED',
-        422,
-      );
-    }
-    return { existing, provider };
   }
 
   private async requireSportEvent(sportEventId: string) {

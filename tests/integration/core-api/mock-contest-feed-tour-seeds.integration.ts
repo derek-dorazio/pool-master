@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { Sport } from '@poolmaster/shared/domain';
-import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
+import { MockContestFeedAdapter } from '../../support/mock-contest-feed-provider';
 import { startMockContestFeedProvider, type RunningMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
 import { expectDefined } from '../../support/expect-defined';
 

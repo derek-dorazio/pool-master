@@ -23,8 +23,7 @@ import { ParticipantRoundStatus, ProviderGameState } from '@poolmaster/shared/do
  * GOLF — per-event per-participant golf round update.
  *
  * Adapters emit `participantExternalId` (the provider-side identifier they
- * know — e.g. `mock-contest-feed`'s contestantId or a real golf provider's
- * player code).
+ * know — e.g. a golf provider's player id).
  * `publishLiveScoreUpdate` resolves it to the internal
  * `SportEventParticipant.id` UUID before persisting; the design plan §10.2
  * field name `sportEventParticipantId` refers to that internal column,

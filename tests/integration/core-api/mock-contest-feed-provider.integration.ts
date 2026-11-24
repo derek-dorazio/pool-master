@@ -5,7 +5,7 @@ import { Sport } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema, type ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
-import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
+import { MockContestFeedAdapter } from '../../support/mock-contest-feed-provider';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
@@ -182,7 +182,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
  */
 async function linkProviderGolfEvents(from: Date, to: Date): Promise<number> {
   const events = (await new MockContestFeedAdapter(mockProvider.baseUrl).getUpcomingEvents(Sport.GOLF, { from, to }))
-    .filter((event) => event.metadata.scenarioId === 'golf-major-2026');
+    .filter((event) => event.metadata['scenarioId'] === 'golf-major-2026');
   for (const event of events) {
     await linkedProviderEvent(getPrisma(), {
       providerId: event.providerId,
@@ -609,7 +609,8 @@ describe('mock contest feed provider event-first verification', () => {
 
     // pool-master-rop.78.3 + pool-master-33l.8.8 — typed LiveScoreResult contract
     // per plans/117 §10.2, now driven through explicit mock live-state control.
-    const liveScores = await adapter.getLiveScores(eventExternalId, { mockEventState: 'live' });
+    adapter.pinEventState(eventExternalId, 'live');
+    const liveScores = await adapter.getLiveScores(eventExternalId);
     expect(liveScores.category).toBe('GOLF');
     expect(golfRoundsOf(liveScores).length).toBeGreaterThan(0);
     expect(golfRoundsOf(liveScores)[0]).toEqual(
@@ -720,22 +721,6 @@ describe('mock contest feed provider event-first verification', () => {
     });
     await expect(prisma.sportEventParticipant.count({ where: { sportEventId: linked.id } }))
       .resolves.toBe(expectDefined(detail).participants.length);
-  });
-
-  it('gives a made-up tournament its own sandbox event from the real mock: an 80-golfer field and a simulation it can start and read', async () => {
-    const adapter = new MockContestFeedAdapter(mockProvider.baseUrl);
-    const sandboxId = `sandbox-${randomUUID()}`;
-
-    const detail = await adapter.getEventDetails(sandboxId);
-    expect(detail).not.toBeNull();
-    expect(expectDefined(detail).externalId).toBe(sandboxId);
-    expect(expectDefined(detail).participants).toHaveLength(80);
-
-    await expect(adapter.getLiveSimulation(sandboxId)).resolves.toBeNull();
-    const started = await adapter.startLiveSimulation(sandboxId, { minutesPerRound: 15 });
-    expect(started).toMatchObject({ minutesPerRound: 15 });
-    await expect(adapter.getLiveSimulation(sandboxId)).resolves.toMatchObject({ minutesPerRound: 15 });
-    await expect(adapter.getEventDetails('not-a-sandbox-id')).resolves.toBeNull();
   });
 
   it('pool-master-rop.68.1.7 verifies manual and scheduled Golf event sync workflow with scoped payload diagnostics, and no schedule sync', async () => {
@@ -936,13 +921,13 @@ describe('mock contest feed provider event-first verification', () => {
 
     await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
 
+    provider.pinEventState(eventExternalId, 'locked');
     const field = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
         providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
-        mockEventState: 'locked',
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1001,13 +986,13 @@ describe('mock contest feed provider event-first verification', () => {
       actor: { type: 'ROOT_ADMIN' },
     });
 
+    provider.pinEventState(eventExternalId, 'golf-r2-complete');
     const r2Complete = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
         providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
-        mockEventState: 'golf-r2-complete',
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1033,13 +1018,13 @@ describe('mock contest feed provider event-first verification', () => {
       { status: 'ACTIVE' },
     ]);
 
+    provider.pinEventState(eventExternalId, 'golf-correction');
     const corrected = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
         providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
-        mockEventState: 'golf-correction',
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1053,13 +1038,13 @@ describe('mock contest feed provider event-first verification', () => {
     expect(leaderAfterCorrection?.picks.filter((pick) => pick.isCounting)).toHaveLength(2);
     expect(leaderAfterCorrection?.picks.filter((pick) => pick.isDropped)).toHaveLength(1);
 
+    provider.pinEventState(eventExternalId, 'golf-completed');
     const finalLive = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
         providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
-        mockEventState: 'golf-completed',
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1127,13 +1112,13 @@ describe('mock contest feed provider event-first verification', () => {
     });
     expect(completedLiveCandidates.map((event) => event.externalId)).not.toContain(eventExternalId);
 
+    provider.pinEventState(eventExternalId, 'golf-completed');
     const rerunCompletedDetail = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
         providerId: 'mock-contest-feed',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
-        mockEventState: 'golf-completed',
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1201,48 +1186,5 @@ describe('mock contest feed provider event-first verification', () => {
       },
     });
     expect(hydratedEventParticipantCount).toBeGreaterThan(0);
-  });
-
-  it('pool-master-33l.8.8: adapter applies explicit mock event states through the detail and live feeds', async () => {
-    const anchor = new Date('2026-04-26T21:00:00.000Z');
-    const lifecycleProvider = await startMockContestFeedProvider();
-
-    try {
-      const adapter = new MockContestFeedAdapter(lifecycleProvider.baseUrl);
-      const from = anchor;
-      const to = new Date(anchor.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-      const openEvents = await adapter.getUpcomingEvents(Sport.GOLF, { from, to });
-      const event = openEvents.find((item) => item.externalId === 'golf-masters-2026');
-      expect(event).toBeDefined();
-      expect(event?.status).toBe('SCHEDULED');
-      expect(event?.fieldLocked).toBe(false);
-
-      const eventId = event?.externalId ?? '';
-      const detail = await adapter.getEventDetails(eventId, { mockEventState: 'locked' });
-      expect(detail?.name).toBe(event?.name);
-      expect(detail?.fieldLocked).toBe(true);
-      expect(detail?.participants).toHaveLength(80);
-
-      const openScores = await adapter.getLiveScores(eventId, { mockEventState: 'open' });
-      expect(openScores.category).toBe('GOLF');
-      expect(golfRoundsOf(openScores)).toHaveLength(0);
-
-      const liveScores = await adapter.getLiveScores(eventId, { mockEventState: 'live' });
-      expect(liveScores.category).toBe('GOLF');
-      expect(golfRoundsOf(liveScores).length).toBeGreaterThan(0);
-      expect(golfRoundsOf(liveScores)[0]).toEqual(
-        expect.objectContaining({
-          participantExternalId: expect.any(String),
-          round: expect.any(Number),
-          strokes: expect.any(Number),
-          scoreToPar: expect.any(Number),
-          status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
-        }),
-      );
-
-    } finally {
-      await lifecycleProvider.close();
-    }
   });
 });

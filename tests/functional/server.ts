@@ -4,6 +4,8 @@ import path from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../packages/core-api/src/index';
 import { buildApp as buildMockContestFeedProvider } from '../../packages/mock-contest-feed-provider/src/app';
+import { buildProvidersFromRows } from '../../packages/core-api/src/modules/ingestion/core/provider-bindings';
+import { MockContestFeedAdapter, servePinControls, type MockFeedEventState } from '../support/mock-contest-feed-provider';
 import {
   startMailInboxServer,
   startSmtpSinkServer,
@@ -28,17 +30,18 @@ const stateFilePath: string = stateFilePathEnv;
 let smtpSink: SmtpSinkServer | undefined;
 let mailInbox: MailInboxServer | undefined;
 let queryBudgetRecorder: QueryBudgetRecorder | undefined;
-// pool-master-cs8 — the FAPI daemon runs a real mock-contest-feed provider so
-// provider-linked golf scenarios (catalog browse, score-source link, sync-driven
-// live scores) can be driven end to end through the generated SDK, the same way
-// the deployed QA stack runs poolmaster-qa-mock-contest-feed-provider alongside
-// core-api. It is registered for GOLF but only ever
-// touched by requests that explicitly hit the provider/sync surface, so it is
-// inert for every other functional test.
+// pool-master-cs8 — the FAPI daemon runs the mock contest feed and registers a test-code fake
+// provider over it (#2039), so provider-linked golf scenarios (catalog browse, score-source link,
+// sync-driven live scores) can be driven end to end through the generated SDK. It is registered
+// for GOLF but only ever touched by requests that explicitly hit the provider/sync surface, so it
+// is inert for every other functional test.
 let mockContestFeedProvider: FastifyInstance | undefined;
+// The event states tests pin through the mock feed's pin route, read by the fake provider.
+const pinnedMockFeedStates = new Map<string, MockFeedEventState>();
 
 async function startMockContestFeedProviderForDaemon(): Promise<string> {
   const provider = buildMockContestFeedProvider();
+  servePinControls(provider, pinnedMockFeedStates);
   await provider.listen({ host: '127.0.0.1', port: 0 });
   const address = provider.server.address();
   if (!address || typeof address === 'string') {
@@ -108,7 +111,7 @@ function observeQueryBudget(app: FastifyInstance, recorder: QueryBudgetRecorder)
   });
 }
 
-async function writeState(port: number, mailInboxUrl: string, queryBudgetUrl: string): Promise<void> {
+async function writeState(port: number, mailInboxUrl: string, queryBudgetUrl: string, mockFeedUrl: string): Promise<void> {
   await fs.mkdir(path.dirname(stateFilePath), { recursive: true });
   await fs.writeFile(
     stateFilePath,
@@ -121,6 +124,8 @@ async function writeState(port: number, mailInboxUrl: string, queryBudgetUrl: st
       mailInboxUrl,
       // #1244 — read by tests/functional/query-budget-check.ts.
       queryBudgetUrl,
+      // #2039 — where tests pin a mock feed event's state; see tests/functional/mock-feed.ts.
+      mockFeedUrl,
       // #276 — read by global-setup, which adopts this daemon only while its spawner or a run using
       // it is alive: the condition under which the watchdog below keeps it running.
       spawnerPid,
@@ -148,15 +153,14 @@ async function main(): Promise<void> {
   // Fixed, so tests can assert the exact links in email bodies.
   process.env.APP_BASE_URL = FUNCTIONAL_APP_BASE_URL;
 
-  // Register the mock provider before buildApp() — registerConfiguredProviders
-  // reads these env vars once, at construction time (pool-master-cs8).
+  // The fake serves golf first, ahead of any provider the Provider rows build (#2039).
   const mockProviderBaseUrl = await startMockContestFeedProviderForDaemon();
-  process.env.SPORT_DATA_DEFAULT_PROVIDER = 'mock-contest-feed';
-  process.env.SPORT_DATA_PROVIDER_BINDINGS_JSON = JSON.stringify({
-    providers: { 'mock-contest-feed': { baseUrl: mockProviderBaseUrl } },
+  const app = buildApp({
+    buildSportDataProviders: (rows, env, logger) => [
+      new MockContestFeedAdapter(mockProviderBaseUrl, pinnedMockFeedStates),
+      ...buildProvidersFromRows(rows, env, logger),
+    ],
   });
-
-  const app = buildApp();
   observeQueryBudget(app, queryBudgetRecorder);
 
   await app.ready();
@@ -167,7 +171,7 @@ async function main(): Promise<void> {
     throw new Error('Functional server failed to bind to a TCP port');
   }
 
-  await writeState(address.port, mailInbox.url, queryBudgetRecorder.url);
+  await writeState(address.port, mailInbox.url, queryBudgetRecorder.url, mockProviderBaseUrl);
 
   // Idempotent shutdown — multiple triggers (SIGTERM + watchdog) can fire concurrently
   // when the parent dies abruptly mid-shutdown. Without the guard, app.close() would be

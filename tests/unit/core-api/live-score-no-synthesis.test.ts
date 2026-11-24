@@ -18,7 +18,7 @@ import { resolve } from 'node:path';
 import * as liveScoreDto from '@poolmaster/shared/dto/live-score.dto';
 
 const adapterPaths = [
-  resolve(__dirname, '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter.ts'),
+  resolve(__dirname, '../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-mapping.ts'),
 ];
 
 describe('pool-master-rop.78.3 — no synthetic golf strokes', () => {

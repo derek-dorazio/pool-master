@@ -5,7 +5,6 @@ import {
   Button,
   ConfirmDialog,
   formatDateTimeDisplay,
-  InlineError,
   SectionCard,
   PickerModal,
   StatusBadge,
@@ -19,25 +18,15 @@ import {
   syncScopeLabel,
   syncScopeTone,
 } from './sport-admin-utils';
-import { GolfTournamentLiveSimulation } from './golf-tournament-live-simulation';
 import {
   useProviderCatalog,
   type ProviderCatalogEvent,
 } from './use-provider-catalog';
 import type { SportEventDto } from '@/lib/api';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
-import { useProvidersQuery } from './use-providers-query';
 import { SportProviderChoice } from './sport-provider-choice';
 
 type PickerCatalogEvent = ProviderCatalogEvent & { id: string };
-
-/**
- * #402 — a provider that can simulate live scoring (the QA mock feed) answers any event id
- * with this prefix as a golf event of its own, so a made-up tournament links to
- * `sandbox-<its id>` and never needs a real tournament's dates or id. The mock's
- * scenario-store.ts and core-api's mock adapter hold the same prefix.
- */
-const simulatedEventIdPrefix = 'sandbox-';
 
 /**
  * plans/124 §6.3 block 3 — the score-source link status plus the link picker and
@@ -74,12 +63,6 @@ export function SportEventScoreSourceCard({
     () => catalog.events.map((event) => ({ ...event, id: event.externalId })),
     [catalog.events],
   );
-
-  const providersQuery = useProvidersQuery({ enabled: tournament.syncScope === SportEventSyncScope.NONE });
-  // poolmaster-allow-list-lookup: the few data providers
-  const simulatingProviderId = (providersQuery.data ?? []).find(
-    (provider) => provider.sportsCovered.includes(tournament.sport) && provider.supportsLiveSimulation,
-  )?.providerId ?? null;
 
   const linkMutation = useInvalidatingMutation({
     mutationFn: async (link: { providerId: string | null; externalId: string }) => {
@@ -146,35 +129,19 @@ export function SportEventScoreSourceCard({
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {tournament.syncScope === SportEventSyncScope.NONE ? (
-          <>
-            <Button
-              data-testid="root-admin-sport-event-link-open"
-              onClick={() => {
-                // A refusal from the simulated-event link must not greet the picker.
-                linkMutation.reset();
-                setLinkOpen(true);
-              }}
-              size="sm"
-              type="button"
-              variant="secondary"
-            >
-              Link to provider event
-            </Button>
-            {simulatingProviderId ? (
-              <Button
-                data-testid="root-admin-sport-event-link-simulated"
-                disabled={linkMutation.isPending}
-                onClick={() =>
-                  linkMutation.mutate({ providerId: simulatingProviderId, externalId: `${simulatedEventIdPrefix}${eventId}` })
-                }
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                Link to a new simulated event
-              </Button>
-            ) : null}
-          </>
+          <Button
+            data-testid="root-admin-sport-event-link-open"
+            onClick={() => {
+              // A refusal from an earlier pick must not greet the reopened picker.
+              linkMutation.reset();
+              setLinkOpen(true);
+            }}
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            Link to provider event
+          </Button>
         ) : (
           <Button
             data-testid="root-admin-sport-event-unlink-open"
@@ -187,20 +154,6 @@ export function SportEventScoreSourceCard({
           </Button>
         )}
       </div>
-      {simulatingProviderId && tournament.syncScope === SportEventSyncScope.NONE ? (
-        <p className="mt-2 text-sm text-muted-foreground">
-          A simulated event works on any dates. After linking, load the participant field from it, then start the
-          live simulation.
-        </p>
-      ) : null}
-      {linkMutation.isError && !linkOpen ? (
-        <InlineError className="mt-2" testId="root-admin-sport-event-link-error">
-          {extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })}
-        </InlineError>
-      ) : null}
-      {tournament.syncScope === SportEventSyncScope.NONE ? null : (
-        <GolfTournamentLiveSimulation tournament={tournament} />
-      )}
 
       <PickerModal<PickerCatalogEvent>
         canApply={selectedCatalogId !== null && !linkMutation.isPending}
