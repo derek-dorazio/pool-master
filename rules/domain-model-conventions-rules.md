@@ -446,11 +446,11 @@ unprefixed.
 
 ### Full-path names
 
-A table that belongs to another is named by its full owner path, so the name says where it
-sits without reading the schema: `SportLeagueSeasonPhaseSlot` is a slot of a phase of a
-Season of a sport league, and `SportEventRoundMatchGameSide` is a side of a game of a match of
-a round of a sport event. Two tables with the same last word (a slot definition and a Season's
-slot) never need context to tell apart.
+A table that belongs to another is named by its full owner path, so the name says where it sits
+without reading the schema: `SportLeagueSeasonPhaseSlot` is a slot of a phase of a Season of a
+sport league, and `SportEventRoundMatchGameSideResult` is a side's result in a game of a match
+of a round of a sport event. Two tables with the same last word (a slot definition and a
+Season's slot) never need context to tell apart.
 
 - **`SportEvent` is the event path's root.** It is not renamed `SportLeagueSeasonEvent`: it
   points at its Season with a `seasonId` foreign key, and its own tables
@@ -493,16 +493,21 @@ table set for every variant.
     `FIELD`), read from the feed where it varies by round. A `HEAD_TO_HEAD` match has
     exactly two sides; a `FIELD` match has one per competitor. Nothing branches on the
     sport to tell them apart.
+  - **A side's number is its fixed place, not home or away.** The sync writes the away side
+    as 1 and the home side as 2; a neutral-site or `FIELD` match records `homeAway` `NONE`.
+    Code reads sides by number, never by assuming home or away.
   - **A Game is one game played** in a Match, and each side's result in that Game is one
-    Game side row (score, position, periods completed, status). A side's outcome in the
-    Match (WON / LOST / TIED / PENDING) is a rollup of its Games.
-  - **Period scores are per Game side** (a period kind `REGULAR` / `OVERTIME` /
+    Game side result row (score, position, periods completed, status). A side's outcome in
+    the Match (WON / LOST / TIED / PENDING) is a rollup of its Games.
+  - **Period scores are per Game side result** (a period kind `REGULAR` / `OVERTIME` /
     `SHOOTOUT`), and **player stats are per Game** (one row per Game, player and stat
     code). Neither is stored per period of a player, or per team.
-  - **No sport or scoring family gets its own result tables.** A golf round, a race result
-    and a game score are all Game sides; an event's final result per competitor is one
-    standing row. A new sport adds data and, at most, columns every row of the shape can
-    carry, never a `…GolfRound` or `…RaceResult` beside the shared shape.
+  - **No sport or scoring family gets its own result tables.** A golf round, a race result and
+    a game score are all Game side results. A `FIELD` event's final result per competitor is
+    one standing row; a head-to-head result lives on its Match sides, and a season standing
+    belongs to the Season, so no standing row is written for them. A new sport adds data and,
+    at most, columns every row of the shape can carry, never a `…GolfRound` or `…RaceResult`
+    beside the shared shape.
   - *Status:* today's schema still has the per-family tables (`SportEventMatch` with home
     and away columns, `SportEventParticipantGolfRound`, `…RaceResult`). Code that touches
     them extends nothing new onto them; the league model redesign replaces them (ADR 0012).
