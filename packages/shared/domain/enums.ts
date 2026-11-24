@@ -68,13 +68,13 @@ export const ParticipantStatusOrder = explicitOrder<ParticipantStatus>({
   [ParticipantStatus.RETIRED]: 3,
 });
 
-/** What a live check of a sports data provider found (#1873). */
+/** A sports data provider's health, from its sync runs of the last hour (#1873, #1999). */
 export const ProviderHealthStatus = {
-  /** It answered, quickly and without errors: Up. */
+  /** None of its runs failed: Up. */
   HEALTHY: 'HEALTHY',
-  /** It answered, but slowly or with some errors: Slow. */
+  /** Some of its runs failed: Slow. */
   DEGRADED: 'DEGRADED',
-  /** It did not answer: Down. */
+  /** All of its runs failed: Down. */
   DOWN: 'DOWN',
 } as const;
 export type ProviderHealthStatus = (typeof ProviderHealthStatus)[keyof typeof ProviderHealthStatus];

@@ -45,12 +45,11 @@ const MOCK_FEED_EVENTS = { providerId, externalId: { startsWith: 'golf-' } };
 const eventExternalId = 'golf-masters-2026';
 const syncVerificationNow = new Date('2026-05-30T12:00:00.000Z');
 const syncVerificationConfig: IngestionScheduleConfig = {
-  healthCheck: { enabled: true, intervalMinutes: 5 },
   // Every unstarted event in the lookahead takes field syncs (#431 removed the release
   // window), so a week keeps the scheduled pass to the one event this suite asserts on.
-  eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 7 },
-  eventLiveScores: { enabled: false, intervalSeconds: 30 },
-  eventList: { enabled: true, intervalMinutes: 360 },
+  FIELD: { enabled: true, intervalMinutes: 360, lookaheadDays: 7 },
+  SCORES: { enabled: false, intervalSeconds: 30 },
+  EVENTS: { enabled: true, intervalMinutes: 360 },
 };
 
 function emptyLiveScorePersistenceResult() {

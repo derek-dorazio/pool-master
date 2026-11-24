@@ -83,7 +83,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const { result: facts, statements } = await recordStatements(() => new PrismaSportLeagueOverviewReader(getAppPrisma()).readFacts(NOW));
 
     expect(facts.leagues).toEqual(expect.arrayContaining([
-      { id: tour.id, sport: Sport.GOLF, name: tour.name, syncProviderId: 'balldontlie', isActive: true },
+      { id: tour.id, sport: Sport.GOLF, name: tour.name, syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true },
     ]));
     expect(facts.latestSyncRuns.filter((latest) => latest.sportLeagueId === tour.id).sort((left, right) => left.kind.localeCompare(right.kind))).toEqual([
       expect.objectContaining({ kind: ProviderSyncKind.EVENTS, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.' }),

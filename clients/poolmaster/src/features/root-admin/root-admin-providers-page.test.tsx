@@ -26,10 +26,9 @@ function provider(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryD
 }
 
 const SCHEDULE: IngestionScheduleConfig = {
-  healthCheck: { enabled: true, intervalMinutes: 5 },
-  eventList: { enabled: true, intervalMinutes: 360 },
-  eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
-  eventLiveScores: { enabled: true, intervalSeconds: 300 },
+  EVENTS: { enabled: true, intervalMinutes: 360 },
+  FIELD: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
+  SCORES: { enabled: true, intervalSeconds: 300 },
 };
 
 function scheduleGroup(value: IngestionScheduleConfig = SCHEDULE, saved = true): SettingsGroup {
@@ -90,7 +89,7 @@ describe('RootAdminProvidersPage', () => {
     expect(screen.getByTestId('root-admin-open-sync-findings-page')).toHaveAttribute('href', '/manage/providers/findings');
   });
 
-  it('lists each provider with its status in a word, its request rate, sport leagues, error rate as a percent, rate-limited jobs of the last 24 hours and latency', async () => {
+  it('lists each provider with its status in a word, its request rate, sport leagues, error rate as a percent and rate-limited jobs of the last 24 hours, and no latency column', async () => {
     seed();
     renderPage();
 
@@ -101,7 +100,7 @@ describe('RootAdminProvidersPage', () => {
     expect(balldontlie.getByText('16')).toBeInTheDocument();
     expect(balldontlie.getByText('0.4%')).toBeInTheDocument();
     expect(balldontlie.getByText('7')).toBeInTheDocument();
-    expect(balldontlie.getByText('420 ms')).toBeInTheDocument();
+    expect(screen.queryByText(/Latency/)).not.toBeInTheDocument();
     const mock = within(screen.getByTestId('root-admin-provider-mock'));
     expect(mock.getByText('Down')).toBeInTheDocument();
     expect(mock.getByText('Not paced')).toBeInTheDocument();
@@ -121,14 +120,14 @@ describe('RootAdminProvidersPage', () => {
     expect(shown).toEqual(['root-admin-provider-up', 'root-admin-provider-slow', 'root-admin-provider-down']);
   });
 
-  it('opens a provider with its live check and settings, Close and Check now, and Check now checks the providers again', async () => {
+  it('opens a provider with its health from its runs and its settings, Close and Check now, and Check now checks the providers again', async () => {
     seed();
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-provider-balldontlie'));
     const dialog = within(await screen.findByTestId('root-admin-provider-dialog'));
     expect(dialog.getByTestId('root-admin-provider-dialog-webhooks')).toHaveTextContent('On');
-    expect(dialog.getByText('420 ms')).toBeInTheDocument();
+    expect(dialog.getByText('0.4%')).toBeInTheDocument();
     expect(dialog.getByText('Rate limited (24 h)')).toBeInTheDocument();
     expect(dialog.getByTestId('root-admin-provider-dialog-base-url')).toHaveTextContent('https://api.balldontlie.io');
     expect(dialog.getByTestId('root-admin-provider-dialog-poll')).toHaveTextContent('15 minutes');
@@ -198,12 +197,12 @@ describe('RootAdminProvidersPage', () => {
     expect(screen.getByTestId('root-admin-provider-dialog-webhooks-input')).toBeInTheDocument();
   });
 
-  it('says when webhooks are switched on but their secret is not set, and shows a provider that is not running', async () => {
-    seed({ providers: [provider({ status: null, errorRate: null, latencyMs: null, webhooksEnabled: false, settings: providerSettingsFixture({ webhookSecretSet: false }) })] });
+  it('says when webhooks are switched on but their secret is not set, and shows a provider with no sync run in the hour as No runs', async () => {
+    seed({ providers: [provider({ status: null, errorRate: null, webhooksEnabled: false, settings: providerSettingsFixture({ webhookSecretSet: false }) })] });
     renderPage();
 
     const row = within(await screen.findByTestId('root-admin-provider-balldontlie'));
-    expect(row.getAllByText('Not running').length).toBeGreaterThan(0);
+    expect(row.getAllByText('No runs').length).toBe(2);
     await userEvent.click(screen.getByTestId('root-admin-provider-balldontlie'));
     expect(await screen.findByTestId('root-admin-provider-dialog-webhooks')).toHaveTextContent('Off: switched on, but its signing secret is not set');
   });
@@ -269,24 +268,27 @@ describe('RootAdminProvidersPage', () => {
   });
 
   it('shows a row per sync with how often it runs and which events it covers, Field always running and a switched-off sync as Off', async () => {
-    seed({ group: scheduleGroup({ ...SCHEDULE, healthCheck: { enabled: false, intervalMinutes: 5 } }) });
+    seed({ group: scheduleGroup({ ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 } }) });
     renderPage();
 
-    const field = within(await screen.findByTestId('root-admin-sync-schedule-eventParticipants'));
+    const rows = await screen.findAllByTestId(/^root-admin-sync-schedule-(EVENTS|FIELD|SCORES)$/);
+    expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual(['root-admin-sync-schedule-EVENTS', 'root-admin-sync-schedule-FIELD', 'root-admin-sync-schedule-SCORES']);
+    const field = within(screen.getByTestId('root-admin-sync-schedule-FIELD'));
+    expect(field.getByText('Field')).toBeInTheDocument();
     expect(field.getByText('6 h')).toBeInTheDocument();
     expect(field.getByText('Events starting in the next 14 days')).toBeInTheDocument();
-    expect(within(screen.getByTestId('root-admin-sync-schedule-eventList')).getByText('6 h')).toBeInTheDocument();
-    expect(within(screen.getByTestId('root-admin-sync-schedule-eventLiveScores')).getByText('5 min')).toBeInTheDocument();
-    expect(within(screen.getByTestId('root-admin-sync-schedule-eventLiveScores')).getByText('Events in progress; webhooks arrive between runs')).toBeInTheDocument();
-    expect(within(screen.getByTestId('root-admin-sync-schedule-healthCheck')).getByText('Off')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-sync-schedule-SCORES')).getByText('5 min')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-sync-schedule-SCORES')).getByText('Events in progress; webhooks arrive between runs')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-sync-schedule-EVENTS')).getByText('Off')).toBeInTheDocument();
+    expect(screen.queryByText('Health check')).not.toBeInTheDocument();
   });
 
   it('opens a sync in view with who last changed the schedule, then Edit saves only that sync\'s interval and comes back to the view', async () => {
     seed();
-    mocks.updateIngestionSchedule.mockResolvedValue({ data: { ...SCHEDULE, eventList: { enabled: true, intervalMinutes: 120 } } });
+    mocks.updateIngestionSchedule.mockResolvedValue({ data: { ...SCHEDULE, EVENTS: { enabled: true, intervalMinutes: 120 } } });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-eventList'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-last-changed')).toHaveTextContent('by Derek');
     expect(screen.getByTestId('root-admin-sync-schedule-dialog-every')).toHaveTextContent('6 h');
 
@@ -298,17 +300,17 @@ describe('RootAdminProvidersPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
 
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({
-      body: { eventList: { enabled: true, intervalMinutes: 120 } },
+      body: { EVENTS: { enabled: true, intervalMinutes: 120 } },
     })));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-edit')).toBeInTheDocument();
   });
 
   it('switches a sync that is off back on, saving its switch with its interval, while Field has no switch', async () => {
-    seed({ group: scheduleGroup({ ...SCHEDULE, healthCheck: { enabled: false, intervalMinutes: 5 } }) });
+    seed({ group: scheduleGroup({ ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 } }) });
     mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-healthCheck'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-every')).toHaveTextContent('Off');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-edit'));
     const enabled = screen.getByTestId('root-admin-sync-schedule-dialog-enabled');
@@ -316,11 +318,11 @@ describe('RootAdminProvidersPage', () => {
     await userEvent.click(enabled);
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({
-      body: { healthCheck: { enabled: true, intervalMinutes: 5 } },
+      body: { EVENTS: { enabled: true, intervalMinutes: 360 } },
     })));
     await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
 
-    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-eventParticipants'));
+    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-FIELD'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
     expect(screen.queryByTestId('root-admin-sync-schedule-dialog-enabled')).not.toBeInTheDocument();
   });
@@ -330,25 +332,25 @@ describe('RootAdminProvidersPage', () => {
     mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-eventLiveScores'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-SCORES'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
     expect(screen.getByText('Every, seconds')).toBeInTheDocument();
     await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
     await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '60');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenLastCalledWith(expect.objectContaining({
-      body: { eventLiveScores: { enabled: true, intervalSeconds: 60 } },
+      body: { SCORES: { enabled: true, intervalSeconds: 60 } },
     })));
     await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
 
-    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-eventParticipants'));
+    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-FIELD'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
     expect(screen.getByText('Every, minutes')).toBeInTheDocument();
     await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-lookahead-days'));
     await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-lookahead-days'), '21');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenLastCalledWith(expect.objectContaining({
-      body: { eventParticipants: { intervalMinutes: 360, lookaheadDays: 21 } },
+      body: { FIELD: { intervalMinutes: 360, lookaheadDays: 21 } },
     })));
   });
 
@@ -356,7 +358,7 @@ describe('RootAdminProvidersPage', () => {
     seed();
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-eventParticipants'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-FIELD'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
     const interval = screen.getByTestId('root-admin-sync-schedule-dialog-interval');
     for (const bad of ['0', '1.5', 'abc']) {
@@ -379,7 +381,7 @@ describe('RootAdminProvidersPage', () => {
     seed({ group: scheduleGroup(SCHEDULE, false) });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-healthCheck'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-SCORES'));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-last-changed')).toHaveTextContent('Never: on the defaults');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-edit'));
     await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
@@ -395,7 +397,7 @@ describe('RootAdminProvidersPage', () => {
     mocks.updateIngestionSchedule.mockResolvedValue({ error: { error: { code: 'VALIDATION_ERROR', message: 'Interval too long' } } });
     renderPage();
 
-    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-healthCheck'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
     await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
     await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '10');

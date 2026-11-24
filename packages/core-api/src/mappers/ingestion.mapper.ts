@@ -51,7 +51,6 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     providerName: provider.providerName,
     status: provider.status,
     errorRate: provider.errorRate,
-    latencyMs: provider.latencyMs,
     lastEventAt: provider.lastEventAt?.toISOString() ?? null,
     sportsCovered: provider.sportsCovered,
     primaryForSports: provider.primaryForSports,

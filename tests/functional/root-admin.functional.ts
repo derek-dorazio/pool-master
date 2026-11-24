@@ -398,24 +398,24 @@ describe('SDK Functional: Root Admin', () => {
     const ingestionUpdate = await updateIngestionSchedule({
       client: user.client,
       body: {
-        eventLiveScores: {
+        SCORES: {
           intervalSeconds: 45,
         },
       },
     });
-    expect(ingestionUpdate.data?.eventLiveScores.intervalSeconds).toBe(45);
+    expect(ingestionUpdate.data?.SCORES.intervalSeconds).toBe(45);
 
     const ingestionRead = await getIngestionSchedule({
       client: user.client,
     });
-    expect(ingestionRead.data?.eventLiveScores.intervalSeconds).toBe(45);
+    expect(ingestionRead.data?.SCORES.intervalSeconds).toBe(45);
 
     const eventListUpdate = await updateIngestionSchedule({
       client: user.client,
-      body: { eventList: { intervalMinutes: 120 } },
+      body: { EVENTS: { intervalMinutes: 120 } },
     });
-    expect(eventListUpdate.data?.eventList).toEqual({ enabled: true, intervalMinutes: 120 });
-    expect(eventListUpdate.data?.eventLiveScores.intervalSeconds).toBe(45);
+    expect(eventListUpdate.data?.EVENTS).toEqual({ enabled: true, intervalMinutes: 120 });
+    expect(eventListUpdate.data?.SCORES.intervalSeconds).toBe(45);
   });
 
   it('allows a promoted root-admin user to find, inactivate, and delete a league they do not belong to', async () => {

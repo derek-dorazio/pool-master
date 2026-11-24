@@ -6,7 +6,6 @@
  *   synced sport leagues' events (ADR 0011, #1726), and for every linked event when the admin turns
  *   the feed on
  * - Live score polling (every 5 min during active events)
- * - Provider health checks (every 5 min)
  *
  * Every feed is event-scoped. A synced sport league's events are created by
  * `SyncedEventCreationScheduler` (ADR 0011, #1725), not here; status follows each event's dates
@@ -16,9 +15,9 @@
  * task holding that loop's job lock.
  */
 
-import { JobTrigger, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
+import { JobTrigger, ProviderSyncKind, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
 import { INGESTION_SCHEDULE_SETTINGS } from '../../platform/ingestion-config-service';
-import type { IngestionFeedPolicyKey, IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
+import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import { SCHEDULE_RECHECK_MS, schedulePolicyDelayMs } from '../../../core/schedule-policy-delay';
 import type { FastifyBaseLogger } from 'fastify';
 import type { JobLock } from '../../../core/job-lock';
@@ -248,13 +247,6 @@ export class IngestionScheduler {
     this.running = true;
     this.logger?.debug('Starting ingestion scheduler');
     this.startRecurringLoop(
-      'health checks',
-      async () => this.runHealthChecks(),
-      async () => this.getGlobalDelayMs('healthCheck'),
-      'ingestion:health-checks',
-    );
-
-    this.startRecurringLoop(
       'configured sport loop reconciliation',
       () => { this.reconcileConfiguredSportLoops(); return Promise.resolve(); },
       // eslint-disable-next-line @typescript-eslint/require-await -- resolveDelayMs must return Promise<number>; this constant needs the async wrap, not an await.
@@ -400,30 +392,6 @@ export class IngestionScheduler {
     }, eventId);
   }
 
-  private async runHealthChecks(): Promise<void> {
-    if (!(await this.getGlobalConfig()).healthCheck.enabled) {
-      this.logger?.debug('Skipping provider health checks because they are disabled');
-      return;
-    }
-    this.logger?.debug('Running provider health checks');
-    const providers = this.registry.getAllProviders();
-    for (const provider of providers) {
-      try {
-        const health = await provider.healthCheck();
-        this.logger?.info({
-          providerId: provider.providerId,
-          status: health.status,
-        }, 'Completed provider health check');
-      } catch (error) {
-        const failure = toIngestionFailureLog(error);
-        this.logger?.error({
-          providerId: provider.providerId,
-          ...failure,
-        }, 'Provider health check threw exception');
-      }
-    }
-  }
-
   private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
     if (!this.isSportScheduled(sport)) {
       this.logger?.debug({ sport }, 'Skipping scheduled participant sync because sport is not configured');
@@ -433,7 +401,7 @@ export class IngestionScheduler {
     // A synced sport league's fields load whether or not the admin has turned the feed on for
     // every linked event (ADR 0011, #1726); the switch widens it to all of them.
     const config = await this.getGlobalConfig();
-    const syncedLeaguesOnly = !config.eventParticipants.enabled;
+    const syncedLeaguesOnly = !config.FIELD.enabled;
 
     const window = resolveEventParticipantSyncWindow(config, this.getNow());
     this.logger?.debug({
@@ -493,7 +461,7 @@ export class IngestionScheduler {
     }
 
     const config = await this.getGlobalConfig();
-    if (!config.eventLiveScores.enabled) {
+    if (!config.SCORES.enabled) {
       this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because it is disabled');
       return;
     }
@@ -506,7 +474,7 @@ export class IngestionScheduler {
 
     const now = this.getNow();
     const listed = await eventReader.listLiveScoreEvents({ sport, now });
-    const events = this.dueLiveScoreEvents(sport, listed, now, schedulePolicyDelayMs(config.eventLiveScores));
+    const events = this.dueLiveScoreEvents(sport, listed, now, schedulePolicyDelayMs(config.SCORES));
 
     this.logger?.debug({
       sport,
@@ -624,7 +592,7 @@ export class IngestionScheduler {
       this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because the sport is not scheduled for ingestion');
       return null;
     }
-    if (!(await this.getGlobalConfig()).eventLiveScores.enabled) {
+    if (!(await this.getGlobalConfig()).SCORES.enabled) {
       this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because live score syncs are off for the sport');
       return null;
     }
@@ -867,9 +835,9 @@ export class IngestionScheduler {
     }
   }
 
-  private async getGlobalDelayMs(feed: IngestionFeedPolicyKey): Promise<number> {
+  private async getGlobalDelayMs(kind: ProviderSyncKind): Promise<number> {
     const config = await this.getGlobalConfig();
-    return schedulePolicyDelayMs(config[feed]);
+    return schedulePolicyDelayMs(config[kind]);
   }
 
   /**
@@ -878,12 +846,12 @@ export class IngestionScheduler {
    */
   private async getFieldSyncDelayMs(): Promise<number> {
     const config = await this.getGlobalConfig();
-    return schedulePolicyDelayMs({ ...config.eventParticipants, enabled: true });
+    return schedulePolicyDelayMs({ ...config.FIELD, enabled: true });
   }
 
   /** The admin's live-score interval, shortened to a tick while a notified provider's cadence is set. */
   private async getLiveScoreSweepDelayMs(): Promise<number> {
-    const adminDelayMs = await this.getGlobalDelayMs('eventLiveScores');
+    const adminDelayMs = await this.getGlobalDelayMs(ProviderSyncKind.SCORES);
     return this.options.notifiedProviderCadence?.() ? Math.min(adminDelayMs, LIVE_SCORE_SWEEP_TICK_MS) : adminDelayMs;
   }
 
@@ -947,7 +915,7 @@ function resolveEventParticipantSyncWindow(
   config: IngestionScheduleConfig,
   now: Date,
 ): { from: Date; to: Date } {
-  const lookaheadDays = config.eventParticipants.lookaheadDays ?? 14;
+  const lookaheadDays = config.FIELD.lookaheadDays ?? 14;
   return {
     from: now,
     to: new Date(now.getTime() + lookaheadDays * 24 * 60 * 60 * 1000),

@@ -95,13 +95,13 @@ describe('settings registry on Postgres', () => {
     await taskA.load();
     await taskB.load();
 
-    await new IngestionConfigService(taskA).updateConfig({ eventList: { intervalMinutes: 90 } }, admin.user.id);
-    await new IngestionConfigService(taskB).updateConfig({ eventLiveScores: { intervalSeconds: 45 } }, admin.user.id);
+    await new IngestionConfigService(taskA).updateConfig({ EVENTS: { intervalMinutes: 90 } }, admin.user.id);
+    await new IngestionConfigService(taskB).updateConfig({ SCORES: { intervalSeconds: 45 } }, admin.user.id);
 
     const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: INGESTION_SCHEDULE_SETTINGS.key } });
     expect(stored?.configJson).toEqual(expect.objectContaining({
-      eventLiveScores: { enabled: true, intervalSeconds: 45 },
-      eventList: { enabled: true, intervalMinutes: 90 },
+      SCORES: { enabled: true, intervalSeconds: 45 },
+      EVENTS: { enabled: true, intervalMinutes: 90 },
     }));
   });
 

@@ -102,11 +102,6 @@ async function checkLiveApi(apiKey: string): Promise<boolean> {
     leagues: BALLDONTLIE_CONTRACT_CHECK_LEAGUES,
   });
   const checks: Array<[string, () => Promise<string>]> = [
-    ['health', async () => {
-      const health = await adapter.healthCheck();
-      if (health.status !== 'HEALTHY') throw new Error(health.message ?? health.status);
-      return 'HEALTHY';
-    }],
     ['this season\'s tournaments', async () => {
       const year = new Date().getUTCFullYear();
       const events = await adapter.getUpcomingEvents(Sport.GOLF, { from: new Date(Date.UTC(year, 0, 1)), to: new Date(Date.UTC(year, 11, 31)) });
