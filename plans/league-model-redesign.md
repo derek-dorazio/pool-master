@@ -47,9 +47,9 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SportEventMatch` home/away columns | `SportEventRoundMatchSide` | One side of a Match: field row (empty until known), side number, home/away, seed, spread, rollup outcome. |
 | none | `SportEventRoundMatchGame` | One played game: date, status, scores. |
 | none | `SportEventRoundMatchGameProviderMapping` | A provider's game id (team-sport game, PGA round, PGA match). |
-| `SportEventMatch` home/away scores, `SportEventParticipantGolfRound`, `SportEventParticipantRaceResult` | `SportEventRoundMatchGameSide` | A side's result in one Game: score, text result, score to par, position, start position, periods completed, start period, status. |
-| none | `SportEventRoundMatchGameSidePlayer` | Team-cup lineups: which players played for a side in a Game. |
-| `SportEventMatchPeriodScore` | `SportEventRoundMatchGameSidePeriodScore` | Score per period per Game side, with a period kind (REGULAR / OVERTIME / SHOOTOUT). |
+| `SportEventMatch` home/away scores, `SportEventParticipantGolfRound`, `SportEventParticipantRaceResult` | `SportEventRoundMatchGameSideResult` | A side's result in one Game: score, text result, score to par, position, start position, periods completed, start period, status. |
+| none | `SportEventRoundMatchGameSideLineupPlayer` | Team-cup lineups: which players played for a side in a Game. |
+| `SportEventMatchPeriodScore` | `SportEventRoundMatchGameSideResultPeriodScore` | Score per period per Game side, with a period kind (REGULAR / OVERTIME / SHOOTOUT). |
 | `SportEventParticipantStatLine` | `SportEventRoundMatchGamePlayerStat` | Raw box score per Game, player and stat code. |
 | none | `SportEventRoundMatchGamePlayerScore` | Composite score per Game, player and composite. |
 | `SportEventParticipantStanding`, `…GolfStanding` | `SportEventParticipantStanding` | Event result per field row: total, score to par, position, display position, status (CUT / WD / DQ). |
@@ -219,16 +219,16 @@ The current model was built one sport at a time and leans on code to look right:
     them, so squares can point at it early. `regionLabel` stays until #1926.
   - Squares games re-point to Game and read their two Game sides by side number; squares
     readiness requires HEAD_TO_HEAD.
-- **SportEventRoundMatchGameSide**: a side's raw result in one Game, unique per Game and
+- **SportEventRoundMatchGameSideResult**: a side's raw result in one Game, unique per Game and
   side: `score` (points, goals, strokes, holes up), a text result where the feed sends one
   ("4 & 3"), `scoreToPar` from the feed (never derived from a par, which breaks for
   multi-course events and mid-round), `position` (finish place), `startPosition`,
   `periodsCompleted` and `startPeriod` (holes thru, back-nine starts), shootout score and
   `status` (DNF, DSQ, DNS, WD within that Game).
-  - **…GameSidePeriodScore**: one row per Game side and period, with a period kind REGULAR /
+  - **…GameSideResultPeriodScore**: one row per Game side and period, with a period kind REGULAR /
     OVERTIME / SHOOTOUT. Golf hole scores are stored only where a contest reads them; none
     does today.
-  - **…GameSidePlayer** (DEFERRED, Derek 2026-11-22): team-cup lineups, the player field
+  - **…GameSideLineupPlayer** (DEFERRED, Derek 2026-11-22): team-cup lineups, the player field
     rows that played for a side in a Game (Ryder Cup pairs). Not built in this epic; built
     when match play is synced. Recorded in `rules/domain-model-concepts.md` as a deferred
     concept so a later change uses this shape.
