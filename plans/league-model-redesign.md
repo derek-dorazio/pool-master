@@ -736,6 +736,14 @@ Contest:
   CUSTOM list stays on League (`cupCustomPoints`, used when set). Crowned cups freeze the
   profile's points they used. Kept in code as fixed rules: last place needs 3+ teams, medal
   by place, the championship grid's 10 places, one platform time zone for history years.
+- Championship counting (Derek 2026-11-24, slice 20c): `PlatformChampionshipProfile`
+  (code, `counting` ALL_FINISHES | CUP_CONTESTS), seeded by migration with two rows ("All
+  contests", "Cup contests"); `League.platformChampionshipProfileId`, default All contests,
+  chosen by the commissioner in league settings. ALL_FINISHES counts every contest that
+  writes a finish (all but squares); CUP_CONTESTS counts only contests whose template has
+  `countsInCups`. The profile governs the League Championship only; medals, the record book
+  and the Hall of Lame count every finish. The Championship reads the current choice until
+  its year closes, then freezes with the year.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
