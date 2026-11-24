@@ -139,7 +139,7 @@ export function ContestEntryFrame({
   contest,
   entry,
   leagueCode,
-  phase,
+  phaseLabel,
   rules = [],
   status,
   statusFacts = [],
@@ -153,7 +153,7 @@ export function ContestEntryFrame({
   entry: { createdAt?: string | null; updatedAt?: string | null } | null;
   leagueCode: string;
   /** The contest's phase as the page words it. */
-  phase: string;
+  phaseLabel: string;
   /** The contest's rules as the page names them, such as a pick'em's mode; in the status callout. */
   rules?: string[];
   /** The entry's status, or null while another team's entry is hidden. */
@@ -176,7 +176,7 @@ export function ContestEntryFrame({
       summary={<span data-testid="contest-entry-status-line">{statusLine}</span>}
       testId={testId}
       title={title}
-      titleAside={<EntryStatusPeek entry={entry} facts={facts} phase={phase} status={status} />}
+      titleAside={<EntryStatusPeek entry={entry} facts={facts} phaseLabel={phaseLabel} status={status} />}
     >
       {children}
     </ContestPageFrame>

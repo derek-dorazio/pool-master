@@ -4,10 +4,12 @@ import {
   listSportLeagueEventOverviews,
   listSportLeagueParticipantOverviews,
   listSportLeagueSyncs,
+  getSportLeagueStructure,
   type ContestConfigTemplateDto,
   type SportLeagueEventOverviewDto,
   type SportLeagueParticipantOverviewDto,
   type SportLeagueSyncDto,
+  type SportLeaguePhaseDefinitionDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -59,6 +61,19 @@ export function useSportLeagueContestTemplatesQuery(sportLeagueId: string) {
       const response = await listContestConfigTemplates({ query: { sportLeagueId } });
       if (!response.data?.templates) throwApiError(response.error, 'Contest template response is missing data.');
       return [...response.data.templates].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name));
+    },
+    retry: false,
+  });
+}
+
+/** The League page's Structure tab (#2002): the league's phases in Season order, each with its slots in play order. */
+export function useSportLeagueStructureQuery(sportLeagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.leagueStructure(sportLeagueId),
+    queryFn: async (): Promise<SportLeaguePhaseDefinitionDto[]> => {
+      const response = await getSportLeagueStructure({ path: { sportLeagueId } });
+      if (!response.data?.phases) throwApiError(response.error, 'Sport league structure response is missing data.');
+      return response.data.phases;
     },
     retry: false,
   });

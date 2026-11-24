@@ -5,7 +5,7 @@ import { RaceResultStatus, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { addRunSportLeague, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
@@ -62,6 +62,7 @@ describe('SDK Functional: racing test seed', () => {
     const a = admin.client;
     const file = taggedSeed();
 
+    created.sportLeagueIds.add(await addRunSportLeague(a, Sport.HORSE_RACING, file.sportLeagues[0].name));
     // Dated from today: release refuses a race that has started.
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
 

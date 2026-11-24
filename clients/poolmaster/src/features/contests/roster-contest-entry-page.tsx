@@ -536,7 +536,7 @@ export function RosterContestEntryPage() {
       contest={contest}
       entry={entrySummary}
       leagueCode={leagueCode}
-      phase={getContestPhaseLabel(contest, isEditable)}
+      phaseLabel={getContestPhaseLabel(contest, isEditable)}
       status={picksHidden ? null : entryStatus}
       statusFacts={[{ id: 'entries-close', label: 'Entries', value: isEditable ? 'Close when the event starts' : 'Closed' }]}
       statusLine={statusLine}
