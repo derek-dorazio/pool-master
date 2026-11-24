@@ -703,7 +703,8 @@ Contest:
   contest copies it at creation (`Contest.championshipYear`), so settlement timing can't
   move a contest across New Year. Because it is set by migration, Seasons are added by
   migration; a Season the feed reports that has no row raises an ERROR finding and is not
-  synced until the migration lands. `LeagueYearFinish.year` and `LeagueYearReview.year`
+  synced until the migration lands (a root admin "create next Season" action is deferred to
+  #1995). `LeagueYearFinish.year` and `LeagueYearReview.year`
   become `championshipYear`, read from the contest. A championship year closes when every
   contest assigned to it is final (not on 31 December). History lists contests by the
   calendar year they completed. The plan's earlier "LeagueYearFinish → Season FK" is
