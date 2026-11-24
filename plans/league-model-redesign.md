@@ -679,7 +679,13 @@ Contest:
   `eventType` and `eventSeriesNames` and lists the slot definitions it covers in one child
   table, `ContestConfigTemplateSlot` (template, `SportLeaguePhaseSlot`); there is no phase
   table ("whole postseason" lists its slots; a season-long open-phase contest is not
-  offered). One default per (sport league, selection type). No template versions: a contest
+  offered). One default per (sport league, selection type). Coverage mode (Derek
+  2026-11-24), `ContestConfigTemplate.coverageMode`: ONE_SLOT (the list is where it may run;
+  the commissioner picks one slot: tiered, budget, quick pick, squares, a single-round Clutch
+  Card), ALL_LISTED (covers every listed slot: brackets, a whole-playoffs Clutch Card, a
+  majors pool) or FROM_SLOT (the commissioner picks a starting slot and the contest covers it
+  and every later listed slot: season-long pick'em and survivor). A contest copies only the
+  slots its mode and the commissioner's choice give into `ContestSeasonSlot`. No template versions: a contest
   copies its slots into `ContestSeasonSlot` at creation, so a template edit (by migration
   when a structure changes, or by root admin) affects only future contests. Slot
   definitions are never deleted while a Season slot points at them. Fallback (Derek): if the
