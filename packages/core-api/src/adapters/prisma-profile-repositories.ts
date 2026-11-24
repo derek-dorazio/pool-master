@@ -73,16 +73,11 @@ async function unlessTaken<T>(write: () => Promise<T>): Promise<T | ProfileTaken
     return await write();
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return uniqueTargetNames(error.meta?.['target']).includes('code') ? 'codeTaken' : 'nameTaken';
+      // Prisma names the refused unique index's columns as the error's target.
+      return String(error.meta?.['target']).includes('code') ? 'codeTaken' : 'nameTaken';
     }
     throw error;
   }
-}
-
-/** The columns (or the index name) a P2002 names, as Prisma reports them. */
-function uniqueTargetNames(target: unknown): string[] {
-  if (Array.isArray(target)) return target.map(String);
-  return typeof target === 'string' ? target.split('_') : [];
 }
 
 export class PrismaPlatformTierProfileRepository implements PlatformTierProfileRepository {
