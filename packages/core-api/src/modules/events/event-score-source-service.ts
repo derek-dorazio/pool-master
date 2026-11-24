@@ -55,40 +55,57 @@ const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
 /**
- * The provider leagues a sport league is mapped to on this provider (#1997), selected for its
- * sync or not, so a mapped league that is not synced yet still browses its own provider league and
- * not the whole sport's feed; each with the provider's id for the league's current Season (#2003),
- * null where that Season has none on it. Empty for a league with no mapping to this provider.
+ * The provider leagues a sport league is mapped to on this provider (#1997), so a browse for one
+ * league reads that league alone rather than the whole sport's feed; each with its Seasons' spans
+ * and the provider’s own id for each (#2003), earliest first. Empty for a league with no
+ * mapping to this provider.
  */
 async function mappedProviderLeagues(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<MappedProviderLeague[]> {
   const mappings = await prisma.sportLeagueProviderMapping.findMany({
     where: { sportLeagueId },
     select: {
       providerLeague: { select: { code: true, provider: { select: { code: true } } } },
-      seasonMappings: { where: { season: { currentOf: { isNot: null } } }, select: { providerSeasonId: true } },
+      seasonMappings: {
+        select: { providerSeasonId: true, season: { select: { startsAt: true, endsAt: true, currentOf: { select: { id: true } } } } },
+        orderBy: [{ season: { startsAt: 'asc' } }, { id: 'asc' }],
+      },
     },
     orderBy: { providerLeague: { code: 'asc' } },
   });
   return mappings
     .filter((mapping) => providerSourceIdOf(mapping.providerLeague.provider.code) === providerId)
-    .map((mapping) => ({ code: mapping.providerLeague.code, currentProviderSeasonId: mapping.seasonMappings.at(0)?.providerSeasonId ?? null }));
+    .map((mapping) => ({
+      code: mapping.providerLeague.code,
+      seasons: mapping.seasonMappings.map(({ providerSeasonId, season }) => ({
+        providerSeasonId,
+        startsAt: season.startsAt,
+        endsAt: season.endsAt,
+        isCurrent: season.currentOf !== null,
+      })),
+    }));
 }
 
 interface MappedProviderLeague {
   code: string;
-  currentProviderSeasonId: string | null;
+  seasons: Array<{ providerSeasonId: string; startsAt: Date; endsAt: Date; isCurrent: boolean }>;
 }
 
 /**
- * The browse's ask of its provider: the one provider league, when the league maps exactly one,
- * and with no date range its current Season by the provider's own id, so the browse lists the
- * Season being played rather than a year worked out from a clock.
+ * The browse's asks of its provider. A league that maps exactly one provider league is asked for
+ * alone, by the provider's own ids for its Seasons (#2003): with no date range its current Season,
+ * so the browse lists the Season being played, and with one every Season whose span meets the
+ * range, so no reader turns a date into a season number. A league whose Seasons carry none of
+ * the provider's ids yet (one made through the API) is asked for alone, and the provider reads its
+ * own default. Several mapped leagues, or none, are one ask of the whole sport.
  */
-function askedForAlone(leagues: readonly MappedProviderLeague[], dateRange: DateRange | undefined): ProviderEventListOptions | undefined {
-  if (leagues.length !== 1) return undefined;
+function browseAsks(leagues: readonly MappedProviderLeague[], dateRange: DateRange | undefined): Array<ProviderEventListOptions | undefined> {
+  if (leagues.length !== 1) return [undefined];
   const [league] = leagues;
-  const season = dateRange === undefined && league.currentProviderSeasonId !== null ? { providerSeasonId: league.currentProviderSeasonId } : {};
-  return { providerLeagueCode: league.code, ...season };
+  if (league.seasons.length === 0) return [{ providerLeagueCode: league.code }];
+  const seasons = dateRange === undefined
+    ? league.seasons.filter((season) => season.isCurrent)
+    : league.seasons.filter((season) => season.startsAt <= dateRange.to && season.endsAt >= dateRange.from);
+  return seasons.map((season) => ({ providerLeagueCode: league.code, providerSeasonId: season.providerSeasonId }));
 }
 
 export class EventScoreSourceService {
@@ -124,10 +141,12 @@ export class EventScoreSourceService {
     // league is asked for alone; several are read together and kept by their codes.
     const mapped = options.sportLeagueId ? await mappedProviderLeagues(this.prisma, options.sportLeagueId, providerId) : [];
     const providerLeagueCodes = new Set(mapped.map((league) => league.code));
-    const events = await provider.getUpcomingEvents(sport, dateRange, askedForAlone(mapped, dateRange));
+    const events = (await Promise.all(browseAsks(mapped, dateRange).map((ask) => provider.getUpcomingEvents(sport, dateRange, ask)))).flat();
     const search = options.search?.trim().toLowerCase() || null;
 
     return events
+      // A Season read whole may run past the range at either end.
+      .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to))
       .filter((event) => providerLeagueCodes.size === 0
         || (event.providerLeagueCode !== undefined && providerLeagueCodes.has(event.providerLeagueCode)))
       .filter((event) => !search || event.name.toLowerCase().includes(search));

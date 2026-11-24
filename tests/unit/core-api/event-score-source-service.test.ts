@@ -33,12 +33,18 @@ function buildProvider(overrides: Partial<SportDataProvider> = {}): SportDataPro
 /** BALLDONTLIE's id: a league's selected mapping names its provider by its row (#1997). */
 const SYNCED_PROVIDER = 'balldontlie';
 
-/** A sport league row read with its selected provider mapping, as the service reads it; null code: not synced. */
+/** The NBA's 2024 and 2025 Seasons as the browse reads them, the 2025 one current. */
+const NBA_SEASONS = [
+  { providerSeasonId: '2024', season: { startsAt: new Date('2024-10-01T00:00:00Z'), endsAt: new Date('2025-06-30T23:59:59Z'), currentOf: null } },
+  { providerSeasonId: '2025', season: { startsAt: new Date('2025-10-01T00:00:00Z'), endsAt: new Date('2026-06-30T23:59:59Z'), currentOf: { id: 'league-1' } } },
+];
+
 /** A sport league's provider mappings as the browse reads them, each to a BALLDONTLIE league. */
 function mappingRows(...providerLeagueCodes: string[]) {
   return providerLeagueCodes.map((code) => ({ providerLeague: { code, provider: { code: 'BALLDONTLIE' } }, seasonMappings: [] }));
 }
 
+/** A sport league row read with its selected provider mapping, as the service reads it; null code: not synced. */
 function leagueRow(providerLeagueCode: string | null, extra: Record<string, unknown> = {}) {
   return {
     id: 'league-1', name: 'PGA TOUR', sport: { sport: 'GOLF' }, ...extra,
@@ -141,12 +147,51 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
   it('asks a provider league with no date range for the provider\'s id of the sport league\'s current Season, not a Season worked out from the clock', async () => {
     const provider = buildProvider({ providerId: SYNCED_PROVIDER, getUpcomingEvents: jest.fn().mockResolvedValue([]) });
-    const findMany = jest.fn().mockResolvedValue([{ ...mappingRows('nba')[0], seasonMappings: [{ providerSeasonId: '2025' }] }]);
+    const findMany = jest.fn().mockResolvedValue([{ ...mappingRows('nba')[0], seasonMappings: NBA_SEASONS }]);
     const service = new EventScoreSourceService(asPrismaClient({ sportLeagueProviderMapping: { findMany } }), registryWith(provider));
 
     await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1' });
 
+    expect(provider.getUpcomingEvents).toHaveBeenCalledTimes(1);
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith(Sport.BASKETBALL, undefined, { providerLeagueCode: 'nba', providerSeasonId: '2025' });
+  });
+
+  it('asks a provider league with a date range for each of its Seasons whose span meets the range, by the provider\'s id, and keeps only the events starting inside it', async () => {
+    const provider = buildProvider({
+      providerId: SYNCED_PROVIDER,
+      getUpcomingEvents: jest.fn()
+        .mockResolvedValueOnce([
+          buildProviderEvent({ externalId: 'before', providerLeagueCode: 'nba', startDate: new Date('2025-01-10T00:00:00Z') }),
+          buildProviderEvent({ externalId: 'inside-2024', providerLeagueCode: 'nba', startDate: new Date('2025-04-20T00:00:00Z') }),
+        ])
+        .mockResolvedValueOnce([buildProviderEvent({ externalId: 'inside-2025', providerLeagueCode: 'nba', startDate: new Date('2025-10-25T00:00:00Z') })]),
+    });
+    const findMany = jest.fn().mockResolvedValue([{ ...mappingRows('nba')[0], seasonMappings: NBA_SEASONS }]);
+    const service = new EventScoreSourceService(asPrismaClient({ sportLeagueProviderMapping: { findMany } }), registryWith(provider));
+    const range = { from: new Date('2025-04-01T00:00:00Z'), to: new Date('2025-11-30T00:00:00Z') };
+
+    const result = await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1', ...range });
+
+    expect(result.map((event) => event.externalId)).toEqual(['inside-2024', 'inside-2025']);
+    expect(jest.mocked(provider.getUpcomingEvents).mock.calls).toEqual([
+      [Sport.BASKETBALL, range, { providerLeagueCode: 'nba', providerSeasonId: '2024' }],
+      [Sport.BASKETBALL, range, { providerLeagueCode: 'nba', providerSeasonId: '2025' }],
+    ]);
+  });
+
+  it('asks the provider for nothing when a range meets none of the league\'s Seasons, and asks for the league alone when its Seasons carry no provider id', async () => {
+    const provider = buildProvider({ providerId: SYNCED_PROVIDER, getUpcomingEvents: jest.fn().mockResolvedValue([]) });
+    const findMany = jest.fn()
+      .mockResolvedValueOnce([{ ...mappingRows('nba')[0], seasonMappings: NBA_SEASONS }])
+      .mockResolvedValueOnce(mappingRows('nba'));
+    const service = new EventScoreSourceService(asPrismaClient({ sportLeagueProviderMapping: { findMany } }), registryWith(provider));
+    const range = { from: new Date('2030-01-01T00:00:00Z'), to: new Date('2030-12-31T00:00:00Z') };
+
+    expect(await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1', ...range })).toEqual([]);
+    expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
+
+    await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1', ...range });
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith(Sport.BASKETBALL, range, { providerLeagueCode: 'nba' });
   });
 
   it('keeps the events of every provider league a sport league is mapped to on this provider, asking the provider for all of them', async () => {

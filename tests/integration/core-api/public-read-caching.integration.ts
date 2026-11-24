@@ -215,7 +215,6 @@ describe('admin saves clear the public reads they change (#1181)', () => {
         endDate: '2084-06-19T20:00:00.000Z',
         rounds: 4,
         sportLeagueId,
-        eventYear: 2084,
         autoLifecycleEnabled: false,
       },
     });

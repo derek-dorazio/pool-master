@@ -31,7 +31,7 @@ import {
   type Sport,
   type SportLeaguePlay,
   type SportLeague,
-  calendarYearSeason,
+  type SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
@@ -404,4 +404,20 @@ export function describeSportLeagueUses(uses: SportLeagueUses): string[] {
     ...counted(uses.cupCount, 'league cup', 'league cups'),
     ...counted(uses.participantCount, 'participant', 'participants'),
   ];
+}
+
+/**
+ * The one Season a sport league made through the admin API starts with (#2003): `now`'s calendar
+ * year in UTC, named for it. Every other Season is added by migration. A stopgap for the browser
+ * journeys, which make their own leagues, kept private to this service so nothing else builds a
+ * Season from the clock; slice 7 (#2004) deletes it when the journeys move to test slots.
+ */
+function calendarYearSeason(now: Date): SportLeagueSeasonSpan {
+  const championshipYear = now.getUTCFullYear();
+  return {
+    name: String(championshipYear),
+    championshipYear,
+    startsAt: new Date(Date.UTC(championshipYear, 0, 1)),
+    endsAt: new Date(Date.UTC(championshipYear + 1, 0, 1) - 1),
+  };
 }

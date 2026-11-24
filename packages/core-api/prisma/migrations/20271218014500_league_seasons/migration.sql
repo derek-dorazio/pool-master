@@ -406,7 +406,9 @@ FROM (VALUES
   ('f8f6171f-64af-4ab6-81cf-0c81973ed459', '2028', 2028, '2028-06-01', '2028-07-31', NULL)
 ) AS s(league, name, year, starts, ends, provider_season)
 JOIN "sport_league_seasons" se ON se."sport_league_id" = s.league::uuid AND se."championship_year" = s.year
+-- These ids are BALLDONTLIE's, so only a mapping to one of its leagues takes them.
 JOIN "sport_league_provider_mappings" m ON m."sport_league_id" = se."sport_league_id"
+JOIN "provider_leagues" pl ON pl."id" = m."provider_league_id" AND pl."provider_id" = '6f1e9a52-3b7d-4c1a-9e2f-0d5b8a7c4e11'
 WHERE s.provider_season IS NOT NULL;
 
 -- A league with events but no Season above (one a test database made) gets a Season for each
@@ -464,7 +466,11 @@ UPDATE "sport_leagues" sl SET "current_season_id" = (
   WHERE se."sport_league_id" = sl."id"
   ORDER BY
     (now() BETWEEN se."starts_at" AND se."ends_at") DESC,
-    (se."starts_at" > now() AND EXISTS (
+    -- Only the earliest Season still to start counts, as in `currentSeasonOf`.
+    (se."starts_at" > now() AND NOT EXISTS (
+      SELECT 1 FROM "sport_league_seasons" earlier
+      WHERE earlier."sport_league_id" = se."sport_league_id" AND earlier."starts_at" > now() AND earlier."starts_at" < se."starts_at"
+    ) AND EXISTS (
       SELECT 1 FROM "sport_events" e WHERE e."sport_league_season_id" = se."id" AND e."sync_scope" <> 'NONE'
     )) DESC,
     (se."ends_at" < now()) DESC,

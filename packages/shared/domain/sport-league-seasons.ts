@@ -150,18 +150,3 @@ export function orderSportLeagueSeasons(seasons: readonly SportLeagueSeasonDetai
 
 /** A Season's own facts, as a write gives them. */
 export type SportLeagueSeasonSpan = Pick<SportLeagueSeason, 'name' | 'championshipYear' | 'startsAt' | 'endsAt'>;
-
-/**
- * The one Season a sport league made through the admin API starts with (#2003): `now`'s calendar
- * year in UTC, named for it. Every other Season is added by migration. A stopgap for the browser
- * journeys, which make their own leagues; it goes when they move to test slots (#2004).
- */
-export function calendarYearSeason(now: Date): SportLeagueSeasonSpan {
-  const championshipYear = now.getUTCFullYear();
-  return {
-    name: String(championshipYear),
-    championshipYear,
-    startsAt: new Date(Date.UTC(championshipYear, 0, 1)),
-    endsAt: new Date(Date.UTC(championshipYear + 1, 0, 1) - 1),
-  };
-}

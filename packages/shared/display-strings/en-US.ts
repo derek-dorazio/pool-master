@@ -1275,9 +1275,6 @@ export const enUS = {
       bracketEntry: 'Every {{match}} needs a pick before your bracket can be submitted.',
       pickEm: 'Every {{match}} needs a pick before this week can be submitted.',
     },
-    PROVIDER_LEAGUE_REFUSED: {
-      leagueYear: 'The provider refused {{sportLeagueName}}’s {{events}}: its current plan doesn’t include them.',
-    },
     RACE_RESULT_FIELD_INCOMPLETE: {
       raceResult: 'An official result needs every {{participant}} still in the field: a place for each finisher, or how its {{round}} ended.',
     },

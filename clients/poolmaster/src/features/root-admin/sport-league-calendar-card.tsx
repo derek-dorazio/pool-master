@@ -1,6 +1,6 @@
 import { sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { Notice, LinkButton, SectionCard } from '@/features/shared/ui';
+import { Notice, LinkButton, SectionCard, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { seasonIdOrCurrent, useSportLeagueSeasonsQuery } from '@/features/contests/use-sport-league-seasons';
@@ -33,17 +33,17 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
       testId="root-admin-sport-league-calendar"
       title={`${upperFirst(eventNoun.one)} calendar`}
     >
-      <p className="text-sm text-muted-foreground">
+      <Text as="p" variant="meta">
         {`${sportLeague.name}’s ${eventNoun.many} in one Season, earliest first.`}
-      </p>
+      </Text>
       {seasonsQuery.isError ? (
         <Notice data-testid="root-admin-sport-league-calendar-seasons-error" tone="danger">
           {extractErrorMessage(seasonsQuery.error, { fallback: `We could not load ${sportLeague.name}’s Seasons right now.` })}
         </Notice>
       ) : !seasonsQuery.data ? (
-        <p className="text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-loading">Loading Seasons...</p>
+        <Text as="p" variant="meta" data-testid="root-admin-sport-league-calendar-loading">Loading Seasons...</Text>
       ) : seasonId === null ? (
-        <p className="text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-no-season">{`${sportLeague.name} has no Season yet.`}</p>
+        <Text as="p" variant="meta" data-testid="root-admin-sport-league-calendar-no-season">{`${sportLeague.name} has no Season yet.`}</Text>
       ) : (
         <div className="flex flex-wrap items-end gap-2">
           <SeasonSelect

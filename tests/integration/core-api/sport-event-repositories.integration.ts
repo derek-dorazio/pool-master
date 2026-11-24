@@ -1,4 +1,3 @@
-import { calendarYearSeason } from '@poolmaster/shared/domain';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { testCurrentJobStart } from '../../support/in-memory-background-jobs';
@@ -35,7 +34,7 @@ import { freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
 import { leagueProfiles } from '../../support/league-profiles';
-import { syncLeagueTo } from '../../support/league-sync';
+import { FIRST_SEASON_2026, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportPlay } from '../../support/sport-play';
 
@@ -234,7 +233,7 @@ describe('SportEventRepository — writes', () => {
 describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED }, calendarYearSeason(new Date()));
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED }, FIRST_SEASON_2026);
     const { eventSeries } = repos();
 
     const first = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
@@ -247,7 +246,7 @@ describe('EventSeriesRepository', () => {
   // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
   it('creates a series active', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED }, calendarYearSeason(new Date()));
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED }, FIRST_SEASON_2026);
 
     const series = await seriesNamed(repos().eventSeries, sportLeague.id, 'The Masters');
 

@@ -235,8 +235,6 @@ describe('SportLeagueService — bracket advancement', () => {
   });
 });
 
-// plans/147 decision 6 — "set as current" used to be a foreign key to a season, so the database
-// guaranteed the target existed. currentEventYear is a plain integer; this check is that guarantee.
 describe('SportLeagueService — event sync (ADR 0011)', () => {
   const leagues: TestProviderLeague[] = [
     { id: 'pl-pga', code: 'pga', sport: Sport.GOLF },

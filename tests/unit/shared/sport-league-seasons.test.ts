@@ -5,7 +5,6 @@
  */
 import { expect, jest } from '@jest/globals';
 import {
-  calendarYearSeason,
   currentSeasonOf,
   LeaguePhase,
   orderSportLeagueSeasons,
@@ -147,14 +146,6 @@ describe('orderSportLeagueSeasons', () => {
     })]);
 
     expect(ordered.phases[0]?.slots.map((each) => each.id)).toEqual(['week-3-test', 'week-3-test-a', 'slot-dated', 'slot-augusta', 'slot-zurich']);
-  });
-});
-
-describe('calendarYearSeason', () => {
-  it('is the UTC calendar year of the moment given, named for it, from its first to its last millisecond', () => {
-    expect(calendarYearSeason(at('2026-12-31T23:30:00Z'))).toEqual({
-      name: '2026', championshipYear: 2026, startsAt: at('2026-01-01T00:00:00Z'), endsAt: at('2026-12-31T23:59:59.999Z'),
-    });
   });
 });
 
