@@ -73,6 +73,9 @@ DELETE FROM event_series WHERE sport_league_id IN (SELECT id FROM old_clutch_car
 DELETE FROM participant_provider_mappings
   WHERE sport_league_id IN (SELECT id FROM old_clutch_card_leagues) OR participant_id IN (SELECT id FROM old_clutch_card_participants);
 DELETE FROM participants WHERE id IN (SELECT id FROM old_clutch_card_participants);
+CREATE TEMP TABLE old_clutch_card_primary_pages AS
+  SELECT DISTINCT event_page_id FROM event_page_offers
+  WHERE is_primary AND (sport_league_id IN (SELECT id FROM old_clutch_card_leagues) OR template_id IN (SELECT id FROM old_clutch_card_templates));
 DELETE FROM event_page_offers
   WHERE sport_league_id IN (SELECT id FROM old_clutch_card_leagues) OR template_id IN (SELECT id FROM old_clutch_card_templates);
 DELETE FROM contest_config_templates WHERE id IN (SELECT id FROM old_clutch_card_templates);
@@ -83,7 +86,7 @@ DELETE FROM sport_leagues WHERE id IN (SELECT id FROM old_clutch_card_leagues);
 UPDATE event_page_offers SET is_primary = true
   WHERE id IN (
     SELECT DISTINCT ON (o.event_page_id) o.id FROM event_page_offers o
-    WHERE NOT EXISTS (SELECT 1 FROM event_page_offers p WHERE p.event_page_id = o.event_page_id AND p.is_primary)
+    WHERE o.event_page_id IN (SELECT event_page_id FROM old_clutch_card_primary_pages)
     ORDER BY o.event_page_id, o.sort_order
   );
 
@@ -107,4 +110,4 @@ CREATE TYPE "PrismaScoringFamily" AS ENUM ('STROKE_PLAY', 'FINISH_POSITION', 'HE
 ALTER TABLE "sport_leagues" ALTER COLUMN "scoring_family" TYPE "PrismaScoringFamily" USING ("scoring_family"::text::"PrismaScoringFamily");
 DROP TYPE "PrismaScoringFamily_old";
 
-DROP TABLE old_clutch_card_field, old_clutch_card_participants, old_clutch_card_contests, old_clutch_card_templates, old_clutch_card_events, old_clutch_card_leagues;
+DROP TABLE old_clutch_card_primary_pages, old_clutch_card_field, old_clutch_card_participants, old_clutch_card_contests, old_clutch_card_templates, old_clutch_card_events, old_clutch_card_leagues;

@@ -115,10 +115,10 @@ describe('toContestResponse events', () => {
       participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD,
     };
     const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents;
-    const [statPoolEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), 20).contest.sportEvents;
+    const [bracketEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), 20).contest.sportEvents;
 
     expect([golfEvent.participantType, golfEvent.scoringFamily]).toEqual([null, null]);
-    expect([statPoolEvent.participantType, statPoolEvent.scoringFamily]).toEqual([ParticipantType.TEAM, ScoringFamily.HEAD_TO_HEAD]);
+    expect([bracketEvent.participantType, bracketEvent.scoringFamily]).toEqual([ParticipantType.TEAM, ScoringFamily.HEAD_TO_HEAD]);
   });
 
   it('gives a single-contest read its entry cap, and a contest with no cap none', () => {

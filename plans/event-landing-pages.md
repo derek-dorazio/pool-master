@@ -74,11 +74,11 @@ list of *offers*; each offer names one contest setup on one series:
 | `event_pages` | `id`, `sport`, `slug` (unique per sport), `display_order`, `is_active`, `redirect_to_page_id` (null) |
 | `event_page_offers` | `event_page_id`, `sport_league_id`, `event_series_name`, `template_id` (FK to `contest_config_templates`; a template key alone is not unique), `bracket_start_round` (null), `sort_order`, `is_primary` |
 
-Championship Weekend's offers: Clutch Card *Championship Weekend Stars* on the Championship
-Weekend league (primary: its dates head the page); the NFL playoff bracket from round 3 on
-`NFL Playoffs`; NFL Squares on `NFL Playoffs`, where the commissioner picks one of the two
-conference games. The Super Bowl page: *Super Bowl Stars* on the Super Bowl league (primary) and
-NFL Squares on `NFL Playoffs` (the final).
+Championship Weekend's offers: the NFL playoff bracket from round 3 on `NFL Playoffs` (primary:
+its dates head the page) and NFL Squares on `NFL Playoffs`, where the commissioner picks one of
+the two conference games. It first launched with a Clutch Card offer as its primary; that offer
+was removed with the old Clutch Card leagues (#1998) and returns with the Clutch Card contest
+type (league model redesign slice 26), as do the Super Bowl page's *Super Bowl Stars*.
 
 Rows are seeded in migrations, like contest templates, so every environment has the same pages.
 A root admin page to edit them can come later if pages change more than a few times a year.
@@ -154,7 +154,7 @@ route is the same for everyone (board 5).
 
 | Who | What happens |
 |---|---|
-| Signed out, new | Sign-up form with a banner, "You're starting a Championship Weekend pool". Then Create league (today's form, with "Next: your Clutch Card for Championship Weekend"). Then Create contest prefilled. Then Invites. |
+| Signed out, new | Sign-up form with a banner, "You're starting a Championship Weekend pool". Then Create league (today's form, with "Next: your Championship Weekend bracket"). Then Create contest prefilled. Then Invites. |
 | Signed out, has an account | "Sign in" on the sign-up screen, then as a signed-in visitor. |
 | Signed in, a commissioner of no league | Create league, then as above. |
 | Signed in, a commissioner of one league | Create contest in that league, prefilled. |
@@ -230,15 +230,15 @@ goes about 10 days before and C2 when the event opens for contests.
 | When | Event page | Offers |
 |---|---|---|
 | Mid Jan | NFL Playoffs | Bracket, Survivor, team rosters, Squares |
-| Late Jan | Championship Weekend | Clutch Card, Bracket from the conference round, Squares |
-| Early Feb | Super Bowl | Clutch Card, Squares |
+| Late Jan | Championship Weekend | Bracket from the conference round, Squares (Clutch Card returns with slice 26) |
+| Early Feb | Super Bowl | Squares (Clutch Card returns with slice 26) |
 | Mid Mar | Men's and women's college basketball tournaments | Bracket, Survivor |
 | Apr | The Masters | Golf tiers and budget |
 | May | Kentucky Derby, Indianapolis 500 | Racing pools |
-| Jun | NBA Finals, Stanley Cup Final | Clutch Card, bracket |
+| Jun | NBA Finals, Stanley Cup Final | Bracket (Clutch Card returns with slice 26) |
 | Jun–Jul | Wimbledon, Tour de France | Bracket, racing |
 | Sep | NFL season kickoff | Survivor, Pick'em for the season |
-| Oct | World Series | Clutch Card |
+| Oct | World Series | Clutch Card, once it returns with slice 26 |
 
 ## Questions for Derek
 
@@ -294,8 +294,8 @@ Each has a recommendation; a one-word answer per number is enough.
 
 - **Slice (a), part 1 (#1007):** the tables, Championship Weekend's seed and the two public
   reads. Championship Weekend launches alone; the Super Bowl and the calendar's other pages follow
-  as small seed-only migrations a few weeks before each event. Its Clutch Card offer names the
-  series its editions are loaded as, `Conference Championships`. The API takes the sport as its
+  as small seed-only migrations a few weeks before each event. Its Clutch Card offer (removed in
+  #1998) named the series its editions were loaded as, `Conference Championships`. The API takes the sport as its
   enum value (`AMERICAN_FOOTBALL`); the web maps the URL's path segment to it. `bracket_start_round`
   overrides the template's own starting round (the second-chance template starts at round 2; the
   page's bracket at 3). An offer's state comes from `contestOpening`, which asks Create contest's
@@ -306,7 +306,7 @@ Each has a recommendation; a one-word answer per number is enough.
   web app (`event-page-copy.ts`), keyed by sport and slug, falling back to the sport blurb and the
   template's name for a page with no copy yet. Until #1008, Start goes to sign-up, or to the
   member's leagues. The upcoming Championship Weekend on QA is the existing date-shifted
-  Championship Weekend test seed: loading it shows the Clutch Card OPEN. The NFL bracket and
+  Championship Weekend test seed: loading it showed the Clutch Card OPEN (removed in #1998). The NFL bracket and
   squares stay hidden there, because the NFL Playoffs test seed is last season as played, its
   games over; a test seed must carry results, so there is no upcoming-season one.
 - **Slice (b) (#1008):** every button on an event page goes to

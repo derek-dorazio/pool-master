@@ -253,7 +253,7 @@ export function dueResultMatchNumbers(
  * The lifecycle steps a run takes a released test event through, as an admin would on its
  * Workflow card (#1720): In Progress once it has started, then Completed, which settles its
  * contests, once every result is in. A bracket or week has every result once its last game's
- * has gone in; a tournament, race or stat pool loads its results with the event, so it waits
+ * has gone in; a tournament or race loads its results with the event, so it waits
  * for its end. Test events run with automatic lifecycle off, so nothing else moves them.
  */
 export function testEventTransitions(
