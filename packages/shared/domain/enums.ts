@@ -219,6 +219,34 @@ export const SlotProviderMatchTypeOrder = explicitOrder<SlotProviderMatchType>({
   [SlotProviderMatchType.CALENDAR_WEEK]: 3,
 });
 
+/**
+ * How a slot's games are contested (#2043, plan §1): two sides meeting, or a whole field ranked
+ * against each other. Copied to each Round when events carry slots.
+ */
+export const MatchFormat = {
+  /** Two sides meet: a team game, a tennis match. */
+  HEAD_TO_HEAD: 'HEAD_TO_HEAD',
+  /** A whole field is ranked: a golf round, a race. */
+  FIELD: 'FIELD',
+} as const;
+export type MatchFormat = (typeof MatchFormat)[keyof typeof MatchFormat];
+export const MatchFormatOrder = explicitOrder<MatchFormat>({
+  [MatchFormat.HEAD_TO_HEAD]: 0,
+  [MatchFormat.FIELD]: 1,
+});
+
+/** What a game of a slot is played in, beside how many (#2043): its words come from the display strings. */
+export const PeriodUnit = {
+  QUARTER: 'QUARTER',
+  HALF: 'HALF',
+  PERIOD: 'PERIOD',
+  INNING: 'INNING',
+  HOLE: 'HOLE',
+} as const;
+export type PeriodUnit = (typeof PeriodUnit)[keyof typeof PeriodUnit];
+/** No natural order: A to Z by its display strings. */
+export const PeriodUnitOrder = alphabeticalOrder('PeriodUnit');
+
 export const InjuryStatusCode = {
   HEALTHY: 'HEALTHY',
   QUESTIONABLE: 'QUESTIONABLE',

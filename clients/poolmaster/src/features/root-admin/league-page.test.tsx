@@ -204,7 +204,8 @@ const STRUCTURE_MAPPING = {
   providerId: '00000000-0000-4000-8000-00000000b001', providerName: 'BALLDONTLIE', providerLeagueCode: 'nba', providerLeagueName: 'NBA',
 } as const;
 const STRUCTURE_SLOT: Omit<SportLeaguePhaseDefinitionDto['slots'][number], 'id' | 'key' | 'slotKind'> = {
-  weekNumber: null, name: null, awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', providerMappings: [],
+  weekNumber: null, name: null, awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+  matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
 };
 const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [
   { id: '00000000-0000-4000-8000-00000000c001', phase: 'PRESEASON', isSynced: false, slots: [] },
@@ -414,6 +415,30 @@ describe('League page', () => {
 
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-slot')).not.toBeInTheDocument());
+  });
+
+  it('shows each slot\'s match format, whether its games can end tied and its periods, in the grid and its dialog', async () => {
+    const phases: SportLeaguePhaseDefinitionDto[] = [{
+      id: '00000000-0000-4000-8000-00000000c010', phase: 'REGULAR', isSynced: true, slots: [
+        { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d010', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, canEndTied: true, periodUnit: 'HALF', periodCount: 2 },
+        { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d011', key: 'MONACO', slotKind: 'TOURNAMENT', name: 'Monaco Grand Prix', matchFormat: 'FIELD', periodUnit: null, periodCount: null },
+      ],
+    }];
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    expect(await screen.findByTestId('root-admin-league-structure-slot-WEEK_1')).toHaveTextContent(/Head to head.*Yes.*Halves · 2/);
+    const race = screen.getByTestId('root-admin-league-structure-slot-MONACO');
+    expect(race).toHaveTextContent(/Field.*No.*No periods/);
+
+    await userEvent.click(within(race).getByRole('button', { name: 'Open details' }));
+    expect(await screen.findByTestId('root-admin-league-structure-slot-facts')).toHaveTextContent(/Format.*Field.*Can tie.*No.*Periods.*No periods/);
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-slot')).not.toBeInTheDocument());
+
+    await userEvent.click(within(screen.getByTestId('root-admin-league-structure-slot-WEEK_1')).getByRole('button', { name: 'Open details' }));
+    expect(await screen.findByTestId('root-admin-league-structure-slot-facts')).toHaveTextContent(/Format.*Head to head.*Can tie.*Yes.*Periods.*Halves · 2/);
   });
 
   it('opens a phase to read with its slot count, closes it on Escape, and says so when a slot has no provider', async () => {

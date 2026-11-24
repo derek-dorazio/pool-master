@@ -22,7 +22,7 @@ import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, summary: true, changedCount: true } as const;
 const SLOT_SELECT = {
   id: true, sportLeaguePhaseId: true, key: true, slotKind: true, weekNumber: true, name: true, awardsTrophy: true, squaresEligible: true,
-  seriesFormat: true, seriesGames: true, pairing: true,
+  seriesFormat: true, seriesGames: true, pairing: true, matchFormat: true, canEndTied: true, periodUnit: true, periodCount: true,
   providerMappings: {
     select: {
       id: true, matchType: true, providerValue: true,
