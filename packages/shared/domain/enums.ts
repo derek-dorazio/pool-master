@@ -72,13 +72,13 @@ export const ParticipantStatusOrder = explicitOrder<ParticipantStatus>({
 export const ProviderHealthStatus = {
   /** None of its runs failed: Up. */
   HEALTHY: 'HEALTHY',
-  /** Some of its runs failed: Slow. */
+  /** Some of its runs failed: Partly failing. */
   DEGRADED: 'DEGRADED',
   /** All of its runs failed: Down. */
   DOWN: 'DOWN',
 } as const;
 export type ProviderHealthStatus = (typeof ProviderHealthStatus)[keyof typeof ProviderHealthStatus];
-/** Up first, then Slow, then Down. */
+/** Up first, then Partly failing, then Down. */
 export const ProviderHealthStatusOrder = explicitOrder<ProviderHealthStatus>({
   [ProviderHealthStatus.HEALTHY]: 0,
   [ProviderHealthStatus.DEGRADED]: 1,

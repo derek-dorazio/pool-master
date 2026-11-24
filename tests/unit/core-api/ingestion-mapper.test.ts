@@ -122,7 +122,6 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     providerName: 'Feed',
     status: 'HEALTHY',
     errorRate: 0,
-    latencyMs: 20,
     lastEventAt: AT,
     sportsCovered: [Sport.GOLF],
     activeEventCount: 2,

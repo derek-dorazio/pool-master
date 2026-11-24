@@ -106,7 +106,7 @@ describe('RootAdminProvidersPage', () => {
     expect(mock.getByText('Not paced')).toBeInTheDocument();
   });
 
-  it('sorts Status by the live check\'s own order, Up then Slow then Down, not by the words A to Z', async () => {
+  it('sorts Status by its own order, Up then Partly failing then Down, not by the words A to Z', async () => {
     seed({ providers: [
       provider({ providerId: 'down', providerName: 'Down feed', status: 'DOWN' }),
       provider({ providerId: 'up', providerName: 'Up feed', status: 'HEALTHY' }),

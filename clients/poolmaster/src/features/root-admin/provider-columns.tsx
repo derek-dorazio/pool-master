@@ -16,7 +16,7 @@ export const providerColumns = [
   columnHelper.accessor('status', {
     header: 'Status',
     meta: {
-      info: 'Up, Slow or Down, from its sync runs of the last hour: Up when none failed, Down when all did, Slow when some did. No runs when none finished in the hour.',
+      info: 'Up, Partly failing or Down, from its sync runs of the last hour: Up when none failed, Partly failing when some did, Down when all did. No runs when none finished in the hour.',
       type: { kind: 'enum', order: ProviderHealthStatusOrder, label: (status) => enumLabel('ProviderHealthStatus', status as ProviderHealthStatus) },
     },
     cell: ({ getValue }) => <ProviderStatusChip status={getValue()} />,
