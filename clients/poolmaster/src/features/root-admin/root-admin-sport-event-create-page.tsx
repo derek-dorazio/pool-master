@@ -59,7 +59,7 @@ export function RootAdminSportEventCreatePage() {
       >
         <Notice tone="warning">
           <p className="font-medium">
-            No {sportLeagueNoun.one} to run a {event.one} on
+            No active {sportLeagueNoun.one} for a {event.one}
           </p>
           <p className="mt-1 text-sm">
             Every {sportName} {event.one} runs on a {sportLeagueNoun.one}. There are no active{' '}

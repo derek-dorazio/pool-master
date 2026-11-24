@@ -314,14 +314,16 @@ describe('SportLeaguePageService', () => {
     await expect(missing.listSyncs('nope')).resolves.toBeNull();
     await expect(missing.listEvents('nope')).resolves.toBeNull();
     await expect(missing.listParticipants('nope')).resolves.toBeNull();
+    await expect(missing.getStructure('nope')).resolves.toBeNull();
     await expect(missing.getEventOverview('nope')).resolves.toBeNull();
   });
 
-  it('reads the syncs and events of a sport league that exists', async () => {
+  it('reads the syncs, events and structure of a sport league that exists', async () => {
     const found = service([]);
 
     await expect(found.listSyncs('mlb')).resolves.toHaveLength(3);
     await expect(found.listEvents('mlb')).resolves.toHaveLength(1);
+    await expect(found.getStructure('mlb')).resolves.toEqual({ phases: [] });
     await expect(found.getEventOverview('e1')).resolves.toMatchObject({ syncs: [{ kind: ProviderSyncKind.FIELD }, { kind: ProviderSyncKind.SCORES }] });
   });
 });
@@ -333,6 +335,7 @@ function makeReader(participants: SportLeaguePageParticipant[] | null): SportLea
     readSyncFacts: () => Promise.resolve(exists ? { league: league(), latestRuns: [] } : null),
     readEventFacts: () => Promise.resolve(exists ? eventFacts() : null),
     readParticipants: () => Promise.resolve(participants),
+    readStructure: () => Promise.resolve(exists ? [] : null),
     readEventPageFacts: () => Promise.resolve(exists ? eventPageFacts() : null),
     readPositions: () => Promise.resolve(exists ? [] : null),
   };

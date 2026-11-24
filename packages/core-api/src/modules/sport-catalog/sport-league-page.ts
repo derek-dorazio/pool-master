@@ -15,6 +15,7 @@ import {
   AutoReleaseCheckOutcome,
   compareByEnumOrder,
   fieldOrderDecision,
+  orderSportLeagueStructure,
   isProviderSyncedEvent,
   ParticipantAddedBy,
   ProviderSyncKind,
@@ -28,6 +29,7 @@ import {
   type SportLeagueEventOverview,
   type SportLeagueParticipantOverview,
   type SportLeaguePosition,
+  type SportLeagueStructure,
   type SportLeagueSync,
 } from '@poolmaster/shared/domain';
 import { issuesOf, syncHealthOf } from './sport-league-overview';
@@ -76,6 +78,15 @@ export class SportLeaguePageService {
   /** The league's positions with their provider codes (#2001). Null when the league does not exist. */
   async listPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null> {
     return this.deps.reader.readPositions(sportLeagueId);
+  }
+
+  /**
+   * The league's phase and slot definitions with their provider mappings (#2002), in their one
+   * order. Null when the league does not exist.
+   */
+  async getStructure(sportLeagueId: string): Promise<SportLeagueStructure | null> {
+    const phases = await this.deps.reader.readStructure(sportLeagueId);
+    return phases === null ? null : orderSportLeagueStructure(phases);
   }
 
   /** The Event page's header and sync rows (#1889). Null when the event does not exist. */

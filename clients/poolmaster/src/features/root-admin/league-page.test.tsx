@@ -9,6 +9,8 @@ import type {
   SportLeagueEventOverviewDto,
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
+  SportLeaguePhaseDefinitionDto,
+  SportLeaguePositionDto,
   SportLeagueSyncDto,
 } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
@@ -17,17 +19,20 @@ import { LeagueContestTemplatesTab } from './league-contest-templates-tab';
 import { LeagueEventsTab } from './league-events-tab';
 import { LeaguePageLayout } from './league-page-layout';
 import { LeagueParticipantsTab } from './league-participants-tab';
+import { LeagueStructureTab } from './league-structure-tab';
 import { providerMappingFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // The root admin's League page (#1866): the header, the tab set, and each tab's grid and dialog.
 
 const {
+  getSportLeagueStructureMock,
   listActivityMock,
   listContestConfigTemplatesMock,
   listProvidersMock,
   listSportLeagueEventOverviewsMock,
   listSportLeagueOverviewsMock,
   listSportLeagueParticipantOverviewsMock,
+  listSportLeaguePositionsMock,
   listSportLeaguesMock,
   listSportLeagueSyncsMock,
   mockLogger,
@@ -38,12 +43,14 @@ const {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockReturnValue(logger);
   return {
+    getSportLeagueStructureMock: vi.fn(),
     listActivityMock: vi.fn(),
     listContestConfigTemplatesMock: vi.fn(),
     listProvidersMock: vi.fn(),
     listSportLeagueEventOverviewsMock: vi.fn(),
     listSportLeagueOverviewsMock: vi.fn(),
     listSportLeagueParticipantOverviewsMock: vi.fn(),
+    listSportLeaguePositionsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     listSportLeagueSyncsMock: vi.fn(),
     mockLogger: logger,
@@ -54,12 +61,14 @@ const {
 });
 
 bindApiMocks({
+  getSportLeagueStructure: getSportLeagueStructureMock,
   listActivity: listActivityMock,
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listProviders: listProvidersMock,
   listSportLeagueEventOverviews: listSportLeagueEventOverviewsMock,
   listSportLeagueOverviews: listSportLeagueOverviewsMock,
   listSportLeagueParticipantOverviews: listSportLeagueParticipantOverviewsMock,
+  listSportLeaguePositions: listSportLeaguePositionsMock,
   listSportLeagues: listSportLeaguesMock,
   listSportLeagueSyncs: listSportLeagueSyncsMock,
   syncLeagueEvents: syncLeagueEventsMock,
@@ -190,6 +199,36 @@ function LocationProbe() {
   return <div data-testid="location">{useLocation().pathname}</div>;
 }
 
+const STRUCTURE_MAPPING = {
+  providerId: '00000000-0000-4000-8000-00000000b001', providerName: 'BALLDONTLIE', providerLeagueCode: 'nba', providerLeagueName: 'NBA',
+} as const;
+const STRUCTURE_SLOT: Omit<SportLeaguePhaseDefinitionDto['slots'][number], 'id' | 'key' | 'slotKind'> = {
+  weekNumber: null, name: null, awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', providerMappings: [],
+};
+const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [
+  { id: '00000000-0000-4000-8000-00000000c001', phase: 'PRESEASON', isSynced: false, slots: [] },
+  {
+    id: '00000000-0000-4000-8000-00000000c002', phase: 'REGULAR', isSynced: true, slots: [{
+      ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d001', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, squaresEligible: true,
+      providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e001', matchType: 'CALENDAR_WEEK', providerValue: null }],
+    }],
+  },
+  {
+    id: '00000000-0000-4000-8000-00000000c003', phase: 'POSTSEASON', isSynced: true, slots: [
+      { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d002', key: 'SEMIFINAL', slotKind: 'SEMIFINAL', seriesFormat: 'BEST_OF', seriesGames: 7 },
+      {
+        ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d003', key: 'FINAL', slotKind: 'FINAL', name: 'NBA Finals', awardsTrophy: true, seriesFormat: 'BEST_OF', seriesGames: 7,
+        providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e002', matchType: 'PROVIDER_CODE', providerValue: 'POST:5' }],
+      },
+    ],
+  },
+];
+const POSITION_CODE = { provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL' } as const;
+const POSITIONS: SportLeaguePositionDto[] = [
+  { id: '00000000-0000-4000-8000-00000000f001', code: 'QB', displayOrder: 1, isFieldEligible: true, providerCodes: [{ ...POSITION_CODE, providerCode: 'QB' }] },
+  { id: '00000000-0000-4000-8000-00000000f002', code: 'K', displayOrder: 2, isFieldEligible: false, providerCodes: [] },
+];
+
 function renderLeaguePage(path: string) {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [NBA, SUMMER] } });
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: OVERVIEWS } });
@@ -206,6 +245,7 @@ function renderLeaguePage(path: string) {
             <Route element={<LeagueParticipantsTab />} path="participants" />
             <Route element={<LeagueActivityTab />} path="activity" />
             <Route element={<LeagueContestTemplatesTab />} path="contest-templates" />
+            <Route element={<LeagueStructureTab />} path="structure" />
             <Route element={<LocationProbe />} path="tools" />
           </Route>
           <Route element={<LocationProbe />} path="/manage/sports/:sport/events/:eventId" />
@@ -238,7 +278,7 @@ describe('League page', () => {
     const facts = await screen.findByTestId('root-admin-league-facts');
     expect(within(facts).getByText('OK')).toBeInTheDocument();
     expect(within(facts).getByText('BALLDONTLIE')).toBeInTheDocument();
-    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates']);
+    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure']);
     // The league's bare address opens its Events tab.
     await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-events')).toHaveAttribute('aria-current', 'page'));
   });
@@ -248,7 +288,7 @@ describe('League page', () => {
     renderLeaguePage('/manage/sports/basketball/leagues/summer/events');
 
     await screen.findByTestId('root-admin-league-sync-EVENTS');
-    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Tools']);
+    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure', 'Tools']);
     expect(screen.queryByTestId('root-admin-league-sync-now')).not.toBeInTheDocument();
   });
 
@@ -350,6 +390,72 @@ describe('League page', () => {
 
     expect(within(dialog).getByTestId('root-admin-league-contest-template-status')).toHaveTextContent('On');
     expect(updateContestConfigTemplateMock).not.toHaveBeenCalled();
+  });
+
+  it('lists the league\'s phases and its slots in the API\'s order, each named by its proper name or the word for its kind, opens a slot to read with no Edit, and closes it on Escape', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    const phasesTable = await screen.findByTestId('root-admin-league-structure-phases-table');
+    expect(getSportLeagueStructureMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'nba' } }));
+    expect(within(phasesTable).getByTestId('root-admin-league-structure-phase-PRESEASON')).toHaveTextContent('No');
+    const slots = within(screen.getByTestId('root-admin-league-structure-slots-table')).getAllByTestId(/^root-admin-league-structure-slot-/);
+    expect(slots.map((row) => row.getAttribute('data-testid'))).toEqual(['WEEK_1', 'SEMIFINAL', 'FINAL'].map((key) => `root-admin-league-structure-slot-${key}`));
+    ['Week 1', 'Semifinal', 'NBA Finals'].forEach((label, index) => expect(slots[index]).toHaveTextContent(label));
+    expect(within(screen.getByTestId('root-admin-league-structure-slot-FINAL')).getByText('Best of · 7 games')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-league-structure-slot-WEEK_1')).getByText('BALLDONTLIE nba · Calendar week')).toBeInTheDocument();
+
+    await userEvent.click(within(screen.getByTestId('root-admin-league-structure-slot-FINAL')).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-structure-slot');
+    expect(within(dialog).getByTestId('root-admin-league-structure-slot-mappings')).toHaveTextContent('BALLDONTLIE nba · Provider code POST:5');
+    expect(within(dialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-slot')).not.toBeInTheDocument());
+  });
+
+  it('opens a phase to read with its slot count, closes it on Escape, and says so when a slot has no provider', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    const regular = await screen.findByTestId('root-admin-league-structure-phase-REGULAR');
+    await userEvent.click(within(regular).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-structure-phase');
+    expect(within(dialog).getByTestId('root-admin-league-structure-phase-facts')).toHaveTextContent(/Regular season.*Yes.*1/);
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-phase')).not.toBeInTheDocument());
+
+    await userEvent.click(within(screen.getByTestId('root-admin-league-structure-slot-SEMIFINAL')).getByRole('button', { name: 'Open details' }));
+    expect(await screen.findByTestId('root-admin-league-structure-slot-mappings')).toHaveTextContent('No provider');
+  });
+
+  it('lists the league\'s positions in the API\'s order with whether each is picked into fields and its provider codes, and opens one to read with no Edit', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: [] } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: POSITIONS } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    const table = await screen.findByTestId('root-admin-league-structure-positions-table');
+    expect(listSportLeaguePositionsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'nba' } }));
+    const rows = within(table).getAllByTestId(/^root-admin-league-structure-position-/);
+    expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual(['QB', 'K'].map((code) => `root-admin-league-structure-position-${code}`));
+    expect(rows[0]).toHaveTextContent(/QB.*Yes.*BALLDONTLIE nfl · QB/);
+    expect(rows[1]).toHaveTextContent(/K.*No/);
+
+    await userEvent.click(within(rows[1]).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-structure-position');
+    expect(within(dialog).getByTestId('root-admin-league-structure-position-codes')).toHaveTextContent('No provider');
+    expect(within(dialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+  });
+
+  it('says the positions could not load while the league\'s phases and slots still show', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
+    listSportLeaguePositionsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    expect(await screen.findByTestId('root-admin-league-structure-positions-state-error')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-league-structure-phases-table')).toBeInTheDocument();
   });
 
   it('saves a contest template\'s Default alone', async () => {

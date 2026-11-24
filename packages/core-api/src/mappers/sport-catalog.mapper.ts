@@ -14,6 +14,7 @@ import {
   type SportLeagueOverview,
   type SportLeagueParticipantOverview,
   type SportLeaguePosition,
+  type SportLeagueStructure,
   type SportLeagueSync,
 } from '@poolmaster/shared/domain';
 import type {
@@ -26,6 +27,7 @@ import type {
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
   SportLeaguePositionDto,
+  SportLeagueStructureResponse,
   SportLeagueSyncDto,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
 import type { RankingUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
@@ -193,6 +195,38 @@ export function mapSportLeaguePositionToDto(position: SportLeaguePosition): Spor
       provider: providerCode.provider,
       providerLeagueCode: providerCode.providerLeagueCode,
       providerLeagueName: providerCode.providerLeagueName,
+    })),
+  };
+}
+
+/** A sport league's structure (#2002): every field as it is, in the order the service gave it. */
+export function mapSportLeagueStructureToDto(structure: SportLeagueStructure): SportLeagueStructureResponse {
+  return {
+    phases: structure.phases.map((phase) => ({
+      id: phase.id,
+      phase: phase.phase,
+      isSynced: phase.isSynced,
+      slots: phase.slots.map((slot) => ({
+        id: slot.id,
+        key: slot.key,
+        slotKind: slot.slotKind,
+        weekNumber: slot.weekNumber,
+        name: slot.name,
+        awardsTrophy: slot.awardsTrophy,
+        squaresEligible: slot.squaresEligible,
+        seriesFormat: slot.seriesFormat,
+        seriesGames: slot.seriesGames,
+        pairing: slot.pairing,
+        providerMappings: slot.providerMappings.map((mapping) => ({
+          id: mapping.id,
+          providerId: mapping.providerId,
+          providerName: mapping.providerName,
+          providerLeagueCode: mapping.providerLeagueCode,
+          providerLeagueName: mapping.providerLeagueName,
+          matchType: mapping.matchType,
+          providerValue: mapping.providerValue,
+        })),
+      })),
     })),
   };
 }

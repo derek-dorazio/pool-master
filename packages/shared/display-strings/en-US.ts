@@ -47,6 +47,38 @@ export const enUS = {
       GAME_HALVES: 'Start, half-time, end',
       GOLF_ROUNDS: 'Tournament, rounds, players',
     },
+    LeaguePhase: {
+      PRESEASON: 'Preseason',
+      REGULAR: 'Regular season',
+      POSTSEASON: 'Postseason',
+    },
+    SlotKind: {
+      WEEK: 'Week',
+      PLAY_IN: 'Play-in',
+      ROUND_OF_64: 'Round of 64',
+      ROUND_OF_32: 'Round of 32',
+      ROUND_OF_16: 'Round of 16',
+      QUARTERFINAL: 'Quarterfinal',
+      SEMIFINAL: 'Semifinal',
+      THIRD_PLACE: 'Third place',
+      FINAL: 'Final',
+      TOURNAMENT: 'Tournament',
+    },
+    SeriesFormat: {
+      SINGLE_GAME: 'Single game',
+      BEST_OF: 'Best of',
+      AGGREGATE: 'Aggregate',
+    },
+    SlotPairing: {
+      FIXED: 'Fixed bracket',
+      RESEEDED: 'Reseeded',
+    },
+    SlotProviderMatchType: {
+      PROVIDER_CODE: 'Provider code',
+      NAME_PATTERN: 'Name pattern',
+      DATE_WINDOW: 'Date window',
+      CALENDAR_WEEK: 'Calendar week',
+    },
     InjuryStatusCode: {
       HEALTHY: 'Healthy',
       QUESTIONABLE: 'Questionable',
@@ -1293,6 +1325,9 @@ export const enUS = {
     firstGame: 'first game',
     // Round labels where no proper name is kept for the round.
     roundNumber: { name: 'Round {{n}}', short: 'R{{n}}' },
+    // How many games a slot's meeting is played over, beside its series format.
+    seriesGames_one: '{{count}} game',
+    seriesGames_other: '{{count}} games',
     raceNumber: 'Race {{n}}',
     singleRace: 'Race',
     roundHeading: 'Round',

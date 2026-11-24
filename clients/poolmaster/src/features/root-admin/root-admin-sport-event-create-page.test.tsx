@@ -89,9 +89,9 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1', isActive: false })]);
 
     expect(
-      await screen.findByText('No tour to run a tournament on'),
+      await screen.findByText('No active tour for a tournament'),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sport-event-create-tours-link')).not.toBeInTheDocument();
   });
 
   it('plans/147: defaults the only active tour and its current year when the URL names neither', async () => {

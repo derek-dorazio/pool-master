@@ -24,7 +24,7 @@ const STATUS_TEST_ID = 'contest-entry-status';
 export function EntryStatusPeek({
   entry,
   facts = [],
-  phase,
+  phaseLabel,
   status,
 }: {
   /** The entry's own read, for when it was created and last changed; null until it loads. */
@@ -32,7 +32,7 @@ export function EntryStatusPeek({
   /** The page's own lines, after the contest's phase. */
   facts?: EntryStatusFact[];
   /** The contest's phase as the page words it. */
-  phase: string;
+  phaseLabel: string;
   status: ContestEntryStatus | null;
 }) {
   const displayPreferences = useDisplayPreferences();
@@ -54,7 +54,7 @@ export function EntryStatusPeek({
     >
       <PeekCard
         facts={peekFacts}
-        subtitle={<span data-testid={`${STATUS_TEST_ID}-contest-phase`}>{phase}</span>}
+        subtitle={<span data-testid={`${STATUS_TEST_ID}-contest-phase`}>{phaseLabel}</span>}
         title={<span data-testid={`${STATUS_TEST_ID}-entry-status`}>{statusLabel}</span>}
       />
     </DetailsPeek>

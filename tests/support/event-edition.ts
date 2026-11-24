@@ -25,7 +25,7 @@ const FIXTURE_SERIES_PREFIX = 'Fixture edition: ';
 const LINKED_EVENT_ROUNDS = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'eventSeries' | 'platformTierProfile' | 'platformPricingProfile'>;
+type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'eventSeries' | 'platformTierProfile' | 'platformPricingProfile'>;
 
 export interface EventEdition {
   eventSeriesId: string;
@@ -51,13 +51,15 @@ export async function freshEventEdition(
 /**
  * The fixture tour's id, made on first use. A provider feed's participants are the event league's
  * (#1853), so a test whose sync or live scores reach a `freshEventEdition` event puts its golfers
- * here.
+ * here. Like every league a migration adds (#2002), the tour has its phase and slot definitions: a
+ * regular season of one tournament, the slot its Seasons and events link to once they have one.
  */
 export async function fixtureTourId(prisma: Db, sportCode: Sport = Sport.GOLF): Promise<string> {
   const sport = await sportRow(prisma, sportCode);
   const where = { sportId_name: { sportId: sport.id, name: FIXTURE_TOUR_NAME } };
+  let sportLeagueId: string;
   try {
-    return (await prisma.sportLeague.upsert({
+    sportLeagueId = (await prisma.sportLeague.upsert({
       where,
       create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME },
       update: {},
@@ -66,8 +68,25 @@ export async function fixtureTourId(prisma: Db, sportCode: Sport = Sport.GOLF): 
   } catch (error) {
     // Two reads made it at once: the one that lost finds the winner's.
     if ((error as { code?: string }).code !== 'P2002') throw error;
-    return (await prisma.sportLeague.findUniqueOrThrow({ where, select: { id: true } })).id;
+    sportLeagueId = (await prisma.sportLeague.findUniqueOrThrow({ where, select: { id: true } })).id;
   }
+  await fixtureTourStructure(prisma, sportLeagueId);
+  return sportLeagueId;
+}
+
+const FIXTURE_TOUR_SLOT_KEY = 'FIXTURE_TOURNAMENT';
+
+/** The fixture tour's one phase and slot; `skipDuplicates` lets two first uses race safely. */
+async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<void> {
+  await prisma.sportLeaguePhase.createMany({ data: [{ sportLeagueId, phase: 'REGULAR', isSynced: true }], skipDuplicates: true });
+  const phase = await prisma.sportLeaguePhase.findUniqueOrThrow({ where: { sportLeagueId_phase: { sportLeagueId, phase: 'REGULAR' } }, select: { id: true } });
+  await prisma.sportLeaguePhaseSlot.createMany({
+    data: [{
+      sportLeagueId, sportLeaguePhaseId: phase.id, key: FIXTURE_TOUR_SLOT_KEY, slotKind: 'TOURNAMENT',
+      awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+    }],
+    skipDuplicates: true,
+  });
 }
 
 /** Removes the fixture series, on the fixture tour or the PGA TOUR, that no event uses any more. */

@@ -192,6 +192,21 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     handler: handler.listPositions,
   });
 
+  fastify.get('/:sportLeagueId/structure', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'Get a sport league\'s phase and slot definitions with their provider mappings',
+      description: 'The League page\'s Structure tab (#2002): the sport league\'s timeless phases, in the order a Season plays them, '
+        + 'each with its slot definitions in play order and each slot\'s provider mappings. Set by migration, so there is no write. '
+        + 'Read from a fixed number of queries, however many slots. Root admin only.',
+      operationId: 'getSportLeagueStructure',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 200: schemaRef('SportLeagueStructureResponse'), ...errors(401, 403, 404) },
+    },
+    handler: handler.getStructure,
+  });
+
   fastify.get('/:sportLeagueId/events/overview', {
     onRequest: requireRootAdmin,
     schema: {

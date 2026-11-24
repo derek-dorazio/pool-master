@@ -240,6 +240,10 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'overview'] as const,
       // The League page's Syncs card (#1866), under `leagues` so a league's change refreshes it.
       leagueSyncs: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'syncs', sportLeagueId] as const,
+      // The League page's Structure tab (#2002), under `leagues`: its phase and slot definitions.
+      leagueStructure: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'structure', sportLeagueId] as const,
+      // The Structure tab's positions (#2001), under `leagues`.
+      leaguePositions: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'positions', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       sportEvents: (sport: QueryKeyId, eventYear: number) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport, eventYear] as const,

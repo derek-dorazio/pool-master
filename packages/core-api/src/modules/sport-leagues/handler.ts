@@ -11,6 +11,7 @@ import type {
   SportLeagueParticipantOverviewListResponse,
   SportLeaguePositionListResponse,
   SportLeagueResponse,
+  SportLeagueStructureResponse,
   SportLeagueSyncListResponse,
   UpdateSportLeagueRequest,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
@@ -24,6 +25,7 @@ import {
   mapSportLeagueOverviewToDto,
   mapSportLeagueParticipantOverviewToDto,
   mapSportLeaguePositionToDto,
+  mapSportLeagueStructureToDto,
   mapSportLeagueSyncToDto,
   mapSportLeagueToDto,
 } from '../../mappers';
@@ -67,6 +69,12 @@ export function createSportLeagueHandlers(
       const participants = await page.listParticipants(request.params.sportLeagueId);
       if (participants === null) return notFound(reply, request.params.sportLeagueId);
       return { participants: participants.map(mapSportLeagueParticipantOverviewToDto) } satisfies SportLeagueParticipantOverviewListResponse;
+    },
+
+    getStructure: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {
+      const structure = await page.getStructure(request.params.sportLeagueId);
+      if (structure === null) return notFound(reply, request.params.sportLeagueId);
+      return mapSportLeagueStructureToDto(structure) satisfies SportLeagueStructureResponse;
     },
 
     listSportLeagueOverviews: async (): Promise<SportLeagueOverviewListResponse> => {
