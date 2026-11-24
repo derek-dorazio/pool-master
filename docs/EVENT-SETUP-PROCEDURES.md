@@ -1,10 +1,13 @@
 # Event Setup Procedures
 
 How a root admin sets up an event by hand on the Manage screens and runs it through its
-lifecycle, from draft to settled contests. The numbered steps follow a made-up golf tournament
-in QA (or locally), scored by the mock provider's simulated live round, to test contests,
-entries and the live leaderboard; nothing here depends on a real tournament being played that
-week. Release, contests, the lifecycle moves and cancelling work the same way for every sport.
+lifecycle, from draft to settled contests. The numbered steps follow a golf tournament linked
+to the tour's provider (BALLDONTLIE), so its field and live scores come from that provider's
+feed. No provider simulates a live round (`rules/architecture-rules.md` §3 *Provider and
+Adapter Registry Discipline*): live scores arrive only while the real tournament is being
+played, and contests on past events are tried from the test seeds instead (*Loading instead of
+typing*, below). Release, contests, the lifecycle moves and cancelling work the same way for
+every sport.
 
 - **Races** (horse racing, auto racing, cycling, running) have no score feed, so a race's
   finishing order is entered by hand: see [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md).
@@ -21,12 +24,12 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 
 - **PoolMaster owns the event.** You create it, build its field, and move it between
   statuses yourself.
-- **The mock provider owns the scores.** It scores golfers hole by hole once a live
-  simulation is started for the provider event your tournament is linked to.
+- **The provider owns the scores.** Its feed scores golfers hole by hole while the real
+  tournament your event is linked to is being played.
 - **The live-score sync carries scores across.** It polls every linked tournament that is
   *In progress* and has a field. It does not look at dates.
 - **Golfers are matched by provider id, never by name.** A score only lands on a golfer
-  whose player record came from the mock, so the field must be loaded from the mock (step 4).
+  whose player record came from the provider, so the field must be loaded from it (step 4).
   Golfers added by hand from the roster get no scores.
 
 ## Before you start
@@ -41,8 +44,8 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
    how often fields refresh and how many days ahead. A synced sport league's events load
    their fields regardless of the saved switch (#1726), and leagues that are not synced are
    off, so the page offers no off switch for it.
-3. **No mock event to pick in advance.** Each tournament gets its own simulated event when
-   you link it (step 2), so its dates do not have to match anything in the mock.
+3. **Pick a provider event that has not started.** The link picker lists only the provider's
+   events that start inside your tournament's dates, so give it the real tournament's dates.
 
 ## 1. Create the tournament
 
@@ -51,7 +54,7 @@ Every step is a root-admin screen under `/manage` unless it says otherwise.
 | Field | Set it to |
 |---|---|
 | Tour, Event year, Name | Any tour, the current year, and a name of your own (for example "Derek's Golf Tournament") |
-| Starts, Ends | A start far enough ahead to finish releasing the tournament and creating contests and entries. The start time is the cutoff: the tournament can't be released, and contests can't be created or opened, once it has passed. Nothing compares the dates with the mock |
+| Starts, Ends | A start far enough ahead to finish releasing the tournament and creating contests and entries. The start time is the cutoff: the tournament can't be released, and contests can't be created or opened, once it has passed. Use the real tournament's dates, so the link picker lists it |
 | Rounds | 4 |
 | Move this tournament through Live and Completed automatically | **Unchecked** |
 
@@ -61,21 +64,15 @@ Leave automatic lifecycle off. With it on, a background job moves the tournament
 In progress and Completed from its round dates, which takes the timing out of your hands.
 You can turn it off later from the tournament's ⚙: *Automatic lifecycle on*, *Turn off*.
 
-## 2. Link it to the mock provider
+## 2. Link it to the provider
 
-On the tournament's Tools tab, choose *Link to a new simulated event* on the score-source
-card. That links the tournament to its own mock event, `sandbox-<tournament id>`, which the
-mock builds on request with its 80-golfer field. The card then says "Linked to
-mock-contest-feed event sandbox-…" and the badge reads *Scores synced*.
-
-*Link to provider event* is still there for linking to one of the mock's listed events
-instead; that list shows only events that start inside the tournament's own dates. The
-mock lists the 2026 and 2027 PGA TOUR and LPGA Tour schedules, and their fields are each
-tour's ranked players (about 150), not the 80-golfer field used below.
+On the tournament's Tools tab, choose *Link to provider event* on the score-source card and pick
+the provider's event. The list shows only events that start inside the tournament's own dates.
+The card then says "Linked to balldontlie event …" and the badge reads *Scores synced*.
 
 To create a whole year of those listed events at once, open the tour's page (`/manage/sports/golf/leagues/:leagueId`),
 pick the year on its tournament calendar, and choose *Import {year} from provider*. Every
-event the mock lists for that tour and year is created and linked for scores; ones the tour
+event the provider lists for that tour and year is created and linked for scores; ones the tour
 already has are skipped, so it is safe to run again. The import needs the tour synced: its
 selected provider league mapping names the provider and the provider league, and the import asks
 that provider for that league alone, keeping only events stamped with its code (#1997). A tour
@@ -89,22 +86,22 @@ The *Rounds* grid on the Rounds and matches tab should show R1 to R4; scores for
 round row are skipped. Open a round (⤢) to see its dates, and *Edit* in its dialog to move them on
 an event no feed syncs.
 
-## 4. Load the field from the mock
+## 4. Load the field from the provider
 
 *Field* (`/manage/sports/golf/events/:id/field`), then *Load Participant Field*. This loads
-the mock's 80 golfers and records each one's mock id, which is what the score sync matches
-on. Then:
+the provider's field and records each golfer's provider id, which is what the score sync
+matches on. Then:
 
-- each golfer arrives with the mock's ranking, so tiers can be auto-assigned straight away;
+- each golfer arrives with the provider's ranking, so tiers can be auto-assigned straight away;
   you can correct a golfer's rank, odds or seed with ⤢ › *Edit* on its Field row, or withdraw it
   with ⤢ › *Withdraw*, but a later
   *Refresh Participant Field* replaces them with the provider's values for every golfer
   it reports (it asks you to confirm first);
 - do not use *Add more participants* or *Seed field from league roster*: the golfers they
-  add have no mock id and will never score.
+  add have no provider id and will never score.
 
-The field load matches players by mock id only. If the roster already holds a hand-made
-player with the same name as a mock golfer, you will see both.
+The field load matches players by provider id only. If the roster already holds a hand-made
+player with the same name as a provider golfer, you will see both.
 
 **Optional: adjust the field by bulk upload.** To set many rankings, odds, seeds or
 withdrawals at once (copied from a tournament site, say), use *Bulk upload* on the same
@@ -120,7 +117,7 @@ with the provider's again, as it does corrections made in a golfer's dialog (#41
 On *Field*, press *Auto-assign tiers* in the Field section. A golf event starts with six
 tiers. Auto-assign fills them in the field's order (odds, then seed, then rank, by the first
 value every golfer has; the dialog says which), ten golfers at a time, and the last tier takes
-everyone left. The mock's 80 golfers therefore come out as 10/10/10/10/10/30. The layout is the
+everyone left. An 80-golfer field therefore comes out as 10/10/10/10/10/30. The layout is the
 sport league's tier profile (#1844), chosen in the league's ⚙ on its League page, and an event
 takes its tiers from it when it is made: another league can start its events on its own (the
 College Football Playoff's "6 tiers of 2": its 12 teams come out two to a tier). A tier-pick
@@ -182,51 +179,29 @@ As a commissioner of a test league (root admin is not needed):
 
 ## 8. Go live
 
-Do these two in this order.
-
-1. On the score-source card, *Start live simulation*. The card shows the round under way
-   and when the simulation finishes, and it refreshes that every 30 seconds, including
-   after you leave and come back. By default each round takes 20 minutes, so a full
-   tournament takes 80 minutes.
-2. From the tournament's ⚙, *Move to In Progress*. Open contests on the tournament
-   become active, and the live-score sync starts polling it.
-
-Start the simulation first anyway. A simulated event has no scores until its simulation
-starts, so polls before then bring nothing in. An event linked from the provider list
-instead answers with fixed scores until a simulation runs, and a poll that stores those
-mixes them with the simulated ones.
-
-Golfers tee off across the first third of each round, so the first poll or two may bring
-no scores.
+When the real tournament tees off, *Move to In Progress* from the tournament's ⚙. Open
+contests on the tournament become active, and the live-score sync starts polling it.
 
 ## 9. Watch it
 
-- The contest leaderboard should change about once a minute as holes are played.
-- The cut is made after round 2: the top 65 and ties go through, the rest show as missed
-  cut. A few golfers withdraw mid-round.
+- The contest leaderboard changes as the provider reports holes played, about once a minute
+  at the 60-second live-score interval.
+- The cut is made after round 2, as the provider reports it; golfers who miss it show as
+  missed cut.
 - *Activity* (`/manage/activity`, filter Kind to Sync) shows each live-score run. A run that brings nothing
   in usually means the tournament is not In progress, has no field, or its golfers did not
-  come from the mock.
+  come from the provider.
 
 ## 10. Finish
 
-When the score-source card says "Simulation finished at …", *Move to Completed* from the
-tournament's ⚙.
+When the provider's tournament is final, *Move to Completed* from the tournament's ⚙.
 Final standings are built from the scores PoolMaster has already received.
 
 ## Running it again
 
-- **Use a fresh tournament for each run.** Restarting a simulation part-way through starts
-  again from round 1. PoolMaster keeps the rounds it has already stored, so the leaderboard
-  mixes the two runs until the new one overwrites them.
-- **Restart after a mock restart.** The simulation is held in the mock's memory. If the
-  mock restarts (a QA deploy does this), press *Start live simulation* again.
-- **Don't re-link a tournament to reuse it.** The mock remembers a simulation by event id,
-  and a tournament always gets the same `sandbox-<id>`, so unlinking and linking it again
-  picks up the old simulation's scores at once. A fresh tournament gets a fresh event.
-- **Unlink only listed events.** A finished tournament linked from the provider list keeps
-  that mock event, which blocks the next tournament from using it. *Unlink score source*
-  frees it. Simulated events are one per tournament and never need this.
+- **Unlink a finished tournament to reuse its provider event.** A finished tournament keeps
+  its provider event, which blocks another tournament from linking it. *Unlink score source*
+  frees it.
 
 ## Knockout brackets
 

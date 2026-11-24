@@ -72,7 +72,10 @@ Secrets stay out of the database:
 |---|---|
 | `BALLDONTLIE_API_KEY` | The vendor key, from Secrets Manager. A deployed task with an enabled row and no key fails to start. |
 | `BALLDONTLIE_WEBHOOK_SECRET` | The webhook signing secret. While unset the row's webhook switch is refused on the Providers page (422 `PROVIDER_WEBHOOK_SECRET_MISSING`), a switch already on is logged at startup, every delivery is refused (403), and live scores are polled. |
-| `SPORT_DATA_DEFAULT_PROVIDER`, `SPORT_DATA_PROVIDER_BINDINGS_JSON` | Only the QA mock feed's binding now; a BALLDONTLIE entry is ignored. Removed with the mock (#2039). |
+
+Which providers run is never read from the environment: core-api builds one adapter per enabled
+Provider row whose key is set, and nothing else (#2039). Functional and integration tests register
+their own fake provider through `buildApp`'s provider factory, from test code.
 
 A sport's leagues are read one by one: a league the vendor plan refuses (401/403) or whose read
 fails is logged as `balldontlie.league.unavailable` and left out, so its neighbours still list.

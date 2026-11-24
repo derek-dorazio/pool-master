@@ -2,8 +2,7 @@ import { FormField, Select } from '@/features/shared/ui';
 import type { SportProviderOption } from './sport-admin-utils';
 
 /**
- * Chooses which provider's catalog to browse when more than one covers the sport (the QA mock
- * beside BALLDONTLIE, #1495). Renders nothing for a sport with one provider or none, so the
+ * Chooses which provider's catalog to browse when more than one covers the sport (#1495). Renders nothing for a sport with one provider or none, so the
  * default provider needs no choice.
  */
 export function SportProviderChoice({

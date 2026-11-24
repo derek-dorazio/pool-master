@@ -30,34 +30,12 @@ export const IngestionFeedTypeSchema = z.enum([
 ]).describe('Explicit ingestion feed type requested by the caller. Every feed is event-scoped.');
 export type IngestionFeedType = z.infer<typeof IngestionFeedTypeSchema>;
 
-export const MockEventStateSchema = z.enum([
-  'open',
-  'locked',
-  'live',
-  'completed',
-  'golf-pre-live',
-  'golf-r1-in-progress',
-  'golf-r1-complete',
-  'golf-r2-complete',
-  'golf-correction',
-  'golf-r4-complete-pending-final',
-  'golf-playoff',
-  'golf-completed',
-  'golf-late-correction',
-]).describe(
-  'Mock-provider-only event state override for manual QA event syncs.',
-);
-export type MockEventState = z.infer<typeof MockEventStateSchema>;
-
 export const EventSyncRequestSchema = z.object({
   providerId: z.string().min(1).describe(
     'The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only.',
   ),
   feeds: z.array(IngestionFeedTypeSchema).min(1).describe(
     'Feed types to run for a specific event sync request.',
-  ),
-  mockEventState: MockEventStateSchema.optional().describe(
-    'Optional mock-provider-only event state override for manual QA event syncs.',
   ),
 }).describe('Feed-aware event sync request.');
 export type EventSyncRequest = z.infer<typeof EventSyncRequestSchema>;
@@ -110,7 +88,6 @@ export const ProviderSummaryDtoSchema = z.object({
   sportsCovered: z.array(SportDtoSchema).describe('Sports the provider\'s running adapter covers.'),
   primaryForSports: z.array(SportDtoSchema).describe('The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.'),
   activeEventCount: z.number().int().describe('The provider\'s events that are scheduled or in progress.'),
-  supportsLiveSimulation: z.boolean().describe('True when the provider can play a linked event\'s live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.'),
   requestsPerMinute: z.number().int().min(1).nullable().describe('The request rate core-api holds its calls to the provider to, a minute: its Provider row\'s requestsPerMinute. Null when the provider is not paced.'),
   webhooksEnabled: z.boolean().describe('True when the provider\'s webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted.'),
   syncedSportLeagueCount: z.number().int().min(0).describe('The active sport leagues whose selected provider mapping is to one of this provider\'s leagues.'),
@@ -118,7 +95,7 @@ export const ProviderSummaryDtoSchema = z.object({
     'Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. '
     + 'A job belongs to the provider syncing its sport league, or the provider its event is linked to.',
   ),
-  settings: ProviderSettingsDtoSchema.nullable().describe('The provider\'s row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).'),
+  settings: ProviderSettingsDtoSchema.nullable().describe('The provider\'s row and leagues, which the Providers page edits; null for a provider running without a Provider row.'),
 }).describe('A sports-data provider with its live health and settings.');
 export type ProviderSummaryDto = z.infer<typeof ProviderSummaryDtoSchema>;
 
@@ -279,7 +256,6 @@ export const ProviderSyncRequestPayloadDtoSchema = z.object({
   eventId: z.string().describe('Provider event identifier the sync was asked for.'),
   source: SyncRequestSourceSchema,
   actor: SyncRequestActorDtoSchema,
-  mockEventState: MockEventStateSchema.nullable().describe('The mock feed state a manual QA sync asked for; null otherwise.'),
   normalizedAt: DateTimeSchema.describe('When the request was validated and normalized.'),
 }).describe('The request that submitted a sync run: what was asked for, by whom, and when.');
 export type ProviderSyncRequestPayloadDto = z.infer<typeof ProviderSyncRequestPayloadDtoSchema>;

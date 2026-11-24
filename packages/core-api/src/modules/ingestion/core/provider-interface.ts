@@ -11,7 +11,7 @@
  */
 
 import type { MatchSide, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
-import type { LiveScoreResult, MockEventState } from '@poolmaster/shared/dto';
+import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
 // --- Provider Interface ---
@@ -40,7 +40,7 @@ export interface SportDataProvider {
   getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]>;
 
   /** Fetch details for a specific event. */
-  getEventDetails(eventId: string, options?: ProviderEventSyncOptions): Promise<SportEventDetail | null>;
+  getEventDetails(eventId: string): Promise<SportEventDetail | null>;
 
   /** Fetch participant list for a sport (athletes, drivers, teams). */
   getParticipants(sport: Sport): Promise<ProviderParticipant[]>;
@@ -49,7 +49,7 @@ export interface SportDataProvider {
    * Fetch live/current scores for an event. Returns a typed
    * `LiveScoreResult` discriminated by sport category.
    */
-  getLiveScores(eventId: string, options?: ProviderEventSyncOptions): Promise<LiveScoreResult>;
+  getLiveScores(eventId: string): Promise<LiveScoreResult>;
 
   /** Health check — is the provider API responding? */
   healthCheck(): Promise<ProviderHealthStatus>;
@@ -89,51 +89,6 @@ export function supportsProviderPayloadDiagnostics(
     && typeof provider.clearProviderPayloads === 'function'
     && 'consumeProviderPayloads' in provider
     && typeof provider.consumeProviderPayloads === 'function'
-  );
-}
-
-export interface ProviderEventSyncOptions {
-  mockEventState?: MockEventState;
-}
-
-export function supportsMockEventStateControls(provider: SportDataProvider): boolean {
-  return provider.providerId === 'mock-contest-feed';
-}
-
-export interface LiveSimulationOptions {
-  minutesPerRound?: number;
-}
-
-export type LiveSimulationPhase = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
-
-export interface LiveSimulationStatus {
-  startsAt: Date;
-  endsAt: Date;
-  minutesPerRound: number;
-  phase: LiveSimulationPhase;
-  currentRound: number | null;
-}
-
-/**
- * A provider that can play an event's live scoring forward on its own clock, so a live
- * contest's leaderboard can be exercised without a real tournament in progress (#382).
- * Only the mock contest feed implements it.
- */
-export interface ProviderLiveSimulationControls {
-  /** Resolves null when the provider has no event with that id. */
-  startLiveSimulation(externalEventId: string, options: LiveSimulationOptions): Promise<LiveSimulationStatus | null>;
-  /** The simulation running for the event, or null when none is running (or the event is unknown). */
-  getLiveSimulation(externalEventId: string): Promise<LiveSimulationStatus | null>;
-}
-
-export function supportsLiveSimulation(
-  provider: SportDataProvider,
-): provider is SportDataProvider & ProviderLiveSimulationControls {
-  return (
-    'startLiveSimulation' in provider
-    && typeof provider.startLiveSimulation === 'function'
-    && 'getLiveSimulation' in provider
-    && typeof provider.getLiveSimulation === 'function'
   );
 }
 
@@ -204,8 +159,6 @@ export interface SportEvent {
 export interface ProviderEventMetadata {
   /** The provider's tour word for the event's league; provider data, stored as given. */
   tour?: string;
-  /** The mock feed's scenario the event came from. */
-  scenarioId?: string;
   [key: string]: unknown;
 }
 

@@ -150,8 +150,7 @@ export function deriveSportEventReadiness(
 // --- Provider resolution (plans/124 §4.4, #1495) ---
 //
 // listProviderCatalogEvents needs a providerId, resolved from the provider-health list the
-// sync lane already exposes. More than one provider can cover a sport (the QA mock beside
-// BALLDONTLIE); the one marked primary for it comes first and is the default.
+// sync lane already exposes. More than one provider can cover a sport; the one marked primary for it comes first and is the default.
 
 export type SportProviderOption = {
   providerId: string;

@@ -511,9 +511,9 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
   });
 
   // #385, #1997 — a league's year import reads the provider league its selected mapping names. The
-  // FAPI daemon's mock feed has no Provider row, so no league can be mapped to it and its import is
-  // refused; the import itself is covered against a stand-in provider in the integration suite
-  // until the mock is replaced (#2039).
+  // FAPI daemon's fake feed (test code, #2039) has no Provider row, so no league can be mapped to it
+  // and its import is refused; the import itself is covered against a stand-in provider in the
+  // integration suite.
   it('refuses a year import for a league with no selected provider league with 422 SPORT_LEAGUE_NOT_SYNCED', async () => {
     await ensureGolfSportRow();
     const admin = await buildRegisteredUser({ displayName: 'Golf Admin Import' });

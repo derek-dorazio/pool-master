@@ -121,7 +121,6 @@ Polls configured sports data providers, upserts normalized event data, and store
 | Adapter | Sport(s) | API Key |
 |---------|----------|---------|
 | BALLDONTLIE (`balldontlie`) | Golf: PGA TOUR. Game scores: NFL weeks and playoffs, the College Football Playoff, the NCAA men's and women's basketball tournaments, the NBA playoffs, Premier League matchweeks, the World Cup's knockout bracket | `BALLDONTLIE_API_KEY`, from Secrets Manager; its `Provider` row (#1997) sets `baseUrl`, the plan's `requestsPerMinute` and which leagues are read |
-| Mock contest feed | Golf and QA scenarios | Local/QA only |
 
 The BALLDONTLIE adapter was built from the vendor's published OpenAPI document before any account
 existed. Its contract tests (`tests/unit/core-api/balldontlie/`) hold every field it reads, and every
@@ -133,9 +132,10 @@ API so any drift shows up as the field that broke.
 on their own, so together they can go over the plan's limit; the client then waits out the vendor's
 429 and retries.
 
-Every enabled Provider row with its key is registered, by its `priority`, and the mock where its
-binding is set (QA only, until #2039). An event syncs from the provider it is linked to, so the mock and BALLDONTLIE can
-both serve golf on QA, and a root admin picks the provider wherever more than one serves a sport.
+Every enabled Provider row with its key is registered, by its `priority`, and nothing else: no
+environment variable picks a provider, and no mock feed runs in any environment (#2039). An event
+syncs from the provider it is linked to, and a root admin picks the provider wherever more than one
+serves a sport. Tests register their own fake through `buildApp({ buildSportDataProviders })`.
 
 **Webhooks (#1498):** BALLDONTLIE posts a signed notification to
 `POST /api/v1/provider-webhooks/balldontlie` when something happens in a game or tournament. The

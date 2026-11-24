@@ -18,12 +18,10 @@ import type {
   ReleaseCheckDto,
   SportEventContestListResponse,
   SportEventDto,
-  SportEventLiveSimulationResponse,
   SportEventRoundDto,
   SportEventTierDto,
   SportEventYearListResponse,
 } from '@poolmaster/shared/dto/events.dto';
-import type { LiveSimulationStatus } from '../modules/ingestion/core/provider-interface';
 import { eventContestOpenings } from '../modules/contest-management/contest-opening';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 import { areTiersAndPricesEditable } from '../modules/events/sport-event-tier-service';
@@ -143,20 +141,6 @@ export function mapSportEventTierToDto(tier: SportEventTier): SportEventTierDto 
     tierKey: tier.tierKey,
     label: tier.label,
     tierNumber: tier.tierNumber,
-  };
-}
-
-export function mapLiveSimulationToResponse(
-  sportEventId: string,
-  status: LiveSimulationStatus,
-): SportEventLiveSimulationResponse {
-  return {
-    sportEventId,
-    startsAt: status.startsAt.toISOString(),
-    endsAt: status.endsAt.toISOString(),
-    minutesPerRound: status.minutesPerRound,
-    phase: status.phase,
-    currentRound: status.currentRound,
   };
 }
 

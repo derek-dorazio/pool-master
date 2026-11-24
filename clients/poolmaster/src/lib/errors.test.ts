@@ -121,7 +121,7 @@ describe('hasErrorCode', () => {
 
   it('does not match a different code, a plain Error, or a payload that is not an envelope', () => {
     const envelope = { error: { code: 'SETTINGS_CONFLICT', message: 'Settings changed.' } };
-    expect(hasErrorCode(new ApiError(envelope), 'LIVE_SIMULATION_NOT_RUNNING')).toBe(false);
+    expect(hasErrorCode(new ApiError(envelope), 'SPORT_EVENT_NOT_FOUND')).toBe(false);
     expect(hasErrorCode(new Error('SETTINGS_CONFLICT'), 'SETTINGS_CONFLICT')).toBe(false);
     expect(hasErrorCode(undefined, 'SETTINGS_CONFLICT')).toBe(false);
   });

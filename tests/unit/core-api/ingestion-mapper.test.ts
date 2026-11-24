@@ -71,14 +71,13 @@ describe('toProviderSyncRunDto request payload', () => {
     eventId: 'event-1',
     source: 'MANUAL',
     actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.test' },
-    mockEventState: null,
     normalizedAt: '2026-01-01T00:00:00.000Z',
   };
 
-  it('publishes a stored request payload of the current shape, dropping keys the contract no longer has', () => {
+  it('publishes a stored request payload of the current shape, dropping keys the contract no longer has, such as a retired mockEventState', () => {
     const logger = fakeLogger();
 
-    const dto = toProviderSyncRunDto(buildRun({ payload: { requestPayload: { ...requestPayload, workflowContext: {} } } }), logger);
+    const dto = toProviderSyncRunDto(buildRun({ payload: { requestPayload: { ...requestPayload, workflowContext: {}, mockEventState: null } } }), logger);
 
     expect(dto.payload.requestPayload).toEqual(requestPayload);
     expect(logger.warn).not.toHaveBeenCalled();
@@ -126,7 +125,6 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     lastEventAt: AT,
     sportsCovered: [Sport.GOLF],
     activeEventCount: 2,
-    supportsLiveSimulation: false,
     requestsPerMinute: 600,
     webhooksEnabled: true,
     syncedSportLeagueCount: 16,
