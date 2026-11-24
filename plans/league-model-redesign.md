@@ -747,6 +747,11 @@ Contest:
   `countsInCups`. The profile governs the League Championship only; medals, the record book
   and the Hall of Lame count every finish. The Championship reads the current choice until
   its year closes, then freezes with the year.
+- Cup crowning (Derek 2026-11-24, slice 20c): automatic. A cup is crowned, by a job on the
+  domain event handler map, once every slot it covers has finished and every counted
+  contest in it is final; the API returns `isOver`. Crowning freezes its points; the
+  commissioner `crownCup` route and button go. A year can't close with a cup uncrowned. A
+  correction after crowning raises a finding.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
