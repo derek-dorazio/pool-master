@@ -737,7 +737,7 @@ ruleTester.run('no-bare-enum-literals', noBareEnumLiterals, {
       errors: [{ messageId: 'bareLiteral', data: { field: 'syncScope', value: 'SCORES_ONLY' } }],
     },
     {
-      code: "const a = x.confidence !== 'EXACT';",
+      code: "const a = x.participantType !== 'TEAM';",
       errors: [{ messageId: 'bareLiteral' }],
     },
     {

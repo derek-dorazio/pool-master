@@ -43,7 +43,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { eventPlaysMatches, findSportRow, getSportDefinition, MatchSide, MatchStatus, ScoringFamily, type Sport, type SportDefinition, SportEventStatus, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
+import { eventPlaysMatches, findSportRow, getSportDefinition, MatchSide, MatchStatus, type ProviderCode, ScoringFamily, type Sport, type SportDefinition, SportEventStatus, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -71,6 +71,7 @@ import {
   listEvents,
   listParticipants,
   listPricingProfiles,
+  listProviders,
   listSportLeagues,
   listSportLeagueProviderMappings,
   listSports,
@@ -171,8 +172,8 @@ function found<T>(value: T | undefined, what: string): T {
 }
 
 /** A provider identity as one key: the provider's id and its feed id for the participant. */
-function feedKey(providerId: string, externalId: string): string {
-  return `${providerId}:${externalId}`;
+function feedKey(providerCode: ProviderCode, externalId: string): string {
+  return `${providerCode}:${externalId}`;
 }
 
 function splitName(name: string): { firstName: string; lastName: string } {
@@ -421,8 +422,8 @@ class Loader {
 
   /**
    * Each player's participant id (null in a dry run that would create it): the league's participant
-   * a provider maps the player's feed id to (#1850), else the league's participant found by
-   * externalId, then exact name, else created in the league at the file's ranking (#1853). A
+   * a provider maps the player's feed id to (#1850), else the league's participant found by exact
+   * name, else created in the league at the file's ranking (#1853). A
    * participant belongs to one sport league, so a player is only ever found among the league's
    * own. A feed id the league has no participant mapped to yet is bound to the player's
    * participant, so the provider's sync fields that participant rather than creating a second. A
@@ -430,19 +431,19 @@ class Loader {
    */
   private async ensurePlayers(client: Client, league: SportDataLeague, sportLeagueId: string | null): Promise<Map<string, string | null>> {
     const participants = sportLeagueId === null ? [] : (await must(listParticipants({ client, query: { sportLeagueId } }), `List ${league.name} players`)).participants;
-    const byExternalId = new Map(participants.flatMap((p) => (p.externalId ? [[p.externalId, p.id] as const] : [])));
     const byName = new Map(participants.map((p) => [p.name.toLowerCase(), p.id]));
-    const byFeedId = sportLeagueId === null ? new Map<string, string>() : await this.feedIdsOnSite(client, league, sportLeagueId);
+    const providerIds = await this.providerIdsByCode(client, league);
+    const byFeedId = sportLeagueId === null ? new Map<string, string>() : await this.feedIdsOnSite(client, providerIds, sportLeagueId);
 
     const ids = new Map<string, string | null>();
-    const binds: Array<{ participantId: string | null; player: SportDataPlayer; providerId: string; externalId: string }> = [];
+    const binds: Array<{ participantId: string | null; player: SportDataPlayer; providerCode: ProviderCode; externalId: string }> = [];
     for (const player of league.players) {
-      const feedIds = Object.entries(player.feedIds ?? {});
-      const mapped = feedIds.flatMap(([providerId, externalId]) => {
-        const participantId = byFeedId.get(feedKey(providerId, externalId));
+      const feedIds = Object.entries(player.feedIds ?? {}) as Array<[ProviderCode, string]>;
+      const mapped = feedIds.flatMap(([providerCode, externalId]) => {
+        const participantId = byFeedId.get(feedKey(providerCode, externalId));
         return participantId === undefined ? [] : [participantId];
       });
-      let id = mapped.at(0) ?? byExternalId.get(player.key) ?? byName.get(player.name.toLowerCase()) ?? null;
+      let id = mapped.at(0) ?? byName.get(player.name.toLowerCase()) ?? null;
       if (new Set(mapped).size > 1) {
         throw new Error(`${league.name}: ${player.name}'s feed ids are mapped to ${new Set(mapped).size} different participants; merge them on the site first.`);
       }
@@ -456,7 +457,6 @@ class Loader {
               ranking: player.ranking,
               participantType: this.definitionOf(league).participantType,
               name: player.name,
-              externalId: player.key,
               nationality: player.countryCode,
               ...splitName(player.name),
             },
@@ -466,21 +466,34 @@ class Loader {
       } else {
         this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.SKIP, name: player.name, detail: null });
       }
-      for (const [providerId, externalId] of feedIds) {
-        if (!byFeedId.has(feedKey(providerId, externalId))) binds.push({ participantId: id, player, providerId, externalId });
+      for (const [providerCode, externalId] of feedIds) {
+        if (!byFeedId.has(feedKey(providerCode, externalId))) binds.push({ participantId: id, player, providerCode, externalId });
       }
       ids.set(player.key, id);
     }
-    for (const { participantId, player, providerId, externalId } of binds) {
-      this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.UPDATE, name: player.name, detail: `${providerId} feed id ${externalId} bound` });
+    for (const { participantId, player, providerCode, externalId } of binds) {
+      this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.UPDATE, name: player.name, detail: `${providerCode} feed id ${externalId} bound` });
       if (this.apply) {
         await must(bindParticipantProviderMapping({
           client,
           path: { id: found(participantId ?? undefined, `${player.name}'s id`) },
-          body: { providerId, externalId },
-        }), `Bind ${providerId} ${externalId} to ${player.name}`);
+          body: { providerId: found(providerIds.get(providerCode), `${providerCode}'s Provider row`), externalId },
+        }), `Bind ${providerCode} ${externalId} to ${player.name}`);
       }
     }
+    return ids;
+  }
+
+  /**
+   * The Provider row of each provider the league's players name a feed id of, by its code (#2040):
+   * one read of the providers, none when no player names a feed id. An unknown code stops the load.
+   */
+  private async providerIdsByCode(client: Client, league: SportDataLeague): Promise<Map<ProviderCode, string>> {
+    const codes = new Set(league.players.flatMap((player) => Object.keys(player.feedIds ?? {}) as ProviderCode[]));
+    if (codes.size === 0) return new Map();
+    const { providers } = await must(listProviders({ client }), 'List providers');
+    const ids = new Map(providers.flatMap(({ settings }) => (settings === null ? [] : [[settings.code, settings.id] as const])));
+    for (const code of codes) found(ids.get(code), `${league.name}: provider ${code}'s Provider row`);
     return ids;
   }
 
@@ -488,12 +501,11 @@ class Loader {
    * The participant each provider maps a feed id to, among the sport league's participants, keyed
    * by `feedKey`: one read per provider the league's players name a feed id of, none when none does.
    */
-  private async feedIdsOnSite(client: Client, league: SportDataLeague, sportLeagueId: string): Promise<Map<string, string>> {
-    const providers = new Set(league.players.flatMap((player) => Object.keys(player.feedIds ?? {})));
+  private async feedIdsOnSite(client: Client, providerIds: ReadonlyMap<ProviderCode, string>, sportLeagueId: string): Promise<Map<string, string>> {
     const byFeedId = new Map<string, string>();
-    for (const providerId of providers) {
-      const { providerMappings } = await must(listSportLeagueProviderMappings({ client, query: { providerId, sportLeagueId } }), `List ${providerId} feed ids`);
-      for (const mapping of providerMappings) byFeedId.set(feedKey(mapping.providerId, mapping.externalId), mapping.participantId);
+    for (const [providerCode, providerId] of providerIds) {
+      const { providerMappings } = await must(listSportLeagueProviderMappings({ client, query: { providerId, sportLeagueId } }), `List ${providerCode} feed ids`);
+      for (const mapping of providerMappings) byFeedId.set(feedKey(providerCode, mapping.externalId), mapping.participantId);
     }
     return byFeedId;
   }

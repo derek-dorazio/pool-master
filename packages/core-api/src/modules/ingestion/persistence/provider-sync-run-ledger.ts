@@ -8,6 +8,7 @@ import {
   type JobTrigger,
   type BackgroundJobRequest,
   type ProviderSyncRun,
+  requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
 import type { ProviderSyncRequestPayloadDto, ProviderSyncRunPayloadDto } from '@poolmaster/shared/dto';
 import type { IngestionFeedType, EventSyncRequest, IngestionJobRecord } from '../core/ingestion-scheduler';
@@ -415,9 +416,8 @@ function submissionRuns(input: SubmissionInput): ProviderSyncRunCreate[] {
   const { sport, eventId, feeds } = input.normalizedRequest.scope;
   const requestContext = buildNormalizedSyncRequestContext(input.normalizedRequest);
   return feeds.map((feed) => ({
-    providerId: input.providerId,
+    providerCode: requireProviderCodeOfSourceId(input.providerId),
     sport,
-    eventId,
     kind: FEED_KINDS[feed],
     trigger: input.trigger,
     sportLeagueId: input.sportLeagueId ?? null,

@@ -6,6 +6,7 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 
 // The golf score-correction rules against an in-memory store: what a preview reports, that
 // apply is all or none, how a correction merges, and how a standing is totalled. The sync
@@ -14,7 +15,7 @@ import { RecordingDomainEvents } from '../../support/recording-domain-events';
 function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
-  const event = store.addEvent({ providerId: 'feed', ...eventOverrides });
+  const event = store.addEvent({ providerId: 'balldontlie', ...eventOverrides });
   const ana = store.addParticipant(sport.id, 'Ana Park', { externalId: 'ext-ana' });
   const ben = store.addParticipant(sport.id, 'Ben Cole');
   const anaEntry = store.addToField(event.id, ana.id);
@@ -294,14 +295,14 @@ describe('GolfScoreService — provider sync', () => {
   async function syncSetup() {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.GOLF);
-    const event = store.addEvent({ providerId: 'feed', syncScope: 'SCORES_ONLY' });
+    const event = store.addEvent({ providerId: 'balldontlie', syncScope: 'SCORES_ONLY' });
     const ana = store.addParticipant(sport.id, 'Ana Park');
     const ben = store.addParticipant(sport.id, 'Ben Cole');
     const anaEntry = store.addToField(event.id, ana.id);
     const benEntry = store.addToField(event.id, ben.id);
     const mappedAt = new Date('2026-06-01T12:00:00.000Z');
-    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ana', participantId: ana.id, sportLeagueId: ana.sportLeagueId, confidence: 'EXACT', mappedAt });
-    await store.mappingRepo().bind({ providerId: 'feed', externalId: 'ext-ben', participantId: ben.id, sportLeagueId: ben.sportLeagueId, confidence: 'EXACT', mappedAt });
+    await store.mappingRepo().bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'ext-ana', participantId: ana.id, sportLeagueId: ana.sportLeagueId, participantType: 'INDIVIDUAL', mappedAt });
+    await store.mappingRepo().bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'ext-ben', participantId: ben.id, sportLeagueId: ben.sportLeagueId, participantType: 'INDIVIDUAL', mappedAt });
     const logger = fakeLogger();
     const golfRounds = store.golfRoundRepo();
     const golfStandings = store.golfStandingRepo();
@@ -330,7 +331,7 @@ describe('GolfScoreService — provider sync', () => {
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
-      'feed',
+      'balldontlie',
       null,
     );
 
@@ -347,7 +348,7 @@ describe('GolfScoreService — provider sync', () => {
   it('skips a score for a round on an event with no round schedule rather than creating the round', async () => {
     const { store, service, event, logger } = await syncSetup();
 
-    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', null);
+    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', null);
 
     expect(result).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
     expect(store.roundRows.filter((round) => round.sportEventId === event.id)).toEqual([]);
@@ -364,7 +365,7 @@ describe('GolfScoreService — provider sync', () => {
     await service.persistRoundUpdatesForSportEvent(event.id, [
       update('ext-ana', 1, -3), update('ext-ana', 2, -3), update('ext-ana', 3, -3), update('ext-ana', 4, -3),
       update('ext-ben', 1, -6), update('ext-ben', 2, -2), update('ext-ben', 3, -2), update('ext-ben', 4, -2),
-    ], 'feed', null);
+    ], 'balldontlie', null);
 
     const standings = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id, benEntry.id]);
     expect(standings.map((result) => [result.golf.eventScoreToPar, result.standing.displayPosition])).toEqual([[-12, 'T1'], [-12, 'T1']]);
@@ -377,7 +378,7 @@ describe('GolfScoreService — provider sync', () => {
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
-      'feed',
+      'balldontlie',
       4,
     );
 
@@ -398,7 +399,7 @@ describe('GolfScoreService — provider sync', () => {
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [update('ext-ana', 4, -2), { ...update('ext-ben', 4, -3), thru: 19 }],
-      'feed',
+      'balldontlie',
       4,
     );
 
@@ -420,13 +421,13 @@ describe('GolfScoreService — provider sync', () => {
     it('a tick that repeats the last scores writes no round and no standing, and reports every row UNCHANGED', async () => {
       const { store, service, event, golfRounds, golfStandings } = await scheduledSyncSetup();
       const tick = [update('ext-ana', 1, -2), update('ext-ben', 1, 1)];
-      await service.persistRoundUpdatesForSportEvent(event.id, tick, 'feed', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie', 4);
       const standingsAfterFirstTick = store.standingRows.map((row) => ({ ...row }));
       const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
       const standingWrites = jest.spyOn(golfStandings, 'upsertMany');
       const rankWrites = jest.spyOn(golfStandings, 'updateRanks');
 
-      const result = await service.persistRoundUpdatesForSportEvent(event.id, tick, 'feed', 4);
+      const result = await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie', 4);
 
       expect(roundWrites).toHaveBeenCalledWith([]);
       expect(standingWrites).toHaveBeenCalledWith([]);
@@ -439,11 +440,11 @@ describe('GolfScoreService — provider sync', () => {
 
     it('writes only the golfer whose round changed, in one round write and one standing write, and re-ranks the field', async () => {
       const { service, event, anaEntry, benEntry, golfRounds, golfStandings } = await scheduledSyncSetup();
-      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, 1)], 'feed', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, 1)], 'balldontlie', 4);
       const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
       const standingWrites = jest.spyOn(golfStandings, 'upsertMany');
 
-      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, -4)], 'feed', 4);
+      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, -4)], 'balldontlie', 4);
 
       expect(roundWrites).toHaveBeenCalledTimes(1);
       expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ sportEventParticipantId: benEntry.id, scoreToPar: -4 })]);
@@ -470,7 +471,7 @@ describe('GolfScoreService — provider sync', () => {
     ])('rewrites a round and its standing when %s', async (_label, change, expectedStanding) => {
       const first = { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const };
       const { service, event, anaEntry, golfRounds, golfStandings } = await scheduledSyncSetup();
-      const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'feed', 4);
+      const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'balldontlie', 4);
       await tick({});
       const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
       const standingWrites = jest.spyOn(golfStandings, 'upsertMany');
@@ -488,7 +489,7 @@ describe('GolfScoreService — provider sync', () => {
       const { store, service, event, anaEntry, golfRounds } = await scheduledSyncSetup();
       const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
 
-      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1), update('ext-ana', 1, -3)], 'feed', 4);
+      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1), update('ext-ana', 1, -3)], 'balldontlie', 4);
 
       expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ scoreToPar: -3 })]);
       expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 0 });
@@ -500,21 +501,21 @@ describe('GolfScoreService — provider sync', () => {
 
     it('treats a completion time sent without milliseconds as the instant already stored, so the round is not rewritten', async () => {
       const { service, event, golfRounds } = await scheduledSyncSetup();
-      await service.persistRoundUpdatesForSportEvent(event.id, [{ ...update('ext-ana', 1, -2), completedAt: '2026-06-04T18:00:00.000Z' }], 'feed', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [{ ...update('ext-ana', 1, -2), completedAt: '2026-06-04T18:00:00.000Z' }], 'balldontlie', 4);
       const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
 
-      await service.persistRoundUpdatesForSportEvent(event.id, [{ ...update('ext-ana', 1, -2), completedAt: '2026-06-04T18:00:00Z' }], 'feed', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [{ ...update('ext-ana', 1, -2), completedAt: '2026-06-04T18:00:00Z' }], 'balldontlie', 4);
 
       expect(roundWrites).toHaveBeenCalledWith([]);
     });
 
     it('recreates a missing standing on a tick whose rounds did not change, so a standing a failed tick lost is put right', async () => {
       const { store, service, event, anaEntry } = await scheduledSyncSetup();
-      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', 4);
       store.golfStandingRows = [];
       store.standingRows = [];
 
-      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'feed', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', 4);
 
       const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
       expect(standing).toMatchObject({ golf: { eventScoreToPar: -2 }, standing: { displayPosition: '1' } });

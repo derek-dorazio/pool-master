@@ -32,7 +32,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -57,15 +57,15 @@ export type SportDataContent = (typeof SportDataContent)[keyof typeof SportDataC
 const IsoDaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'must be a YYYY-MM-DD date');
 
 const PlayerSchema = z.object({
-  /** Stored as the participant's externalId; how a later run finds the player again. */
+  /** The player's key within the file: how its field entries name it. */
   key: z.string().min(1),
   /**
-   * The player's feed id at each provider, keyed by provider id (`balldontlie`), as that
-   * provider's sync maps it ("nfl-team-17"; a PGA golfer's bare vendor id). The loader finds the
-   * participant by it, or binds it to the one it finds or creates, so the sync fields that same
-   * participant (#1850). Left out where no provider serves the league yet.
+   * The player's feed id at each provider, keyed by Provider code (`BALLDONTLIE`), as the
+   * provider's own raw id (`17`, never `nfl-team-17`, #2040). The loader finds the participant by
+   * it, or binds it to the one it finds or creates, so the sync fields that same participant
+   * (#1850). Left out where no provider serves the league yet.
    */
-  feedIds: z.record(z.string().min(1), z.string().min(1)).optional(),
+  feedIds: z.partialRecord(z.enum(ProviderCode), z.string().min(1)).optional(),
   name: z.string().min(1),
   countryCode: z.string().length(2),
   /** The player's ranking on the sport league, set when they join it. */

@@ -1,4 +1,4 @@
-import { MatchResultSource, MatchSide, MatchStatus, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchResultSource, MatchSide, MatchStatus, ProviderCode, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { MatchLiveScoreWrite } from '@poolmaster/shared/db';
 import { writeGameScores, type GameScoreWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-score-writer';
@@ -536,6 +536,6 @@ describe('writeGameScores', () => {
     expect(findByIds).toHaveBeenCalledTimes(1);
     expect(findByIds).toHaveBeenCalledWith(['sep-KC', 'sep-BUF', 'sep-PHI', 'sep-DAL']);
     expect(findByProviderExternalIds).toHaveBeenCalledTimes(1);
-    expect(findByProviderExternalIds).toHaveBeenCalledWith('balldontlie', { sportEventId: 'event-1' }, ['bdl-KC', 'bdl-BUF', 'bdl-PHI', 'bdl-DAL']);
+    expect(findByProviderExternalIds).toHaveBeenCalledWith(ProviderCode.BALLDONTLIE, { sportEventId: 'event-1' }, ['bdl-KC', 'bdl-BUF', 'bdl-PHI', 'bdl-DAL']);
   });
 });

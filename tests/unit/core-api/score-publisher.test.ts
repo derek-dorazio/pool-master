@@ -69,7 +69,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
-            { externalId: 'rory', participantId: 'pp-rory' },
+            { externalId: 'rory', participantId: 'pp-rory', provider: { name: 'BALLDONTLIE' } },
           ]),
         },
         sportEventParticipant: {
@@ -94,7 +94,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const persisted = await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION,
         prisma: asPrismaClient(prisma),
-        domainEvents: testDomainEvents(), providerId: 'mock-contest-feed',
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
         scoringFamilyForEvent,
       });
 
@@ -134,7 +134,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const persisted = await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION,
         prisma: asPrismaClient(prisma),
-        domainEvents: testDomainEvents(), providerId: 'mock-contest-feed',
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
         logger,
         scoringFamilyForEvent,
       });
@@ -158,7 +158,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         const prisma = {
           sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', rounds: 4, status }) },
           sportEventRound: { findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]) },
-          participantProviderMapping: { findMany: jest.fn().mockResolvedValue([{ externalId: 'rory', participantId: 'pp-rory' }]) },
+          participantProviderMapping: { findMany: jest.fn().mockResolvedValue([{ externalId: 'rory', participantId: 'pp-rory', provider: { name: 'BALLDONTLIE' } }]) },
           sportEventParticipant: { findMany: jest.fn().mockResolvedValue([{ id: 'sep-rory', participantId: 'pp-rory' }]) },
           sportEventParticipantRound: { upsert: jest.fn(), findMany: jest.fn() },
           sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },

@@ -8,8 +8,8 @@
  * match of the bracket, and the GAME writer counts its games' winners, so every postseason game
  * of the season is handed over on each sync.
  *
- * Team ids are prefixed by league (`nba-team-14`): a provider's participant ids share one
- * namespace across its sports and leagues.
+ * Team ids are the provider's own (`participantFeedId`, #2040): a mapping is kept per sport
+ * league and kind of participant.
  */
 
 import { seriesWinsNeeded, type Sport } from '@poolmaster/shared/domain';
@@ -17,6 +17,7 @@ import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, isDone, PROGRESS_BY_STATE } from './competition-status';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { participantFeedId } from './participant-feed-id';
 
 /** One league's playoffs, as the shared mapping needs it. */
 export interface PlayoffsLeague {
@@ -108,9 +109,6 @@ export function parsePlayoffsScope(league: PlayoffsLeague, eventId: string): num
   return match ? Number(match[1]) : null;
 }
 
-export function playoffsTeamExternalId(league: PlayoffsLeague, teamId: number): string {
-  return `${league.key}-team-${String(teamId)}`;
-}
 
 /** A game's two teams as one key, whichever is at home: two teams meet in one series a postseason. */
 export function pairOf(game: PlayoffGame): string {
@@ -173,7 +171,7 @@ export function toPlayoffsEvents(league: PlayoffsLeague, games: readonly Playoff
 
 export function toPlayoffsTeamParticipant(league: PlayoffsLeague, team: PlayoffTeam): ProviderParticipant {
   return {
-    externalId: playoffsTeamExternalId(league, team.id),
+    externalId: participantFeedId(team.id),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: league.sport,
     name: team.name,
@@ -193,7 +191,7 @@ export function toPlayoffsFieldParticipants(league: PlayoffsLeague, games: reado
 }
 
 /** Each game's teams, state and score, for the GAME live-score category. */
-export function toPlayoffsGameScoreUpdates(league: PlayoffsLeague, games: readonly PlayoffGame[]): GameScoreUpdate[] {
+export function toPlayoffsGameScoreUpdates(games: readonly PlayoffGame[]): GameScoreUpdate[] {
   return games.flatMap((game) => {
     if (game.state === CompetitionStatusState.UNKNOWN) return [];
     const state = GAME_STATE_BY_STATUS[game.state];
@@ -201,8 +199,8 @@ export function toPlayoffsGameScoreUpdates(league: PlayoffsLeague, games: readon
     const started = hasStarted(state);
     return [{
       externalGameId: String(game.id),
-      homeTeamExternalId: playoffsTeamExternalId(league, game.home.id),
-      awayTeamExternalId: playoffsTeamExternalId(league, game.away.id),
+      homeTeamExternalId: participantFeedId(game.home.id),
+      awayTeamExternalId: participantFeedId(game.away.id),
       state,
       homeScore: started ? game.homeScore : null,
       awayScore: started ? game.awayScore : null,

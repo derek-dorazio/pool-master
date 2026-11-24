@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 /**
  * The root admin's sport league overview (#1847) against real Postgres: what the reader gathers
  * for each sport league, that a sport event keeps its latest automatic release check, and that a
@@ -65,7 +66,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const held = await event(tour.id, { eventYear: 2027, startDate: days(30), status: 'DRAFT' });
     await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] });
     const run = (kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date, payloadJson: Prisma.InputJsonValue = {}) => ({
-      kind, trigger: 'SCHEDULE' as const, providerId: 'balldontlie', sport: Sport.GOLF, sportLeagueId: tour.id, status, createdAt, payloadJson,
+      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, status, createdAt, payloadJson,
     });
     await prisma.providerSyncRun.createMany({
       data: [

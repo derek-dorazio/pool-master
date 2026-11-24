@@ -8,12 +8,14 @@
 import { type Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
-  MappingConfidence,
   ParticipantStatus,
+  type ProviderCode,
   type ParticipantType,
   type Sport,
   SportEventStatus,
   eventPlaysMatches,
+  providerSourceIdOf,
+  requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
@@ -196,26 +198,34 @@ export class IngestionPersistence {
 
     if (unmapped.length > 0) {
       const created = await this.prisma.$transaction(async (tx) => {
+        // Each new participant's mapping is keyed to its Provider row (#2040), read once here.
+        const providerIds = new Map((await tx.provider.findMany({
+          where: { code: { in: [...new Set(unmapped.map((participant) => requireProviderCodeOfSourceId(participant.providerId)))] } },
+          select: { id: true, code: true },
+        })).map((provider) => [provider.code, provider.id]));
         const rows = await tx.participant.createManyAndReturn({
           data: unmapped.map((participant) => ({
             sportLeagueId: league.id,
             participantType: league.participantType,
-            externalId: participant.externalId,
             ...participantValues(participant),
           })),
-          select: { id: true, externalId: true },
+          select: { id: true },
         });
-        const idByExternalId = new Map(rows.map((row) => [row.externalId, row.id]));
-        const createdMappings = unmapped.map((participant) => ({
-          participantId: idByExternalId.get(participant.externalId) as string,
+        // createManyAndReturn returns the rows in the order given.
+        const createdMappings = unmapped.map((participant, index) => ({
+          participantId: rows[index].id,
           sportLeagueId: league.id,
-          providerId: participant.providerId,
+          participantType: league.participantType,
+          providerId: requireProviderId(providerIds, participant.providerId),
           externalId: participant.externalId,
-          confidence: MappingConfidence.EXACT,
           lastSeenAt: seenAt,
         }));
         await tx.participantProviderMapping.createMany({ data: createdMappings });
-        return createdMappings;
+        return unmapped.map((participant, index) => ({
+          providerId: participant.providerId,
+          externalId: participant.externalId,
+          participantId: (createdMappings[index] as { participantId: string }).participantId,
+        }));
       });
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
     }
@@ -236,17 +246,23 @@ export class IngestionPersistence {
     });
   }
 
-  /** The sport league's provider mappings of these participants, with their participant, in one query. */
+  /**
+   * The sport league's provider mappings of these participants, with their participant, in one
+   * query. Each mapping is keyed to its Provider row (#2040), read here by the code of the adapter
+   * that named the participant, and comes back under that adapter's id, as the feed names it.
+   */
   private async findMappings(participants: readonly ProviderParticipant[], sportLeagueId: string) {
-    const externalIdsByProvider = new Map<string, string[]>();
+    const externalIdsByCode = new Map<ProviderCode, string[]>();
     for (const participant of participants) {
-      externalIdsByProvider.set(participant.providerId, [...(externalIdsByProvider.get(participant.providerId) ?? []), participant.externalId]);
+      const code = requireProviderCodeOfSourceId(participant.providerId);
+      externalIdsByCode.set(code, [...(externalIdsByCode.get(code) ?? []), participant.externalId]);
     }
-    if (externalIdsByProvider.size === 0) return [];
-    return this.prisma.participantProviderMapping.findMany({
-      where: { sportLeagueId, OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
-      include: { participant: true },
+    if (externalIdsByCode.size === 0) return [];
+    const rows = await this.prisma.participantProviderMapping.findMany({
+      where: { sportLeagueId, OR: [...externalIdsByCode].map(([code, externalIds]) => ({ provider: { code }, externalId: { in: externalIds } })) },
+      include: { participant: true, provider: { select: { code: true } } },
     });
+    return rows.map(({ provider, ...mapping }) => ({ ...mapping, providerId: providerSourceIdOf(provider.code) }));
   }
 
   async persistEventDetailWithDiagnostics(detail: SportEventDetail): Promise<PersistenceDiagnosticsResult<{
@@ -350,7 +366,7 @@ export class IngestionPersistence {
    */
   private async findUnlinkedRankedParticipants(sportEventId: string, providerId: string): Promise<UnlinkedRankedParticipant[]> {
     const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId, ranking: { not: null }, participant: { providerMappings: { none: { providerId } } } },
+      where: { sportEventId, ranking: { not: null }, participant: { providerMappings: { none: { provider: { code: requireProviderCodeOfSourceId(providerId) } } } } },
       select: { ranking: true, participant: { select: { id: true, name: true } } },
       orderBy: [{ ranking: 'asc' }, { participant: { name: 'asc' } }],
     });
@@ -472,6 +488,13 @@ function seedsLockedOn(event: {
 interface LeagueOfEvent {
   id: string;
   participantType: ParticipantType;
+}
+
+/** The Provider row id of the adapter whose feed carries `sourceId`, from the rows read by code. */
+function requireProviderId(idsByCode: ReadonlyMap<ProviderCode, string>, sourceId: string): string {
+  const id = idsByCode.get(requireProviderCodeOfSourceId(sourceId));
+  if (id === undefined) throw new Error(`Provider ${sourceId} has no Provider row, so its participants cannot be mapped.`);
+  return id;
 }
 
 /** A participant's provider identity. */

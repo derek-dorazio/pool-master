@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
-import { BackgroundJobType, JobTrigger, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, ProviderCode, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger, readPayload } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
@@ -12,7 +12,8 @@ import { TEST_JOB_START } from '../../support/in-memory-background-jobs';
 function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
     id: 'sync-run-1',
-    providerId: 'mock-provider',
+    providerId: 'provider-row-1',
+    providerName: 'Mock provider',
     sport: Sport.GOLF,
     eventId: 'event-1',
     ...SCHEDULED_SCORES_RUN,
@@ -30,7 +31,7 @@ function createSyncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRu
 function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRecord {
   return {
     jobType: 'EVENT_PARTICIPANTS_SYNC',
-    providerId: 'mock-provider',
+    providerId: 'balldontlie',
     sport: Sport.GOLF,
     eventExternalId: 'event-1',
     status: 'COMPLETED',
@@ -63,20 +64,20 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
       },
       rows: [
         {
-          id: 'sport-event:mock-provider:event-1',
+          id: 'sport-event:balldontlie:event-1',
           entityType: 'SportEvent',
           disposition: 'UPDATED',
-          providerId: 'mock-provider',
+          providerId: 'balldontlie',
           externalId: 'event-1',
           name: 'Event 1',
           before: { status: 'SCHEDULED' },
           after: { status: 'IN_PROGRESS' },
         },
         {
-          id: 'sport-event-participant:mock-provider:event-1:golfer-1',
+          id: 'sport-event-participant:balldontlie:event-1:golfer-1',
           entityType: 'SportEventParticipant',
           disposition: 'UNCHANGED',
-          providerId: 'mock-provider',
+          providerId: 'balldontlie',
           externalId: 'event-1',
           participantExternalId: 'golfer-1',
           name: 'Golfer 1',
@@ -84,10 +85,10 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
           after: { seedNumber: 1 },
         },
         {
-          id: 'sport-event-participant:mock-provider:event-1:golfer-2',
+          id: 'sport-event-participant:balldontlie:event-1:golfer-2',
           entityType: 'SportEventParticipant',
           disposition: 'CREATED',
-          providerId: 'mock-provider',
+          providerId: 'balldontlie',
           externalId: 'event-1',
           participantExternalId: 'golfer-2',
           name: 'Golfer 2',
@@ -105,7 +106,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
   const scheduled = (eventId: string) => new SyncOrchestrator({ now: () => now }).normalizeRequest({
     source: 'SCHEDULED',
     actor: { type: 'SYSTEM', name: 'scheduler' },
-    scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'mock-provider', eventId, feeds: ['EVENTLIVESCORES'] },
+    scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId, feeds: ['EVENTLIVESCORES'] },
   });
   const linkedEvents = {
     findByProviderRef: jest.fn(async (_providerId: string, externalId: string) => (externalId === 'linked'
@@ -118,16 +119,16 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
   it('fills in the linked event and its sport league for a scheduled run whose caller named neither', async () => {
     const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'balldontlie', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ sportEventId: 'sport-event-1', sportLeagueId: 'pga-tour' });
-    expect(linkedEvents.findByProviderRef).toHaveBeenCalledWith('mock-provider', 'linked');
+    expect(linkedEvents.findByProviderRef).toHaveBeenCalledWith('balldontlie', 'linked');
   });
 
   it('leaves both null for a provider event linked to no event of ours', async () => {
     const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'mock-provider', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'balldontlie', submittedAt: now, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ sportEventId: null, sportLeagueId: null });
   });
@@ -137,7 +138,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
 
     const [run] = await ledger.createSubmissionsWithJob({
       normalizedRequest: scheduled('linked'),
-      providerId: 'mock-provider',
+      providerId: 'balldontlie',
       submittedAt: now,
       runType: 'MANUAL_EVENT_SYNC',
       trigger: JobTrigger.ADMIN,
@@ -157,14 +158,14 @@ describe('ProviderSyncRunLedger', () => {
     const normalizedRequest = new SyncOrchestrator({ now: () => now }).normalizeRequest({
       source: 'MANUAL',
       actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
-      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'event-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
+      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'event-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
     });
     const syncRuns = inMemorySyncRuns();
     const ledger = new ProviderSyncRunLedger(syncRuns);
 
     const runs = await ledger.createSubmissionsWithJob({
       normalizedRequest,
-      providerId: 'mock-provider',
+      providerId: 'balldontlie',
       submittedAt: now,
       runType: 'MANUAL_EVENT_SYNC',
       trigger: JobTrigger.ADMIN,
@@ -187,7 +188,7 @@ describe('ProviderSyncRunLedger', () => {
       scope: {
         type: 'EVENT',
         sport: Sport.GOLF,
-        providerId: 'mock-provider',
+        providerId: 'balldontlie',
         eventId: 'event-1',
         feeds: ['EVENTPARTICIPANTS'],
       },
@@ -200,7 +201,7 @@ describe('ProviderSyncRunLedger', () => {
 
     const runs = await ledger.createSubmissions({
       normalizedRequest,
-      providerId: 'mock-provider',
+      providerId: 'balldontlie',
       submittedAt: now,
       runType: 'SCHEDULED_EVENT_SYNC',
       trigger: JobTrigger.SCHEDULE,
@@ -208,9 +209,9 @@ describe('ProviderSyncRunLedger', () => {
 
     expect(runs).toHaveLength(1);
     expect(providerSyncRunCreate).toHaveBeenCalledWith(expect.objectContaining({
-      providerId: 'mock-provider',
+      providerCode: ProviderCode.BALLDONTLIE,
       sport: Sport.GOLF,
-      eventId: 'event-1',
+      sportEventId: null,
       status: 'SUBMITTED',
       createdAt: now,
       payload: expect.objectContaining({

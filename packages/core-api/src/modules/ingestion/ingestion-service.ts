@@ -174,7 +174,7 @@ export interface IngestionServiceDependencies {
   /** The synced sport leagues, counted per provider on the provider list. */
   sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   /** The Provider rows (#1997). */
-  providerSettings: Pick<ProviderSettingsStore, 'all'>;
+  providerSettings: Pick<ProviderSettingsStore, 'all' | 'bySourceId'>;
   /** Whether each provider's webhooks are on, and its secret set. */
   webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   /** Background jobs that hit a provider's rate limit, counted per provider on the provider list. */
@@ -194,7 +194,7 @@ export class IngestionService {
   private readonly participantMappings: ParticipantProviderMappingRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
   private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
-  private readonly providerSettings: Pick<ProviderSettingsStore, 'all'>;
+  private readonly providerSettings: Pick<ProviderSettingsStore, 'all' | 'bySourceId'>;
   private readonly webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   private readonly now: () => Date;
@@ -259,8 +259,15 @@ export class IngestionService {
     return { sportEventId: event.id, sportLeagueId: event.sportLeagueId };
   }
 
+  /**
+   * The provider's competitors no participant is mapped to. Only a provider with a Provider row
+   * (#2040) can map one, so another adapter lists none; each row names the Provider row, which the
+   * bind takes.
+   */
   private async buildUnmappedParticipantsForProvider(provider: SportDataProvider, externalId: string | undefined): Promise<UnmappedParticipant[]> {
     const results: UnmappedParticipant[] = [];
+    const providerRow = this.providerSettings.bySourceId(provider.providerId);
+    if (providerRow === undefined) return results;
 
     for (const sport of provider.sportsCovered) {
       const participants = (await provider.getParticipants(sport))
@@ -268,7 +275,7 @@ export class IngestionService {
       if (participants.length === 0) continue;
       // poolmaster-allow-query-in-loop: once per sport the provider is configured for, a handful
       const mapped = await this.participantMappings.findByProviderExternalIds(
-        provider.providerId,
+        providerRow.code,
         // A feed id is mapped once per sport league (#1853): one mapped in any of the sport's counts.
         { sport },
         participants.map((participant) => participant.externalId),
@@ -279,8 +286,8 @@ export class IngestionService {
           continue;
         }
         results.push({
-          providerId: provider.providerId,
-          providerName: provider.providerName,
+          providerId: providerRow.id,
+          providerName: providerRow.name,
           externalId: participant.externalId,
           externalName: participant.name,
           sport,
@@ -570,8 +577,9 @@ export class IngestionService {
    * reads one mapping (#1251).
    */
   async getUnmappedParticipants(filters: UnmappedParticipantFilters = {}): Promise<UnmappedParticipant[]> {
+    // `providerId` names a Provider row (#2040); each adapter is matched to its row by code.
     const providers = this.registry.getAllProviders()
-      .filter((provider) => filters.providerId === undefined || provider.providerId === filters.providerId);
+      .filter((provider) => filters.providerId === undefined || this.providerSettings.bySourceId(provider.providerId)?.id === filters.providerId);
     const unmapped: UnmappedParticipant[] = [];
 
     for (const provider of providers) {

@@ -84,10 +84,10 @@ describe('a World Cup knockout bracket as an event', () => {
 });
 
 describe('World Cup teams', () => {
-  it('lists a nation under its prefixed id and name, carrying the league\'s keyword', () => {
+  it('lists a nation under its raw feed id and name, carrying the league\'s keyword', () => {
     const [argentina] = fifaTeamListSchema.parse(readBalldontlieFixture('fifa', 'teams.json')).data;
     expect(toWorldCupTeamParticipant(argentina, '/fifa/worldcup/v1/teams')).toEqual({
-      externalId: 'fifa-wc-team-9',
+      externalId: '9',
       providerId: 'balldontlie',
       sport: Sport.SOCCER,
       name: 'Argentina',
@@ -104,8 +104,8 @@ describe('World Cup teams', () => {
 
   it('gives the bracket\'s teams decided so far, once each, naming no team for a side still to be decided', () => {
     expect(toWorldCupFieldParticipants([spainMorocco, quarterFinal]).map((team) => [team.externalId, team.name])).toEqual([
-      ['fifa-wc-team-33', 'Spain'],
-      ['fifa-wc-team-23', 'Morocco'],
+      ['33', 'Spain'],
+      ['23', 'Morocco'],
     ]);
   });
 });
@@ -113,9 +113,9 @@ describe('World Cup teams', () => {
 describe('World Cup match scores', () => {
   it('gives each knockout match with both teams, a shoot-out\'s scores beside a level score, leaving out an unknown state and an undecided side', () => {
     expect(toWorldCupGameScoreUpdates(knockout2026)).toEqual([
-      { externalGameId: '2689', homeTeamExternalId: 'fifa-wc-team-33', awayTeamExternalId: 'fifa-wc-team-23', state: ProviderGameState.FINAL, homeScore: 0, awayScore: 0, homeShootoutScore: 0, awayShootoutScore: 3 },
-      { externalGameId: '2690', homeTeamExternalId: 'fifa-wc-team-9', awayTeamExternalId: 'fifa-wc-team-25', state: ProviderGameState.IN_PROGRESS, homeScore: 1, awayScore: 1, homeShootoutScore: null, awayShootoutScore: null },
-      { externalGameId: '2691', homeTeamExternalId: 'fifa-wc-team-14', awayTeamExternalId: 'fifa-wc-team-20', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null },
+      { externalGameId: '2689', homeTeamExternalId: '33', awayTeamExternalId: '23', state: ProviderGameState.FINAL, homeScore: 0, awayScore: 0, homeShootoutScore: 0, awayShootoutScore: 3 },
+      { externalGameId: '2690', homeTeamExternalId: '9', awayTeamExternalId: '25', state: ProviderGameState.IN_PROGRESS, homeScore: 1, awayScore: 1, homeShootoutScore: null, awayShootoutScore: null },
+      { externalGameId: '2691', homeTeamExternalId: '14', awayTeamExternalId: '20', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null },
     ]);
   });
 
@@ -171,13 +171,13 @@ describe('a World Cup bracket and its games from the feed (#1728)', () => {
     expect(bracket).toHaveLength(31);
     // From the final (104) back: 101 then 102; 97, 98, 99, 100; then the round of 16 and 32 they come from.
     const vendorOrder = [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87];
-    const homeIds = vendorOrder.map((number) => `fifa-wc-team-${String(byVendorNumber(number).home_team?.id)}`);
+    const homeIds = vendorOrder.map((number) => String(byVendorNumber(number).home_team?.id));
     expect(bracket?.slice(0, 16).map((match) => match.homeTeamExternalId)).toEqual(homeIds);
     expect(bracket?.[0]).toEqual({
       matchNumber: 1,
       roundNumber: 1,
-      homeTeamExternalId: 'fifa-wc-team-23',
-      awayTeamExternalId: 'fifa-wc-team-33',
+      homeTeamExternalId: '23',
+      awayTeamExternalId: '33',
       isNeutralSite: true,
       scheduledAt: new Date(byVendorNumber(74).datetime ?? ''),
       advancesTo: { matchNumber: 17, side: MatchSide.HOME },
@@ -214,13 +214,13 @@ describe('a World Cup bracket and its games from the feed (#1728)', () => {
     expect(games[0]).toEqual({
       externalGameId: '2673',
       roundNumber: 1,
-      homeTeamExternalId: `fifa-wc-team-${String(byVendorNumber(73).home_team?.id)}`,
-      awayTeamExternalId: `fifa-wc-team-${String(byVendorNumber(73).away_team?.id)}`,
+      homeTeamExternalId: String(byVendorNumber(73).home_team?.id),
+      awayTeamExternalId: String(byVendorNumber(73).away_team?.id),
       scheduledAt: new Date(byVendorNumber(73).datetime ?? ''),
       isNeutralSite: true,
     });
     const settled = replaced(89, { away_team: { id: 7, name: 'Germany' }, away_team_source: null });
-    expect(toWorldCupScheduledGames(settled).find((game) => game.externalGameId === '2689')).toMatchObject({ roundNumber: 2, homeTeamExternalId: 'fifa-wc-team-23', awayTeamExternalId: 'fifa-wc-team-7' });
+    expect(toWorldCupScheduledGames(settled).find((game) => game.externalGameId === '2689')).toMatchObject({ roundNumber: 2, homeTeamExternalId: '23', awayTeamExternalId: '7' });
   });
 
   it('gives no games while the rounds cannot be told from a partial listing', () => {

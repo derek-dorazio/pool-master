@@ -156,23 +156,22 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(league.data).sportLeague.currentEventYear).toBeNull();
 
     // --- 20 participants of the tour + a ranking upload (incl. a tied ranking pair) ------
-    const players: Array<{ id: string; externalId: string; rank: number }> = [];
+    const players: Array<{ id: string; rank: number }> = [];
     for (let i = 0; i < 20; i += 1) {
-      const externalId = `${RUN}-p${i}`;
       const p = await createParticipant({
         client: c,
-        body: { sportLeagueId, participantType: 'INDIVIDUAL', name: `${RUN} Player ${i}`, shortName: `P${i}`, nationality: 'USA', externalId },
+        body: { sportLeagueId, participantType: 'INDIVIDUAL', name: `${RUN} Player ${i}`, shortName: `P${i}`, nationality: 'USA' },
       });
       expect(p.response?.status).toBe(201);
       created.participantIds.add(expectDefined(p.data).participant.id);
       // ranks 1..19 with p18 and p19 tied at 19 to exercise the tie-break
-      players.push({ id: expectDefined(p.data).participant.id, externalId, rank: i >= 18 ? 19 : i + 1 });
+      players.push({ id: expectDefined(p.data).participant.id, rank: i >= 18 ? 19 : i + 1 });
     }
 
     const rosterApply = await applySportLeagueRankingUpload({
       client: c,
       path: { sportLeagueId },
-      body: { rows: players.map((p) => ({ externalId: p.externalId, ranking: p.rank })) },
+      body: { rows: players.map((p) => ({ participantId: p.id, ranking: p.rank })) },
     });
     expect(rosterApply.response?.status).toBe(200);
     expect(expectDefined(rosterApply.data).participants.length).toBe(20);
@@ -237,7 +236,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.sportLeagueIds.add(guestTourId);
     const guest = await createParticipant({
       client: c,
-      body: { sportLeagueId: guestTourId, participantType: 'INDIVIDUAL', name: `${RUN} LIV Guest`, shortName: 'GUEST', nationality: 'ESP', externalId: `${RUN}-guest` },
+      body: { sportLeagueId: guestTourId, participantType: 'INDIVIDUAL', name: `${RUN} LIV Guest`, shortName: 'GUEST', nationality: 'ESP' },
     });
     const guestId = expectDefined(guest.data).participant.id;
     created.participantIds.add(guestId);

@@ -38,10 +38,11 @@ import {
   type GolfRoundResult,
   type GolfStandingResult,
   type SportEvent,
+  requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core/sync-write-diagnostics';
 import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from '../ingestion/core/sync-write-diagnostics';
-import { matchAmong, resolveParticipantRow, type ParticipantRowResolution } from '../sport-catalog/participant-row-resolver';
+import { feedIdsOfCandidates, matchAmong, resolveParticipantRow, type ParticipantRowResolution } from '../sport-catalog/participant-row-resolver';
 import type { ScoringFamilyEvent } from '../scoring-families/scoring-family-module';
 import { DomainEventType, type DomainEvents } from '../domain-events';
 
@@ -166,7 +167,7 @@ export class GolfScoreService {
 
     const externalIds = [...new Set(rounds.map((round) => round.participantExternalId))];
     const participantIdByExternalId = new Map(
-      (await this.deps.mappings.findByProviderExternalIds(providerId, { sportEventId }, externalIds)).map((mapping) => [mapping.externalId, mapping.participantId]),
+      (await this.deps.mappings.findByProviderExternalIds(requireProviderCodeOfSourceId(providerId), { sportEventId }, externalIds)).map((mapping) => [mapping.externalId, mapping.participantId]),
     );
     const entryIdByParticipantId = new Map(
       (await this.deps.field.findBySportEvent(sportEventId)).map((entry) => [entry.participantId, entry.id]),
@@ -408,6 +409,7 @@ export class GolfScoreService {
       this.deps.rounds.findBySportEvent(sportEventId),
     ]);
     const participants = await this.deps.participants.findByIds(field.map((entry) => entry.participantId));
+    const feedIds = await feedIdsOfCandidates(rows, participants, this.deps.mappings);
     const entryIdByParticipantId = new Map(field.map((entry) => [entry.participantId, entry.id]));
     const round = eventRounds.find((candidate) => candidate.roundNumber === roundNumber);
     const existingByEntry = new Map(
@@ -416,7 +418,7 @@ export class GolfScoreService {
     );
 
     return Promise.all(rows.map(async (row) => {
-      const resolved = await resolveParticipantRow(row, matchAmong(participants));
+      const resolved = await resolveParticipantRow(row, matchAmong(participants, feedIds));
       const after: GolfRoundValues = { strokes: row.strokes, scoreToPar: row.scoreToPar, thru: row.thru ?? null, status: row.status };
       const sportEventParticipantId = resolved.participant ? entryIdByParticipantId.get(resolved.participant.id) ?? null : null;
       if (resolved.resolution !== 'MATCHED' || !sportEventParticipantId) {

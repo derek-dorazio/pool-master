@@ -5,11 +5,10 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   InjuryStatusCode,
-  MappingConfidence,
   ParticipantStatus,
   ParticipantType,
 } from '../domain/enums';
-import { DateTimeSchema, StringRecordSchema } from './common.dto';
+import { DateTimeSchema } from './common.dto';
 
 /** An admin-managed roster state: RETIRED and SUSPENDED are set by hand on the player page. */
 const ParticipantStatusDtoSchema = z.enum(ParticipantStatus);
@@ -43,7 +42,6 @@ export const ParticipantDtoSchema = z.object({
   participantType: z
     .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
     .describe('Whether the participant is an individual or team.'),
-  externalId: z.string().optional().describe('Primary provider identifier when one exists.'),
   firstName: z.string().optional().describe('First name when the participant is a person.'),
   lastName: z.string().optional().describe('Last name when the participant is a person.'),
   shortName: z.string().optional().describe('Short-form display name for compact UI surfaces.'),
@@ -54,7 +52,6 @@ export const ParticipantDtoSchema = z.object({
   injuryStatus: ParticipantInjuryStatusDtoSchema,
   photoUrl: z.string().nullable().optional().describe('Optional participant image URL.'),
   photoLastUpdated: DateTimeSchema.optional().describe('When the participant image metadata was last refreshed.'),
-  externalIds: StringRecordSchema.describe('Map of provider identifiers keyed by provider code.'),
   createdAt: DateTimeSchema.describe('When the participant record was created.'),
   updatedAt: DateTimeSchema.describe('When the participant record was last updated.'),
 }).describe('Participant summary returned by participant-search and detail APIs.');
@@ -88,14 +85,12 @@ export const CreateParticipantRequestSchema = z.object({
   participantType: z
     .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
     .describe('Whether the participant is one person or a team.'),
-  externalId: z.string().optional().describe('Primary provider identifier.'),
   firstName: z.string().max(255).optional().describe('First name when the participant is a person.'),
   lastName: z.string().max(255).optional().describe('Last name when the participant is a person.'),
   shortName: z.string().max(100).optional().describe('Short-form display name for compact UI surfaces.'),
   nationality: z.string().max(10).optional().describe('Participant nationality or country code.'),
   role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
   teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
-  externalIds: StringRecordSchema.optional().describe('Map of provider identifiers keyed by provider code.'),
 }).describe('A new participant for the shared catalog.');
 export type CreateParticipantRequest = z.infer<typeof CreateParticipantRequestSchema>;
 
@@ -111,8 +106,6 @@ export const UpdateParticipantRequestSchema = z.object({
   ranking: z.number().int().nullable().optional().describe('Rank in the sport league; null unranks.'),
   injuryStatus: ParticipantInjuryStatusDtoSchema.optional(),
   photoUrl: z.string().optional().describe('Participant image URL.'),
-  externalId: z.string().optional().describe('Primary provider identifier.'),
-  externalIds: StringRecordSchema.optional().describe('Map of provider identifiers keyed by provider code.'),
 }).describe('Fields to change on a participant. Omitted fields keep their current values.');
 export type UpdateParticipantRequest = z.infer<typeof UpdateParticipantRequestSchema>;
 
@@ -120,9 +113,10 @@ export const ParticipantProviderMappingDtoSchema = z.object({
   id: z.uuid(),
   participantId: z.uuid(),
   sportLeagueId: z.uuid().describe('The participant\'s sport league: a feed id names one participant per sport league.'),
-  providerId: z.string().describe('The provider that knows the participant by externalId.'),
-  externalId: z.string(),
-  confidence: z.enum(MappingConfidence).describe('How the identity was matched.'),
+  participantType: z.enum(ParticipantType).describe('The participant\'s kind: a team id and a player id the feed numbers alike never collide.'),
+  providerId: z.uuid().describe('The Provider that knows the participant by externalId.'),
+  providerName: z.string().describe('That provider\'s name.'),
+  externalId: z.string().describe('The provider\'s own id for the participant, never prefixed.'),
   mappedAt: DateTimeSchema,
 }).describe('A provider\'s identifier for a participant — how synced data finds them.');
 export type ParticipantProviderMappingDto = z.infer<typeof ParticipantProviderMappingDtoSchema>;
@@ -133,13 +127,13 @@ export const ParticipantProviderMappingListResponseSchema = z.object({
 export type ParticipantProviderMappingListResponse = z.infer<typeof ParticipantProviderMappingListResponseSchema>;
 
 export const SportLeagueProviderMappingListQuerySchema = z.object({
-  providerId: z.string().min(1).describe('The provider whose identities to list.'),
+  providerId: z.uuid().describe('The Provider whose identities to list.'),
   sportLeagueId: z.uuid().describe('Only the identities of this sport league\'s participants.'),
 }).describe('Whose provider identities to list: one provider\'s, in one sport league.');
 export type SportLeagueProviderMappingListQuery = z.infer<typeof SportLeagueProviderMappingListQuerySchema>;
 
 export const BindParticipantProviderMappingRequestSchema = z.object({
-  providerId: z.string().min(1).describe('The provider whose identifier this binds.'),
+  providerId: z.uuid().describe('The Provider whose identifier this binds.'),
   externalId: z.string().min(1).describe('The provider\'s identifier for the competitor — from the unmapped-competitor list.'),
 }).describe('Binds a provider identity to this participant. An identity already bound to another participant moves here.');
 export type BindParticipantProviderMappingRequest = z.infer<typeof BindParticipantProviderMappingRequestSchema>;

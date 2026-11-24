@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { testDomainEvents } from '../../support/domain-events';
 import {
   getAppPrisma,
@@ -35,6 +36,11 @@ const rankedEventIds = [
   'integration-follow-up-finished',
 ];
 
+/** The feed id a participant is mapped to, as the sync maps one participant to one feed id. */
+function feedIdOf(participant: { providerMappings: Array<{ externalId: string }> }): string | undefined {
+  return participant.providerMappings[0]?.externalId;
+}
+
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   const prisma = getPrisma();
@@ -65,36 +71,15 @@ afterAll(async () => {
   await prisma.sportEvent.deleteMany({
     where: { externalId: { in: rankedEventIds } },
   });
+  // The suite's participants are the ones mapped to its feed ids (#2040: a feed id lives only on the mapping).
+  const feedMapped = await prisma.participantProviderMapping.findMany({ where: { externalId: { startsWith: 'ingestion-' } }, select: { participantId: true } });
   await prisma.participantProviderMapping.deleteMany({
-    where: { providerId: 'TEST_PROVIDER' },
+    where: { externalId: { startsWith: 'ingestion-' } },
   });
   await prisma.participant.deleteMany({ where: { name: { startsWith: 'Linkable ' } } });
   await prisma.sportLeague.deleteMany({ where: { name: { startsWith: 'Linkable ' } } });
-  await prisma.participant.deleteMany({
-    where: {
-      externalId: {
-        in: [
-          'ingestion-player-1',
-          'ingestion-ranked-1',
-          'ingestion-ranked-2',
-          'ingestion-ranked-3',
-          'ingestion-ranked-4',
-          'ingestion-odds-1',
-          'ingestion-odds-2',
-          'ingestion-batch-1',
-          'ingestion-batch-2',
-          'ingestion-batch-3',
-          'ingestion-rebuild-1',
-          'ingestion-rebuild-2',
-          'ingestion-play-in-team',
-          'ingestion-play-in-place',
-          'ingestion-follow-up-1',
-          'ingestion-follow-up-2',
-          'ingestion-follow-up-3',
-        ],
-      },
-    },
-  });
+  // One still on another suite's field stays: only the ones left on no field go.
+  await prisma.participant.deleteMany({ where: { id: { in: feedMapped.map((row) => row.participantId) }, sportEventParticipants: { none: {} } } });
   await teardownIntegrationTests();
 });
 
@@ -103,20 +88,20 @@ describe('IngestionPersistence', () => {
   async function linkedField(externalId: string, golferId: string): Promise<SportEventDetail> {
     const detail: SportEventDetail = {
       externalId,
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Rebuild ${externalId}`,
       startDate: new Date('2026-04-15T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
       metadata: {},
-      participants: [{ externalId: golferId, providerId: 'TEST_PROVIDER', sport: Sport.GOLF, name: `Golfer ${golferId}`, active: true, ranking: 3, metadata: {} }],
+      participants: [{ externalId: golferId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${golferId}`, active: true, ranking: 3, metadata: {} }],
     };
     await linkedProviderEvent(getPrisma(), { providerId: detail.providerId, externalId, name: detail.name, startDate: detail.startDate });
     return detail;
   }
   const withRebuilds = () => new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
-  const eventIdOf = async (externalId: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'TEST_PROVIDER', externalId } } })).id;
+  const eventIdOf = async (externalId: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { providerId_externalId: { providerId: 'balldontlie', externalId } } })).id;
 
   it('writes the event\'s leaderboard rebuild job with the field a sync changes, and none for a sync that changes nothing (#1466)', async () => {
     const detail = await linkedField('integration-rebuild-sync', 'ingestion-rebuild-1');
@@ -158,7 +143,7 @@ describe('IngestionPersistence', () => {
       expect(job).toMatchObject({
         status: 'QUEUED',
         dedupeKey: `SYNC_EVENT_GAMES_AND_TIERS:${sportEventId}`,
-        payload: { sportEventId, providerId: 'TEST_PROVIDER', externalId: detail.externalId, games: [{ ...games[0], scheduledAt: KICKOFF.toISOString() }] },
+        payload: { sportEventId, providerId: 'balldontlie', externalId: detail.externalId, games: [{ ...games[0], scheduledAt: KICKOFF.toISOString() }] },
       });
 
       // The same field again writes no field row, but the games may have moved, so its job is written on its own.
@@ -195,7 +180,7 @@ describe('IngestionPersistence', () => {
 
     const detail: SportEventDetail = {
       externalId: 'integration-ingestion-event',
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: 'Integration Ingestion Event',
       startDate: new Date('2026-04-15T12:00:00.000Z'),
@@ -205,7 +190,7 @@ describe('IngestionPersistence', () => {
       participants: [
         {
           externalId: 'ingestion-player-1',
-          providerId: 'TEST_PROVIDER',
+          providerId: 'balldontlie',
           sport: Sport.GOLF,
           name: 'Ingestion Player One',
           firstName: 'Ingestion',
@@ -235,13 +220,13 @@ describe('IngestionPersistence', () => {
     const event = await prisma.sportEvent.findUniqueOrThrow({
       where: {
         providerId_externalId: {
-          providerId: 'TEST_PROVIDER',
+          providerId: 'balldontlie',
           externalId: 'integration-ingestion-event',
         },
       },
     });
     const participant = await prisma.participant.findFirstOrThrow({
-      where: { externalId: 'ingestion-player-1' },
+      where: { providerMappings: { some: { externalId: 'ingestion-player-1' } } },
     });
     const sportEventParticipant =
       await prisma.sportEventParticipant.findUniqueOrThrow({
@@ -267,7 +252,7 @@ describe('IngestionPersistence', () => {
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const golfer = (externalId: string, name: string, ranking?: number) => ({
       externalId,
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name,
       active: true,
@@ -276,7 +261,7 @@ describe('IngestionPersistence', () => {
     });
     const detail: SportEventDetail = {
       externalId: 'integration-ranked-field',
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: 'Integration Ranked Field',
       startDate: new Date('2026-04-22T12:00:00.000Z'),
@@ -296,9 +281,9 @@ describe('IngestionPersistence', () => {
 
     const rows = await prisma.sportEventParticipant.findMany({
       where: { sportEventId: event.id },
-      include: { participant: true },
+      include: { participant: { include: { providerMappings: true } } },
     });
-    expect(Object.fromEntries(rows.map((row) => [row.participant.externalId, row.ranking]))).toEqual({
+    expect(Object.fromEntries(rows.map((row) => [feedIdOf(row.participant), row.ranking]))).toEqual({
       'ingestion-ranked-1': 7,
       'ingestion-ranked-2': null,
     });
@@ -307,7 +292,7 @@ describe('IngestionPersistence', () => {
   function rankedGolfer(externalId: string, ranking?: number) {
     return {
       externalId,
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Golfer ${externalId}`,
       active: true,
@@ -319,7 +304,7 @@ describe('IngestionPersistence', () => {
   function rankedFieldDetail(externalId: string, participants: SportEventDetail['participants']): SportEventDetail {
     return {
       externalId,
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Integration ${externalId}`,
       startDate: new Date('2026-04-29T12:00:00.000Z'),
@@ -347,7 +332,7 @@ describe('IngestionPersistence', () => {
     );
 
     const row = await prisma.sportEventParticipant.findFirstOrThrow({
-      where: { sportEventId: event.id, participant: { externalId: 'ingestion-ranked-3' } },
+      where: { sportEventId: event.id, participant: { providerMappings: { some: { externalId: 'ingestion-ranked-3' } } } },
     });
     expect(row.ranking).toBe(12);
   });
@@ -369,7 +354,7 @@ describe('IngestionPersistence', () => {
     );
 
     const row = await prisma.sportEventParticipant.findFirstOrThrow({
-      where: { sportEventId: event.id, participant: { externalId: 'ingestion-ranked-4' } },
+      where: { sportEventId: event.id, participant: { providerMappings: { some: { externalId: 'ingestion-ranked-4' } } } },
     });
     expect(row.ranking).toBe(5);
   });
@@ -381,14 +366,14 @@ describe('IngestionPersistence', () => {
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const startDate = new Date('2026-06-04T12:00:00.000Z');
     const linked = await linkedProviderEvent(prisma, {
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       externalId: 'integration-linked-sync',
       name: 'Linked Sync Open',
       startDate,
     });
     const providerEvent = (externalId: string) => ({
       externalId,
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Provider ${externalId}`,
       startDate,
@@ -406,7 +391,7 @@ describe('IngestionPersistence', () => {
     expect(result.count).toBe(1);
     expect((await prisma.sportEvent.findUniqueOrThrow({ where: { id: linked.id } })).participantCount).toBe(80);
     await expect(prisma.sportEvent.count({
-      where: { providerId: 'TEST_PROVIDER', externalId: 'integration-unlinked-sync' },
+      where: { providerId: 'balldontlie', externalId: 'integration-unlinked-sync' },
     })).resolves.toBe(0);
   });
 
@@ -417,7 +402,7 @@ describe('IngestionPersistence', () => {
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const startDate = new Date('2026-06-18T12:00:00.000Z');
     const link = async (externalId: string, participantCount: number) => {
-      const event = await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId, name: `Batch ${externalId}`, startDate });
+      const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: `Batch ${externalId}`, startDate });
       return prisma.sportEvent.update({ where: { id: event.id }, data: { participantCount } });
     };
     const grown = await link('integration-batch-grown', 60);
@@ -425,7 +410,7 @@ describe('IngestionPersistence', () => {
     const shrunk = await link('integration-batch-shrunk', 90);
     const providerEvent = (externalId: string, participantCount: number) => ({
       externalId,
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Provider ${externalId}`,
       startDate,
@@ -457,7 +442,7 @@ describe('IngestionPersistence', () => {
     expect([grown.id, same.id, shrunk.id].map((id) => byId.get(id)?.participantCount)).toEqual([80, 80, 70]);
     expect(byId.get(same.id)?.updatedAt).toEqual(same.updatedAt);
     await expect(prisma.sportEvent.count({
-      where: { providerId: 'TEST_PROVIDER', externalId: 'integration-batch-unlinked' },
+      where: { providerId: 'balldontlie', externalId: 'integration-batch-unlinked' },
     })).resolves.toBe(0);
   });
 
@@ -466,7 +451,7 @@ describe('IngestionPersistence', () => {
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const golfer = (externalId: string, oddsSourceEventId: string) => ({
       externalId,
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       sport: Sport.GOLF,
       name: `Golfer ${externalId}`,
       active: true,
@@ -487,11 +472,11 @@ describe('IngestionPersistence', () => {
 
     const rows = await prisma.sportEventParticipant.findMany({
       where: { sportEventId: event.id },
-      include: { participant: true },
+      include: { participant: { include: { providerMappings: true } } },
     });
     const byGolfer: Record<string, { seedNumber: number | null; oddsToWin: number | null }> = {};
     for (const row of rows) {
-      byGolfer[row.participant.externalId ?? row.participantId] = {
+      byGolfer[feedIdOf(row.participant) ?? row.participantId] = {
         seedNumber: row.seedNumber,
         oddsToWin: row.oddsToWin === null ? null : Number(row.oddsToWin),
       };
@@ -507,7 +492,7 @@ describe('IngestionPersistence', () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const entrant = (externalId: string, metadata: Record<string, unknown>) => ({
-      externalId, providerId: 'TEST_PROVIDER', sport: Sport.GOLF, name: `Golfer ${externalId}`, active: true, metadata,
+      externalId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${externalId}`, active: true, metadata,
     });
     const detail = rankedFieldDetail('integration-play-in-place', [
       entrant('ingestion-play-in-team', { seed: 1 }),
@@ -517,8 +502,8 @@ describe('IngestionPersistence', () => {
 
     await persistence.persistEventDetailWithDiagnostics(detail);
 
-    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: true } });
-    expect(Object.fromEntries(rows.map((row) => [row.participant.externalId, row.isPlayInPlace]))).toEqual({
+    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } });
+    expect(Object.fromEntries(rows.map((row) => [feedIdOf(row.participant), row.isPlayInPlace]))).toEqual({
       'ingestion-play-in-team': false,
       'ingestion-play-in-place': true,
     });
@@ -534,7 +519,7 @@ describe('IngestionPersistence', () => {
       const externalId = `integration-admin-header-${syncScope}`;
       const startDate = new Date('2026-06-11T12:00:00.000Z');
       const created = await linkedProviderEvent(prisma, {
-        providerId: 'TEST_PROVIDER',
+        providerId: 'balldontlie',
         externalId,
         name: 'Admin Open',
         startDate,
@@ -543,7 +528,7 @@ describe('IngestionPersistence', () => {
 
       await persistence.persistEventsWithDiagnostics([{
         externalId,
-        providerId: 'TEST_PROVIDER',
+        providerId: 'balldontlie',
         sport: Sport.GOLF,
         name: 'Provider Open',
         startDate: new Date('2026-07-01T12:00:00.000Z'),
@@ -589,14 +574,14 @@ describe('IngestionPersistence', () => {
       { ...rankedGolfer('ingestion-batch-3', 3), ...changes['ingestion-batch-3'] },
     ]);
     const event = await linkedProviderEvent(prisma, {
-      providerId: 'TEST_PROVIDER',
+      providerId: 'balldontlie',
       externalId: 'integration-batched-sync',
       name: field(2).name,
       startDate: field(2).startDate,
     });
     const stamps = async () => {
-      const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: true } });
-      return new Map(rows.map((row) => [row.participant.externalId, [row.updatedAt.toISOString(), row.participant.updatedAt.toISOString()]]));
+      const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } });
+      return new Map(rows.map((row) => [feedIdOf(row.participant), [row.updatedAt.toISOString(), row.participant.updatedAt.toISOString()]]));
     };
 
     const created = await persistence.persistEventDetailWithDiagnostics(field(2));
@@ -604,7 +589,7 @@ describe('IngestionPersistence', () => {
     expect(created.value).toEqual({ eventsPersisted: 1, participantsPersisted: 3, sportEventParticipantsPersisted: 3 });
     expect(created.writeDiagnostics.rows.filter((row) => row.entityType === 'SportEventParticipant').map((row) => [row.disposition, Boolean(row.internalId)]))
       .toEqual([['CREATED', true], ['CREATED', true], ['CREATED', true]]);
-    await expect(prisma.participantProviderMapping.count({ where: { providerId: 'TEST_PROVIDER', externalId: { startsWith: 'ingestion-batch-' } } })).resolves.toBe(3);
+    await expect(prisma.participantProviderMapping.count({ where: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: { startsWith: 'ingestion-batch-' } } })).resolves.toBe(3);
     const afterCreate = await stamps();
 
     const repeated = await persistence.persistEventDetailWithDiagnostics(field(2));
@@ -619,7 +604,7 @@ describe('IngestionPersistence', () => {
     expect(afterChange.get('ingestion-batch-1')).toEqual(afterCreate.get('ingestion-batch-1'));
     expect(afterChange.get('ingestion-batch-3')).toEqual(afterCreate.get('ingestion-batch-3'));
     expect(afterChange.get('ingestion-batch-2')?.[0]).not.toBe(afterCreate.get('ingestion-batch-2')?.[0]);
-    const row = await prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { externalId: 'ingestion-batch-2' } } });
+    const row = await prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { providerMappings: { some: { externalId: 'ingestion-batch-2' } } } } });
     expect(row.ranking).toBe(9);
 
     // A withdrawal: the field row records it, and the rest of the field is not touched.
@@ -631,7 +616,7 @@ describe('IngestionPersistence', () => {
     const afterWithdrawal = await stamps();
     expect(afterWithdrawal.get('ingestion-batch-1')).toEqual(afterChange.get('ingestion-batch-1'));
     expect(afterWithdrawal.get('ingestion-batch-2')).toEqual(afterChange.get('ingestion-batch-2'));
-    await expect(prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { externalId: 'ingestion-batch-3' } } }))
+    await expect(prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { providerMappings: { some: { externalId: 'ingestion-batch-3' } } } } }))
       .resolves.toMatchObject({ isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN });
 
     // A participant-only change: the participant row is rewritten, the field row is not.
@@ -646,7 +631,7 @@ describe('IngestionPersistence', () => {
     expect(fieldRowAt).toBe(afterWithdrawal.get('ingestion-batch-1')?.[0]);
     expect(participantAt).not.toBe(afterWithdrawal.get('ingestion-batch-1')?.[1]);
     expect(afterReaffiliation.get('ingestion-batch-2')).toEqual(afterWithdrawal.get('ingestion-batch-2'));
-    await expect(prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-batch-1' } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
+    await expect(prisma.participant.findFirstOrThrow({ where: { providerMappings: { some: { externalId: 'ingestion-batch-1' } } } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
   });
 
   // #1853 — a participant belongs to one sport league: the one of the event the sync fields them
@@ -655,12 +640,12 @@ describe('IngestionPersistence', () => {
     const prisma = getPrisma();
     const golfer = (externalId: string, tour: string) => ({ ...rankedGolfer(externalId), name: `League ${externalId}`, metadata: { tour } });
     const detail = rankedFieldDetail('integration-event-league', [golfer('ingestion-league-a', 'pga'), golfer('ingestion-league-b', 'NO-SUCH-LEAGUE')]);
-    const event = await linkedProviderEvent(prisma, { providerId: 'TEST_PROVIDER', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
+    const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
     const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
 
     const { statements } = await recordStatements(() => new IngestionPersistence(getAppPrisma(), testDomainEvents()).persistEventDetailWithDiagnostics(detail));
 
-    const created = await prisma.participant.findMany({ where: { externalId: { in: ['ingestion-league-a', 'ingestion-league-b'] } }, select: { sportLeagueId: true } });
+    const created = await prisma.participant.findMany({ where: { providerMappings: { some: { externalId: { in: ['ingestion-league-a', 'ingestion-league-b'] } } } }, select: { sportLeagueId: true } });
     expect(created).toEqual([{ sportLeagueId }, { sportLeagueId }]);
     await expect(prisma.participantProviderMapping.count({ where: { externalId: { in: ['ingestion-league-a', 'ingestion-league-b'] }, sportLeagueId } })).resolves.toBe(2);
     expect(statementsOn(statements, StatementVerb.INSERT, 'participants')).toHaveLength(1);

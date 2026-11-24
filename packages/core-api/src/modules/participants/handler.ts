@@ -4,7 +4,7 @@
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ParticipantService } from './service';
-import { ParticipantNotFoundError } from './service';
+import { ParticipantNotFoundError, ProviderNotFoundError } from './service';
 import type { ParticipantSearchFilters } from '@poolmaster/shared/db';
 import type {
   BindParticipantProviderMappingRequest,
@@ -14,15 +14,11 @@ import type {
   SportLeagueProviderMappingListQuery,
   UpdateParticipantRequest,
 } from '@poolmaster/shared/dto/participants.dto';
-import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 import { mapParticipantProviderMappingToDto, mapParticipantToDto, toUpdateParticipantInput } from '../../mappers';
 import { sendError } from '../../core/error-handler';
 import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 
-export function createParticipantHandlers(
-  participantService: ParticipantService,
-  providerRegistry: ProviderRegistry,
-) {
+export function createParticipantHandlers(participantService: ParticipantService) {
   return {
     searchParticipants,
     getParticipant,
@@ -86,16 +82,15 @@ export function createParticipantHandlers(
     reply: FastifyReply,
   ) {
     const { providerId, externalId } = request.body;
-    // A mapping names a registered provider, or no sync will ever use it.
-    if (!providerRegistry.getProviderById(providerId)) {
-      return sendError(reply, 404, 'PROVIDER_NOT_FOUND', `Provider ${providerId} was not found.`);
-    }
     try {
       const providerMapping = await participantService.bindProviderMapping(request.params.id, providerId, externalId);
       return reply.send({ providerMapping: mapParticipantProviderMappingToDto(providerMapping) });
     } catch (err) {
       if (err instanceof ParticipantNotFoundError) {
         return sendError(reply, 404, 'PARTICIPANT_NOT_FOUND', err.message);
+      }
+      if (err instanceof ProviderNotFoundError) {
+        return sendError(reply, 404, 'PROVIDER_NOT_FOUND', err.message);
       }
       throw err;
     }
@@ -182,14 +177,12 @@ export function createParticipantHandlers(
         ranking: body.ranking,
         name: body.name,
         participantType: body.participantType,
-        externalId: body.externalId,
         firstName: body.firstName,
         lastName: body.lastName,
         shortName: body.shortName,
         nationality: body.nationality,
         role: body.role,
         teamAffiliation: body.teamAffiliation,
-        externalIds: body.externalIds,
       });
 
       logger.info(

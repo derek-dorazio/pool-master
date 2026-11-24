@@ -114,15 +114,15 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
   });
 
   describe('getEventDetails', () => {
-    it('gives a finished playoffs with its eight teams, by the league\'s prefixed ids and tour, and none of the regular season\'s', async () => {
+    it('gives a finished playoffs with its eight teams, by the feed\'s raw ids and the league\'s tour, and none of the regular season\'s', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('wnba-2025-postseason');
 
       expect(detail).toMatchObject({ externalId: 'wnba-2025-postseason', sport: Sport.BASKETBALL, status: 'COMPLETED', participantCount: 8, fieldLocked: true });
-      expect(detail?.participants.map((team) => team.externalId)).not.toContain('wnba-team-3');
-      expect(detail?.participants[0]).toMatchObject({ externalId: 'wnba-team-8', name: 'Minnesota Lynx', metadata: { tour: 'WNBA', abbreviation: 'MIN' } });
+      expect(detail?.participants.map((team) => team.externalId)).not.toContain('3');
+      expect(detail?.participants[0]).toMatchObject({ externalId: '8', name: 'Minnesota Lynx', metadata: { tour: 'WNBA', abbreviation: 'MIN' } });
       expect(requestLine(harness.api)).toEqual(['/wnba/v1/games?seasons[]=2025&per_page=100', '/wnba/v1/standings?season=2025']);
     });
 
@@ -132,7 +132,7 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
 
       const detail = await harness.adapter.getEventDetails('wnba-2025-postseason');
 
-      const team = (id: number) => `wnba-team-${String(id)}`;
+      const team = (id: number) => String(id);
       // Minnesota 1 v Golden State 8, Phoenix 4 v New York 5, Atlanta 3 v Indiana 6, Las Vegas 2 v Seattle 7.
       expect(detail?.bracket?.map((match) => [match.matchNumber, match.roundNumber, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
         [1, 1, team(8), team(18), { matchNumber: 5, side: MatchSide.HOME }],
@@ -190,8 +190,8 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
     const teams = await harness.adapter.getParticipants(Sport.BASKETBALL);
 
     expect(teams).toHaveLength(9);
-    expect(teams.map((team) => team.externalId)).not.toContain('wnba-team-20');
-    expect(teams[0]).toMatchObject({ externalId: 'wnba-team-8', name: 'Minnesota Lynx', sport: Sport.BASKETBALL, metadata: { tour: 'WNBA' } });
+    expect(teams.map((team) => team.externalId)).not.toContain('20');
+    expect(teams[0]).toMatchObject({ externalId: '8', name: 'Minnesota Lynx', sport: Sport.BASKETBALL, metadata: { tour: 'WNBA' } });
     expect(requestLine(harness.api)).toEqual(['/wnba/v1/teams?']);
   });
 
@@ -203,9 +203,9 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
 
     expect(result).toMatchObject({ category: 'GAME', externalEventId: 'wnba-2026-postseason' });
     expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.homeTeamExternalId, game.state, game.homeScore, game.awayScore]) : []).toEqual([
-      ['4262001', 'wnba-team-8', ProviderGameState.FINAL, 91, 80],
-      ['4262002', 'wnba-team-7', ProviderGameState.IN_PROGRESS, 44, 40],
-      ['4262003', 'wnba-team-1', ProviderGameState.SCHEDULED, null, null],
+      ['4262001', '8', ProviderGameState.FINAL, 91, 80],
+      ['4262002', '7', ProviderGameState.IN_PROGRESS, 44, 40],
+      ['4262003', '1', ProviderGameState.SCHEDULED, null, null],
     ]);
   });
 

@@ -116,7 +116,7 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
         fieldEntryFixture({
           id: 'sep-1',
           participantId: 'p-1',
-          participant: participantFixture({ id: 'p-1', name: 'Rory McIlroy', externalId: 'rory-1' }),
+          participant: participantFixture({ id: 'p-1', name: 'Rory McIlroy' }),
           ranking: 2,
           rounds: [roundResult(1, 70), roundResult(2, 70), roundResult(3, 72)],
         }),

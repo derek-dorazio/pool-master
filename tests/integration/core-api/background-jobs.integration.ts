@@ -6,7 +6,7 @@
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
-import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, ReleaseAttemptOutcome, ReleaseCheckKey, Sport, type ReleaseAttemptResult, type ReleaseCheck } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, JobErrorType, JobTrigger, ProviderCode, ReleaseAttemptOutcome, ReleaseCheckKey, Sport, type ReleaseAttemptResult, type ReleaseCheck } from '@poolmaster/shared/domain';
 import { releaseSportEventJob, releaseSportEventJobHandler } from '../../../packages/core-api/src/modules/events/release-sport-event-job';
 import {
   getAppPrisma,
@@ -313,7 +313,8 @@ describe('Activity reads and job results (#1819)', () => {
 
   afterEach(async () => {
     const prisma = getPrisma();
-    await prisma.providerSyncRun.deleteMany({ where: { providerId: 'integration-background-jobs' } });
+    // Runs name a Provider row now (#2040), so this suite's runs are told apart by nothing but being here.
+    await prisma.providerSyncRun.deleteMany();
     const leagues = await prisma.sportLeague.findMany({ where: { name: { startsWith: 'Activity Jobs ' } }, select: { id: true } });
     const leagueIds = leagues.map((league) => league.id);
     await prisma.sportEvent.deleteMany({ where: { eventSeries: { sportLeagueId: { in: leagueIds } } } });
@@ -428,10 +429,10 @@ describe('Activity reads and job results (#1819)', () => {
     const job = await getPrisma().backgroundJob.create({ data: { type: 'MANUAL_EVENT_SYNC', trigger: JobTrigger.SYSTEM, payload: {} } });
     const runs = new PrismaProviderSyncRunRepository(getAppPrisma());
     const mine = await runs.create({
-      providerId: 'integration-background-jobs', sport: Sport.GOLF, eventId: 'e', ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
+      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
       status: 'COMPLETED', startedAt: null, completedAt: null, payload: {},
     });
-    await runs.create({ providerId: 'integration-background-jobs', sport: Sport.GOLF, eventId: 'e', ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, payload: {} });
+    await runs.create({ providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, payload: {} });
 
     await expect(runs.findByBackgroundJobIds([job.id])).resolves.toEqual([expect.objectContaining({ id: mine.id, backgroundJobId: job.id })]);
     await expect(runs.findByBackgroundJobIds([])).resolves.toEqual([]);
@@ -440,9 +441,8 @@ describe('Activity reads and job results (#1819)', () => {
 
 describe('manual sync runs and their job (#1441)', () => {
   const run = (feed: string) => ({
-    providerId: 'integration-background-jobs',
+    providerCode: ProviderCode.BALLDONTLIE,
     sport: Sport.GOLF,
-    eventId: 'jobs-event',
     ...SCHEDULED_SCORES_RUN,
     status: 'SUBMITTED' as const,
     startedAt: null,
@@ -450,8 +450,12 @@ describe('manual sync runs and their job (#1441)', () => {
     payload: { requestedFeed: feed },
   });
 
+  // Every run is keyed to the one Provider row (#2040), so the suite's runs are told apart by clearing them.
+  beforeEach(async () => {
+    await getPrisma().providerSyncRun.deleteMany();
+  });
   afterEach(async () => {
-    await getPrisma().providerSyncRun.deleteMany({ where: { providerId: 'integration-background-jobs' } });
+    await getPrisma().providerSyncRun.deleteMany();
   });
 
   it('writes the runs, in the order given, and the job naming them in one transaction', async () => {
@@ -483,7 +487,7 @@ describe('manual sync runs and their job (#1441)', () => {
       () => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { syncRunIds: [], sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId: 'jobs-event' }),
     )).rejects.toThrow(/Invalid MANUAL_EVENT_SYNC job payload/);
 
-    await expect(getPrisma().providerSyncRun.count({ where: { providerId: 'integration-background-jobs' } })).resolves.toBe(0);
+    await expect(getPrisma().providerSyncRun.count()).resolves.toBe(0);
     await expect(getPrisma().backgroundJob.count()).resolves.toBe(0);
   });
 });

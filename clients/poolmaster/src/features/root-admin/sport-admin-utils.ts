@@ -323,7 +323,7 @@ export function formatGolfRoundStatus(status: GolfRoundScoreStatus): string {
 }
 
 export const GOLF_ROUND_SCORE_UPLOAD_HEADERS = [
-  'externalId',
+  'participantId',
   'playerName',
   'strokes',
   'scoreToPar',

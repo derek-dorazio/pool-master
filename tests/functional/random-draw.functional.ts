@@ -91,7 +91,6 @@ async function seedRandomDrawFixture() {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Draw Golfer ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
-        externalIds: {},
         role: 'GOLFER',
       },
     });

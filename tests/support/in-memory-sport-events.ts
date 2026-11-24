@@ -37,6 +37,7 @@ import type {
   PricingProfileRepository,
   TierProfileRepository,
 } from '@poolmaster/shared/db';
+import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
@@ -141,13 +142,23 @@ export class InMemorySportEvents {
    * of `overrides.sportLeagueId`. A sport with no league yet places the participant in the league an
    * event made by `addEvent` defaults to, so a field and its feed lookups agree.
    */
-  addParticipant(sportId: string, name: string, overrides: Partial<Participant> = {}): Participant {
+  /**
+   * A participant of the sport's first league. `externalId` also maps it to that BALLDONTLIE feed
+   * id (#2040: a feed id lives only on the participant's provider mapping).
+   */
+  addParticipant(sportId: string, name: string, { externalId, ...overrides }: Partial<Participant> & { externalId?: string } = {}): Participant {
     const sportLeagueId = this.sportLeagues.find((league) => league.sportId === sportId)?.id ?? UNPLACED_SPORT_LEAGUE_ID;
     const participant: Participant = stamp({
       id: this.id('participant'), sportLeagueId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-      injuryStatus: { status: 'HEALTHY' }, externalIds: {}, ranking: null, ...overrides,
+      injuryStatus: { status: 'HEALTHY' }, ranking: null, ...overrides,
     });
     this.participants.push(participant);
+    if (externalId !== undefined) {
+      this.mappings.push(stamp({
+        id: this.id('mapping'), providerId: TEST_PROVIDER_ROWS.BALLDONTLIE.id, providerName: TEST_PROVIDER_ROWS.BALLDONTLIE.name,
+        participantId: participant.id, sportLeagueId, participantType: participant.participantType, externalId, mappedAt: participant.createdAt,
+      }));
+    }
     return participant;
   }
 
@@ -240,7 +251,7 @@ export class InMemorySportEvents {
       search: async () => [...this.participants],
       findMatchingAny: async (sportLeagueId, queries) => this.participants.filter((row) => row.sportLeagueId === sportLeagueId && queries.some((query) => (
         (query.id === undefined || row.id === query.id)
-        && (query.externalId === undefined || row.externalId === query.externalId)
+        && (query.externalId === undefined || this.mappings.some((mapping) => mapping.participantId === row.id && mapping.externalId === query.externalId))
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
       ))),
       findBySportLeague: async (sportLeagueId) => this.participants
@@ -267,14 +278,17 @@ export class InMemorySportEvents {
   mappingRepo(): ParticipantProviderMappingRepository {
     return {
       findByParticipant: async (participantId) => this.mappings.filter((row) => row.participantId === participantId),
-      findByProviderExternalIds: async (providerId, scope, externalIds) => this.mappings.filter((row) => row.providerId === providerId
+      findByParticipantIds: async (participantIds) => this.mappings.filter((row) => participantIds.includes(row.participantId)),
+      findByProviderExternalIds: async (providerCode, scope, externalIds) => this.mappings.filter((row) => row.providerId === TEST_PROVIDER_ROWS[providerCode].id
         && externalIds.includes(row.externalId) && this.inScope(row.participantId, scope)),
       findByProviderAndSportLeague: async (providerId, sportLeagueId) => this.mappings.filter((row) => row.providerId === providerId
         && row.sportLeagueId === sportLeagueId),
       bind: async (mapping) => {
+        const provider = Object.values(TEST_PROVIDER_ROWS).find((candidate) => candidate.id === mapping.providerId);
+        if (!provider) return null;
         this.mappings = this.mappings.filter((row) => !(row.providerId === mapping.providerId && row.externalId === mapping.externalId
-          && row.sportLeagueId === mapping.sportLeagueId));
-        const row = stamp({ id: this.id('mapping'), ...mapping });
+          && row.sportLeagueId === mapping.sportLeagueId && row.participantType === mapping.participantType));
+        const row = stamp({ id: this.id('mapping'), ...mapping, providerName: provider.name });
         this.mappings.push(row);
         return row;
       },

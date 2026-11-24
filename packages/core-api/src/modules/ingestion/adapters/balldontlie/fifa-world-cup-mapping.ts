@@ -19,8 +19,7 @@
  * gives apart from the match score (`home_score_penalties`); they go on the game for the writer
  * to name the winner by (#1532).
  *
- * Team ids are prefixed (`fifa-wc-team-12`): a bare number would collide with another sport's.
- * Each team carries the league's keyword in `metadata.tour`, so it links by name only to the
+ * Team ids are the provider's own (`participantFeedId`, #2040). Each team carries the league's keyword in `metadata.tour`, so it links by name only to the
  * site's team in the World Cup.
  */
 
@@ -31,6 +30,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { FifaMatch, FifaMatchTeamSource, FifaTeam } from './fifa-world-cup-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { participantFeedId } from './participant-feed-id';
 
 export const FIFA_WC_MATCHES_PATH = '/fifa/worldcup/v1/matches';
 export const FIFA_WC_TEAMS_PATH = '/fifa/worldcup/v1/teams';
@@ -58,9 +58,6 @@ export function parseWorldCupScope(eventId: string): WorldCupScope | null {
   return match ? { season: Number(match[1]) } : null;
 }
 
-export function worldCupTeamExternalId(teamId: number): string {
-  return `fifa-wc-team-${String(teamId)}`;
-}
 
 /** A field the document leaves optional but without which a row cannot be used. */
 function required<Value>(value: Value | null | undefined, path: string, row: string, field: string): Value {
@@ -144,7 +141,7 @@ export function toWorldCupEvents(matches: readonly FifaMatch[]): SportEvent[] {
 export function toWorldCupTeamParticipant(team: FifaTeam, path: string): ProviderParticipant {
   const id = required(team.id, path, 'a team', 'id');
   return {
-    externalId: worldCupTeamExternalId(id),
+    externalId: participantFeedId(id),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.SOCCER,
     name: required(team.name, path, `team ${String(id)}`, 'name'),
@@ -178,8 +175,8 @@ export function toWorldCupGameScoreUpdates(matches: readonly FifaMatch[]): GameS
     const started = hasStarted(state);
     return [{
       externalGameId: String(required(match.id, FIFA_WC_MATCHES_PATH, 'a match with both teams', 'id')),
-      homeTeamExternalId: worldCupTeamExternalId(required(match.home_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'home team id')),
-      awayTeamExternalId: worldCupTeamExternalId(required(match.away_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'away team id')),
+      homeTeamExternalId: participantFeedId(required(match.home_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'home team id')),
+      awayTeamExternalId: participantFeedId(required(match.away_team.id, FIFA_WC_MATCHES_PATH, matchName(match), 'away team id')),
       state,
       homeScore: started ? match.home_score ?? null : null,
       awayScore: started ? match.away_score ?? null : null,
@@ -209,8 +206,8 @@ export function toWorldCupScheduledGames(knockout: readonly FifaMatch[]): Provid
     return [{
       externalGameId: String(match.id),
       roundNumber: rounds.of(match),
-      homeTeamExternalId: worldCupTeamExternalId(home.id),
-      awayTeamExternalId: worldCupTeamExternalId(away.id),
+      homeTeamExternalId: participantFeedId(home.id),
+      awayTeamExternalId: participantFeedId(away.id),
       scheduledAt: match.datetime ? new Date(match.datetime) : null,
       isNeutralSite: true,
     }];
@@ -272,8 +269,8 @@ export function toWorldCupBracket(knockout: readonly FifaMatch[]): ProviderBrack
     return {
       matchNumber: numbers.get(match) ?? 0,
       roundNumber: index + 1,
-      homeTeamExternalId: home ? worldCupTeamExternalId(home.id) : null,
-      awayTeamExternalId: away ? worldCupTeamExternalId(away.id) : null,
+      homeTeamExternalId: home ? participantFeedId(home.id) : null,
+      awayTeamExternalId: away ? participantFeedId(away.id) : null,
       isNeutralSite: true,
       scheduledAt: match.datetime ? new Date(match.datetime) : null,
       advancesTo: next ? { matchNumber: numbers.get(next) ?? 0, side: position % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY } : null,

@@ -47,8 +47,9 @@ writes nothing. The workflow's summary shows the list with the file's scope and 
 Running the same file again lists everything as a skip.
 
 **Feed ids.** A test player may carry `feedIds`, the provider's id for that team or player keyed
-by provider (`"feedIds": { "balldontlie": "nfl-team-18" }`), in the form the provider's sync
-stores them ([`LIVE-SPORTS-DATA-SYNC.md`](LIVE-SPORTS-DATA-SYNC.md) *Participants*). The run
+by provider code (`"feedIds": { "BALLDONTLIE": "18" }`), the provider's raw id, never prefixed,
+as the provider's sync stores them ([`LIVE-SPORTS-DATA-SYNC.md`](LIVE-SPORTS-DATA-SYNC.md) *Participants*). The run
+reads the `Provider` rows once (`GET /api/v1/providers`; a code with no row stops the load), then
 reads each named provider's feed ids for the player's sport league once
 (`GET /api/v1/participants/provider-mappings?sportLeagueId=…`) and takes the participant a player's feed id is
 mapped to before any match by key or name, so the sync's participant is the test player too,

@@ -65,12 +65,12 @@ const race = sportEventFixture({
 const sovereignty = fieldEntryFixture({
   id: 'sep-1',
   participantId: 'p-1',
-  participant: participantFixture({ id: 'p-1', name: 'Sovereignty', externalId: 'h-1' }),
+  participant: participantFixture({ id: 'p-1', name: 'Sovereignty' }),
 });
 const journalism = fieldEntryFixture({
   id: 'sep-2',
   participantId: 'p-2',
-  participant: participantFixture({ id: 'p-2', name: 'Journalism', externalId: 'h-2' }),
+  participant: participantFixture({ id: 'p-2', name: 'Journalism' }),
 });
 
 function previewRow(

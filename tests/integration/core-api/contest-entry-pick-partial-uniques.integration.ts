@@ -100,7 +100,6 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
       sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Participant A ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
-      externalIds: {},
     },
   });
   const participantB = await prisma.participant.create({
@@ -108,7 +107,6 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
       sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Participant B ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
-      externalIds: {},
     },
   });
   const sepA = await prisma.sportEventParticipant.create({

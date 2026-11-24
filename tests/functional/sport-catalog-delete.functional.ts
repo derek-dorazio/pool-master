@@ -10,6 +10,7 @@ import {
   getSportLeague,
   updateLeagueEventEmailSettings,
 } from '@poolmaster/shared/generated/hey-api';
+import { ProviderCode } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueProfiles } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
@@ -173,7 +174,13 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
     const participantId = await newPlayer(client, sportLeagueId, 'Retired Golfer');
     const db = getFunctionalPrisma();
     await db.participantProviderMapping.create({
-      data: { participantId, sportLeagueId, providerId: `functional-${RUN}`, externalId: `retired-${RUN}`, confidence: 'MANUAL' },
+      data: {
+        participantId,
+        sportLeagueId,
+        providerId: (await db.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } })).id,
+        participantType: 'INDIVIDUAL',
+        externalId: `retired-${RUN}`,
+      },
     });
 
     const deleted = await deleteParticipant({ client, path: { id: participantId } });

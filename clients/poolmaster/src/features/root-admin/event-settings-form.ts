@@ -26,7 +26,6 @@ export const TIER_ORDER_LABELS: Record<FieldOrderBasis, string> = {
   [FieldOrderBasis.ODDS]: 'Odds',
   [FieldOrderBasis.SEED]: 'Seed',
   [FieldOrderBasis.RANKING]: 'Rank',
-  [FieldOrderBasis.NAME]: 'Name',
 };
 
 export function valuesOf(event: SportEventDto, timeZone: string): SettingsValues {

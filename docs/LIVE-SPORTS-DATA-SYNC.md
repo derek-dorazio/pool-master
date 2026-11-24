@@ -183,14 +183,15 @@ leaves no row.
 | Table | Written |
 |---|---|
 | `participants` | One per feed id per sport league. A feed id no participant of the event's league is mapped to creates a new participant in that league, whatever the site already holds by that name. |
-| `participant_provider_mappings` | Unique on `(provider_id, external_id, sport_league_id)`. `EXACT` when the sync created it, `MANUAL` when bound by hand or by test data. `last_seen_at` is set on every mapping a field sync matches. |
+| `participant_provider_mappings` | The only home of a participant's feed ids (#2040). `provider_id` is the `providers` row. Unique on `(provider_id, external_id, sport_league_id, participant_type)`. Written by the sync, bound by hand, or loaded with test data; no confidence. `last_seen_at` is set on every mapping a field sync matches. |
 | `sport_event_participants` | The field row: active, ranking, seed, odds. A released bracket's seeds are kept. |
 
 A participant the site holds by name with no mapping stays beside the new one: merge them, or
 bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`). The
 field's ranked rows with no mapping are listed in a `RANKED_PARTICIPANTS_UNLINKED` warning on the
-run. Participant ids are prefixed by league (`nfl-team-12`, `nba-player-3202`); PGA TOUR golfers
-use the vendor's bare id.
+run. Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
+The mapping's sport league and participant type keep a team and a player with the same raw id
+apart.
 
 **Load sport data is test data only.** It never creates a production participant the sync would
 match differently: test rows carry the feed id ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md)
@@ -200,12 +201,14 @@ match differently: test rows carry the feed id ([`SPORT-DATA-LOADING.md`](SPORT-
 
 While the event is a draft, the field is tiered and priced with no typing
 (`SyncedFieldValuationService`): one field order (odds, then seed, then rank, whichever every
-participant has, then name), the event's tiers from its league's tier profile, and prices from
+participant has, then name to break ties), the event's tiers from its league's tier profile, and prices from
 the event's last pricing or the league's pricing profile. Any tier placed by hand freezes tiers
 for that event, and any price typed by hand freezes prices (`tiersKeptAsEdited`,
 `pricesKeptAsEdited`); later field additions then warn `FIELD_ROWS_UNTIERED` / `UNPRICED`.
 Pressing *Auto-assign* is not a hand edit. A released event's tiers and prices are locked. A
-failure is a `TIERS_AND_PRICES_NOT_MADE` warning on the job; the field is written regardless.
+field where nobody has odds, a seed or a rank has no order: it is not ordered by name, it is
+skipped with reason `NO_ORDER` (#2040). A failure or a skip is a `TIERS_AND_PRICES_NOT_MADE`
+warning on the job; the field is written regardless.
 
 ### Games and brackets
 
@@ -334,12 +337,18 @@ routes by external id; an id no league claims is read as a PGA TOUR tournament.
 | League | Keyword | External id | Participants | Category | Files |
 |---|---|---|---|---|---|
 | PGA TOUR | `PGA TOUR` | vendor tournament id | bare player id | `GOLF` | `pga-*` |
-| NFL | `NFL` | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | `nfl-team-<id>` | `GAME` | `nfl-*` |
-| College Football Playoff | `CFP` | `ncaaf-<season>-cfp` | `ncaaf-team-<id>` | `GAME` | `ncaaf-*` |
-| NCAA men / women | `NCAAM` / `NCAAW` | `ncaab-<season>-tournament`, `ncaaw-…` | `ncaab-team-<id>`, `ncaaw-…` | `GAME` | `ncaa-tournament-*` |
-| NBA / NHL / MLB / WNBA playoffs | `NBA` / `NHL` / `MLB` / `WNBA` | `<league>-<season>-postseason` | `<league>-team-<id>` | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
-| Premier League | `EPL` | `epl-<season>-matchweek-<n>` | `epl-team-<id>` | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
-| FIFA World Cup | `FIFAWC` | `fifa-wc-<year>-knockout` | `fifa-wc-team-<id>` | `GAME` with shoot-outs | `fifa-world-cup-*` |
+| NFL | `NFL` | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | raw team id | `GAME` | `nfl-*` |
+| College Football Playoff | `CFP` | `ncaaf-<season>-cfp` | raw team id | `GAME` | `ncaaf-*` |
+| NCAA men / women | `NCAAM` / `NCAAW` | `ncaab-<season>-tournament`, `ncaaw-…` | raw team id | `GAME` | `ncaa-tournament-*` |
+| NBA / NHL / MLB / WNBA playoffs | `NBA` / `NHL` / `MLB` / `WNBA` | `<league>-<season>-postseason` | raw team id | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
+| Premier League | `EPL` | `epl-<season>-matchweek-<n>` | raw team id | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
+| FIFA World Cup | `FIFAWC` | `fifa-wc-<year>-knockout` | raw team id | `GAME` with shoot-outs | `fifa-world-cup-*` |
+
+A participant id is the provider's raw feed id, never prefixed (#2040). The same raw id can name a
+team in two leagues, or a team and a player in one: the participant's provider mapping tells them
+apart, since it is unique on (provider, feed id, sport league, participant type), and its provider
+is a `Provider` row. Sync runs and sync jobs name their `Provider` row too, and a run's event is a
+link to the `SportEvent` it synced.
 
 League notes that are not obvious from the code:
 

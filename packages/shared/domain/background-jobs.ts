@@ -92,6 +92,8 @@ export interface BackgroundJobScope {
  */
 export interface BackgroundJobRequest extends BackgroundJobScope {
   type: BackgroundJobType;
+  /** The Provider row a sync job reads (#2040); omitted for a job that calls no provider. */
+  providerId?: string;
   payload: unknown;
   /** Due at once when omitted. */
   runAt?: Date;

@@ -68,7 +68,6 @@ describe('RosterPick CRUD integration', () => {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Tiger Roster Pick CRUD ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        externalIds: {},
         role: 'GOLFER',
         teamAffiliation: null,
       },

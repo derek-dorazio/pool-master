@@ -121,6 +121,7 @@ export function toProviderSyncRunDto(
   return {
     id: run.id,
     providerId: run.providerId,
+    providerName: run.providerName,
     sport: run.sport,
     eventId: run.eventId,
     kind: run.kind,

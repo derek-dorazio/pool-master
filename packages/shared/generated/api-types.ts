@@ -2478,7 +2478,7 @@ export interface paths {
         put?: never;
         /**
          * Fill a sport event's tiers from its active field
-         * @description Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
+         * @description Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.
          */
         post: operations["autoAssignEventTiers"];
         delete?: never;
@@ -2518,7 +2518,7 @@ export interface paths {
         put?: never;
         /**
          * Price a sport event's seeded field
-         * @description Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0.
+         * @description Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.
          */
         post: operations["autoAssignEventPrices"];
         delete?: never;
@@ -9165,14 +9165,20 @@ export interface components {
              * @description The participant's sport league: a feed id names one participant per sport league.
              */
             sportLeagueId: string;
-            /** @description The provider that knows the participant by externalId. */
-            providerId: string;
-            externalId: string;
             /**
-             * @description How the identity was matched.
+             * @description The participant's kind: a team id and a player id the feed numbers alike never collide.
              * @enum {string}
              */
-            confidence: "EXACT" | "HIGH" | "MANUAL";
+            participantType: "INDIVIDUAL" | "TEAM";
+            /**
+             * Format: uuid
+             * @description The Provider that knows the participant by externalId.
+             */
+            providerId: string;
+            /** @description That provider's name. */
+            providerName: string;
+            /** @description The provider's own id for the participant, never prefixed. */
+            externalId: string;
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -9191,14 +9197,20 @@ export interface components {
                  * @description The participant's sport league: a feed id names one participant per sport league.
                  */
                 sportLeagueId: string;
-                /** @description The provider that knows the participant by externalId. */
-                providerId: string;
-                externalId: string;
                 /**
-                 * @description How the identity was matched.
+                 * @description The participant's kind: a team id and a player id the feed numbers alike never collide.
                  * @enum {string}
                  */
-                confidence: "EXACT" | "HIGH" | "MANUAL";
+                participantType: "INDIVIDUAL" | "TEAM";
+                /**
+                 * Format: uuid
+                 * @description The Provider that knows the participant by externalId.
+                 */
+                providerId: string;
+                /** @description That provider's name. */
+                providerName: string;
+                /** @description The provider's own id for the participant, never prefixed. */
+                externalId: string;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -9208,14 +9220,20 @@ export interface components {
         };
         /** @description Binds a provider identity to this participant. An identity already bound to another participant moves here. */
         BindParticipantProviderMappingRequest: {
-            /** @description The provider whose identifier this binds. */
+            /**
+             * Format: uuid
+             * @description The Provider whose identifier this binds.
+             */
             providerId: string;
             /** @description The provider's identifier for the competitor — from the unmapped-competitor list. */
             externalId: string;
         };
         /** @description Whose provider identities to list: one provider's, in one sport league. */
         SportLeagueProviderMappingListQuery: {
-            /** @description The provider whose identities to list. */
+            /**
+             * Format: uuid
+             * @description The Provider whose identities to list.
+             */
             providerId: string;
             /**
              * Format: uuid
@@ -9236,14 +9254,20 @@ export interface components {
                  * @description The participant's sport league: a feed id names one participant per sport league.
                  */
                 sportLeagueId: string;
-                /** @description The provider that knows the participant by externalId. */
-                providerId: string;
-                externalId: string;
                 /**
-                 * @description How the identity was matched.
+                 * @description The participant's kind: a team id and a player id the feed numbers alike never collide.
                  * @enum {string}
                  */
-                confidence: "EXACT" | "HIGH" | "MANUAL";
+                participantType: "INDIVIDUAL" | "TEAM";
+                /**
+                 * Format: uuid
+                 * @description The Provider that knows the participant by externalId.
+                 */
+                providerId: string;
+                /** @description That provider's name. */
+                providerName: string;
+                /** @description The provider's own id for the participant, never prefixed. */
+                externalId: string;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -9269,8 +9293,6 @@ export interface components {
              * @enum {string}
              */
             participantType: "INDIVIDUAL" | "TEAM";
-            /** @description Primary provider identifier when one exists. */
-            externalId?: string;
             /** @description First name when the participant is a person. */
             firstName?: string;
             /** @description Last name when the participant is a person. */
@@ -9317,10 +9339,6 @@ export interface components {
              * @description When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
-            /** @description Map of provider identifiers keyed by provider code. */
-            externalIds: {
-                [key: string]: string;
-            };
             /**
              * Format: date-time
              * @description When the participant record was created.
@@ -9367,8 +9385,6 @@ export interface components {
                  * @enum {string}
                  */
                 participantType: "INDIVIDUAL" | "TEAM";
-                /** @description Primary provider identifier when one exists. */
-                externalId?: string;
                 /** @description First name when the participant is a person. */
                 firstName?: string;
                 /** @description Last name when the participant is a person. */
@@ -9415,10 +9431,6 @@ export interface components {
                  * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
-                /** @description Map of provider identifiers keyed by provider code. */
-                externalIds: {
-                    [key: string]: string;
-                };
                 /**
                  * Format: date-time
                  * @description When the participant record was created.
@@ -9451,8 +9463,6 @@ export interface components {
                  * @enum {string}
                  */
                 participantType: "INDIVIDUAL" | "TEAM";
-                /** @description Primary provider identifier when one exists. */
-                externalId?: string;
                 /** @description First name when the participant is a person. */
                 firstName?: string;
                 /** @description Last name when the participant is a person. */
@@ -9499,10 +9509,6 @@ export interface components {
                  * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
-                /** @description Map of provider identifiers keyed by provider code. */
-                externalIds: {
-                    [key: string]: string;
-                };
                 /**
                  * Format: date-time
                  * @description When the participant record was created.
@@ -9531,8 +9537,6 @@ export interface components {
              * @enum {string}
              */
             participantType: "INDIVIDUAL" | "TEAM";
-            /** @description Primary provider identifier. */
-            externalId?: string;
             /** @description First name when the participant is a person. */
             firstName?: string;
             /** @description Last name when the participant is a person. */
@@ -9545,10 +9549,6 @@ export interface components {
             role?: string;
             /** @description Current team affiliation. */
             teamAffiliation?: string;
-            /** @description Map of provider identifiers keyed by provider code. */
-            externalIds?: {
-                [key: string]: string;
-            };
         };
         /** @description Fields to change on a participant. Omitted fields keep their current values. */
         UpdateParticipantRequest: {
@@ -9597,12 +9597,6 @@ export interface components {
             };
             /** @description Participant image URL. */
             photoUrl?: string;
-            /** @description Primary provider identifier. */
-            externalId?: string;
-            /** @description Map of provider identifiers keyed by provider code. */
-            externalIds?: {
-                [key: string]: string;
-            };
         };
         /** @description A sport the platform runs contests on. */
         SportDto: {
@@ -10914,10 +10908,10 @@ export interface components {
              */
             releaseAtKind: "PLANNED" | "ACTUAL" | null;
             /**
-             * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+             * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
              * @enum {string|null}
              */
-            tierOrderBasis: "ODDS" | "SEED" | "RANKING" | "NAME" | null;
+            tierOrderBasis: "ODDS" | "SEED" | "RANKING" | null;
             /** @description False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last. */
             tierOrderCoversField: boolean;
             /** @description One per field row, active or withdrawn, never paged. */
@@ -11098,10 +11092,10 @@ export interface components {
                  */
                 releaseAtKind: "PLANNED" | "ACTUAL" | null;
                 /**
-                 * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+                 * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
                  * @enum {string|null}
                  */
-                tierOrderBasis: "ODDS" | "SEED" | "RANKING" | "NAME" | null;
+                tierOrderBasis: "ODDS" | "SEED" | "RANKING" | null;
                 /** @description False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last. */
                 tierOrderCoversField: boolean;
                 /** @description One per field row, active or withdrawn, never paged. */
@@ -12741,11 +12735,11 @@ export interface components {
             /** @description Order within the tier. */
             tierOrderIndex: number | null;
             /** @enum {string|null} */
-            tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+            tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
             /** @description Price in a budget contest; null when unpriced. */
             price: number | null;
             /** @enum {string|null} */
-            priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+            priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
         };
         /** @description A field row's running standing. The score lives in the sport's extension. */
         SportEventParticipantStandingDto: {
@@ -12840,8 +12834,6 @@ export interface components {
                  * @enum {string}
                  */
                 participantType: "INDIVIDUAL" | "TEAM";
-                /** @description Primary provider identifier when one exists. */
-                externalId?: string;
                 /** @description First name when the participant is a person. */
                 firstName?: string;
                 /** @description Last name when the participant is a person. */
@@ -12888,10 +12880,6 @@ export interface components {
                  * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
-                /** @description Map of provider identifiers keyed by provider code. */
-                externalIds: {
-                    [key: string]: string;
-                };
                 /**
                  * Format: date-time
                  * @description When the participant record was created.
@@ -12915,11 +12903,11 @@ export interface components {
                 /** @description Order within the tier. */
                 tierOrderIndex: number | null;
                 /** @enum {string|null} */
-                tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
                 /** @description Price in a budget contest; null when unpriced. */
                 price: number | null;
                 /** @enum {string|null} */
-                priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
             } | null;
             /** @description Null until the participant has a scored round, or a race result. */
             standing: {
@@ -13045,8 +13033,6 @@ export interface components {
                      * @enum {string}
                      */
                     participantType: "INDIVIDUAL" | "TEAM";
-                    /** @description Primary provider identifier when one exists. */
-                    externalId?: string;
                     /** @description First name when the participant is a person. */
                     firstName?: string;
                     /** @description Last name when the participant is a person. */
@@ -13093,10 +13079,6 @@ export interface components {
                      * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
-                    /** @description Map of provider identifiers keyed by provider code. */
-                    externalIds: {
-                        [key: string]: string;
-                    };
                     /**
                      * Format: date-time
                      * @description When the participant record was created.
@@ -13120,11 +13102,11 @@ export interface components {
                     /** @description Order within the tier. */
                     tierOrderIndex: number | null;
                     /** @enum {string|null} */
-                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
                     /** @description Price in a budget contest; null when unpriced. */
                     price: number | null;
                     /** @enum {string|null} */
-                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
                 /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
@@ -13293,8 +13275,6 @@ export interface components {
                      * @enum {string}
                      */
                     participantType: "INDIVIDUAL" | "TEAM";
-                    /** @description Primary provider identifier when one exists. */
-                    externalId?: string;
                     /** @description First name when the participant is a person. */
                     firstName?: string;
                     /** @description Last name when the participant is a person. */
@@ -13341,10 +13321,6 @@ export interface components {
                      * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
-                    /** @description Map of provider identifiers keyed by provider code. */
-                    externalIds: {
-                        [key: string]: string;
-                    };
                     /**
                      * Format: date-time
                      * @description When the participant record was created.
@@ -13368,11 +13344,11 @@ export interface components {
                     /** @description Order within the tier. */
                     tierOrderIndex: number | null;
                     /** @enum {string|null} */
-                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
                     /** @description Price in a budget contest; null when unpriced. */
                     price: number | null;
                     /** @enum {string|null} */
-                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
                 /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
@@ -14363,8 +14339,6 @@ export interface components {
                      * @enum {string}
                      */
                     participantType: "INDIVIDUAL" | "TEAM";
-                    /** @description Primary provider identifier when one exists. */
-                    externalId?: string;
                     /** @description First name when the participant is a person. */
                     firstName?: string;
                     /** @description Last name when the participant is a person. */
@@ -14411,10 +14385,6 @@ export interface components {
                      * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
-                    /** @description Map of provider identifiers keyed by provider code. */
-                    externalIds: {
-                        [key: string]: string;
-                    };
                     /**
                      * Format: date-time
                      * @description When the participant record was created.
@@ -14438,11 +14408,11 @@ export interface components {
                     /** @description Order within the tier. */
                     tierOrderIndex: number | null;
                     /** @enum {string|null} */
-                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                    tierAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
                     /** @description Price in a budget contest; null when unpriced. */
                     price: number | null;
                     /** @enum {string|null} */
-                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "AUTO_NAME" | "MANUAL" | null;
+                    priceAssignedSource: "AUTO_ODDS" | "AUTO_SEED" | "AUTO_RANKING" | "MANUAL" | null;
                 } | null;
                 /** @description Null until the participant has a scored round, or a race result. */
                 standing: {
@@ -24508,10 +24478,16 @@ export interface components {
         /** @description One feed's sync against a provider, with its diagnostics. */
         ProviderSyncRunDto: {
             id: string;
+            /**
+             * Format: uuid
+             * @description The Provider the run read.
+             */
             providerId: string;
+            /** @description That Provider's name. */
+            providerName: string;
             /** @enum {string} */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+            /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
             eventId: string | null;
             /**
              * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
@@ -24641,10 +24617,16 @@ export interface components {
         /** @description One feed's sync against a provider, with its summary and its detailed diagnostics. */
         ProviderSyncRunDetailDto: {
             id: string;
+            /**
+             * Format: uuid
+             * @description The Provider the run read.
+             */
             providerId: string;
+            /** @description That Provider's name. */
+            providerName: string;
             /** @enum {string} */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+            /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
             eventId: string | null;
             /**
              * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
@@ -24883,6 +24865,10 @@ export interface components {
         };
         /** @description Filters over the sync-run history. A submission-time window bounds it; nothing pages it. */
         ProviderSyncRunListQuery: {
+            /**
+             * Format: uuid
+             * @description Only the runs of this Provider.
+             */
             providerId?: string;
             /** @enum {string} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
@@ -24903,10 +24889,16 @@ export interface components {
         ProviderSyncRunListResponse: {
             syncRuns: {
                 id: string;
+                /**
+                 * Format: uuid
+                 * @description The Provider the run read.
+                 */
                 providerId: string;
+                /** @description That Provider's name. */
+                providerName: string;
                 /** @enum {string} */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+                /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
                 eventId: string | null;
                 /**
                  * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
@@ -25048,10 +25040,16 @@ export interface components {
             submittedAt: string;
             syncRuns: {
                 id: string;
+                /**
+                 * Format: uuid
+                 * @description The Provider the run read.
+                 */
                 providerId: string;
+                /** @description That Provider's name. */
+                providerName: string;
                 /** @enum {string} */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description Provider event identifier when the run was narrowed to one event; null for a whole-sport run. */
+                /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
                 eventId: string | null;
                 /**
                  * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
@@ -25186,6 +25184,10 @@ export interface components {
         };
         /** @description A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is. */
         UnmappedProviderParticipantDto: {
+            /**
+             * Format: uuid
+             * @description The Provider that reports the competitor: what binding it to a participant names.
+             */
             providerId: string;
             providerName: string;
             /** @description The provider's identifier for the competitor. */
@@ -25197,7 +25199,10 @@ export interface components {
         };
         /** @description Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors. */
         UnmappedProviderParticipantListQuery: {
-            /** @description Only this provider's competitors; the other providers are not asked. */
+            /**
+             * Format: uuid
+             * @description Only this Provider's competitors; the other providers are not asked.
+             */
             providerId?: string;
             /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
             externalId?: string;
@@ -25205,6 +25210,10 @@ export interface components {
         /** @description The unmapped competitors matching the filters, across the scheduled sports of each provider asked. */
         UnmappedProviderParticipantListResponse: {
             participants: {
+                /**
+                 * Format: uuid
+                 * @description The Provider that reports the competitor: what binding it to a participant names.
+                 */
                 providerId: string;
                 providerName: string;
                 /** @description The provider's identifier for the competitor. */
@@ -36634,7 +36643,7 @@ export interface operations {
     listSportLeagueProviderMappings: {
         parameters: {
             query: {
-                /** @description The provider whose identities to list. */
+                /** @description The Provider whose identities to list. */
                 providerId: string;
                 /** @description Only the identities of this sport league's participants. */
                 sportLeagueId: string;
@@ -37677,6 +37686,7 @@ export interface operations {
     listProviderSyncRuns: {
         parameters: {
             query?: {
+                /** @description Only the runs of this Provider. */
                 providerId?: string;
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
@@ -37906,7 +37916,7 @@ export interface operations {
     listUnmappedProviderParticipants: {
         parameters: {
             query?: {
-                /** @description Only this provider's competitors; the other providers are not asked. */
+                /** @description Only this Provider's competitors; the other providers are not asked. */
                 providerId?: string;
                 /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
                 externalId?: string;

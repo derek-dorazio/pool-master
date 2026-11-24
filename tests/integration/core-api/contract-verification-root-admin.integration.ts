@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
@@ -143,7 +144,7 @@ function emptyLiveScorePersistenceResult() {
 }
 
 class OperationalContractProvider implements SportDataProvider {
-  providerId = 'contract-provider';
+  providerId = 'balldontlie';
   providerName = 'Contract Provider';
   sportsCovered: Sport[] = ['GOLF'];
 
@@ -245,7 +246,7 @@ class OperationalContractProvider implements SportDataProvider {
 }
 
 class EmptyDiagnosticsProvider extends OperationalContractProvider implements ProviderPayloadDiagnostics {
-  override providerId = 'empty-diagnostics-provider';
+  override providerId = 'balldontlie';
   override providerName = 'Empty Diagnostics Provider';
   private payloads: ProviderPayloadCapture[] = [];
 
@@ -439,9 +440,8 @@ describe('Contract verification (root admin)', () => {
       data: {
         kind: 'SCORES',
         trigger: 'SCHEDULE',
-        providerId: 'forbidden-details-provider',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         sport: 'GOLF',
-        eventId: 'forbidden-details-event',
         status: 'COMPLETED',
         payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
         detailsJson: { providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: true, rawTruncated: false, raw: [] } },
@@ -538,9 +538,8 @@ describe('Contract verification (root admin)', () => {
           kind: 'SCORES',
           trigger: 'SCHEDULE',
           id: '11111111-1111-1111-1111-111111111111',
-          providerId: 'integration-test',
+          providerId: BALLDONTLIE_TEST_PROVIDER_ID,
           sport: 'GOLF',
-          eventId: 'golf-masters-2026',
           status: 'COMPLETED',
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
           completedAt: new Date('2026-04-09T10:01:00.000Z'),
@@ -552,7 +551,7 @@ describe('Contract verification (root admin)', () => {
           },
           detailsJson: {
             jobPayload: {
-              jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'integration-test', sport: 'GOLF',
+              jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: 'GOLF',
               status: 'COMPLETED', recordsProcessed: 42, errors: 0, errorLog: [],
             },
             writeDiagnostics: {
@@ -565,9 +564,8 @@ describe('Contract verification (root admin)', () => {
           kind: 'SCORES',
           trigger: 'SCHEDULE',
           id: '22222222-2222-2222-2222-222222222222',
-          providerId: 'integration-test',
+          providerId: BALLDONTLIE_TEST_PROVIDER_ID,
           sport: 'GOLF',
-          eventId: 'event-2',
           status: 'FAILED',
           startedAt: new Date('2026-04-10T10:00:00.000Z'),
           completedAt: new Date('2026-04-10T10:00:30.000Z'),
@@ -637,14 +635,14 @@ describe('Contract verification (root admin)', () => {
 
     const syncRunsRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/ingestion/sync-runs?providerId=integration-test&sport=GOLF',
+      url: `/api/v1/ingestion/sync-runs?providerId=${BALLDONTLIE_TEST_PROVIDER_ID}&sport=GOLF`,
       headers: rootAdmin.headers,
     });
     expect(syncRunsRes.statusCode).toBe(200);
     expect(ProviderSyncRunListResponseSchema.safeParse(syncRunsRes.json()).success).toBe(true);
     // #205 — both rows were submitted just now, inside the default 6-hour window.
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns).toHaveLength(2);
-    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0].providerId).toBe('integration-test');
+    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0]).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE' });
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0].payload.runType).toBeDefined();
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns.map((run) => run.id)).toEqual([
       '11111111-1111-1111-1111-111111111111',
@@ -692,7 +690,7 @@ describe('Contract verification (root admin)', () => {
     // A window that ends before they were submitted excludes them.
     const earlierRes = await getApp().inject({
       method: 'GET',
-      url: '/api/v1/ingestion/sync-runs?providerId=integration-test&sport=GOLF&from=2020-01-01T00:00:00.000Z&to=2020-01-02T00:00:00.000Z',
+      url: `/api/v1/ingestion/sync-runs?providerId=${BALLDONTLIE_TEST_PROVIDER_ID}&sport=GOLF&from=2020-01-01T00:00:00.000Z&to=2020-01-02T00:00:00.000Z`,
       headers: rootAdmin.headers,
     });
     expect(earlierRes.statusCode).toBe(200);
@@ -841,17 +839,17 @@ describe('Contract verification (root admin)', () => {
       isRootAdmin: true,
     });
 
-    await getPrisma().sportEvent.upsert({
+    const contractEvent = await getPrisma().sportEvent.upsert({
       where: {
         providerId_externalId: {
-          providerId: 'contract-provider',
+          providerId: 'balldontlie',
           externalId: 'event-1',
         },
       },
       create: {
         ...(await freshEventEdition(getPrisma())),
         externalId: 'event-1',
-        providerId: 'contract-provider',
+        providerId: 'balldontlie',
         sport: 'GOLF',
         name: 'Contract Masters',
         venue: 'Contract National',
@@ -885,9 +883,9 @@ describe('Contract verification (root admin)', () => {
         kind: 'SCORES',
         trigger: 'SCHEDULE',
         id: '33333333-3333-3333-3333-333333333333',
-        providerId: 'contract-provider',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         sport: 'GOLF',
-        eventId: 'event-1',
+        sportEventId: contractEvent.id,
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
@@ -898,9 +896,9 @@ describe('Contract verification (root admin)', () => {
         },
       },
       update: {
-        providerId: 'contract-provider',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         sport: 'GOLF',
-        eventId: 'event-1',
+        sportEventId: contractEvent.id,
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
@@ -913,7 +911,7 @@ describe('Contract verification (root admin)', () => {
     });
     await getPrisma().providerSyncRun.deleteMany({
       where: {
-        providerId: 'contract-provider',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         id: {
           not: '33333333-3333-3333-3333-333333333333',
         },
@@ -931,19 +929,18 @@ describe('Contract verification (root admin)', () => {
       expect(providersRes.statusCode).toBe(200);
       expect(ProviderListResponseSchema.safeParse(providersRes.json()).success).toBe(true);
       // BALLDONTLIE's row lists too, not running here (#1997): the registered provider is found by its id.
-      expect(providersRes.json<ProviderListResponse>().providers.find((summary) => summary.providerId === 'contract-provider')).toMatchObject({
-        providerId: 'contract-provider',
+      expect(providersRes.json<ProviderListResponse>().providers.find((summary) => summary.providerId === 'balldontlie')).toMatchObject({
+        providerId: 'balldontlie',
         status: 'HEALTHY',
         activeEventCount: 1,
-        requestsPerMinute: null,
-        webhooksEnabled: false,
+        // requestsPerMinute and webhooksEnabled are the BALLDONTLIE Provider row's (#1997), checked where it is.
         syncedSportLeagueCount: 0,
         rateLimitedJobsLast24h: 0,
       });
 
       const syncRunsRes = await app.inject({
         method: 'GET',
-        url: '/api/v1/ingestion/sync-runs?providerId=contract-provider&sport=GOLF&status=COMPLETED',
+        url: `/api/v1/ingestion/sync-runs?providerId=${BALLDONTLIE_TEST_PROVIDER_ID}&sport=GOLF&status=COMPLETED`,
         headers: rootAdmin.headers,
       });
       expect(syncRunsRes.statusCode).toBe(200);
@@ -962,7 +959,7 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          providerId: 'contract-provider',
+          providerId: 'balldontlie',
           feeds: ['EVENTLIVESCORES'],
         },
       });
@@ -984,7 +981,7 @@ describe('Contract verification (root admin)', () => {
           url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
           headers: withoutJsonBodyHeaders(rootAdmin.headers),
           payload: {
-            providerId: 'contract-provider',
+            providerId: 'balldontlie',
             feeds: [retiredFeed],
           },
         });
@@ -1021,7 +1018,7 @@ describe('Contract verification (root admin)', () => {
       isRootAdmin: true,
     });
     await getPrisma().providerSyncRun.deleteMany({
-      where: { providerId: 'empty-diagnostics-provider' },
+      where: { providerId: BALLDONTLIE_TEST_PROVIDER_ID },
     });
     const app = await buildIngestionApp(new EmptyDiagnosticsProvider());
 
@@ -1031,7 +1028,7 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/ingestion/sports/GOLF/events/empty-diagnostics-event/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          providerId: 'empty-diagnostics-provider',
+          providerId: 'balldontlie',
           feeds: ['EVENTLIVESCORES'],
         },
       });
@@ -1149,7 +1146,7 @@ describe('Contract verification (root admin)', () => {
           url: '/api/v1/ingestion/sports/GOLF/events/missing-300/sync',
           headers: withoutJsonBodyHeaders(rootAdmin.headers),
           payload: {
-            providerId: 'contract-provider',
+            providerId: 'balldontlie',
             feeds: ['EVENTLIVESCORES'],
           },
         });
@@ -1201,7 +1198,7 @@ describe('Contract verification (root admin)', () => {
       update: {},
     });
     await prisma.participantProviderMapping.deleteMany({
-      where: { providerId: 'contract-provider', externalId: 'golfer-1' },
+      where: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'golfer-1' },
     });
     const participant = await prisma.participant.create({
       data: {
@@ -1210,7 +1207,6 @@ describe('Contract verification (root admin)', () => {
         participantType: 'INDIVIDUAL',
         status: 'ACTIVE',
         injuryStatus: { status: 'HEALTHY' },
-        externalIds: {},
       },
     });
     const app = await buildIngestionApp(new OperationalContractProvider());
@@ -1224,21 +1220,21 @@ describe('Contract verification (root admin)', () => {
       expect(beforeRes.statusCode).toBe(200);
       expect(UnmappedProviderParticipantListResponseSchema.safeParse(beforeRes.json()).success).toBe(true);
       expect(beforeRes.json<UnmappedProviderParticipantListResponse>().participants).toContainEqual({
-        providerId: 'contract-provider',
-        providerName: 'Contract Provider',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+        providerName: 'BALLDONTLIE',
         externalId: 'golfer-1',
         externalName: 'Avery Hart',
         sport: 'GOLF',
       });
 
       // Filtered to one competitor, the page reads that row alone (#1251).
-      const oneUrl = '/api/v1/ingestion/unmapped-participants?providerId=contract-provider&externalId=golfer-1';
+      const oneUrl = `/api/v1/ingestion/unmapped-participants?providerId=${BALLDONTLIE_TEST_PROVIDER_ID}&externalId=golfer-1`;
       const oneRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
       expect(oneRes.statusCode).toBe(200);
       expect(UnmappedProviderParticipantListResponseSchema.safeParse(oneRes.json()).success).toBe(true);
       expect(oneRes.json<UnmappedProviderParticipantListResponse>().participants).toEqual([{
-        providerId: 'contract-provider',
-        providerName: 'Contract Provider',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+        providerName: 'BALLDONTLIE',
         externalId: 'golfer-1',
         externalName: 'Avery Hart',
         sport: 'GOLF',
@@ -1248,15 +1244,16 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/participants/${participant.id}/provider-mappings`,
         headers: rootAdmin.headers,
-        payload: { providerId: 'contract-provider', externalId: 'golfer-1' },
+        payload: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'golfer-1' },
       });
       expect(bindRes.statusCode).toBe(200);
       expect(ParticipantProviderMappingResponseSchema.safeParse(bindRes.json()).success).toBe(true);
       expect(bindRes.json<ParticipantProviderMappingResponse>().providerMapping).toMatchObject({
         participantId: participant.id,
-        providerId: 'contract-provider',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+        providerName: 'BALLDONTLIE',
+        participantType: 'INDIVIDUAL',
         externalId: 'golfer-1',
-        confidence: 'MANUAL',
       });
 
       const afterRes = await app.inject({
@@ -1268,7 +1265,7 @@ describe('Contract verification (root admin)', () => {
       expect(
         afterRes.json<UnmappedProviderParticipantListResponse>().participants.some(
           (row) =>
-            row.providerId === 'contract-provider' && row.externalId === 'golfer-1',
+            row.providerId === BALLDONTLIE_TEST_PROVIDER_ID && row.externalId === 'golfer-1',
         ),
       ).toBe(false);
       const oneAfterRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
@@ -1278,7 +1275,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/participants/${participant.id}/provider-mappings`,
         headers: rootAdmin.headers,
-        payload: { providerId: 'missing-provider', externalId: 'golfer-1' },
+        payload: { providerId: randomUUID(), externalId: 'golfer-1' },
       });
       expect(unknownProviderRes.statusCode).toBe(404);
       expect(unknownProviderRes.json<ErrorEnvelope>().error.code).toBe('PROVIDER_NOT_FOUND');
@@ -1367,7 +1364,6 @@ describe('Contract verification (root admin)', () => {
             name: `Z3L Contract Golfer ${stamp}-${i}`,
             shortName: `Z${stamp}${i}`,
             nationality: 'USA',
-            externalId: `z3l-contract-${stamp}-p${i}`,
           },
         });
         expect(playerRes.statusCode).toBe(201);
@@ -1375,6 +1371,14 @@ describe('Contract verification (root admin)', () => {
           expect(ParticipantResponseSchema.safeParse(playerRes.json()).success).toBe(true);
         }
         created.participantIds.push(playerRes.json<ParticipantResponse>().participant.id);
+        // A feed id is bound as a provider mapping, never sent on the participant (#2040).
+        const bindRes = await getApp().inject({
+          method: 'POST',
+          url: `/api/v1/participants/${playerRes.json<ParticipantResponse>().participant.id}/provider-mappings`,
+          headers: rootAdmin.headers,
+          payload: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: `z3l-contract-${stamp}-p${i}` },
+        });
+        expect(bindRes.statusCode).toBe(200);
       }
 
       // --- listParticipants, the golf player list (200) ----------------------
@@ -1777,7 +1781,7 @@ describe('Contract verification (root admin)', () => {
       // --- listProviderCatalogEvents (200) --------------------------------
       const catalogRes = await app.inject({
         method: 'GET',
-        url: '/api/v1/ingestion/providers/contract-provider/catalog-events?sport=GOLF&from=2026-04-01T00:00:00.000Z&to=2026-04-30T00:00:00.000Z',
+        url: '/api/v1/ingestion/providers/balldontlie/catalog-events?sport=GOLF&from=2026-04-01T00:00:00.000Z&to=2026-04-30T00:00:00.000Z',
         headers: rootAdmin.headers,
       });
       expect(catalogRes.statusCode).toBe(200);
@@ -1785,7 +1789,7 @@ describe('Contract verification (root admin)', () => {
       // #205 — each result is a provider event, provider and sport included.
       expect(catalogRes.json<ProviderCatalogEventListResponse>().events).toContainEqual(expect.objectContaining({
         externalId: 'event-1',
-        providerId: 'contract-provider',
+        providerId: 'balldontlie',
         sport: 'GOLF',
         venue: 'Contract National',
       }));
@@ -1821,19 +1825,19 @@ describe('Contract verification (root admin)', () => {
 
       // --- linkEventScoreSource (200) ------------------------------------------
       // A shape test: linkScoreSource checks the provider is registered for the event's
-      // sport, so the link goes through the app that registers contract-provider. It does
+      // sport, so the link goes through the app that registers the contract provider. It does
       // not check the provider event exists, so a synthetic externalId links fine.
       const linkRes = await app.inject({
         method: 'PUT',
         url: `/api/v1/events/${eventId}/score-source`,
         headers: rootAdmin.headers,
-        payload: { providerId: 'contract-provider', externalId: `contract-cs8-${stamp}` },
+        payload: { providerId: 'balldontlie', externalId: `contract-cs8-${stamp}` },
       });
       expect(linkRes.statusCode).toBe(200);
       expect(SportEventResponseSchema.safeParse(linkRes.json()).success).toBe(true);
       expect(linkRes.json<SportEventResponse>().event).toMatchObject({
         syncScope: 'SCORES_ONLY',
-        providerId: 'contract-provider',
+        providerId: 'balldontlie',
         externalId: `contract-cs8-${stamp}`,
       });
 
@@ -1884,7 +1888,7 @@ describe('Contract verification (root admin)', () => {
       expect(providersRes.statusCode).toBe(200);
       expect(ProviderListResponseSchema.safeParse(providersRes.json()).success).toBe(true);
       expect(providersRes.json<{ providers: Array<{ providerId: string; supportsLiveSimulation: boolean }> }>().providers)
-        .toContainEqual(expect.objectContaining({ providerId: 'contract-provider', supportsLiveSimulation: true }));
+        .toContainEqual(expect.objectContaining({ providerId: 'balldontlie', supportsLiveSimulation: true }));
 
       const leagueRes = await getApp().inject({
         method: 'POST',
@@ -1927,7 +1931,7 @@ describe('Contract verification (root admin)', () => {
         method: 'PUT',
         url: `/api/v1/events/${eventId}/score-source`,
         headers: rootAdmin.headers,
-        payload: { providerId: 'contract-provider', externalId: `live-sim-${stamp}` },
+        payload: { providerId: 'balldontlie', externalId: `live-sim-${stamp}` },
       });
       expect(linkRes.statusCode).toBe(200);
 

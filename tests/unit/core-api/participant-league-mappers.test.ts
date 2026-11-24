@@ -52,13 +52,18 @@ describe('participant mappers', () => {
     expect(dto.injuryStatus).toEqual({ status: 'OUT', detail: 'Wrist', expectedReturn: '2026-05-01T00:00:00.000Z', updatedAt: '2026-04-01T00:00:00.000Z', source: 'PGA' });
   });
 
-  it('shows a provider mapping with its confidence and when it was made', () => {
-    expect(mapParticipantProviderMappingToDto({ id: 'm-1', participantId: 'p-scheffler', providerId: 'sportsdata', externalId: '46046', confidence: 0.98, mappedAt: created } as never)).toEqual({
+  it('shows a provider mapping with its sport league, participant type, provider row and name, raw feed id and when it was made', () => {
+    expect(mapParticipantProviderMappingToDto({
+      id: 'm-1', participantId: 'p-scheffler', sportLeagueId: 'league-pga', participantType: 'INDIVIDUAL',
+      providerId: 'provider-row-1', providerName: 'BALLDONTLIE', externalId: '46046', mappedAt: created, createdAt: created, updatedAt: created,
+    })).toEqual({
       id: 'm-1',
       participantId: 'p-scheffler',
-      providerId: 'sportsdata',
+      sportLeagueId: 'league-pga',
+      participantType: 'INDIVIDUAL',
+      providerId: 'provider-row-1',
+      providerName: 'BALLDONTLIE',
       externalId: '46046',
-      confidence: 0.98,
       mappedAt: '2026-01-01T00:00:00.000Z',
     });
   });

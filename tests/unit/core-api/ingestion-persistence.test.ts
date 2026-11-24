@@ -2,7 +2,7 @@ import { testDomainEvents } from '../../support/domain-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { expect } from '@jest/globals';
-import { BackgroundJobType, MappingConfidence, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type {
   ProviderParticipant,
@@ -15,11 +15,12 @@ import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import type { SportEventParticipantView } from '@poolmaster/shared/db';
 import { PublicReadPath } from '../../../packages/core-api/src/core/public-cache';
 import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 
 function buildInProgressEvent(): SportEvent {
   return {
     externalId: 'provider-event-1',
-    providerId: 'mock-contest-feed',
+    providerId: 'balldontlie',
     sport: Sport.GOLF,
     name: 'Manual Test Golf Tournament',
     startDate: new Date('2026-05-02T20:00:00.000Z'),
@@ -37,7 +38,7 @@ function linkedRow(overrides: Record<string, unknown> = {}) {
   return {
     id: 'sport-event-1',
     externalId: 'provider-event-1',
-    providerId: 'mock-contest-feed',
+    providerId: 'balldontlie',
     sport: Sport.GOLF,
     name: 'Manual Test Golf Tournament',
     venue: null,
@@ -82,7 +83,9 @@ function fieldSyncPrisma(options: {
     participantProviderMapping: {
       findMany: jest.fn().mockResolvedValue([{
         id: 'mapping-1',
-        providerId: 'mock-contest-feed',
+        // Keyed to the Provider row (#2040); the read joins its code.
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+        provider: { code: ProviderCode.BALLDONTLIE },
         externalId: options.externalId,
         participantId: 'participant-1',
         participant: { id: 'participant-1', name: 'Stored Name' },
@@ -117,7 +120,7 @@ describe('IngestionPersistence', () => {
         findMany: jest.fn().mockResolvedValue([{
             id: 'sport-event-1',
             externalId: 'golf-weekend-1',
-            providerId: 'mock-contest-feed',
+            providerId: 'balldontlie',
             sport: Sport.GOLF,
             name: 'Old Weekend 1 Name',
             venue: 'Old Links',
@@ -146,7 +149,7 @@ describe('IngestionPersistence', () => {
     const events: SportEvent[] = [
       {
         externalId: 'golf-weekend-1',
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         sport: Sport.GOLF,
         name: 'Weekend 1 Championship',
         venue: 'PoolMaster QA Links',
@@ -164,7 +167,7 @@ describe('IngestionPersistence', () => {
       },
       {
         externalId: 'golf-weekend-2',
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         sport: Sport.GOLF,
         name: 'Weekend 2 Championship',
         venue: 'PoolMaster QA Links',
@@ -227,7 +230,7 @@ describe('IngestionPersistence', () => {
       participants: [
         {
           externalId: 'golfer-01',
-          providerId: 'mock-contest-feed',
+          providerId: 'balldontlie',
           sport: Sport.GOLF,
           name: 'Scottie Scheffler',
           active: true,
@@ -245,7 +248,7 @@ describe('IngestionPersistence', () => {
       eventRow: {
         id: 'sport-event-1',
         externalId: 'golf-open-2026',
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         sport: Sport.GOLF,
         name: 'Manual Test Golf Tournament',
         venue: null,
@@ -309,7 +312,7 @@ describe('IngestionPersistence', () => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       sport: Sport.BASKETBALL,
-      participants: [{ externalId: 'nba-player-1', providerId: 'mock-contest-feed', sport: Sport.BASKETBALL, name: 'Jayson Tatum', active: true, metadata: {} }],
+      participants: [{ externalId: 'nba-player-1', providerId: 'balldontlie', sport: Sport.BASKETBALL, name: 'Jayson Tatum', active: true, metadata: {} }],
     };
     const prisma = fieldSyncPrisma({
       externalId: 'nba-player-1',
@@ -326,7 +329,7 @@ describe('IngestionPersistence', () => {
       { participantId: 'site-brown', name: 'Jaylen Brown', ranking: 5 },
     ]);
     expect(prisma.sportEventParticipant.findMany).toHaveBeenCalledWith({
-      where: { sportEventId: 'sport-event-1', ranking: { not: null }, participant: { providerMappings: { none: { providerId: 'mock-contest-feed' } } } },
+      where: { sportEventId: 'sport-event-1', ranking: { not: null }, participant: { providerMappings: { none: { provider: { code: ProviderCode.BALLDONTLIE } } } } },
       select: { ranking: true, participant: { select: { id: true, name: true } } },
       orderBy: [{ ranking: 'asc' }, { participant: { name: 'asc' } }],
     });
@@ -353,7 +356,7 @@ describe('IngestionPersistence', () => {
       status: 'SCHEDULED',
       participants: [{
         externalId: 'team-01',
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         sport: Sport.BASKETBALL,
         name: 'Duke',
         active: true,
@@ -394,7 +397,7 @@ describe('IngestionPersistence', () => {
     const NOW = new Date('2026-10-28T20:00:00.000Z');
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
-      participants: [{ externalId: 'golfer-01', providerId: 'mock-contest-feed', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 1, metadata: {} }],
+      participants: [{ externalId: 'golfer-01', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 1, metadata: {} }],
     };
 
     function syncedEvent(createField: jest.Mock) {
@@ -456,7 +459,7 @@ describe('IngestionPersistence', () => {
       participants: [
         {
           externalId: 'golfer-01',
-          providerId: 'mock-contest-feed',
+          providerId: 'balldontlie',
           sport: Sport.GOLF,
           name: 'Scottie Scheffler',
           active: true,
@@ -474,7 +477,7 @@ describe('IngestionPersistence', () => {
       eventRow: {
         id: 'sport-event-1',
         externalId: 'golf-open-2026',
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         sport: Sport.GOLF,
         name: 'Manual Test Golf Tournament',
         venue: null,
@@ -525,13 +528,13 @@ describe('IngestionPersistence', () => {
       externalId: 'golf-open-2026',
       status: 'SCHEDULED',
       participants: [{
-        externalId: 'golfer-01', providerId: 'mock-contest-feed', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 7,
+        externalId: 'golfer-01', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 7,
         metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
       }],
     };
     const prisma = fieldSyncPrisma({
       externalId: 'golfer-01',
-      eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', providerId: 'mock-contest-feed', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null, participantCount: null, metadata: detail.metadata },
+      eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null, participantCount: null, metadata: detail.metadata },
       linkedEvent: { id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { participantType: 'INDIVIDUAL' } } } },
       fieldRow: {
         id: 'sport-event-participant-1', isActive: true, inactiveReason: null, ranking: 7, oddsToWin: 8.5, seedNumber: 1,
@@ -680,10 +683,10 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
       participant: {
         // What the site holds; a sync that matched by name would read it.
         findMany: jest.fn().mockResolvedValue(siteParticipants),
-        createManyAndReturn: jest.fn(({ data }: { data: Array<{ sportLeagueId: string; externalId: string }> }) => Promise.resolve(
-          data.map((row) => ({ id: `created-${row.externalId}`, sportLeagueId: row.sportLeagueId, externalId: row.externalId })),
-        )),
+        // Numbered in the order given, as Postgres returns them.
+        createManyAndReturn: jest.fn(({ data }: { data: unknown[] }) => Promise.resolve(data.map((_row, index) => ({ id: `created-${index + 1}` })))),
       },
+      provider: { findMany: jest.fn().mockResolvedValue([{ id: BALLDONTLIE_TEST_PROVIDER_ID, code: ProviderCode.BALLDONTLIE }]) },
       participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn().mockResolvedValue({ count: 0 }), updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
       // The field write carries the event's leaderboard rebuild (#1466).
       backgroundJob: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
@@ -698,7 +701,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
   async function sync(prisma: ReturnType<typeof unmappedPrisma>, participants: ProviderParticipant[]) {
     const logger = fakeLogger();
     await new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), logger).persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants });
-    const [[{ data: mappings }]] = prisma.participantProviderMapping.createMany.mock.calls as Array<[{ data: Array<{ participantId: string; externalId: string; confidence: string }> }]>;
+    const [[{ data: mappings }]] = prisma.participantProviderMapping.createMany.mock.calls as Array<[{ data: Array<{ participantId: string; externalId: string }> }]>;
     return { mappings, logger };
   }
 
@@ -706,13 +709,14 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     prisma.participant.createManyAndReturn.mock.calls.flatMap(([{ data }]) => data as unknown as Array<{ name: string; sportLeagueId: string; participantType: string }>);
   const createdNames = (prisma: ReturnType<typeof unmappedPrisma>) => createdRows(prisma).map((row) => row.name);
 
-  it('creates a golfer whose feed id no participant of the league is mapped to, with an EXACT mapping in the league, though the league has an unmapped golfer of the same name', async () => {
+  it('creates a golfer whose feed id no participant of the league is mapped to, mapped in the league to the BALLDONTLIE Provider row, though the league has an unmapped golfer of the same name', async () => {
     const prisma = unmappedPrisma([{ id: 'site-scheffler', sportLeagueId: EVENT_LEAGUE.id, name: 'Scottie Scheffler' }]);
 
     const { mappings, logger } = await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
 
     expect(createdNames(prisma)).toEqual(['Scottie Scheffler']);
-    expect(mappings).toEqual([{ participantId: 'created-bdl-1', sportLeagueId: EVENT_LEAGUE.id, providerId: 'balldontlie', externalId: 'bdl-1', confidence: MappingConfidence.EXACT, lastSeenAt: expect.any(Date) }]);
+    expect(mappings).toEqual([{ participantId: 'created-1', sportLeagueId: EVENT_LEAGUE.id, participantType: 'INDIVIDUAL', providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'bdl-1', lastSeenAt: expect.any(Date) }]);
+    expect(prisma.provider.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { code: { in: [ProviderCode.BALLDONTLIE] } } }));
     expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ created: 1 }), 'Persisted participants from ingestion');
   });
 
@@ -741,7 +745,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaab-team-999', 'Duke Blue Devils', 'NCAAM')]);
 
     expect(createdNames(prisma)).toEqual(['Duke Blue Devils', 'Duke Blue Devils']);
-    expect(mappings.map((mapping) => mapping.participantId)).toEqual(['created-ncaab-team-150', 'created-ncaab-team-999']);
+    expect(mappings.map((mapping) => [mapping.participantId, mapping.externalId])).toEqual([['created-1', 'ncaab-team-150'], ['created-2', 'ncaab-team-999']]);
   });
 
   it('creates no participant for a feed event no event is linked to, there being no sport league for them to belong to', async () => {
@@ -757,18 +761,27 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
 
   it('creates every golfer of a feed whose ids no participant is mapped to, one per feed id, though two share a name', async () => {
     const prisma = unmappedPrisma();
-    const participants = [golfer('bdl-1', 'Tom Kim'), golfer('bdl-2', 'Tom Kim'), golfer('mock-1', 'Rory McIlroy', 'mock-contest-feed')];
+    const participants = [golfer('bdl-1', 'Tom Kim'), golfer('bdl-2', 'Tom Kim')];
 
     const { mappings } = await sync(prisma, participants);
 
-    expect(createdNames(prisma)).toEqual(['Tom Kim', 'Tom Kim', 'Rory McIlroy']);
-    expect(mappings).toEqual(participants.map((participant) => ({
-      participantId: `created-${participant.externalId}`,
+    expect(createdNames(prisma)).toEqual(['Tom Kim', 'Tom Kim']);
+    expect(mappings).toEqual(participants.map((participant, index) => ({
+      participantId: `created-${index + 1}`,
       sportLeagueId: EVENT_LEAGUE.id,
-      providerId: participant.providerId,
+      participantType: 'INDIVIDUAL',
+      providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       externalId: participant.externalId,
-      confidence: MappingConfidence.EXACT,
       lastSeenAt: expect.any(Date),
     })));
+  });
+
+  it('creates no participant for a feed whose provider has no Provider row, since its mappings could be keyed to none', async () => {
+    const prisma = unmappedPrisma();
+
+    await expect(new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger())
+      .persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [golfer('mock-1', 'Rory McIlroy', 'mock-contest-feed')] }))
+      .rejects.toThrow('mock-contest-feed has no Provider row');
+    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
   });
 });

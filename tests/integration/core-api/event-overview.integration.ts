@@ -4,6 +4,7 @@
  * ordered by, and each field row's feed id and when a sync last saw it, in a fixed number of
  * statements however large the field. No mocks.
  */
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import {
@@ -55,11 +56,11 @@ async function seedSyncedEvent(golfers: number) {
   for (const [index, row] of field.entries()) {
     await prisma.sportEventParticipant.update({ where: { id: row.id }, data: { oddsToWin: 10 + index } });
     await prisma.participantProviderMapping.create({
-      data: { participantId: row.participantId, sportLeagueId, providerId: 'balldontlie', externalId: `bdl-${randomUUID().slice(0, 8)}`, lastSeenAt: seenAt },
+      data: { participantId: row.participantId, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: `bdl-${randomUUID().slice(0, 8)}`, lastSeenAt: seenAt },
     });
   }
   const failedRun = await prisma.providerSyncRun.create({
-    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: 'balldontlie', sport: Sport.GOLF, sportLeagueId, sportEventId: event.id, status: 'FAILED', payloadJson: {} },
+    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId, sportEventId: event.id, status: 'FAILED', payloadJson: {} },
   });
   return { event, field, seenAt, failedRun, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
@@ -96,7 +97,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
 
     const { overview } = okBody(await get(`/api/v1/events/${event.id}/overview`, rootAdmin), SportEventOverviewResponseSchema);
 
-    expect(overview).toMatchObject({ syncHealth: SportLeagueSyncHealth.OFF, issues: [], releaseMode: SportEventReleaseMode.MANUAL, tierOrderBasis: FieldOrderBasis.NAME });
+    expect(overview).toMatchObject({ syncHealth: SportLeagueSyncHealth.OFF, issues: [], releaseMode: SportEventReleaseMode.MANUAL, tierOrderBasis: null });
     expect(overview.fieldFeed.map((row) => [row.feedId, row.lastInFeedAt])).toEqual([[null, null], [null, null]]);
   });
 

@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
@@ -223,7 +224,7 @@ async function waitForScheduledProviderSyncRuns(providerIdToFind: string, expect
   const deadline = Date.now() + SYNC_RUN_WAIT_MS;
   while (Date.now() < deadline) {
     const rows = await getPrisma().providerSyncRun.findMany({
-      where: { providerId: providerIdToFind },
+      where: { providerId: providerIdToFind }, include: { sportEvent: { select: { externalId: true } } },
     });
     const scheduledRows = rows.filter((run) =>
       readStoredSyncRunPayload(run.payloadJson)?.requestPayload?.source === 'SCHEDULED',
@@ -267,10 +268,11 @@ async function findEventParticipantByExternalIds(input: {
   // A feed id names one participant per sport league (#1853): the one in the event's league.
   const participantMapping = await prisma.participantProviderMapping.findUniqueOrThrow({
     where: {
-      providerId_externalId_sportLeagueId: {
-        providerId: input.providerId,
+      providerId_externalId_sportLeagueId_participantType: {
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         externalId: input.participantExternalId,
         sportLeagueId: persistedEvent.eventSeries.sportLeagueId,
+        participantType: 'INDIVIDUAL',
       },
     },
   });
@@ -770,7 +772,7 @@ describe('mock contest feed provider event-first verification', () => {
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
-      providerSettings: { all: () => [] },
+      providerSettings: { all: () => [], bySourceId: () => undefined },
       webhooks: { isOn: () => false, isSecretSet: () => false },
       jobHistory: new PrismaBackgroundJobRepository(getAppPrisma()),
       syncRunLedger,
@@ -860,7 +862,7 @@ describe('mock contest feed provider event-first verification', () => {
     expect(scheduledScottieEventParticipant.oddsToWin?.toNumber()).toBeGreaterThan(0);
 
     const scheduledRunPayloads = scheduledRuns.map((run) => readStoredSyncRunPayload(run.payloadJson));
-    expect(scheduledRuns.map((run) => run.eventId).filter((id): id is string => Boolean(id))).toEqual([
+    expect(scheduledRuns.map((run) => run.sportEvent?.externalId).filter((id): id is string => Boolean(id))).toEqual([
       'golf-genesis-scottish-open-2026',
     ]);
     expect(scheduledRunPayloads.map((payload) => String(payload?.requestedFeed))).toEqual([
@@ -922,7 +924,7 @@ describe('mock contest feed provider event-first verification', () => {
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
-      providerSettings: { all: () => [] },
+      providerSettings: { all: () => [], bySourceId: () => undefined },
       webhooks: { isOn: () => false, isSecretSet: () => false },
       jobHistory: new PrismaBackgroundJobRepository(getAppPrisma()),
       syncRunLedger,

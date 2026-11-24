@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import type { ProviderSummaryDto } from '@/lib/api';
 import type { ProviderSyncRun } from './root-admin-sync-utils';
 import { SyncRunDialog } from './sync-run-dialog';
 
@@ -14,20 +13,11 @@ const { getProviderSyncRunMock } = vi.hoisted(() => ({ getProviderSyncRunMock: v
 
 bindApiMocks({ getProviderSyncRun: getProviderSyncRunMock });
 
-const PROVIDERS: ProviderSummaryDto[] = [
-  {
-    providerId: 'mock-contest-feed',
-    providerName: 'Mock contest feed',
-    status: 'HEALTHY',
-    sportsCovered: ['GOLF'],
-    primaryForSports: ['GOLF'],
-  } as ProviderSummaryDto,
-];
-
 function syncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
     id: 'sync-run-1',
-    providerId: 'mock-contest-feed',
+    providerId: '6f1e9a52-0000-4000-8000-000000000001',
+    providerName: 'Mock contest feed',
     sport: 'GOLF',
     eventId: 'masters-2026',
     status: 'COMPLETED',
@@ -49,7 +39,7 @@ function renderDialog(run: ProviderSyncRun, onClose = vi.fn()) {
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <SyncRunDialog onClose={onClose} providers={PROVIDERS} run={run} />
+        <SyncRunDialog onClose={onClose} run={run} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -69,7 +59,7 @@ describe('SyncRunDialog', () => {
     getProviderSyncRunMock.mockReset();
   });
 
-  it('loads the run\'s details by its id and names its provider', async () => {
+  it('loads the run\'s details by its id and names its provider from the run', async () => {
     getProviderSyncRunMock.mockResolvedValue(detailResponse({}));
     renderDialog(syncRun());
 
