@@ -698,8 +698,9 @@ Contest:
   "Regular Season Clutch Cup" and a "Playoff Clutch Cup" (PHASE), which fill once Clutch
   Cards run there. `Cup` keys on (League, Season, cup definition); a contest counts in every
   cup whose coverage holds its slot. `Contest.cupWeight` and the `CupWeight` enum are removed
-  (Derek 2026-11-24): every qualifying contest counts ×1, and a league chooses breadth by
-  which cups it follows (Season vs Majors), not by weights. Finish rows drop `weight`.
+  (Derek 2026-11-24): every qualifying contest counts ×1. There is no follow setting
+  (Derek 2026-11-24): a league has every cup whose coverage holds one of its counted
+  contests, shown from its first counted contest (the API returns `isShown`). Finish rows drop `weight`.
 - Championship year (Derek 2026-11-24, slices 6/20): `SportLeagueSeason.championshipYear`,
   NOT NULL, explicit on every Season and set by migration, never computed: the year the
   Season is named for (NFL 2025 → 2025, Super Bowl included; NBA, NHL, NCAA basketball and
