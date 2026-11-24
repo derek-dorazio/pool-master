@@ -694,8 +694,9 @@ Contest:
   cups; racing a Season Cup; every sport league with REGULAR and POSTSEASON phases a
   "Regular Season Clutch Cup" and a "Playoff Clutch Cup" (PHASE), which fill once Clutch
   Cards run there. `Cup` keys on (League, Season, cup definition); a contest counts in every
-  cup whose coverage holds its slot. The contest's `cupWeight` stays the commissioner's only
-  override. Replaces the per-contest-only counting of today.
+  cup whose coverage holds its slot. `Contest.cupWeight` and the `CupWeight` enum are removed
+  (Derek 2026-11-24): every qualifying contest counts ×1, and a league chooses breadth by
+  which cups it follows (Season vs Majors), not by weights. Finish rows drop `weight`.
 - Championship year (Derek 2026-11-24, slices 6/20): `SportLeagueSeason.championshipYear`,
   NOT NULL, explicit on every Season and set by migration, never computed: the year the
   Season is named for (NFL 2025 → 2025, Super Bowl included; NBA, NHL, NCAA basketball and
@@ -711,7 +712,7 @@ Contest:
   replaced.
 - Finishes and medals (Derek 2026-11-24, slice 20): `LeagueYearFinish` is renamed
   `ContestSquadFinish` (one row per team per settled contest, from its best entry: place,
-  tied, ranked entries, weight, points, `championshipYear` copied from the contest). Every
+  tied, ranked entries, points, `championshipYear` copied from the contest). Every
   contest type with a finishing order writes them (tiered, budget, quick pick, pick'em,
   survivor, bracket, Clutch Card); squares does not. Medals count gold, silver, bronze and
   top 10 (new) from these rows in one shared function, over every contest that writes them;
