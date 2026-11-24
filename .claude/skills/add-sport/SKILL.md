@@ -104,8 +104,9 @@ In order:
    round is `ROUND_OF_16`), a proper `name` only where the league has one (Super Bowl, Sweet
    16), `awardsTrophy`, `squaresEligible` (single games with period scores only), its
    series format, games and pairing, its `matchFormat` (`HEAD_TO_HEAD` when two sides meet,
-   `FIELD` when a whole field is ranked), `canEndTied` (a game can finish level: a soccer
-   regular season, a leg of a two-legged tie), and its `periodUnit` with `periodCount` (four
+   `FIELD` when a whole field is ranked), `canEndTied` (a real game can finish level, so
+   scoring handles a tie: a soccer regular season, a leg of a two-legged tie, the NFL's regular
+   season; never a tie pick, since a pick names a winner), and its `periodUnit` with `periodCount` (four
    quarters, nine innings, eighteen holes; both null for a race). Weeks go to the longest
    season the league plays. An open phase (golf, tennis, racing) has one `TOURNAMENT` slot per recurring tournament. A
    synced league gives each slot it syncs a `SportLeaguePhaseSlotProviderMapping` on its

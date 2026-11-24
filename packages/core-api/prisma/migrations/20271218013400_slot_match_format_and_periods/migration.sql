@@ -4,10 +4,11 @@
 -- The backfill carries today's facts over once, and nothing in code reads a sport for them again:
 -- * matchFormat: the league's scoring family. Head-to-head leagues meet two sides; stroke play and
 --   finish position rank a whole field.
--- * canEndTied: a soccer game that may end in a draw: the regular season, and each leg of a
---   two-legged tie, which is settled on aggregate. A one-game soccer knockout is settled by a
---   shoot-out, and every other sport's games play on until someone wins. That is the sport
---   registry's `pickEm.tiePicks` and `shootout`, which later slices stop reading.
+-- * canEndTied: whether a real game can finish level, so that scoring handles a tie. It never offers
+--   a tie pick, since a pick always names a winner (Derek 2026-11-24). True for a soccer regular
+--   season and each leg of a two-legged soccer tie (settled on aggregate), and for the NFL's regular
+--   season, where overtime can end level. A one-game soccer knockout is settled by a shoot-out, and
+--   every other league's games play on until someone wins.
 -- * periods: each league's own layout (men's college basketball plays halves), else its sport's:
 --   four quarters, two halves, three periods, nine innings or eighteen holes. A race and a tennis
 --   match keep no score by period, so they get none.
@@ -26,7 +27,8 @@ ADD COLUMN "period_count" INTEGER;
 
 UPDATE "sport_league_phase_slots" slot
 SET "match_format" = (CASE sl."scoring_family" WHEN 'HEAD_TO_HEAD' THEN 'HEAD_TO_HEAD' ELSE 'FIELD' END)::"PrismaMatchFormat",
-    "can_end_tied" = (s."sport" = 'SOCCER' AND (ph."phase" = 'REGULAR' OR slot."series_format" = 'AGGREGATE')),
+    "can_end_tied" = ((s."sport" = 'SOCCER' AND (ph."phase" = 'REGULAR' OR slot."series_format" = 'AGGREGATE'))
+      OR (sl."id" = 'f91f2566-1978-4171-a706-ae417c4d601a' AND ph."phase" = 'REGULAR')),
     "period_unit" = (CASE
         WHEN sl."match_period_layout" = 'HALVES' THEN 'HALF'
         WHEN sl."match_period_layout" = 'QUARTERS' THEN 'QUARTER'
