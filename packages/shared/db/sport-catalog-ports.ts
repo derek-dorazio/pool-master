@@ -41,6 +41,7 @@ import type {
   TierLayoutValues,
   PlatformTierProfile,
   ValuationSource,
+  SportLeaguePhaseDefinition,
 } from '../domain';
 
 export interface SportRepository {
@@ -708,6 +709,11 @@ export interface SportLeaguePageReader {
   readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null>;
   /** Null when the league does not exist. */
   readParticipants(sportLeagueId: string): Promise<SportLeaguePageParticipant[] | null>;
+  /**
+   * The league's phase and slot definitions with their provider mappings (#2002), in no order.
+   * Null when the league does not exist.
+   */
+  readStructure(sportLeagueId: string): Promise<SportLeaguePhaseDefinition[] | null>;
   /** One event's facts (#1889). Null when the event does not exist. */
   readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
 }

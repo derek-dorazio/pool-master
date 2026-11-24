@@ -18,7 +18,7 @@ export function eventMatchColumns() {
       meta: { info: 'The round the match is played in, first round first.', type: { kind: 'number' } },
       cell: ({ row }) => row.original.roundLabel,
     }),
-    columnHelper.accessor('pairing', {
+    columnHelper.accessor('pairingLabel', {
       header: 'Match',
       meta: { info: 'Its two sides: "vs" on a neutral site, otherwise away @ home. TBD until a side is decided. ⤢ opens its details.', type: { kind: 'text' } },
       cell: ({ getValue }) => <Text variant="strong">{getValue()}</Text>,

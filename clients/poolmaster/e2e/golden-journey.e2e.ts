@@ -7,6 +7,7 @@ import {
 } from './helpers/admin-session';
 import { closeFieldParticipant, correctFieldParticipant, openFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
+import { createJourneySportLeague } from './helpers/admin-api';
 import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
@@ -194,20 +195,10 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
 
     const tourId = await test.step('create a golf tour', async () => {
-      await page.goto('/manage/sports/golf/leagues/new');
-      await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
-      // The sport's tier layout and the Standard prices, as its leagues name today (#1844).
-      await page.getByTestId('root-admin-sport-league-list-new-tier-profile').selectOption({ label: '6 tiers of 10' });
-      await page.getByTestId('root-admin-sport-league-list-new-pricing-profile').selectOption({ label: 'Standard' });
-      const created = await submitAndRead<{ sportLeague: { id: string } }>(
-        page,
-        'root-admin-sport-league-list-new-save',
-        'POST',
-        '/api/v1/sport-leagues',
-      );
-      const id = created.sportLeague.id;
-      // Creating returns to the Sports page, whose one grid lists every sport league.
-      await expect(page).toHaveURL(/\/manage\/sports(\?.*)?$/);
+      // A league is added by migration, so a journey makes its own through the API.
+      const id = await createJourneySportLeague(page, { sport: 'GOLF', name: run.tourName, platformTierProfileCode: 'TIERS_6_OF_10' });
+      // The Sports page's one grid lists every sport league, the new one too.
+      await page.goto('/manage/sports');
       await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
       return id;
     });
