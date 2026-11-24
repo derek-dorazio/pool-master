@@ -321,6 +321,9 @@ their participants and keeps them current, and an event's status follows its dat
 authoring and admin result entry are the fallback for leagues no provider covers and for
 correcting a feed. The decision and its alternatives are
 [ADR-0011](../docs/adr/0011-provider-sync-creates-events.md), which supersedes ADR-0009.
+That fallback describes today's code only: under ADR-0012 and ADR-0013 a league with no feed is
+off, and a feed's mistake is corrected by the feed and applied with Re-settle, never by admin
+result entry.
 
 [ADR-0012](../docs/adr/0012-season-phase-slot-model-contests-cover-slots.md) amends it: events
 sit in a Season and cover slots, their status bubbles up from the feed's Games, and a league
