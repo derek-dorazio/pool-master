@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { assertNever, ProviderSyncFindingAction } from '@poolmaster/shared/domain';
 import {
@@ -22,14 +22,6 @@ import { useChangeSyncFindingStatus } from './use-sync-findings';
 
 const NONE = '—';
 
-/** What each action does, as its line in the Actions section says. */
-const ACTION_DESCRIPTIONS: Record<ProviderSyncFindingAction, string> = {
-  [ProviderSyncFindingAction.MAP_PARTICIPANT]: 'Choose the participant of this sport league the feed means. Their synced results land from the next sync, and the finding is resolved.',
-  [ProviderSyncFindingAction.RESOLVE]: 'Marks it fixed. The sync opens it again if it sees it again.',
-  [ProviderSyncFindingAction.WAIVE]: 'Accepts it as it is, with a note saying why. It stays waived when the sync sees it again.',
-  [ProviderSyncFindingAction.REOPEN]: 'Opens it again, so it counts on the Sports page.',
-};
-
 /**
  * One sync finding's dialog on Findings (#1999), opened by ⤢ on its row: its Details, then the
  * actions the API says it offers (rules/ux-rules.md §12 item 14). View only; each action is its
@@ -50,36 +42,48 @@ export function SyncFindingDialog({ finding, onClose }: { finding: ProviderSyncF
     ? extractErrorMessage(statusMutation.error, { fallback: 'We could not change this finding.' })
     : null;
 
-  const control = (action: ProviderSyncFindingAction) => {
+  /** Each action's button, and the page's sentence on what it does. */
+  const actionParts = (action: ProviderSyncFindingAction): { description: string; control: ReactNode } => {
     const label = enumLabel('ProviderSyncFindingAction', action);
     const buttonTestId = `${testId}-${action}`;
     switch (action) {
       case ProviderSyncFindingAction.MAP_PARTICIPANT:
-        return (
-          <LinkButton data-testid={buttonTestId} size="sm" to={buildSyncFindingMapParticipantPath(finding.id)} variant="secondary">
-            {`${label} ›`}
-          </LinkButton>
-        );
+        return {
+          description: 'Choose the participant of this sport league the feed means. Their synced results land from the next sync, and the finding is resolved.',
+          control: (
+            <LinkButton data-testid={buttonTestId} size="sm" to={buildSyncFindingMapParticipantPath(finding.id)} variant="secondary">
+              {`${label} ›`}
+            </LinkButton>
+          ),
+        };
       case ProviderSyncFindingAction.WAIVE:
-        return (
-          <Button data-testid={buttonTestId} onClick={() => setIsWaiving(true)} size="sm" type="button" variant="secondary">
-            {label}
-          </Button>
-        );
+        return {
+          description: 'Accepts it as it is, with a note saying why. It stays waived when the sync sees it again.',
+          control: (
+            <Button data-testid={buttonTestId} onClick={() => setIsWaiving(true)} size="sm" type="button" variant="secondary">
+              {label}
+            </Button>
+          ),
+        };
       case ProviderSyncFindingAction.RESOLVE:
       case ProviderSyncFindingAction.REOPEN:
-        return (
-          <Button
-            data-testid={buttonTestId}
-            disabled={statusMutation.isPending}
-            onClick={() => statusMutation.mutate({ action })}
-            size="sm"
-            type="button"
-            variant="secondary"
-          >
-            {label}
-          </Button>
-        );
+        return {
+          description: action === ProviderSyncFindingAction.RESOLVE
+            ? 'Marks it fixed. The sync opens it again if it sees it again.'
+            : 'Opens it again, so it counts on the Sports page.',
+          control: (
+            <Button
+              data-testid={buttonTestId}
+              disabled={statusMutation.isPending}
+              onClick={() => statusMutation.mutate({ action })}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              {label}
+            </Button>
+          ),
+        };
       default:
         return assertNever(action);
     }
@@ -88,8 +92,7 @@ export function SyncFindingDialog({ finding, onClose }: { finding: ProviderSyncF
   const actions: DetailAction[] = finding.actions.map((action) => ({
     id: action,
     name: enumLabel('ProviderSyncFindingAction', action),
-    description: ACTION_DESCRIPTIONS[action],
-    control: control(action),
+    ...actionParts(action),
     testId: `${testId}-action-${action}`,
   }));
 
