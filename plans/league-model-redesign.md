@@ -726,6 +726,13 @@ Contest:
   consecutive Seasons. A contest whose covered slots are all `slotKind` WEEK gets none
   (replaces the `isWeekOfGames` game-count guess). A trophy shows from its first Season
   (`PERPETUAL_TROPHY_MIN_YEARS` goes).
+- Points scales (Derek 2026-11-24, slice 20): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
+  `CupPointsScale` enum move to `PlatformPointsProfile` (code, name, `kind` TABLE |
+  FIELD_BEATEN, `points` list for TABLE, `pointsAfterTable` for STANDARD's tail), seeded by
+  migration; `League.platformPointsProfileId` replaces `cupPointsScale`, and a league's own
+  CUSTOM list stays on League (`cupCustomPoints`, used when set). Crowned cups freeze the
+  profile's points they used. Kept in code as fixed rules: last place needs 3+ teams, medal
+  by place, the championship grid's 10 places, one platform time zone for history years.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
