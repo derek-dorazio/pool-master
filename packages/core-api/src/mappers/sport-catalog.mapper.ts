@@ -218,6 +218,10 @@ export function mapSportLeagueStructureToDto(structure: SportLeagueStructure): S
         seriesFormat: slot.seriesFormat,
         seriesGames: slot.seriesGames,
         pairing: slot.pairing,
+        matchFormat: slot.matchFormat,
+        canEndTied: slot.canEndTied,
+        periodUnit: slot.periodUnit,
+        periodCount: slot.periodCount,
         providerMappings: slot.providerMappings.map((mapping) => ({
           id: mapping.id,
           providerId: mapping.providerId,

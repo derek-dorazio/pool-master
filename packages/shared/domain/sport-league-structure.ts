@@ -10,6 +10,8 @@ import {
   SlotKindOrder,
   SlotProviderMatchTypeOrder,
   type LeaguePhase,
+  type MatchFormat,
+  type PeriodUnit,
   type SeriesFormat,
   type SlotKind,
   type SlotPairing,
@@ -44,6 +46,14 @@ export interface SportLeagueSlotDefinition {
   seriesFormat: SeriesFormat;
   seriesGames: number;
   pairing: SlotPairing;
+  /** Two sides meeting, or a whole field ranked. */
+  matchFormat: MatchFormat;
+  /** Whether a game of the slot can finish level; a slot that cannot is decided by overtime or a shoot-out. */
+  canEndTied: boolean;
+  /** What a game is played in, set with `periodCount`; null with it for a game kept by no period (a race, a tennis match). */
+  periodUnit: PeriodUnit | null;
+  /** How many periods a game has, overtime aside; null exactly when `periodUnit` is. */
+  periodCount: number | null;
   providerMappings: SlotProviderMappingDefinition[];
 }
 
