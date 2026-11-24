@@ -65,6 +65,8 @@ export interface GolfRoundPersistenceResult {
   updatesPersisted: number;
   updatesSkipped: number;
   writeDiagnostics: SyncWriteDiagnostics;
+  /** The feed's participant ids no participant is mapped to (#1999): the publisher raises a finding for each. */
+  unmappedExternalIds?: readonly string[];
 }
 
 export type GolfRoundStatus = GolfRoundUpdate['status'];
@@ -232,7 +234,8 @@ export class GolfScoreService {
       persistable.push({ round: { ...round, strokes: round.strokes }, sportEventParticipantId, sportEventRoundId });
     }
     if (unmappedExternalIds.size > 0) {
-      // One line a tick, not one per golfer (#1183): an unmapped golfer stays unmapped tick after tick.
+      // One line a tick, not one per golfer (#1183); each is raised as a sync finding by the
+      // publisher, deduplicated, from what this returns (#1999).
       logger?.warn(
         { action: 'liveScore.golf.unmappedExternalId', data: { providerId, sportEventId, externalIds: [...unmappedExternalIds] } },
         'Skipping golf round updates for provider participants with no internal mapping',
@@ -294,6 +297,7 @@ export class GolfScoreService {
       updatesPersisted: latestByKey.size,
       updatesSkipped: skipped,
       writeDiagnostics: mergeSyncWriteDiagnostics([summarizeSyncWriteRows(detailRows), standingDiagnostics]),
+      unmappedExternalIds: [...unmappedExternalIds],
     };
   }
 

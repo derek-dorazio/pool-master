@@ -171,3 +171,34 @@ resource "aws_cloudwatch_metric_alarm" "provider_notifications_quiet" {
   alarm_description   = "An event in play has had no provider webhook notification for longer than its league's normal gap; check the BALLDONTLIE webhook endpoint"
   alarm_actions       = [aws_sns_topic.alerts.arn]
 }
+
+# Sync findings (#1999): a finding the sync opens as an ERROR, such as a Provider whose webhooks
+# are on with no signing secret, logs `ingestion.syncFinding.errorOpened` once, when it opens (a
+# finding seen again while open logs nothing). The root admin's Findings list shows it; this
+# alarm sends it to the alerts topic so nobody has to be looking at the list.
+resource "aws_cloudwatch_log_metric_filter" "sync_finding_error_opened" {
+  name           = "${local.name_prefix}-sync-finding-error-opened"
+  log_group_name = aws_cloudwatch_log_group.services["core-api"].name
+  pattern        = "{ $.action = \"ingestion.syncFinding.errorOpened\" }"
+
+  metric_transformation {
+    name          = "SyncFindingErrorOpened"
+    namespace     = "PoolMaster/${var.environment}"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "sync_finding_error_opened" {
+  alarm_name          = "${local.name_prefix}-sync-finding-error-opened"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  metric_name         = aws_cloudwatch_log_metric_filter.sync_finding_error_opened.metric_transformation[0].name
+  namespace           = aws_cloudwatch_log_metric_filter.sync_finding_error_opened.metric_transformation[0].namespace
+  period              = 300
+  statistic           = "Sum"
+  threshold           = 1
+  treat_missing_data  = "notBreaching"
+  alarm_description   = "The sync opened an ERROR finding; open Manage > Providers > Findings in root admin to see what it is"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+}

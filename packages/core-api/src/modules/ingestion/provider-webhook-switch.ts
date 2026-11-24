@@ -1,8 +1,8 @@
 /**
  * Whether each provider's webhooks are on (#1997): its Provider row is enabled with
  * `webhooksEnabled`, and its signing secret is set in this environment (Secrets Manager, through
- * the task definition). The flag without the secret is refused on the Providers page and logged
- * at startup; slice 2 raises it as an ERROR finding.
+ * the task definition). The flag without the secret is refused on the Providers page, logged at
+ * startup, and raised as an ERROR finding by the worker on each league the Provider syncs (#1999).
  */
 import type { FastifyBaseLogger } from 'fastify';
 import { providerSourceIdOf, type ProviderCode, type ProviderSettings } from '@poolmaster/shared/domain';
@@ -41,10 +41,15 @@ export class ProviderWebhookSwitch {
     return this.providers.all().filter((provider) => this.isOn(provider)).map((provider) => providerSourceIdOf(provider.code));
   }
 
+  /** Whether the provider's webhooks are switched on while its signing secret is not set here. */
+  isFlagWithoutSecret(provider: Pick<ProviderSettings, 'code' | 'isEnabled' | 'webhooksEnabled'>): boolean {
+    return isOn(provider) && !this.isSecretSet(provider.code);
+  }
+
   /** Logs each provider whose webhooks are switched on while its signing secret is not set. */
   warnFlagsWithoutSecret(logger?: FastifyBaseLogger): void {
     for (const provider of this.providers.all()) {
-      if (isOn(provider) && !this.isSecretSet(provider.code)) {
+      if (this.isFlagWithoutSecret(provider)) {
         logger?.error(
           { action: 'ingestion.providerWebhooks.secretMissing', providerCode: provider.code },
           'A provider\'s webhooks are switched on but its signing secret is not set, so its notifications are refused',

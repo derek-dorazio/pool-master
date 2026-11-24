@@ -14,17 +14,17 @@ import type { PrismaClient } from '@prisma/client';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
 import { ProviderCode, Sport, SportEventSyncScope, type ProviderSettings, type SportEvent } from '../../../packages/shared/domain';
-import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
+import { fakeSportEventRepo } from '../../support/repo-fakes';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
 import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { buildProviderMapping, buildSportLeague } from '../../factories';
-import { BALLDONTLIE_TEST_PROVIDER_ID, balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
+import { balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
 import { stubInstance } from '../../support/stub-instance';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 
-// The root-admin reads over ingestion (provider list, sync-run history, unmapped competitors)
+// The root-admin reads over ingestion (provider list, sync-run history)
 // and the manual sync submission's refusals and its background worker.
 
 /** The provider settings store over these Provider rows: each adapter finds its row by its source id. */
@@ -34,8 +34,6 @@ function settingsOf(...rows: ProviderSettings[]): IngestionServiceDependencies['
     bySourceId: (sourceId) => rows.find((row) => row.code === providerCodeOfSourceId(sourceId)),
   };
 }
-
-const BALLDONTLIE_SETTINGS = settingsOf(balldontlieTestProvider());
 
 function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): InMemorySyncRuns {
   return Object.assign(inMemorySyncRuns(), overrides);
@@ -52,7 +50,6 @@ function service(
   const jobs = new BackgroundJobQueue({ jobs: runs.jobs, currentStart: testCurrentJobStart });
   const ingestion = new IngestionService({
     sportEvents: fakeSportEventRepo(),
-    participantMappings: fakeParticipantProviderMappingRepo(),
     sportLeagues: { findEventSynced: () => Promise.resolve([]) },
     providerSettings: { all: () => [], bySourceId: () => undefined },
     webhooks: { isOn: () => false, isSecretSet: () => false },
@@ -275,82 +272,6 @@ describe('IngestionService.getSyncRun', () => {
 
     await expect(service({ registry: registryWith(null), syncRuns: runs }).getSyncRun('missing'))
       .rejects.toBeInstanceOf(ProviderSyncRunNotFoundError);
-  });
-});
-
-describe('IngestionService.getUnmappedParticipants', () => {
-  it('lists the competitors each provider reports for its sports that no participant is mapped to', async () => {
-    const provider = fakeSportDataProvider({
-      providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: [Sport.GOLF],
-      getParticipants: jest.fn().mockResolvedValue([
-        { externalId: 'p-1', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Mapped Golfer', active: true, metadata: {} },
-        { externalId: 'p-2', providerId: 'balldontlie', sport: Sport.GOLF, name: 'New Golfer', active: true, metadata: {} },
-      ]),
-    });
-    const participantMappings = fakeParticipantProviderMappingRepo({
-      findByProviderExternalIds: jest.fn().mockResolvedValue([{ externalId: 'p-1' }]),
-    });
-
-    const unmapped = await service({
-      registry: registryWith(provider), participantMappings, providerSettings: BALLDONTLIE_SETTINGS,
-    }).getUnmappedParticipants();
-
-    expect(provider.getParticipants).toHaveBeenCalledTimes(1);
-    expect(provider.getParticipants).toHaveBeenCalledWith(Sport.GOLF);
-    expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith(ProviderCode.BALLDONTLIE, { sport: Sport.GOLF }, ['p-1', 'p-2']);
-    expect(unmapped).toEqual([
-      { providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', externalId: 'p-2', externalName: 'New Golfer', sport: Sport.GOLF },
-    ]);
-  });
-
-  it('keeps only the competitor named by provider and id, and reads the mapping of that one id alone', async () => {
-    const provider = fakeSportDataProvider({
-      providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: [Sport.GOLF],
-      getParticipants: jest.fn().mockResolvedValue([
-        { externalId: 'p-1', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Other Golfer', active: true, metadata: {} },
-        { externalId: 'p-2', providerId: 'balldontlie', sport: Sport.GOLF, name: 'New Golfer', active: true, metadata: {} },
-      ]),
-    });
-    const participantMappings = fakeParticipantProviderMappingRepo({ findByProviderExternalIds: jest.fn().mockResolvedValue([]) });
-
-    const unmapped = await service({
-      registry: registryWith(provider), participantMappings, providerSettings: BALLDONTLIE_SETTINGS,
-    }).getUnmappedParticipants({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'p-2' });
-
-    expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith(ProviderCode.BALLDONTLIE, { sport: Sport.GOLF }, ['p-2']);
-    expect(unmapped).toEqual([
-      { providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE', externalId: 'p-2', externalName: 'New Golfer', sport: Sport.GOLF },
-    ]);
-  });
-
-  it('asks no provider but the one named, and reads no mapping when the named competitor is not reported', async () => {
-    const provider = fakeSportDataProvider({
-      providerId: 'balldontlie', sportsCovered: [Sport.GOLF],
-      getParticipants: jest.fn().mockResolvedValue([
-        { externalId: 'p-1', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Golfer', active: true, metadata: {} },
-      ]),
-    });
-    const participantMappings = fakeParticipantProviderMappingRepo({ findByProviderExternalIds: jest.fn().mockResolvedValue([]) });
-    const reads = service({ registry: registryWith(provider), participantMappings, providerSettings: BALLDONTLIE_SETTINGS });
-
-    await expect(reads.getUnmappedParticipants({ providerId: '00000000-0000-4000-8000-0000000000ff' })).resolves.toEqual([]);
-    expect(provider.getParticipants).not.toHaveBeenCalled();
-    await expect(reads.getUnmappedParticipants({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'gone' })).resolves.toEqual([]);
-    expect(participantMappings.findByProviderExternalIds).not.toHaveBeenCalled();
-  });
-
-  it('skips a provider that has no Provider row, since a mapping can only be keyed to one', async () => {
-    const provider = fakeSportDataProvider({
-      sportsCovered: [Sport.GOLF],
-      getParticipants: jest.fn().mockResolvedValue([{ externalId: 'p-1', providerId: 'mock-provider', sport: Sport.GOLF, name: 'Golfer', active: true, metadata: {} }]),
-    });
-
-    await expect(service({ registry: registryWith(provider), providerSettings: BALLDONTLIE_SETTINGS }).getUnmappedParticipants()).resolves.toEqual([]);
-    expect(provider.getParticipants).not.toHaveBeenCalled();
-  });
-
-  it('returns nothing when no provider is registered', async () => {
-    await expect(service({ registry: registryWith(null) }).getUnmappedParticipants()).resolves.toEqual([]);
   });
 });
 

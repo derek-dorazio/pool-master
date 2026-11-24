@@ -11,7 +11,6 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   BackgroundJobRepository,
   BackgroundJobScopeCount,
-  ParticipantProviderMappingRepository,
   ProviderSyncRunRepository,
   SportEventRepository,
   SportLeagueRepository,
@@ -32,7 +31,6 @@ import {
   providerSourceIdOf,
 } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
-import type { SportDataProvider } from './core/provider-interface';
 import type {
   EventSyncRequest,
   IngestionFeedType,
@@ -91,21 +89,6 @@ export interface ProviderManualSyncSubmissionResult {
   syncRuns: ProviderSyncRun[];
 }
 
-export interface UnmappedParticipant {
-  providerId: string;
-  providerName: string;
-  externalId: string;
-  externalName: string;
-  sport: Sport;
-}
-
-export interface UnmappedParticipantFilters {
-  /** Only this provider's competitors. */
-  providerId?: string;
-  /** Only the competitor the provider knows by this identifier. */
-  externalId?: string;
-}
-
 export interface SyncRunListFilters {
   providerId?: string;
   sport?: Sport;
@@ -160,7 +143,6 @@ export class SportEventSyncScopeError extends Error {
 export interface IngestionServiceDependencies {
   registry: ProviderRegistry;
   sportEvents: SportEventRepository;
-  participantMappings: ParticipantProviderMappingRepository;
   syncRuns: ProviderSyncRunRepository;
   /** The synced sport leagues, counted per provider on the provider list. */
   sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
@@ -182,7 +164,6 @@ export interface IngestionServiceDependencies {
 export class IngestionService {
   private readonly registry: ProviderRegistry;
   private readonly sportEvents: SportEventRepository;
-  private readonly participantMappings: ParticipantProviderMappingRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
   private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   private readonly providerSettings: Pick<ProviderSettingsStore, 'all' | 'bySourceId'>;
@@ -198,7 +179,6 @@ export class IngestionService {
   constructor(deps: IngestionServiceDependencies) {
     this.registry = deps.registry;
     this.sportEvents = deps.sportEvents;
-    this.participantMappings = deps.participantMappings;
     this.syncRuns = deps.syncRuns;
     this.sportLeagues = deps.sportLeagues;
     this.providerSettings = deps.providerSettings;
@@ -248,45 +228,6 @@ export class IngestionService {
       throw new SportEventSyncScopeError(eventId, event.syncScope, disallowedFeeds);
     }
     return { sportEventId: event.id, sportLeagueId: event.sportLeagueId };
-  }
-
-  /**
-   * The provider's competitors no participant is mapped to. Only a provider with a Provider row
-   * (#2040) can map one, so another adapter lists none; each row names the Provider row, which the
-   * bind takes.
-   */
-  private async buildUnmappedParticipantsForProvider(provider: SportDataProvider, externalId: string | undefined): Promise<UnmappedParticipant[]> {
-    const results: UnmappedParticipant[] = [];
-    const providerRow = this.providerSettings.bySourceId(provider.providerId);
-    if (providerRow === undefined) return results;
-
-    for (const sport of provider.sportsCovered) {
-      const participants = (await provider.getParticipants(sport))
-        .filter((participant) => externalId === undefined || participant.externalId === externalId);
-      if (participants.length === 0) continue;
-      // poolmaster-allow-query-in-loop: once per sport the provider is configured for, a handful
-      const mapped = await this.participantMappings.findByProviderExternalIds(
-        providerRow.code,
-        // A feed id is mapped once per sport league (#1853): one mapped in any of the sport's counts.
-        { sport },
-        participants.map((participant) => participant.externalId),
-      );
-      const mappedIds = new Set(mapped.map((mapping) => mapping.externalId));
-      for (const participant of participants) {
-        if (mappedIds.has(participant.externalId)) {
-          continue;
-        }
-        results.push({
-          providerId: providerRow.id,
-          providerName: providerRow.name,
-          externalId: participant.externalId,
-          externalName: participant.name,
-          sport,
-        });
-      }
-    }
-
-    return results;
   }
 
   // -------------------------------------------------------------------------
@@ -551,23 +492,5 @@ export class IngestionService {
       throw new Error(`Manual event sync left ${String(unrecorded.length)} run(s) without a recorded outcome: ${unrecorded.join(', ')}`);
     }
     return { changedCount };
-  }
-
-  /**
-   * Competitors the providers report that no participant is mapped to. `providerId` asks only
-   * that provider and `externalId` keeps only that competitor, so a page about one competitor
-   * reads one mapping (#1251).
-   */
-  async getUnmappedParticipants(filters: UnmappedParticipantFilters = {}): Promise<UnmappedParticipant[]> {
-    // `providerId` names a Provider row (#2040); each adapter is matched to its row by code.
-    const providers = this.registry.getAllProviders()
-      .filter((provider) => filters.providerId === undefined || this.providerSettings.bySourceId(provider.providerId)?.id === filters.providerId);
-    const unmapped: UnmappedParticipant[] = [];
-
-    for (const provider of providers) {
-      unmapped.push(...await this.buildUnmappedParticipantsForProvider(provider, filters.externalId));
-    }
-
-    return unmapped;
   }
 }
