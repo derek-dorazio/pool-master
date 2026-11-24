@@ -1,12 +1,76 @@
-import { DateDisplay, HelpTip, ReadOnlyDetailModal } from '@/features/shared/ui';
-import type { ProviderSummaryDto } from '@/lib/api';
-import { errorRatePercent, requestsPerMinuteText } from './provider-facts';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  PROVIDER_POLL_MINUTES_RANGE,
+  PROVIDER_PRIORITY_RANGE,
+  PROVIDER_REQUESTS_PER_MINUTE_RANGE,
+} from '@poolmaster/shared/domain';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import {
+  Button,
+  DateDisplay,
+  DetailEditModal,
+  FormField,
+  HelpTip,
+  Input,
+  Select,
+  showToast,
+  type Fact,
+} from '@/features/shared/ui';
+import type { ProviderSettingsDto, ProviderSummaryDto } from '@/lib/api';
+import { errorRateText, latencyText, requestsPerMinuteText, webhooksText } from './provider-facts';
 import { ProviderStatusChip } from './provider-status-chip';
+import { useUpdateProviderSettings } from './use-update-provider';
+import { wholeNumberIn } from './whole-number-field';
+
+const settingsSchema = z.object({
+  baseUrl: z.url({ protocol: /^https$/, error: 'Enter an https URL' }),
+  requestsPerMinute: wholeNumberIn(PROVIDER_REQUESTS_PER_MINUTE_RANGE),
+  webhooksEnabled: z.enum(['on', 'off']),
+  webhookPollMinutes: wholeNumberIn(PROVIDER_POLL_MINUTES_RANGE),
+  webhookRoundPollMinutes: wholeNumberIn(PROVIDER_POLL_MINUTES_RANGE),
+  hasPlayerStats: z.enum(['yes', 'no']),
+  isEnabled: z.enum(['on', 'off']),
+  priority: wholeNumberIn(PROVIDER_PRIORITY_RANGE),
+});
+
+type SettingsValues = z.infer<typeof settingsSchema>;
+
+function valuesOf(settings: ProviderSettingsDto): SettingsValues {
+  return {
+    baseUrl: settings.baseUrl,
+    requestsPerMinute: String(settings.requestsPerMinute),
+    webhooksEnabled: settings.webhooksEnabled ? 'on' : 'off',
+    webhookPollMinutes: String(settings.webhookPollMinutes),
+    webhookRoundPollMinutes: String(settings.webhookRoundPollMinutes),
+    hasPlayerStats: settings.hasPlayerStats ? 'yes' : 'no',
+    isEnabled: settings.isEnabled ? 'on' : 'off',
+    priority: String(settings.priority),
+  };
+}
+
+/** Only the changed settings, so a save never resends what another admin may have changed. */
+function changesOf(values: SettingsValues, current: SettingsValues) {
+  return {
+    ...(values.baseUrl !== current.baseUrl && { baseUrl: values.baseUrl }),
+    ...(values.requestsPerMinute !== current.requestsPerMinute && { requestsPerMinute: Number(values.requestsPerMinute) }),
+    ...(values.webhooksEnabled !== current.webhooksEnabled && { webhooksEnabled: values.webhooksEnabled === 'on' }),
+    ...(values.webhookPollMinutes !== current.webhookPollMinutes && { webhookPollMinutes: Number(values.webhookPollMinutes) }),
+    ...(values.webhookRoundPollMinutes !== current.webhookRoundPollMinutes && { webhookRoundPollMinutes: Number(values.webhookRoundPollMinutes) }),
+    ...(values.hasPlayerStats !== current.hasPlayerStats && { hasPlayerStats: values.hasPlayerStats === 'yes' }),
+    ...(values.isEnabled !== current.isEnabled && { isEnabled: values.isEnabled === 'on' }),
+    ...(values.priority !== current.priority && { priority: Number(values.priority) }),
+  };
+}
+
+const minutes = (value: number) => (value === 1 ? '1 minute' : `${String(value)} minutes`);
 
 /**
- * A provider's dialog (#1873): what the live check found and how we call it, view only. Its key and
- * rate are set in Terraform, so there is no Edit; Check now reads the list again, which checks
- * every provider live.
+ * A provider's dialog (#1873, #1997): what the live check found and its settings, then Edit for
+ * its settings from its Provider row. Check now reads the list again, which checks every provider
+ * live. A provider with no row (the QA mock feed) has no Edit. Its API key and webhook secret stay
+ * in Secrets Manager.
  */
 export function ProviderDialog({
   checkedAt,
@@ -23,32 +87,118 @@ export function ProviderDialog({
   provider: ProviderSummaryDto;
 }) {
   const testId = 'root-admin-provider-dialog';
+  const settings = provider.settings;
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const current = settings === null ? null : valuesOf(settings);
+  const form = useForm<SettingsValues>({
+    resolver: zodResolver(settingsSchema),
+    ...(current !== null && { defaultValues: current }),
+    mode: 'onChange',
+  });
+  const updateMutation = useUpdateProviderSettings({
+    providerId: settings?.id ?? '',
+    onSuccess: () => {
+      showToast({ title: `Saved ${provider.providerName}'s settings`, tone: 'success' });
+      form.reset(form.getValues());
+      setMode('view');
+    },
+  });
+
+  const facts: Fact[] = [
+    { id: 'status', label: 'Status', value: <ProviderStatusChip status={provider.status} /> },
+    { id: 'checked', label: 'Checked', value: <DateDisplay value={checkedAt} /> },
+    { id: 'error-rate', label: 'Error rate (1 h)', value: errorRateText(provider) },
+    { id: 'latency', label: 'Latency p95', value: latencyText(provider) },
+    { id: 'rate-limited', label: 'Rate limited (24 h)', value: provider.rateLimitedJobsLast24h },
+    { id: 'sport-leagues', label: 'Sport leagues', value: provider.syncedSportLeagueCount },
+    { id: 'rate', label: 'Requests a minute', value: requestsPerMinuteText(provider), testId: `${testId}-rate` },
+    { id: 'webhooks', label: 'Webhooks', value: webhooksText(provider), testId: `${testId}-webhooks` },
+    ...(settings === null ? [] : [
+      { id: 'enabled', label: 'Status setting', value: settings.isEnabled ? 'On' : 'Off', testId: `${testId}-enabled` },
+      { id: 'base-url', label: 'Base URL', value: settings.baseUrl, testId: `${testId}-base-url` },
+      { id: 'poll', label: 'Webhook safety-net poll', value: minutes(settings.webhookPollMinutes), testId: `${testId}-poll` },
+      { id: 'round-poll', label: 'Webhook poll during a round', value: minutes(settings.webhookRoundPollMinutes), testId: `${testId}-round-poll` },
+      { id: 'player-stats', label: 'Player stats', value: settings.hasPlayerStats ? 'In its plan' : 'Not in its plan', testId: `${testId}-player-stats` },
+      { id: 'priority', label: 'Priority', value: settings.priority, testId: `${testId}-priority` },
+    ]),
+  ];
+
+  const cancelEdit = () => {
+    if (current !== null) form.reset(current);
+    updateMutation.reset();
+    setMode('view');
+  };
+
+  const title = (
+    <span className="inline-flex items-center gap-2">
+      {mode === 'view' ? provider.providerName : `${provider.providerName} · Edit`}
+      <HelpTip label={`About ${provider.providerName}`} testId={`${testId}-help`}>
+        {settings === null
+          ? 'This provider is set up outside the Provider table, so its settings are not edited here.'
+          : 'Its API key and webhook secret stay in Secrets Manager. The base URL, rate and polls reach every server within a minute; switching it on or off and its priority take effect when the servers next start.'}
+      </HelpTip>
+    </span>
+  );
+
   return (
-    <ReadOnlyDetailModal
-      action={{ label: 'Check now', onClick: onCheckNow, isPending: isChecking, pendingLabel: 'Checking...', testId: `${testId}-check` }}
-      details={[
-        { id: 'status', label: 'Status', value: <ProviderStatusChip status={provider.status} /> },
-        { id: 'rate', label: 'Requests a minute', value: requestsPerMinuteText(provider) },
-        { id: 'checked', label: 'Checked', value: <DateDisplay value={checkedAt} /> },
-        { id: 'error-rate', label: 'Error rate (1 h)', value: `${String(errorRatePercent(provider))}%` },
-        { id: 'rate-limited', label: 'Rate limited (24 h)', value: provider.rateLimitedJobsLast24h },
-        { id: 'latency', label: 'Latency p95', value: `${String(provider.latencyMs)} ms` },
-        { id: 'webhooks', label: 'Webhooks', value: provider.webhooksEnabled ? 'On' : 'Off' },
-        { id: 'sport-leagues', label: 'Sport leagues', value: provider.syncedSportLeagueCount },
-      ]}
+    <DetailEditModal
+      canSave={form.formState.isValid && form.formState.isDirty}
+      error={updateMutation.error}
+      errorFallback="We could not save these settings."
+      facts={facts}
+      isPending={updateMutation.isPending}
+      mode={mode}
       onCancel={onClose}
+      onCancelEdit={cancelEdit}
+      {...(settings !== null && { onEdit: () => setMode('edit') })}
       onOpenChange={(open) => (open ? undefined : onClose())}
+      onSave={() => void form.handleSubmit((values) => current !== null && updateMutation.mutate(changesOf(values, current)))()}
       open
-      size="sm"
+      pendingLabel="Saving..."
+      saveLabel="Save settings"
       testId={testId}
-      title={(
-        <span className="inline-flex items-center gap-2">
-          {provider.providerName}
-          <HelpTip label={`About ${provider.providerName}`} testId={`${testId}-help`}>
-            The key and the rate are set in Terraform, so this dialog only reads and checks: there is no Edit.
-          </HelpTip>
-        </span>
+      title={title}
+      viewActions={(
+        <Button data-testid={`${testId}-check`} disabled={isChecking} onClick={onCheckNow} type="button" variant="secondary">
+          {isChecking ? 'Checking...' : 'Check now'}
+        </Button>
       )}
-    />
+    >
+      <div className="grid gap-4">
+        <FormField label="Status">
+          <Select data-testid={`${testId}-enabled-input`} {...form.register('isEnabled')}>
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </Select>
+        </FormField>
+        <FormField error={form.formState.errors.baseUrl?.message} label="Base URL">
+          <Input data-testid={`${testId}-base-url-input`} {...form.register('baseUrl')} />
+        </FormField>
+        <FormField error={form.formState.errors.requestsPerMinute?.message} label="Requests a minute">
+          <Input data-testid={`${testId}-rate-input`} inputMode="numeric" {...form.register('requestsPerMinute')} />
+        </FormField>
+        <FormField label="Webhooks">
+          <Select data-testid={`${testId}-webhooks-input`} {...form.register('webhooksEnabled')}>
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </Select>
+        </FormField>
+        <FormField error={form.formState.errors.webhookPollMinutes?.message} label="Webhook safety-net poll, minutes">
+          <Input data-testid={`${testId}-poll-input`} inputMode="numeric" {...form.register('webhookPollMinutes')} />
+        </FormField>
+        <FormField error={form.formState.errors.webhookRoundPollMinutes?.message} label="Webhook poll during a round, minutes">
+          <Input data-testid={`${testId}-round-poll-input`} inputMode="numeric" {...form.register('webhookRoundPollMinutes')} />
+        </FormField>
+        <FormField label="Player stats">
+          <Select data-testid={`${testId}-player-stats-input`} {...form.register('hasPlayerStats')}>
+            <option value="yes">In its plan</option>
+            <option value="no">Not in its plan</option>
+          </Select>
+        </FormField>
+        <FormField error={form.formState.errors.priority?.message} label="Priority">
+          <Input data-testid={`${testId}-priority-input`} inputMode="numeric" {...form.register('priority')} />
+        </FormField>
+      </div>
+    </DetailEditModal>
   );
 }

@@ -56,7 +56,13 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>>;
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>> & {
+  /**
+   * The provider league whose sync the sport league takes (#1997): its mapping to it is made when
+   * missing and selected, in the same write. Null stops the sync and keeps the mapping.
+   */
+  syncProviderLeagueId?: string | null;
+};
 
 /**
  * What still uses a sport league, each a reason it cannot be deleted (#1400). Its series with
@@ -91,7 +97,7 @@ export interface SportLeagueRepository {
    * whose parent is one of them (#1881), whose events its parent's sync creates. In one query.
    */
   findEventSyncedWithClutchCards(): Promise<SportLeague[]>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
+  create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -217,7 +223,7 @@ export interface SportEventAutoReleaseCandidate {
   startDate: Date;
   providerId: string;
   syncScope: SportEventSyncScope;
-  eventSyncProviderId: string;
+  syncProviderId: string;
   autoReleaseDaysBeforeStart: number;
 }
 
@@ -557,7 +563,7 @@ export interface SportLeagueOverviewLeague {
   parentSportLeagueId: string | null;
   /** Null: its sport's family. A Clutch Card's is COMPOSITE. */
   scoringFamily: ScoringFamily | null;
-  eventSyncProviderId: string | null;
+  syncProviderId: string | null;
   isActive: boolean;
 }
 
@@ -632,10 +638,10 @@ export interface SportLeaguePageLeague {
   isActive: boolean;
   parentSportLeagueId: string | null;
   scoringFamily: ScoringFamily | null;
-  eventSyncProviderId: string | null;
+  syncProviderId: string | null;
   autoReleaseDaysBeforeStart: number | null;
   /** A Clutch Card's parent league, whose event list sync creates its events; null for any other league. */
-  parent: { isActive: boolean; eventSyncProviderId: string | null } | null;
+  parent: { isActive: boolean; syncProviderId: string | null } | null;
 }
 
 /** A sync run as the League page reads it. */

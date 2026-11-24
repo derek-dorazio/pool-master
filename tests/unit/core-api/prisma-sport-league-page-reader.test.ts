@@ -19,13 +19,14 @@ import { asPrismaClient } from '../../support/prisma-double';
 const NOW = new Date('2027-04-15T12:00:00.000Z');
 const at = (iso: string) => new Date(iso);
 
+const SYNCED_TO_BALLDONTLIE = { providerLeague: { provider: { code: 'BALLDONTLIE' } } };
 const LEAGUE_ROW = {
-  id: 'tour', isActive: true, parentSportLeagueId: null, scoringFamily: null, eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7,
+  id: 'tour', isActive: true, parentSportLeagueId: null, scoringFamily: null, selectedProviderMapping: SYNCED_TO_BALLDONTLIE, autoReleaseDaysBeforeStart: 7,
   sport: { sport: Sport.GOLF }, parentSportLeague: null,
 };
 const CLUTCH_ROW = {
-  ...LEAGUE_ROW, id: 'clutch', parentSportLeagueId: 'tour', scoringFamily: 'COMPOSITE', eventSyncProviderId: null,
-  parentSportLeague: { isActive: true, eventSyncProviderId: 'balldontlie' },
+  ...LEAGUE_ROW, id: 'clutch', parentSportLeagueId: 'tour', scoringFamily: 'COMPOSITE', selectedProviderMapping: null,
+  parentSportLeague: { isActive: true, selectedProviderMapping: SYNCED_TO_BALLDONTLIE },
 };
 
 function runRow(kind: ProviderSyncKind, overrides: Record<string, unknown> = {}) {
@@ -43,6 +44,7 @@ function prismaDouble(options: { league?: unknown } = {}) {
     sportEventParticipant: { groupBy: jest.fn().mockResolvedValue([]) },
     participant: { findMany: jest.fn().mockResolvedValue([]) },
     participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]) },
+    providerLeague: { findMany: jest.fn().mockResolvedValue([]) },
   };
 }
 
@@ -59,7 +61,7 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
 
     const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
 
-    expect(facts).toEqual({ league: expect.objectContaining({ id: 'tour', sport: Sport.GOLF, parent: null }), latestRuns: [] });
+    expect(facts).toEqual({ league: expect.objectContaining({ id: 'tour', sport: Sport.GOLF, syncProviderId: 'balldontlie', parent: null }), latestRuns: [] });
     expect(prisma.providerSyncRun.findMany).not.toHaveBeenCalled();
   });
 
@@ -195,7 +197,7 @@ describe('readOverdueCandidates', () => {
     expect(prisma.sportEventRound.findMany).not.toHaveBeenCalled();
   });
 
-  it('gives an event its own rounds with each round\'s latest match start, and a Clutch Card event only the parent rounds it covers', async () => {
+  it('gives an event its own rounds with each round\'s latest match start, and a Clutch Card event only the parent rounds it covers, each with its league\'s typical game length', async () => {
     const prisma = prismaDouble();
     const base = { name: 'Event', sport: Sport.GOLF, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-10T00:00:00.000Z'), endDate: null, eventSeriesId: 'series-1', parentRoundNumbers: [] };
     prisma.sportEvent.findMany.mockResolvedValue([
@@ -206,6 +208,8 @@ describe('readOverdueCandidates', () => {
     const round = (roundNumber: number) => ({ id: `r${String(roundNumber)}`, sportEventId: 'parent', roundNumber, scheduledDate: at(`2027-04-1${String(roundNumber)}T00:00:00.000Z`), scheduledEndAt: null });
     prisma.sportEventRound.findMany.mockResolvedValue([round(1), round(2)]);
     prisma.sportEventMatch.groupBy.mockResolvedValue([{ sportEventRoundId: 'r2', _max: { scheduledDate: at('2027-04-12T18:00:00.000Z') } }]);
+    prisma.eventSeries.findMany.mockResolvedValue([{ id: 'series-1', sportLeagueId: 'tour' }]);
+    prisma.providerLeague.findMany.mockResolvedValue([{ typicalGameMinutes: 300, sportLeagues: [{ sportLeagueId: 'tour' }] }]);
 
     const candidates = await readOverdueCandidates(asPrismaClient(prisma), NOW, ['series-1']);
 
@@ -215,5 +219,6 @@ describe('readOverdueCandidates', () => {
       ['card', [at('2027-04-12T18:00:00.000Z')]],
       ['bare', []],
     ]);
+    expect(candidates.map((candidate) => candidate.typicalGameMinutes)).toEqual([300, 300, 300]);
   });
 });

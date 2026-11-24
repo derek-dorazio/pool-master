@@ -8,12 +8,11 @@ import {
   toPlayoffPlayerParticipant,
   toPlayoffRoundBoxScores,
   toPlayoffRoundEvent,
-  toPlayoffRoundEvents,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-rounds';
 import type { PlayoffGame, PlayoffsLeague, PlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 
-// A playoff round as a Clutch Card's event (#1497), on made-up leagues: a four-team one whose
-// rounds are best of three, and a six-team one whose top two seeds sit out the first round.
+// A playoff round as a Clutch Card's event (#1497), on a made-up four-team league whose rounds
+// are best of three.
 const LEAGUE: PlayoffsLeague = {
   key: 'tst',
   tour: 'TST',
@@ -25,16 +24,6 @@ const LEAGUE: PlayoffsLeague = {
   ],
   playoffYearOffset: 1,
   seasonRolloverMonth: 8,
-};
-
-const BYE_LEAGUE: PlayoffsLeague = {
-  ...LEAGUE,
-  key: 'bye',
-  rounds: [
-    { name: 'Wild Card', seriesLength: 3, seriesCount: 2 },
-    { name: 'Division Series', seriesLength: 3, seriesCount: 2 },
-    { name: 'Championship', seriesLength: 3, seriesCount: 1 },
-  ],
 };
 
 const team = (id: number): PlayoffTeam => ({ id, name: `Team ${String(id)}`, metadata: {} });
@@ -138,24 +127,6 @@ describe('toPlayoffRoundEvent', () => {
     const series = playoffSeries([game(5, 1, 2, null, null, CompetitionStatusState.SCHEDULED)]);
 
     expect(toPlayoffRoundEvent(LEAGUE, 2025, 2, series)).toMatchObject({ status: 'SCHEDULED', fieldLocked: false });
-  });
-});
-
-describe('toPlayoffRoundEvents', () => {
-  it('makes one event per round the games have reached, in round order, leaving out a round past the league\'s last', () => {
-    // A third meeting chain the league has no round for: 1 v 3 after 1 v 2.
-    const games = [...semifinals(), game(5, 1, 2, 90, 80), game(8, 1, 3, 90, 80)];
-
-    expect(toPlayoffRoundEvents(LEAGUE, 2025, games).map((event) => [event.externalId, event.name])).toEqual([
-      ['tst-2025-postseason-round-1', 'Test Semifinals'],
-      ['tst-2025-postseason-round-2', 'Test Final'],
-    ]);
-  });
-
-  it('names a bye league\'s rounds by its own round list', () => {
-    const games = [game(1, 3, 6, 5, 2), game(4, 1, 3, 6, 0)];
-
-    expect(toPlayoffRoundEvents(BYE_LEAGUE, 2025, games).map((event) => event.name)).toEqual(['Wild Card', 'Division Series']);
   });
 });
 

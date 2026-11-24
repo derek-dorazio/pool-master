@@ -31,7 +31,7 @@ const at = (iso: string) => new Date(iso);
 
 function league(overrides: Partial<SportLeagueOverviewLeague> = {}): SportLeagueOverviewLeague {
   return {
-    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', parentSportLeagueId: null, scoringFamily: null, eventSyncProviderId: 'balldontlie', isActive: true,
+    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', parentSportLeagueId: null, scoringFamily: null, syncProviderId: 'balldontlie', isActive: true,
     ...overrides,
   };
 }
@@ -66,7 +66,7 @@ describe('sport league sync health', () => {
   });
 
   it('is OFF for a league on with no provider syncing it', () => {
-    expect(only(facts({ leagues: [league({ eventSyncProviderId: null })] })).syncHealth).toBe(SportLeagueSyncHealth.OFF);
+    expect(only(facts({ leagues: [league({ syncProviderId: null })] })).syncHealth).toBe(SportLeagueSyncHealth.OFF);
   });
 
   it('is NOT_RUN_YET for a synced league with no run of any sync', () => {
@@ -127,7 +127,7 @@ describe('sport league issues', () => {
   it('counts the league\'s overdue events as an OVERDUE issue after RELEASE, most overdue first, leaving out one not yet overdue and another league\'s', () => {
     const endedAgo = (ms: number) => new Date(NOW.getTime() - ms);
     const overdue = (id: string, sportLeagueId: string, name: string, endDate: Date) => ({
-      id, sportLeagueId, name, sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-01T00:00:00.000Z'), endDate, rounds: [],
+      id, sportLeagueId, name, sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-01T00:00:00.000Z'), endDate, rounds: [], typicalGameMinutes: 180,
     });
     const row = only(facts({
       heldEvents: [{ id: 'e9', sportLeagueId: 'mlb', name: 'Held', checkedAt: NOW, failedChecks: [ReleaseCheckKey.FIELD_LOADED] }],
@@ -189,7 +189,7 @@ describe('sport league season', () => {
 });
 
 describe('a Clutch Card sport league', () => {
-  const worldSeries = league({ id: 'ws', name: 'World Series', parentSportLeagueId: 'mlb', scoringFamily: ScoringFamily.COMPOSITE, eventSyncProviderId: null });
+  const worldSeries = league({ id: 'ws', name: 'World Series', parentSportLeagueId: 'mlb', scoringFamily: ScoringFamily.COMPOSITE, syncProviderId: null });
 
   it('is CLUTCH_CARD, takes its parent\'s provider and its parent\'s event list run, and keeps its own field and scores runs', () => {
     const rows = buildSportLeagueOverviews(facts({
@@ -239,7 +239,7 @@ describe('a Clutch Card sport league', () => {
   });
 
   it('is OFF while its parent league has no provider', () => {
-    const rows = buildSportLeagueOverviews(facts({ leagues: [league({ eventSyncProviderId: null }), worldSeries] }), NOW);
+    const rows = buildSportLeagueOverviews(facts({ leagues: [league({ syncProviderId: null }), worldSeries] }), NOW);
 
     expect(rows.find((row) => row.id === 'ws')).toMatchObject({ providerId: null, syncHealth: SportLeagueSyncHealth.OFF });
   });

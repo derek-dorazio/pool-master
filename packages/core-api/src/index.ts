@@ -52,9 +52,15 @@ import { AppSettingsService } from './modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
 import { PlatformSettingsService } from './modules/platform/platform-settings-service';
 import { ingestionModule } from './modules/ingestion/routes';
-import { providerWebhooksModule, readBalldontlieWebhookSecret, readWebhookProviderIds } from './modules/ingestion/provider-webhook-routes';
+import { providerWebhooksModule, readBalldontlieWebhookSecret } from './modules/ingestion/provider-webhook-routes';
 import { ProviderNotificationService } from './modules/ingestion/provider-notifications';
-import { readNotifiedProviderCadence } from './modules/ingestion/notified-provider-cadence';
+import { ProviderCode } from '@poolmaster/shared/domain';
+import { notifiedProviderCadenceOf } from './modules/ingestion/notified-provider-cadence';
+import { ProviderSettingsStore } from './modules/ingestion/provider-settings-store';
+import { ProviderWebhookSwitch } from './modules/ingestion/provider-webhook-switch';
+import { providerLookupOf } from './modules/ingestion/provider-lookup';
+import { ProviderSettingsService } from './modules/ingestion/provider-settings-service';
+import { PrismaProviderSettingsRepository } from './adapters/prisma-provider-settings-repository';
 import { IngestionService } from './modules/ingestion/ingestion-service';
 import { plansModule } from './modules/plans/routes';
 import { PlanEntitlementsService } from './modules/plans/plan-entitlements-service';
@@ -155,8 +161,16 @@ export function buildApp() {
 
   app.decorate('prisma', prisma);
 
+  // The providers come from their rows (#1997): read, and their adapters registered, when the app is ready.
   const registry = new ProviderRegistry();
-  registerConfiguredProviders(registry, process.env, app.log);
+  const providerSettingsRepository = new PrismaProviderSettingsRepository(prisma);
+  const providerSettings = new ProviderSettingsStore(providerSettingsRepository, app.log);
+  const balldontlieWebhookSecret = readBalldontlieWebhookSecret(process.env);
+  const providerWebhooks = new ProviderWebhookSwitch(providerSettings, {
+    ...(balldontlieWebhookSecret !== undefined && { [ProviderCode.BALLDONTLIE]: balldontlieWebhookSecret }),
+  });
+  const providers = providerLookupOf(providerSettings, registry);
+  const webhookProviderIds = () => providerWebhooks.onProviderIds();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const appSettings = new AppSettingsService({
     repository: runtimeConfigRepository,
@@ -207,7 +221,7 @@ export function buildApp() {
     contestSettlement,
   });
   // One set of event services for the admin routes, the synced event creation sweep and the draft event notices.
-  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, domainEvents, registry);
+  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, domainEvents, providers);
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
   const cdn = createCdnInvalidator(process.env, app.log);
@@ -350,13 +364,12 @@ export function buildApp() {
     jobLock,
     logger: app.log,
   });
-  const notifiedProviderCadence = readNotifiedProviderCadence(process.env);
   const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
     configReader: ingestionConfigService,
     eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
     syncRunLedger: providerSyncRunLedger,
     jobLock,
-    notifiedProviderCadence,
+    notifiedProviderCadence: () => notifiedProviderCadenceOf(providerSettings, providerWebhooks),
   });
   const ingestionService = new IngestionService({
     registry,
@@ -364,10 +377,10 @@ export function buildApp() {
     participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
     syncRuns: providerSyncRuns,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
-    webhookProviderIds: readWebhookProviderIds(process.env),
+    providerSettings,
+    webhooks: providerWebhooks,
     jobHistory: backgroundJobRepository,
     scheduler: ingestionScheduler,
-    ingestionConfigReader: ingestionConfigService,
     syncRunLedger: providerSyncRunLedger,
     jobs: backgroundJobs,
     logger: app.log,
@@ -439,16 +452,14 @@ export function buildApp() {
     domainEvents,
     leaderboards,
     services: sportEventServices,
-    schedule: ingestionConfigService,
-    webhookProviderIds: notifiedProviderCadence?.providerIds ?? [],
+    webhookProviderIds,
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, {
     prefix: '/api/v1/sport-leagues',
     cdn,
-    providerRegistry: registry,
-    schedule: ingestionConfigService,
-    webhookProviderIds: notifiedProviderCadence?.providerIds ?? [],
+    providers,
+    webhookProviderIds,
   });
   const profiles = createProfileServices(prisma, app.log);
   app.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
@@ -464,7 +475,14 @@ export function buildApp() {
     sportEvents: new PrismaSportEventRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
   });
-  app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry, leagueEventsSync, activity });
+  app.register(ingestionModule, {
+    prefix: '/api/v1/ingestion',
+    ingestionService,
+    providerRegistry: registry,
+    leagueEventsSync,
+    activity,
+    providerSettings: new ProviderSettingsService({ repository: providerSettingsRepository, store: providerSettings, webhooks: providerWebhooks, logger: app.log }),
+  });
   app.register(activityModule, { prefix: '/api/v1/activity', activity });
   app.register(customersModule, {
     prefix: '/api/v1/customers',
@@ -478,7 +496,8 @@ export function buildApp() {
       jobs: backgroundJobs,
       logger: app.log,
     }),
-    balldontlieSigningSecret: readBalldontlieWebhookSecret(process.env),
+    webhooks: providerWebhooks,
+    providerSettings,
   });
   app.register(emailEventsModule, {
     prefix: '/api/v1/email',
@@ -506,6 +525,12 @@ export function buildApp() {
     // place of a stored value; the background refresh then carries other tasks' saves here.
     await appSettings.load();
     appSettings.start();
+    // The provider rows load before any provider is called; a change of enable, priority or the
+    // leagues read takes effect when the task next starts, the rest on the next read (#1997).
+    await providerSettings.load();
+    providerSettings.start();
+    registerConfiguredProviders(registry, providerSettings, process.env, app.log);
+    providerWebhooks.warnFlagsWithoutSecret(app.log);
 
     // An API-only task (#1186) serves requests and leaves everything below to the worker.
     if (!role.runsBackgroundWork) {
@@ -547,6 +572,7 @@ export function buildApp() {
 
   app.addHook('onClose', async () => {
     appSettings.stop();
+    providerSettings.stop();
     ingestionScheduler.stop();
     syncedEventCreationScheduler.stop();
     eventLifecycleScheduler.stop();

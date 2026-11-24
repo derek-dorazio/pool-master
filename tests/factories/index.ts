@@ -28,7 +28,9 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SelectionType,
+  ProviderCode,
   type SportLeague,
+  type SportLeagueProviderMapping,
 } from '@poolmaster/shared/domain';
 
 let counter = 0;
@@ -52,6 +54,24 @@ export function buildUser(overrides: Partial<User> = {}): User {
   };
 }
 
+/**
+ * A sport league's selected mapping to a provider's league (#1997): BALLDONTLIE's, by its
+ * provider id, unless the overrides say otherwise.
+ */
+export function buildProviderMapping(overrides: Partial<SportLeagueProviderMapping> = {}): SportLeagueProviderMapping {
+  const id = nextId();
+  return {
+    id,
+    providerLeagueId: `provider-league-${id}`,
+    providerLeagueCode: 'nba',
+    providerLeagueName: 'NBA',
+    providerCode: ProviderCode.BALLDONTLIE,
+    providerName: 'BALLDONTLIE',
+    providerId: 'balldontlie',
+    ...overrides,
+  };
+}
+
 export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
   const id = nextId();
   return {
@@ -62,10 +82,9 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     displayOrder: null,
     parentSportLeagueId: null,
     parentRoundNumbers: [],
-    matchKeyword: null,
     currentEventYear: null,
     isActive: true,
-    eventSyncProviderId: null,
+    selectedProviderMapping: null,
     autoReleaseDaysBeforeStart: 7,
     bracketAdvancement: BracketAdvancement.FIXED,
     roundNames: [],

@@ -33,7 +33,6 @@ import {
   toPlayoffPlayerParticipant,
   toPlayoffRoundBoxScores,
   toPlayoffRoundEvent,
-  toPlayoffRoundEvents,
   type PlayoffPlayer,
   type PlayoffStatLine,
 } from './series-playoff-rounds';
@@ -89,7 +88,7 @@ export class PlayoffsReader {
     for (const season of this.seasonsFor(dateRange)) {
       games.push(...await this.postseasonGames(season));
     }
-    return [...toPlayoffsEvents(this.source.league, games), ...this.roundEvents(games)]
+    return toPlayoffsEvents(this.source.league, games)
       .filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
@@ -169,11 +168,6 @@ export class PlayoffsReader {
     return { category: 'GAME', externalEventId: playoffsScopeId(this.source.league, season), games: toPlayoffsGameScoreUpdates(this.source.league, games) };
   }
 
-  /** The rounds the games have reached as events of their own: none for a league without round reads. */
-  protected roundEvents(_games: readonly PlayoffGame[]): SportEvent[] {
-    return [];
-  }
-
   /** The season's games the vendor marks as its postseason, whatever the query's filters did. */
   protected async postseasonGames(season: number): Promise<PlayoffGame[]> {
     return (await this.source.games(season)).filter((game) => game.postseason && game.season === season);
@@ -200,12 +194,6 @@ export class PlayoffRoundsReader extends PlayoffsReader {
     logger?: FastifyBaseLogger,
   ) {
     super(source, now, logger);
-  }
-
-  /** Each season's rounds the games have reached. */
-  protected override roundEvents(games: readonly PlayoffGame[]): SportEvent[] {
-    const seasons = [...new Set(games.map((game) => game.season))];
-    return seasons.flatMap((season) => toPlayoffRoundEvents(this.source.league, season, games.filter((game) => game.season === season)));
   }
 
   /**

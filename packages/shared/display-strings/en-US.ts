@@ -39,6 +39,14 @@ export const enUS = {
       DEGRADED: 'Slow',
       DOWN: 'Down',
     },
+    ProviderCode: {
+      BALLDONTLIE: 'BALLDONTLIE',
+    },
+    ProviderWebhookEventSet: {
+      GAME_PERIODS: 'Start, each period, end',
+      GAME_HALVES: 'Start, half-time, end',
+      GOLF_ROUNDS: 'Tournament, rounds, players',
+    },
     InjuryStatusCode: {
       HEALTHY: 'Healthy',
       QUESTIONABLE: 'Questionable',
@@ -980,9 +988,12 @@ export const enUS = {
     PRICING_PROFILE_NOT_FOUND: 'Pricing profile not found.',
     PROFILE_RATE_LIMITED: 'Too many requests. Wait a minute and try again.',
     PROVIDER_EVENT_NOT_FOUND: 'The provider has no such event.',
+    PROVIDER_LEAGUE_NOT_FOUND: 'Provider league not found.',
     PROVIDER_LEAGUE_REFUSED: 'The provider refused this league.',
     PROVIDER_NOT_FOUND: 'Provider not found.',
+    PROVIDER_PRIORITY_TAKEN: 'Another provider already has that priority.',
     PROVIDER_SPORT_MISMATCH: 'This provider does not cover this sport.',
+    PROVIDER_WEBHOOK_SECRET_MISSING: 'Webhooks can’t be turned on until the provider’s signing secret is set.',
     PROVIDER_WEBHOOK_UNVERIFIED: 'This delivery is not signed by the provider.',
     RACE_RESULT_FIELD_INCOMPLETE: 'An official result needs a result for every active runner on the field, and a place for every finisher.',
     RACE_RESULT_POSITIONS_INVALID: 'The finishing places do not form a finishing order: they run 1, 2, 3 ..., and only a dead heat repeats a place, skipping the next (1, 2, 2, 4).',
@@ -1017,7 +1028,6 @@ export const enUS = {
     SPORT_EVENT_SYNC_SCOPE_RESTRICTED: 'This event\'s sync cannot be changed that way.',
     SPORT_EVENT_TIERS_LOCKED: 'This event has been released, so its tiers and prices are locked.',
     SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED: 'An event already has its bracket, so how winners advance cannot change.',
-    SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: 'This league has no match keyword, so a sync cannot find its events.',
     SPORT_LEAGUE_IN_USE: 'This league is in use, so it cannot be deleted.',
     SPORT_LEAGUE_NAME_ALREADY_EXISTS: 'A sport league already uses that name.',
     SPORT_LEAGUE_NOT_BRACKET: 'This league plays no bracket.',
@@ -1026,7 +1036,6 @@ export const enUS = {
     SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS: 'Some rows do not name one participant.',
     SPORT_NOT_FOUND: 'Sport not found.',
     SPORT_PROVIDER_NOT_FOUND: 'Provider not found.',
-    SPORT_SYNC_NOT_CONFIGURED: 'Sync is not set up for this league.',
     SQUAD_DELETE_HAS_RESULTS: 'This team has finished contests, so it stays in the results. It can stay inactive instead.',
     SQUAD_DELETE_REQUIRES_INACTIVE: 'This team must be inactive before it can be deleted.',
     SQUAD_HISTORY_EXISTS: 'This person already has a team history in this league.',
@@ -1267,9 +1276,6 @@ export const enUS = {
     },
     SPORT_EVENT_NOT_RELEASED: {
       bracketAdmin: 'Release the {{event}} before entering results.',
-    },
-    SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD: {
-      leagueYear: '{{sportLeagueName}} has no match keyword. Set it to the provider’s {{sportLeague}} name.',
     },
   },
   word: {

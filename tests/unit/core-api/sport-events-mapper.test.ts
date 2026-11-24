@@ -260,7 +260,7 @@ describe('the event\'s rounds, tiers, years, live simulation and year import on 
 
 describe('SportEvent provider sync on the wire (ADR 0011)', () => {
   it('marks an event provider-synced when its sport league\'s sync names the provider it is linked to for scores', () => {
-    expect(mapSportEventToDto(summary(event({ eventSyncProviderId: 'mock-contest-feed' }), 72)).providerSynced).toBe(true);
+    expect(mapSportEventToDto(summary(event({ syncProviderId: 'mock-contest-feed' }), 72)).providerSynced).toBe(true);
   });
 
   it('leaves an event admin-owned when its sport league is not synced', () => {
@@ -268,10 +268,10 @@ describe('SportEvent provider sync on the wire (ADR 0011)', () => {
   });
 
   it('leaves an event admin-owned when it is linked to another provider than the one syncing its league', () => {
-    expect(mapSportEventToDto(summary(event({ eventSyncProviderId: 'balldontlie' }), 72)).providerSynced).toBe(false);
+    expect(mapSportEventToDto(summary(event({ syncProviderId: 'balldontlie' }), 72)).providerSynced).toBe(false);
   });
 
   it('leaves an event admin-owned when its score source is unlinked, even in a synced league', () => {
-    expect(mapSportEventToDto(summary(event({ eventSyncProviderId: 'mock-contest-feed', syncScope: 'NONE' }), 72)).providerSynced).toBe(false);
+    expect(mapSportEventToDto(summary(event({ syncProviderId: 'mock-contest-feed', syncScope: 'NONE' }), 72)).providerSynced).toBe(false);
   });
 });

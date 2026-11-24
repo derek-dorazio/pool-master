@@ -6,8 +6,8 @@ import { ProviderDialog } from './provider-dialog';
 import { useProvidersQuery } from './use-providers-query';
 
 /**
- * The Providers page's providers (#1873): one row per registered provider with its live check,
- * a row opening its view-only dialog.
+ * The Providers page's providers (#1873): one row per provider with its live check, a row
+ * opening its dialog, where its settings are edited (#1997).
  */
 export function ProvidersSection() {
   const providersQuery = useProvidersQuery();

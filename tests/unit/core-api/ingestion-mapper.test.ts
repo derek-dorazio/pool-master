@@ -131,10 +131,22 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     webhooksEnabled: true,
     syncedSportLeagueCount: 16,
     rateLimitedJobsLast24h: 3,
+    settings: null,
   } as unknown as Parameters<typeof toProviderSummaryDto>[0];
 
   it('sends a provider\'s request rate, webhook switch, synced sport league count and rate-limited job count as they are', () => {
     expect(toProviderSummaryDto(provider)).toMatchObject({ requestsPerMinute: 600, webhooksEnabled: true, syncedSportLeagueCount: 16, rateLimitedJobsLast24h: 3 });
+  });
+
+  it('sends a provider\'s stored settings and leagues with whether its webhook secret is set, and none for a provider with no row', () => {
+    const league = { id: 'pl-1', providerId: 'prov-1', code: 'nfl', name: 'NFL', sport: Sport.AMERICAN_FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true };
+    const settings = {
+      id: 'prov-1', code: 'BALLDONTLIE', name: 'BALLDONTLIE', baseUrl: 'https://api.example.test', requestsPerMinute: 5, webhooksEnabled: true,
+      webhookPollMinutes: 10, webhookRoundPollMinutes: 5, hasPlayerStats: true, isEnabled: true, priority: 1, leagues: [league], webhookSecretSet: false,
+    };
+    const dto = toProviderSummaryDto({ ...provider, settings } as unknown as Parameters<typeof toProviderSummaryDto>[0]);
+    expect(dto.settings).toEqual({ ...settings, leagues: [{ id: 'pl-1', code: 'nfl', name: 'NFL', sport: Sport.AMERICAN_FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true }] });
+    expect(toProviderSummaryDto(provider).settings).toBeNull();
   });
 
   it('sends a provider\'s last event time as ISO, and a provider that has sent none as null', () => {

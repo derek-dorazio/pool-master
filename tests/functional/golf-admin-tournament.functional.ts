@@ -148,7 +148,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     // --- Sport league (tour) ------------------------------------------------------
     const league = await createSportLeague({
       client: c,
-      body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `PGA Tour ${RUN}`, matchKeyword: 'PGA' },
+      body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `PGA Tour ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
@@ -510,46 +510,21 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(editions.data).events.map((event) => event.eventYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
   });
 
-  // #385 — a tour's year imported from the FAPI daemon's real mock provider, whose tour seeds
-  // (#383) carry PGA TOUR and LPGA Tour slates. The match is the provider's tour name, so an
-  // "LPGA Tour" league gets only LPGA events, and a second run creates nothing.
-  it('imports a tour\'s year from the provider as linked events, only that tour\'s, and skips them all on a second run', async () => {
+  // #385, #1997 — a league's year import reads the provider league its selected mapping names. The
+  // FAPI daemon's mock feed has no Provider row, so no league can be mapped to it and its import is
+  // refused; the import itself is covered against a stand-in provider in the integration suite
+  // until the mock is replaced (#2039).
+  it('refuses a year import for a league with no selected provider league with 422 SPORT_LEAGUE_NOT_SYNCED', async () => {
     await ensureGolfSportRow();
     const admin = await buildRegisteredUser({ displayName: 'Golf Admin Import' });
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `Import Tour ${RUN}`, matchKeyword: 'LPGA Tour' } });
-    const sportLeagueId = expectDefined(league.data).sportLeague.id;
-    created.sportLeagueIds.add(sportLeagueId);
-
-    const first = await importEventYearFromProvider({ client: c, body: { sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed' } });
-    expect(first.response?.status).toBe(201);
-    const imported = expectDefined(first.data).created;
-    imported.forEach((event) => created.sportEventIds.add(event.id));
-    // Tournaments whose start has already passed are never created (#1821); once the mock's 2027
-    // season is under way they are the only ones a first run skips.
-    const started = expectDefined(first.data).skipped;
-    expect(started.every((row) => row.reason === 'ALREADY_STARTED')).toBe(true);
-    expect(imported.length + started.length).toBeGreaterThan(20);
-    // Fails once the mock's whole 2027 season is past: move this test to the mock's next year then.
-    expect(imported.length).toBeGreaterThan(0);
-    for (const event of imported) {
-      expect(event).toMatchObject({ sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed', syncScope: 'SCORES_ONLY', loadedParticipantCount: 0 });
-      expect(event.externalId.startsWith('lpga-tour-2027-')).toBe(true);
-    }
-
-    const again = await importEventYearFromProvider({ client: c, body: { sportLeagueId, eventYear: 2027, providerId: 'mock-contest-feed' } });
-    expect(again.response?.status).toBe(201);
-    expect(expectDefined(again.data).created).toEqual([]);
-    expect(expectDefined(again.data).skipped.filter((row) => row.reason === 'ALREADY_LINKED')).toHaveLength(imported.length);
-    expect(expectDefined(again.data).skipped.filter((row) => row.reason !== 'ALREADY_LINKED').every((row) => row.reason === 'ALREADY_STARTED')).toBe(true);
-
-    const noKeyword = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `No Keyword Tour ${RUN}` } });
-    created.sportLeagueIds.add(expectDefined(noKeyword.data).sportLeague.id);
+    const unsynced = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `Unsynced Tour ${RUN}` } });
+    created.sportLeagueIds.add(expectDefined(unsynced.data).sportLeague.id);
     expectFunctionalError(
-      await importEventYearFromProvider({ client: c, body: { sportLeagueId: expectDefined(noKeyword.data).sportLeague.id, eventYear: 2027, providerId: 'mock-contest-feed' } }),
-      { status: 422, code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD' },
+      await importEventYearFromProvider({ client: c, body: { sportLeagueId: expectDefined(unsynced.data).sportLeague.id, eventYear: 2027, providerId: 'mock-contest-feed' } }),
+      { status: 422, code: 'SPORT_LEAGUE_NOT_SYNCED' },
     );
   }, 60_000);
 

@@ -6,6 +6,7 @@ import type { ProviderBracketMatch, ProviderScheduledGame } from '../../../packa
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { leagueProfiles } from '../../support/league-profiles';
+import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 
 // A synced league's game week and fixed-shape playoff take their games from its provider (ADR
 // 0011, #1728), against real Postgres: the draft's matches written through the bracket's own
@@ -19,7 +20,7 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-const PROVIDER = 'integration-test';
+const PROVIDER = SYNCED_PROVIDER_ID;
 const KICKOFF = new Date('2026-11-15T18:00:00.000Z');
 const HOUR = 60 * 60 * 1000;
 
@@ -31,7 +32,8 @@ async function syncedWeek() {
     create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `NFL ${randomUUID()}`, matchKeyword: 'NFL', eventSyncProviderId: PROVIDER } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `NFL ${randomUUID()}` } });
+  await syncLeagueTo(prisma, sportLeague.id, 'nfl');
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Week 11 ${randomUUID()}` } });
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
@@ -96,7 +98,7 @@ describe('Provider game slate (#1728)', () => {
 
   it('leaves an event of a league that is not synced without games', async () => {
     const { event, game } = await syncedWeek();
-    await getPrisma().sportLeague.updateMany({ where: { eventSeries: { some: { id: event.eventSeriesId } } }, data: { eventSyncProviderId: null } });
+    await getPrisma().sportLeague.updateMany({ where: { eventSeries: { some: { id: event.eventSeriesId } } }, data: { syncProviderId: null } });
     const { providerGames } = integrationSportEventServices();
 
     await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: event.externalId, games: [game('g1', 'Bears', 'Lions', 0)] }))
@@ -112,8 +114,9 @@ describe('Provider game slate (#1728)', () => {
       update: {},
     });
     const sportLeague = await prisma.sportLeague.create({
-      data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `NFL ${randomUUID()}`, matchKeyword: 'NFL', eventSyncProviderId: PROVIDER, bracketAdvancement: 'RESEED_BY_SEED' },
+      data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `NFL ${randomUUID()}`, bracketAdvancement: 'RESEED_BY_SEED' },
     });
+    await syncLeagueTo(prisma, sportLeague.id, 'nfl');
     const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `NFL Playoffs ${randomUUID()}` } });
     const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
       eventSeriesId: eventSeries.id,

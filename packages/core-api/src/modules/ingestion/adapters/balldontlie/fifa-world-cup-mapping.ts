@@ -36,8 +36,8 @@ export const FIFA_WC_MATCHES_PATH = '/fifa/worldcup/v1/matches';
 export const FIFA_WC_TEAMS_PATH = '/fifa/worldcup/v1/teams';
 
 /**
- * The tour name events and teams carry in `metadata.tour`, matched against a sport league's
- * match keyword. Soccer's FIFA World Cup sport league is given it by migration.
+ * The tour name events and teams carry in `metadata.tour`, for display; a sport
+ * league finds them by their provider league code (#1997).
  */
 export const FIFA_WC_TOUR = 'FIFAWC';
 

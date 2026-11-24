@@ -18,6 +18,7 @@ import {
   SportLeagueSyncHealth,
 } from '@poolmaster/shared/domain';
 import { SportEventOverviewResponseSchema } from '@poolmaster/shared/dto';
+import { syncLeagueTo } from '../../support/league-sync';
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, get, okBody, seedEventWithField } from '../list-route-seeds';
 import { expectConstantQueries, measureQueryScaling } from '../query-scaling';
@@ -46,7 +47,8 @@ async function seedSyncedEvent(golfers: number) {
   const prisma = getPrisma();
   const { event, field } = await seedEventWithField(golfers, { status: SportEventStatus.DRAFT, ownSportLeague: true, startsInDays: 30 });
   const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId }, select: { sportLeagueId: true } });
-  await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7 } });
+  await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { autoReleaseDaysBeforeStart: 7 } });
+  await syncLeagueTo(prisma, sportLeagueId, 'pga');
   await prisma.sportEvent.update({ where: { id: event.id }, data: { providerId: 'balldontlie', syncScope: 'SCORES_ONLY' } });
   const seenAt = new Date(Date.now() - 60 * 60 * 1000);
   for (const [index, row] of field.entries()) {

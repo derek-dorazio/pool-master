@@ -30,6 +30,20 @@ function buildProvider(overrides: Partial<SportDataProvider> = {}): SportDataPro
   });
 }
 
+/** BALLDONTLIE's id: a league's selected mapping names its provider by its row (#1997). */
+const SYNCED_PROVIDER = 'balldontlie';
+
+/** A sport league row read with its selected provider mapping, as the service reads it; null code: not synced. */
+function leagueRow(providerLeagueCode: string | null, extra: Record<string, unknown> = {}) {
+  return {
+    id: 'league-1', name: 'PGA TOUR', sport: { sport: 'GOLF' }, ...extra,
+    selectedProviderMapping: providerLeagueCode === null ? null : {
+      id: 'mapping-1',
+      providerLeague: { id: 'provider-league-1', code: providerLeagueCode, name: providerLeagueCode.toUpperCase(), provider: { code: 'BALLDONTLIE', name: 'BALLDONTLIE' } },
+    },
+  };
+}
+
 describe('EventScoreSourceService.listCandidateEvents', () => {
   afterEach(() => {
     jest.useRealTimers();
@@ -54,7 +68,7 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
     await service.listCandidateEvents('mock-golf', Sport.GOLF);
 
-    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', undefined);
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', undefined, undefined);
   });
 
   it('leaves the other end of the window open when only one of from or to is given', async () => {
@@ -81,7 +95,7 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 
     await service.listCandidateEvents('mock-golf', Sport.GOLF, { from, to });
 
-    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', { from, to });
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', { from, to }, undefined);
   });
 
   it('pool-master-753 returns the provider events themselves, unscored and unreshaped', async () => {
@@ -99,108 +113,40 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(result).toEqual([event]);
   });
 
-  it('pool-master-753 filters by the sportLeagueId\'s matchKeyword as a plain substring match', async () => {
+  it('narrows the browse to the provider league the sport league\'s selected mapping names, by the code each event carries, never by its name', async () => {
     const provider = buildProvider({
+      providerId: SYNCED_PROVIDER,
       getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'ext-1', name: 'PGA Championship' }),
-        buildProviderEvent({ externalId: 'ext-2', name: 'LIV Golf Miami' }),
+        buildProviderEvent({ externalId: 'nba-2025-postseason', name: 'NBA Playoffs', providerLeagueCode: 'nba' }),
+        buildProviderEvent({ externalId: 'wnba-2026-postseason', name: 'WNBA Playoffs', providerLeagueCode: 'wnba' }),
+        buildProviderEvent({ externalId: 'nba-exhibition', name: 'NBA Exhibition' }),
       ]),
     });
-    const providerRegistry = registryWith(provider);
-    const prisma = {
-      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'PGA' }) },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
-
-    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
-
-    expect(result.map((event) => event.externalId)).toEqual(['ext-1']);
-  });
-
-  it('keeps an event whose provider tour name equals the matchKeyword, ignoring case, even when its name lacks the keyword, and still excludes the other tour', async () => {
-    const provider = buildProvider({
-      getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'pga-1', name: 'Masters Tournament', metadata: { tour: 'PGA TOUR' } }),
-        buildProviderEvent({ externalId: 'lpga-1', name: 'Honda LPGA Thailand', metadata: { tour: 'LPGA Tour' } }),
-      ]),
-    });
-    const prisma = {
-      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'pga tour' }) },
-    };
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(leagueRow('nba')) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
-
-    expect(result.map((event) => event.externalId)).toEqual(['pga-1']);
-  });
-
-  it('leaves out an event whose name holds the keyword only inside a longer word, so the NBA\'s picker lists no WNBA playoffs', async () => {
-    const provider = buildProvider({
-      getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'nba-2025-postseason', name: 'NBA Playoffs', metadata: { tour: 'NBA' } }),
-        buildProviderEvent({ externalId: 'wnba-2026-postseason', name: 'WNBA Playoffs', metadata: { tour: 'WNBA' } }),
-      ]),
-    });
-    const prisma = {
-      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'NBA' }) },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
-
-    const result = await service.listCandidateEvents('mock-golf', Sport.BASKETBALL, { sportLeagueId: 'league-1' });
+    const result = await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1' });
 
     expect(result.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith(Sport.BASKETBALL, undefined, { providerLeagueCode: 'nba' });
   });
 
-  it('keeps an event whose name holds the keyword as whole words even when it names another tour, so a league keyed "U.S. Open" lists that PGA TOUR event', async () => {
+  it('applies no league filter when the sport league is not synced, or is synced from another provider', async () => {
     const provider = buildProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'pga-us-open', name: 'U.S. Open Championship', metadata: { tour: 'PGA TOUR' } }),
-        buildProviderEvent({ externalId: 'pga-masters', name: 'Masters Tournament', metadata: { tour: 'PGA TOUR' } }),
-      ]),
-    });
-    const prisma = {
-      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: 'U.S. Open' }) },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
-
-    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
-
-    expect(result.map((event) => event.externalId)).toEqual(['pga-us-open']);
-  });
-
-  it('matches a keyword stored with stray spaces as the trimmed keyword, and treats a blank one as no keyword', async () => {
-    const provider = buildProvider({
-      getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'nba-2025-postseason', name: 'NBA Playoffs', metadata: { tour: 'NBA' } }),
-        buildProviderEvent({ externalId: 'wnba-2026-postseason', name: 'WNBA Playoffs', metadata: { tour: 'WNBA' } }),
-      ]),
-    });
-    const findUnique = jest.fn().mockResolvedValueOnce({ matchKeyword: ' NBA ' }).mockResolvedValueOnce({ matchKeyword: '   ' });
-    const service = new EventScoreSourceService(asPrismaClient({ sportLeague: { findUnique } }), registryWith(provider));
-
-    const padded = await service.listCandidateEvents('mock-golf', Sport.BASKETBALL, { sportLeagueId: 'league-1' });
-    const blank = await service.listCandidateEvents('mock-golf', Sport.BASKETBALL, { sportLeagueId: 'league-1' });
-
-    expect(padded.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
-    expect(blank.map((event) => event.externalId)).toEqual(['nba-2025-postseason', 'wnba-2026-postseason']);
-  });
-
-  it('pool-master-753 applies no filter when the league has no matchKeyword set', async () => {
-    const provider = buildProvider({
-      getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'ext-1', name: 'PGA Championship' }),
+        buildProviderEvent({ externalId: 'ext-1', name: 'PGA Championship', providerLeagueCode: 'pga' }),
         buildProviderEvent({ externalId: 'ext-2', name: 'LIV Golf Miami' }),
       ]),
     });
-    const providerRegistry = registryWith(provider);
-    const prisma = {
-      sportLeague: { findUnique: jest.fn().mockResolvedValue({ matchKeyword: null }) },
-    };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), providerRegistry);
+    const findUnique = jest.fn().mockResolvedValueOnce(leagueRow(null)).mockResolvedValueOnce(leagueRow('pga'));
+    const service = new EventScoreSourceService(asPrismaClient({ sportLeague: { findUnique } }), registryWith(provider));
 
-    const result = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
+    const unsynced = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
+    const otherProvider = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
 
-    expect(result.map((event) => event.externalId)).toEqual(['ext-1', 'ext-2']);
+    expect(unsynced.map((event) => event.externalId)).toEqual(['ext-1', 'ext-2']);
+    expect(otherProvider.map((event) => event.externalId)).toEqual(['ext-1', 'ext-2']);
+    expect(provider.getUpcomingEvents).toHaveBeenLastCalledWith(Sport.GOLF, undefined, undefined);
   });
 
   it('pool-master-753 filters by a free-text search term independently of the league filter', async () => {
@@ -220,22 +166,23 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
   });
 });
 
-// #385: a tour's provider slate for one year, matched by the provider's tour name.
+// #385: a league's provider slate for one year, from the provider league its selected mapping names (#1997).
 describe('EventScoreSourceService.listTourEventsForYear', () => {
-  const pgaLeague = { id: 'pga', name: 'PGA TOUR', matchKeyword: 'PGA TOUR', sport: { sport: 'GOLF' } };
+  const pgaLeague = leagueRow('pga');
+  const syncedProvider = (overrides: Partial<SportDataProvider> = {}) => buildProvider({ providerId: SYNCED_PROVIDER, ...overrides });
 
-  it('returns only events whose provider tour equals the league\'s match keyword, ignoring case, so "PGA TOUR" does not pick up the LPGA', async () => {
-    const provider = buildProvider({
+  it('returns only events of the league\'s provider league, by their code, so the PGA TOUR does not pick up the LPGA', async () => {
+    const provider = syncedProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([
-        buildProviderEvent({ externalId: 'pga-1', name: 'Alpha Open', venue: 'A Links', metadata: { tour: 'pga tour' } }),
-        buildProviderEvent({ externalId: 'lpga-1', name: 'LPGA Alpha', metadata: { tour: 'LPGA Tour' } }),
-        buildProviderEvent({ externalId: 'none-1', name: 'PGA TOUR Exhibition', metadata: {} }),
+        buildProviderEvent({ externalId: 'pga-1', name: 'Alpha Open', venue: 'A Links', providerLeagueCode: 'pga' }),
+        buildProviderEvent({ externalId: 'lpga-1', name: 'LPGA Alpha', providerLeagueCode: 'lpga' }),
+        buildProviderEvent({ externalId: 'none-1', name: 'PGA TOUR Exhibition' }),
       ]),
     });
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    const events = await service.listTourEventsForYear('mock-golf', 'pga', 2027);
+    const events = await service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027);
 
     expect(events).toEqual([{
       externalId: 'pga-1',
@@ -246,25 +193,25 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     }]);
   });
 
-  it('asks the provider for the league\'s sport across that calendar year in UTC, naming the league\'s tour so it reads only that league', async () => {
-    const provider = buildProvider();
+  it('asks the provider for the league\'s sport across that calendar year in UTC, naming its provider league so it reads only that league', async () => {
+    const provider = syncedProvider();
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    await service.listTourEventsForYear('mock-golf', 'pga', 2027);
+    await service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027);
 
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', {
       from: new Date('2027-01-01T00:00:00.000Z'),
       to: new Date('2027-12-31T23:59:59.999Z'),
-    }, { tour: 'PGA TOUR' });
+    }, { providerLeagueCode: 'pga' });
   });
 
   it('refuses with 422 PROVIDER_LEAGUE_REFUSED, naming the league, when the provider\'s plan refuses the tour\'s league', async () => {
-    const provider = buildProvider({ getUpcomingEvents: jest.fn().mockRejectedValue(new ProviderLeagueRefusedError('BALLDONTLIE', 'NFL', 401)) });
+    const provider = syncedProvider({ getUpcomingEvents: jest.fn().mockRejectedValue(new ProviderLeagueRefusedError('BALLDONTLIE', 'NFL', 401)) });
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    await expect(service.listTourEventsForYear('mock-golf', 'pga', 2027)).rejects.toMatchObject({
+    await expect(service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027)).rejects.toMatchObject({
       code: 'PROVIDER_LEAGUE_REFUSED',
       statusCode: 422,
       message: expect.stringContaining('BALLDONTLIE refused NFL') as unknown,
@@ -273,27 +220,30 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
 
   it('passes on any other provider failure unchanged', async () => {
     const outage = new Error('BALLDONTLIE request /nfl/v1/games failed: 503');
-    const provider = buildProvider({ getUpcomingEvents: jest.fn().mockRejectedValue(outage) });
+    const provider = syncedProvider({ getUpcomingEvents: jest.fn().mockRejectedValue(outage) });
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    await expect(service.listTourEventsForYear('mock-golf', 'pga', 2027)).rejects.toBe(outage);
+    await expect(service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027)).rejects.toBe(outage);
   });
 
-  it('refuses a league with no match keyword with 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD and never calls the provider', async () => {
-    const provider = buildProvider();
-    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue({ ...pgaLeague, matchKeyword: null }) } };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+  it('refuses a league with no selected mapping, or one to another provider, with 422 SPORT_LEAGUE_NOT_SYNCED and never calls the provider', async () => {
+    const provider = syncedProvider();
+    const otherProvider = buildProvider();
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValueOnce(leagueRow(null)).mockResolvedValueOnce(pgaLeague) } };
 
-    await expect(service.listTourEventsForYear('mock-golf', 'pga', 2027))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', statusCode: 422 });
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider)).listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(otherProvider)).listTourEventsForYear('mock-golf', 'pga', 2027))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
     expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
+    expect(otherProvider.getUpcomingEvents).not.toHaveBeenCalled();
   });
 
   it('404s SPORT_LEAGUE_NOT_FOUND for an unknown league and PROVIDER_NOT_FOUND for an unknown provider', async () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(null) } };
 
-    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(buildProvider())).listTourEventsForYear('mock-golf', 'nope', 2027))
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(syncedProvider())).listTourEventsForYear(SYNCED_PROVIDER, 'nope', 2027))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
     await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(null)).listTourEventsForYear('unknown', 'pga', 2027))
       .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });

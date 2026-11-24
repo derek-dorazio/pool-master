@@ -14,6 +14,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { AutoReleaseCheckOutcome, SportEventStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
 export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReader {
   constructor(private readonly prisma: PrismaClient) {}
@@ -22,7 +23,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
     const notCancelled = { not: SportEventStatus.CANCELLED };
     const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, clutchCardRows, overdueCandidates] = await Promise.all([
       this.prisma.sportLeague.findMany({
-        select: { id: true, name: true, parentSportLeagueId: true, scoringFamily: true, eventSyncProviderId: true, isActive: true, sport: { select: { sport: true } } },
+        select: { id: true, name: true, parentSportLeagueId: true, scoringFamily: true, ...SYNC_PROVIDER_SELECT, isActive: true, sport: { select: { sport: true } } },
       }),
       this.latestSyncRuns(),
       this.prisma.sportEvent.findMany({
@@ -57,7 +58,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
     });
 
     return {
-      leagues: leagues.map(({ sport, ...league }) => ({ ...league, sport: sport.sport })),
+      leagues: leagues.map(({ sport, selectedProviderMapping, ...league }) => ({ ...league, sport: sport.sport, syncProviderId: syncProviderIdOf({ selectedProviderMapping }) })),
       latestSyncRuns,
       heldEvents: heldEvents.flatMap((event) => {
         // The check constraint sets the time with the outcome.

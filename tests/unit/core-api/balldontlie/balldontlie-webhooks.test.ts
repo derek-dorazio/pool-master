@@ -1,9 +1,8 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieWebhookNotificationSchema } from '@poolmaster/shared/dto';
 import {
-  BALLDONTLIE_WEBHOOK_EVENT_TYPES,
-  BALLDONTLIE_WEBHOOK_GAME_LEAGUES,
   balldontlieQuietAfterMs,
+  balldontlieWebhookEventTypes,
   checkBalldontlieSignature,
   readBalldontlieNotification,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-webhooks';
@@ -23,8 +22,16 @@ import {
   TEST_BALLDONTLIE_WEBHOOK_SECRET as SECRET,
   balldontlieSignature,
 } from '../../../support/balldontlie-webhooks';
+import { BALLDONTLIE_TEST_LEAGUES as LEAGUES } from '../../../support/balldontlie-provider-rows';
 
-const read = (body: object) => readBalldontlieNotification(BalldontlieWebhookNotificationSchema.parse(body));
+const EVENT_TYPES = balldontlieWebhookEventTypes(LEAGUES);
+/** The event id prefix a league's game notifications are routed by. */
+const prefixOf = (code: string): string => {
+  const notification = readBalldontlieNotification({ event_type: `${code}.game.ended`, game: { id: 1 } }, LEAGUES);
+  return notification?.subject === 'GAME' ? notification.eventIdPrefix : '';
+};
+
+const read = (body: object) => readBalldontlieNotification(BalldontlieWebhookNotificationSchema.parse(body), LEAGUES);
 
 describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   it('reads a subscribed NFL game event as that game\'s notification, for the NFL\'s scopes', () => {
@@ -93,7 +100,7 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   });
 
   it('subscribes to the coarse game events of every league with a reader and golf\'s four tournament events, never a hole', () => {
-    expect(BALLDONTLIE_WEBHOOK_EVENT_TYPES).toEqual(expect.arrayContaining([
+    expect(EVENT_TYPES).toEqual(expect.arrayContaining([
       'nfl.game.started', 'nfl.game.period_ended', 'nfl.game.ended',
       'ncaaf.game.started', 'ncaaf.game.period_ended', 'ncaaf.game.ended',
       'ncaab.game.ended', 'ncaaw.game.ended',
@@ -104,13 +111,14 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
       'worldcup.game.ended',
       'pga.tournament.started', 'pga.tournament.round_started', 'pga.player.round_completed', 'pga.tournament.ended',
     ]));
-    expect(BALLDONTLIE_WEBHOOK_EVENT_TYPES).not.toContain('pga.player.hole_completed');
-    expect(BALLDONTLIE_WEBHOOK_EVENT_TYPES.every((type) => read({ event_type: type, game: { id: 1 }, tournament: { id: 1 } }) !== null))
+    expect(EVENT_TYPES).not.toContain('pga.player.hole_completed');
+    expect(EVENT_TYPES.every((type) => read({ event_type: type, game: { id: 1 }, tournament: { id: 1 } }) !== null))
       .toBe(true);
   });
 
   it('names each league\'s events by the prefix its reader\'s event ids really start with', () => {
-    const { nfl, ncaaf, nba, ncaab, ncaaw, nhl, mlb, wnba, epl, worldcup } = BALLDONTLIE_WEBHOOK_GAME_LEAGUES;
+    const [nfl, ncaaf, nba, ncaab, ncaaw, nhl, mlb, wnba, epl, worldcup] = ['nfl', 'ncaaf', 'nba', 'ncaab', 'ncaaw', 'nhl', 'mlb', 'wnba', 'epl', 'worldcup']
+      .map((code) => ({ eventIdPrefix: prefixOf(code) }));
     expect(parsePlayoffsScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason`)).toBe(2025);
     expect(parsePlayoffRoundScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason-round-1`)).not.toBeNull();
     expect(parseNflScope(`${nfl.eventIdPrefix}2026-week-11`)).not.toBeNull();
@@ -126,7 +134,7 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
 });
 
 describe('how long a BALLDONTLIE event may stay in play with no notification (#1499)', () => {
-  const quietMinutes = (sport: Sport, externalId: string) => balldontlieQuietAfterMs(sport, externalId) / 60_000;
+  const quietMinutes = (sport: Sport, externalId: string) => balldontlieQuietAfterMs(LEAGUES, sport, externalId) / 60_000;
 
   it('allows each league its longest normal gap between notifications, a period or half plus its break, never as short as one quarter', () => {
     expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(90);
@@ -139,9 +147,6 @@ describe('how long a BALLDONTLIE event may stay in play with no notification (#1
     expect(quietMinutes(Sport.BASKETBALL, 'wnba-2026-postseason')).toBe(75);
     expect(quietMinutes(Sport.SOCCER, 'epl-2026-matchweek-12')).toBe(90);
     expect(quietMinutes(Sport.SOCCER, 'fifa-wc-2026-knockout')).toBe(150);
-    for (const league of Object.values(BALLDONTLIE_WEBHOOK_GAME_LEAGUES)) {
-      expect(league.quietAfterMinutes).toBeGreaterThanOrEqual(75);
-    }
   });
 
   it('allows a golf round six hours, since its first notification after the start is the first group finishing', () => {
@@ -209,5 +214,27 @@ describe('checking a BALLDONTLIE delivery\'s signature (#1498)', () => {
     expect(checkBalldontlieSignature({ ...signed, signature: 'v1=abc' }, SECRET, now)).toBe('MALFORMED');
     expect(checkBalldontlieSignature({ ...signed, signature: ' , ' }, SECRET, now)).toBe('MALFORMED');
     expect(checkBalldontlieSignature({ ...signed, timestamp: '2026-11-15T18:00:00Z' }, SECRET, now)).toBe('MALFORMED');
+  });
+});
+
+describe('BALLDONTLIE webhooks follow its league rows (#1997)', () => {
+  const withoutMlb = LEAGUES.filter((league) => league.code !== 'mlb');
+
+  it('drops a notification about a league that has no enabled row', () => {
+    const body = BalldontlieWebhookNotificationSchema.parse({ event_type: 'mlb.game.ended', game: { id: 7 } });
+
+    expect(readBalldontlieNotification(body, LEAGUES)).not.toBeNull();
+    expect(readBalldontlieNotification(body, withoutMlb)).toBeNull();
+  });
+
+  it('subscribes only to the events of the enabled leagues, by each league\'s event set', () => {
+    expect(balldontlieWebhookEventTypes(withoutMlb)).not.toContain('mlb.game.ended');
+    expect(balldontlieWebhookEventTypes(LEAGUES.filter((league) => league.code === 'epl'))).toEqual(['epl.game.started', 'epl.game.halftime', 'epl.game.ended']);
+  });
+
+  it('takes a league\'s quiet window from its row, so an edit on the Providers page changes it', () => {
+    const longer = LEAGUES.map((league) => (league.code === 'nfl' ? { ...league, quietAfterMinutes: 120 } : league));
+
+    expect(balldontlieQuietAfterMs(longer, Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(120 * 60_000);
   });
 });

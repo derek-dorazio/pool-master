@@ -42,7 +42,6 @@ const providerId = 'mock-contest-feed';
 const eventExternalId = 'golf-masters-2026';
 const syncVerificationNow = new Date('2026-05-30T12:00:00.000Z');
 const syncVerificationConfig: IngestionScheduleConfig = {
-  scheduledSports: [Sport.GOLF],
   healthCheck: { enabled: true, intervalMinutes: 5 },
   // Every unstarted event in the lookahead takes field syncs (#431 removed the release
   // window), so a week keeps the scheduled pass to the one event this suite asserts on.
@@ -771,9 +770,9 @@ describe('mock contest feed provider event-first verification', () => {
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
-      webhookProviderIds: [],
+      providerSettings: { all: () => [] },
+      webhooks: { isOn: () => false, isSecretSet: () => false },
       jobHistory: new PrismaBackgroundJobRepository(getAppPrisma()),
-      ingestionConfigReader: configReader,
       syncRunLedger,
       jobs: backgroundJobs.queue,
     });
@@ -923,7 +922,8 @@ describe('mock contest feed provider event-first verification', () => {
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
-      webhookProviderIds: [],
+      providerSettings: { all: () => [] },
+      webhooks: { isOn: () => false, isSecretSet: () => false },
       jobHistory: new PrismaBackgroundJobRepository(getAppPrisma()),
       syncRunLedger,
       jobs: backgroundJobs.queue,

@@ -3,6 +3,7 @@ import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { createFakeBalldontlie, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
 
 /**
  * The adapter's soccer reads, the Premier League and the FIFA World Cup, against a fake
@@ -68,9 +69,9 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW): { 
   global.fetch = api.fetch;
   let clock = now;
   const adapter = new BalldontlieAdapter({
-    baseUrl: 'https://api.balldontlie.io',
+    connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
     apiKey: API_KEY,
-    requestsPerMinute: 600,
+    leagues: BALLDONTLIE_TEST_LEAGUES,
     now: () => clock,
     sleep: (ms) => { clock += ms; return Promise.resolve(); },
   });

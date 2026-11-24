@@ -9,6 +9,10 @@ import type {
   SportEventRoundDto,
   SportEventTierDto,
   SportLeagueDto,
+  SportLeagueProviderMappingDto,
+  ProviderLeagueDto,
+  ProviderSettingsDto,
+  ProviderSummaryDto,
 } from '@/lib/api';
 
 /** The Standard pricing profile's id, which `sportLeagueFixture` names. */
@@ -169,14 +173,88 @@ export function tierFixture(overrides: Partial<SportEventTierDto> = {}): SportEv
   };
 }
 
+/** One of BALLDONTLIE's leagues. */
+export function providerLeagueFixture(overrides: Partial<ProviderLeagueDto> = {}): ProviderLeagueDto {
+  return {
+    id: '00000000-0000-4000-8000-0000000000c1',
+    code: 'pga',
+    name: 'PGA TOUR',
+    sport: 'GOLF',
+    webhookEventSet: 'GOLF_ROUNDS',
+    quietAfterMinutes: 360,
+    typicalGameMinutes: 360,
+    isEnabled: true,
+    ...overrides,
+  };
+}
+
+/** BALLDONTLIE's Provider row, with its PGA TOUR, MLB and NBA leagues. */
+export function providerSettingsFixture(overrides: Partial<ProviderSettingsDto> = {}): ProviderSettingsDto {
+  return {
+    id: '00000000-0000-4000-8000-0000000000d1',
+    code: 'BALLDONTLIE',
+    name: 'BALLDONTLIE',
+    baseUrl: 'https://api.balldontlie.io',
+    requestsPerMinute: 5,
+    webhooksEnabled: true,
+    webhookSecretSet: true,
+    webhookPollMinutes: 15,
+    webhookRoundPollMinutes: 2,
+    hasPlayerStats: false,
+    isEnabled: true,
+    priority: 1,
+    leagues: [
+      providerLeagueFixture(),
+      providerLeagueFixture({ id: '00000000-0000-4000-8000-0000000000c2', code: 'mlb', name: 'MLB', sport: 'BASEBALL', webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 210, typicalGameMinutes: 180 }),
+      providerLeagueFixture({ id: '00000000-0000-4000-8000-0000000000c3', code: 'nba', name: 'NBA', sport: 'BASKETBALL', webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 75, typicalGameMinutes: 150 }),
+    ],
+    ...overrides,
+  };
+}
+
+/** BALLDONTLIE on the provider list, running, with its row. */
+export function providerSummaryFixture(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryDto {
+  return {
+    providerId: 'balldontlie',
+    providerName: 'BALLDONTLIE',
+    status: 'HEALTHY',
+    errorRate: 0.004,
+    latencyMs: 420,
+    lastEventAt: null,
+    sportsCovered: ['BASEBALL', 'BASKETBALL', 'GOLF'],
+    primaryForSports: ['BASEBALL', 'BASKETBALL', 'GOLF'],
+    activeEventCount: 3,
+    supportsLiveSimulation: false,
+    requestsPerMinute: 5,
+    webhooksEnabled: true,
+    syncedSportLeagueCount: 16,
+    rateLimitedJobsLast24h: 7,
+    settings: providerSettingsFixture(),
+    ...overrides,
+  };
+}
+
+/** A sport league's mapping to one of BALLDONTLIE's leagues. */
+export function providerMappingFixture(overrides: Partial<SportLeagueProviderMappingDto> = {}): SportLeagueProviderMappingDto {
+  return {
+    id: '00000000-0000-4000-8000-0000000000b1',
+    providerLeagueId: '00000000-0000-4000-8000-0000000000c1',
+    providerLeagueCode: 'pga',
+    providerLeagueName: 'PGA TOUR',
+    providerCode: 'BALLDONTLIE',
+    providerName: 'BALLDONTLIE',
+    providerId: 'balldontlie',
+    ...overrides,
+  };
+}
+
 export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): SportLeagueDto {
   return {
     id: 'league-1',
     sportId: 'sport-golf',
     sport: 'GOLF',
     name: 'PGA Tour',
-    matchKeyword: 'PGA',
-    eventSyncProviderId: null,
+    selectedProviderMapping: null,
     autoReleaseDaysBeforeStart: 7,
     tierProfileId: '00000000-0000-4000-8000-0000000000a1',
     pricingProfileId: STANDARD_PRICING_PROFILE_ID,

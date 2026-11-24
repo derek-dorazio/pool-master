@@ -13,9 +13,11 @@ import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardo
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { leagueProfiles } from '../../support/league-profiles';
+import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 
-const PROVIDER = 'integration-test';
+// The events' provider: BALLDONTLIE's id, since a synced league names a provider by its row (#1997).
+const PROVIDER = SYNCED_PROVIDER_ID;
 const now = new Date('2026-04-26T22:30:00.000Z');
 const weekLater = new Date('2026-05-03T22:30:00.000Z');
 
@@ -201,23 +203,23 @@ describe('ScheduledEventReader — field hydration', () => {
 });
 
 describe('ScheduledEventReader — field hydration for synced sport leagues only (#1726)', () => {
-  async function seriesInLeague(name: string, eventSyncProviderId: string | null, isActive = true) {
+  async function seriesInLeague(name: string, synced: boolean, isActive = true) {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `${name} ${randomUUID()}`, eventSyncProviderId, isActive } });
+    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
+    if (synced) await syncLeagueTo(prisma, league.id, 'pga');
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `${name} series ${randomUUID()}` } });
     return { eventSeriesId: series.id };
   }
 
   it('offers only the events of active sport leagues whose sync names the event\'s provider, and offers every linked event without the switch', async () => {
-    await createEvent('synced', { ...(await seriesInLeague('Synced', PROVIDER)), startDate: new Date('2026-04-29T12:00:00.000Z') });
-    await createEvent('other-provider-sync', { ...(await seriesInLeague('Other sync', 'another-feed')), startDate: new Date('2026-04-28T12:00:00.000Z') });
-    await createEvent('sync-off', { ...(await seriesInLeague('Off', null)), startDate: new Date('2026-04-28T06:00:00.000Z') });
-    await createEvent('inactive-league', { ...(await seriesInLeague('Inactive', PROVIDER, false)), startDate: new Date('2026-04-28T03:00:00.000Z') });
+    await createEvent('synced', { ...(await seriesInLeague('Synced', true)), startDate: new Date('2026-04-29T12:00:00.000Z') });
+    await createEvent('sync-off', { ...(await seriesInLeague('Off', false)), startDate: new Date('2026-04-28T06:00:00.000Z') });
+    await createEvent('inactive-league', { ...(await seriesInLeague('Inactive', true, false)), startDate: new Date('2026-04-28T03:00:00.000Z') });
 
     const syncedOnly = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater, syncedLeaguesOnly: true });
     const all = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
@@ -226,11 +228,22 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     expect(externalIds(all)).toEqual(['inactive-league', 'sync-off']);
   });
 
+  it('offers none of the events of a provider with no Provider row, which syncs no league, even in a synced league', async () => {
+    const rowless = 'integration-test-rowless';
+    const registry = registryWith(fakeSportDataProvider({ providerId: rowless }));
+    await createEvent('rowless', { providerId: rowless, ...(await seriesInLeague('Synced', true)), startDate: new Date('2026-04-29T12:00:00.000Z') });
+
+    const events = await createScheduledEventReader({ prisma: getAppPrisma(), registry })
+      .listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater, syncedLeaguesOnly: true });
+
+    expect(events).toEqual([]);
+  });
+
   it('takes the two soonest from the synced leagues\' events, so an earlier unsynced event never crowds one out', async () => {
     await createEvent('unsynced-earliest', { startDate: new Date('2026-04-27T12:00:00.000Z') });
-    const synced = await seriesInLeague('Synced', PROVIDER);
-    const later = await seriesInLeague('Synced later', PROVIDER);
-    const latest = await seriesInLeague('Synced latest', PROVIDER);
+    const synced = await seriesInLeague('Synced', true);
+    const later = await seriesInLeague('Synced later', true);
+    const latest = await seriesInLeague('Synced latest', true);
     await createEvent('synced-first', { ...synced, startDate: new Date('2026-04-28T12:00:00.000Z') });
     await createEvent('synced-second', { ...later, startDate: new Date('2026-04-29T12:00:00.000Z') });
     await createEvent('synced-third', { ...latest, startDate: new Date('2026-04-30T12:00:00.000Z') });

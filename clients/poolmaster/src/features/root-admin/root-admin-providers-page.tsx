@@ -1,13 +1,14 @@
 import { LinkButton, PageHeader } from '@/features/shared/ui';
 import { RUN_EVENT_SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 import { providersCountLine } from './provider-facts';
+import { ProviderLeaguesSection } from './provider-leagues-section';
 import { ProvidersSection } from './providers-section';
 import { SyncSchedulesSection } from './sync-schedules-section';
 import { useProvidersQuery } from './use-providers-query';
 
 /**
- * /manage/providers (#1873): the sports data providers with their live check, and the one sync
- * schedule every sport league follows, with Run event sync and Unmapped competitors in the header
+ * /manage/providers (#1873): the sports data providers with their live check and their settings,
+ * their own leagues (#1997), and the one sync schedule every sport league follows, with Run event sync and Unmapped competitors in the header
  * (#1887). Root admin, desktop only.
  */
 export function RootAdminProvidersPage() {
@@ -32,6 +33,7 @@ export function RootAdminProvidersPage() {
         title="Providers"
       />
       <ProvidersSection />
+      <ProviderLeaguesSection />
       <SyncSchedulesSection />
     </section>
   );

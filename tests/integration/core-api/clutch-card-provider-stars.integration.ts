@@ -10,6 +10,7 @@ import { createFakeBalldontlie } from '../../support/balldontlie-fake-api';
 import { nbaRoutes } from '../../support/balldontlie-nba-routes';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { leagueProfiles, STAT_POOL_TIER_PROFILE_NAME } from '../../support/league-profiles';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../support/balldontlie-provider-rows';
 
 // A Clutch Card's stars and box scores from BALLDONTLIE against real Postgres (#1497): the
 // admin's "Load Participant Field" on an event linked to the provider's NBA Finals round, then a
@@ -45,7 +46,7 @@ function adapter() {
     global.fetch = originalFetch;
     expect(api.violations).toEqual([]);
   };
-  return new BalldontlieAdapter({ baseUrl: 'https://api.balldontlie.io', apiKey: API_KEY, requestsPerMinute: 600 });
+  return new BalldontlieAdapter({ connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }), apiKey: API_KEY, leagues: BALLDONTLIE_TEST_LEAGUES });
 }
 
 /**
@@ -62,7 +63,7 @@ async function finalsWithLoadedStar() {
     update: {},
   });
   const league = await prisma.sportLeague.create({
-    data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: basketball.id, name: `NBA Finals ${suffix}`, matchKeyword: 'NBA Finals', participantType: 'INDIVIDUAL', scoringFamily: ScoringFamily.COMPOSITE },
+    data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: basketball.id, name: `NBA Finals ${suffix}`, participantType: 'INDIVIDUAL', scoringFamily: ScoringFamily.COMPOSITE },
   });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `NBA Finals ${suffix}` } });
   const event = await prisma.sportEvent.create({

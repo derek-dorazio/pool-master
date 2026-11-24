@@ -13,7 +13,6 @@ import type { SportEventServices } from '../../../packages/core-api/src/modules/
 import {
   SportEventSyncScopeError,
   SportProviderNotFoundError,
-  SportSyncNotConfiguredError,
   type IngestionService,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
@@ -58,7 +57,7 @@ const round = {
 };
 const EVENT_OVERVIEW: SportEventOverview = {
   syncHealth: 'OK',
-  syncs: [{ kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: null, nextRunAt: AT }],
+  syncs: [{ kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: null }],
   issues: [],
   releaseMode: 'AUTO',
   releaseAt: AT,
@@ -319,7 +318,6 @@ describe('field refresh from the provider', () => {
 
   it.each<[string, Error, number, string]>([
     ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF', 'mock-provider'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
-    ['a sport ingestion is not set up for with 422 SPORT_SYNC_NOT_CONFIGURED', new SportSyncNotConfiguredError('GOLF'), 422, 'SPORT_SYNC_NOT_CONFIGURED'],
     ['a sync scope that leaves the field out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError(EVENT_ID, 'SCORES_ONLY', ['EVENTPARTICIPANTS']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],
   ])('answers a field sync refused for %s, with no session read as no actor', async (_label, error, status, code) => {
     const { ingestion, handlers } = fakes();
@@ -383,7 +381,7 @@ describe('the event overview', () => {
     expect(read.body).toEqual({
       overview: {
         syncHealth: 'OK',
-        syncs: [{ kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: null, nextRunAt: ISO }],
+        syncs: [{ kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: null }],
         issues: [],
         releaseMode: 'AUTO',
         releaseAt: ISO,

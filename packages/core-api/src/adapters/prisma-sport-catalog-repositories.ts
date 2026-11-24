@@ -64,8 +64,9 @@ import type {
   SportEventRound,
   SportEventTier,
   SportLeague,
+  SportLeagueProviderMapping,
 } from '@poolmaster/shared/domain';
-import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, ScoringFamily, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
+import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, providerSourceIdOf, ScoringFamily, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -73,11 +74,38 @@ import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
 import { toStatLine } from './prisma-stat-line-repositories';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
 type Db = PrismaClient;
 
-/** An active sport league whose events a provider's sync creates (ADR 0011). */
-const EVENT_SYNCED_LEAGUE = { isActive: true, eventSyncProviderId: { not: null } } satisfies Prisma.SportLeagueWhereInput;
+/** An active sport league whose events a provider's sync creates (ADR 0011): it has a selected provider mapping (#1997). */
+const EVENT_SYNCED_LEAGUE = { isActive: true, selectedProviderMappingId: { not: null } } satisfies Prisma.SportLeagueWhereInput;
+
+/** A sport league's selected provider mapping, with the names the screens show (#1997). */
+export const SELECTED_PROVIDER_MAPPING_INCLUDE = {
+  selectedProviderMapping: {
+    select: {
+      id: true,
+      providerLeague: { select: { id: true, code: true, name: true, provider: { select: { code: true, name: true } } } },
+    },
+  },
+} satisfies Prisma.SportLeagueInclude;
+
+type SportLeagueRow = Prisma.SportLeagueGetPayload<{ include: typeof SELECTED_PROVIDER_MAPPING_INCLUDE }>;
+
+/** A sport league's selected provider mapping as the domain reads it; null when the league is not synced. */
+export function toSelectedProviderMapping(mapping: SportLeagueRow['selectedProviderMapping']): SportLeagueProviderMapping | null {
+  if (mapping === null) return null;
+  return {
+    id: mapping.id,
+    providerLeagueId: mapping.providerLeague.id,
+    providerLeagueCode: mapping.providerLeague.code,
+    providerLeagueName: mapping.providerLeague.name,
+    providerCode: mapping.providerLeague.provider.code,
+    providerName: mapping.providerLeague.provider.name,
+    providerId: providerSourceIdOf(mapping.providerLeague.provider.code),
+  };
+}
 
 export class PrismaSportRepository implements SportRepository {
   constructor(private readonly prisma: Db) {}
@@ -105,7 +133,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
 
   async findById(id: string): Promise<SportLeague | null> {
     return memoizedRead(this.prisma, `${ReadMemoKey.sportLeague}${id}`, async () => {
-      const row = await this.prisma.sportLeague.findUnique({ where: { id } });
+      const row = await this.prisma.sportLeague.findUnique({ where: { id }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
       return row ? toSportLeague(row) : null;
     });
   }
@@ -115,7 +143,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       return [];
     }
     return memoizedReadMany(this.prisma, ReadMemoKey.sportLeague, ids, async (missing) => {
-      const rows = await this.prisma.sportLeague.findMany({ where: { id: { in: [...missing] } } });
+      const rows = await this.prisma.sportLeague.findMany({ where: { id: { in: [...missing] } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
       return rows.map(toSportLeague);
     });
   }
@@ -126,19 +154,21 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(filters.sportId !== undefined && { sportId: filters.sportId }),
         ...(filters.isActive !== undefined && { isActive: filters.isActive }),
       },
+      include: SELECTED_PROVIDER_MAPPING_INCLUDE,
       orderBy: { name: 'asc' },
     });
     return rows.map(toSportLeague);
   }
 
   async findBySportAndName(sportId: string, name: string): Promise<SportLeague | null> {
-    const row = await this.prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } } });
+    const row = await this.prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
     return row ? toSportLeague(row) : null;
   }
 
   async findEventSynced(): Promise<SportLeague[]> {
     const rows = await this.prisma.sportLeague.findMany({
       where: EVENT_SYNCED_LEAGUE,
+      include: SELECTED_PROVIDER_MAPPING_INCLUDE,
       orderBy: { name: 'asc' },
     });
     return rows.map(toSportLeague);
@@ -152,39 +182,55 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
           { isActive: true, scoringFamily: ScoringFamily.COMPOSITE, parentSportLeague: EVENT_SYNCED_LEAGUE },
         ],
       },
+      include: SELECTED_PROVIDER_MAPPING_INCLUDE,
       orderBy: { name: 'asc' },
     });
     return rows.map(toSportLeague);
   }
 
-  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague> {
+  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague> {
     return toSportLeague(await this.prisma.sportLeague.create({
       data: {
         sportId: input.sportId,
         name: input.name,
-        matchKeyword: input.matchKeyword,
         bracketAdvancement: input.bracketAdvancement,
         tierProfileId: input.tierProfileId,
         pricingProfileId: input.pricingProfileId,
       },
+      include: SELECTED_PROVIDER_MAPPING_INCLUDE,
     }));
   }
 
   async update(id: string, updates: SportLeagueUpdate): Promise<SportLeague> {
-    const write = () => this.prisma.sportLeague.update({
-      where: { id },
-      data: {
+    const { syncProviderLeagueId } = updates;
+    const data = {
         ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.matchKeyword !== undefined && { matchKeyword: updates.matchKeyword }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
         ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
-        ...(updates.eventSyncProviderId !== undefined && { eventSyncProviderId: updates.eventSyncProviderId }),
         ...(updates.autoReleaseDaysBeforeStart !== undefined && { autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }),
         ...(updates.tierProfileId !== undefined && { tierProfileId: updates.tierProfileId }),
         ...(updates.pricingProfileId !== undefined && { pricingProfileId: updates.pricingProfileId }),
-      },
-    });
+    } satisfies Prisma.SportLeagueUncheckedUpdateInput;
+    // A provider league to sync from is mapped when it is not yet, then selected, in one
+    // transaction (#1997); null stops the sync and keeps the mapping.
+    const write = () => (syncProviderLeagueId === undefined
+      ? this.prisma.sportLeague.update({ where: { id }, data, include: SELECTED_PROVIDER_MAPPING_INCLUDE })
+      : this.prisma.$transaction(async (tx) => {
+        const mapping = syncProviderLeagueId === null
+          ? null
+          : await tx.sportLeagueProviderMapping.upsert({
+            where: { sportLeagueId_providerLeagueId: { sportLeagueId: id, providerLeagueId: syncProviderLeagueId } },
+            create: { sportLeagueId: id, providerLeagueId: syncProviderLeagueId },
+            update: {},
+            select: { id: true },
+          });
+        return tx.sportLeague.update({
+          where: { id },
+          data: { ...data, selectedProviderMappingId: mapping?.id ?? null },
+          include: SELECTED_PROVIDER_MAPPING_INCLUDE,
+        });
+      }));
     // A sport event's read carries its sport league's settings, so those are forgotten too.
     return toSportLeague(await forgettingReads([ReadMemoKey.sportEvent, ReadMemoKey.sportLeague], write));
   }
@@ -479,21 +525,22 @@ export class PrismaSportEventRepository implements SportEventRepository {
       where: {
         status: SportEventStatus.DRAFT,
         startDate: { gt: now, lte: horizon },
-        eventSeries: { sportLeague: { isActive: true, eventSyncProviderId: { not: null }, autoReleaseDaysBeforeStart: { not: null } } },
+        eventSeries: { sportLeague: { isActive: true, selectedProviderMappingId: { not: null }, autoReleaseDaysBeforeStart: { not: null } } },
       },
       select: {
         id: true,
         startDate: true,
         providerId: true,
         syncScope: true,
-        eventSeries: { select: { sportLeague: { select: { eventSyncProviderId: true, autoReleaseDaysBeforeStart: true } } } },
+        eventSeries: { select: { sportLeague: { select: { ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true } } } },
       },
       orderBy: { startDate: 'asc' },
     });
     return rows.flatMap((row) => {
-      const { eventSyncProviderId, autoReleaseDaysBeforeStart } = row.eventSeries.sportLeague;
-      if (eventSyncProviderId === null || autoReleaseDaysBeforeStart === null) return [];
-      return [{ id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope, eventSyncProviderId, autoReleaseDaysBeforeStart }];
+      const { autoReleaseDaysBeforeStart } = row.eventSeries.sportLeague;
+      const syncProviderId = syncProviderIdOf(row.eventSeries.sportLeague);
+      if (syncProviderId === null || autoReleaseDaysBeforeStart === null) return [];
+      return [{ id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope, syncProviderId, autoReleaseDaysBeforeStart }];
     });
   }
 
@@ -1203,15 +1250,14 @@ function toSport(row: Prisma.SportGetPayload<object>): SportConfig {
   };
 }
 
-function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
+function toSportLeague(row: SportLeagueRow): SportLeague {
   return {
     id: row.id,
     sportId: row.sportId,
     name: row.name,
-    matchKeyword: row.matchKeyword,
     currentEventYear: row.currentEventYear,
     isActive: row.isActive,
-    eventSyncProviderId: row.eventSyncProviderId,
+    selectedProviderMapping: toSelectedProviderMapping(row.selectedProviderMapping),
     autoReleaseDaysBeforeStart: row.autoReleaseDaysBeforeStart,
     bracketAdvancement: row.bracketAdvancement,
     roundNames: row.roundNames,
@@ -1240,7 +1286,7 @@ const SPORT_EVENT_INCLUDE = {
   eventSeries: {
     select: {
       sportLeagueId: true,
-      sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, eventSyncProviderId: true } },
+      sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, ...SYNC_PROVIDER_SELECT } },
     },
   },
   // A Clutch Card event's parent's name (#1820); null on every other event.
@@ -1248,6 +1294,7 @@ const SPORT_EVENT_INCLUDE = {
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
+  const syncProviderId = syncProviderIdOf(row.eventSeries.sportLeague);
   return {
     id: row.id,
     externalId: row.externalId,
@@ -1270,7 +1317,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     ...(row.eventSeries.sportLeague.squaresFromRound !== null && { squaresFromRound: row.eventSeries.sportLeague.squaresFromRound }),
     ...(row.eventSeries.sportLeague.participantType !== null && { participantType: row.eventSeries.sportLeague.participantType }),
     ...(row.eventSeries.sportLeague.scoringFamily !== null && { scoringFamily: row.eventSeries.sportLeague.scoringFamily }),
-    ...(row.eventSeries.sportLeague.eventSyncProviderId !== null && { eventSyncProviderId: row.eventSeries.sportLeague.eventSyncProviderId }),
+    ...(syncProviderId !== null && { syncProviderId }),
     syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),

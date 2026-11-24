@@ -27,6 +27,8 @@ import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
+import { buildProviderMapping } from '../../factories';
+
 const NOW = new Date('2026-01-15T12:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PROVIDER = 'balldontlie';
@@ -35,7 +37,7 @@ function setup() {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const sportLeague = store.addSportLeague(sport.id);
-  sportLeague.eventSyncProviderId = PROVIDER;
+  sportLeague.selectedProviderMapping = buildProviderMapping({ providerId: PROVIDER });
   const sportEvents = store.sportEventRepo();
   const lifecycle = new EventLifecycleService(
     { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
@@ -86,7 +88,7 @@ async function readySyncedDraft(store: InMemorySportEvents, sportLeagueId: strin
     sportLeagueId,
     providerId: PROVIDER,
     syncScope: SportEventSyncScope.SCORES_ONLY,
-    eventSyncProviderId: PROVIDER,
+    syncProviderId: PROVIDER,
     startDate: new Date(NOW.getTime() + daysAhead * DAY_MS),
     ...overrides,
   });
@@ -300,7 +302,7 @@ describe('SportEventAutoReleaseScheduler: the hourly sweep (#1823)', () => {
     const inWindow = await readySyncedDraft(store, sportLeague.id, 6);
     await readySyncedDraft(store, sportLeague.id, 8);
     const offLeague = store.addSportLeague(sportLeague.sportId, 'Korn Ferry Tour');
-    offLeague.eventSyncProviderId = PROVIDER;
+    offLeague.selectedProviderMapping = buildProviderMapping({ providerId: PROVIDER });
     offLeague.autoReleaseDaysBeforeStart = null;
     await readySyncedDraft(store, offLeague.id, 2);
 

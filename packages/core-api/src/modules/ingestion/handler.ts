@@ -10,7 +10,10 @@ import type {
   ProviderCatalogEventListQuery,
   UnmappedProviderParticipantListQuery,
   ProviderSyncRunListQuery,
+  UpdateProviderLeagueRequest,
+  UpdateProviderRequest,
 } from '@poolmaster/shared/dto';
+import { ProviderSettingsError, type ProviderSettingsService } from './provider-settings-service';
 import type { IngestionService } from './ingestion-service';
 import type { EventSyncRequest } from './core/ingestion-scheduler';
 import { SyncRequestValidationError } from './core/sync-orchestrator';
@@ -18,7 +21,6 @@ import {
   MockEventStateUnsupportedError,
   ProviderSyncRunNotFoundError,
   SportEventSyncScopeError,
-  SportSyncNotConfiguredError,
   SportProviderNotFoundError,
 } from './ingestion-service';
 import type { EventScoreSourceService } from '../events/event-score-source-service';
@@ -27,6 +29,8 @@ import { sendError } from '../../core/error-handler';
 import { requireAuthUser } from '../../plugins/auth-guard';
 import {
   toProviderEventDto,
+  toProviderLeagueDto,
+  toProviderSettingsDto,
   toProviderManualSyncSubmissionResponse,
   toProviderSummaryDto,
   toProviderSyncRunDetailDto,
@@ -37,9 +41,12 @@ import {
 export function createIngestionHandlers(
   ingestionService: IngestionService,
   eventScoreSourceService: EventScoreSourceService,
+  providerSettings: ProviderSettingsService,
 ) {
   return {
     listProviders,
+    updateProvider,
+    updateProviderLeague,
     listSyncRuns,
     getSyncRun,
     submitEventSync,
@@ -53,6 +60,32 @@ export function createIngestionHandlers(
     const providers = await ingestionService.listProviders();
     logger.info({ count: providers.length }, 'Listed providers');
     return reply.send({ providers: providers.map(toProviderSummaryDto) });
+  }
+
+  async function updateProvider(
+    request: FastifyRequest<{ Params: { providerId: string }; Body: UpdateProviderRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const saved = await providerSettings.updateProvider(request.params.providerId, request.body);
+      return reply.send({ provider: toProviderSettingsDto(saved.provider, saved.webhookSecretSet) });
+    } catch (err) {
+      if (err instanceof ProviderSettingsError) return sendError(reply, err.statusCode, err.code, err.message);
+      throw err;
+    }
+  }
+
+  async function updateProviderLeague(
+    request: FastifyRequest<{ Params: { providerId: string; providerLeagueId: string }; Body: UpdateProviderLeagueRequest }>,
+    reply: FastifyReply,
+  ) {
+    try {
+      const saved = await providerSettings.updateLeague(request.params.providerId, request.params.providerLeagueId, request.body);
+      return reply.send({ league: toProviderLeagueDto(saved) });
+    } catch (err) {
+      if (err instanceof ProviderSettingsError) return sendError(reply, err.statusCode, err.code, err.message);
+      throw err;
+    }
   }
 
   async function listSyncRuns(
@@ -126,13 +159,6 @@ export function createIngestionHandlers(
           eventId: request.params.eventId,
         }, 'Manual event sync failed because no providers were registered');
         return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
-      }
-      if (err instanceof SportSyncNotConfiguredError) {
-        logger.warn({
-          sport: request.params.sport,
-          eventId: request.params.eventId,
-        }, 'Manual event sync failed because sport is not enabled in ingestion config');
-        return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
       }
       if (err instanceof MockEventStateUnsupportedError) {
         logger.warn({

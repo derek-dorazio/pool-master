@@ -5,6 +5,7 @@ import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/in
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 import { fakeLogger } from '../../../support/fake-logger';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
 
 /**
  * The adapter's WNBA playoffs reads against a fake BALLDONTLIE that checks every request it
@@ -48,9 +49,9 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes, now = NOW, log
   global.fetch = api.fetch;
   let clock = now;
   const adapter = new BalldontlieAdapter({
-    baseUrl: 'https://api.balldontlie.io',
+    connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
     apiKey: API_KEY,
-    requestsPerMinute: 600,
+    leagues: BALLDONTLIE_TEST_LEAGUES,
     now: () => clock,
     sleep: (ms) => { clock += ms; return Promise.resolve(); },
     ...(logger && { logger }),

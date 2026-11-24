@@ -5,6 +5,8 @@
  */
 import type {
   ProviderEventDto,
+  ProviderLeagueDto,
+  ProviderSettingsDto,
   ProviderManualSyncSubmissionResponse,
   ProviderSummaryDto,
   ProviderSyncRunDetailDto,
@@ -13,7 +15,7 @@ import type {
   UnmappedProviderParticipantDto,
 } from '@poolmaster/shared/dto';
 import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
-import type { ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import type { ProviderLeagueSettings, ProviderSettings, ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
@@ -38,6 +40,38 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     webhooksEnabled: provider.webhooksEnabled,
     syncedSportLeagueCount: provider.syncedSportLeagueCount,
     rateLimitedJobsLast24h: provider.rateLimitedJobsLast24h,
+    settings: provider.settings === null ? null : toProviderSettingsDto(provider.settings, provider.settings.webhookSecretSet),
+  };
+}
+
+export function toProviderSettingsDto(provider: ProviderSettings, webhookSecretSet: boolean): ProviderSettingsDto {
+  return {
+    id: provider.id,
+    code: provider.code,
+    name: provider.name,
+    baseUrl: provider.baseUrl,
+    requestsPerMinute: provider.requestsPerMinute,
+    webhooksEnabled: provider.webhooksEnabled,
+    webhookSecretSet,
+    webhookPollMinutes: provider.webhookPollMinutes,
+    webhookRoundPollMinutes: provider.webhookRoundPollMinutes,
+    hasPlayerStats: provider.hasPlayerStats,
+    isEnabled: provider.isEnabled,
+    priority: provider.priority,
+    leagues: provider.leagues.map(toProviderLeagueDto),
+  };
+}
+
+export function toProviderLeagueDto(league: ProviderLeagueSettings): ProviderLeagueDto {
+  return {
+    id: league.id,
+    code: league.code,
+    name: league.name,
+    sport: league.sport,
+    webhookEventSet: league.webhookEventSet,
+    quietAfterMinutes: league.quietAfterMinutes,
+    typicalGameMinutes: league.typicalGameMinutes,
+    isEnabled: league.isEnabled,
   };
 }
 

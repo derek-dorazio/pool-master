@@ -14,7 +14,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { lastRunText, nextRunText } from './league-syncs-text';
+import { lastRunText, syncModeText } from './league-syncs-text';
 import { SyncHealthChip } from './sync-health-chip';
 import { fieldWriteKeys } from './use-sport-event';
 
@@ -84,7 +84,7 @@ export function EventSyncsCard({
             aside={<SyncHealthChip health={sync.health} />}
             facts={lastRunText(sync, preferences)}
             name={enumLabel('ProviderSyncKind', kind)}
-            note={nextRunText(sync, preferences)}
+            note={syncModeText(sync)}
             testId={`root-admin-event-sync-${kind}`}
           />
         </SectionRows>

@@ -37,9 +37,8 @@ export interface NcaaTournamentLeague {
   key: 'ncaab' | 'ncaaw';
   eventName: string;
   /**
-   * The tour name its events and teams carry in `metadata.tour`, matched against a sport
-   * league's match keyword. Basketball's NCAA Division I sport leagues are given these by
-   * migration.
+   * The tour name its events and teams carry in `metadata.tour`, for display; a sport league
+   * finds them by their provider league code (#1997).
    */
   tour: string;
   firstFourRound: number;

@@ -16,7 +16,8 @@
  * task holding that loop's job lock.
  */
 
-import { JobTrigger, SUPPORTED_SPORTS, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
+import { JobTrigger, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
+import { INGESTION_SCHEDULE_SETTINGS } from '../../platform/ingestion-config-service';
 import type { IngestionFeedPolicyKey, IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import { SCHEDULE_RECHECK_MS, schedulePolicyDelayMs } from '../../../core/schedule-policy-delay';
 import type { FastifyBaseLogger } from 'fastify';
@@ -195,8 +196,11 @@ export interface IngestionSchedulerOptions {
   syncRunLedger?: Pick<ProviderSyncRunLedger, 'createSubmissions' | 'executeFeedRun'>;
   /** Keeps each provider loop to one server task; omitted, each loop runs on this task. */
   jobLock?: JobLock;
-  /** Set while a provider sends webhook notifications; omitted, every event polls each sweep. */
-  notifiedProviderCadence?: NotifiedProviderCadence;
+  /**
+   * The cadence while a provider sends webhook notifications, read each sweep so a change to a
+   * Provider row takes effect (#1997); omitted, or answering undefined, every event polls each sweep.
+   */
+  notifiedProviderCadence?: () => NotifiedProviderCadence | undefined;
 }
 
 const SCHEDULED_SYNC_SOURCE: SyncRequestSource = 'SCHEDULED';
@@ -226,7 +230,6 @@ export class IngestionScheduler {
   private readonly inFlightScheduledEventSyncs = new Set<string>();
   private readonly liveScorePacing = new Map<Sport, LiveScorePacing>();
   /** The unregistered scheduled sports last warned about, so an unchanged set is not re-warned every cycle. */
-  private lastWarnedUnregisteredSports: string | null = null;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
 
   constructor(
@@ -254,7 +257,7 @@ export class IngestionScheduler {
 
     this.startRecurringLoop(
       'configured sport loop reconciliation',
-      async () => this.reconcileConfiguredSportLoops(),
+      () => { this.reconcileConfiguredSportLoops(); return Promise.resolve(); },
       // eslint-disable-next-line @typescript-eslint/require-await -- resolveDelayMs must return Promise<number>; this constant needs the async wrap, not an await.
       async () => SCHEDULE_RECHECK_MS,
     );
@@ -262,9 +265,9 @@ export class IngestionScheduler {
     this.logger?.info('Ingestion scheduler started');
   }
 
-  private async reconcileConfiguredSportLoops(): Promise<void> {
+  private reconcileConfiguredSportLoops(): void {
     try {
-      const sports = await this.getConfiguredScheduledSports();
+      const sports = this.getConfiguredScheduledSports();
       if (!this.running) {
         return;
       }
@@ -433,7 +436,7 @@ export class IngestionScheduler {
   }
 
   private async runConfiguredSportFieldSync(sport: Sport): Promise<void> {
-    if (!(await this.isSportScheduled(sport))) {
+    if (!this.isSportScheduled(sport)) {
       this.logger?.debug({ sport }, 'Skipping scheduled participant sync because sport is not configured');
       return;
     }
@@ -495,7 +498,7 @@ export class IngestionScheduler {
 
   private async runConfiguredLiveScoreSweep(sport: Sport): Promise<void> {
     const feed = 'EVENTLIVESCORES' as const;
-    if (!(await this.isSportScheduled(sport))) {
+    if (!this.isSportScheduled(sport)) {
       this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because sport is not configured');
       return;
     }
@@ -555,7 +558,7 @@ export class IngestionScheduler {
    * gone quiet. What it remembers is kept for the events still listed only.
    */
   private dueLiveScoreEvents(sport: Sport, listed: LiveScoreEventRef[], now: Date, adminIntervalMs: number): LiveScoreEventRef[] {
-    const cadence = this.options.notifiedProviderCadence;
+    const cadence = this.options.notifiedProviderCadence?.();
     if (!cadence) return listed;
 
     const previous = this.liveScorePacing.get(sport);
@@ -628,7 +631,7 @@ export class IngestionScheduler {
    */
   async runNotifiedEventSync(request: NotifiedEventSync, context: { jobId: string; trigger: JobTrigger }): Promise<IngestionJobRecord | null> {
     const feed = 'EVENTLIVESCORES' as const;
-    if (!(await this.isSportScheduled(request.sport))) {
+    if (!this.isSportScheduled(request.sport)) {
       this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because the sport is not scheduled for ingestion');
       return null;
     }
@@ -896,42 +899,24 @@ export class IngestionScheduler {
   /** The admin's live-score interval, shortened to a tick while a notified provider's cadence is set. */
   private async getLiveScoreSweepDelayMs(): Promise<number> {
     const adminDelayMs = await this.getGlobalDelayMs('eventLiveScores');
-    return this.options.notifiedProviderCadence ? Math.min(adminDelayMs, LIVE_SCORE_SWEEP_TICK_MS) : adminDelayMs;
+    return this.options.notifiedProviderCadence?.() ? Math.min(adminDelayMs, LIVE_SCORE_SWEEP_TICK_MS) : adminDelayMs;
   }
 
   private async getGlobalConfig(): Promise<IngestionScheduleConfig> {
     if (!this.options.configReader) {
-      return defaultIngestionScheduleConfig();
+      return INGESTION_SCHEDULE_SETTINGS.defaults(process.env);
     }
 
     return this.options.configReader.getConfig();
   }
 
-  private async getConfiguredScheduledSports(): Promise<Sport[]> {
-    const config = await this.getGlobalConfig();
-    const registeredSports = new Set(this.registry.getSupportedSports());
-    const configuredSports = Array.from(new Set(config.scheduledSports));
-    const unregisteredSports = configuredSports.filter((sport) => !registeredSports.has(sport));
-    const unregisteredKey = unregisteredSports.length > 0 ? [...unregisteredSports].sort().join(',') : null;
-    if (unregisteredKey !== null && unregisteredKey === this.lastWarnedUnregisteredSports) {
-      this.logger?.debug({
-        configuredSports,
-        unregisteredSports,
-      }, 'Configured scheduled ingestion sports still have no registered provider');
-    } else if (unregisteredKey !== null) {
-      this.logger?.warn({
-        configuredSports,
-        unregisteredSports,
-      }, 'Configured scheduled ingestion sports have no registered provider');
-    }
-    this.lastWarnedUnregisteredSports = unregisteredKey;
-
-    return configuredSports.filter((sport) => registeredSports.has(sport));
+  /** The sports a running provider covers (#1997): its Provider league rows say which. */
+  private getConfiguredScheduledSports(): Sport[] {
+    return this.registry.getSupportedSports();
   }
 
-  private async isSportScheduled(sport: Sport): Promise<boolean> {
-    const sports = await this.getConfiguredScheduledSports();
-    return sports.includes(sport);
+  private isSportScheduled(sport: Sport): boolean {
+    return this.getConfiguredScheduledSports().includes(sport);
   }
 
   /** The registered provider with this id, when it serves the sport. */
@@ -1116,28 +1101,5 @@ function toIngestionFailureLog(error: unknown): {
   return {
     errorMessage: String(error),
     errorName: typeof error,
-  };
-}
-
-function defaultIngestionScheduleConfig(): IngestionScheduleConfig {
-  return {
-    scheduledSports: [...SUPPORTED_SPORTS],
-    healthCheck: {
-      enabled: true,
-      intervalMinutes: 5,
-    },
-    eventList: {
-      enabled: true,
-      intervalMinutes: 360,
-    },
-    eventParticipants: {
-      enabled: false,
-      intervalMinutes: 360,
-      lookaheadDays: 14,
-    },
-    eventLiveScores: {
-      enabled: true,
-      intervalSeconds: 300,
-    },
   };
 }

@@ -71,17 +71,6 @@ export const SettingsGroupListSchema = z.object({
 }).describe('Every settings group the platform has.');
 export type SettingsGroupList = z.infer<typeof SettingsGroupListSchema>;
 
-/**
- * The ingestion schedule as a request carries it. The stored schema defaults `scheduledSports`,
- * and a default inside a `oneOf` is ignored by the request validator (Ajv strict mode refuses
- * it), so a save must send the field: a save is a whole value anyway.
- */
-const IngestionScheduleConfigValueSchema = IngestionScheduleConfigSchema.extend({
-  scheduledSports: IngestionScheduleConfigSchema.shape.scheduledSports.unwrap().describe(
-    'Sports that scheduled ingestion is allowed to run automatically.',
-  ),
-});
-
 const expectedUpdatedAt = DateTimeSchema.nullable().describe(
   'The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.',
 );
@@ -89,7 +78,7 @@ const expectedUpdatedAt = DateTimeSchema.nullable().describe(
 export const SettingsGroupUpdateRequestSchema = z.discriminatedUnion('key', [
   z.object({
     key: z.literal('INGESTION_SCHEDULE_CONFIG'),
-    value: IngestionScheduleConfigValueSchema.describe('The whole new value.'),
+    value: IngestionScheduleConfigSchema.describe('The whole new value.'),
     expectedUpdatedAt,
   }),
   z.object({

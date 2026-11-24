@@ -57,14 +57,16 @@ describe('createScheduledEventReader', () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }] }));
   });
 
-  it('narrows each provider\'s field query to active sport leagues whose sync names that provider when asked for synced leagues only', async () => {
-    const { read, findMany } = reader(['mock', 'bdl']);
+  it('narrows a provider\'s field query to active sport leagues whose selected mapping names that provider when asked for synced leagues only, and asks nothing of a provider no league can sync from', async () => {
+    const { read, findMany } = reader(['mock', 'balldontlie']);
 
-    await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW, syncedLeaguesOnly: true });
+    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW, syncedLeaguesOnly: true })).resolves.toEqual([
+      { providerId: 'balldontlie', externalId: 'balldontlie-ext' },
+    ]);
 
+    expect(findMany).toHaveBeenCalledTimes(1);
     expect(findMany.mock.calls.map(([query]) => (query.where as { eventSeries?: unknown }).eventSeries)).toEqual([
-      { sportLeague: { eventSyncProviderId: 'mock', isActive: true } },
-      { sportLeague: { eventSyncProviderId: 'bdl', isActive: true } },
+      { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
     ]);
   });
 

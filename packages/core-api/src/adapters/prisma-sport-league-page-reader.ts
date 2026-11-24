@@ -17,6 +17,7 @@ import type {
 import { isClutchCardLeague, ProviderSyncKind, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { outcomeSummary } from './prisma-sport-league-overview-reader';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
 const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, payloadJson: true } as const;
 const EVENT_SELECT = {
@@ -183,14 +184,19 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const row = await this.prisma.sportLeague.findUnique({
       where: { id: sportLeagueId },
       select: {
-        id: true, isActive: true, parentSportLeagueId: true, scoringFamily: true, eventSyncProviderId: true, autoReleaseDaysBeforeStart: true,
+        id: true, isActive: true, parentSportLeagueId: true, scoringFamily: true, ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true,
         sport: { select: { sport: true } },
-        parentSportLeague: { select: { isActive: true, eventSyncProviderId: true } },
+        parentSportLeague: { select: { isActive: true, ...SYNC_PROVIDER_SELECT } },
       },
     });
     if (row === null) return null;
-    const { sport, parentSportLeague, ...league } = row;
-    return { ...league, sport: sport.sport, parent: parentSportLeague };
+    const { sport, parentSportLeague, selectedProviderMapping, ...league } = row;
+    return {
+      ...league,
+      sport: sport.sport,
+      syncProviderId: syncProviderIdOf({ selectedProviderMapping }),
+      parent: parentSportLeague === null ? null : { isActive: parentSportLeague.isActive, syncProviderId: syncProviderIdOf(parentSportLeague) },
+    };
   }
 }
 

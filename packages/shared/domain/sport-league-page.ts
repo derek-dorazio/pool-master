@@ -36,8 +36,6 @@ export interface SportLeagueSync {
   health: SportLeagueSyncHealth;
   mode: SportLeagueSyncMode;
   lastRun: SportLeagueSyncLastRun | null;
-  /** When the schedule runs it next; null when nothing will: it is off, its policy is off, or the webhook drives it. */
-  nextRunAt: Date | null;
 }
 
 /** One event on the League page's Events grid. */

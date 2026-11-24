@@ -6,15 +6,32 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { SportStat, BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, SportStat, BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
+
+/**
+ * A sport league's link to one provider's league (#1997), with the names the screens show. A
+ * league may be mapped to more than one provider; its `selectedProviderMapping` is the one synced.
+ */
+export interface SportLeagueProviderMapping {
+  id: string;
+  providerLeagueId: string;
+  /** The provider's own code for its league (`nfl`). */
+  providerLeagueCode: string;
+  providerLeagueName: string;
+  providerCode: ProviderCode;
+  providerName: string;
+  /**
+   * The id the provider's events and participants carry (`SportEvent.providerId`): the
+   * provider's adapter id, read through `providerSourceIdOf`.
+   */
+  providerId: string;
+}
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
   sportId: string;
   name: string;
-  /** Substring a provider event name carries when it belongs to this sport league. */
-  matchKeyword: string | null;
   /**
    * The event year the sport league is currently on. Not a foreign key: setting it
    * refuses a year the sport league has no events in (plans/147 decision 6).
@@ -22,11 +39,10 @@ export interface SportLeague extends DomainEntity {
   currentEventYear: number | null;
   isActive: boolean;
   /**
-   * The provider whose sync creates and keeps its events (ADR 0011, #1725); null when an admin
-   * authors them. A root admin sets it once the league's reader is built and the provider is
-   * configured.
+   * The provider league whose sync creates and keeps its events (ADR 0011, #1997): one of its own
+   * provider mappings. Null: the league is not synced.
    */
-  eventSyncProviderId: string | null;
+  selectedProviderMapping: SportLeagueProviderMapping | null;
   /**
    * How many days before its start a synced DRAFT event is released on its own once every ready
    * check passes (#1823); null releases only by hand. 1 to 30, 7 for a new league.

@@ -32,7 +32,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
     providerId: PROVIDER,
     externalId: 'nfl-2026-week-11',
     syncScope: SportEventSyncScope.SCORES_ONLY,
-    ...(synced && { eventSyncProviderId: PROVIDER }),
+    ...(synced && { syncProviderId: PROVIDER }),
   });
   void store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
   const field = Object.fromEntries(TEAMS.map((name) => {
@@ -275,7 +275,7 @@ describe('ProviderGameSlateService', () => {
         providerId: PROVIDER,
         externalId: 'nfl-2026-postseason',
         syncScope: SportEventSyncScope.SCORES_ONLY,
-        eventSyncProviderId: PROVIDER,
+        syncProviderId: PROVIDER,
       });
       // A day apart from two hours before the first kickoff, as a provider event's rounds are made.
       void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: roundDefault(roundNumber) })));

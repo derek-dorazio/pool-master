@@ -5,7 +5,6 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import { SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import type {
   IngestionFeedSchedulePolicy,
   IngestionScheduleConfig,
@@ -18,10 +17,9 @@ import { defineSettingsGroup } from './settings-group';
 export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionScheduleConfig>({
   key: 'INGESTION_SCHEDULE_CONFIG',
   title: 'Ingestion schedule',
-  description: 'Which sports sync on a schedule, and how often each provider feed runs: one schedule for every sport league.',
+  description: 'How often each provider feed runs: one schedule for every sport league.',
   schema: IngestionScheduleConfigSchema,
   defaults: () => ({
-    scheduledSports: [...SUPPORTED_SPORTS],
     healthCheck: {
       enabled: true,
       intervalMinutes: 5,
@@ -120,7 +118,6 @@ function applyPatch(
   patch: IngestionScheduleConfigPatch,
 ): IngestionScheduleConfig {
   return {
-    scheduledSports: patch.scheduledSports ? [...patch.scheduledSports] : [...config.scheduledSports],
     healthCheck: mergePolicy(config.healthCheck, patch.healthCheck),
     eventList: mergePolicy(config.eventList, patch.eventList),
     eventParticipants: mergePolicy(config.eventParticipants, patch.eventParticipants),

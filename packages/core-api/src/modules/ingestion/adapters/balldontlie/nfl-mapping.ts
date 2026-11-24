@@ -19,8 +19,8 @@ import { NflSeasonType, type NflGame, type NflStanding, type NflTeam } from './n
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 
 /**
- * The tour name events carry in `metadata.tour`, matched against a sport league's match keyword.
- * The NFL sport league's keyword must be set to this for its year import to find these events.
+ * The tour name events carry in `metadata.tour`, for display; the NFL
+ * sport league finds them by their provider league code, `nfl` (#1997).
  */
 export const NFL_LEAGUE_NAME = 'NFL';
 

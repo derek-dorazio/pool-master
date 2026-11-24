@@ -7,7 +7,8 @@ import { isSyncedLeague, leaguePageTabs } from './league-page-context';
 import { failedJobCount } from './use-activity';
 import { leagueParticipantColumnIds } from './league-participant-columns';
 import { editableParticipantFields, participantUpdateBody, participantValuesOf } from './league-participant-form';
-import { lastRunText, nextRunText } from './league-syncs-text';
+import { lastRunText, syncModeText } from './league-syncs-text';
+import { providerMappingFixture } from './sport-test-fixtures';
 
 // The League page's rules (#1866) that need no screen: its tabs, its grids' columns and defaults,
 // and what its dialogs send.
@@ -48,10 +49,10 @@ describe('failedJobCount', () => {
 
 describe('isSyncedLeague', () => {
   it('takes the overview\'s provider once read, so a Clutch Card counts as synced through its parent, and the league\'s own setting before', () => {
-    expect(isSyncedLeague({ eventSyncProviderId: null }, { providerId: 'balldontlie' })).toBe(true);
-    expect(isSyncedLeague({ eventSyncProviderId: 'balldontlie' }, { providerId: null })).toBe(false);
-    expect(isSyncedLeague({ eventSyncProviderId: 'balldontlie' }, undefined)).toBe(true);
-    expect(isSyncedLeague({ eventSyncProviderId: null }, undefined)).toBe(false);
+    expect(isSyncedLeague({ selectedProviderMapping: null }, { providerId: 'balldontlie' })).toBe(true);
+    expect(isSyncedLeague({ selectedProviderMapping: providerMappingFixture() }, { providerId: null })).toBe(false);
+    expect(isSyncedLeague({ selectedProviderMapping: providerMappingFixture() }, undefined)).toBe(true);
+    expect(isSyncedLeague({ selectedProviderMapping: null }, undefined)).toBe(false);
   });
 });
 
@@ -130,9 +131,8 @@ describe('sync row text', () => {
     expect(lastRunText({ lastRun: null }, PREFERENCES)).toBe('Never run');
   });
 
-  it('says when it runs next, that the webhook drives it, or that nothing schedules it', () => {
-    expect(nextRunText({ mode: 'SCHEDULE', nextRunAt: '2027-03-01T18:00:00.000Z' }, PREFERENCES)).toMatch(/^Next run /);
-    expect(nextRunText({ mode: 'SCHEDULE', nextRunAt: null }, PREFERENCES)).toBe('Not scheduled');
-    expect(nextRunText({ mode: 'WEBHOOK', nextRunAt: null }, PREFERENCES)).toBe('Follows the webhook, with a poll while an event is live');
+  it('says whether the webhook or the ingestion schedule drives a sync', () => {
+    expect(syncModeText({ mode: 'SCHEDULE' })).toBe('Runs on the ingestion schedule');
+    expect(syncModeText({ mode: 'WEBHOOK' })).toBe('Follows the webhook, with a poll while an event is live');
   });
 });

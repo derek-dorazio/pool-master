@@ -25,7 +25,7 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
   const { sport, definition } = useManagedSport();
   const { event } = sportVocabulary(definition);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague.noun);
-  const { providerId, providers, setProviderId, isSuccess: providersLoaded } = useSportProviderId(true, sport, sportLeague.eventSyncProviderId);
+  const { providerId, providers, setProviderId, isSuccess: providersLoaded } = useSportProviderId(true, sport, sportLeague.selectedProviderMapping?.providerId ?? null);
 
   const importMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -80,7 +80,7 @@ export function SportLeagueYearImport({ eventYear, sportLeague }: { eventYear: n
       {result ? (
         <p className="w-full text-sm text-muted-foreground" data-testid="root-admin-sport-league-calendar-import-result" role="status">
           {result.created.length === 0 && result.skipped.length === 0
-            ? `The provider lists no ${eventYear} ${event.many} for the ${sportLeagueNoun.one} “${sportLeague.matchKeyword ?? ''}”. Check that ${sportLeague.name}’s match keyword is the provider’s ${sportLeagueNoun.one} name.`
+            ? `The provider lists no ${eventYear} ${event.many} for ${sportLeague.selectedProviderMapping?.providerLeagueName ?? sportLeague.name}.`
             : importSummary(result, event)}
         </p>
       ) : null}

@@ -237,7 +237,7 @@ describe('sport league handlers', () => {
   const overviews = new SportLeagueOverviewService({
     reader: {
       readFacts: async () => ({
-        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', parentSportLeagueId: null, scoringFamily: null, eventSyncProviderId: 'balldontlie', isActive: true }],
+        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', parentSportLeagueId: null, scoringFamily: null, syncProviderId: 'balldontlie', isActive: true }],
         latestSyncRuns: [],
         heldEvents: [],
         eventCounts: new Map([['sl1', 2]]),
@@ -250,7 +250,7 @@ describe('sport league handlers', () => {
     now: () => AT,
   });
   const pageLeague = {
-    id: 'sl1', sport: Sport.GOLF, isActive: true, parentSportLeagueId: null, scoringFamily: null, eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null, parent: null,
+    id: 'sl1', sport: Sport.GOLF, isActive: true, parentSportLeagueId: null, scoringFamily: null, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null, parent: null,
   };
   const known = <T>(sportLeagueId: string, facts: T) => Promise.resolve(sportLeagueId === 'sl1' ? facts : null);
   const page = new SportLeaguePageService({
@@ -271,14 +271,7 @@ describe('sport league handlers', () => {
         mapping: null,
       }]),
     },
-    schedule: { getConfig: () => Promise.resolve({
-      scheduledSports: [Sport.GOLF],
-      healthCheck: { enabled: true, intervalMinutes: 5 },
-      eventList: { enabled: true, intervalMinutes: 360 },
-      eventParticipants: { enabled: false, intervalMinutes: 360 },
-      eventLiveScores: { enabled: true, intervalSeconds: 300 },
-    }) },
-    webhookProviderIds: [],
+    webhookProviderIds: () => [],
     now: () => AT,
   });
   const handlers = createSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews, page);

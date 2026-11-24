@@ -23,9 +23,8 @@ import {
 export const BALLDONTLIE_PROVIDER_ID = 'balldontlie';
 
 /**
- * The tour name events carry in `metadata.tour`, matched against a sport league's
- * matchKeyword (#385). It is the PGA TOUR sport league's own name and the keyword a migration
- * seeds on it (#1666): the year import finds a league's events by its keyword alone.
+ * The tour name events carry in `metadata.tour`, for display. A sport league's events are found
+ * by the provider league code each event carries (`pga`), never by this name (#1997).
  */
 export const PGA_TOUR_NAME = 'PGA TOUR';
 

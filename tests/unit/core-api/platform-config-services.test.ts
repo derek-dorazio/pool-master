@@ -1,6 +1,5 @@
 import { expect } from '@jest/globals';
 import { z } from 'zod';
-import { SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import {
   AppSettingsService,
   SettingsConflictError,
@@ -371,7 +370,6 @@ describe('platform config services on the settings registry', () => {
       'eventLiveScores',
       'eventParticipants',
       'healthCheck',
-      'scheduledSports',
     ]);
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
       eventParticipants: expect.objectContaining({ enabled: false }),
@@ -384,20 +382,16 @@ describe('platform config services on the settings registry', () => {
 
     await expect(
       service.updateConfig({
-        scheduledSports: ['GOLF'],
         eventLiveScores: { intervalSeconds: 45 },
         eventList: { intervalMinutes: 120 },
       }, 'admin-1'),
     ).resolves.toEqual(expect.objectContaining({
-      scheduledSports: ['GOLF'],
       eventLiveScores: { enabled: true, intervalSeconds: 45 },
       eventList: { enabled: true, intervalMinutes: 120 },
       eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
     }));
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(
       expect.objectContaining({
-        // The default schedule allows every supported sport; one with no provider runs no feed.
-        scheduledSports: [...SUPPORTED_SPORTS],
         eventList: { enabled: true, intervalMinutes: 360 },
         eventLiveScores: expect.objectContaining({ intervalSeconds: 300 }),
       }),
@@ -420,7 +414,7 @@ describe('platform config services on the settings registry', () => {
     }));
   });
 
-  it('a config stored before the one-schedule change loads with its settings intact, drops its per-sport overrides, takes the default event list policy, and is not rewritten on boot', async () => {
+  it('a config stored before the one-schedule change loads with its settings intact, drops its per-sport overrides and its sports list (#1997), takes the default event list policy, and is not rewritten on boot', async () => {
     const repository = inMemoryRuntimeConfigs();
     repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
       scheduledSports: ['GOLF'],
@@ -433,7 +427,6 @@ describe('platform config services on the settings registry', () => {
     const service = new IngestionConfigService(settings, fakeLogger());
 
     await expect(service.getConfig()).resolves.toEqual({
-      scheduledSports: ['GOLF'],
       healthCheck: { enabled: true, intervalMinutes: 5 },
       eventList: { enabled: true, intervalMinutes: 360 },
       eventParticipants: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
@@ -442,7 +435,7 @@ describe('platform config services on the settings registry', () => {
     expect(repository.history).toHaveLength(0);
   });
 
-  it('the next save of a config stored with per-sport overrides stores it without them', async () => {
+  it('the next save of a config stored with per-sport overrides and a sports list stores it without them', async () => {
     const repository = inMemoryRuntimeConfigs();
     repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
       scheduledSports: ['GOLF'],
@@ -458,6 +451,7 @@ describe('platform config services on the settings registry', () => {
 
     const stored = repository.rows.get(INGESTION_SCHEDULE_SETTINGS.key)?.configJson;
     expect(stored).not.toHaveProperty('perSportOverrides');
+    expect(stored).not.toHaveProperty('scheduledSports');
     expect(stored).toEqual(expect.objectContaining({ healthCheck: { enabled: true, intervalMinutes: 10 } }));
   });
 });

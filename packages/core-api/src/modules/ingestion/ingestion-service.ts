@@ -29,6 +29,8 @@ import {
   isClutchCardLeague,
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
+  type ProviderSettings,
+  providerSourceIdOf,
 } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { SportDataProvider } from './core/provider-interface';
@@ -36,7 +38,6 @@ import { supportsLiveSimulation, supportsMockEventStateControls } from './core/p
 import type {
   EventSyncRequest,
   IngestionFeedType,
-  IngestionScheduleConfigReader,
   IngestionScheduler,
 } from './core/ingestion-scheduler';
 import { SyncOrchestrator } from './core/sync-orchestrator';
@@ -49,6 +50,8 @@ import {
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
 import { syncChangedRows } from './core/sync-write-diagnostics';
+import type { ProviderSettingsStore } from './provider-settings-store';
+import type { ProviderWebhookSwitch } from './provider-webhook-switch';
 
 /** The window the provider list counts rate-limited jobs over (#1881). */
 const DAY_MS = 24 * 3_600_000;
@@ -60,9 +63,10 @@ const DAY_MS = 24 * 3_600_000;
 export interface ProviderSummary {
   providerId: string;
   providerName: string;
-  status: ProviderHealthStatus;
-  errorRate: number;
-  latencyMs: number;
+  /** Null, with the error rate and latency, when the provider is not running in this task. */
+  status: ProviderHealthStatus | null;
+  errorRate: number | null;
+  latencyMs: number | null;
   lastEventAt: Date | null;
   sportsCovered: Sport[];
   /** The covered sports this provider is the default for (catalog browse, new links). */
@@ -71,12 +75,14 @@ export interface ProviderSummary {
   supportsLiveSimulation: boolean;
   /** The request rate its adapter holds to, a minute; null when the adapter does not pace itself. */
   requestsPerMinute: number | null;
-  /** Whether its webhooks are on: its signing secret is set. */
+  /** Whether its webhooks are on: switched on for it and its signing secret set. */
   webhooksEnabled: boolean;
   /** The active sport leagues whose events its sync creates. */
   syncedSportLeagueCount: number;
   /** Its jobs that ended on its rate limit, or wait to retry after it, in the last 24 hours (#1881). */
   rateLimitedJobsLast24h: number;
+  /** Its Provider row and leagues, with whether its signing secret is set; null for a provider with no row (the QA mock feed). */
+  settings: (ProviderSettings & { webhookSecretSet: boolean }) | null;
 }
 
 export interface ProviderManualSyncSubmissionResult {
@@ -135,13 +141,6 @@ export class ProviderSyncRunNotFoundError extends Error {
   }
 }
 
-export class SportSyncNotConfiguredError extends Error {
-  constructor(sport: Sport) {
-    super(`Sport ${sport} is not enabled in ingestion scheduledSports config`);
-    this.name = 'SportSyncNotConfiguredError';
-  }
-}
-
 export class MockEventStateUnsupportedError extends Error {
   constructor(providerId: string) {
     super(`Provider ${providerId} does not support mock event state controls`);
@@ -174,13 +173,14 @@ export interface IngestionServiceDependencies {
   syncRuns: ProviderSyncRunRepository;
   /** The synced sport leagues, counted per provider on the provider list. */
   sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
-  /** The providers whose webhooks are on (`readWebhookProviderIds`). */
-  webhookProviderIds: readonly string[];
+  /** The Provider rows (#1997). */
+  providerSettings: Pick<ProviderSettingsStore, 'all'>;
+  /** Whether each provider's webhooks are on, and its secret set. */
+  webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   /** Background jobs that hit a provider's rate limit, counted per provider on the provider list. */
   jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   now?: () => Date;
   scheduler?: IngestionScheduler;
-  ingestionConfigReader?: IngestionScheduleConfigReader;
   syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
   syncRunLedger?: ProviderSyncRunLedger;
   /** Queues the job that runs a manual event sync's submitted runs (#1441). */
@@ -194,11 +194,11 @@ export class IngestionService {
   private readonly participantMappings: ParticipantProviderMappingRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
   private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
-  private readonly webhookProviderIds: ReadonlySet<string>;
+  private readonly providerSettings: Pick<ProviderSettingsStore, 'all'>;
+  private readonly webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   private readonly now: () => Date;
   private readonly scheduler?: IngestionScheduler;
-  private readonly ingestionConfigReader?: IngestionScheduleConfigReader;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
   private readonly syncRunLedger: ProviderSyncRunLedger;
   private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'queued'>;
@@ -210,40 +210,15 @@ export class IngestionService {
     this.participantMappings = deps.participantMappings;
     this.syncRuns = deps.syncRuns;
     this.sportLeagues = deps.sportLeagues;
-    this.webhookProviderIds = new Set(deps.webhookProviderIds);
+    this.providerSettings = deps.providerSettings;
+    this.webhooks = deps.webhooks;
     this.jobHistory = deps.jobHistory;
     this.now = deps.now ?? (() => new Date());
     this.scheduler = deps.scheduler;
-    this.ingestionConfigReader = deps.ingestionConfigReader;
     this.jobs = deps.jobs;
     this.logger = deps.logger;
     this.syncOrchestrator = deps.syncOrchestrator ?? new SyncOrchestrator();
     this.syncRunLedger = deps.syncRunLedger ?? new ProviderSyncRunLedger(deps.syncRuns, deps.logger, deps.sportEvents);
-  }
-
-  private async getConfiguredSportsForProvider(provider: SportDataProvider): Promise<Sport[]> {
-    if (!this.ingestionConfigReader) {
-      return provider.sportsCovered;
-    }
-
-    const config = await this.ingestionConfigReader.getConfig();
-    const configuredSports = new Set(config.scheduledSports);
-    return provider.sportsCovered.filter((sport) => configuredSports.has(sport));
-  }
-
-  private async assertSportSyncConfigured(sport: Sport): Promise<void> {
-    if (!this.ingestionConfigReader) {
-      return;
-    }
-
-    const config = await this.ingestionConfigReader.getConfig();
-    if (!config.scheduledSports.includes(sport)) {
-      this.logger?.warn({
-        sport,
-        scheduledSports: config.scheduledSports,
-      }, 'Sync requested for sport that is not enabled in ingestion config');
-      throw new SportSyncNotConfiguredError(sport);
-    }
   }
 
   /**
@@ -287,7 +262,7 @@ export class IngestionService {
   private async buildUnmappedParticipantsForProvider(provider: SportDataProvider, externalId: string | undefined): Promise<UnmappedParticipant[]> {
     const results: UnmappedParticipant[] = [];
 
-    for (const sport of await this.getConfiguredSportsForProvider(provider)) {
+    for (const sport of provider.sportsCovered) {
       const participants = (await provider.getParticipants(sport))
         .filter((participant) => externalId === undefined || participant.externalId === externalId);
       if (participants.length === 0) continue;
@@ -326,47 +301,54 @@ export class IngestionService {
    */
   async listProviders(): Promise<ProviderSummary[]> {
     const providers = this.registry.getAllProviders();
+    const rows = this.providerSettings.all();
+    const providerIds = [...new Set([...providers.map((provider) => provider.providerId), ...rows.map((row) => providerSourceIdOf(row.code))])];
     const [eventSummaries, syncedLeagues, rateLimited] = await Promise.all([
-      this.sportEvents.summarizeByProviders(providers.map((provider) => provider.providerId)),
+      this.sportEvents.summarizeByProviders(providerIds),
       this.sportLeagues.findEventSyncedWithClutchCards(),
       this.jobHistory.countByScope({ errorType: JobErrorType.RATE_LIMITED, since: new Date(this.now().getTime() - DAY_MS) }),
     ]);
     const syncedLeagueCounts = new Map<string, number>();
     const leagueProviders = new Map<string, string>();
     for (const league of syncedLeagues) {
-      if (league.eventSyncProviderId) {
-        syncedLeagueCounts.set(league.eventSyncProviderId, (syncedLeagueCounts.get(league.eventSyncProviderId) ?? 0) + 1);
-        leagueProviders.set(league.id, league.eventSyncProviderId);
+      const providerId = league.selectedProviderMapping?.providerId;
+      if (providerId !== undefined) {
+        syncedLeagueCounts.set(providerId, (syncedLeagueCounts.get(providerId) ?? 0) + 1);
+        leagueProviders.set(league.id, providerId);
       }
     }
     // A Clutch Card league's jobs belong to its parent's provider, whose sync creates its events;
     // it is not a synced league of its own.
     for (const league of syncedLeagues) {
       const parentProviderId = league.parentSportLeagueId === null ? undefined : leagueProviders.get(league.parentSportLeagueId);
-      if (!league.eventSyncProviderId && isClutchCardLeague(league) && parentProviderId) {
+      if (league.selectedProviderMapping === null && isClutchCardLeague(league) && parentProviderId) {
         leagueProviders.set(league.id, parentProviderId);
       }
     }
     const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
-    const summaries = await Promise.all(providers.map(async (provider): Promise<ProviderSummary> => {
-      const health = await provider.healthCheck();
-      const events = eventSummaries.get(provider.providerId);
-      const sportsCovered = await this.getConfiguredSportsForProvider(provider);
+    const rowsById = new Map(rows.map((row) => [providerSourceIdOf(row.code), row]));
+    const summaries = await Promise.all(providerIds.map(async (providerId): Promise<ProviderSummary> => {
+      const provider = this.registry.getProviderById(providerId);
+      const row = rowsById.get(providerId);
+      const health = provider === null ? null : await provider.healthCheck();
+      const events = eventSummaries.get(providerId);
+      const sportsCovered = provider?.sportsCovered ?? [];
       return {
-        providerId: provider.providerId,
-        providerName: provider.providerName,
-        status: health.status,
-        errorRate: health.errorRateLastHour,
-        latencyMs: health.latencyMsP95,
-        lastEventAt: events?.lastChangedAt ?? health.lastSuccessfulPoll ?? null,
+        providerId,
+        providerName: row?.name ?? provider?.providerName ?? providerId,
+        status: health?.status ?? null,
+        errorRate: health?.errorRateLastHour ?? null,
+        latencyMs: health?.latencyMsP95 ?? null,
+        lastEventAt: events?.lastChangedAt ?? health?.lastSuccessfulPoll ?? null,
         sportsCovered,
-        primaryForSports: sportsCovered.filter((sport) => this.registry.getProvider(sport)?.providerId === provider.providerId),
+        primaryForSports: sportsCovered.filter((sport) => this.registry.getProvider(sport)?.providerId === providerId),
         activeEventCount: events?.activeEventCount ?? 0,
-        supportsLiveSimulation: supportsLiveSimulation(provider),
-        requestsPerMinute: provider.requestsPerMinute ?? null,
-        webhooksEnabled: this.webhookProviderIds.has(provider.providerId),
-        syncedSportLeagueCount: syncedLeagueCounts.get(provider.providerId) ?? 0,
-        rateLimitedJobsLast24h: rateLimitedCounts.get(provider.providerId) ?? 0,
+        supportsLiveSimulation: provider !== null && supportsLiveSimulation(provider),
+        requestsPerMinute: row?.requestsPerMinute ?? provider?.requestsPerMinute ?? null,
+        webhooksEnabled: row !== undefined && this.webhooks.isOn(row),
+        syncedSportLeagueCount: syncedLeagueCounts.get(providerId) ?? 0,
+        rateLimitedJobsLast24h: rateLimitedCounts.get(providerId) ?? 0,
+        settings: row === undefined ? null : { ...row, webhookSecretSet: this.webhooks.isSecretSet(row.code) },
       };
     }));
     return summaries.sort((a, b) => a.providerName.localeCompare(b.providerName));
@@ -435,7 +417,6 @@ export class IngestionService {
       );
       throw new SportProviderNotFoundError(request.sport, request.providerId);
     }
-    await this.assertSportSyncConfigured(request.sport);
     if (request.mockEventState && !supportsMockEventStateControls(provider)) {
       throw new MockEventStateUnsupportedError(provider.providerId);
     }

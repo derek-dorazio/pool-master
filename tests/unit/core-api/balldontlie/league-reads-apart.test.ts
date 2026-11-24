@@ -6,6 +6,7 @@ import { ProviderLeagueRefusedError } from '../../../../packages/core-api/src/mo
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 import { fakeLogger } from '../../../support/fake-logger';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
 
 /**
  * Each league of a sport is read on its own (#1797): a league the plan refuses, or whose read
@@ -36,9 +37,9 @@ function setup(routes: Record<string, FakeRoute>, logger?: FastifyBaseLogger, le
   global.fetch = api.fetch;
   let now = NOW;
   const adapter = new BalldontlieAdapter({
-    baseUrl: 'https://api.balldontlie.io',
+    connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
     apiKey: API_KEY,
-    requestsPerMinute: 600,
+    leagues: BALLDONTLIE_TEST_LEAGUES,
     now: () => now,
     sleep: (ms) => { now += ms; return Promise.resolve(); },
     ...(logger && { logger }),
@@ -105,21 +106,21 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     await expect(harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).rejects.toThrow('/nfl/v1/teams');
   });
 
-  it('reads only the named tour\'s league when asked for one tour, ignoring case, so the NFL year import never asks for college football', async () => {
+  it('reads only the league with the code asked for, so the NFL year import never asks for college football', async () => {
     const harness = setup(freePlan);
     restore = harness.restore;
 
-    const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { tour: ' nfl ' });
+    const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'nfl' });
 
     expect(events.map((event) => event.externalId)).toEqual(['nfl-2026-week-12']);
     expect(pathsRead(harness.api)).toEqual(['/nfl/v1/games']);
   });
 
-  it('throws a league refusal naming the provider, the league and the status when the plan refuses the one tour asked for', async () => {
+  it('throws a league refusal naming the provider, the league and the status when the plan refuses the one league asked for', async () => {
     const harness = setup(freePlan);
     restore = harness.restore;
 
-    const read = harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { tour: 'CFP' });
+    const read = harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'ncaaf' });
 
     await expect(read).rejects.toBeInstanceOf(ProviderLeagueRefusedError);
     await expect(read).rejects.toMatchObject({ providerName: 'BALLDONTLIE', league: 'CFP', status: 401 });
@@ -129,27 +130,27 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const harness = setup({ '/pga/v2/tournaments': refused }, undefined, ['pga']);
     restore = harness.restore;
 
-    const read = harness.adapter.getUpcomingEvents(Sport.GOLF, YEAR_2026, { tour: 'PGA TOUR' });
+    const read = harness.adapter.getUpcomingEvents(Sport.GOLF, YEAR_2026, { providerLeagueCode: 'pga' });
 
     await expect(read).rejects.toBeInstanceOf(ProviderLeagueRefusedError);
     await expect(read).rejects.toMatchObject({ providerName: 'BALLDONTLIE', league: 'PGA TOUR', status: 401 });
   });
 
-  it('passes on any other failure of the one tour asked for unchanged, so an outage still shows as one', async () => {
+  it('passes on any other failure of the one league asked for unchanged, so an outage still shows as one', async () => {
     const harness = setup({ ...nflRoutes, '/nfl/v1/games': failing });
     restore = harness.restore;
 
-    const read = harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { tour: 'NFL' });
+    const read = harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'nfl' });
 
     await expect(read).rejects.not.toBeInstanceOf(ProviderLeagueRefusedError);
     await expect(read).rejects.toThrow('/nfl/v1/games');
   });
 
-  it('reads every league as a sport\'s list when the tour asked for names none of them', async () => {
+  it('reads every league as a sport\'s list when the code asked for names none of them', async () => {
     const harness = setup({ ...nflRoutes, '/ncaaf/v1/games': pagedRoute([]), '/ncaaf/v1/teams': () => ({ body: { data: [] } }) });
     restore = harness.restore;
 
-    await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { tour: 'XFL' });
+    await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'xfl' });
 
     expect(pathsRead(harness.api)).toEqual(['/ncaaf/v1/games', '/nfl/v1/games']);
   });

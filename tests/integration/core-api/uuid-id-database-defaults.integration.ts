@@ -20,7 +20,7 @@
  *   2. The reason it is safe: `dbgenerated` changes nothing Prisma-side. An explicitly supplied
  *      id is still accepted, and an omitted one still produces a row.
  *
- * The `sport_leagues.name` / `match_keyword` half of #340 is also covered: the schema now
+ * The `sport_leagues.name` half of #340 is also covered: the schema now
  * declares `@db.VarChar(255)` for columns the database had always bounded at 255, and the bound
  * is asserted to be real rather than taken on trust.
  *
@@ -142,17 +142,16 @@ describe('#340 sport_leagues bounded text columns', () => {
   /** A suite-prefixed name padded to exactly `length` characters. */
   const nameOfLength = (length: number) => uniqueName().padEnd(length, 'n');
 
-  it('stores a name and matchKeyword of exactly 255 characters', async () => {
+  it('stores a name of exactly 255 characters', async () => {
     const prisma = getPrisma();
     const sportId = await golfSportId();
 
     // The declared bound is the one the database has always had. 255 must still fit.
     const created = await prisma.sportLeague.create({
-      data: { ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(255), matchKeyword: 'k'.repeat(255) },
+      data: { ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(255) },
     });
 
     expect(created.name).toHaveLength(255);
-    expect(created.matchKeyword).toHaveLength(255);
   });
 
   it('rejects a name longer than 255 characters, so the declared bound is real', async () => {
@@ -163,17 +162,6 @@ describe('#340 sport_leagues bounded text columns', () => {
     // 255. The schema was the artifact that was wrong, and this is the behavior it misdescribed.
     await expect(
       prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(256) } }),
-    ).rejects.toThrow();
-  });
-
-  it('rejects a matchKeyword longer than 255 characters', async () => {
-    const prisma = getPrisma();
-    const sportId = await golfSportId();
-
-    await expect(
-      prisma.sportLeague.create({
-        data: { ...(await leagueProfiles(prisma)), sportId, name: uniqueName(), matchKeyword: 'k'.repeat(256) },
-      }),
     ).rejects.toThrow();
   });
 });

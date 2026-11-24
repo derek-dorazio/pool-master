@@ -28,11 +28,19 @@ export interface BalldontliePage<Row> {
   meta?: { next_cursor?: number | null };
 }
 
-export interface BalldontlieClientOptions {
+/**
+ * Where the client calls and how fast (#1997): the BALLDONTLIE Provider row's base URL and its
+ * plan's limit (5 on the free plan, 60 on ALL-STAR, 600 on GOAT and All-Access), read for each
+ * request so an edit on the Providers page takes effect without a restart.
+ */
+export interface BalldontlieConnection {
   baseUrl: string;
-  apiKey: string;
-  /** The plan's limit: 5 on the free plan, 60 on ALL-STAR, 600 on GOAT and All-Access. */
   requestsPerMinute: number;
+}
+
+export interface BalldontlieClientOptions {
+  connection: () => BalldontlieConnection;
+  apiKey: string;
   payloads: ProviderPayloadRecorder;
   /** How long one attempt may take before it is abandoned and retried. */
   timeoutMs?: number;
@@ -91,8 +99,6 @@ export class BalldontlieRequestError extends Error {
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 export class BalldontlieClient {
-  private readonly baseUrl: string;
-  private readonly minIntervalMs: number;
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
   private readonly now: () => number;
@@ -101,11 +107,6 @@ export class BalldontlieClient {
   private nextSlotAt = 0;
 
   constructor(private readonly options: BalldontlieClientOptions) {
-    if (!Number.isInteger(options.requestsPerMinute) || options.requestsPerMinute < 1) {
-      throw new Error(`BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not ${String(options.requestsPerMinute)}.`);
-    }
-    this.baseUrl = options.baseUrl.replace(/\/$/, '');
-    this.minIntervalMs = Math.ceil(60_000 / options.requestsPerMinute);
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.now = options.now ?? Date.now;
@@ -161,10 +162,13 @@ export class BalldontlieClient {
   }
 
   /** Waits for the next free slot under the rate limit, then holds it. */
-  private async takeSlot(): Promise<void> {
+  private async takeSlot(requestsPerMinute: number): Promise<void> {
+    if (!Number.isInteger(requestsPerMinute) || requestsPerMinute < 1) {
+      throw new Error(`BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not ${String(requestsPerMinute)}.`);
+    }
     const now = this.now();
     const startAt = Math.max(now, this.nextSlotAt);
-    this.nextSlotAt = startAt + this.minIntervalMs;
+    this.nextSlotAt = startAt + Math.ceil(60_000 / requestsPerMinute);
     if (startAt > now) {
       await this.sleep(startAt - now);
     }
@@ -172,10 +176,11 @@ export class BalldontlieClient {
 
   private async request(pathAndQuery: string): Promise<unknown> {
     for (let attempt = 0; ; attempt += 1) {
-      await this.takeSlot();
+      const connection = this.options.connection();
+      await this.takeSlot(connection.requestsPerMinute);
       let response: Response;
       try {
-        response = await fetch(`${this.baseUrl}${pathAndQuery}`, {
+        response = await fetch(`${connection.baseUrl.replace(/\/$/, '')}${pathAndQuery}`, {
           headers: { Authorization: this.options.apiKey, Accept: 'application/json' },
           signal: AbortSignal.timeout(this.timeoutMs),
         });

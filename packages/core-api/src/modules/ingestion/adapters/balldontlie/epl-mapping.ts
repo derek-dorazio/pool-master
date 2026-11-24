@@ -28,8 +28,8 @@ export const EPL_MATCHES_PATH = '/epl/v2/matches';
 export const EPL_TEAMS_PATH = '/epl/v2/teams';
 
 /**
- * The tour name events and teams carry in `metadata.tour`, matched against a sport league's
- * match keyword. Soccer's Premier League sport league is given it by migration.
+ * The tour name events and teams carry in `metadata.tour`, for display; a sport
+ * league finds them by their provider league code (#1997).
  */
 export const EPL_TOUR = 'EPL';
 

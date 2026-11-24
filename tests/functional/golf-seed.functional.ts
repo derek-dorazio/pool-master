@@ -103,7 +103,7 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; matchKeyword: string | null; bracketAdvancement: BracketAdvancement } | undefined> {
+async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; bracketAdvancement: BracketAdvancement } | undefined> {
   const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport } })).data);
   return sportLeagues.find((league) => league.name === name);
 }
@@ -175,7 +175,6 @@ describe('Loading a golf test seed through the admin API', () => {
     expect(counts(applied)).toEqual(counts(dryRun));
 
     const league = expectDefined(await leagueNamed(tour));
-    expect(league.matchKeyword).toBe(tour);
     const events = await eventsOf(league.id, 2026);
     const opener = expectDefined(events.find((event) => event.name === `${prefix} Opener`));
     // Released for contests, a whole number of weeks on from 2026-01-15 and at least a week after today.
@@ -306,7 +305,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     const golfSportId = (await db.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id;
     const league = `${tour} known`;
     // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
-    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), sportId: golfSportId, name: league, matchKeyword: league } });
+    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), sportId: golfSportId, name: league } });
     const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL', externalId: `${RUN}-synced` } });
     await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: provider, externalId: feedId('golfer-2'), confidence: 'EXACT' } });
 

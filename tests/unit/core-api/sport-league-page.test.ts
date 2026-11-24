@@ -24,7 +24,6 @@ import {
   SportLeagueSyncMode,
 } from '@poolmaster/shared/domain';
 import type { SportEventPageFacts, SportEventPageFieldRow, SportLeagueEventFacts, SportLeaguePageEvent, SportLeaguePageLeague, SportLeaguePageParticipant, SportLeaguePageReader, SportLeaguePageRun } from '@poolmaster/shared/db';
-import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import {
   SportEventOverviewDtoSchema,
   SportLeagueEventOverviewDtoSchema,
@@ -49,18 +48,10 @@ const DAY = 24 * 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
 const at = (iso: string) => new Date(iso);
 
-const SCHEDULE: IngestionScheduleConfig = {
-  scheduledSports: [Sport.BASEBALL],
-  healthCheck: { enabled: true, intervalMinutes: 5 },
-  eventList: { enabled: true, intervalMinutes: 360 },
-  eventParticipants: { enabled: false, intervalMinutes: 360 },
-  eventLiveScores: { enabled: true, intervalSeconds: 300 },
-};
-
 function league(overrides: Partial<SportLeaguePageLeague> = {}): SportLeaguePageLeague {
   return {
     id: 'mlb', sport: Sport.BASEBALL, isActive: true, parentSportLeagueId: null, scoringFamily: null,
-    eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, parent: null, ...overrides,
+    syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, parent: null, ...overrides,
   };
 }
 
@@ -91,10 +82,10 @@ function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEven
   return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPageSlug: null, ...overrides };
 }
 
-const context = { schedule: SCHEDULE, webhookProviderIds: [] as string[], now: NOW };
+const context = { webhookProviderIds: [] as string[], now: NOW };
 
 describe('buildSportLeagueSyncs', () => {
-  it('reports every sync kind in order, each with its latest run, its health from that run, and its next run an interval after it', () => {
+  it('reports every sync kind in order, each with its latest run and its health from that run', () => {
     const syncs = buildSportLeagueSyncs(league(), [
       run(ProviderSyncKind.SCORES, { createdAt: at('2027-04-15T11:58:00.000Z') }),
       run(ProviderSyncKind.EVENTS, { status: ProviderSyncRunStatus.FAILED, changedCount: null, summary: 'Rate limited.' }),
@@ -105,39 +96,26 @@ describe('buildSportLeagueSyncs', () => {
       [ProviderSyncKind.FIELD, SportLeagueSyncHealth.NOT_RUN_YET],
       [ProviderSyncKind.SCORES, SportLeagueSyncHealth.OK],
     ]);
-    expect(syncs[0]).toMatchObject({ mode: SportLeagueSyncMode.SCHEDULE, lastRun: { id: 'events-run', summary: 'Rate limited.', changedCount: null }, nextRunAt: at('2027-04-15T16:00:00.000Z') });
-    // The field policy is off, so nothing schedules it.
-    expect(syncs[1]).toMatchObject({ lastRun: null, nextRunAt: null });
-    expect(syncs[2]?.nextRunAt).toEqual(at('2027-04-15T12:03:00.000Z'));
+    expect(syncs[0]).toMatchObject({ mode: SportLeagueSyncMode.SCHEDULE, lastRun: { id: 'events-run', summary: 'Rate limited.', changedCount: null } });
+    expect(syncs[1]).toMatchObject({ lastRun: null });
   });
 
-  it('runs a sync whose next time has passed, or that never ran, now', () => {
-    const syncs = buildSportLeagueSyncs(league(), [run(ProviderSyncKind.EVENTS, { createdAt: at('2027-04-14T00:00:00.000Z') })], context);
-    const fresh = buildSportLeagueSyncs(league(), [], context);
-
-    expect(syncs[0]?.nextRunAt).toEqual(NOW);
-    expect(fresh[0]?.nextRunAt).toEqual(NOW);
-  });
-
-  it('leaves the live scores of a provider whose webhook is set to the webhook, with no next run', () => {
+  it('leaves the live scores of a provider whose webhook is on to the webhook, and every other sync to the schedule', () => {
     const syncs = buildSportLeagueSyncs(league(), [], { ...context, webhookProviderIds: ['balldontlie'] });
 
     expect(syncs.map((sync) => sync.mode)).toEqual([SportLeagueSyncMode.SCHEDULE, SportLeagueSyncMode.SCHEDULE, SportLeagueSyncMode.WEBHOOK]);
-    expect(syncs[2]?.nextRunAt).toBeNull();
   });
 
-  it('schedules nothing for a league that is off, has no provider, or whose sport is not scheduled', () => {
+  it('reads every sync OFF for a league that is off or has no provider', () => {
     const off = buildSportLeagueSyncs(league({ isActive: false }), [], context);
-    const unsynced = buildSportLeagueSyncs(league({ eventSyncProviderId: null }), [], context);
-    const unscheduled = buildSportLeagueSyncs(league(), [], { ...context, schedule: { ...SCHEDULE, scheduledSports: [Sport.GOLF] } });
+    const unsynced = buildSportLeagueSyncs(league({ syncProviderId: null }), [], context);
 
     expect(off.map((sync) => sync.health)).toEqual([SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF]);
-    expect(unsynced.every((sync) => sync.health === SportLeagueSyncHealth.OFF && sync.nextRunAt === null)).toBe(true);
-    expect(unscheduled.every((sync) => sync.nextRunAt === null)).toBe(true);
+    expect(unsynced.every((sync) => sync.health === SportLeagueSyncHealth.OFF)).toBe(true);
   });
 
   it('takes a Clutch Card\'s provider from its parent league, whose event list sync creates its events', () => {
-    const clutchCard = league({ id: 'ws', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: 'mlb', eventSyncProviderId: null, parent: { isActive: true, eventSyncProviderId: 'balldontlie' } });
+    const clutchCard = league({ id: 'ws', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: 'mlb', syncProviderId: null, parent: { isActive: true, syncProviderId: 'balldontlie' } });
     const syncs = buildSportLeagueSyncs(clutchCard, [run(ProviderSyncKind.EVENTS, { id: 'mlb-events' })], context);
 
     expect(syncs[0]).toMatchObject({ health: SportLeagueSyncHealth.OK, lastRun: { id: 'mlb-events' } });
@@ -193,7 +171,7 @@ describe('buildSportLeagueEvents', () => {
         run(ProviderSyncKind.SCORES, { status: ProviderSyncRunStatus.FAILED, createdAt: at('2027-04-15T11:30:00.000Z') }),
         run(ProviderSyncKind.FIELD),
       ]]]),
-      overdueCandidates: [{ id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [] }],
+      overdueCandidates: [{ id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [], typicalGameMinutes: 180 }],
     }), NOW);
 
     expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([
@@ -240,11 +218,11 @@ describe('buildSportEventOverview', () => {
     expect(fresh).toMatchObject({ syncHealth: SportLeagueSyncHealth.NOT_RUN_YET, issues: [] });
   });
 
-  it('reads every sync OFF, with nothing scheduled, for an event no provider syncs, as one an admin made in a synced league', () => {
+  it('reads every sync OFF for an event no provider syncs, as one an admin made in a synced league', () => {
     const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE }) }), context);
 
     expect(overview.syncHealth).toBe(SportLeagueSyncHealth.OFF);
-    expect(overview.syncs.map((sync) => [sync.health, sync.nextRunAt])).toEqual([[SportLeagueSyncHealth.OFF, null], [SportLeagueSyncHealth.OFF, null]]);
+    expect(overview.syncs.map((sync) => sync.health)).toEqual([SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF]);
     expect(overview.releaseMode).toBe(SportEventReleaseMode.MANUAL);
   });
 
@@ -262,7 +240,7 @@ describe('buildSportEventOverview', () => {
 
   it('counts only this event\'s overdue candidate as its OVERDUE issue', () => {
     const expectedEnd = new Date(NOW.getTime() - OVERDUE_AFTER_MS - MINUTE);
-    const candidate = { id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [] };
+    const candidate = { id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [], typicalGameMinutes: 180 };
     const overview = buildSportEventOverview(eventPageFacts({ overdueCandidates: [candidate, { ...candidate, id: 'e2' }] }), context);
 
     expect(overview.issues).toEqual([{
@@ -320,8 +298,7 @@ describe('SportLeaguePageService', () => {
   };
   const service = (rows: SportLeaguePageParticipant[] | null) => new SportLeaguePageService({
     reader: makeReader(rows),
-    schedule: { getConfig: () => Promise.resolve(SCHEDULE) },
-    webhookProviderIds: [],
+    webhookProviderIds: () => [],
     now: () => NOW,
   });
 

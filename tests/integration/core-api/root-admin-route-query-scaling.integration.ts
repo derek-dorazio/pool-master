@@ -55,6 +55,7 @@ import {
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 import { leagueProfiles, STAT_POOL_TIER_PROFILE_NAME } from '../../support/league-profiles';
+import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
@@ -90,7 +91,8 @@ class ScalingProvider implements SportDataProvider {
   }
 }
 
-const provider = new ScalingProvider('scaling-provider', 'Scaling Provider', Sport.GOLF);
+// BALLDONTLIE's id, so the leagues synced from its seeded Provider row read as this provider's (#1997).
+const provider = new ScalingProvider(SYNCED_PROVIDER_ID, 'BALLDONTLIE', Sport.GOLF);
 /** A second provider, so the provider list shows two and a read per provider would show. */
 const tennisProvider = new ScalingProvider('scaling-tennis-provider', 'Scaling Tennis Provider', Sport.TENNIS);
 
@@ -201,7 +203,7 @@ async function seedLeagueActivity(jobs: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Tour ${suffix}`, matchKeyword: `ACT${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Tour ${suffix}` } });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Open ${suffix}` } });
   for (let index = 0; index < jobs; index += 1) {
     const onLeague = index % 2 === 0;
@@ -238,10 +240,11 @@ async function seedRateLimitedJobs() {
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
   const sportLeague = await prisma.sportLeague.create({
-    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Tour ${suffix}`, matchKeyword: `LIM${suffix}`, eventSyncProviderId: provider.providerId },
+    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Tour ${suffix}` },
   });
+  await syncLeagueTo(prisma, sportLeague.id, 'pga');
   const clutchCard = await prisma.sportLeague.create({
-    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Clutch Card ${suffix}`, matchKeyword: `LIMC${suffix}`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id },
+    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Clutch Card ${suffix}`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id },
   });
   const events = await Promise.all([provider, tennisProvider].map(async (owner) => prisma.sportEvent.create({
     data: {
@@ -304,12 +307,13 @@ async function seedUnmappedParticipants(unmapped: number) {
   return createTestUser({ isRootAdmin: true });
 }
 
-/** A root admin, a sports league keyed to a tour, and a provider with `events` of that tour's events. */
+/** A root admin, a sports league synced from BALLDONTLIE's PGA TOUR, and a provider with `events` of that league's events. */
 async function seedCatalogEvents(events: number) {
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
   const tour = `Scaling Tour ${suffix}`;
-  const sportLeague = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: tour, matchKeyword: tour } });
+  const sportLeague = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: tour } });
+  await syncLeagueTo(getPrisma(), sportLeague.id, 'pga');
   provider.events = Array.from({ length: events }, (_, index) => {
     const startDate = new Date(Date.now() + (index + 1) * 7 * DAY);
     return {
@@ -320,6 +324,7 @@ async function seedCatalogEvents(events: number) {
       startDate,
       status: 'SCHEDULED' as const,
       fieldLocked: false,
+      providerLeagueCode: 'pga',
       metadata: {},
     };
   });
@@ -337,7 +342,8 @@ async function seedSportLeagueOverviews(leagues: number) {
   const suffix = randomUUID().slice(0, 8);
   for (let index = 0; index < leagues; index += 1) {
     const name = `Overview Tour ${suffix} ${String(index)}`;
-    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name, matchKeyword: `OV${suffix}${String(index)}`, eventSyncProviderId: provider.providerId } });
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name } });
+    await syncLeagueTo(prisma, sportLeague.id, 'pga');
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${name} Open` } });
     const event = (key: string, eventYear: number, extra: Pick<Prisma.SportEventUncheckedCreateInput, 'status' | 'autoReleaseCheckedAt' | 'autoReleaseOutcome' | 'autoReleaseFailedChecks'> = {}) => prisma.sportEvent.create({
       data: {
@@ -365,7 +371,7 @@ async function seedSportLeagueOverviews(leagues: number) {
       ],
     });
     const clutchCard = await prisma.sportLeague.create({
-      data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: sport.id, name: `${name} Clutch Card`, matchKeyword: `OVC${suffix}${String(index)}`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id, parentRoundNumbers: [1] },
+      data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: sport.id, name: `${name} Clutch Card`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id, parentRoundNumbers: [1] },
     });
     const clutchSeries = await prisma.eventSeries.create({ data: { sportLeagueId: clutchCard.id, name: `${name} Clutch Card` } });
     await prisma.sportEvent.create({
@@ -420,7 +426,8 @@ async function seedLeagueEventOverviews(events: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Tour ${suffix}`, eventSyncProviderId: provider.providerId } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Tour ${suffix}` } });
+  await syncLeagueTo(prisma, sportLeague.id, 'pga');
   for (let index = 0; index < events; index += 1) {
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Open ${suffix} ${String(index)}` } });
     const overdue = index % 2 === 0;
@@ -570,7 +577,8 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
   it('GET a sport league\'s syncs: one row per sync kind, from the league with its sport and the latest run of each kind in four statements, however many runs (#1865)', async () => {
     const prisma = getPrisma();
     const sport = await golf();
-    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Syncs ${randomUUID().slice(0, 8)}`, eventSyncProviderId: provider.providerId } });
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Syncs ${randomUUID().slice(0, 8)}` } });
+    await syncLeagueTo(prisma, sportLeague.id, 'pga');
     await prisma.providerSyncRun.createMany({
       data: Array.from({ length: 20 }, (_, index) => ({
         kind: (['EVENTS', 'FIELD', 'SCORES'] as const)[index % 3], trigger: 'SCHEDULE' as const, providerId: provider.providerId, sport: Sport.GOLF,
@@ -689,13 +697,13 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     });
   });
 
-  it('GET the ingestion schedule: every sport\'s schedule from the settings in memory, with no query', async () => {
+  it('GET the ingestion schedule: every sync kind\'s policy from the settings in memory, with no query', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
     await expectFixedQueries({
       route: 'GET /api/v1/platform/ingestion-schedule',
-      fixedBy: 'the supported sports',
+      fixedBy: 'the sync kinds',
       call: () => get('/api/v1/platform/ingestion-schedule', rootAdmin),
-      rowsShown: (response) => okBody(response, IngestionScheduleConfigSchema).scheduledSports.length,
+      rowsShown: (response) => Object.keys(okBody(response, IngestionScheduleConfigSchema)).length,
       statements: 0,
     });
   });

@@ -14,10 +14,11 @@ import {
   ProviderSyncRunNotFoundError,
   SportEventSyncScopeError,
   SportProviderNotFoundError,
-  SportSyncNotConfiguredError,
   type IngestionService,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
+import { ProviderSettingsError, type ProviderSettingsService } from '../../../packages/core-api/src/modules/ingestion/provider-settings-service';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
+import { BALLDONTLIE_TEST_LEAGUES, balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
 
 const AT = new Date('2026-04-10T12:00:00.000Z');
 const boom = new Error('feed down');
@@ -28,7 +29,7 @@ const run = {
 
 function service(overrides: Record<string, unknown> = {}) {
   return {
-    listProviders: jest.fn((..._args: unknown[]) => Promise.resolve([{ providerId: 'feed', lastEventAt: null }])),
+    listProviders: jest.fn((..._args: unknown[]) => Promise.resolve([{ providerId: 'feed', lastEventAt: null, settings: null }])),
     listSyncRuns: jest.fn((..._args: unknown[]) => Promise.resolve([run])),
     getSyncRun: jest.fn((..._args: unknown[]) => Promise.resolve({ ...run, details: null })),
     syncEventData: jest.fn((..._args: unknown[]) => Promise.resolve({ sport: Sport.GOLF, eventId: 'e1', requestedFeeds: ['SCORES'], submittedAt: AT, syncRuns: [run] })),
@@ -37,14 +38,65 @@ function service(overrides: Record<string, unknown> = {}) {
   };
 }
 const scoreSources = (listCandidateEvents: unknown) => ({ listCandidateEvents }) as unknown as EventScoreSourceService;
-const handlersOver = (fake: ReturnType<typeof service>, sources = scoreSources(jest.fn())) =>
-  createIngestionHandlers(fake as unknown as IngestionService, sources);
+/** The Providers page's saves, answering with BALLDONTLIE's row unless told otherwise. */
+function providerSettings(overrides: Partial<Record<'updateProvider' | 'updateLeague', jest.Mock>> = {}) {
+  return {
+    updateProvider: jest.fn().mockResolvedValue({ provider: balldontlieTestProvider(), webhookSecretSet: true }),
+    updateLeague: jest.fn().mockResolvedValue(BALLDONTLIE_TEST_LEAGUES[0]),
+    ...overrides,
+  };
+}
+const handlersOver = (fake: ReturnType<typeof service>, sources = scoreSources(jest.fn()), settings = providerSettings()) =>
+  createIngestionHandlers(fake as unknown as IngestionService, sources, settings as unknown as ProviderSettingsService);
 
 describe('ingestion provider and run handlers', () => {
   it('lists the registered providers', async () => {
     const reply = await callHandler(handlersOver(service()).listProviders, stubRequest({ contextLogger: false }));
 
     expect(reply.body).toMatchObject({ providers: [{ providerId: 'feed', lastEventAt: null }] });
+  });
+
+  it('saves a provider\'s settings and answers its row with whether its webhook secret is set', async () => {
+    const settings = providerSettings();
+    const reply = await callHandler(
+      handlersOver(service(), undefined, settings).updateProvider,
+      stubRequest({ params: { providerId: 'p1' }, body: { requestsPerMinute: 600 } }),
+    );
+
+    expect(settings.updateProvider).toHaveBeenCalledWith('p1', { requestsPerMinute: 600 });
+    expect(reply.body).toMatchObject({ provider: { code: 'BALLDONTLIE', name: 'BALLDONTLIE', requestsPerMinute: 600, webhookSecretSet: true } });
+  });
+
+  it('sends a refused provider save with its status and code, and passes any other failure on', async () => {
+    const refused = providerSettings({ updateProvider: jest.fn().mockRejectedValue(new ProviderSettingsError('Its secret is not set.', 'PROVIDER_WEBHOOK_SECRET_MISSING')) });
+    const failing = providerSettings({ updateProvider: jest.fn().mockRejectedValue(boom) });
+    const request = () => stubRequest({ params: { providerId: 'p1' }, body: { webhooksEnabled: true } });
+
+    await expect(callHandler(handlersOver(service(), undefined, refused).updateProvider, request()))
+      .resolves.toMatchObject({ statusCode: 422, body: { error: { code: 'PROVIDER_WEBHOOK_SECRET_MISSING' } } });
+    await expect(callHandler(handlersOver(service(), undefined, failing).updateProvider, request())).rejects.toBe(boom);
+  });
+
+  it('saves a provider league\'s settings, and sends one not found as 404 PROVIDER_LEAGUE_NOT_FOUND', async () => {
+    const settings = providerSettings();
+    const missing = providerSettings({ updateLeague: jest.fn().mockRejectedValue(new ProviderSettingsError('Not found.', 'PROVIDER_LEAGUE_NOT_FOUND')) });
+    const request = () => stubRequest({ params: { providerId: 'p1', providerLeagueId: 'l1' }, body: { typicalGameMinutes: 200 } });
+
+    const saved = await callHandler(handlersOver(service(), undefined, settings).updateProviderLeague, request());
+    const notFound = await callHandler(handlersOver(service(), undefined, missing).updateProviderLeague, request());
+
+    expect(settings.updateLeague).toHaveBeenCalledWith('p1', 'l1', { typicalGameMinutes: 200 });
+    expect(saved.body).toMatchObject({ league: { code: 'pga', name: 'PGA TOUR' } });
+    expect(notFound).toMatchObject({ statusCode: 404, body: { error: { code: 'PROVIDER_LEAGUE_NOT_FOUND' } } });
+  });
+
+  it('passes any other failure saving a provider league on to the global error handler', async () => {
+    const failing = providerSettings({ updateLeague: jest.fn().mockRejectedValue(boom) });
+
+    await expect(callHandler(
+      handlersOver(service(), undefined, failing).updateProviderLeague,
+      stubRequest({ params: { providerId: 'p1', providerLeagueId: 'l1' }, body: {} }),
+    )).rejects.toBe(boom);
   });
 
   it('lists sync runs with the query\'s window read as dates, and an omitted window as none', async () => {
@@ -105,7 +157,6 @@ describe('manual event sync handler', () => {
 
   it.each<[string, Error, number, string]>([
     ['a sport with no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError(Sport.GOLF, 'feed'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
-    ['a sport ingestion is not set up for with 422 SPORT_SYNC_NOT_CONFIGURED', new SportSyncNotConfiguredError(Sport.GOLF), 422, 'SPORT_SYNC_NOT_CONFIGURED'],
     ['a mock state the provider cannot play with 422 MOCK_EVENT_STATE_UNSUPPORTED', new MockEventStateUnsupportedError('feed'), 422, 'MOCK_EVENT_STATE_UNSUPPORTED'],
     ['a feed the event\'s sync scope leaves out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError('e1', 'SCORES_ONLY', ['FIELD']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],
   ])('refuses a sync for %s', async (_label, error, status, code) => {

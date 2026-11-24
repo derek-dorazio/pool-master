@@ -232,7 +232,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     // --- Tour ------------------------------------------------------------
     const league = await createSportLeague({
       client: admin,
-      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), sport: 'GOLF', name: `USGA ${RUN}`, matchKeyword: 'U.S. Open' },
+      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), sport: 'GOLF', name: `USGA ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
@@ -282,7 +282,8 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(expectDefined(usOpen).sport).toBe('GOLF');
     expect(new Date(expectDefined(usOpen).startDate).getUTCFullYear()).toBe(2026);
 
-    // matchKeyword (from the linked SportLeague) narrows the same browse.
+    // A league narrows the browse only to the provider league its selected mapping names (#1997);
+    // the mock feed has no Provider row, so this league names none and the browse is unnarrowed.
     const filtered = await listProviderCatalogEvents({
       client: admin,
       path: { providerId: MOCK_PROVIDER_ID },
@@ -295,7 +296,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     });
     expect(filtered.response?.status).toBe(200);
     expect(expectDefined(filtered.data).events.length).toBeGreaterThan(0);
-    expect(expectDefined(filtered.data).events.every((e) => e.name.includes('U.S. Open'))).toBe(true);
+    expect(expectDefined(filtered.data).events.some((e) => e.externalId === MOCK_EVENT_EXTERNAL_ID)).toBe(true);
 
     // --- 2. Link the manual-admin tournament's score source -------------
     const link = await linkEventScoreSource({

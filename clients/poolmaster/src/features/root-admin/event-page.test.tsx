@@ -21,6 +21,7 @@ import {
   pricingProfilesFixture,
   sportEventFixture,
   sportEventRoundFixture,
+  providerMappingFixture,
   sportLeagueFixture,
   tierFixture,
 } from './sport-test-fixtures';
@@ -129,8 +130,8 @@ function eventOverview(overrides: Partial<SportEventOverviewDto> = {}): SportEve
   return {
     syncHealth: 'OFF',
     syncs: [
-      { kind: 'FIELD', health: 'OFF', mode: 'SCHEDULE', lastRun: null, nextRunAt: null },
-      { kind: 'SCORES', health: 'OFF', mode: 'SCHEDULE', lastRun: null, nextRunAt: null },
+      { kind: 'FIELD', health: 'OFF', mode: 'SCHEDULE', lastRun: null },
+      { kind: 'SCORES', health: 'OFF', mode: 'SCHEDULE', lastRun: null },
     ],
     issues: [],
     releaseMode: 'MANUAL',
@@ -221,7 +222,7 @@ function renderEventPage(path: string, {
 }: { event?: ReturnType<typeof tournament>; overview?: SportEventOverviewDto; synced?: boolean } = {}) {
   getEventMock.mockResolvedValue({ data: { event } });
   getEventOverviewMock.mockResolvedValue({ data: { overview } });
-  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [synced ? { ...PGA, eventSyncProviderId: 'balldontlie' } : PGA] } });
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [synced ? { ...PGA, selectedProviderMapping: providerMappingFixture() } : PGA] } });
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: [leagueOverview(synced ? { providerId: 'balldontlie' } : {})] } });
   listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: PGA.tierProfileId, name: 'Six tiers', tiers: [], sportLeagueCount: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
   listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
@@ -375,8 +376,8 @@ describe('Event page syncs', () => {
   const syncedOverview = eventOverview({
     syncHealth: 'OK',
     syncs: [
-      { kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: { id: 'run-1', status: 'COMPLETED', createdAt: '2026-05-01T09:00:00.000Z', startedAt: '2026-05-01T09:00:00.000Z', summary: null, changedCount: 4 }, nextRunAt: null },
-      { kind: 'SCORES', health: 'NOT_RUN_YET', mode: 'WEBHOOK', lastRun: null, nextRunAt: null },
+      { kind: 'FIELD', health: 'OK', mode: 'SCHEDULE', lastRun: { id: 'run-1', status: 'COMPLETED', createdAt: '2026-05-01T09:00:00.000Z', startedAt: '2026-05-01T09:00:00.000Z', summary: null, changedCount: 4 } },
+      { kind: 'SCORES', health: 'NOT_RUN_YET', mode: 'WEBHOOK', lastRun: null },
     ],
   });
 
@@ -409,7 +410,7 @@ describe('Event page syncs', () => {
   it('offers no Sync now on a sync that is off', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/field');
 
-    expect(await screen.findByTestId('root-admin-event-sync-FIELD', {}, { timeout: 5_000 })).toHaveTextContent('Not scheduled');
+    expect(await screen.findByTestId('root-admin-event-sync-FIELD', {}, { timeout: 5_000 })).toHaveTextContent('Runs on the ingestion schedule');
     expect(screen.queryByTestId('root-admin-event-sync-now-FIELD')).not.toBeInTheDocument();
   });
 });

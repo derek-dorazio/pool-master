@@ -7,7 +7,7 @@ import type { SportLeagueOverviewDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportsPage } from './root-admin-sports-page';
 import { sportsCountLine } from './sport-league-overview-text';
-import { pricingProfilesFixture, sportLeagueFixture, STANDARD_PRICING_PROFILE_ID } from './sport-test-fixtures';
+import { pricingProfilesFixture, providerMappingFixture, providerSummaryFixture, sportLeagueFixture, STANDARD_PRICING_PROFILE_ID } from './sport-test-fixtures';
 
 // /manage/sports, the root admin's landing page (#1848): every sport league in one grid.
 
@@ -120,7 +120,7 @@ function LocationProbe() {
 }
 
 function renderPage() {
-  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['BASEBALL', 'BASKETBALL', 'GOLF'] }] } });
+  listProvidersMock.mockResolvedValue({ data: { providers: [providerSummaryFixture()] } });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -255,7 +255,7 @@ describe('RootAdminSportsPage', () => {
 
   it('opens a sport league\'s settings from its ⚙ without leaving the grid, showing them before Edit', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' }) } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() }) } });
     listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
     listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
     renderPage();
@@ -264,7 +264,7 @@ describe('RootAdminSportsPage', () => {
 
     expect(await screen.findByText('MLB settings')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sport-league-settings-status')).toHaveTextContent('On');
-    expect(await screen.findByTestId('root-admin-sport-league-settings-provider')).toHaveTextContent('BALLDONTLIE');
+    expect(await screen.findByTestId('root-admin-sport-league-settings-provider')).toHaveTextContent('BALLDONTLIE · PGA TOUR');
     expect(screen.getByTestId('root-admin-sport-league-settings-auto-release')).toHaveTextContent('7 days before start');
     expect(await screen.findByTestId('root-admin-sport-league-settings-tier-profile')).toHaveTextContent('4 tiers of 3');
     expect(screen.queryByTestId('root-admin-sport-league-settings-status-input')).not.toBeInTheDocument();
@@ -273,7 +273,7 @@ describe('RootAdminSportsPage', () => {
 
   it('saves only the settings changed on Edit, then shows them again', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
-    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' });
+    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: mlb } });
     listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
     listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
@@ -296,7 +296,7 @@ describe('RootAdminSportsPage', () => {
 
   it('keeps Save off on a second Edit right after a save, so nothing unchanged is sent', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
-    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', eventSyncProviderId: 'balldontlie' });
+    const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: mlb } });
     listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
     listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
@@ -340,19 +340,19 @@ describe('RootAdminSportsPage', () => {
     listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [] } });
     listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: [] } });
     updateSportLeagueMock.mockResolvedValue({
-      error: { error: { code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', message: 'This sport league needs a match keyword first.' } },
+      error: { error: { code: 'PROVIDER_NOT_FOUND', message: 'BALLDONTLIE\'s mlb is switched off or not running.' } },
       response: { status: 422 },
     });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
     await userEvent.click(await screen.findByTestId('root-admin-sport-league-settings-edit'));
-    await screen.findByRole('option', { name: 'BALLDONTLIE' });
-    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-settings-provider-input'), 'BALLDONTLIE');
+    await screen.findByRole('option', { name: 'BALLDONTLIE · MLB' });
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-settings-provider-input'), 'BALLDONTLIE · MLB');
     await userEvent.click(screen.getByTestId('root-admin-sport-league-settings-save'));
 
-    expect(await screen.findByText('This league has no match keyword, so a sync cannot find its events.')).toBeInTheDocument();
-    expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ body: { eventSyncProviderId: 'balldontlie' } }));
+    expect(await screen.findByText('Provider not found.')).toBeInTheDocument();
+    expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ body: { syncProviderLeagueId: '00000000-0000-4000-8000-0000000000c2' } }));
     expect(screen.getByTestId('root-admin-sport-league-settings-provider-input')).toBeInTheDocument();
   });
 

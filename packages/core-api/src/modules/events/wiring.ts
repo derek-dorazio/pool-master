@@ -37,7 +37,7 @@ import { MatchResultService } from '../scoring-families/head-to-head/match-resul
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { eventStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService, type SportDataProviderLookup } from '../sport-catalog/sport-league-service';
-import { ProviderRegistry } from '../ingestion/core/provider-registry';
+import { NO_PROVIDERS } from '../ingestion/provider-lookup';
 import { EventLifecycleService, type FinishedSportEventSettlement } from './event-lifecycle-service';
 import type { DomainEvents } from '../domain-events';
 import { SportEventService } from './service';
@@ -257,11 +257,11 @@ export function createSportEventServices(
   /** What follows each results, field or game write (#1946): the app's one map, built in index.ts. */
   domainEvents: Pick<DomainEvents, 'collect'>,
   /**
-   * The registered providers a sport league's event sync may name (ADR 0011). Pass the app's
-   * registry wherever a sport league is updated; omitted, none is registered, so turning a
-   * league's sync on is refused.
+   * The provider leagues a sport league's event sync may name, and which providers run here (ADR
+   * 0011, #1997). Pass the app's lookup wherever a sport league is updated; omitted, there are none,
+   * so turning a league's sync on is refused.
    */
-  providers: SportDataProviderLookup = new ProviderRegistry(),
+  providers: SportDataProviderLookup = NO_PROVIDERS,
 ): SportEventServices {
   const sports = new PrismaSportRepository(prisma);
   const sportLeagues = new PrismaSportLeagueRepository(prisma);
@@ -311,8 +311,8 @@ export function createSportEventServices(
 export function createSportLeagueService(
   prisma: PrismaClient,
   logger?: FastifyBaseLogger,
-  /** The registered providers a sport league's event sync may name (ADR 0011); none, turning a league's sync on is refused. */
-  providers: SportDataProviderLookup = new ProviderRegistry(),
+  /** The provider leagues a sport league's event sync may name (ADR 0011, #1997); none, turning a league's sync on is refused. */
+  providers: SportDataProviderLookup = NO_PROVIDERS,
 ): SportLeagueService {
   return new SportLeagueService({
     sports: new PrismaSportRepository(prisma),

@@ -25,6 +25,7 @@ import {
 import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { leagueProfiles } from '../../support/league-profiles';
+import { syncLeagueTo } from '../../support/league-sync';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -46,10 +47,13 @@ async function golfSportId(): Promise<string> {
   return sport.id;
 }
 
-async function sportLeague(name: string, extra: { scoringFamily?: 'COMPOSITE'; parentSportLeagueId?: string; parentRoundNumbers?: number[]; eventSyncProviderId?: string; autoReleaseDaysBeforeStart?: number } = {}) {
-  return getPrisma().sportLeague.create({
-    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, matchKeyword: randomUUID().slice(0, 8), ...extra },
+/** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
+async function sportLeague(name: string, { synced = false, ...extra }: { scoringFamily?: 'COMPOSITE'; parentSportLeagueId?: string; parentRoundNumbers?: number[]; synced?: boolean; autoReleaseDaysBeforeStart?: number } = {}) {
+  const league = await getPrisma().sportLeague.create({
+    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
   });
+  if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
+  return league;
 }
 
 async function event(sportLeagueId: string, input: { startDate: Date; status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'; parentEventId?: string; parentRoundNumbers?: number[] }) {
@@ -67,7 +71,7 @@ async function get(url: string) {
 
 describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
   it('reports a Clutch Card\'s event list by its parent\'s latest EVENTS run and its other syncs by its own runs, in kind order', async () => {
-    const tour = await sportLeague('Page Tour', { eventSyncProviderId: 'balldontlie' });
+    const tour = await sportLeague('Page Tour', { synced: true });
     const clutch = await sportLeague('Page Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: tour.id, parentRoundNumbers: [2] });
     const run = (sportLeagueId: string, kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date) => ({
       kind, trigger: 'SCHEDULE' as const, providerId: 'balldontlie', sport: Sport.GOLF, sportLeagueId, status, createdAt,
@@ -103,7 +107,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
 
 describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
   it('shows a released event\'s release time as ACTUAL and an automatic draft\'s window opening as PLANNED, with its field and last sync', async () => {
-    const tour = await sportLeague('Release Page Tour', { eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 });
+    const tour = await sportLeague('Release Page Tour', { synced: true, autoReleaseDaysBeforeStart: 5 });
     const released = await event(tour.id, { startDate: fromNow(3 * DAY_MS), status: 'DRAFT' });
     const draft = await event(tour.id, { startDate: fromNow(10 * DAY_MS), status: 'DRAFT' });
     const releasedAt = fromNow(-HOUR_MS);
@@ -131,7 +135,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
   });
 
   it('marks a Clutch Card event overdue by its parent\'s covered round, ended more than 4 hours ago, and not one whose round ended within 4 hours', async () => {
-    const tour = await sportLeague('Overdue Page Tour', { eventSyncProviderId: 'balldontlie' });
+    const tour = await sportLeague('Overdue Page Tour', { synced: true });
     const clutch = await sportLeague('Overdue Page Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: tour.id, parentRoundNumbers: [2] });
     const parent = await event(tour.id, { startDate: fromNow(-3 * DAY_MS), status: 'IN_PROGRESS' });
     const roundEnd = fromNow(-5 * HOUR_MS);

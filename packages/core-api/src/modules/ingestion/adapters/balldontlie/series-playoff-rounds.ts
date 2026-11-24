@@ -14,9 +14,7 @@
  * (`nba-2025-postseason-round-4`).
  *
  * A round's event and its players carry the round's name as their tour ("NBA Finals"), not the
- * league's: a sport league finds its events, and the stars it already holds, by the tour equal to
- * its match keyword, so the NBA's bracket league keeps only the season's playoffs and each Clutch
- * Card league its own round.
+ * league's, for display.
  */
 
 import { seriesWinsNeeded, type SportStat } from '@poolmaster/shared/domain';
@@ -113,15 +111,6 @@ export function toPlayoffRoundEvent(league: PlayoffsLeague, season: number, roun
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
     metadata: { tour: name, season, round },
   };
-}
-
-/** Each round a season's games have reached, as an event each, in round order. */
-export function toPlayoffRoundEvents(league: PlayoffsLeague, season: number, games: readonly PlayoffGame[]): SportEvent[] {
-  const series = playoffSeries(games);
-  const rounds = [...new Set(series.map((each) => each.round))]
-    .filter((round) => round <= league.rounds.length)
-    .sort((left, right) => left - right);
-  return rounds.map((round) => toPlayoffRoundEvent(league, season, round, series.filter((each) => each.round === round)));
 }
 
 /**

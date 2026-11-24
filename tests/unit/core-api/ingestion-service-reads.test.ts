@@ -17,25 +17,14 @@ import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../su
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
 import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
-import { buildSportLeague } from '../../factories';
+import { buildProviderMapping, buildSportLeague } from '../../factories';
+import { balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
 import { stubInstance } from '../../support/stub-instance';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 
 // The root-admin reads over ingestion (provider list, sync-run history, unmapped competitors)
 // and the manual sync submission's refusals and its background worker.
-
-const GOLF_ONLY_CONFIG = {
-  scheduledSports: [Sport.GOLF],
-  healthCheck: { enabled: true, intervalMinutes: 5 },
-  eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
-  eventLiveScores: { enabled: true, intervalSeconds: 300 },
-  eventList: { enabled: true, intervalMinutes: 360 },
-};
-
-function configReader(config = GOLF_ONLY_CONFIG) {
-  return { getConfig: jest.fn().mockResolvedValue(config) };
-}
 
 function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): InMemorySyncRuns {
   return Object.assign(inMemorySyncRuns(), overrides);
@@ -54,7 +43,8 @@ function service(
     sportEvents: fakeSportEventRepo(),
     participantMappings: fakeParticipantProviderMappingRepo(),
     sportLeagues: { findEventSyncedWithClutchCards: () => Promise.resolve([]) },
-    webhookProviderIds: [],
+    providerSettings: { all: () => [] },
+    webhooks: { isOn: () => false, isSecretSet: () => false },
     jobHistory: { countByScope: () => Promise.resolve([]) },
     logger: fakeLogger(),
     jobs,
@@ -78,7 +68,7 @@ describe('IngestionService.listProviders', () => {
       summarizeByProviders: jest.fn().mockResolvedValue(new Map([['zebra', { activeEventCount: 3, lastChangedAt }]])),
     });
 
-    const providers = await service({ registry: registryWith(provider), sportEvents, ingestionConfigReader: configReader() }).listProviders();
+    const providers = await service({ registry: registryWith(provider), sportEvents }).listProviders();
 
     expect(providers).toEqual([
       expect.objectContaining({
@@ -87,7 +77,7 @@ describe('IngestionService.listProviders', () => {
     ]);
   });
 
-  it('lists none of a provider\'s sports as covered when they are not scheduled, and falls back to its last successful poll', async () => {
+  it('falls back to a provider\'s last successful poll for its last event time when it has no events', async () => {
     const provider = fakeSportDataProvider({
       providerId: 'alpha',
       sportsCovered: [Sport.GOLF],
@@ -98,19 +88,19 @@ describe('IngestionService.listProviders', () => {
     });
 
     const providers = await service({
-      registry: registryWith(provider), ingestionConfigReader: configReader({ ...GOLF_ONLY_CONFIG, scheduledSports: [] }),
+      registry: registryWith(provider),
     }).listProviders();
 
     expect(providers).toEqual([
       expect.objectContaining({
         providerId: 'alpha', status: 'DEGRADED', errorRate: 0.2, latencyMs: 900,
         lastEventAt: new Date('2026-05-01T00:00:00.000Z'), activeEventCount: 0,
-        sportsCovered: [], supportsLiveSimulation: false,
+        sportsCovered: [Sport.GOLF], supportsLiveSimulation: false,
       }),
     ]);
   });
 
-  it('lists every sport a provider covers when no ingestion config is wired, and a null last-event time when it has none', async () => {
+  it('lists every sport a provider covers, and a null last-event time when it has none', async () => {
     const provider = fakeSportDataProvider({ sportsCovered: [Sport.GOLF] });
 
     const [summary] = await service({ registry: registryWith(provider) }).listProviders();
@@ -137,15 +127,20 @@ describe('IngestionService.listProviders', () => {
     const unpaced = fakeSportDataProvider({ providerId: 'mock', providerName: 'Mock' });
     const registry = registryWith(paced);
     registry.register(Sport.GOLF, unpaced, 'SECONDARY');
-    const nba = buildSportLeague({ name: 'NBA', eventSyncProviderId: 'balldontlie' });
+    const nba = buildSportLeague({ name: 'NBA', selectedProviderMapping: buildProviderMapping() });
     const findEventSyncedWithClutchCards = jest.fn().mockResolvedValue([
-      buildSportLeague({ name: 'PGA TOUR', eventSyncProviderId: 'balldontlie' }),
+      buildSportLeague({ name: 'PGA TOUR', selectedProviderMapping: buildProviderMapping({ providerLeagueCode: 'pga', providerLeagueName: 'PGA TOUR' }) }),
       nba,
       // A Clutch Card league is not a synced league of its own.
       buildSportLeague({ name: 'NBA Clutch Card', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: nba.id }),
     ]);
 
-    const providers = await service({ registry, sportLeagues: { findEventSyncedWithClutchCards }, webhookProviderIds: ['balldontlie'] }).listProviders();
+    const providers = await service({
+      registry,
+      sportLeagues: { findEventSyncedWithClutchCards },
+      providerSettings: { all: () => [balldontlieTestProvider({ requestsPerMinute: 600 })] },
+      webhooks: { isOn: () => true, isSecretSet: () => true },
+    }).listProviders();
 
     expect(findEventSyncedWithClutchCards).toHaveBeenCalledTimes(1);
     expect(providers).toEqual([
@@ -154,10 +149,35 @@ describe('IngestionService.listProviders', () => {
     ]);
   });
 
+  it('lists a provider that has a row but is not running here, as when its key is not set, with no status and its row\'s settings', async () => {
+    const [summary] = await service({
+      registry: registryWith(null),
+      providerSettings: { all: () => [balldontlieTestProvider({ requestsPerMinute: 5 })] },
+      webhooks: { isOn: () => false, isSecretSet: () => false },
+    }).listProviders();
+
+    expect(summary).toMatchObject({
+      providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: null, sportsCovered: [], requestsPerMinute: 5, webhooksEnabled: false,
+      settings: { code: 'BALLDONTLIE', requestsPerMinute: 5, webhooksEnabled: true, webhookSecretSet: false },
+    });
+  });
+
+  it('shows a provider\'s webhooks off while its row switches them on but its signing secret is not set', async () => {
+    const isOn = jest.fn().mockReturnValue(false);
+    const [summary] = await service({
+      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' })),
+      providerSettings: { all: () => [balldontlieTestProvider({ webhooksEnabled: true })] },
+      webhooks: { isOn, isSecretSet: () => false },
+    }).listProviders();
+
+    expect(isOn).toHaveBeenCalledWith(expect.objectContaining({ code: 'BALLDONTLIE', webhooksEnabled: true }));
+    expect(summary).toMatchObject({ webhooksEnabled: false, settings: { webhooksEnabled: true, webhookSecretSet: false } });
+  });
+
   it('counts each provider\'s rate-limited jobs of the last 24 hours: league jobs by the league\'s sync provider (a Clutch Card\'s by its parent\'s), event jobs by the event\'s provider', async () => {
     const registry = registryWith(fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }));
     registry.register(Sport.GOLF, fakeSportDataProvider({ providerId: 'mock', providerName: 'Mock' }), 'SECONDARY');
-    const nba = buildSportLeague({ name: 'NBA', eventSyncProviderId: 'balldontlie' });
+    const nba = buildSportLeague({ name: 'NBA', selectedProviderMapping: buildProviderMapping() });
     // Listed before its parent, as the read's name order can put it.
     const clutchCard = buildSportLeague({ name: 'A NBA Clutch Card', scoringFamily: ScoringFamily.COMPOSITE, parentSportLeagueId: nba.id });
     const countByScope = jest.fn().mockResolvedValue([
@@ -253,7 +273,7 @@ describe('IngestionService.getSyncRun', () => {
 });
 
 describe('IngestionService.getUnmappedParticipants', () => {
-  it('lists the competitors each provider reports for its scheduled sports that no participant is mapped to', async () => {
+  it('lists the competitors each provider reports for its sports that no participant is mapped to', async () => {
     const provider = fakeSportDataProvider({
       providerId: 'feed', providerName: 'Feed', sportsCovered: [Sport.GOLF],
       getParticipants: jest.fn().mockResolvedValue([
@@ -266,7 +286,7 @@ describe('IngestionService.getUnmappedParticipants', () => {
     });
 
     const unmapped = await service({
-      registry: registryWith(provider), participantMappings, ingestionConfigReader: configReader(),
+      registry: registryWith(provider), participantMappings,
     }).getUnmappedParticipants();
 
     expect(provider.getParticipants).toHaveBeenCalledTimes(1);
@@ -288,7 +308,7 @@ describe('IngestionService.getUnmappedParticipants', () => {
     const participantMappings = fakeParticipantProviderMappingRepo({ findByProviderExternalIds: jest.fn().mockResolvedValue([]) });
 
     const unmapped = await service({
-      registry: registryWith(provider), participantMappings, ingestionConfigReader: configReader(),
+      registry: registryWith(provider), participantMappings,
     }).getUnmappedParticipants({ providerId: 'feed', externalId: 'p-2' });
 
     expect(participantMappings.findByProviderExternalIds).toHaveBeenCalledWith('feed', { sport: Sport.GOLF }, ['p-2']);
@@ -305,23 +325,12 @@ describe('IngestionService.getUnmappedParticipants', () => {
       ]),
     });
     const participantMappings = fakeParticipantProviderMappingRepo({ findByProviderExternalIds: jest.fn().mockResolvedValue([]) });
-    const reads = service({ registry: registryWith(provider), participantMappings, ingestionConfigReader: configReader() });
+    const reads = service({ registry: registryWith(provider), participantMappings });
 
     await expect(reads.getUnmappedParticipants({ providerId: 'other-feed' })).resolves.toEqual([]);
     expect(provider.getParticipants).not.toHaveBeenCalled();
     await expect(reads.getUnmappedParticipants({ providerId: 'feed', externalId: 'gone' })).resolves.toEqual([]);
     expect(participantMappings.findByProviderExternalIds).not.toHaveBeenCalled();
-  });
-
-  it('never asks a provider for the competitors of a sport that is not scheduled', async () => {
-    const provider = fakeSportDataProvider({ sportsCovered: [Sport.GOLF], getParticipants: jest.fn().mockResolvedValue([]) });
-
-    const unmapped = await service({
-      registry: registryWith(provider), ingestionConfigReader: configReader({ ...GOLF_ONLY_CONFIG, scheduledSports: [] }),
-    }).getUnmappedParticipants();
-
-    expect(provider.getParticipants).not.toHaveBeenCalled();
-    expect(unmapped).toEqual([]);
   });
 
   it('returns nothing when no provider is registered', async () => {

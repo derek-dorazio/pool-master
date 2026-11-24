@@ -23,9 +23,9 @@ import { createSportLeagueService, eventFieldCache } from '../events/wiring';
 import { PrismaSportLeagueOverviewReader } from '../../adapters/prisma-sport-league-overview-reader';
 import { SportLeagueOverviewService } from '../sport-catalog/sport-league-overview';
 import { createSportLeagueHandlers } from './handler';
-import type { ProviderRegistry } from '../ingestion/core/provider-registry';
+import type { SportDataProviderLookup } from '../sport-catalog/sport-league-service';
 import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
-import { SportLeaguePageService, type SportLeaguePageServiceDeps } from '../sport-catalog/sport-league-page';
+import { SportLeaguePageService } from '../sport-catalog/sport-league-page';
 
 const TAGS = ['Sport leagues'];
 
@@ -42,21 +42,20 @@ const SPORT_LEAGUE_PARAMS = {
 
 export interface SportLeaguesModuleOptions {
   cdn: CdnInvalidator;
-  /** The providers a sport league's event sync may name (ADR 0011). */
-  providerRegistry: ProviderRegistry;
-  /** The League page's syncs read (#1865): the one ingestion schedule, and which providers' webhooks drive their live scores. */
-  schedule: SportLeaguePageServiceDeps['schedule'];
-  webhookProviderIds: readonly string[];
+  /** The provider leagues a sport league's event sync may name (ADR 0011, #1997). */
+  providers: SportDataProviderLookup;
+  /** The League page's syncs read (#1865): which providers' webhooks drive their live scores. */
+  /** The providers whose webhooks are on now. */
+  webhookProviderIds: () => readonly string[];
 }
 
 export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
-  const sportLeagues = createSportLeagueService(getAppPrisma(fastify), fastify.log, opts.providerRegistry);
+  const sportLeagues = createSportLeagueService(getAppPrisma(fastify), fastify.log, opts.providers);
   const lists = new ReadCache<SportLeagueListResponse>(readPublicReadCacheTtlMs(process.env));
   const overviews = new SportLeagueOverviewService({ reader: new PrismaSportLeagueOverviewReader(getAppPrisma(fastify)) });
   const page = new SportLeaguePageService({
     reader: new PrismaSportLeaguePageReader(getAppPrisma(fastify)),
-    schedule: opts.schedule,
     webhookProviderIds: opts.webhookProviderIds,
   });
   const handler = createSportLeagueHandlers(sportLeagues, lists, overviews, page);
@@ -137,8 +136,8 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
         + '422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. '
         + '409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: '
         + 'the loaded bracket\'s links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. '
-        + 'eventSyncProviderId turns the league\'s event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, '
-        + '422 PROVIDER_SPORT_MISMATCH for one not covering the league\'s sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. '
+        + 'syncProviderLeagueId turns the league\'s event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: '
+        + '404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. '
         + 'autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.',
       operationId: 'updateSportLeague',
       params: SPORT_LEAGUE_PARAMS,
@@ -167,10 +166,10 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     onRequest: requireRootAdmin,
     schema: {
       tags: TAGS,
-      summary: 'List a sport league\'s syncs with their health, latest run and next run',
+      summary: 'List a sport league\'s syncs with their health, latest run and what drives them',
       description: 'The League page\'s Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. '
         + 'A Clutch Card reports its parent league\'s event list sync, which creates its events. Health follows the Sports page\'s rule from that sync\'s latest run; '
-        + 'the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.',
+        + 'live scores follow the webhook while the provider\'s webhooks are on, and every other sync runs on the one ingestion schedule. Root admin only.',
       operationId: 'listSportLeagueSyncs',
       params: SPORT_LEAGUE_PARAMS,
       response: { 200: schemaRef('SportLeagueSyncListResponse'), ...errors(401, 403, 404) },

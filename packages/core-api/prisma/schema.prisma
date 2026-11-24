@@ -1115,7 +1115,8 @@ model Sport {
   createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeagues SportLeague[]
+  sportLeagues    SportLeague[]
+  providerLeagues ProviderLeague[]
 
   @@map("sports")
 }
@@ -1129,7 +1130,6 @@ model SportLeague {
   id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportId                    String                   @map("sport_id") @db.Uuid
   name                       String                   @db.VarChar(255)
-  matchKeyword               String?                  @map("match_keyword") @db.VarChar(255)
   /// The event year the tour is currently on — a business pointer, not a foreign
   /// key: "set as current" refuses a year with no events for this tour, which is the
   /// integrity the season FK used to give (plans/147 decision 6).
@@ -1196,12 +1196,10 @@ model SportLeague {
   /// Creating a Clutch Card event copies it onto the event with the parent it finds. Reference
   /// data, set by the migration that seeds the round league.
   parentRoundNumbers         Int[]                    @default([]) @map("parent_round_numbers")
-  /// The provider whose sync creates and keeps this sport league's events (ADR 0011, #1725):
-  /// a scheduled pass imports the provider's events for the league's tour, born DRAFT. Null:
-  /// an admin authors them. Set by a root admin per league, only once its reader is built and
-  /// the provider is configured; a business pointer, not a foreign key, since providers are
-  /// configuration rather than rows.
-  eventSyncProviderId        String?                  @map("event_sync_provider_id") @db.VarChar(100)
+  /// The provider league whose sync creates and keeps this sport league's events (ADR 0011,
+  /// #1997): one of the league's own provider mappings, so a league can be mapped to a second
+  /// provider before it switches. Null: the league is not synced. Set by a root admin.
+  selectedProviderMappingId  String?                  @map("selected_provider_mapping_id") @db.Uuid
   /// How many days before its start a synced DRAFT event of this sport league is released on its
   /// own once every ready check passes (#1823): the release sweep tries it each hour of that
   /// window and logs each try. Null: never automatically; a root admin releases by hand. 1 to 30.
@@ -1209,19 +1207,24 @@ model SportLeague {
   createdAt                  DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
-  sport                     Sport                          @relation(fields: [sportId], references: [id])
-  tierProfile               TierProfile                    @relation(fields: [tierProfileId], references: [id], onDelete: Restrict)
-  pricingProfile            PricingProfile                 @relation(fields: [pricingProfileId], references: [id], onDelete: Restrict)
-  parentSportLeague         SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
-  rounds                    SportLeague[]                  @relation("SportLeagueRounds")
-  participants              Participant[]
-  providerMappings          ParticipantProviderMapping[]
-  eventSeries               EventSeries[]
-  contestConfigTemplates    ContestConfigTemplate[]
-  cups                      Cup[]
-  eventPageOffers           EventPageOffer[]
+  sport                       Sport                        @relation(fields: [sportId], references: [id])
+  tierProfile                 TierProfile                  @relation(fields: [tierProfileId], references: [id], onDelete: Restrict)
+  pricingProfile              PricingProfile               @relation(fields: [pricingProfileId], references: [id], onDelete: Restrict)
+  parentSportLeague           SportLeague?                 @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
+  rounds                      SportLeague[]                @relation("SportLeagueRounds")
+  participants                Participant[]
+  providerMappings            ParticipantProviderMapping[]
+  eventSeries                 EventSeries[]
+  contestConfigTemplates      ContestConfigTemplate[]
+  cups                        Cup[]
+  eventPageOffers             EventPageOffer[]
+  sportLeagueProviderMappings SportLeagueProviderMapping[] @relation("SportLeagueProviderMappings")
+  /// The composite key keeps the selected mapping one of the league's own.
+  selectedProviderMapping     SportLeagueProviderMapping?  @relation("SelectedSportLeagueProviderMapping", fields: [id, selectedProviderMappingId], references: [sportLeagueId, id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([sportId, name])
+  /// A mapping is selected by at most its own league, once.
+  @@unique([id, selectedProviderMappingId])
   @@index([parentSportLeagueId])
   @@index([tierProfileId])
   @@index([pricingProfileId])
@@ -2107,8 +2110,8 @@ model SportEvent {
   createdAt                  DateTime                       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
 
-  parentEvent                SportEvent?                        @relation("ClutchCardParentEvent", fields: [parentEventId], references: [id], onDelete: Restrict)
-  clutchCardEvents           SportEvent[]                       @relation("ClutchCardParentEvent")
+  parentEvent                SportEvent?                 @relation("ClutchCardParentEvent", fields: [parentEventId], references: [id], onDelete: Restrict)
+  clutchCardEvents           SportEvent[]                @relation("ClutchCardParentEvent")
   contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]
   pendingDrawReceipts        ContestDraw[]               @relation("ContestDrawReceiptsPending")
@@ -2435,6 +2438,110 @@ model SportEventParticipantValuation {
 
   @@index([sportEventTierId, tierOrderIndex])
   @@map("sport_event_participant_valuations")
+}
+
+// =============================================================================
+// Providers (#1997)
+// =============================================================================
+
+/// Which data provider a Provider row is (#1997): the code picks the adapter in code; nothing
+/// else about a provider is in code.
+enum PrismaProviderCode {
+  BALLDONTLIE
+}
+
+/// Which of a provider's webhook events a provider league sends for its games (#1997): a game's
+/// start, each period's end and its end; a game's start, its half-time and its end; or a golf
+/// tournament's start, each round's start, each player's round and its end. The adapter maps each
+/// set to the provider's own event names.
+enum PrismaProviderWebhookEventSet {
+  GAME_PERIODS
+  GAME_HALVES
+  GOLF_ROUNDS
+}
+
+/// One data provider (#1997, plans/league-model-redesign.md §4), with the settings each
+/// environment gives it: QA's free-tier rate and production's paid rate are row values, edited on
+/// the Providers page. Seeded by migration. The API key and webhook secret stay in Secrets
+/// Manager. Provider and ProviderLeague are the provider's own lists, so they are the stated
+/// exception to the rule that provider codes live only in *ProviderMapping tables.
+model Provider {
+  id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                    PrismaProviderCode @unique
+  name                    String             @db.VarChar(100)
+  baseUrl                 String             @map("base_url") @db.VarChar(500)
+  /// The provider plan's request limit a minute, which every sync service holds its calls to.
+  requestsPerMinute       Int                @map("requests_per_minute")
+  /// Whether the provider's webhook notifications are taken: only while its signing secret is
+  /// set too. A notified event's scores are polled only at the safety-net pace below.
+  webhooksEnabled         Boolean            @default(false) @map("webhooks_enabled")
+  /// How often a notified event's scores are polled anyway while it is in play, in minutes.
+  webhookPollMinutes      Int                @map("webhook_poll_minutes")
+  /// How often a notified event played in rounds is polled while a round is under way, in
+  /// minutes, since the provider does not notify each hole.
+  webhookRoundPollMinutes Int                @map("webhook_round_poll_minutes")
+  /// Whether its plan includes player box scores.
+  hasPlayerStats          Boolean            @default(false) @map("has_player_stats")
+  isEnabled               Boolean            @default(true) @map("is_enabled")
+  /// Which provider a sport is served by first when more than one covers it: lower first.
+  priority                Int                @unique
+  createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  leagues ProviderLeague[]
+
+  @@map("providers")
+}
+
+/// One of a provider's own leagues (#1997): its code for the league (`nfl`), the sport it plays
+/// and how its webhooks behave. Seeded by migration with the provider; SportLeagueProviderMapping
+/// links a sport league to one.
+model ProviderLeague {
+  id                 String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId         String                        @map("provider_id") @db.Uuid
+  /// The provider's own code for the league, as its API names it.
+  code               String                        @db.VarChar(50)
+  /// The provider's own name for the league, shown beside its code.
+  name               String                        @db.VarChar(100)
+  sportId            String                        @map("sport_id") @db.Uuid
+  webhookEventSet    PrismaProviderWebhookEventSet @map("webhook_event_set")
+  /// How long a game may go between two of the league's notifications in normal play, in
+  /// minutes, with room for overtime and breaks: past it, the webhook may have stopped.
+  quietAfterMinutes  Int                           @map("quiet_after_minutes")
+  /// How long one of its games usually takes from its scheduled start, in minutes: a start plus
+  /// this is when a game with no scheduled end should have ended.
+  typicalGameMinutes Int                           @map("typical_game_minutes")
+  isEnabled          Boolean                       @default(true) @map("is_enabled")
+  createdAt          DateTime                      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime                      @updatedAt @map("updated_at") @db.Timestamptz
+
+  provider     Provider                     @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  sport        Sport                        @relation(fields: [sportId], references: [id], onDelete: Restrict)
+  sportLeagues SportLeagueProviderMapping[]
+
+  @@unique([providerId, code])
+  @@index([sportId])
+  @@map("provider_leagues")
+}
+
+/// Links a sport league to one provider's league (#1997): a league may be mapped to more than
+/// one provider, and `SportLeague.selectedProviderMappingId` picks the one its sync reads.
+model SportLeagueProviderMapping {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId    String   @map("sport_league_id") @db.Uuid
+  providerLeagueId String   @map("provider_league_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeague    SportLeague    @relation("SportLeagueProviderMappings", fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  providerLeague ProviderLeague @relation(fields: [providerLeagueId], references: [id], onDelete: Restrict)
+  selectedBy     SportLeague?   @relation("SelectedSportLeagueProviderMapping")
+
+  @@unique([sportLeagueId, providerLeagueId])
+  /// The target of SportLeague's composite key to its selected mapping.
+  @@unique([sportLeagueId, id])
+  @@index([providerLeagueId])
+  @@map("sport_league_provider_mappings")
 }
 
 model ProviderSyncRun {

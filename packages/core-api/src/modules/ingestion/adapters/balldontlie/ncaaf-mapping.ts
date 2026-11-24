@@ -63,8 +63,8 @@ export function cfpGameWindow(season: number): GameWindow {
 /** The College Football Playoff's settings, in one place. */
 export const CFP_LEAGUE = {
   /**
-   * The tour name events and teams carry in `metadata.tour`, matched against a sport league's
-   * match keyword. The College Football Playoff sport league is given it by migration.
+   * The tour name events and teams carry in `metadata.tour`, for display; a sport
+   * league finds them by their provider league code (#1997).
    */
   tour: 'CFP',
   eventName: 'College Football Playoff',

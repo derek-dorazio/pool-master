@@ -56,7 +56,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
   const overviews = facts.leagues.map((league): SportLeagueOverview => {
     const clutchCard = isClutchCardLeague(league);
     const parent = league.parentSportLeagueId === null ? undefined : leagueById.get(league.parentSportLeagueId);
-    const providerId = clutchCard ? parent?.eventSyncProviderId ?? null : league.eventSyncProviderId;
+    const providerId = clutchCard ? parent?.syncProviderId ?? null : league.syncProviderId;
     const runs = syncRunsOf(league, clutchCard, runsByLeague);
     const failedRuns = runs.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
     return {

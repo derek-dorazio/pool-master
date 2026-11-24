@@ -14,7 +14,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { lastRunText, nextRunText } from './league-syncs-text';
+import { lastRunText, syncModeText } from './league-syncs-text';
 import { SyncHealthChip } from './sync-health-chip';
 import { useSportLeagueSyncsQuery } from './use-sport-league-page';
 
@@ -70,7 +70,7 @@ export function LeagueSyncsCard({ isSynced, sportLeagueId }: { isSynced: boolean
                 facts={lastRunText(sync, preferences)}
                 key={sync.kind}
                 name={enumLabel('ProviderSyncKind', sync.kind)}
-                note={nextRunText(sync, preferences)}
+                note={syncModeText(sync)}
                 testId={`root-admin-league-sync-${sync.kind}`}
               />
             ))}

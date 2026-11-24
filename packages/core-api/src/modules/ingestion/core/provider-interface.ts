@@ -24,8 +24,8 @@ export interface SportDataProvider {
   sportsCovered: Sport[];
 
   /**
-   * The request rate the adapter holds its calls to, a minute: the provider plan's limit, set in
-   * the deployment's provider bindings. Absent for an adapter that does not pace itself.
+   * The request rate the adapter holds its calls to, a minute: the provider plan's limit, from its
+   * Provider row (#1997). Absent for an adapter that does not pace itself.
    */
   readonly requestsPerMinute?: number;
 
@@ -33,8 +33,9 @@ export interface SportDataProvider {
    * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
    * without one, every event the provider has for the sport (#402: the catalog browse no
    * longer defaults to a window around today). Called on demand by the catalog browse,
-   * score-source linking and the year import; nothing schedules it (#126). Given a `tour`, a
-   * provider that reads its sport league by league may read only that tour's league (#1797).
+   * score-source linking and the year import; nothing schedules it (#126). Given a
+   * `providerLeagueCode`, a provider that reads its sport league by league reads only that league
+   * (#1797, #1997).
    */
   getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]>;
 
@@ -141,12 +142,12 @@ export function supportsLiveSimulation(
 /** What a caller of `getUpcomingEvents` wants from a sport's list (#1797). */
 export interface ProviderEventListOptions {
   /**
-   * The sport league's match keyword, when only its events are wanted. A provider that reads
-   * the sport league by league reads only the one whose events carry this tour, and throws
-   * `ProviderLeagueRefusedError` when the plan refuses it; one that cannot tell ignores it, and
-   * the caller filters by tour as before.
+   * The provider's own code for one of its leagues (a ProviderLeague's `code`, #1997), when only
+   * that league's events are wanted. A provider that reads the sport league by league reads only
+   * that league, and throws `ProviderLeagueRefusedError` when the plan refuses it; one that cannot
+   * tell ignores it, and the caller filters by `SportEvent.providerLeagueCode`.
    */
-  tour?: string;
+  providerLeagueCode?: string;
 }
 
 /**
@@ -187,6 +188,12 @@ export interface SportEvent {
   rounds?: number;
   participantCount?: number;
   fieldLocked: boolean;
+  /**
+   * The provider's own code for the league the event belongs to (a ProviderLeague's `code`,
+   * #1997); a sport league's sync keeps the events of its selected provider league. Absent from a
+   * provider that does not read league by league.
+   */
+  providerLeagueCode?: string;
   metadata: ProviderEventMetadata;
 }
 
@@ -195,7 +202,7 @@ export interface SportEvent {
  * something reads back, so a provider that supplies them supplies them with these types.
  */
 export interface ProviderEventMetadata {
-  /** The tour the event belongs to, matched against a sport league's matchKeyword (#385). */
+  /** The provider's tour word for the event's league; provider data, stored as given. */
   tour?: string;
   /** The mock feed's scenario the event came from. */
   scenarioId?: string;
@@ -275,9 +282,8 @@ export interface ProviderParticipant {
  */
 export interface ProviderParticipantMetadata {
   /**
-   * The sport league the participant plays in, by its match keyword, when the provider's sport
-   * covers more than one (a college team is a men's or a women's team). A same-name link looks
-   * only among the site's participants affiliated with that league.
+   * The name of the league the participant plays in, for display, when the provider's sport
+   * covers more than one (a college team is a men's or a women's team).
    */
   tour?: string;
   seed?: number;

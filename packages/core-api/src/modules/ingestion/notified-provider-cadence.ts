@@ -1,44 +1,35 @@
 /**
- * The live-score sweep's pace for providers that send webhook notifications (#1499), read from
- * the environment at startup. A provider counts as sending them once its webhook signing secret
- * is set: before then nothing arrives, so its events keep polling at the admin's interval.
- *
- * Each poll interval may be overridden in seconds; one that is not a whole number of seconds of at least
- * one stops startup, rather than quietly polling at a pace nobody chose.
+ * The live-score sweep's pace for providers that send webhook notifications (#1499), from their
+ * Provider rows (#1997): a provider counts as sending them while its webhooks are on (switched on
+ * and its signing secret set). Before then nothing arrives, so its events keep polling at the
+ * admin's interval. Each poll interval and each league's quiet window is a row value, edited on
+ * the Providers page.
  */
 
-import { z } from 'zod';
+import { ProviderCode } from '@poolmaster/shared/domain';
 import type { NotifiedProviderCadence } from './core/ingestion-scheduler';
 import { balldontlieQuietAfterMs } from './adapters/balldontlie/balldontlie-webhooks';
-import { readWebhookProviderIds } from './provider-webhook-routes';
+import type { ProviderSettingsStore } from './provider-settings-store';
+import type { ProviderWebhookSwitch } from './provider-webhook-switch';
 
-/** Each notified event's safety-net poll: 15 minutes (Derek, 2026-11-12). */
-export const DEFAULT_NOTIFIED_POLL_SECONDS = 15 * 60;
-/** A golf event's poll while a round is under way, since golf is not notified hole by hole. */
-export const DEFAULT_NOTIFIED_ROUND_POLL_SECONDS = 2 * 60;
-
-const SecondsSchema = z.coerce.number().int().min(1);
-
-function seconds(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
-  const raw = env[name]?.trim();
-  if (!raw) return fallback;
-  const parsed = SecondsSchema.safeParse(raw);
-  if (!parsed.success) {
-    throw new Error(`${name} must be a whole number of seconds, at least 1; it is "${raw}".`);
-  }
-  return parsed.data;
-}
-
-/** The cadence for the providers whose webhook secret is set, or undefined when none is. */
-export function readNotifiedProviderCadence(env: NodeJS.ProcessEnv): NotifiedProviderCadence | undefined {
-  const providerIds = readWebhookProviderIds(env);
-  if (providerIds.length === 0) return undefined;
+/**
+ * The cadence for the providers whose webhooks are on, or undefined when none is. Only
+ * BALLDONTLIE sends webhooks, so its row sets the pace.
+ */
+export function notifiedProviderCadenceOf(
+  store: Pick<ProviderSettingsStore, 'byCode' | 'enabledLeagues'>,
+  webhooks: Pick<ProviderWebhookSwitch, 'onProviderIds'>,
+): NotifiedProviderCadence | undefined {
+  const providerIds = webhooks.onProviderIds();
+  const provider = store.byCode(ProviderCode.BALLDONTLIE);
+  if (providerIds.length === 0 || provider === undefined) return undefined;
+  const leagues = store.enabledLeagues(ProviderCode.BALLDONTLIE);
   return {
     providerIds,
-    pollIntervalMs: seconds(env, 'PROVIDER_WEBHOOK_POLL_SECONDS', DEFAULT_NOTIFIED_POLL_SECONDS) * 1000,
-    roundPollIntervalMs: seconds(env, 'PROVIDER_WEBHOOK_ROUND_POLL_SECONDS', DEFAULT_NOTIFIED_ROUND_POLL_SECONDS) * 1000,
+    pollIntervalMs: provider.webhookPollMinutes * 60_000,
+    roundPollIntervalMs: provider.webhookRoundPollMinutes * 60_000,
     // Each league's own gap between notifications, not one window: a quarter of football
     // and a golf round's wait for its first finisher differ by hours.
-    quietAfterMs: (sport, event) => balldontlieQuietAfterMs(sport, event.externalId),
+    quietAfterMs: (sport, event) => balldontlieQuietAfterMs(leagues, sport, event.externalId),
   };
 }

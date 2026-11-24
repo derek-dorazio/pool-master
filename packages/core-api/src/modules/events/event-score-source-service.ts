@@ -21,7 +21,7 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { MANUAL_ADMIN_PROVIDER_ID, SportEventSyncScope, type Sport } from '@poolmaster/shared/domain';
-import { isLeagueTour } from '../ingestion/core/league-keyword';
+import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '../../adapters/prisma-sport-catalog-repositories';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
   ProviderLeagueRefusedError,
@@ -56,28 +56,14 @@ export interface ProviderEventDetailSummary {
 const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
-/** #385 — whether a provider event belongs to the tour a sport league's matchKeyword names (`isLeagueTour`). */
-function isTourEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
-  const tour = event.metadata.tour;
-  return typeof tour === 'string' && isLeagueTour(tour, keyword);
-}
-
 /**
- * #385 — whether an event belongs to the league whose match keyword this is: its tour is the
- * keyword, or its name holds the keyword as whole words. A keyword inside a longer word is no
- * match, so "NBA" does not take "WNBA Playoffs", while a fragment such as "U.S. Open" still takes
- * "U.S. Open Championship".
+ * The provider league code a sport league's sync reads (#1997): its selected provider mapping's,
+ * when that mapping is to this provider; null otherwise.
  */
-function isLeagueEvent(event: ProviderCatalogSportEvent, keyword: string): boolean {
-  const sought = keyword.trim().toLowerCase();
-  if (sought === '') return false;
-  if (isTourEvent(event, sought)) return true;
-  const name = event.name.toLowerCase();
-  const isWordCharacter = (character: string | undefined) => character !== undefined && /[\p{L}\p{N}]/u.test(character);
-  for (let at = name.indexOf(sought); at !== -1; at = name.indexOf(sought, at + 1)) {
-    if (!isWordCharacter(name[at - 1]) && !isWordCharacter(name[at + sought.length])) return true;
-  }
-  return false;
+async function selectedProviderLeagueCode(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<string | null> {
+  const row = await prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: SELECTED_PROVIDER_MAPPING_INCLUDE });
+  const mapping = row === null ? null : toSelectedProviderMapping(row.selectedProviderMapping);
+  return mapping !== null && mapping.providerId === providerId ? mapping.providerLeagueCode : null;
 }
 
 export class EventScoreSourceService {
@@ -109,25 +95,25 @@ export class EventScoreSourceService {
       ? { from: options.from ?? EARLIEST_DATE, to: options.to ?? LATEST_DATE }
       : undefined;
 
-    const events = await provider.getUpcomingEvents(sport, dateRange);
-
-    // A blank keyword is no keyword: the league names no tour or words to keep.
-    const matchKeyword = options.sportLeagueId
-      ? (await this.prisma.sportLeague.findUnique({ where: { id: options.sportLeagueId } }))?.matchKeyword?.trim() || null
+    // A league with no selected mapping to this provider names no provider league to keep.
+    const providerLeagueCode = options.sportLeagueId
+      ? await selectedProviderLeagueCode(this.prisma, options.sportLeagueId, providerId)
       : null;
+    const events = await provider.getUpcomingEvents(sport, dateRange, providerLeagueCode === null ? undefined : { providerLeagueCode });
     const search = options.search?.trim().toLowerCase() || null;
 
     return events
-      .filter((event) => !matchKeyword || isLeagueEvent(event, matchKeyword))
+      .filter((event) => providerLeagueCode === null || event.providerLeagueCode === providerLeagueCode)
       .filter((event) => !search || event.name.toLowerCase().includes(search));
   }
 
   /**
-   * #385 — a tour's slate for one year, for the bulk import. A provider event belongs to the
-   * tour when its `metadata.tour` equals the sport league's matchKeyword, ignoring case, so
-   * "PGA TOUR" never picks up "LPGA Tour" the way a name substring would. The year is the
-   * event's UTC start date. The provider is asked for the tour alone, and a refusal of it by the
-   * provider's plan is a `PROVIDER_LEAGUE_REFUSED` error (#1797).
+   * #385 — a sport league's slate for one year, for the bulk import and the league's events sync:
+   * the events of the provider league its selected provider mapping names (#1997), by the code
+   * the provider stamps on each, never by a name. The year is the event's UTC start date. The
+   * provider is asked for that league alone, and a refusal of it by the provider's plan is a
+   * `PROVIDER_LEAGUE_REFUSED` error (#1797). 422 SPORT_LEAGUE_NOT_SYNCED when the league has no
+   * selected mapping to this provider.
    */
   async listTourEventsForYear(
     providerId: string,
@@ -140,24 +126,25 @@ export class EventScoreSourceService {
     }
     const sportLeague = await this.prisma.sportLeague.findUnique({
       where: { id: sportLeagueId },
-      include: { sport: true },
+      include: { sport: true, ...SELECTED_PROVIDER_MAPPING_INCLUDE },
     });
     if (!sportLeague) {
       throw new EventScoreSourceError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     }
-    const tour = sportLeague.matchKeyword?.trim();
-    if (!tour) {
+    const mapping = toSelectedProviderMapping(sportLeague.selectedProviderMapping);
+    if (mapping === null || mapping.providerId !== providerId) {
       throw new EventScoreSourceError(
-        `${sportLeague.name} has no match keyword, so no provider tour can be matched to it.`,
-        'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD',
+        `${sportLeague.name} is not synced from provider ${providerId}, so none of its leagues is ${sportLeague.name}'s.`,
+        'SPORT_LEAGUE_NOT_SYNCED',
         422,
       );
     }
+    const providerLeagueCode = mapping.providerLeagueCode;
 
     const events = await provider.getUpcomingEvents(sportLeague.sport.sport, {
       from: new Date(Date.UTC(eventYear, 0, 1)),
       to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
-    }, { tour }).catch((error: unknown) => {
+    }, { providerLeagueCode }).catch((error: unknown) => {
       // #1797 — the provider's plan leaves this league out: say so, not "something went wrong".
       if (error instanceof ProviderLeagueRefusedError) {
         throw new EventScoreSourceError(error.message, 'PROVIDER_LEAGUE_REFUSED', 422);
@@ -165,7 +152,7 @@ export class EventScoreSourceService {
       throw error;
     });
     return events
-      .filter((event) => isTourEvent(event, tour))
+      .filter((event) => event.providerLeagueCode === providerLeagueCode)
       .map((event) => ({
         externalId: event.externalId,
         name: event.name,

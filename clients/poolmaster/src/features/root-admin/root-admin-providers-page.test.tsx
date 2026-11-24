@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { IngestionScheduleConfig, ProviderSummaryDto, SettingsGroup } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminProvidersPage } from './root-admin-providers-page';
+import { providerSettingsFixture, providerSummaryFixture } from './sport-test-fixtures';
 
 // /manage/providers: the providers grid with each provider's view-only dialog and its Check now,
 // and the sync schedules grid with each sync's view-then-Edit dialog.
@@ -13,33 +14,18 @@ import { RootAdminProvidersPage } from './root-admin-providers-page';
 const mocks = vi.hoisted(() => ({
   listProviders: vi.fn(),
   getSettingsGroup: vi.fn(),
+  updateProviderSettings: vi.fn(),
+  updateProviderLeague: vi.fn(),
   updateIngestionSchedule: vi.fn(),
 }));
 
 bindApiMocks(mocks);
 
 function provider(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryDto {
-  return {
-    providerId: 'balldontlie',
-    providerName: 'BALLDONTLIE',
-    status: 'HEALTHY',
-    errorRate: 0.004,
-    latencyMs: 420,
-    lastEventAt: null,
-    sportsCovered: ['GOLF'],
-    primaryForSports: ['GOLF'],
-    activeEventCount: 3,
-    supportsLiveSimulation: false,
-    requestsPerMinute: 5,
-    webhooksEnabled: true,
-    syncedSportLeagueCount: 16,
-    rateLimitedJobsLast24h: 7,
-    ...overrides,
-  };
+  return providerSummaryFixture({ sportsCovered: ['GOLF'], primaryForSports: ['GOLF'], ...overrides });
 }
 
 const SCHEDULE: IngestionScheduleConfig = {
-  scheduledSports: ['GOLF'],
   healthCheck: { enabled: true, intervalMinutes: 5 },
   eventList: { enabled: true, intervalMinutes: 360 },
   eventParticipants: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
@@ -59,7 +45,7 @@ function scheduleGroup(value: IngestionScheduleConfig = SCHEDULE, saved = true):
   };
 }
 
-function seed({ providers = [provider(), provider({ providerId: 'mock', providerName: 'Mock feed', status: 'DOWN', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0, rateLimitedJobsLast24h: 0 })], group = scheduleGroup() } = {}) {
+function seed({ providers = [provider(), provider({ providerId: 'mock', providerName: 'Mock feed', status: 'DOWN', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0, rateLimitedJobsLast24h: 0, settings: null })], group = scheduleGroup() } = {}) {
   mocks.listProviders.mockResolvedValue({ data: { providers } });
   mocks.getSettingsGroup.mockResolvedValue({ data: group });
 }
@@ -106,7 +92,7 @@ describe('RootAdminProvidersPage', () => {
     expect(balldontlie.getByText('16')).toBeInTheDocument();
     expect(balldontlie.getByText('0.4%')).toBeInTheDocument();
     expect(balldontlie.getByText('7')).toBeInTheDocument();
-    expect(balldontlie.getByText('420')).toBeInTheDocument();
+    expect(balldontlie.getByText('420 ms')).toBeInTheDocument();
     const mock = within(screen.getByTestId('root-admin-provider-mock'));
     expect(mock.getByText('Down')).toBeInTheDocument();
     expect(mock.getByText('Not paced')).toBeInTheDocument();
@@ -126,22 +112,21 @@ describe('RootAdminProvidersPage', () => {
     expect(shown).toEqual(['root-admin-provider-up', 'root-admin-provider-slow', 'root-admin-provider-down']);
   });
 
-  it('opens a provider in a view-only dialog with its rate-limited jobs, Close and Check now, no Edit (why sits behind its help), and Check now checks the providers again', async () => {
+  it('opens a provider with its live check and settings, Close and Check now, and Check now checks the providers again', async () => {
     seed();
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-provider-balldontlie'));
     const dialog = within(await screen.findByTestId('root-admin-provider-dialog'));
-    expect(dialog.getByText('Webhooks')).toBeInTheDocument();
-    expect(dialog.getByText('On')).toBeInTheDocument();
+    expect(dialog.getByTestId('root-admin-provider-dialog-webhooks')).toHaveTextContent('On');
     expect(dialog.getByText('420 ms')).toBeInTheDocument();
     expect(dialog.getByText('Rate limited (24 h)')).toBeInTheDocument();
-    expect(dialog.getByText('7')).toBeInTheDocument();
-    expect(dialog.getByText('Checked')).toBeInTheDocument();
-    expect(dialog.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
-    expect(dialog.queryByText(/set in Terraform/)).not.toBeInTheDocument();
+    expect(dialog.getByTestId('root-admin-provider-dialog-base-url')).toHaveTextContent('https://api.balldontlie.io');
+    expect(dialog.getByTestId('root-admin-provider-dialog-poll')).toHaveTextContent('15 minutes');
+    expect(dialog.getByTestId('root-admin-provider-dialog-priority')).toHaveTextContent('1');
+    expect(dialog.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
     await userEvent.click(dialog.getByTestId('root-admin-provider-dialog-help'));
-    expect(await screen.findByText(/The key and the rate are set in Terraform/)).toBeInTheDocument();
+    expect(await screen.findByText(/stay in Secrets Manager/)).toBeInTheDocument();
     expect(mocks.listProviders).toHaveBeenCalledTimes(1);
 
     await userEvent.click(dialog.getByTestId('root-admin-provider-dialog-check'));
@@ -149,6 +134,101 @@ describe('RootAdminProvidersPage', () => {
     await waitFor(() => expect(mocks.listProviders).toHaveBeenCalledTimes(2));
     await userEvent.click(dialog.getByRole('button', { name: 'Close' }));
     expect(screen.queryByTestId('root-admin-provider-dialog')).not.toBeInTheDocument();
+  });
+
+  it('saves only the provider settings changed on Edit, then shows the view again', async () => {
+    seed();
+    mocks.updateProviderSettings.mockResolvedValue({ data: { provider: providerSettingsFixture({ requestsPerMinute: 600 }) } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-provider-balldontlie'));
+    await userEvent.click(await screen.findByTestId('root-admin-provider-dialog-edit'));
+    const rate = screen.getByTestId('root-admin-provider-dialog-rate-input');
+    await userEvent.clear(rate);
+    await userEvent.type(rate, '600');
+    await userEvent.click(screen.getByTestId('root-admin-provider-dialog-save'));
+
+    await waitFor(() => expect(mocks.updateProviderSettings).toHaveBeenCalledWith(expect.objectContaining({
+      path: { providerId: providerSettingsFixture().id },
+      body: { requestsPerMinute: 600 },
+    })));
+    expect(await screen.findByTestId('root-admin-provider-dialog-edit')).toBeInTheDocument();
+  });
+
+  it('keeps Save off for a rate outside the range the API holds it to', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-provider-balldontlie'));
+    await userEvent.click(await screen.findByTestId('root-admin-provider-dialog-edit'));
+    const rate = screen.getByTestId('root-admin-provider-dialog-rate-input');
+    await userEvent.clear(rate);
+    await userEvent.type(rate, '0');
+
+    expect(await screen.findByText('Enter a whole number from 1 to 6000')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-provider-dialog-save')).toBeDisabled();
+    expect(mocks.updateProviderSettings).not.toHaveBeenCalled();
+  });
+
+  it('shows a refused save, such as webhooks switched on without their secret, in the form, which stays open', async () => {
+    seed({ providers: [provider({ webhooksEnabled: false, settings: providerSettingsFixture({ webhooksEnabled: false, webhookSecretSet: false }) })] });
+    mocks.updateProviderSettings.mockResolvedValue({
+      error: { error: { code: 'PROVIDER_WEBHOOK_SECRET_MISSING', message: 'BALLDONTLIE\'s webhook signing secret is not set in this environment.' } },
+      response: { status: 422 },
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-provider-balldontlie'));
+    expect(await screen.findByTestId('root-admin-provider-dialog-webhooks')).toHaveTextContent('Off');
+    await userEvent.click(screen.getByTestId('root-admin-provider-dialog-edit'));
+    await userEvent.selectOptions(screen.getByTestId('root-admin-provider-dialog-webhooks-input'), 'on');
+    await userEvent.click(screen.getByTestId('root-admin-provider-dialog-save'));
+
+    expect(await screen.findByText('Save failed')).toBeInTheDocument();
+    expect(mocks.updateProviderSettings).toHaveBeenCalledWith(expect.objectContaining({ body: { webhooksEnabled: true } }));
+    expect(screen.getByTestId('root-admin-provider-dialog-webhooks-input')).toBeInTheDocument();
+  });
+
+  it('says when webhooks are switched on but their secret is not set, and shows a provider that is not running', async () => {
+    seed({ providers: [provider({ status: null, errorRate: null, latencyMs: null, webhooksEnabled: false, settings: providerSettingsFixture({ webhookSecretSet: false }) })] });
+    renderPage();
+
+    const row = within(await screen.findByTestId('root-admin-provider-balldontlie'));
+    expect(row.getAllByText('Not running').length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByTestId('root-admin-provider-balldontlie'));
+    expect(await screen.findByTestId('root-admin-provider-dialog-webhooks')).toHaveTextContent('Off: switched on, but its signing secret is not set');
+  });
+
+  it('offers no Edit for a provider with no Provider row', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-provider-mock'));
+    const dialog = within(await screen.findByTestId('root-admin-provider-dialog'));
+    expect(dialog.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(dialog.getByRole('button', { name: 'Check now' })).toBeInTheDocument();
+  });
+
+  it('lists each provider league with its sport, switch and lengths, and Edit saves only what changed', async () => {
+    seed();
+    mocks.updateProviderLeague.mockResolvedValue({ data: { league: providerSettingsFixture().leagues[1] } });
+    renderPage();
+
+    const mlb = within(await screen.findByTestId('root-admin-provider-league-mlb'));
+    expect(mlb.getByText('MLB')).toBeInTheDocument();
+    expect(mlb.getByText('180')).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('root-admin-provider-league-mlb'));
+    expect(await screen.findByTestId('root-admin-provider-league-dialog-typical')).toHaveTextContent('180 minutes');
+    await userEvent.click(screen.getByTestId('root-admin-provider-league-dialog-edit'));
+    const typical = screen.getByTestId('root-admin-provider-league-dialog-typical-input');
+    await userEvent.clear(typical);
+    await userEvent.type(typical, '200');
+    await userEvent.click(screen.getByTestId('root-admin-provider-league-dialog-save'));
+
+    await waitFor(() => expect(mocks.updateProviderLeague).toHaveBeenCalledWith(expect.objectContaining({
+      path: { providerId: providerSettingsFixture().id, providerLeagueId: '00000000-0000-4000-8000-0000000000c2' },
+      body: { typicalGameMinutes: 200 },
+    })));
   });
 
   it('shows a row per sync with how often it runs and which events it covers, Field always running and a switched-off sync as Off', async () => {

@@ -8,12 +8,9 @@ import {
   LeaguePlan,
   type PlanCap,
   type PlanFeature,
-  Sport,
-  SUPPORTED_SPORTS,
   type SwitchableEmailTemplateKey,
 } from '@poolmaster/shared/domain';
 
-const SportSchema = z.enum(Sport);
 
 export const IngestionFeedSchedulePolicySchema = z.object({
   enabled: z.boolean().describe('Whether the feed should be scheduled automatically.'),
@@ -37,13 +34,11 @@ export const IngestionFeedSchedulePolicyPatchSchema = IngestionFeedSchedulePolic
 export type IngestionFeedSchedulePolicyPatch = z.infer<typeof IngestionFeedSchedulePolicyPatchSchema>;
 
 /**
- * One schedule for every sport league (#1871): there are no per-sport overrides. A stored value
- * saved before then still loads, because a settings group drops keys its schema does not name.
+ * One schedule for every sport league (#1871): there are no per-sport overrides, and which sports
+ * sync is which provider leagues are enabled (#1997). A stored value saved before then still
+ * loads, because a settings group drops keys its schema does not name.
  */
 export const IngestionScheduleConfigSchema = z.object({
-  scheduledSports: z.array(SportSchema).min(1).default([...SUPPORTED_SPORTS]).describe(
-    'Sports that scheduled ingestion is allowed to run automatically.',
-  ),
   healthCheck: IngestionFeedSchedulePolicySchema.describe(
     'Scheduling policy for provider health checks.',
   ),
@@ -60,10 +55,9 @@ export const IngestionScheduleConfigSchema = z.object({
 export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSchema>;
 
 /** The feed policies of the schedule, each with its own interval. */
-export type IngestionFeedPolicyKey = keyof Omit<IngestionScheduleConfig, 'scheduledSports'>;
+export type IngestionFeedPolicyKey = keyof IngestionScheduleConfig;
 
 export const IngestionScheduleConfigPatchSchema = z.object({
-  scheduledSports: z.array(SportSchema).min(1).optional(),
   healthCheck: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventList: IngestionFeedSchedulePolicyPatchSchema.optional(),
   eventParticipants: IngestionFeedSchedulePolicyPatchSchema.optional(),
