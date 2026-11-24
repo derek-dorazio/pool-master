@@ -765,6 +765,10 @@ Contest:
 - Clutch Cards for the 2027 NFL playoffs (Derek 2026-11-24): the goal stays (#937 closed,
   replaced by slice 26 from the sync); slices are built in the best order with slice 26
   targeted before late January.
+- Contest events page (Derek 2026-11-24, slice 15): the commissioner's free "Events" checklist
+  (`contest-events-page.tsx`, `setContestSportEvents`) is deleted. The coverage pick (the
+  slot, or the starting slot) is made at creation and can be changed on the contest's
+  settings while it is in Set up, with the same picker; from Open its slots are fixed.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
