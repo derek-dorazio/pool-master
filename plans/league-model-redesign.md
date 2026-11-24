@@ -682,6 +682,20 @@ Contest:
   definitions are never deleted while a Season slot points at them. Fallback (Derek): if the
   trophy design needs a stable identity across structure changes, revisit with a template
   phase coverage row (`ContestConfigTemplatePhase`).
+- Cups (Derek 2026-11-24, slice 20): a cup adds up the counted contests that cover a single
+  slot and rank every entry by its own choices (today tiered, budget and the Clutch Card;
+  both tiered and budget count). Contests covering several slots (pick'em, survivor,
+  bracket, a majors pool) crown their own winner and never count; squares and quick pick
+  never count. One global rule, no sport branches. Which cups exist is sport league data,
+  `SportLeagueCupDefinition` (sport league, name, `coverage` ALL_SLOTS | PHASE |
+  LISTED_SLOTS, `phase` only with PHASE by database check) with
+  `SportLeagueCupDefinitionSlot` rows for LISTED_SLOTS, seeded by migration: golf
+  "Season Cup" (ALL_SLOTS) and "Majors Cup" (LISTED_SLOTS); tennis Season and Grand Slam
+  cups; racing a Season Cup; every sport league with REGULAR and POSTSEASON phases a
+  "Regular Season Clutch Cup" and a "Playoff Clutch Cup" (PHASE), which fill once Clutch
+  Cards run there. `Cup` keys on (League, Season, cup definition); a contest counts in every
+  cup whose coverage holds its slot. The contest's `cupWeight` stays the commissioner's only
+  override. Replaces the per-contest-only counting of today.
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
