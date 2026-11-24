@@ -61,6 +61,7 @@ function overview(overrides: Partial<SportLeagueOverviewDto> = {}): SportLeagueO
     sport: 'BASEBALL',
     name: 'MLB',
     providerId: 'balldontlie',
+    providerName: 'BALLDONTLIE',
     isActive: true,
     syncHealth: 'OK',
     issues: [],
@@ -109,7 +110,7 @@ function overviews(): SportLeagueOverviewDto[] {
       ],
     }),
     overview({ id: 'ncaa', sport: 'BASKETBALL', name: "NCAA Men's Basketball", eventCount: 2 }),
-    overview({ id: 'pwhl', sport: 'HOCKEY', name: 'PWHL', providerId: null, isActive: false, syncHealth: 'OFF', season: null, nextEventStartsAt: null, eventCount: 0 }),
+    overview({ id: 'pwhl', sport: 'HOCKEY', name: 'PWHL', providerId: null, providerName: null, isActive: false, syncHealth: 'OFF', season: null, nextEventStartsAt: null, eventCount: 0 }),
   ];
 }
 

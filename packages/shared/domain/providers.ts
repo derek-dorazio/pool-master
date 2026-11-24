@@ -1,4 +1,4 @@
-import { ProviderCode, SportEventSyncScope } from './enums';
+import { ProviderCode, ProviderHealthStatus, SportEventSyncScope } from './enums';
 
 /**
  * Reserved provider identity for admin-authored SportEvent rows (plans/124
@@ -60,4 +60,37 @@ export function isProviderSyncedEvent(event: {
   return event.syncProviderId !== undefined
     && event.syncProviderId === event.providerId
     && event.syncScope === SportEventSyncScope.SCORES_ONLY;
+}
+
+/**
+ * The name of the provider an event is linked to (#1999): its sport league's sync provider, when
+ * the event is linked to that one; null for an admin-authored event, or one linked elsewhere.
+ */
+export function eventProviderNameOf(event: { providerId: string; syncProviderId?: string; syncProviderName?: string }): string | null {
+  return event.syncProviderId !== undefined && event.syncProviderId === event.providerId ? event.syncProviderName ?? null : null;
+}
+
+/** How many of a Provider's sync runs finished in a window, and how many of those failed. */
+export interface ProviderSyncRunCounts {
+  /** The Provider row. */
+  providerId: string;
+  finished: number;
+  failed: number;
+}
+
+/**
+ * A Provider's health from its own sync runs (#1999), never from a live call: no finished run in
+ * the window is unknown (null); none failed is HEALTHY, all failed is DOWN, and some failed is
+ * DEGRADED. The error rate is the failed share.
+ */
+export function providerHealthOfRuns(counts: Pick<ProviderSyncRunCounts, 'finished' | 'failed'> | undefined): {
+  status: ProviderHealthStatus | null;
+  errorRate: number | null;
+} {
+  if (counts === undefined || counts.finished === 0) return { status: null, errorRate: null };
+  const errorRate = counts.failed / counts.finished;
+  const status = counts.failed === 0
+    ? ProviderHealthStatus.HEALTHY
+    : counts.failed === counts.finished ? ProviderHealthStatus.DOWN : ProviderHealthStatus.DEGRADED;
+  return { status, errorRate };
 }

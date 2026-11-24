@@ -15,7 +15,7 @@ import {
 } from '@/features/shared/ui';
 import { OnOffField } from './on-off-field';
 import type { ProviderSettingRangesDto, ProviderSettingsDto, ProviderSummaryDto } from '@/lib/api';
-import { errorRateText, latencyText, requestsPerMinuteText, webhooksText } from './provider-facts';
+import { errorRateText, requestsPerMinuteText, webhooksText } from './provider-facts';
 import { ProviderStatusChip } from './provider-status-chip';
 import { useUpdateProviderSettings } from './use-update-provider';
 import { wholeNumberIn } from './whole-number-field';
@@ -66,7 +66,7 @@ function changesOf(values: SettingsValues, current: SettingsValues) {
 const minutes = (value: number) => (value === 1 ? '1 minute' : `${String(value)} minutes`);
 
 /**
- * A provider's dialog (#1873, #1997): what the live check found and its settings, then Edit for
+ * A provider's dialog (#1873, #1997): its health from its sync runs and its settings, then Edit for
  * its settings from its Provider row. Check now reads the list again, which checks every provider
  * live. A provider with no row has no Edit. Its API key and webhook secret stay
  * in Secrets Manager.
@@ -111,7 +111,6 @@ export function ProviderDialog({
     { id: 'status', label: 'Status', value: <ProviderStatusChip status={provider.status} /> },
     { id: 'checked', label: 'Checked', value: <DateDisplay value={checkedAt} /> },
     { id: 'error-rate', label: 'Error rate (1 h)', value: errorRateText(provider) },
-    { id: 'latency', label: 'Latency p95', value: latencyText(provider) },
     { id: 'rate-limited', label: 'Rate limited (24 h)', value: provider.rateLimitedJobsLast24h },
     { id: 'sport-leagues', label: 'Sport leagues', value: provider.syncedSportLeagueCount },
     { id: 'rate', label: 'Requests a minute', value: requestsPerMinuteText(provider), testId: `${testId}-rate` },

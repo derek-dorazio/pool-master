@@ -4,7 +4,6 @@ export type {
   SportEvent,
   SportEventDetail,
   ProviderParticipant,
-  ProviderHealthStatus,
 } from './provider-interface';
 
 export { ProviderRegistry } from './provider-registry';

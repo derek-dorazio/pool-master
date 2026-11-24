@@ -85,16 +85,20 @@ so the job is deferred rather than syncing a partial list (*Rate limit and retri
 **The schedule** is the `INGESTION_SCHEDULE_CONFIG` settings group
 (`platform/ingestion-config-service.ts`), edited on the root admin's Providers page. One schedule
 serves every sport league; there are no per-sport or per-league overrides, and every sport a
-registered provider covers is scheduled.
+registered provider covers is scheduled. Its keys are the sync kinds, `ProviderSyncKind` (#1999).
 
 | Policy | Default | Runs |
 |---|---|---|
-| `healthCheck.intervalMinutes` | 5 min | provider health check |
-| `eventList.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
-| `eventParticipants.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3) |
-| `eventLiveScores.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
+| `EVENTS.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
+| `FIELD.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3) |
+| `SCORES.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
 
 Each loop re-reads its interval after every run, so a saved change applies without a restart.
+
+There is no health check loop and no route calls a provider live (#1999). A provider's health on
+the Providers page comes from its own sync runs of the last hour: HEALTHY when none failed, DOWN
+when all did, DEGRADED when some did, and unknown when none finished
+(`providerHealthOfRuns`).
 
 ### Rate limit and retries
 

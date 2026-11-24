@@ -56,6 +56,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
       sport: league.sport,
       name: league.name,
       providerId,
+      providerName: league.syncProviderName,
       isActive: league.isActive,
       syncHealth: syncHealthOf({ isActive: league.isActive, providerId, runCount: runs.length, failedRunCount: failedRuns.length }),
       issues: [

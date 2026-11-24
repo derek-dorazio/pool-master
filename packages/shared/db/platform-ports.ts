@@ -9,6 +9,7 @@ import type {
   PlatformRuntimeConfigChange,
   ProviderCode,
   ProviderSyncRun,
+  ProviderSyncRunCounts,
   ProviderSyncRunStatus,
   ProviderSyncRunWithDetails,
   Sport,
@@ -74,6 +75,11 @@ export interface ProviderSyncRunRepository {
   clearDetailsBatchSubmittedBefore(before: Date, limit: number): Promise<number>;
   /** Deletes up to `limit` runs submitted before `before`; returns how many. One batch per call. */
   deleteBatchSubmittedBefore(before: Date, limit: number): Promise<number>;
+  /**
+   * Each Provider's runs submitted since `since` that have finished, and how many of them failed
+   * (#1999), in one read. A Provider with no finished run there is left out.
+   */
+  countFinishedByProvider(since: Date): Promise<ProviderSyncRunCounts[]>;
 }
 
 /**

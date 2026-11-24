@@ -243,6 +243,7 @@ export const SportLeagueOverviewDtoSchema = z.object({
   sport: z.enum(Sport),
   name: z.string(),
   providerId: z.string().nullable().describe('The provider that syncs its events. Null when none does.'),
+  providerName: z.string().nullable().describe('That provider\'s name, so no reader looks it up by id (#1999). Null when none syncs it.'),
   isActive: z.boolean().describe('On: offered to customers and synced. Off: hidden and not synced.'),
   syncHealth: z.enum(SportLeagueSyncHealth).describe('From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.'),
   issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention.'),

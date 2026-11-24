@@ -26,11 +26,8 @@ const LEAGUE_STATUS_OPTIONS = [
 ];
 
 /** The words a sport league's Provider cell shows: its provider, or none. */
-export function providerText(
-  overview: Pick<SportLeagueOverviewDto, 'providerId'>,
-  nameOfProvider: (providerId: string) => string,
-): string {
-  return overview.providerId === null ? 'No provider' : nameOfProvider(overview.providerId);
+export function providerText(overview: Pick<SportLeagueOverviewDto, 'providerName'>): string {
+  return overview.providerName ?? 'No provider';
 }
 
 /**
@@ -64,11 +61,9 @@ const byTotalIssues: SortingFn<SportLeagueOverviewDto> = (left, right) => totalI
  * from its header, and every one explained behind its (i), in domain words.
  */
 export function sportLeagueOverviewColumns({
-  nameOfProvider,
   onOpenSettings,
   onOpenSyncRun,
 }: {
-  nameOfProvider: (providerId: string) => string;
   onOpenSettings: (sportLeagueId: string) => void;
   onOpenSyncRun: (syncRunId: string) => void;
 }) {
@@ -104,7 +99,7 @@ export function sportLeagueOverviewColumns({
         </span>
       ),
     }),
-    columnHelper.accessor((overview) => providerText(overview, nameOfProvider), {
+    columnHelper.accessor(providerText, {
       id: 'provider',
       header: 'Provider',
       meta: {

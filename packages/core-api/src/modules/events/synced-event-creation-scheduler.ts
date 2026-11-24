@@ -41,7 +41,7 @@ export class SyncedEventCreationScheduler {
     this.lockedSweep = new LockedSweep({
       lockKey: SWEEP_LOCK_KEY,
       jobLock: options.jobLock,
-      intervalMs: async () => schedulePolicyDelayMs((await options.schedule.getConfig()).eventList),
+      intervalMs: async () => schedulePolicyDelayMs((await options.schedule.getConfig()).EVENTS),
       firstRunAfterMs: FIRST_SWEEP_AFTER_MS,
       label: 'synced event creation sweep',
       logger: options.logger,
@@ -63,7 +63,7 @@ export class SyncedEventCreationScheduler {
   }
 
   private async sweep(): Promise<void> {
-    const { eventList } = await this.options.schedule.getConfig();
+    const { EVENTS: eventList } = await this.options.schedule.getConfig();
     if (!eventList.enabled) {
       this.options.logger?.debug({ action: 'events.leagueSync.scheduleOff' }, 'Skipped the events sync sweep because the Event list schedule is off');
       return;

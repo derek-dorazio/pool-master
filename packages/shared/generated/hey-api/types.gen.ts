@@ -968,13 +968,13 @@ export type BillingConfig = {
 };
 
 /**
- * Partial ingestion schedule update: only the policies and properties it names change.
+ * Partial ingestion schedule update: only the sync kinds and properties it names change.
  */
 export type IngestionScheduleConfigPatch = {
     /**
      * Partial feed-scheduling update payload.
      */
-    healthCheck?: {
+    EVENTS?: {
         /**
          * Whether the feed should be scheduled automatically.
          */
@@ -995,7 +995,7 @@ export type IngestionScheduleConfigPatch = {
     /**
      * Partial feed-scheduling update payload.
      */
-    eventList?: {
+    FIELD?: {
         /**
          * Whether the feed should be scheduled automatically.
          */
@@ -1016,28 +1016,7 @@ export type IngestionScheduleConfigPatch = {
     /**
      * Partial feed-scheduling update payload.
      */
-    eventParticipants?: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Partial feed-scheduling update payload.
-     */
-    eventLiveScores?: {
+    SCORES?: {
         /**
          * Whether the feed should be scheduled automatically.
          */
@@ -1058,13 +1037,13 @@ export type IngestionScheduleConfigPatch = {
 };
 
 /**
- * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
+ * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
  */
 export type IngestionScheduleConfig = {
     /**
-     * Scheduling policy for provider health checks.
+     * The EVENTS sync: how often each synced sport league's events sync is queued.
      */
-    healthCheck: {
+    EVENTS: {
         /**
          * Whether the feed should be scheduled automatically.
          */
@@ -1083,9 +1062,9 @@ export type IngestionScheduleConfig = {
         lookaheadDays?: number;
     };
     /**
-     * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+     * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
      */
-    eventList: {
+    FIELD: {
         /**
          * Whether the feed should be scheduled automatically.
          */
@@ -1104,30 +1083,9 @@ export type IngestionScheduleConfig = {
         lookaheadDays?: number;
     };
     /**
-     * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+     * The SCORES sync: live score polling.
      */
-    eventParticipants: {
-        /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled: boolean;
-        /**
-         * How often the feed should run, in minutes, for interval-driven orchestration.
-         */
-        intervalMinutes?: number;
-        /**
-         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-         */
-        intervalSeconds?: number;
-        /**
-         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-         */
-        lookaheadDays?: number;
-    };
-    /**
-     * Scheduling policy for live score polling.
-     */
-    eventLiveScores: {
+    SCORES: {
         /**
          * Whether the feed should be scheduled automatically.
          */
@@ -8220,6 +8178,10 @@ export type SportLeagueOverviewDto = {
      */
     providerId: string | null;
     /**
+     * That provider's name, so no reader looks it up by id (#1999). Null when none syncs it.
+     */
+    providerName: string | null;
+    /**
      * On: offered to customers and synced. Off: hidden and not synced.
      */
     isActive: boolean;
@@ -8392,6 +8354,10 @@ export type SportLeagueOverviewListResponse = {
          * The provider that syncs its events. Null when none does.
          */
         providerId: string | null;
+        /**
+         * That provider's name, so no reader looks it up by id (#1999). Null when none syncs it.
+         */
+        providerName: string | null;
         /**
          * On: offered to customers and synced. Off: hidden and not synced.
          */
@@ -10140,6 +10106,10 @@ export type SportEventDto = {
      */
     providerId: string;
     /**
+     * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+     */
+    providerName: string | null;
+    /**
      * Sport the event belongs to.
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
@@ -10489,6 +10459,10 @@ export type SportEventListResponse = {
          */
         providerId: string;
         /**
+         * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+         */
+        providerName: string | null;
+        /**
          * Sport the event belongs to.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
@@ -10832,6 +10806,10 @@ export type SportEventResponse = {
          * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
          */
         providerId: string;
+        /**
+         * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+         */
+        providerName: string | null;
         /**
          * Sport the event belongs to.
          */
@@ -11247,6 +11225,10 @@ export type ImportSportEventYearFromProviderResponse = {
          * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
          */
         providerId: string;
+        /**
+         * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+         */
+        providerName: string | null;
         /**
          * Sport the event belongs to.
          */
@@ -16519,9 +16501,9 @@ export type SettingsGroup = {
      */
     value: {
         /**
-         * Scheduling policy for provider health checks.
+         * The EVENTS sync: how often each synced sport league's events sync is queued.
          */
-        healthCheck: {
+        EVENTS: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -16540,9 +16522,9 @@ export type SettingsGroup = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
          */
-        eventList: {
+        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -16561,30 +16543,9 @@ export type SettingsGroup = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+         * The SCORES sync: live score polling.
          */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
+        SCORES: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -16608,9 +16569,9 @@ export type SettingsGroup = {
      */
     defaults: {
         /**
-         * Scheduling policy for provider health checks.
+         * The EVENTS sync: how often each synced sport league's events sync is queued.
          */
-        healthCheck: {
+        EVENTS: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -16629,9 +16590,9 @@ export type SettingsGroup = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
          */
-        eventList: {
+        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -16650,30 +16611,9 @@ export type SettingsGroup = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+         * The SCORES sync: live score polling.
          */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
+        SCORES: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -17586,9 +17526,9 @@ export type SettingsGroupList = {
          */
         value: {
             /**
-             * Scheduling policy for provider health checks.
+             * The EVENTS sync: how often each synced sport league's events sync is queued.
              */
-            healthCheck: {
+            EVENTS: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -17607,9 +17547,9 @@ export type SettingsGroupList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
              */
-            eventList: {
+            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -17628,30 +17568,9 @@ export type SettingsGroupList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+             * The SCORES sync: live score polling.
              */
-            eventParticipants: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Scheduling policy for live score polling.
-             */
-            eventLiveScores: {
+            SCORES: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -17675,9 +17594,9 @@ export type SettingsGroupList = {
          */
         defaults: {
             /**
-             * Scheduling policy for provider health checks.
+             * The EVENTS sync: how often each synced sport league's events sync is queued.
              */
-            healthCheck: {
+            EVENTS: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -17696,9 +17615,9 @@ export type SettingsGroupList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
              */
-            eventList: {
+            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -17717,30 +17636,9 @@ export type SettingsGroupList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+             * The SCORES sync: live score polling.
              */
-            eventParticipants: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Scheduling policy for live score polling.
-             */
-            eventLiveScores: {
+            SCORES: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -18621,9 +18519,9 @@ export type SettingsGroupUpdateRequest = {
      */
     value: {
         /**
-         * Scheduling policy for provider health checks.
+         * The EVENTS sync: how often each synced sport league's events sync is queued.
          */
-        healthCheck: {
+        EVENTS: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -18642,9 +18540,9 @@ export type SettingsGroupUpdateRequest = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
          */
-        eventList: {
+        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -18663,30 +18561,9 @@ export type SettingsGroupUpdateRequest = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+         * The SCORES sync: live score polling.
          */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
+        SCORES: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -19135,9 +19012,9 @@ export type SettingsChange = {
      */
     previousValue: {
         /**
-         * Scheduling policy for provider health checks.
+         * The EVENTS sync: how often each synced sport league's events sync is queued.
          */
-        healthCheck: {
+        EVENTS: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -19156,9 +19033,9 @@ export type SettingsChange = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
          */
-        eventList: {
+        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -19177,30 +19054,9 @@ export type SettingsChange = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+         * The SCORES sync: live score polling.
          */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
+        SCORES: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -19224,9 +19080,9 @@ export type SettingsChange = {
      */
     newValue: {
         /**
-         * Scheduling policy for provider health checks.
+         * The EVENTS sync: how often each synced sport league's events sync is queued.
          */
-        healthCheck: {
+        EVENTS: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -19245,9 +19101,9 @@ export type SettingsChange = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
          */
-        eventList: {
+        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -19266,30 +19122,9 @@ export type SettingsChange = {
             lookaheadDays?: number;
         };
         /**
-         * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+         * The SCORES sync: live score polling.
          */
-        eventParticipants: {
-            /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
-             * How often the feed should run, in minutes, for interval-driven orchestration.
-             */
-            intervalMinutes?: number;
-            /**
-             * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-             */
-            intervalSeconds?: number;
-            /**
-             * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-             */
-            lookaheadDays?: number;
-        };
-        /**
-         * Scheduling policy for live score polling.
-         */
-        eventLiveScores: {
+        SCORES: {
             /**
              * Whether the feed should be scheduled automatically.
              */
@@ -20158,9 +19993,9 @@ export type SettingsChangeList = {
          */
         previousValue: {
             /**
-             * Scheduling policy for provider health checks.
+             * The EVENTS sync: how often each synced sport league's events sync is queued.
              */
-            healthCheck: {
+            EVENTS: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -20179,9 +20014,9 @@ export type SettingsChangeList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
              */
-            eventList: {
+            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -20200,30 +20035,9 @@ export type SettingsChangeList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+             * The SCORES sync: live score polling.
              */
-            eventParticipants: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Scheduling policy for live score polling.
-             */
-            eventLiveScores: {
+            SCORES: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -20247,9 +20061,9 @@ export type SettingsChangeList = {
          */
         newValue: {
             /**
-             * Scheduling policy for provider health checks.
+             * The EVENTS sync: how often each synced sport league's events sync is queued.
              */
-            healthCheck: {
+            EVENTS: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -20268,9 +20082,9 @@ export type SettingsChangeList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for the event list sync: how often each synced sport league's events sync is queued.
+             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
              */
-            eventList: {
+            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -20289,30 +20103,9 @@ export type SettingsChangeList = {
                 lookaheadDays?: number;
             };
             /**
-             * Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked.
+             * The SCORES sync: live score polling.
              */
-            eventParticipants: {
-                /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
-                 * How often the feed should run, in minutes, for interval-driven orchestration.
-                 */
-                intervalMinutes?: number;
-                /**
-                 * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
-                 */
-                intervalSeconds?: number;
-                /**
-                 * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
-                 */
-                lookaheadDays?: number;
-            };
-            /**
-             * Scheduling policy for live score polling.
-             */
-            eventLiveScores: {
+            SCORES: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
@@ -27802,7 +27595,7 @@ export type ProviderSettingsDto = {
 };
 
 /**
- * A sports-data provider with its live health and settings.
+ * A sports-data provider with its health from its sync runs, and its settings.
  */
 export type ProviderSummaryDto = {
     /**
@@ -27814,19 +27607,15 @@ export type ProviderSummaryDto = {
      */
     providerName: string;
     /**
-     * Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
+     * Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
      */
     status: 'HEALTHY' | 'DEGRADED' | 'DOWN' | null;
     /**
-     * Provider-reported error rate over the last hour; null when the provider is not running.
+     * The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished.
      */
     errorRate: number | null;
     /**
-     * Provider-reported p95 latency; null when the provider is not running.
-     */
-    latencyMs: number | null;
-    /**
-     * When one of the provider's events last changed, else its last successful poll; null when neither is known.
+     * When one of the provider's events last changed; null when none is known.
      */
     lastEventAt: string | null;
     /**
@@ -28192,19 +27981,15 @@ export type ProviderListResponse = {
          */
         providerName: string;
         /**
-         * Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
+         * Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
          */
         status: 'HEALTHY' | 'DEGRADED' | 'DOWN' | null;
         /**
-         * Provider-reported error rate over the last hour; null when the provider is not running.
+         * The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished.
          */
         errorRate: number | null;
         /**
-         * Provider-reported p95 latency; null when the provider is not running.
-         */
-        latencyMs: number | null;
-        /**
-         * When one of the provider's events last changed, else its last successful poll; null when neither is known.
+         * When one of the provider's events last changed; null when none is known.
          */
         lastEventAt: string | null;
         /**
@@ -38066,7 +37851,7 @@ export type GetIngestionScheduleError = GetIngestionScheduleErrors[keyof GetInge
 
 export type GetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
+     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
      */
     200: IngestionScheduleConfig;
 };
@@ -38095,7 +37880,7 @@ export type UpdateIngestionScheduleError = UpdateIngestionScheduleErrors[keyof U
 
 export type UpdateIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
+     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
      */
     200: IngestionScheduleConfig;
 };
@@ -38124,7 +37909,7 @@ export type ResetIngestionScheduleError = ResetIngestionScheduleErrors[keyof Res
 
 export type ResetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
+     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
      */
     200: IngestionScheduleConfig;
 };

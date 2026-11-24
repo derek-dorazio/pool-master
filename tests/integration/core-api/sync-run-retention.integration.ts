@@ -117,3 +117,23 @@ describe('sync-run retention (#1174)', () => {
     expect(Object.keys(await detailsByLabel())).toEqual(['submitted-11-months-ago']);
   });
 });
+
+describe('PrismaProviderSyncRunRepository.countFinishedByProvider (#1999)', () => {
+  it('counts each Provider\'s runs submitted since the time that finished, and how many failed, leaving out older and unfinished runs', async () => {
+    const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
+    const write = (status: ProviderSyncRunStatus, createdAt: Date) => repo.create({
+      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status,
+      startedAt: null, completedAt: null, payload: {}, createdAt,
+    });
+    const since = new Date(NOW.getTime() - 60 * 60_000);
+    await write(ProviderSyncRunStatus.COMPLETED, new Date(since.getTime() + 60_000));
+    await write(ProviderSyncRunStatus.FAILED, new Date(since.getTime() + 120_000));
+    await write(ProviderSyncRunStatus.COMPLETED, new Date(since.getTime() + 180_000));
+    await write(ProviderSyncRunStatus.IN_PROGRESS, new Date(since.getTime() + 240_000));
+    await write(ProviderSyncRunStatus.FAILED, daysAgo(1));
+    const provider = await getPrisma().provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE }, select: { id: true } });
+
+    await expect(repo.countFinishedByProvider(since)).resolves.toEqual([{ providerId: provider.id, finished: 3, failed: 1 }]);
+    await expect(repo.countFinishedByProvider(NOW)).resolves.toEqual([]);
+  });
+});

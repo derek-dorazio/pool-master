@@ -7,7 +7,7 @@ import { SyncSchedulesSection } from './sync-schedules-section';
 import { useProvidersQuery } from './use-providers-query';
 
 /**
- * /manage/providers (#1873): the sports data providers with their live check and their settings,
+ * /manage/providers (#1873): the sports data providers with their health from their sync runs and their settings,
  * their own leagues (#1997), and the one sync schedule every sport league follows, with Run event sync and Findings in the header
  * (#1887, #1999). Root admin, desktop only.
  */
