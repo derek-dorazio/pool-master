@@ -161,7 +161,7 @@ a Team On Screen*.
 
 ### The sport side
 
-> **Being replaced.** Stale against the target model: `SportLeague`'s `roundNames` and `bracketAdvancement`; `TierProfile` and `PricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `EventSeries` (removed); `SportEvent` as an edition in an `eventYear` (it sits in a Season); `SportEventRound` and the golfer's `SportEventParticipantRound`; `Participant`'s Clutch Card league players; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game sides). The target model, which new code is designed toward, is §5
+> **Being replaced.** Stale against the target model: `SportLeague`'s `roundNames` and `bracketAdvancement`; `TierProfile` and `PricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `EventSeries` (removed); `SportEvent` as an edition in an `eventYear` (it sits in a Season); `SportEventRound` and the golfer's `SportEventParticipantRound`; `Participant`'s Clutch Card league players; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game side results). The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
@@ -318,7 +318,7 @@ squad membership are one unit*. What follows is what it means for the product.
 What the phrases people use mean in the model. Status names are the enum values; the
 operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 
-> **Being replaced.** Stale against the target model: **release an event** (judged on the event's next unstarted slot), **add events** (a contest's coverage comes from its template's slots), **start** and **settle** (per covered slot, not per event), **score a round** and **correct a score** (Game sides), **sync** (every active league is synced; status comes from the feed's Games), **cancel** and **postpone a game** (a Game's status from the feed; a moved game moves to its slot and voids its picks). The target model, which new code is designed toward, is §5
+> **Being replaced.** Stale against the target model: **release an event** (judged on the event's next unstarted slot), **add events** (a contest's coverage comes from its template's slots), **start** and **settle** (per covered slot, not per event), **score a round** and **correct a score** (Game side results), **sync** (every active league is synced; status comes from the feed's Games), **cancel** and **postpone a game** (a Game's status from the feed; a moved game moves to its slot and voids its picks). The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
