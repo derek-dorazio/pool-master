@@ -784,6 +784,9 @@ Contest:
   as a starting point (ONE_SLOT, or the first slot of ALL_LISTED / FROM_SLOT) only where that
   holds; the NBA and NHL second round and Conference Finals are not starting points, so
   today's Conference Finals Clutch Cards go. A contest that can't open raises a finding.
+- Play-in rounds (Derek 2026-11-24, slices 11 and 26): whole-tournament tiered, budget and quick
+  pick templates list the Round of 64 (NBA first round) through the Final and leave the
+  play-in out; the play-in is still synced and fills the bracket before the cutoff.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
