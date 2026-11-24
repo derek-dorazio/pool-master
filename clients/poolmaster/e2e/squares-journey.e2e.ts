@@ -138,6 +138,8 @@ test('act 1: the root admin releases an American football event of one game betw
       sport: 'AMERICAN_FOOTBALL',
       name: run.tourName,
       ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
+      participantType: 'TEAM',
+      scoringFamily: 'HEAD_TO_HEAD',
     });
     const { event } = await postJson<{ event: { id: string } }>(api, headers, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,
