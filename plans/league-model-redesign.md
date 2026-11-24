@@ -47,7 +47,7 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SportEventMatch` home/away columns | `SportEventRoundMatchSide` | One side of a Match: field row (empty until known), side number, spread, rollup outcome. Home/away is on the Game side result; seed on the field row. |
 | none | `SportEventRoundMatchGame` | One played game: date, status, scores. |
 | none | `SportEventRoundMatchGameProviderMapping` | A provider's game id (team-sport game, PGA round, PGA match). |
-| `SportEventMatch` home/away scores, `SportEventParticipantGolfRound`, `SportEventParticipantRaceResult` | `SportEventRoundMatchGameSideResult` | A side's result in one Game: score, text result, score to par, position, start position, periods completed, start period, status. |
+| `SportEventMatch` home/away scores, `SportEventParticipantGolfRound`, `SportEventParticipantRaceResult` | `SportEventRoundMatchGameSideResult` | A side's result in one Game: score, text result, score to par, position, start position, periods completed, start period, home/away, status. |
 | none | `SportEventRoundMatchGameSideLineupPlayer` | Team-cup lineups: which players played for a side in a Game. |
 | `SportEventMatchPeriodScore` | `SportEventRoundMatchGameSideResultPeriodScore` | Score per period per Game side, with a period kind (REGULAR / OVERTIME / SHOOTOUT). |
 | `SportEventParticipantStatLine` | `SportEventRoundMatchGamePlayerStat` | Raw box score per Game, player and stat code. |
@@ -396,7 +396,8 @@ loses the slots already under way. The event-level "event started" readiness rea
 |---|---|---|
 | Super Bowl squares | ONE_SLOT | FINAL |
 | Super Bowl Clutch Card | ONE_SLOT | FINAL |
-| Playoff bracket, survivor | FROM_SLOT | every POSTSEASON slot but the play-in |
+| Playoff bracket | ALL_LISTED | every POSTSEASON slot but the play-in |
+| Playoff survivor | FROM_SLOT | every POSTSEASON slot but the play-in |
 | Whole-tournament tiered, budget, quick pick | ALL_LISTED | every POSTSEASON slot but the play-in |
 | Round tiered, budget, quick pick | ONE_SLOT | each starting-point POSTSEASON slot |
 | Playoffs Clutch Card | ALL_LISTED | every POSTSEASON slot of one event |
@@ -761,8 +762,8 @@ Contest:
 - Points scales (Derek 2026-11-24, slice 20e): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
   `CupPointsScale` enum move to `PlatformPointsProfile` (code, name, `kind` TABLE |
   FIELD_BEATEN, `points` list for TABLE, `pointsAfterTable` for STANDARD's tail), seeded by
-  migration; `League.platformPointsProfileId` replaces `cupPointsScale`, and a league's own
-  league's custom list is a points profile row the league owns (`cupCustomPoints` goes). Crowned cups freeze the
+  migration; `League.platformPointsProfileId` replaces `cupPointsScale`, and a league's
+  custom list is a points profile row the league owns (`cupCustomPoints` goes). Crowned cups freeze the
   profile's points they used. Kept in code as fixed rules: last place needs 3+ teams, medal
   by place, the championship grid's 10 places.
 - Championship counting (Derek 2026-11-24, slice 20e): `PlatformChampionshipProfile`
