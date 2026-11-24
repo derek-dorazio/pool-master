@@ -39,6 +39,7 @@ import { LeagueSettingsPage } from '@/features/leagues/league-settings-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
 import { LeagueActivityTab } from '@/features/root-admin/league-activity-tab';
 import { LeagueContestTemplatesTab } from '@/features/root-admin/league-contest-templates-tab';
+import { LeagueStructureTab } from '@/features/root-admin/league-structure-tab';
 import { LeagueEventsTab } from '@/features/root-admin/league-events-tab';
 import { LeaguePageLayout } from '@/features/root-admin/league-page-layout';
 import { LeagueParticipantsTab } from '@/features/root-admin/league-participants-tab';
@@ -46,7 +47,6 @@ import { LeagueToolsTab } from '@/features/root-admin/league-tools-tab';
 import { ParticipantLinkRedirect } from '@/features/root-admin/participant-link-redirect';
 import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin-participant-create-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
-import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { EventPageLayout } from '@/features/root-admin/event-page-layout';
@@ -409,7 +409,6 @@ export const router = createBrowserRouter([
                       // A sport's own entry and its old league list now open the Sports page (#1848).
                       { index: true, element: <Navigate replace to={SPORTS_PATH} /> },
                       { path: 'leagues', element: <Navigate replace to={SPORTS_PATH} /> },
-                      { path: 'leagues/new', element: <RootAdminSportLeagueCreatePage /> },
                       {
                         // A sport league's own page and its tabs (#1866).
                         path: 'leagues/:leagueId',
@@ -420,6 +419,7 @@ export const router = createBrowserRouter([
                           { path: 'participants', element: <LeagueParticipantsTab /> },
                           { path: 'activity', element: <LeagueActivityTab /> },
                           { path: 'contest-templates', element: <LeagueContestTemplatesTab /> },
+                          { path: 'structure', element: <LeagueStructureTab /> },
                           { path: 'tools', element: <LeagueToolsTab /> },
                           // Its old edit page: the settings are the ⚙ dialog on the page now.
                           { path: 'edit', element: <Navigate replace to=".." relative="path" /> },

@@ -201,6 +201,52 @@ describe('ProviderSyncFindingService raising', () => {
   });
 });
 
+describe('ProviderSyncFindingService rate-limit findings', () => {
+  it('raises one PROVIDER_RATE_LIMITED finding per league at the severity the streak reached there', async () => {
+    const { findings, table } = service();
+
+    await findings.raiseProviderRateLimited({
+      providerId: PROVIDER.id,
+      leagues: [{ sportLeagueId: 'nfl', severity: ProviderSyncFindingSeverity.ERROR }, { sportLeagueId: 'pga', severity: ProviderSyncFindingSeverity.WARNING }],
+    });
+
+    expect(table.raised).toEqual([[
+      { kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, severity: ProviderSyncFindingSeverity.ERROR, sportLeagueId: 'nfl', sportEventId: null, providerId: PROVIDER.id, providerValue: null, providerValueName: null },
+      { kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, severity: ProviderSyncFindingSeverity.WARNING, sportLeagueId: 'pga', sportEventId: null, providerId: PROVIDER.id, providerValue: null, providerValueName: null },
+    ]]);
+  });
+
+  it('logs ingestion.syncFinding.errorOpened for an ERROR that escalates an open WARNING, not only one newly opened, so the alarm hears it', async () => {
+    const { findings, table, logger } = service();
+    table.repository.raise = async () => [];
+
+    await findings.raiseProviderRateLimited({ providerId: PROVIDER.id, leagues: [{ sportLeagueId: 'nfl', severity: ProviderSyncFindingSeverity.ERROR }] });
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'ingestion.syncFinding.errorOpened', kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, sportLeagueId: 'nfl', escalated: true }),
+      expect.any(String),
+    );
+  });
+
+  it('logs no error for a WARNING, and raises nothing for no leagues', async () => {
+    const { findings, table, logger } = service();
+
+    await findings.raiseProviderRateLimited({ providerId: PROVIDER.id, leagues: [{ sportLeagueId: 'nfl', severity: ProviderSyncFindingSeverity.WARNING }] });
+    await findings.raiseProviderRateLimited({ providerId: PROVIDER.id, leagues: [] });
+
+    expect(table.raised).toHaveLength(1);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('resolves only the Provider\'s rate-limit findings when it answers again', async () => {
+    const { findings, table } = service();
+
+    await findings.resolveProviderRateLimited(PROVIDER.id);
+
+    expect(table.resolved).toEqual([{ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, providerId: PROVIDER.id }]);
+  });
+});
+
 describe('ProviderSyncFindingService reads', () => {
   it('lists every finding and answers one by id', async () => {
     const table = inMemoryFindings([finding()]);

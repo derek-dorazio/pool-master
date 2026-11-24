@@ -21,9 +21,12 @@ import {
   ProviderSyncFindingResponseSchema,
   SportLeagueOverviewListResponseSchema,
 } from '@poolmaster/shared/dto';
-import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaProviderSettingsRepository } from '../../../packages/core-api/src/adapters/prisma-provider-settings-repository';
 import { PrismaProviderSyncFindingRepository } from '../../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
+import { ProviderRateLimitWatch } from '../../../packages/core-api/src/modules/ingestion/findings/provider-rate-limit-watch';
 import { ProviderSyncFindingService } from '../../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
+import { ProviderSettingsStore } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
 import { SYNC_FINDINGS_REQUESTS_PER_MINUTE } from '../../../packages/core-api/src/modules/ingestion/findings/routes';
 import { SyncFindingRetention } from '../../../packages/core-api/src/modules/ingestion/findings/sync-finding-retention';
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
@@ -242,6 +245,50 @@ describe('the startup webhook check', () => {
 
     expect(raised).toEqual([expect.objectContaining({ kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, severity: ProviderSyncFindingSeverity.ERROR, providerId: provider.id, status: ProviderSyncFindingStatus.OPEN })]);
     expect(after.map((row) => row.status)).toEqual([ProviderSyncFindingStatus.RESOLVED]);
+  });
+});
+
+describe('the rate-limit finding', () => {
+  it('raises a WARNING on a league a rate-limiting Provider syncs, escalates it to ERROR at the league\'s quiet threshold on the same row, and resolves it at the Provider\'s next answer', async () => {
+    const league = await golfLeague();
+    await syncLeagueTo(getPrisma(), league.id, 'pga');
+    const provider = await balldontlie();
+    const providers = new ProviderSettingsStore(new PrismaProviderSettingsRepository(getPrisma()));
+    await providers.load();
+    const pgaQuietMinutes = providers.enabledLeagues(ProviderCode.BALLDONTLIE).find((each) => each.code === 'pga')?.quietAfterMinutes ?? 0;
+    let clock = NOW.getTime();
+    const watch = new ProviderRateLimitWatch({
+      findings: new ProviderSyncFindingService({
+        repository: new PrismaProviderSyncFindingRepository(getPrisma()),
+        providers,
+        participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma())),
+        now: () => new Date(clock),
+      }),
+      providers,
+      syncedLeagues: async () => (await new PrismaSportLeagueRepository(getPrisma()).findEventSynced()).filter((each) => each.id === league.id),
+      now: () => clock,
+    });
+    const observer = watch.observerFor(ProviderCode.BALLDONTLIE);
+    const findings = () => getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id } });
+    const at = async (minutes: number, ending: 'refused' | 'answered') => {
+      clock = NOW.getTime() + minutes * 60_000;
+      observer[ending]();
+      await watch.settled();
+    };
+
+    await at(0, 'answered');
+    await at(1, 'refused');
+    await at(16, 'refused');
+    const warned = await findings();
+    await at(1 + pgaQuietMinutes, 'refused');
+    const escalated = await findings();
+    await at(2 + pgaQuietMinutes, 'answered');
+    const after = await findings();
+
+    expect(pgaQuietMinutes).toBeGreaterThan(15);
+    expect(warned).toEqual([expect.objectContaining({ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, severity: ProviderSyncFindingSeverity.WARNING, providerId: provider.id, status: ProviderSyncFindingStatus.OPEN })]);
+    expect(escalated).toEqual([expect.objectContaining({ id: warned[0]?.id, severity: ProviderSyncFindingSeverity.ERROR, status: ProviderSyncFindingStatus.OPEN })]);
+    expect(after).toEqual([expect.objectContaining({ id: warned[0]?.id, status: ProviderSyncFindingStatus.RESOLVED })]);
   });
 });
 

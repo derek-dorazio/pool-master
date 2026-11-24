@@ -65,7 +65,6 @@ import {
   cancelEventMatch,
   createEvent,
   createParticipant,
-  createSportLeague,
   getEventBracket,
   listEventParticipants,
   listEvents,
@@ -378,17 +377,18 @@ class Loader {
   }
 
   /**
-   * The league's id, or null in a dry run that would create it. A bracket rule the file names
-   * is set on a new league, and changed on an existing one that has another.
+   * The league's id. The league must be on the site already: a missing one is refused. A bracket
+   * rule the file names is changed on a league that has another.
    */
-  private async ensureLeague(client: Client, league: SportDataLeague): Promise<string | null> {
+  private async ensureLeague(client: Client, league: SportDataLeague): Promise<string> {
     const { name, urlSegment, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
+    // A file that names the league's stored URL segment finds it by that; an older file, by name.
     const existing = urlSegment === undefined
       ? sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase())
       : sportLeagues.find((row) => row.urlSegment === urlSegment);
-    this.leagueDefinitions.set(name, existing ? sportLeagueDefinitionOf(this.sport, existing) : getSportDefinition(this.sport));
     if (existing) {
+      this.leagueDefinitions.set(name, sportLeagueDefinitionOf(this.sport, existing));
       const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;
       const change = `bracket advancement ${existing.bracketAdvancement} -> ${bracketAdvancement}`;
       const row = { sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, name };
@@ -409,20 +409,9 @@ class Loader {
       this.report({ ...row, action: LoadAction.UPDATE, detail: change });
       return existing.id;
     }
-    this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.ADD, name, detail: null });
-    if (!this.apply) return null;
-    if (urlSegment === undefined) {
-      throw new Error(`${name} is not on the site: give it a urlSegment in the file to create it.`);
-    }
-    // A new league tiers as the sport's own leagues do and prices with Standard (#1844).
-    const sibling = sportLeagues[0];
-    const { platformTierProfileId } = found(sibling, `Another ${this.sport} sport league, whose tier profile a new one names`);
-    const { platformPricingProfileId } = await this.standardPricing(client);
-    const created = await must(createSportLeague({
-      client,
-      body: { sport: this.sport, name, urlSegment, platformTierProfileId, platformPricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
-    }), `Create sport league ${name}`);
-    return created.sportLeague.id;
+    // A sport league is added by migration with its phases and slots (the add-sport skill), never by
+    // a test data file, so a file naming a league the site lacks is refused, in a dry run too.
+    throw new Error(`No ${this.sport} sport league named ${name}: a sport league is added by migration, not by test data.`);
   }
 
   /**
@@ -434,11 +423,11 @@ class Loader {
    * participant, so the provider's sync fields that participant rather than creating a second. A
    * player already in the league keeps the ranking it has.
    */
-  private async ensurePlayers(client: Client, league: SportDataLeague, sportLeagueId: string | null): Promise<Map<string, string | null>> {
-    const participants = sportLeagueId === null ? [] : (await must(listParticipants({ client, query: { sportLeagueId } }), `List ${league.name} players`)).participants;
+  private async ensurePlayers(client: Client, league: SportDataLeague, sportLeagueId: string): Promise<Map<string, string | null>> {
+    const { participants } = await must(listParticipants({ client, query: { sportLeagueId } }), `List ${league.name} players`);
     const byName = new Map(participants.map((p) => [p.name.toLowerCase(), p.id]));
     const providerIds = await this.providerIdsByCode(client, league);
-    const byFeedId = sportLeagueId === null ? new Map<string, string>() : await this.feedIdsOnSite(client, providerIds, sportLeagueId);
+    const byFeedId = await this.feedIdsOnSite(client, providerIds, sportLeagueId);
 
     const ids = new Map<string, string | null>();
     const binds: Array<{ participantId: string | null; player: SportDataPlayer; providerCode: ProviderCode; externalId: string }> = [];
@@ -458,7 +447,7 @@ class Loader {
           const created = await must(createParticipant({
             client,
             body: {
-              sportLeagueId: found(sportLeagueId ?? undefined, `${league.name}'s id`),
+              sportLeagueId,
               ranking: player.ranking,
               participantType: this.definitionOf(league).participantType,
               name: player.name,
@@ -523,9 +512,7 @@ class Loader {
       ? await this.ensurePlayers(client, league, sportLeagueId)
       : new Map<string, string | null>();
 
-    const stored = sportLeagueId
-      ? (await must(listEvents({ client, query: { sportLeagueId, eventYear: this.file.scope.season } }), `List ${league.name} events`)).events
-      : [];
+    const { events: stored } = await must(listEvents({ client, query: { sportLeagueId, eventYear: this.file.scope.season } }), `List ${league.name} events`);
     const matches = this.matchEvents(league, stored);
     for (const event of league.events) {
       await this.loadEvent(await this.options.getClient(), { league, sportLeagueId, event, stored: matches.get(event) ?? null, participantIds });
@@ -692,7 +679,7 @@ class Loader {
 
   private async loadEvent(client: Client, input: {
     league: SportDataLeague;
-    sportLeagueId: string | null;
+    sportLeagueId: string;
     event: SportDataEvent;
     stored: StoredEvent | null;
     participantIds: ReadonlyMap<string, string | null>;
@@ -727,7 +714,7 @@ class Loader {
       const created = await must(createEvent({
         client,
         body: {
-          sportLeagueId: found(input.sportLeagueId ?? undefined, `${league.name}'s id`),
+          sportLeagueId: input.sportLeagueId,
           eventYear: this.file.scope.season,
           name: event.name,
           ...(event.venue ? { venue: event.venue } : {}),

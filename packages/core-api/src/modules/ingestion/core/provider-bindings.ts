@@ -11,6 +11,7 @@ import type { ProviderRegistry } from './provider-registry';
 import { BalldontlieAdapter } from '../adapters';
 import { isDeployedEnvironment, readAppEnv } from '../../../core/config';
 import { readBackgroundJobMaxTasks } from '../../background-jobs/background-job-runner';
+import type { ProviderRateLimitObserver } from './provider-call-policy';
 
 /** The Provider rows as the adapters read them: a row by code, and its enabled leagues. */
 export interface ProviderRows {
@@ -23,13 +24,16 @@ export interface ProviderRows {
  * Builds the providers a task runs from the Provider rows, in serving order. The app takes it as a
  * dependency, so a functional or integration test registers its own fake provider from test code.
  */
-export type SportDataProviderFactory = (rows: ProviderRows, env: NodeJS.ProcessEnv, logger?: FastifyBaseLogger) => SportDataProvider[];
+export type SportDataProviderFactory = (rows: ProviderRows, env: NodeJS.ProcessEnv, logger?: FastifyBaseLogger, rateLimits?: ProviderRateLimitObservers) => SportDataProvider[];
 
-type RowFactory = (row: ProviderSettings, rows: ProviderRows, env: NodeJS.ProcessEnv, logger?: FastifyBaseLogger) => SportDataProvider | null;
+/** Each Provider's observer of how its calls end, for its rate-limit finding (league model 1c). */
+export type ProviderRateLimitObservers = (code: ProviderCode) => ProviderRateLimitObserver;
+
+type RowFactory = (row: ProviderSettings, rows: ProviderRows, env: NodeJS.ProcessEnv, logger?: FastifyBaseLogger, rateLimits?: ProviderRateLimitObservers) => SportDataProvider | null;
 
 /** Each Provider code's adapter. One whose secret is not set here is not built, and says so. */
 const rowFactories: Readonly<Record<ProviderCode, RowFactory>> = {
-  [ProviderCode.BALLDONTLIE]: (row, rows, env, logger) => {
+  [ProviderCode.BALLDONTLIE]: (row, rows, env, logger, rateLimits) => {
     const apiKey = env['BALLDONTLIE_API_KEY']?.trim();
     if (!apiKey) {
       logger?.error(
@@ -47,16 +51,17 @@ const rowFactories: Readonly<Record<ProviderCode, RowFactory>> = {
       apiKey,
       leagues: rows.enabledLeagues(row.code),
       maxTasks: readBackgroundJobMaxTasks(env),
+      ...(rateLimits && { rateLimits: rateLimits(row.code) }),
       ...(logger && { logger }),
     });
   },
 };
 
 /** The enabled Provider rows' adapters, lowest priority first; a row whose secret is not set is left out. */
-export const buildProvidersFromRows: SportDataProviderFactory = (rows, env, logger) => [...rows.all()]
+export const buildProvidersFromRows: SportDataProviderFactory = (rows, env, logger, rateLimits) => [...rows.all()]
   .filter((row) => row.isEnabled)
   .sort((a, b) => a.priority - b.priority)
-  .flatMap((row) => rowFactories[row.code](row, rows, env, logger) ?? []);
+  .flatMap((row) => rowFactories[row.code](row, rows, env, logger, rateLimits) ?? []);
 
 function requireDefaultProviderConfigured(
   env: NodeJS.ProcessEnv,
@@ -83,9 +88,10 @@ export function registerConfiguredProviders(
   env: NodeJS.ProcessEnv = process.env,
   logger?: FastifyBaseLogger,
   buildProviders: SportDataProviderFactory = buildProvidersFromRows,
+  rateLimits?: ProviderRateLimitObservers,
 ): void {
   // Every provider is built before any is registered.
-  const ordered = buildProviders(rows, env, logger);
+  const ordered = buildProviders(rows, env, logger, rateLimits);
 
   if (ordered.length === 0) {
     requireDefaultProviderConfigured(env, logger);

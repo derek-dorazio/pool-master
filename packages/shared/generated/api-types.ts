@@ -2299,26 +2299,6 @@ export interface paths {
         patch: operations["updateEventParticipants"];
         trace?: never;
     };
-    "/api/v1/events/{eventId}/participants/seed": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Seed a sport event's field from its sport league
-         * @description Adds the sport league's active participants with derived seeds and odds; ones already on the field are skipped. Root admin only.
-         */
-        post: operations["seedEventParticipants"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/events/{eventId}/leaderboards/rebuild": {
         parameters: {
             query?: never;
@@ -2916,6 +2896,26 @@ export interface paths {
          * @description The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. Health follows the Sports page's rule from that sync's latest run; live scores follow the webhook while the provider's webhooks are on, and every other sync runs on the one ingestion schedule. Root admin only.
          */
         get: operations["listSportLeagueSyncs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sport-leagues/{sportLeagueId}/structure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a sport league's phase and slot definitions with their provider mappings
+         * @description The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its slot definitions in play order and each slot's provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.
+         */
+        get: operations["getSportLeagueStructure"];
         put?: never;
         post?: never;
         delete?: never;
@@ -11364,6 +11364,165 @@ export interface components {
                 createdAt: string;
             }[];
         };
+        /** @description How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced. */
+        SlotProviderMappingDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            providerId: string;
+            providerName: string;
+            /** @description The provider's own code for the league the mapping reads, such as nfl. */
+            providerLeagueCode: string;
+            providerLeagueName: string;
+            /**
+             * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+             * @enum {string}
+             */
+            matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
+            /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+            providerValue: string | null;
+        };
+        /** @description One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it. */
+        SportLeagueSlotDefinitionDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS. */
+            key: string;
+            /** @enum {string} */
+            slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+            /** @description The week's number in its phase; set only on a WEEK slot. */
+            weekNumber: number | null;
+            /** @description The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind. */
+            name: string | null;
+            awardsTrophy: boolean;
+            /** @description Whether a squares pool can be played on its games. */
+            squaresEligible: boolean;
+            /** @enum {string} */
+            seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+            /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
+            seriesGames: number;
+            /** @enum {string} */
+            pairing: "FIXED" | "RESEEDED";
+            /** @description By provider, then in the order the sync tries them. */
+            providerMappings: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                providerId: string;
+                providerName: string;
+                /** @description The provider's own code for the league the mapping reads, such as nfl. */
+                providerLeagueCode: string;
+                providerLeagueName: string;
+                /**
+                 * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                 * @enum {string}
+                 */
+                matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
+                /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                providerValue: string | null;
+            }[];
+        };
+        /** @description One phase definition of a sport league. */
+        SportLeaguePhaseDefinitionDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+            /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
+            isSynced: boolean;
+            /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
+            slots: {
+                /** Format: uuid */
+                id: string;
+                /** @description A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS. */
+                key: string;
+                /** @enum {string} */
+                slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                /** @description The week's number in its phase; set only on a WEEK slot. */
+                weekNumber: number | null;
+                /** @description The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind. */
+                name: string | null;
+                awardsTrophy: boolean;
+                /** @description Whether a squares pool can be played on its games. */
+                squaresEligible: boolean;
+                /** @enum {string} */
+                seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
+                seriesGames: number;
+                /** @enum {string} */
+                pairing: "FIXED" | "RESEEDED";
+                /** @description By provider, then in the order the sync tries them. */
+                providerMappings: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    providerId: string;
+                    providerName: string;
+                    /** @description The provider's own code for the league the mapping reads, such as nfl. */
+                    providerLeagueCode: string;
+                    providerLeagueName: string;
+                    /**
+                     * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                     * @enum {string}
+                     */
+                    matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
+                    /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                    providerValue: string | null;
+                }[];
+            }[];
+        };
+        /** @description A sport league's phase and slot definitions, set by migration. */
+        SportLeagueStructureResponse: {
+            /** @description In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON. */
+            phases: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                phase: "PRESEASON" | "REGULAR" | "POSTSEASON";
+                /** @description Whether the league's sync reads the phase. An unsynced phase has no slots. */
+                isSynced: boolean;
+                /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
+                slots: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS. */
+                    key: string;
+                    /** @enum {string} */
+                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                    /** @description The week's number in its phase; set only on a WEEK slot. */
+                    weekNumber: number | null;
+                    /** @description The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind. */
+                    name: string | null;
+                    awardsTrophy: boolean;
+                    /** @description Whether a squares pool can be played on its games. */
+                    squaresEligible: boolean;
+                    /** @enum {string} */
+                    seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                    /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
+                    seriesGames: number;
+                    /** @enum {string} */
+                    pairing: "FIXED" | "RESEEDED";
+                    /** @description By provider, then in the order the sync tries them. */
+                    providerMappings: {
+                        /** Format: uuid */
+                        id: string;
+                        /** Format: uuid */
+                        providerId: string;
+                        providerName: string;
+                        /** @description The provider's own code for the league the mapping reads, such as nfl. */
+                        providerLeagueCode: string;
+                        providerLeagueName: string;
+                        /**
+                         * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                         * @enum {string}
+                         */
+                        matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
+                        /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                        providerValue: string | null;
+                    }[];
+                }[];
+            }[];
+        };
         /** @description Re-ranks participants of the sport league. */
         SportLeagueParticipantRankingsRequest: {
             /** @description Participants of the sport league to re-rank, all or none. */
@@ -13372,16 +13531,6 @@ export interface components {
             /** @description Already on the field. */
             skipped: number;
             total: number;
-        };
-        /** @description What seeding the field from the event's sport league did. */
-        SeedSportEventParticipantsResponse: {
-            added: number;
-            /** @description Already on the field. */
-            skipped: number;
-            /** @description Active affiliations considered. */
-            total: number;
-            seedNumbersDerived: number;
-            oddsDerived: number;
         };
         /** @description One save of the field grid. */
         UpdateSportEventParticipantsRequest: {
@@ -25786,10 +25935,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             /**
-             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here.
+             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
              * @enum {string}
              */
-            kind: "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
+            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
             /**
              * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
              * @enum {string}
@@ -25859,10 +26008,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here.
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
                  * @enum {string}
                  */
-                kind: "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -25934,10 +26083,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here.
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
                  * @enum {string}
                  */
-                kind: "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -33491,73 +33640,6 @@ export interface operations {
             };
         };
     };
-    seedEventParticipants: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description What seeding the field from the event's sport league did. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeedSportEventParticipantsResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     rebuildEventLeaderboards: {
         parameters: {
             query?: never;
@@ -35803,6 +35885,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportLeagueSyncListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getSportLeagueStructure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A sport league's phase and slot definitions, set by migration. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeagueStructureResponse"];
                 };
             };
             /** @description Standard API error envelope. */

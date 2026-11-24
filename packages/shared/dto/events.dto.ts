@@ -447,15 +447,6 @@ export const AddSportEventParticipantsResponseSchema = z.object({
 }).describe('What adding participants did.');
 export type AddSportEventParticipantsResponse = z.infer<typeof AddSportEventParticipantsResponseSchema>;
 
-export const SeedSportEventParticipantsResponseSchema = z.object({
-  added: z.number().int(),
-  skipped: z.number().int().describe('Already on the field.'),
-  total: z.number().int().describe('Active affiliations considered.'),
-  seedNumbersDerived: z.number().int(),
-  oddsDerived: z.number().int(),
-}).describe('What seeding the field from the event\'s sport league did.');
-export type SeedSportEventParticipantsResponse = z.infer<typeof SeedSportEventParticipantsResponseSchema>;
-
 /** The largest value the 32-bit integer columns behind ranking and seed number can hold (#437). */
 const MAX_INT32 = 2147483647;
 
@@ -590,7 +581,6 @@ registerSchema('SportEventParticipantDto', SportEventParticipantDtoSchema);
 registerSchema('SportEventParticipantListResponse', SportEventParticipantListResponseSchema);
 registerSchema('AddSportEventParticipantsRequest', AddSportEventParticipantsRequestSchema);
 registerSchema('AddSportEventParticipantsResponse', AddSportEventParticipantsResponseSchema);
-registerSchema('SeedSportEventParticipantsResponse', SeedSportEventParticipantsResponseSchema);
 registerSchema('UpdateSportEventParticipantsRequest', UpdateSportEventParticipantsRequestSchema);
 registerSchema('SportEventParticipantResponse', SportEventParticipantResponseSchema);
 registerSchema('SportEventParticipantUploadRequest', SportEventParticipantUploadRequestSchema);

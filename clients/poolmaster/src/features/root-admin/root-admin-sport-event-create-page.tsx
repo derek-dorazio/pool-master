@@ -3,14 +3,12 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
   Notice,
-  LinkButton,
   PageHeader,
   SegmentedControl,
 } from '@/features/shared/ui';
 import { SportEventManualCreateForm } from './sport-event-manual-create-form';
 import { SportEventProviderBrowse } from './sport-event-provider-browse';
 import type { SportEventEdition } from './sport-event-edition';
-import { buildSportLeagueCreatePath } from './manage-navigation';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 import { upperFirst } from '@/lib/upper-first';
@@ -30,7 +28,7 @@ export function RootAdminSportEventCreatePage() {
   const [mode, setMode] = useState<CreateMode>('manual');
   const [selection, setSelection] = useState<Partial<SportEventEdition>>({});
 
-  const { sport, sportUrlSegment, definition } = useManagedSport();
+  const { sport, definition } = useManagedSport();
   const { event, sportLeague: sportLeagueNoun } = sportVocabulary(definition);
   const sportName = definition.name.toLowerCase();
   const sportLeaguesQuery = useSportLeaguesQuery(sport);
@@ -61,21 +59,12 @@ export function RootAdminSportEventCreatePage() {
       >
         <Notice tone="warning">
           <p className="font-medium">
-            Create a {sportLeagueNoun.one} before creating a {event.one}
+            No active {sportLeagueNoun.one} for a {event.one}
           </p>
           <p className="mt-1 text-sm">
             Every {sportName} {event.one} runs on a {sportLeagueNoun.one}. There are no active{' '}
             {sportName} {sportLeagueNoun.many} yet.
           </p>
-          <div className="mt-3">
-            <LinkButton
-              data-testid="root-admin-sport-event-create-tours-link"
-              to={buildSportLeagueCreatePath(sportUrlSegment)}
-              variant="secondary"
-            >
-              New {sportLeagueNoun.one}
-            </LinkButton>
-          </div>
         </Notice>
       </section>
     );

@@ -10,9 +10,8 @@
  * is one repository call, and what viewers poll, `listCachedEventParticipants`, is shared
  * by every contest on the event for up to 30 seconds.
  *
- * Seeding from a sport league copies its active participants onto the field once; it
- * does not constrain the field afterwards. `addParticipants` is the deliberate path for
- * anyone else (a LIV golfer at a PGA event): there was never a constraint to bypass.
+ * `addParticipants` adds anyone to the field (a LIV golfer at a PGA event): a field is never
+ * constrained to its sport league's roster.
  *
  * The field upload (#128) adjusts rankings, odds, seeds and withdrawals of participants
  * already on the field; it never adds one. Live scores reach a participant only through a
@@ -35,7 +34,6 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   getSportDefinition,
-  ParticipantStatus,
   eventPlaysMatches,
   SportEventStatus,
   type ParticipantInactiveReason,
@@ -44,7 +42,6 @@ import {
 } from '@poolmaster/shared/domain';
 import type { JobsForWrite } from '../background-jobs/background-job-queue';
 import { DomainEventType, type DomainEvents } from '../domain-events';
-import { deriveSeedNumbersAndOdds } from '../golf/golf-seeding-algorithm';
 import {
   matchAmong,
   feedIdsOfCandidates,
@@ -59,14 +56,6 @@ import { assertTiersAndPricesEditable } from './sport-event-tier-service';
 
 // The field row a reader sees lives with the port that reads it (#1163).
 export type { ParticipantRoundView, ParticipantStandingView, SportEventParticipantView } from '@poolmaster/shared/db';
-
-export interface SeedFieldResult {
-  added: number;
-  skipped: number;
-  total: number;
-  seedNumbersDerived: number;
-  oddsDerived: number;
-}
 
 export interface AddFieldResult {
   added: number;
@@ -185,7 +174,6 @@ export interface SportEventParticipantServiceDeps {
   /** What follows each results, field or game change it writes (#1946): the app's one map. */
   domainEvents: Pick<DomainEvents, 'collect'>;
   now?: () => Date;
-  random?: () => number;
   logger?: FastifyBaseLogger;
 }
 
@@ -226,46 +214,6 @@ export class SportEventParticipantService implements EventFieldReads {
       );
     }
     return row;
-  }
-
-  /**
-   * Copies the event's sport league's active participants onto the field, with their league
-   * ranking, deriving seed numbers and odds for the ones added. Idempotent: participants already
-   * on the field are skipped and keep what they have.
-   */
-  async seedFromSportLeague(sportEventId: string): Promise<SeedFieldResult> {
-    const event = await this.requireEvent(sportEventId);
-    const { sportLeagueId } = event;
-    const roster = (await this.deps.participants.findBySportLeague(sportLeagueId))
-      .filter((participant) => participant.status === ParticipantStatus.ACTIVE);
-    const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.participantId));
-    const toAdd = roster.filter((participant) => !onField.has(participant.id));
-    const seeded = deriveSeedNumbersAndOdds(
-      toAdd.map((participant) => ({ participantId: participant.id, ranking: participant.ranking })),
-      this.deps.random,
-    );
-    if (seeded.length > 0) {
-      const rebuild = await this.rebuild(sportEventId);
-      await this.deps.field.createMany(sportEventId, seeded.map((entry) => ({
-        participantId: entry.participantId,
-        ranking: entry.ranking,
-        seedNumber: entry.seedNumber,
-        oddsToWin: entry.oddsToWin,
-      })), rebuild.jobs);
-      rebuild.queued();
-    }
-
-    this.deps.logger?.info(
-      { sportEventId, sportLeagueId, added: seeded.length, skipped: roster.length - seeded.length },
-      'Seeded field from sport league',
-    );
-    return {
-      added: seeded.length,
-      skipped: roster.length - seeded.length,
-      total: roster.length,
-      seedNumbersDerived: seeded.length,
-      oddsDerived: seeded.length,
-    };
   }
 
   /** Adds any participants to the field; idempotent for ones already on it. */

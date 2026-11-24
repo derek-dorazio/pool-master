@@ -93,12 +93,13 @@ the provider's field and records each golfer's provider id, which is what the sc
 matches on. Then:
 
 - each golfer arrives with the provider's ranking, so tiers can be auto-assigned straight away;
-  you can correct a golfer's rank, odds or seed with ⤢ › *Edit* on its Field row, or withdraw it
+  you can correct a golfer's rank or seed with ⤢ › *Edit* on its Field row (odds come only from
+  the feed, so the dialog shows them but never edits them), or withdraw it
   with ⤢ › *Withdraw*, but a later
   *Refresh Participant Field* replaces them with the provider's values for every golfer
   it reports (it asks you to confirm first);
-- do not use *Add more participants* or *Seed field from league roster*: the golfers they
-  add have no provider id and will never score.
+- do not use *Add more participants*: the golfers it adds have no provider id and will never
+  score.
 
 The field load matches players by provider id only. If the roster already holds a hand-made
 player with the same name as a provider golfer, you will see both.

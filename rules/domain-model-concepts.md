@@ -387,6 +387,7 @@ SportLeague
  ├─→ SportLeagueConference ─→ SportLeagueConferenceDivision
  ├─→ SportLeaguePhase          (PRESEASON | REGULAR | POSTSEASON; synced or not)
  │     └─→ SportLeaguePhaseSlot (a key, a kind, an optional proper name: WEEK 14, FINAL, a tournament)
+ │           └─→ SportLeaguePhaseSlotProviderMapping (how one provider's games match it; inclusion only)
  └─→ SportLeaguePosition       (QB, RB...; field eligibility)
 
 Calendar (one real Season)

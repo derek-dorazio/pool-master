@@ -1,4 +1,4 @@
-import { createLeague, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createLeague, createSportLeague, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { SPORT_PLATFORM_TIER_PROFILE_CODE, STANDARD_PLATFORM_PRICING_PROFILE_CODE } from '../support/league-profiles';
@@ -285,4 +285,17 @@ export async function sportLeagueCreateBody(client: Client, sport: Sport): Promi
     throw new Error(`The ${SPORT_PLATFORM_TIER_PROFILE_CODE[sport]} tier profile or the Standard pricing profile is missing.`);
   }
   return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id, urlSegment: `test-${randomUUID()}` };
+}
+
+/**
+ * A run's own sport league, standing in for one a migration adds: a test data file loads into a
+ * league the site has and never creates one, so a suite that loads a file under a tagged league
+ * name adds that league first. Returns its id.
+ */
+export async function addRunSportLeague(client: Client, sport: Sport, name: string): Promise<string> {
+  const created = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, sport)), sport, name } });
+  if (!created.data) {
+    throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
+  }
+  return created.data.sportLeague.id;
 }

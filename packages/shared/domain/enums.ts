@@ -108,6 +108,107 @@ export const ProviderWebhookEventSetOrder = explicitOrder<ProviderWebhookEventSe
   [ProviderWebhookEventSet.GOLF_ROUNDS]: 2,
 });
 
+/**
+ * The phases a sport league's Season can have (#2002, plans/league-model-redesign.md §1). The
+ * order below is the phases' only order.
+ */
+export const LeaguePhase = {
+  PRESEASON: 'PRESEASON',
+  REGULAR: 'REGULAR',
+  POSTSEASON: 'POSTSEASON',
+} as const;
+export type LeaguePhase = (typeof LeaguePhase)[keyof typeof LeaguePhase];
+/** The order a Season plays its phases in. */
+export const LeaguePhaseOrder = explicitOrder<LeaguePhase>({
+  [LeaguePhase.PRESEASON]: 0,
+  [LeaguePhase.REGULAR]: 1,
+  [LeaguePhase.POSTSEASON]: 2,
+});
+
+/**
+ * What a slot definition is within its phase (#2002): a numbered week, a knockout round counted
+ * back from the final, or one recurring tournament (golf, tennis, racing).
+ */
+export const SlotKind = {
+  WEEK: 'WEEK',
+  PLAY_IN: 'PLAY_IN',
+  ROUND_OF_64: 'ROUND_OF_64',
+  ROUND_OF_32: 'ROUND_OF_32',
+  ROUND_OF_16: 'ROUND_OF_16',
+  QUARTERFINAL: 'QUARTERFINAL',
+  SEMIFINAL: 'SEMIFINAL',
+  THIRD_PLACE: 'THIRD_PLACE',
+  FINAL: 'FINAL',
+  TOURNAMENT: 'TOURNAMENT',
+} as const;
+export type SlotKind = (typeof SlotKind)[keyof typeof SlotKind];
+/**
+ * The order slots are played in within a phase: weeks (by week number), then the knockout rounds
+ * to the final. Tournaments come last here; a Season orders them by date.
+ */
+export const SlotKindOrder = explicitOrder<SlotKind>({
+  [SlotKind.WEEK]: 0,
+  [SlotKind.PLAY_IN]: 1,
+  [SlotKind.ROUND_OF_64]: 2,
+  [SlotKind.ROUND_OF_32]: 3,
+  [SlotKind.ROUND_OF_16]: 4,
+  [SlotKind.QUARTERFINAL]: 5,
+  [SlotKind.SEMIFINAL]: 6,
+  [SlotKind.THIRD_PLACE]: 7,
+  [SlotKind.FINAL]: 8,
+  [SlotKind.TOURNAMENT]: 9,
+});
+
+/** How one meeting of two sides in a slot is decided (#2002). */
+export const SeriesFormat = {
+  /** One game. */
+  SINGLE_GAME: 'SINGLE_GAME',
+  /** The first to win most of an odd number of games. */
+  BEST_OF: 'BEST_OF',
+  /** Goals over two or more legs. */
+  AGGREGATE: 'AGGREGATE',
+} as const;
+export type SeriesFormat = (typeof SeriesFormat)[keyof typeof SeriesFormat];
+/** One game, then a series, then legs. */
+export const SeriesFormatOrder = explicitOrder<SeriesFormat>({
+  [SeriesFormat.SINGLE_GAME]: 0,
+  [SeriesFormat.BEST_OF]: 1,
+  [SeriesFormat.AGGREGATE]: 2,
+});
+
+/** How a slot's winners meet in the next slot (#2002). */
+export const SlotPairing = {
+  /** By the bracket's fixed links. */
+  FIXED: 'FIXED',
+  /** Reseeded by seed after the slot (the NFL's). */
+  RESEEDED: 'RESEEDED',
+} as const;
+export type SlotPairing = (typeof SlotPairing)[keyof typeof SlotPairing];
+export const SlotPairingOrder = explicitOrder<SlotPairing>({
+  [SlotPairing.FIXED]: 0,
+  [SlotPairing.RESEEDED]: 1,
+});
+
+/** How a provider's games are matched to a slot definition (#2002, plan §1 and §6), in matching order. */
+export const SlotProviderMatchType = {
+  /** The code the provider's adapter reduces a game to (`REG:5`, `POST:3`). */
+  PROVIDER_CODE: 'PROVIDER_CODE',
+  /** A normalized tournament name, for open phases. */
+  NAME_PATTERN: 'NAME_PATTERN',
+  /** A date window, for a feed with no round marker. */
+  DATE_WINDOW: 'DATE_WINDOW',
+  /** The calendar week a game is played in, by the one global week rule. */
+  CALENDAR_WEEK: 'CALENDAR_WEEK',
+} as const;
+export type SlotProviderMatchType = (typeof SlotProviderMatchType)[keyof typeof SlotProviderMatchType];
+/** The order the sync tries them in (plan §6). */
+export const SlotProviderMatchTypeOrder = explicitOrder<SlotProviderMatchType>({
+  [SlotProviderMatchType.PROVIDER_CODE]: 0,
+  [SlotProviderMatchType.NAME_PATTERN]: 1,
+  [SlotProviderMatchType.DATE_WINDOW]: 2,
+  [SlotProviderMatchType.CALENDAR_WEEK]: 3,
+});
+
 export const InjuryStatusCode = {
   HEALTHY: 'HEALTHY',
   QUESTIONABLE: 'QUESTIONABLE',
@@ -736,6 +837,13 @@ export const ProviderSyncFindingStatusOrder = explicitOrder<ProviderSyncFindingS
  * slices add their kinds here, with their actions.
  */
 export const ProviderSyncFindingKind = {
+  /**
+   * A Provider has rate limited every call for a while (league model 1c), so its syncs keep
+   * being put off: a WARNING after a quarter of an hour, an ERROR once it has lasted the
+   * league's quiet threshold (`ProviderLeague.quietAfterMinutes`). Resolved by the Provider's
+   * next answer. Subject: each league it syncs, and the Provider.
+   */
+  PROVIDER_RATE_LIMITED: 'PROVIDER_RATE_LIMITED',
   /**
    * The feed sent a participant id no participant of the league is mapped to, so its results
    * had nowhere to land. Subject: league, Provider and the provider's participant id.

@@ -122,6 +122,15 @@ describe('provider bindings', () => {
 
       expect(providers.map((provider) => provider.providerId)).toEqual(['balldontlie']);
     });
+
+    it('hands each built adapter its Provider\'s rate-limit observer, so a rate-limiting Provider raises its finding', () => {
+      const observer = { refused: jest.fn(), answered: jest.fn() };
+      const rateLimits = jest.fn(() => observer);
+
+      registerConfiguredProviders(new ProviderRegistry(), rowsOf([balldontlieTestProvider()]), { ...LOCAL, BALLDONTLIE_API_KEY: 'a-key' }, undefined, buildProvidersFromRows, rateLimits);
+
+      expect(rateLimits).toHaveBeenCalledWith('BALLDONTLIE');
+    });
   });
 
   describe('an injected provider factory', () => {

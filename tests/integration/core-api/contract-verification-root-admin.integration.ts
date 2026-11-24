@@ -40,6 +40,7 @@ import {
   SportLeagueSyncListResponseSchema,
   SportLeagueEventOverviewListResponseSchema,
   SportLeagueParticipantOverviewListResponseSchema,
+  SportLeagueStructureResponseSchema,
   SportLeagueResponseSchema,
   SportListResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -1606,6 +1607,9 @@ describe('Contract verification (root admin)', () => {
       const leagueParticipants = SportLeagueParticipantOverviewListResponseSchema.safeParse(leagueParticipantsRes.json());
       expect(leagueParticipants.success).toBe(true);
       expect(leagueParticipants.data?.participants.length).toBeGreaterThanOrEqual(3);
+      const leagueStructureRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}/structure`, headers: rootAdmin.headers });
+      expect(leagueStructureRes.statusCode).toBe(200);
+      expect(SportLeagueStructureResponseSchema.safeParse(leagueStructureRes.json()).success).toBe(true);
 
       // --- updateSportLeague: set as current (200: { sportLeague }) ------------
       const setCurrentRes = await getApp().inject({
