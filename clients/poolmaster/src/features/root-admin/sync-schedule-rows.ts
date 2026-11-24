@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { IngestionSchedule, IngestionScheduleConfigPatch, IngestionSyncSchedule } from '@/lib/api';
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { explicitOrderValues, ProviderSyncKind, ProviderSyncKindOrder } from '@poolmaster/shared/domain';
+import { assertNever, explicitOrderValues, ProviderSyncKind, ProviderSyncKindOrder } from '@poolmaster/shared/domain';
 import { plural } from '@/lib/plural';
 
 /** The schedule's syncs, one row each on the Providers page (#1873), keyed by sync kind (#1999) in the order they run for an event. */
@@ -45,10 +45,21 @@ function intervalOf(policy: IngestionSyncSchedule): number {
   return (unitOf(policy) === 'seconds' ? policy.intervalSeconds : policy.intervalMinutes) ?? 0;
 }
 
-/** Which events a run covers: the days ahead for a sync that looks ahead; the live scores sync's own words; else none. */
+/**
+ * Which events a run covers: the days ahead for a sync that looks ahead, else its kind's own
+ * words. Exhaustive, so a new sync kind must say what it covers.
+ */
 function whichEvents(kind: ProviderSyncKind, policy: IngestionSyncSchedule): string {
   if (policy.lookaheadDays !== undefined) return `Events starting in the next ${plural(policy.lookaheadDays, 'day')}`;
-  return kind === ProviderSyncKind.SCORES ? 'Events in progress; webhooks arrive between runs' : '—';
+  switch (kind) {
+    case ProviderSyncKind.SCORES:
+      return 'Events in progress; webhooks arrive between runs';
+    case ProviderSyncKind.EVENTS:
+    case ProviderSyncKind.FIELD:
+      return '—';
+    default:
+      return assertNever(kind);
+  }
 }
 
 /** One row per sync kind for the Sync schedules grid, from the one schedule every sport league follows. */
