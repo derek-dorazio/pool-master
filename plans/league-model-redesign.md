@@ -709,8 +709,11 @@ Contest:
   migration; a Season the feed reports that has no row raises an ERROR finding and is not
   synced until the migration lands (a root admin "create next Season" action is deferred to
   #1995). `LeagueYearFinish.year` and `LeagueYearReview.year`
-  become `championshipYear`, read from the contest. A championship year closes when every
-  contest assigned to it is final (not on 31 December). History lists contests by the
+  become `championshipYear`, read from the contest. A championship year closes (Derek 2026-11-24) when every
+  Season with that championship year, in the sport leagues the League ran contests in, has
+  finished its last slot and every contest in that year is final; the close is stored once
+  per League and year (`LeagueChampionshipYear.closedAt`), never reopens, and no contest can
+  be created into a closed year. History lists contests by the
   calendar year they completed. The plan's earlier "LeagueYearFinish → Season FK" is
   replaced.
 - Finishes and medals (Derek 2026-11-24, slice 20b): `LeagueYearFinish` is renamed
