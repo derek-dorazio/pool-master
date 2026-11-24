@@ -5,8 +5,10 @@
  * policy is the only retry layer.
  *
  * - Pacing: each task holds itself to `requestsPerMinute / maxTasks`, the provider's limit shared
- *   evenly by the most tasks that run background work at once. It is read from config once, so no
- *   request waits on a database read; the jobs one task runs at once share its one pace.
+ *   evenly by the most tasks that run background work at once. The limit is read for each request
+ *   from the provider's settings in memory (its Provider row, #1997), so an edit takes effect without
+ *   a restart and no request waits on a database read; the jobs one task runs at once share its one
+ *   pace.
  * - Retry: a 429, a 5xx or no answer is tried again, up to three more times. A 429 that names a
  *   Retry-After within the longest wait is honoured; otherwise the wait backs off exponentially,
  *   with jitter, up to that cap.
@@ -84,8 +86,8 @@ export class ProviderRateLimitedError extends Error implements ClassifiedJobErro
 export interface ProviderCallPolicyOptions {
   /** The provider, for the refusal's message. */
   providerId: string;
-  /** The provider plan's limit, shared by every task. */
-  requestsPerMinute: number;
+  /** The provider plan's limit, shared by every task: a number, or read for each request. */
+  requestsPerMinute: number | (() => number);
   /** The most tasks that run background work at once (config), each taking an even share. */
   maxTasks: number;
   /** Clock and wait for the pacing, injectable so it is testable without real time. */
@@ -137,7 +139,7 @@ const exponentialBackoff = (): IBackoffFactory<unknown> => new ExponentialBackof
 
 /** One provider's pacing, retries and breaker. Built once per provider client, so it is shared by every job on the task. */
 export class ProviderCallPolicy {
-  private readonly minIntervalMs: number;
+  private readonly requestsPerMinute: () => number;
   private readonly now: () => number;
   private readonly sleep: (ms: number) => Promise<void>;
   /** When the next request may start; requests reserve their slot in call order. */
@@ -148,13 +150,12 @@ export class ProviderCallPolicy {
 
   constructor(private readonly options: ProviderCallPolicyOptions) {
     const { requestsPerMinute, maxTasks } = options;
-    if (!Number.isInteger(requestsPerMinute) || requestsPerMinute < 1) {
-      throw new Error(`${options.providerId} requestsPerMinute must be a whole number of at least 1, not ${String(requestsPerMinute)}.`);
-    }
     if (!Number.isInteger(maxTasks) || maxTasks < 1) {
       throw new Error(`The background task pool's maximum task count must be a whole number of at least 1, not ${String(maxTasks)}.`);
     }
-    this.minIntervalMs = Math.ceil((60_000 * maxTasks) / requestsPerMinute);
+    this.requestsPerMinute = typeof requestsPerMinute === 'function' ? requestsPerMinute : () => requestsPerMinute;
+    // A bad limit is refused at construction, not at the first request.
+    this.intervalOf(this.requestsPerMinute());
     this.now = options.now ?? Date.now;
     this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => { setTimeout(resolve, ms); }));
 
@@ -175,7 +176,15 @@ export class ProviderCallPolicy {
 
   /** The gap this task keeps between the starts of two requests to the provider. */
   get intervalMs(): number {
-    return this.minIntervalMs;
+    return this.intervalOf(this.requestsPerMinute());
+  }
+
+  /** The gap at this limit, shared by the tasks; a limit that is not a whole number of at least 1 is refused. */
+  private intervalOf(requestsPerMinute: number): number {
+    if (!Number.isInteger(requestsPerMinute) || requestsPerMinute < 1) {
+      throw new Error(`${this.options.providerId} requestsPerMinute must be a whole number of at least 1, not ${String(requestsPerMinute)}.`);
+    }
+    return Math.ceil((60_000 * this.options.maxTasks) / requestsPerMinute);
   }
 
   /** Runs one provider request under the pacing, retries and breaker. `attempt` is tried once each time. */
@@ -212,7 +221,7 @@ export class ProviderCallPolicy {
   private async takeSlot(): Promise<void> {
     const now = this.now();
     const startAt = Math.max(now, this.nextSlotAt);
-    this.nextSlotAt = startAt + this.minIntervalMs;
+    this.nextSlotAt = startAt + this.intervalMs;
     if (startAt > now) {
       await this.sleep(startAt - now);
     }

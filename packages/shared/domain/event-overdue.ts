@@ -3,30 +3,12 @@
  * cancelled, and its last round or match should have ended more than OVERDUE_AFTER_MS ago. The Sports page's
  * overview and the League page's events read both judge it here, from the same facts.
  */
-import { FINISHED_SPORT_EVENT_STATUSES, Sport, SportEventStatus } from './enums';
+import { FINISHED_SPORT_EVENT_STATUSES, SportEventStatus, type Sport } from './enums';
 
 /** How long after its expected end an event's missing results count as overdue: 4 hours (Derek, 2026-11-18). */
 export const OVERDUE_AFTER_MS = 4 * 60 * 60 * 1000;
 
-const HOUR_MS = 60 * 60 * 1000;
-
-/**
- * How long a sport's game, race or round usually takes from its scheduled start, for a round or
- * match with no scheduled end: a start plus this is when it should have ended.
- */
-export const SPORT_TYPICAL_PLAY_MS: Readonly<Record<Sport, number>> = {
-  [Sport.AMERICAN_FOOTBALL]: 3.5 * HOUR_MS,
-  [Sport.BASKETBALL]: 2.5 * HOUR_MS,
-  [Sport.BASEBALL]: 3 * HOUR_MS,
-  [Sport.HOCKEY]: 2.5 * HOUR_MS,
-  [Sport.SOCCER]: 2 * HOUR_MS,
-  [Sport.TENNIS]: 3 * HOUR_MS,
-  [Sport.GOLF]: 6 * HOUR_MS,
-  [Sport.AUTO_RACING]: 2 * HOUR_MS,
-  [Sport.HORSE_RACING]: 0.5 * HOUR_MS,
-  [Sport.CYCLING]: 5 * HOUR_MS,
-  [Sport.RUNNING]: 3 * HOUR_MS,
-};
+const MINUTE_MS = 60 * 1000;
 
 /**
  * Statuses never overdue: a never-released draft, which no contest can use (#1908), and an event
@@ -53,23 +35,34 @@ export interface OverdueEventFacts {
   startDate: Date;
   endDate: Date | null;
   rounds: OverdueRoundFacts[];
+  /**
+   * How long one of its games usually takes from its scheduled start, in minutes: its sport
+   * league's selected provider league's (#1997). Null when its league syncs from none.
+   */
+  typicalGameMinutes: number | null;
 }
 
 /**
  * When the event should have ended: its last round's scheduled end, or for a round with none the
- * later of its start and its last match's start plus the sport's typical play. With no rounds,
- * its own end date, else its start plus the typical play.
+ * later of its start and its last match's start plus its typical game length. With no rounds,
+ * its own end date, else its start plus the typical game length. Null when that takes a typical
+ * game length the event does not have: its end is not known, so it is never overdue.
  */
-export function expectedEndOf(event: OverdueEventFacts): Date {
-  const play = SPORT_TYPICAL_PLAY_MS[event.sport];
+export function expectedEndOf(event: OverdueEventFacts): Date | null {
+  const play = event.typicalGameMinutes === null ? null : event.typicalGameMinutes * MINUTE_MS;
   if (event.rounds.length === 0) {
-    return event.endDate ?? new Date(event.startDate.getTime() + play);
+    if (event.endDate !== null) return event.endDate;
+    return play === null ? null : new Date(event.startDate.getTime() + play);
   }
-  const ends = event.rounds.map((round) => {
-    if (round.scheduledEndAt !== null) return round.scheduledEndAt.getTime();
-    const lastStart = Math.max(round.scheduledDate.getTime(), round.latestMatchStart?.getTime() ?? 0);
-    return lastStart + play;
-  });
+  const ends: number[] = [];
+  for (const round of event.rounds) {
+    if (round.scheduledEndAt !== null) {
+      ends.push(round.scheduledEndAt.getTime());
+      continue;
+    }
+    if (play === null) return null;
+    ends.push(Math.max(round.scheduledDate.getTime(), round.latestMatchStart?.getTime() ?? 0) + play);
+  }
   return new Date(Math.max(...ends));
 }
 
@@ -81,6 +74,7 @@ export function expectedEndOf(event: OverdueEventFacts): Date {
 export function overdueExpectedEnd(event: OverdueEventFacts, now: Date): Date | null {
   if (NEVER_OVERDUE_STATUSES.includes(event.status)) return null;
   const expectedEnd = expectedEndOf(event);
+  if (expectedEnd === null) return null;
   return now.getTime() - expectedEnd.getTime() > OVERDUE_AFTER_MS ? expectedEnd : null;
 }
 

@@ -87,7 +87,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   const leagueOverview = overviewsQuery.data?.find((candidate) => candidate.id === event.sportLeagueId);
   const isSynced = sportLeague === undefined && leagueOverview === undefined
     ? event.providerSynced
-    : isSyncedLeague(sportLeague ?? { eventSyncProviderId: null }, leagueOverview);
+    : isSyncedLeague(sportLeague ?? { selectedProviderMapping: null }, leagueOverview);
   const overview = overviewQuery.data;
 
   // A synced event has no Tools tab, so its old link lands on Field.

@@ -53,7 +53,13 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>>;
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>> & {
+  /**
+   * The provider league whose sync the sport league takes (#1997): its mapping to it is made when
+   * missing and selected, in the same write. Null stops the sync and keeps the mapping.
+   */
+  syncProviderLeagueId?: string | null;
+};
 
 /**
  * What still uses a sport league, each a reason it cannot be deleted (#1400). Its series with
@@ -81,7 +87,7 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'matchKeyword' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
+  create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -204,7 +210,7 @@ export interface SportEventAutoReleaseCandidate {
   startDate: Date;
   providerId: string;
   syncScope: SportEventSyncScope;
-  eventSyncProviderId: string;
+  syncProviderId: string;
   autoReleaseDaysBeforeStart: number;
 }
 
@@ -537,7 +543,7 @@ export interface SportLeagueOverviewLeague {
   id: string;
   sport: Sport;
   name: string;
-  eventSyncProviderId: string | null;
+  syncProviderId: string | null;
   isActive: boolean;
 }
 
@@ -600,7 +606,7 @@ export interface SportLeaguePageLeague {
   id: string;
   sport: Sport;
   isActive: boolean;
-  eventSyncProviderId: string | null;
+  syncProviderId: string | null;
   autoReleaseDaysBeforeStart: number | null;
 }
 

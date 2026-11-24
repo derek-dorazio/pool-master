@@ -3,8 +3,8 @@
  * (the schedule, an admin's Sync now) queues the same SYNC_LEAGUE_EVENTS job, and the job does the
  * work in the background, so no request waits on the provider.
  *
- * For each year the job names, the provider's events whose tour is the league's match keyword
- * (`EventScoreSourceService.listTourEventsForYear`) become its events
+ * For each year the job names, the events of the provider league the league's selected provider
+ * mapping names (`EventScoreSourceService.listTourEventsForYear`, #1997) become its events
  * (`SportEventService.importProviderEventYear`, the one creation path: series, rounds and default
  * tiers seeded alike, and a re-run skips what is there), and the events already linked keep their
  * provider's name, venue and dates (`SportEventService.keepProviderEventsCurrent`, ADR 0011).
@@ -46,11 +46,11 @@ export const LEAGUE_EVENTS_SYNC_RUN_TYPE = 'LEAGUE_EVENTS_SYNC';
 const YEARS_AHEAD = [0, 1] as const;
 
 /**
- * The provider's refusals a retry cannot fix: the league is unknown, has no match keyword, or is
+ * The provider's refusals a retry cannot fix: the league is unknown, is not synced from the provider, or is
  * left out of the provider's plan. Anything else, such as the provider being unreachable, is
  * tried again.
  */
-const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT_FOUND', 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', 'PROVIDER_LEAGUE_REFUSED']);
+const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT_FOUND', 'SPORT_LEAGUE_NOT_SYNCED', 'PROVIDER_LEAGUE_REFUSED']);
 
 export interface LeagueEventsSyncOptions {
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findEventSynced'>;
@@ -88,7 +88,7 @@ export class LeagueEventsSync {
     if (!sportLeague) {
       throw new SportEventError(`Sport league ${input.sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     }
-    if (sportLeague.eventSyncProviderId === null) {
+    if (sportLeague.selectedProviderMapping === null) {
       throw new SportEventError(`No provider syncs ${sportLeague.name}'s events.`, 'SPORT_LEAGUE_NOT_SYNCED', 422);
     }
     // poolmaster-allow-direct-job: a root admin's Sync now starts the league's sync
@@ -115,7 +115,7 @@ export class LeagueEventsSync {
 
     const sportLeague = await this.options.sportLeagues.findById(payload.sportLeagueId);
     if (!sportLeague) throw new PermanentBackgroundJobError(`Sport league ${payload.sportLeagueId} no longer exists`);
-    const providerId = sportLeague.eventSyncProviderId;
+    const providerId = sportLeague.selectedProviderMapping?.providerId ?? null;
     if (providerId === null) throw new PermanentBackgroundJobError(`No provider syncs ${sportLeague.name}'s events any more`);
     const sport = (await this.options.sports.findById(sportLeague.sportId))?.sport;
     if (sport === undefined) throw new PermanentBackgroundJobError(`Sport league ${sportLeague.name} belongs to no known sport`);

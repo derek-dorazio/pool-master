@@ -26,11 +26,16 @@ import { TABLE_SCAN_ALLOWANCES, type TableScanAllowance } from './table-scan-all
  * Reference data: tables a migration or a root admin writes a handful of rows into, which stay
  * small however many leagues sign up. Every other table grows with customer data or with each
  * season's sport data, so a new table is checked unless it is listed here.
+ *
+ * `sport_league_provider_mappings` (#1997) is listed although it joins two tables: a root admin
+ * writes it, about one row per sport league and provider league, so it stays as small as
+ * `sport_leagues`; and its reads are by `sport_league_id` or `provider_league_id`, which its
+ * unique key and its index serve.
  */
 export const REFERENCE_TABLES = new Set([
   '_prisma_migrations', 'sports', 'sport_leagues', 'event_series', 'contest_config_templates',
   'event_pages', 'event_page_offers', 'platform_runtime_configs', 'platform_runtime_config_history',
-  'tier_profiles', 'pricing_profiles',
+  'tier_profiles', 'pricing_profiles', 'providers', 'provider_leagues', 'sport_league_provider_mappings',
 ]);
 
 /** An app statement as the check keeps it: its SQL and the first test that sent it. */

@@ -32,7 +32,7 @@ import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
 import { PrismaSportLeaguePageReader } from '../../adapters/prisma-sport-league-page-reader';
-import { SportLeaguePageService, type SportLeaguePageServiceDeps } from '../sport-catalog/sport-league-page';
+import { SportLeaguePageService } from '../sport-catalog/sport-league-page';
 import type { DomainEvents } from '../domain-events';
 import { createSportEventServices, eventFieldCache, type SportEventServices } from './wiring';
 import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
@@ -54,9 +54,9 @@ export interface EventsModuleOptions {
    * write through the same instances; omitted, the module builds its own.
    */
   services?: SportEventServices;
-  /** The Event page's sync rows (#1889): the one ingestion schedule, and which providers' webhooks drive their live scores. */
-  schedule: SportLeaguePageServiceDeps['schedule'];
-  webhookProviderIds: readonly string[];
+  /** The Event page's sync rows (#1889): which providers' webhooks drive their live scores. */
+  /** The providers whose webhooks are on now. */
+  webhookProviderIds: () => readonly string[];
 }
 
 const TAGS = ['Events'];
@@ -110,8 +110,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     leaderboards: opts.leaderboards,
     eventOverviews: new SportLeaguePageService({
       reader: new PrismaSportLeaguePageReader(prisma),
-      schedule: opts.schedule,
-      webhookProviderIds: opts.webhookProviderIds,
+        webhookProviderIds: opts.webhookProviderIds,
     }),
   });
   const write = { onRequest: requireRootAdmin };
@@ -213,9 +212,9 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       summary: 'Import a tour\'s event year from a provider',
       description:
         'Creates each provider event for the sport league\'s tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) '
-        + 'exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league\'s matchKeyword, ignoring case. '
+        + 'exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when it is of the provider league the sport league\'s selected provider mapping names (#1997). '
         + 'Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. '
-        + '404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider\'s plan '
+        + '404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to the provider; 422 PROVIDER_LEAGUE_REFUSED when the provider\'s plan '
         + 'does not include the tour\'s league (#1797). Root admin only.',
       operationId: 'importEventYearFromProvider',
       body: schemaRef('ImportSportEventYearFromProviderRequest'),

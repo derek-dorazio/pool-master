@@ -56,15 +56,23 @@ flowchart LR
 
 ## 1. Configuration
 
-Providers are configuration, read once at boot by `registerConfiguredProviders`
-(`ingestion/core/provider-bindings.ts`):
+Each provider is a `Provider` row with its `ProviderLeague` rows (#1997), seeded by migration and
+edited on the root admin's Providers page: base URL, request rate, webhook switch, safety-net
+poll minutes, priority, and per league its webhook event set, `quietAfterMinutes`,
+`typicalGameMinutes` and whether it is read. Each environment's database holds its own values; the
+running tasks read the rows again every minute, so an edit needs no restart.
+`registerConfiguredProviders` (`ingestion/core/provider-bindings.ts`) registers each enabled row's
+adapter at startup, and reads only its enabled leagues. A sport league syncs from the provider
+league its selected `SportLeagueProviderMapping` names; the migration mapped the leagues it could
+match and selected the mapping of each league that was synced before.
+
+Secrets stay out of the database:
 
 | Setting | What it does |
 |---|---|
-| `SPORT_DATA_DEFAULT_PROVIDER` | The provider that is PRIMARY for every sport it covers. |
-| `SPORT_DATA_PROVIDER_BINDINGS_JSON` | Each bound provider's `baseUrl` and `requestsPerMinute`; non-default ones register as SECONDARY. Staging and prod refuse the mock without an override. |
-| `BALLDONTLIE_API_KEY` | The vendor key, from Secrets Manager. |
-| `BALLDONTLIE_WEBHOOK_SECRET` | The webhook signing secret. Unset, every delivery is refused (403) and live scores fall back to polling. |
+| `BALLDONTLIE_API_KEY` | The vendor key, from Secrets Manager. A deployed task with an enabled row and no key fails to start. |
+| `BALLDONTLIE_WEBHOOK_SECRET` | The webhook signing secret. While unset the row's webhook switch is refused on the Providers page (422 `PROVIDER_WEBHOOK_SECRET_MISSING`), a switch already on is logged at startup, every delivery is refused (403), and live scores are polled. |
+| `SPORT_DATA_DEFAULT_PROVIDER`, `SPORT_DATA_PROVIDER_BINDINGS_JSON` | Only the QA mock feed's binding now; a BALLDONTLIE entry is ignored. Removed with the mock (#2039). |
 
 A sport's leagues are read one by one: a league the vendor plan refuses (401/403) or whose read
 fails is logged as `balldontlie.league.unavailable` and left out, so its neighbours still list.
@@ -73,7 +81,8 @@ so the job is deferred rather than syncing a partial list (*Rate limit and retri
 
 **The schedule** is the `INGESTION_SCHEDULE_CONFIG` settings group
 (`platform/ingestion-config-service.ts`), edited on the root admin's Providers page. One schedule
-serves every sport league; there are no per-sport or per-league overrides.
+serves every sport league; there are no per-sport or per-league overrides, and every sport a
+registered provider covers is scheduled.
 
 | Policy | Default | Runs |
 |---|---|---|
@@ -252,8 +261,8 @@ The Field and Scores timers still run outside the job table; moving them onto jo
 step (#1835).
 
 **Overdue.** A released event is `OVERDUE` when it is neither completed nor cancelled more than
-4 hours after it should have ended (its last round's end, else its last start plus the sport's
-typical play). A draft never released is never overdue. One function:
+4 hours after it should have ended (its last round's end, else its last start plus its league's
+provider league's `typicalGameMinutes`). A draft never released is never overdue. One function:
 `overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
 
 ### Webhooks
@@ -265,13 +274,14 @@ one `PROVIDER_EVENT_SYNC` per in-progress event the notification is about, 60 se
 on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. The job runs the normal
 scores sync. **The delivery is a trigger, never a record**: nothing in its body is written.
 
-Subscribed types are `BALLDONTLIE_WEBHOOK_EVENT_TYPES`: `game.started`, `game.period_ended`
-(`game.halftime` for soccer) and `game.ended` for each league in
-`BALLDONTLIE_WEBHOOK_GAME_LEAGUES`, and the four PGA tournament and round events.
+Subscribed types are `balldontlieWebhookEventTypes` of the enabled league rows, by each row's
+webhook event set: `game.started`, `game.period_ended` (`game.halftime` for soccer, `GAME_HALVES`)
+and `game.ended` for a game league, and the four PGA tournament and round events for
+`GOLF_ROUNDS`.
 
 While the webhook secret is set, polling is only the safety net:
 
-- **Pace.** BALLDONTLIE events poll every 15 minutes, a golf round every 2.
+- **Pace.** BALLDONTLIE events poll every `webhookPollMinutes` (15), a golf round every `webhookRoundPollMinutes` (2), both on the Provider row.
 - **Start.** A start notification also syncs a linked event still `SCHEDULED` six minutes out,
   after the lifecycle has moved it.
 - **Reconcile.** An end notification queues a second sync ten minutes out for late corrections.
@@ -371,14 +381,16 @@ A new league usually touches only these:
    contract test comparing the Zod schemas with the vendor's.
 2. **Contract**: `<league>-contract.ts`, Zod schemas for exactly the fields read.
 3. **Mapping**: a scope id whose `parse…Scope` cannot claim another league's ids, a prefixed
-   participant id, a `tour` equal to the league's keyword, states through `competition-status.ts`.
+   participant id, events stamped with the league's `providerLeagueCode`, states through `competition-status.ts`.
 4. **Reader**: reads through `BalldontlieClient` only (its call policy's pacing and retries, payload capture). A series
    league supplies a `PlayoffsSource` instead.
 5. **Adapter routing**: a branch in `getEventDetails` and `getLiveScores` ahead of the PGA
    fallback, and the league in the `leagues` map.
-6. **Migration**: `match_keyword` only where `NULL`; `round_series_lengths` for a series league.
-7. **Webhooks**: an entry in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` with its prefix and
-   `quietAfterMinutes`, or its notifications are dropped.
+6. **Migration**: the `provider_league` row (code, sport, webhook event set, `quiet_after_minutes`,
+   `typical_game_minutes`) and the sport league's mapping to it; `round_series_lengths` for a
+   series league.
+7. **Webhooks**: the league's event id prefix in `balldontlie-webhooks.ts`, or its notifications
+   are dropped.
 8. **Docs**: this page.
 
 A change to `score-publisher.ts`, the schedulers, the writers or the persistence layer changes

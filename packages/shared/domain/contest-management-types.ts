@@ -73,7 +73,7 @@ export interface SportEvent extends DomainEntity {
    * through the series like `sportLeagueId`; absent when an admin authors them. Whether this
    * event is one the sync keeps is `isProviderSyncedEvent`.
    */
-  eventSyncProviderId?: string;
+  syncProviderId?: string;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;

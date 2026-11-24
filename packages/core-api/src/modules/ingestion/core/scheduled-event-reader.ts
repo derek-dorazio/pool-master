@@ -3,6 +3,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   getSportDefinition,
   MatchStatus,
+  providerCodeOfSourceId,
   SportEventStatus,
   SportEventSyncScope,
   TournamentFormat,
@@ -43,9 +44,12 @@ export function createScheduledEventReader({
       const providerIds = servingProviderIds(sport, feed);
       // Each provider loads the fields of its own next two events, so one provider's earlier
       // events never hold another's back.
-      const rows = (await Promise.all(providerIds.map((providerId) =>
+      const rows = (await Promise.all(providerIds.map((providerId) => {
+        // A league's sync names a provider by its row (#1997); a provider with none syncs no league.
+        const syncCode = providerCodeOfSourceId(providerId);
+        if (syncedLeaguesOnly && syncCode === undefined) return Promise.resolve([]);
         // poolmaster-allow-query-in-loop: once per provider serving the sport, one or two
-        prisma.sportEvent.findMany({
+        return prisma.sportEvent.findMany({
           where: {
             sport,
             providerId: { in: [providerId] },
@@ -58,12 +62,15 @@ export function createScheduledEventReader({
             },
             syncScope: SportEventSyncScope.SCORES_ONLY,
             // A synced league's sync names this provider (ADR 0011, #1726).
-            ...(syncedLeaguesOnly && { eventSeries: { sportLeague: { eventSyncProviderId: providerId, isActive: true } } }),
+            ...(syncedLeaguesOnly && syncCode !== undefined && {
+              eventSeries: { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: syncCode } } } } } },
+            }),
           },
           orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }],
           take: FIELD_EVENTS_PER_PROVIDER,
           select: { providerId: true, externalId: true },
-        })))).flat();
+        });
+      }))).flat();
       logger?.debug({
         sport,
         feed,

@@ -17,6 +17,7 @@ export * from './email-delivery';
 export * from './background-jobs';
 export * from './email-images';
 export * from './providers';
+export * from './provider-settings';
 export * from './sport-catalog-types';
 export * from './sport-rows';
 export * from './tournament-format';

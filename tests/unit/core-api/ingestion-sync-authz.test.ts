@@ -12,6 +12,7 @@ import { globalErrorHandler } from '../../../packages/core-api/src/core/error-ha
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import type { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import type { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import type { ProviderSettingsService } from '../../../packages/core-api/src/modules/ingestion/provider-settings-service';
 import { SyncRequestValidationError } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
@@ -50,6 +51,7 @@ function createIngestionServiceMock() {
 async function buildIngestionSyncApp() {
   const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   const providerService = createIngestionServiceMock();
+  const providerSettings = { updateProvider: jest.fn(), updateLeague: jest.fn() };
   // No `user.findUnique` stub: authorization reads the token claim and never the row (A10).
   // The decoration stays because the module expects the instance to carry a Prisma client.
   const prisma = {} as unknown as PrismaClient;
@@ -65,10 +67,11 @@ async function buildIngestionSyncApp() {
     providerRegistry: {} as unknown as ProviderRegistry,
     leagueEventsSync: { syncNow: jest.fn() },
     activity: { present: jest.fn() },
+    providerSettings: providerSettings as unknown as ProviderSettingsService,
   });
   await app.ready();
 
-  return { app, providerService };
+  return { app, providerService, providerSettings };
 }
 
 describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
@@ -172,6 +175,30 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       message: 'Event-scoped sync requests require a non-empty provider event ID.',
       details: { validationCode: 'INVALID_EVENT_ID' },
     });
+
+    await app.close();
+  });
+
+  it('refuses a member\'s provider settings and provider league saves with 403 before either is saved (#1997)', async () => {
+    const { app, providerSettings } = await buildIngestionSyncApp();
+
+    const provider = await app.inject({ method: 'PATCH', url: '/api/v1/ingestion/provider-settings/00000000-0000-4000-8000-000000000001', headers: authHeaders('member-user', false), payload: { requestsPerMinute: 600 } });
+    const league = await app.inject({ method: 'PATCH', url: '/api/v1/ingestion/provider-settings/00000000-0000-4000-8000-000000000001/leagues/00000000-0000-4000-8000-000000000002', headers: authHeaders('member-user', false), payload: { typicalGameMinutes: 200 } });
+
+    expect([provider.statusCode, league.statusCode]).toEqual([403, 403]);
+    expect(providerSettings.updateProvider).not.toHaveBeenCalled();
+    expect(providerSettings.updateLeague).not.toHaveBeenCalled();
+
+    await app.close();
+  });
+
+  it('refuses with 400 a provider rate outside the range a provider may be set to, before it is saved', async () => {
+    const { app, providerSettings } = await buildIngestionSyncApp();
+
+    const res = await app.inject({ method: 'PATCH', url: '/api/v1/ingestion/provider-settings/00000000-0000-4000-8000-000000000001', headers: authHeaders('root-admin-user', true), payload: { requestsPerMinute: 0 } });
+
+    expect(res.statusCode).toBe(400);
+    expect(providerSettings.updateProvider).not.toHaveBeenCalled();
 
     await app.close();
   });

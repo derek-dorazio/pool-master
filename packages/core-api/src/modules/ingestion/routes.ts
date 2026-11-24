@@ -23,6 +23,7 @@ import { requireRootAdmin } from '../../core/root-admin-guard';
 import { EventScoreSourceService } from '../events/event-score-source-service';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { IngestionService } from './ingestion-service';
+import type { ProviderSettingsService } from './provider-settings-service';
 import { createIngestionHandlers } from './handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireAuthUser } from '../../plugins/auth-guard';
@@ -37,6 +38,8 @@ export interface IngestionModuleOptions {
   leagueEventsSync: Pick<LeagueEventsSync, 'syncNow'>;
   /** Answers the queued job as its Activity row reads. */
   activity: Pick<ActivityService, 'present'>;
+  /** The Providers page's edits (#1997). */
+  providerSettings: ProviderSettingsService;
 }
 
 const SPORT_PARAM = { type: 'string', enum: Object.values(Sport) };
@@ -52,17 +55,54 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
   const handler = createIngestionHandlers(
     opts.ingestionService,
     new EventScoreSourceService(getAppPrisma(fastify), opts.providerRegistry, fastify.log),
+    opts.providerSettings,
   );
 
   fastify.get('/providers', {
     schema: {
       tags: ['Ingestion'],
-      summary: 'List sports-data providers with their live health',
-      description: 'Every registered provider, each with a live health check made for this request, the sports ingestion is scheduled for, and how many of its events are scheduled or in progress.',
+      summary: 'List sports-data providers with their live health and settings',
+      description: 'Every provider with a Provider row or running in this task, each with a live health check made for this request (none for one not running), the sports its adapter covers, how many of its events are scheduled or in progress, and its settings and leagues (#1997).',
       operationId: 'listProviders',
       response: { 200: schemaRef('ProviderListResponse'), ...errors() },
     },
     handler: handler.listProviders,
+  });
+
+  fastify.patch('/provider-settings/:providerId', {
+    schema: {
+      tags: ['Ingestion'],
+      summary: 'Change a provider\'s settings',
+      description: 'The Providers page\'s edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. '
+        + '404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. '
+        + '422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider\'s signing secret is not set in this environment. Root admin only.',
+      operationId: 'updateProviderSettings',
+      params: { type: 'object', required: ['providerId'], properties: { providerId: { type: 'string', format: 'uuid', description: 'The Provider row (ProviderSettingsDto.id).' } } },
+      body: schemaRef('UpdateProviderRequest'),
+      response: { 200: schemaRef('ProviderSettingsResponse'), ...errors(400, 404, 409, 422) },
+    },
+    handler: handler.updateProvider,
+  });
+
+  fastify.patch('/provider-settings/:providerId/leagues/:providerLeagueId', {
+    schema: {
+      tags: ['Ingestion'],
+      summary: 'Change one of a provider\'s leagues',
+      description: 'The Providers page\'s league edit (#1997); omitted fields are left alone. The quiet window and typical game length are taken by every task within a minute; enabling a league takes effect when the server tasks next start. '
+        + '404 PROVIDER_LEAGUE_NOT_FOUND when the provider has no such league. Root admin only.',
+      operationId: 'updateProviderLeague',
+      params: {
+        type: 'object',
+        required: ['providerId', 'providerLeagueId'],
+        properties: {
+          providerId: { type: 'string', format: 'uuid', description: 'The Provider row (ProviderSettingsDto.id).' },
+          providerLeagueId: { type: 'string', format: 'uuid', description: 'The provider league (ProviderLeagueDto.id).' },
+        },
+      },
+      body: schemaRef('UpdateProviderLeagueRequest'),
+      response: { 200: schemaRef('ProviderLeagueResponse'), ...errors(400, 404) },
+    },
+    handler: handler.updateProviderLeague,
   });
 
   fastify.get('/sync-runs', {

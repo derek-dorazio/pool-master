@@ -29,8 +29,8 @@ export function leaguePageTabs(isSynced: boolean): readonly (typeof LEAGUE_PAGE_
 }
 
 /** Whether a provider syncs the league's events, from its overview row once read, else its own setting. */
-export function isSyncedLeague(sportLeague: Pick<SportLeagueDto, 'eventSyncProviderId'>, overview: Pick<SportLeagueOverviewDto, 'providerId'> | undefined): boolean {
-  return (overview === undefined ? sportLeague.eventSyncProviderId : overview.providerId) !== null;
+export function isSyncedLeague(sportLeague: Pick<SportLeagueDto, 'selectedProviderMapping'>, overview: Pick<SportLeagueOverviewDto, 'providerId'> | undefined): boolean {
+  return (overview === undefined ? sportLeague.selectedProviderMapping : overview.providerId) !== null;
 }
 
 /** The League page context, for a tab under `LeaguePageLayout`. */

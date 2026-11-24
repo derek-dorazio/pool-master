@@ -33,6 +33,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
 import { leagueProfiles } from '../../support/league-profiles';
+import { syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
@@ -230,7 +231,7 @@ describe('SportEventRepository — writes', () => {
 describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
     const { eventSeries } = repos();
 
     const first = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
@@ -243,7 +244,7 @@ describe('EventSeriesRepository', () => {
   // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
   it('creates a series active', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
 
     const series = await seriesNamed(repos().eventSeries, sportLeague.id, 'The Masters');
 
@@ -865,11 +866,13 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
 
   const releaseJobs = () => getPrisma().backgroundJob.findMany({ where: { type: BackgroundJobType.RELEASE_SPORT_EVENT }, orderBy: { createdAt: 'asc' } });
 
-  /** A golf sport league of its own, synced by `providerId` unless null, with this release window. */
-  async function syncedLeague(providerId: string | null, autoReleaseDaysBeforeStart: number | null = 7) {
-    return getPrisma().sportLeague.create({
-      data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, matchKeyword: 'AUTO', eventSyncProviderId: providerId, autoReleaseDaysBeforeStart },
+  /** A golf sport league of its own, synced from BALLDONTLIE's PGA TOUR unless `synced` is false, with this release window. */
+  async function syncedLeague(synced: boolean, autoReleaseDaysBeforeStart: number | null = 7) {
+    const league = await getPrisma().sportLeague.create({
+      data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, autoReleaseDaysBeforeStart },
     });
+    if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
+    return league;
   }
 
   async function draftIn(sportLeagueId: string, daysAhead: number, providerId = 'balldontlie', status: 'DRAFT' | 'SCHEDULED' = 'DRAFT') {
@@ -888,10 +891,10 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     });
   }
 
-  it('finds the drafts of synced leagues with automatic release on that start by the horizon, with each league\'s window, in a fixed three indexed statements', async () => {
-    const synced = await syncedLeague('balldontlie', 5);
-    const unsynced = await syncedLeague(null);
-    const off = await syncedLeague('balldontlie', null);
+  it('finds the drafts of synced leagues with automatic release on that start by the horizon, with each league\'s window and sync provider, in a fixed six indexed statements', async () => {
+    const synced = await syncedLeague(true, 5);
+    const unsynced = await syncedLeague(false);
+    const off = await syncedLeague(true, null);
     const soon = await draftIn(synced.id, 3);
     const later = await draftIn(synced.id, 20);
     await draftIn(synced.id, 40);
@@ -903,16 +906,17 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     const { result, statements } = await recordStatements(() => repos().events.findAutoReleaseCandidates(NOW, new Date(NOW.getTime() + 30 * DAY_MS)));
 
     expect(result).toEqual([
-      { id: soon.id, startDate: soon.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
-      { id: later.id, startDate: later.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', eventSyncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+      { id: soon.id, startDate: soon.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
+      { id: later.id, startDate: later.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
     ]);
-    // The events, then their series and leagues in one read each, however many events there are.
-    expect(statements).toHaveLength(3);
+    // The events, then their series, leagues, selected mappings, provider leagues and providers in
+    // one read each, however many events there are.
+    expect(statements).toHaveLength(6);
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAutoReleaseCandidates' })))).resolves.toEqual([]);
   });
 
   it('counts an event\'s rounds and the active setups its league offers, in two statements', async () => {
-    const league = await syncedLeague('balldontlie');
+    const league = await syncedLeague(true);
     const event = await draftIn(league.id, 3);
     const { rounds } = repos();
     await createRoundRows(rounds, event.id, [{ roundNumber: 1, scheduledDate: event.startDate }, { roundNumber: 2, scheduledDate: event.startDate }]);
@@ -933,7 +937,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
   });
 
   it('sweeps 20 events in its window in the same statements as 2: one candidates read and one insert of every job', async () => {
-    const league = await syncedLeague('balldontlie');
+    const league = await syncedLeague(true);
     const sweep = async () => (await recordStatements(() => sweeper().scheduler.runSweep())).statements;
     await Promise.all([1, 2].map((day) => draftIn(league.id, day)));
     const small = await sweep();
@@ -949,7 +953,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
   });
 
   it('queues one job per event, scoped to that event, however often it sweeps, until a worker claims it, then the next sweep queues a fresh try', async () => {
-    const league = await syncedLeague('balldontlie');
+    const league = await syncedLeague(true);
     const event = await draftIn(league.id, 3);
     const { scheduler, jobs } = sweeper();
 

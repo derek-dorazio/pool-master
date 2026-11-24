@@ -23,8 +23,8 @@ import { useUpdateSportLeague } from './use-update-sport-league';
 
 const settingsSchema = z.object({
   isActive: z.enum(['on', 'off']),
-  /** The provider whose sync keeps the league's events; empty is none. */
-  eventSyncProviderId: z.string(),
+  /** The provider league whose sync keeps the league's events; empty is none. */
+  syncProviderLeagueId: z.string(),
   /** Days before an event's start its automatic release begins; empty is off. */
   autoReleaseDays: z.string().refine(
     (value) => value === '' || (/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= AUTO_RELEASE_DAYS_MAX),
@@ -39,7 +39,7 @@ type SettingsValues = z.infer<typeof settingsSchema>;
 function valuesOf(sportLeague: SportLeagueDto): SettingsValues {
   return {
     isActive: sportLeague.isActive ? 'on' : 'off',
-    eventSyncProviderId: sportLeague.eventSyncProviderId ?? '',
+    syncProviderLeagueId: sportLeague.selectedProviderMapping?.providerLeagueId ?? '',
     autoReleaseDays: sportLeague.autoReleaseDaysBeforeStart === null ? '' : String(sportLeague.autoReleaseDaysBeforeStart),
     tierProfileId: sportLeague.tierProfileId,
     pricingProfileId: sportLeague.pricingProfileId,
@@ -108,8 +108,8 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
     sportLeagueId: sportLeague.id,
     toBody: (values: SettingsValues) => ({
       ...(values.isActive !== current.isActive && { isActive: values.isActive === 'on' }),
-      ...(values.eventSyncProviderId !== current.eventSyncProviderId && {
-        eventSyncProviderId: values.eventSyncProviderId === '' ? null : values.eventSyncProviderId,
+      ...(values.syncProviderLeagueId !== current.syncProviderLeagueId && {
+        syncProviderLeagueId: values.syncProviderLeagueId === '' ? null : values.syncProviderLeagueId,
       }),
       ...(values.autoReleaseDays !== current.autoReleaseDays && {
         autoReleaseDaysBeforeStart: values.autoReleaseDays === '' ? null : Number(values.autoReleaseDays),
@@ -119,12 +119,12 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
     }),
   });
 
-  // poolmaster-allow-list-lookup: the handful of registered providers is the picker's whole source
-  const providers = (providersQuery.data ?? []).filter((provider) =>
-    provider.sportsCovered.includes(sportLeague.sport) || provider.providerId === current.eventSyncProviderId);
-  const providerName = (providerId: string) =>
-    // poolmaster-allow-list-lookup: the same handful of providers
-    providersQuery.data?.find((provider) => provider.providerId === providerId)?.providerName ?? providerId;
+  // The provider leagues that play the league's sport, from the Provider rows (#1997).
+  const providerLeagues = (providersQuery.data ?? []).flatMap((provider) => (provider.settings?.leagues ?? [])
+    .filter((league) => league.sport === sportLeague.sport)
+    .map((league) => ({ id: league.id, label: `${provider.providerName} · ${league.name}` })));
+  const selected = sportLeague.selectedProviderMapping;
+  const selectedLabel = selected === null ? 'No provider' : `${selected.providerName} · ${selected.providerLeagueName}`;
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
   const tierProfileName = tierProfilesQuery.data?.find((profile) => profile.id === sportLeague.tierProfileId)?.name ?? '…';
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
@@ -132,7 +132,7 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
 
   const facts: Fact[] = [
     { id: 'status', label: 'Status', value: sportLeague.isActive ? 'On' : 'Off', testId: 'root-admin-sport-league-settings-status' },
-    { id: 'provider', label: 'Provider', value: sportLeague.eventSyncProviderId === null ? 'No provider' : providerName(sportLeague.eventSyncProviderId), testId: 'root-admin-sport-league-settings-provider' },
+    { id: 'provider', label: 'Provider', value: selectedLabel, testId: 'root-admin-sport-league-settings-provider' },
     { id: 'autoRelease', label: 'Auto release', value: autoReleaseText(sportLeague.autoReleaseDaysBeforeStart), testId: 'root-admin-sport-league-settings-auto-release' },
     { id: 'tierProfile', label: 'Tier profile', value: tierProfileName, testId: 'root-admin-sport-league-settings-tier-profile' },
     { id: 'pricingProfile', label: 'Pricing profile', value: pricingProfileName, testId: 'root-admin-sport-league-settings-pricing-profile' },
@@ -171,13 +171,13 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
           </Select>
         </FormField>
         <FormField label="Provider">
-          <Select data-testid="root-admin-sport-league-settings-provider-input" {...form.register('eventSyncProviderId')}>
+          <Select data-testid="root-admin-sport-league-settings-provider-input" {...form.register('syncProviderLeagueId')}>
             <option value="">No provider</option>
-            {current.eventSyncProviderId !== '' && !providers.some((provider) => provider.providerId === current.eventSyncProviderId)
-              ? <option value={current.eventSyncProviderId}>{current.eventSyncProviderId}</option>
+            {current.syncProviderLeagueId !== '' && !providerLeagues.some((league) => league.id === current.syncProviderLeagueId)
+              ? <option value={current.syncProviderLeagueId}>{selectedLabel}</option>
               : null}
-            {providers.map((provider) => (
-              <option key={provider.providerId} value={provider.providerId}>{provider.providerName}</option>
+            {providerLeagues.map((league) => (
+              <option key={league.id} value={league.id}>{league.label}</option>
             ))}
           </Select>
         </FormField>

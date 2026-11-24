@@ -44,7 +44,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
   const overdueByLeague = groupBy<SportLeagueOverdueCandidate>(facts.overdueCandidates, (event) => event.sportLeagueId);
 
   const overviews = facts.leagues.map((league): SportLeagueOverview => {
-    const providerId = league.eventSyncProviderId;
+    const providerId = league.syncProviderId;
     const runs = runsByLeague.get(league.id) ?? [];
     const failedRuns = runs.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
     return {

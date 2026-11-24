@@ -1,7 +1,11 @@
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
+import { EventScoreSourceService } from '../../../../packages/core-api/src/modules/events/event-score-source-service';
+import { registryWith } from '../../../support/fake-sport-data-provider';
+import { asPrismaClient } from '../../../support/prisma-double';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { nbaGames, nbaRoutes } from '../../../support/balldontlie-nba-routes';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
 
 /**
  * The adapter's NBA playoffs reads against a fake BALLDONTLIE that checks every request it
@@ -21,9 +25,9 @@ function setup(routes: Record<string, FakeRoute> = nbaRoutes, now = NOW): { adap
   global.fetch = api.fetch;
   let clock = now;
   const adapter = new BalldontlieAdapter({
-    baseUrl: 'https://api.balldontlie.io',
+    connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
     apiKey: API_KEY,
-    requestsPerMinute: 600,
+    leagues: BALLDONTLIE_TEST_LEAGUES,
     now: () => clock,
     sleep: (ms) => { clock += ms; return Promise.resolve(); },
   });
@@ -49,7 +53,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
   afterEach(() => restore?.());
 
   describe('getUpcomingEvents', () => {
-    it('lists each season\'s playoffs starting in the range, reading the seasons whose playoffs fall in its years and only their playoff games', async () => {
+    it('lists each season\'s playoffs starting in the range, and no round as an event of its own, reading the seasons whose playoffs fall in its years and only their playoff games', async () => {
       const harness = setup();
       restore = harness.restore;
 
@@ -59,6 +63,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
         ['nba-2024-postseason', 'NBA Playoffs', 'COMPLETED', { tour: 'NBA', season: 2024 }],
         ['nba-2025-postseason', 'NBA Playoffs', 'IN_PROGRESS', { tour: 'NBA', season: 2025 }],
       ]);
+      expect(events.map((event) => event.providerLeagueCode)).toEqual(['nba', 'nba']);
       expect(requestLine(harness.api)).toEqual([
         '/nba/v1/games?seasons[]=2024&season_type=playoffs&per_page=100',
         '/nba/v1/games?seasons[]=2025&season_type=playoffs&per_page=100',
@@ -237,5 +242,20 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     restore = harness.restore;
 
     await expect(harness.adapter.getLiveScores('nba-2024-postseason')).rejects.toThrow('game 18444001 has no home_team');
+  });
+
+  it('imports into a sport league synced to the BALLDONTLIE nba league only the season\'s playoffs of the year', async () => {
+    const harness = setup();
+    restore = harness.restore;
+    const league = {
+      id: 'league', name: 'NBA Playoffs', sport: { sport: Sport.BASKETBALL },
+      selectedProviderMapping: { id: 'mapping', providerLeague: { id: 'provider-league', code: 'nba', name: 'NBA', provider: { code: 'BALLDONTLIE', name: 'BALLDONTLIE' } } },
+    };
+    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(league) } };
+    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(harness.adapter));
+
+    const events = await service.listTourEventsForYear('balldontlie', 'league', 2024);
+
+    expect(events.map((event) => event.externalId)).toEqual(['nba-2023-postseason']);
   });
 });

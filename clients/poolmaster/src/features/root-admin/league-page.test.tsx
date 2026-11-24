@@ -17,7 +17,7 @@ import { LeagueContestTemplatesTab } from './league-contest-templates-tab';
 import { LeagueEventsTab } from './league-events-tab';
 import { LeaguePageLayout } from './league-page-layout';
 import { LeagueParticipantsTab } from './league-participants-tab';
-import { sportLeagueFixture } from './sport-test-fixtures';
+import { providerMappingFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // The root admin's League page (#1866): the header, the tab set, and each tab's grid and dialog.
 
@@ -73,7 +73,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-const NBA = sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', eventSyncProviderId: 'balldontlie', currentEventYear: 2027 });
+const NBA = sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', selectedProviderMapping: providerMappingFixture(), currentEventYear: 2027 });
 const SUMMER = sportLeagueFixture({ id: 'summer', sport: 'BASKETBALL', name: 'Summer League' });
 
 function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOverviewDto {
@@ -98,7 +98,7 @@ const OVERVIEWS = [
 ];
 
 function sync(kind: SportLeagueSyncDto['kind']): SportLeagueSyncDto {
-  return { kind, health: 'OK', mode: 'SCHEDULE', lastRun: null, nextRunAt: null };
+  return { kind, health: 'OK', mode: 'SCHEDULE', lastRun: null };
 }
 
 function event(overrides: Partial<SportLeagueEventOverviewDto>): SportLeagueEventOverviewDto {

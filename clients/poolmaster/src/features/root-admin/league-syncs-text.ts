@@ -13,8 +13,7 @@ export function lastRunText(sync: Pick<SportLeagueSyncDto, 'lastRun'>, preferenc
     .join(' · ');
 }
 
-/** When the sync runs next: a time, the webhook, or nothing scheduled. */
-export function nextRunText(sync: Pick<SportLeagueSyncDto, 'mode' | 'nextRunAt'>, preferences: DisplayPreferences): string {
-  if (sync.mode === SportLeagueSyncMode.WEBHOOK) return 'Follows the webhook, with a poll while an event is live';
-  return sync.nextRunAt === null ? 'Not scheduled' : `Next run ${formatDateTimeDisplay(sync.nextRunAt, preferences)}`;
+/** What drives the sync: the webhook, or the one ingestion schedule. */
+export function syncModeText(sync: Pick<SportLeagueSyncDto, 'mode'>): string {
+  return sync.mode === SportLeagueSyncMode.WEBHOOK ? 'Follows the webhook, with a poll while an event is live' : 'Runs on the ingestion schedule';
 }

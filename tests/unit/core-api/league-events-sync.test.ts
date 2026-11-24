@@ -13,7 +13,7 @@ import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-
 import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import type { ProviderEventDetailsChange, ProviderEventYearImport } from '../../../packages/core-api/src/modules/events/service';
-import { buildSportLeague } from '../../factories';
+import { buildProviderMapping, buildSportLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryBackgroundJobs, jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
@@ -61,7 +61,7 @@ function build(options: {
   };
   const sportLeagues = {
     findById: jest.fn(async (id: string) => options.leagues.find((league) => league.id === id) ?? null),
-    findEventSynced: jest.fn(async () => options.leagues.filter((league) => league.eventSyncProviderId !== null && league.isActive)),
+    findEventSynced: jest.fn(async () => options.leagues.filter((league) => league.selectedProviderMapping !== null && league.isActive)),
   };
   const logger = fakeLogger();
   const sync = new LeagueEventsSync({
@@ -88,15 +88,15 @@ function build(options: {
 const stillHeld = () => Promise.resolve(true);
 
 function syncedLeague(overrides: Partial<SportLeague> = {}): SportLeague {
-  return buildSportLeague({ id: randomUUID(), name: 'PGA TOUR', matchKeyword: 'PGA TOUR', eventSyncProviderId: 'balldontlie', ...overrides });
+  return buildSportLeague({ id: randomUUID(), name: 'PGA TOUR', selectedProviderMapping: buildProviderMapping({ providerLeagueCode: 'pga', providerLeagueName: 'PGA TOUR' }), ...overrides });
 }
 
 describe('LeagueEventsSync', () => {
   describe('the schedule', () => {
     it('queues one events sync job per active synced league, for this calendar year and the next, scoped to the league', async () => {
       const pga = syncedLeague();
-      const lpga = syncedLeague({ name: 'LPGA', matchKeyword: 'LPGA' });
-      const unsynced = syncedLeague({ eventSyncProviderId: null });
+      const lpga = syncedLeague({ name: 'LPGA' });
+      const unsynced = syncedLeague({ selectedProviderMapping: null });
       const { sync, jobs } = build({ leagues: [pga, lpga, unsynced], wakes: false });
 
       await expect(sync.queueScheduled()).resolves.toBe(2);
@@ -108,8 +108,8 @@ describe('LeagueEventsSync', () => {
     });
 
     it('makes every league\'s scheduled job due now, with no league held back behind another', async () => {
-      const nba = syncedLeague({ name: 'NBA', matchKeyword: 'NBA' });
-      const mlb = syncedLeague({ name: 'MLB', matchKeyword: 'MLB' });
+      const nba = syncedLeague({ name: 'NBA' });
+      const mlb = syncedLeague({ name: 'MLB' });
       const { sync, jobs } = build({ leagues: [nba, mlb], wakes: false });
 
       await sync.queueScheduled();
@@ -178,7 +178,7 @@ describe('LeagueEventsSync', () => {
     });
 
     it('refuses a league that does not exist with SPORT_LEAGUE_NOT_FOUND and one no provider syncs with SPORT_LEAGUE_NOT_SYNCED', async () => {
-      const unsynced = syncedLeague({ eventSyncProviderId: null });
+      const unsynced = syncedLeague({ selectedProviderMapping: null });
       const { sync, jobs } = build({ leagues: [unsynced] });
 
       await expect(sync.syncNow({ sportLeagueId: randomUUID(), requestedByUserId: randomUUID() }))
@@ -345,7 +345,7 @@ describe('LeagueEventsSync', () => {
     });
 
     it('fails at once, recording no run, for a league gone or no longer synced', async () => {
-      const unsynced = syncedLeague({ eventSyncProviderId: null });
+      const unsynced = syncedLeague({ selectedProviderMapping: null });
       const { sync, syncRuns } = build({ leagues: [unsynced] });
 
       await expect(sync.run({ sportLeagueId: randomUUID(), eventYears: [2026] }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.ADMIN }))

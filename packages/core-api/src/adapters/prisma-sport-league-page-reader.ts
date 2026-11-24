@@ -17,6 +17,7 @@ import type {
 import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { outcomeSummary } from './prisma-sport-league-overview-reader';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
 const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, payloadJson: true } as const;
 const EVENT_SELECT = {
@@ -179,13 +180,13 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const row = await this.prisma.sportLeague.findUnique({
       where: { id: sportLeagueId },
       select: {
-        id: true, isActive: true, eventSyncProviderId: true, autoReleaseDaysBeforeStart: true,
+        id: true, isActive: true, ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true,
         sport: { select: { sport: true } },
       },
     });
     if (row === null) return null;
-    const { sport, ...league } = row;
-    return { ...league, sport: sport.sport };
+    const { sport, selectedProviderMapping, ...league } = row;
+    return { ...league, sport: sport.sport, syncProviderId: syncProviderIdOf({ selectedProviderMapping }) };
   }
 }
 

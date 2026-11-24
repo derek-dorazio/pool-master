@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { SportLeagueCalendarCard } from './sport-league-calendar-card';
-import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { sportEventFixture, providerMappingFixture, sportLeagueFixture } from './sport-test-fixtures';
 
 // plans/147 — a tour's tournaments by event year: the season list, the season home page,
 // "set as current" and "clone to next year" all moved here when the season was collapsed into the event.
@@ -266,7 +266,7 @@ describe('plans/147 SportLeagueCalendarCard', () => {
 
   it('imports from the tour\'s event sync provider rather than the sport\'s primary when the tour has one', async () => {
     importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
-    renderCard({ ...SPORT_LEAGUE, eventSyncProviderId: 'balldontlie' }, [
+    renderCard({ ...SPORT_LEAGUE, selectedProviderMapping: providerMappingFixture() }, [
       ...MOCK_FEED_ONLY,
       { providerId: 'balldontlie', sportsCovered: ['GOLF'], primaryForSports: [] },
     ]);
@@ -281,9 +281,9 @@ describe('plans/147 SportLeagueCalendarCard', () => {
     ));
   });
 
-  it('says the provider listed nothing for the tour, and to check its match keyword, when the import creates and skips nothing', async () => {
+  it('says the provider listed nothing for the tour\'s provider league when the import creates and skips nothing', async () => {
     importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
-    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026, matchKeyword: 'PGA' }));
+    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026, selectedProviderMapping: providerMappingFixture() }));
     await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
 
     await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-calendar-import')).toBeEnabled());
@@ -291,24 +291,8 @@ describe('plans/147 SportLeagueCalendarCard', () => {
     await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
 
     expect(await screen.findByTestId('root-admin-sport-league-calendar-import-result')).toHaveTextContent(
-      'The provider lists no 2026 tournaments for the tour “PGA”. Check that PGA Tour’s match keyword is the provider’s tour name.',
+      'The provider lists no 2026 tournaments for PGA TOUR.',
     );
-  });
-
-  it('tells the admin to set the tour\'s match keyword when the import is refused for having none', async () => {
-    importEventYearFromProviderMock.mockResolvedValue({
-      error: { error: { code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', message: 'no keyword' } },
-      response: { status: 422 },
-    });
-    renderCard();
-    await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
-
-    await waitFor(() => expect(screen.getByTestId('root-admin-sport-league-calendar-import')).toBeEnabled());
-    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import'));
-    await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
-
-    expect(await screen.findByText('PGA Tour has no match keyword. Set it to the provider’s tour name.'))
-      .toBeInTheDocument();
   });
 
   it('tells the admin the provider\'s plan refused the tour\'s events, instead of a generic failure', async () => {
@@ -328,7 +312,7 @@ describe('plans/147 SportLeagueCalendarCard', () => {
   });
 });
 
-describe('SportLeagueCalendarCard year actions: plural import, a tour without a keyword, and closing dialogs', () => {
+describe('SportLeagueCalendarCard year actions: plural import, a tour with no provider league, and closing dialogs', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
@@ -359,15 +343,15 @@ describe('SportLeagueCalendarCard year actions: plural import, a tour without a 
       .toHaveTextContent('Created 2 tournaments; skipped 0 already here.');
   });
 
-  it('names an empty keyword when a tour without a match keyword imports nothing', async () => {
+  it('names the tour itself when a tour with no provider league imports nothing', async () => {
     importEventYearFromProviderMock.mockResolvedValue({ data: { created: [], skipped: [] } });
-    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026, matchKeyword: null }));
+    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: 2026 }));
 
     await openImport();
     await userEvent.click(screen.getByTestId('root-admin-sport-league-calendar-import-confirm'));
 
     expect(await screen.findByTestId('root-admin-sport-league-calendar-import-result'))
-      .toHaveTextContent('The provider lists no 2026 tournaments for the tour “”.');
+      .toHaveTextContent('The provider lists no 2026 tournaments for PGA Tour.');
   });
 
   it('closes the import confirmation from its close button without importing', async () => {

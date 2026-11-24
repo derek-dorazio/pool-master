@@ -15,6 +15,7 @@ import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setup
 import { findUnindexedScans } from '../index-check';
 import { recordStatements } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
+import { syncLeagueTo } from '../../support/league-sync';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -36,10 +37,13 @@ async function golfSportId(): Promise<string> {
   return sport.id;
 }
 
-async function sportLeague(name: string, extra: { eventSyncProviderId?: string } = {}) {
-  return getPrisma().sportLeague.create({
-    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, matchKeyword: randomUUID().slice(0, 8), ...extra },
+/** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
+async function sportLeague(name: string, { synced = false }: { synced?: boolean } = {}) {
+  const league = await getPrisma().sportLeague.create({
+    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}` },
   });
+  if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
+  return league;
 }
 
 async function event(sportLeagueId: string, input: { eventYear: number; startDate: Date; endDate?: Date; status?: 'DRAFT' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' }) {
@@ -53,7 +57,7 @@ async function event(sportLeagueId: string, input: { eventYear: number; startDat
 describe('PrismaSportLeagueOverviewReader', () => {
   it('gathers each sport league\'s latest run per sync kind, held drafts, event years and next start', async () => {
     const prisma = getPrisma();
-    const tour = await sportLeague('Overview Tour', { eventSyncProviderId: 'balldontlie' });
+    const tour = await sportLeague('Overview Tour', { synced: true });
     const past = await event(tour.id, { eventYear: 2026, startDate: days(-200), endDate: days(-196), status: 'COMPLETED' });
     const current = await event(tour.id, { eventYear: 2027, startDate: days(-20), endDate: days(-17), status: 'COMPLETED' });
     const next = await event(tour.id, { eventYear: 2027, startDate: days(10), endDate: days(13) });
@@ -78,7 +82,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const { result: facts, statements } = await recordStatements(() => new PrismaSportLeagueOverviewReader(getAppPrisma()).readFacts(NOW));
 
     expect(facts.leagues).toEqual(expect.arrayContaining([
-      { id: tour.id, sport: Sport.GOLF, name: tour.name, eventSyncProviderId: 'balldontlie', isActive: true },
+      { id: tour.id, sport: Sport.GOLF, name: tour.name, syncProviderId: 'balldontlie', isActive: true },
     ]));
     expect(facts.latestSyncRuns.filter((latest) => latest.sportLeagueId === tour.id).sort((left, right) => left.kind.localeCompare(right.kind))).toEqual([
       expect.objectContaining({ kind: ProviderSyncKind.EVENTS, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.' }),

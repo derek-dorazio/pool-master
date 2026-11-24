@@ -414,7 +414,7 @@ class Loader {
     const { pricingProfileId } = await this.standardPricing(client);
     const created = await must(createSportLeague({
       client,
-      body: { sport: this.sport, name, matchKeyword: name, tierProfileId, pricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
+      body: { sport: this.sport, name, tierProfileId, pricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
     }), `Create sport league ${name}`);
     return created.sportLeague.id;
   }

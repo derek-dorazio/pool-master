@@ -79,6 +79,7 @@ import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { providerWebhooksModule } from '../../packages/core-api/src/modules/ingestion/provider-webhook-routes';
 import { ProviderNotificationService } from '../../packages/core-api/src/modules/ingestion/provider-notifications';
+import { ProviderCode } from '@poolmaster/shared/domain';
 import { TEST_BALLDONTLIE_WEBHOOK_SECRET } from '../support/balldontlie-webhooks';
 import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { jobHandlers, testCurrentJobStart } from '../support/in-memory-background-jobs';
@@ -94,6 +95,11 @@ import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contes
 import { createContestManagementService, createReleasedEditionContests } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
+import { ProviderSettingsStore } from '../../packages/core-api/src/modules/ingestion/provider-settings-store';
+import { ProviderWebhookSwitch } from '../../packages/core-api/src/modules/ingestion/provider-webhook-switch';
+import { providerLookupOf } from '../../packages/core-api/src/modules/ingestion/provider-lookup';
+import { ProviderSettingsService } from '../../packages/core-api/src/modules/ingestion/provider-settings-service';
+import { PrismaProviderSettingsRepository } from '../../packages/core-api/src/adapters/prisma-provider-settings-repository';
 import {
   BackgroundJobQueue,
   BackgroundJobRunner,
@@ -221,6 +227,25 @@ export function integrationSportEventServices(prisma: PrismaClient = getAppPrism
   return createSportEventServices(prisma, undefined, integrationEventLifecycle(prisma), testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), providers);
 }
 
+/**
+ * The Provider rows as the app wires them (#1997): the store read once, BALLDONTLIE's webhook
+ * switch with the test secret, the lookup a sport league's sync is checked against, and the
+ * Providers page's saves. No adapter is built from the rows: a test registers its own providers.
+ */
+export async function integrationProviderSettings(prisma: PrismaClient, registry: ProviderRegistry) {
+  const repository = new PrismaProviderSettingsRepository(prisma);
+  const store = new ProviderSettingsStore(repository);
+  await store.load();
+  const webhooks = new ProviderWebhookSwitch(store, { [ProviderCode.BALLDONTLIE]: TEST_BALLDONTLIE_WEBHOOK_SECRET });
+  return {
+    store,
+    webhooks,
+    webhookProviderIds: () => webhooks.onProviderIds(),
+    providers: providerLookupOf(store, registry),
+    settingsService: new ProviderSettingsService({ repository, store, webhooks }),
+  };
+}
+
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
   return app;
@@ -272,6 +297,12 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   });
   await settings.load();
   appSettings = settings;
+  // The Provider rows (#1997), read once as the app reads them when it is ready; BALLDONTLIE's
+  // webhooks are signed with the test secret. No adapter is built from them: a test registers
+  // the providers it needs.
+  const {
+    store: providerSettings, webhooks: providerWebhooks, webhookProviderIds, providers, settingsService: providerSettingsService,
+  } = await integrationProviderSettings(prisma, providerRegistry);
   // The one reader of PLAN_CONFIG, as in index.ts: the outbox and the routes share it.
   const planEntitlements = new PlanEntitlementsService({
     leagues: new PrismaLeagueRepository(prisma),
@@ -322,9 +353,9 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     sportEvents: new PrismaSportEventRepository(prisma),
     participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
     syncRuns: new PrismaProviderSyncRunRepository(prisma),
-    ingestionConfigReader: ingestionConfigService,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
-    webhookProviderIds: [],
+    providerSettings,
+    webhooks: providerWebhooks,
     jobHistory: new PrismaBackgroundJobRepository(prisma),
     jobs: backgroundJobs.queue,
   });
@@ -334,7 +365,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
-    sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providerRegistry).sportEvents,
+    sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providers).sportEvents,
     syncRuns: providerSyncRuns,
     jobs: backgroundJobs.queue,
   });
@@ -387,12 +418,12 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, {
-    prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, domainEvents, leaderboards, schedule: ingestionConfigService, webhookProviderIds: [],
+    prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, domainEvents, leaderboards, webhookProviderIds,
   });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
-  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providerRegistry, schedule: ingestionConfigService, webhookProviderIds: [] });
+  testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providers, webhookProviderIds });
   const profiles = createProfileServices(prisma, testApp.log);
   testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
@@ -405,7 +436,14 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     sportEvents: new PrismaSportEventRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
   });
-  testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry, leagueEventsSync, activity });
+  testApp.register(ingestionModule, {
+    prefix: '/api/v1/ingestion',
+    ingestionService,
+    providerRegistry,
+    leagueEventsSync,
+    activity,
+    providerSettings: providerSettingsService,
+  });
   testApp.register(activityModule, { prefix: '/api/v1/activity', activity });
   testApp.register(customersModule, {
     prefix: '/api/v1/customers',
@@ -431,7 +469,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
       sportEvents: new PrismaSportEventRepository(prisma),
       jobs: backgroundJobs.queue,
     }),
-    balldontlieSigningSecret: TEST_BALLDONTLIE_WEBHOOK_SECRET,
+    webhooks: providerWebhooks,
+    providerSettings,
   });
   testApp.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest: outbox.test });
 

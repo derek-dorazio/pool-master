@@ -2114,7 +2114,7 @@ export interface paths {
         put?: never;
         /**
          * Import a tour's event year from a provider
-         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when its metadata.tour equals the sport league's matchKeyword, ignoring case. Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
+         * @description Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when it is of the provider league the sport league's selected provider mapping names (#1997). Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to the provider; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.
          */
         post: operations["importEventYearFromProvider"];
         delete?: never;
@@ -2923,7 +2923,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport league
-         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. eventSyncProviderId turns the league's event sync on (ADR 0011) or off with null: 404 PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one not covering the league's sport, 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced league has no match keyword. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.
+         * @description Setting currentEventYear is "set as current": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.
          */
         patch: operations["updateSportLeague"];
         trace?: never;
@@ -2936,8 +2936,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List a sport league's syncs with their health, latest run and next run
-         * @description The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. Health follows the Sports page's rule from that sync's latest run; the next run comes from the one ingestion schedule, or none while the webhook drives it. Root admin only.
+         * List a sport league's syncs with their health, latest run and what drives them
+         * @description The League page's Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. Health follows the Sports page's rule from that sync's latest run; live scores follow the webhook while the provider's webhooks are on, and every other sync runs on the one ingestion schedule. Root admin only.
          */
         get: operations["listSportLeagueSyncs"];
         put?: never;
@@ -3524,8 +3524,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List sports-data providers with their live health
-         * @description Every registered provider, each with a live health check made for this request, the sports ingestion is scheduled for, and how many of its events are scheduled or in progress.
+         * List sports-data providers with their live health and settings
+         * @description Every provider with a Provider row or running in this task, each with a live health check made for this request (none for one not running), the sports its adapter covers, how many of its events are scheduled or in progress, and its settings and leagues (#1997).
          */
         get: operations["listProviders"];
         put?: never;
@@ -3534,6 +3534,46 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/provider-settings/{providerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a provider's settings
+         * @description The Providers page's edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. 404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. 422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider's signing secret is not set in this environment. Root admin only.
+         */
+        patch: operations["updateProviderSettings"];
+        trace?: never;
+    };
+    "/api/v1/ingestion/provider-settings/{providerId}/leagues/{providerLeagueId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change one of a provider's leagues
+         * @description The Providers page's league edit (#1997); omitted fields are left alone. The quiet window and typical game length are taken by every task within a minute; enabling a league takes effect when the server tasks next start. 404 PROVIDER_LEAGUE_NOT_FOUND when the provider has no such league. Root admin only.
+         */
+        patch: operations["updateProviderLeague"];
         trace?: never;
     };
     "/api/v1/ingestion/sync-runs": {
@@ -3747,7 +3787,7 @@ export interface paths {
         put?: never;
         /**
          * Receive a BALLDONTLIE webhook notification
-         * @description Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment's endpoint secret; several, separated by commas or spaces, while the secret rotates, any one of which may match), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while no secret is configured. A verified notification about a game or tournament linked to an in-progress event queues one live-score sync of that event, due about a minute later; notifications arriving while it waits queue nothing more. The sync reads the provider's current scores, so the notification's own contents are never written. A notification about nothing linked, or of a type PoolMaster does not act on, is acknowledged and dropped. Every verified delivery answers 200, so the provider does not retry it.
+         * @description Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment's endpoint secret; several, separated by commas or spaces, while the secret rotates, any one of which may match), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while the provider's webhooks are off: switched off on the Providers page, or no secret configured. A verified notification about a game or tournament linked to an in-progress event queues one live-score sync of that event, due about a minute later; notifications arriving while it waits queue nothing more. The sync reads the provider's current scores, so the notification's own contents are never written. A notification about nothing linked, or of a type PoolMaster does not act on for any of the provider's enabled leagues, is acknowledged and dropped. Every verified delivery answers 200, so the provider does not retry it.
          */
         post: operations["receiveBalldontlieWebhook"];
         delete?: never;
@@ -4668,7 +4708,6 @@ export interface components {
         };
         /** @description Partial ingestion schedule update: only the policies and properties it names change. */
         IngestionScheduleConfigPatch: {
-            scheduledSports?: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
             /** @description Partial feed-scheduling update payload. */
             healthCheck?: {
                 /** @description Whether the feed should be scheduled automatically. */
@@ -4716,23 +4755,6 @@ export interface components {
         };
         /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league. */
         IngestionScheduleConfig: {
-            /**
-             * @description Sports that scheduled ingestion is allowed to run automatically.
-             * @default [
-             *       "GOLF",
-             *       "HORSE_RACING",
-             *       "AUTO_RACING",
-             *       "CYCLING",
-             *       "RUNNING",
-             *       "BASKETBALL",
-             *       "AMERICAN_FOOTBALL",
-             *       "HOCKEY",
-             *       "BASEBALL",
-             *       "SOCCER",
-             *       "TENNIS"
-             *     ]
-             */
-            scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
             /** @description Scheduling policy for provider health checks. */
             healthCheck: {
                 /** @description Whether the feed should be scheduled automatically. */
@@ -9651,6 +9673,32 @@ export interface components {
                 updatedAt: string;
             }[];
         };
+        /** @description A sport league's link to one provider's league (#1997). */
+        SportLeagueProviderMappingDto: {
+            /**
+             * Format: uuid
+             * @description The mapping.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The provider league the sport league is mapped to (ProviderLeagueDto).
+             */
+            providerLeagueId: string;
+            /** @description The provider's own code for its league, e.g. "nfl". */
+            providerLeagueCode: string;
+            /** @description The provider's own name for its league, e.g. "NFL". */
+            providerLeagueName: string;
+            /**
+             * @description The provider.
+             * @enum {string}
+             */
+            providerCode: "BALLDONTLIE";
+            /** @description The provider's name, e.g. "BALLDONTLIE". */
+            providerName: string;
+            /** @description The id the provider's events carry as their providerId (SportEventDto.providerId). */
+            providerId: string;
+        };
         /** @description A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
         SportLeagueDto: {
             /**
@@ -9670,14 +9718,36 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
-            /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
-            matchKeyword: string | null;
             /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
             currentEventYear: number | null;
             /** @description Whether the sport league is in use; a read filter, not a write lock. */
             isActive: boolean;
-            /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
-            eventSyncProviderId: string | null;
+            /** @description The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced. */
+            selectedProviderMapping: {
+                /**
+                 * Format: uuid
+                 * @description The mapping.
+                 */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The provider league the sport league is mapped to (ProviderLeagueDto).
+                 */
+                providerLeagueId: string;
+                /** @description The provider's own code for its league, e.g. "nfl". */
+                providerLeagueCode: string;
+                /** @description The provider's own name for its league, e.g. "NFL". */
+                providerLeagueName: string;
+                /**
+                 * @description The provider.
+                 * @enum {string}
+                 */
+                providerCode: "BALLDONTLIE";
+                /** @description The provider's name, e.g. "BALLDONTLIE". */
+                providerName: string;
+                /** @description The id the provider's events carry as their providerId (SportEventDto.providerId). */
+                providerId: string;
+            } | null;
             /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
             autoReleaseDaysBeforeStart: number | null;
             /**
@@ -9769,14 +9839,36 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
-                matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
-                /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
-                eventSyncProviderId: string | null;
+                /** @description The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced. */
+                selectedProviderMapping: {
+                    /**
+                     * Format: uuid
+                     * @description The mapping.
+                     */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The provider league the sport league is mapped to (ProviderLeagueDto).
+                     */
+                    providerLeagueId: string;
+                    /** @description The provider's own code for its league, e.g. "nfl". */
+                    providerLeagueCode: string;
+                    /** @description The provider's own name for its league, e.g. "NFL". */
+                    providerLeagueName: string;
+                    /**
+                     * @description The provider.
+                     * @enum {string}
+                     */
+                    providerCode: "BALLDONTLIE";
+                    /** @description The provider's name, e.g. "BALLDONTLIE". */
+                    providerName: string;
+                    /** @description The id the provider's events carry as their providerId (SportEventDto.providerId). */
+                    providerId: string;
+                } | null;
                 /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
                 autoReleaseDaysBeforeStart: number | null;
                 /**
@@ -9859,14 +9951,36 @@ export interface components {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
-                /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
-                matchKeyword: string | null;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
                 isActive: boolean;
-                /** @description The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events. */
-                eventSyncProviderId: string | null;
+                /** @description The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced. */
+                selectedProviderMapping: {
+                    /**
+                     * Format: uuid
+                     * @description The mapping.
+                     */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The provider league the sport league is mapped to (ProviderLeagueDto).
+                     */
+                    providerLeagueId: string;
+                    /** @description The provider's own code for its league, e.g. "nfl". */
+                    providerLeagueCode: string;
+                    /** @description The provider's own name for its league, e.g. "NFL". */
+                    providerLeagueName: string;
+                    /**
+                     * @description The provider.
+                     * @enum {string}
+                     */
+                    providerCode: "BALLDONTLIE";
+                    /** @description The provider's name, e.g. "BALLDONTLIE". */
+                    providerName: string;
+                    /** @description The id the provider's events carry as their providerId (SportEventDto.providerId). */
+                    providerId: string;
+                } | null;
                 /** @description How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league. */
                 autoReleaseDaysBeforeStart: number | null;
                 /**
@@ -9937,8 +10051,6 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Unique within the sport. */
             name: string;
-            /** @description Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import. */
-            matchKeyword?: string;
             /**
              * @description FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
              * @enum {string}
@@ -9958,13 +10070,14 @@ export interface components {
         /** @description Changes to a sport league; omitted fields are left alone. */
         UpdateSportLeagueRequest: {
             name?: string;
-            /** @description null clears it. */
-            matchKeyword?: string | null;
             isActive?: boolean;
             /** @description Days before an event's start that its automatic release begins, 1 to 30; null turns automatic release off for the sport league. */
             autoReleaseDaysBeforeStart?: number | null;
-            /** @description Turns the sport league's event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league's sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league's events by it. Clearing the keyword of a synced league is refused the same way. */
-            eventSyncProviderId?: string | null;
+            /**
+             * Format: uuid
+             * @description Turns the sport league's event sync on with that provider league (a ProviderLeagueDto id), mapping the sport league to it when it is not yet, or off with null, which keeps the mapping. 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist; 422 PROVIDER_SPORT_MISMATCH for one of another sport; 422 PROVIDER_NOT_FOUND when its provider or the league is switched off or not running.
+             */
+            syncProviderLeagueId?: string | null;
             /** @description Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in. */
             currentEventYear?: number;
             /**
@@ -10287,11 +10400,6 @@ export interface components {
                 /** @description Rows it created or updated; null unless it completed and counted them. */
                 changedCount: number | null;
             } | null;
-            /**
-             * Format: date-time
-             * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-             */
-            nextRunAt: string | null;
         };
         /** @description A sport league's syncs. */
         SportLeagueSyncListResponse: {
@@ -10336,11 +10444,6 @@ export interface components {
                     /** @description Rows it created or updated; null unless it completed and counted them. */
                     changedCount: number | null;
                 } | null;
-                /**
-                 * Format: date-time
-                 * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-                 */
-                nextRunAt: string | null;
             }[];
         };
         /** @description One event on the League page's Events grid. */
@@ -10701,11 +10804,6 @@ export interface components {
                     /** @description Rows it created or updated; null unless it completed and counted them. */
                     changedCount: number | null;
                 } | null;
-                /**
-                 * Format: date-time
-                 * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-                 */
-                nextRunAt: string | null;
             }[];
             /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
             issues: ({
@@ -10890,11 +10988,6 @@ export interface components {
                         /** @description Rows it created or updated; null unless it completed and counted them. */
                         changedCount: number | null;
                     } | null;
-                    /**
-                     * Format: date-time
-                     * @description When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-                     */
-                    nextRunAt: string | null;
                 }[];
                 /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
                 issues: ({
@@ -12056,7 +12149,7 @@ export interface components {
         ImportSportEventYearFromProviderRequest: {
             /**
              * Format: uuid
-             * @description The tour. Its matchKeyword must equal the provider's tour name for an event (case-insensitive), e.g. "PGA TOUR"; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when it has none.
+             * @description The sport league. Its events are the provider league its selected provider mapping names; 422 SPORT_LEAGUE_NOT_SYNCED when it has none.
              */
             sportLeagueId: string;
             /** @description Provider events starting in this calendar year (UTC) are imported, as editions branded with it. */
@@ -16112,23 +16205,6 @@ export interface components {
             } | null;
             /** @description The value in use. */
             value: {
-                /**
-                 * @description Sports that scheduled ingestion is allowed to run automatically.
-                 * @default [
-                 *       "GOLF",
-                 *       "HORSE_RACING",
-                 *       "AUTO_RACING",
-                 *       "CYCLING",
-                 *       "RUNNING",
-                 *       "BASKETBALL",
-                 *       "AMERICAN_FOOTBALL",
-                 *       "HOCKEY",
-                 *       "BASEBALL",
-                 *       "SOCCER",
-                 *       "TENNIS"
-                 *     ]
-                 */
-                scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -16176,23 +16252,6 @@ export interface components {
             };
             /** @description The value a reset would store. */
             defaults: {
-                /**
-                 * @description Sports that scheduled ingestion is allowed to run automatically.
-                 * @default [
-                 *       "GOLF",
-                 *       "HORSE_RACING",
-                 *       "AUTO_RACING",
-                 *       "CYCLING",
-                 *       "RUNNING",
-                 *       "BASKETBALL",
-                 *       "AMERICAN_FOOTBALL",
-                 *       "HOCKEY",
-                 *       "BASEBALL",
-                 *       "SOCCER",
-                 *       "TENNIS"
-                 *     ]
-                 */
-                scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -16868,23 +16927,6 @@ export interface components {
                 } | null;
                 /** @description The value in use. */
                 value: {
-                    /**
-                     * @description Sports that scheduled ingestion is allowed to run automatically.
-                     * @default [
-                     *       "GOLF",
-                     *       "HORSE_RACING",
-                     *       "AUTO_RACING",
-                     *       "CYCLING",
-                     *       "RUNNING",
-                     *       "BASKETBALL",
-                     *       "AMERICAN_FOOTBALL",
-                     *       "HOCKEY",
-                     *       "BASEBALL",
-                     *       "SOCCER",
-                     *       "TENNIS"
-                     *     ]
-                     */
-                    scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -16932,23 +16974,6 @@ export interface components {
                 };
                 /** @description The value a reset would store. */
                 defaults: {
-                    /**
-                     * @description Sports that scheduled ingestion is allowed to run automatically.
-                     * @default [
-                     *       "GOLF",
-                     *       "HORSE_RACING",
-                     *       "AUTO_RACING",
-                     *       "CYCLING",
-                     *       "RUNNING",
-                     *       "BASKETBALL",
-                     *       "AMERICAN_FOOTBALL",
-                     *       "HOCKEY",
-                     *       "BASEBALL",
-                     *       "SOCCER",
-                     *       "TENNIS"
-                     *     ]
-                     */
-                    scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -17599,8 +17624,6 @@ export interface components {
             key: "INGESTION_SCHEDULE_CONFIG";
             /** @description The whole new value. */
             value: {
-                /** @description Sports that scheduled ingestion is allowed to run automatically. */
-                scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -17957,23 +17980,6 @@ export interface components {
             } | null;
             /** @description The stored value before the save; null when the save created the first stored value. */
             previousValue: {
-                /**
-                 * @description Sports that scheduled ingestion is allowed to run automatically.
-                 * @default [
-                 *       "GOLF",
-                 *       "HORSE_RACING",
-                 *       "AUTO_RACING",
-                 *       "CYCLING",
-                 *       "RUNNING",
-                 *       "BASKETBALL",
-                 *       "AMERICAN_FOOTBALL",
-                 *       "HOCKEY",
-                 *       "BASEBALL",
-                 *       "SOCCER",
-                 *       "TENNIS"
-                 *     ]
-                 */
-                scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -18021,23 +18027,6 @@ export interface components {
             } | null;
             /** @description The value the save stored. */
             newValue: {
-                /**
-                 * @description Sports that scheduled ingestion is allowed to run automatically.
-                 * @default [
-                 *       "GOLF",
-                 *       "HORSE_RACING",
-                 *       "AUTO_RACING",
-                 *       "CYCLING",
-                 *       "RUNNING",
-                 *       "BASKETBALL",
-                 *       "AMERICAN_FOOTBALL",
-                 *       "HOCKEY",
-                 *       "BASEBALL",
-                 *       "SOCCER",
-                 *       "TENNIS"
-                 *     ]
-                 */
-                scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description Scheduling policy for provider health checks. */
                 healthCheck: {
                     /** @description Whether the feed should be scheduled automatically. */
@@ -18685,23 +18674,6 @@ export interface components {
                 } | null;
                 /** @description The stored value before the save; null when the save created the first stored value. */
                 previousValue: {
-                    /**
-                     * @description Sports that scheduled ingestion is allowed to run automatically.
-                     * @default [
-                     *       "GOLF",
-                     *       "HORSE_RACING",
-                     *       "AUTO_RACING",
-                     *       "CYCLING",
-                     *       "RUNNING",
-                     *       "BASKETBALL",
-                     *       "AMERICAN_FOOTBALL",
-                     *       "HOCKEY",
-                     *       "BASEBALL",
-                     *       "SOCCER",
-                     *       "TENNIS"
-                     *     ]
-                     */
-                    scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -18749,23 +18721,6 @@ export interface components {
                 } | null;
                 /** @description The value the save stored. */
                 newValue: {
-                    /**
-                     * @description Sports that scheduled ingestion is allowed to run automatically.
-                     * @default [
-                     *       "GOLF",
-                     *       "HORSE_RACING",
-                     *       "AUTO_RACING",
-                     *       "CYCLING",
-                     *       "RUNNING",
-                     *       "BASKETBALL",
-                     *       "AMERICAN_FOOTBALL",
-                     *       "HOCKEY",
-                     *       "BASEBALL",
-                     *       "SOCCER",
-                     *       "TENNIS"
-                     *     ]
-                     */
-                    scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                     /** @description Scheduling policy for provider health checks. */
                     healthCheck: {
                         /** @description Whether the feed should be scheduled automatically. */
@@ -24071,27 +24026,119 @@ export interface components {
              */
             mockEventState?: "open" | "locked" | "live" | "completed" | "golf-pre-live" | "golf-r1-in-progress" | "golf-r1-complete" | "golf-r2-complete" | "golf-correction" | "golf-r4-complete-pending-final" | "golf-playoff" | "golf-completed" | "golf-late-correction";
         };
-        /** @description A registered sports-data provider with its live health. */
+        /** @description One of a provider's own leagues (#1997). */
+        ProviderLeagueDto: {
+            /**
+             * Format: uuid
+             * @description The provider league.
+             */
+            id: string;
+            /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+            code: string;
+            /** @description The provider's own name for the league. */
+            name: string;
+            /**
+             * @description The sport the league plays.
+             * @enum {string}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /**
+             * @description Which of the provider's webhook events the league sends for its games.
+             * @enum {string}
+             */
+            webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+            /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+            quietAfterMinutes: number;
+            /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+            typicalGameMinutes: number;
+            /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+            isEnabled: boolean;
+        };
+        /** @description A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager. */
+        ProviderSettingsDto: {
+            /**
+             * Format: uuid
+             * @description The Provider row.
+             */
+            id: string;
+            /**
+             * @description Which provider the row is; it picks the adapter.
+             * @enum {string}
+             */
+            code: "BALLDONTLIE";
+            /** @description The provider's display name. */
+            name: string;
+            /**
+             * Format: uri
+             * @description Where the adapter calls the provider. Taken by each task within a minute.
+             */
+            baseUrl: string;
+            /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+            requestsPerMinute: number;
+            /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+            webhooksEnabled: boolean;
+            /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+            webhookSecretSet: boolean;
+            /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+            webhookPollMinutes: number;
+            /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+            webhookRoundPollMinutes: number;
+            /** @description Whether the provider plan includes player box scores. */
+            hasPlayerStats: boolean;
+            /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+            isEnabled: boolean;
+            /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
+            priority: number;
+            /** @description The provider's own leagues, by code. */
+            leagues: {
+                /**
+                 * Format: uuid
+                 * @description The provider league.
+                 */
+                id: string;
+                /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                code: string;
+                /** @description The provider's own name for the league. */
+                name: string;
+                /**
+                 * @description The sport the league plays.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /**
+                 * @description Which of the provider's webhook events the league sends for its games.
+                 * @enum {string}
+                 */
+                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                quietAfterMinutes: number;
+                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                typicalGameMinutes: number;
+                /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+            }[];
+        };
+        /** @description A sports-data provider with its live health and settings. */
         ProviderSummaryDto: {
-            /** @description Registered provider identifier. */
+            /** @description The id the provider's events carry as their providerId. */
             providerId: string;
             /** @description Provider display name. */
             providerName: string;
             /**
-             * @description Health from a live check made for this request.
-             * @enum {string}
+             * @description Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
+             * @enum {string|null}
              */
-            status: "HEALTHY" | "DEGRADED" | "DOWN";
-            /** @description Provider-reported error rate over the last hour. */
-            errorRate: number;
-            /** @description Provider-reported p95 latency. */
-            latencyMs: number;
+            status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
+            /** @description Provider-reported error rate over the last hour; null when the provider is not running. */
+            errorRate: number | null;
+            /** @description Provider-reported p95 latency; null when the provider is not running. */
+            latencyMs: number | null;
             /**
              * Format: date-time
              * @description When one of the provider's events last changed, else its last successful poll; null when neither is known.
              */
             lastEventAt: string | null;
-            /** @description Sports the provider covers that ingestion is scheduled for. */
+            /** @description Sports the provider's running adapter covers. */
             sportsCovered: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
             /** @description The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them. */
             primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
@@ -24099,37 +24146,253 @@ export interface components {
             activeEventCount: number;
             /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
             supportsLiveSimulation: boolean;
-            /** @description The request rate core-api holds its calls to the provider to, a minute: the provider plan's limit, set in the deployment's provider bindings. Null when the provider is not paced. */
+            /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
             requestsPerMinute: number | null;
-            /** @description True when the provider's webhooks are on: its signing secret is set, so its notifications are accepted. */
+            /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
             webhooksEnabled: boolean;
-            /** @description The active sport leagues whose events this provider's sync creates. */
+            /** @description The active sport leagues whose selected provider mapping is to one of this provider's leagues. */
             syncedSportLeagueCount: number;
             /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
             rateLimitedJobsLast24h: number;
+            /** @description The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed). */
+            settings: {
+                /**
+                 * Format: uuid
+                 * @description The Provider row.
+                 */
+                id: string;
+                /**
+                 * @description Which provider the row is; it picks the adapter.
+                 * @enum {string}
+                 */
+                code: "BALLDONTLIE";
+                /** @description The provider's display name. */
+                name: string;
+                /**
+                 * Format: uri
+                 * @description Where the adapter calls the provider. Taken by each task within a minute.
+                 */
+                baseUrl: string;
+                /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+                requestsPerMinute: number;
+                /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+                webhooksEnabled: boolean;
+                /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+                webhookSecretSet: boolean;
+                /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+                webhookPollMinutes: number;
+                /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+                webhookRoundPollMinutes: number;
+                /** @description Whether the provider plan includes player box scores. */
+                hasPlayerStats: boolean;
+                /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+                /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
+                priority: number;
+                /** @description The provider's own leagues, by code. */
+                leagues: {
+                    /**
+                     * Format: uuid
+                     * @description The provider league.
+                     */
+                    id: string;
+                    /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                    code: string;
+                    /** @description The provider's own name for the league. */
+                    name: string;
+                    /**
+                     * @description The sport the league plays.
+                     * @enum {string}
+                     */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /**
+                     * @description Which of the provider's webhook events the league sends for its games.
+                     * @enum {string}
+                     */
+                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                    /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                    quietAfterMinutes: number;
+                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                    typicalGameMinutes: number;
+                    /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                    isEnabled: boolean;
+                }[];
+            } | null;
         };
-        /** @description Every registered provider. */
+        /** @description Changes to a provider's settings; omitted fields are left alone. */
+        UpdateProviderRequest: {
+            /**
+             * Format: uri
+             * @description An https URL.
+             */
+            baseUrl?: string;
+            requestsPerMinute?: number;
+            /** @description true is refused with 422 PROVIDER_WEBHOOK_SECRET_MISSING while the provider's signing secret is not set in this environment. */
+            webhooksEnabled?: boolean;
+            webhookPollMinutes?: number;
+            webhookRoundPollMinutes?: number;
+            hasPlayerStats?: boolean;
+            isEnabled?: boolean;
+            /** @description 409 PROVIDER_PRIORITY_TAKEN when another provider has it. */
+            priority?: number;
+        };
+        /** @description A provider's settings as saved. */
+        ProviderSettingsResponse: {
+            /** @description A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager. */
+            provider: {
+                /**
+                 * Format: uuid
+                 * @description The Provider row.
+                 */
+                id: string;
+                /**
+                 * @description Which provider the row is; it picks the adapter.
+                 * @enum {string}
+                 */
+                code: "BALLDONTLIE";
+                /** @description The provider's display name. */
+                name: string;
+                /**
+                 * Format: uri
+                 * @description Where the adapter calls the provider. Taken by each task within a minute.
+                 */
+                baseUrl: string;
+                /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+                requestsPerMinute: number;
+                /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+                webhooksEnabled: boolean;
+                /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+                webhookSecretSet: boolean;
+                /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+                webhookPollMinutes: number;
+                /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+                webhookRoundPollMinutes: number;
+                /** @description Whether the provider plan includes player box scores. */
+                hasPlayerStats: boolean;
+                /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+                /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
+                priority: number;
+                /** @description The provider's own leagues, by code. */
+                leagues: {
+                    /**
+                     * Format: uuid
+                     * @description The provider league.
+                     */
+                    id: string;
+                    /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                    code: string;
+                    /** @description The provider's own name for the league. */
+                    name: string;
+                    /**
+                     * @description The sport the league plays.
+                     * @enum {string}
+                     */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /**
+                     * @description Which of the provider's webhook events the league sends for its games.
+                     * @enum {string}
+                     */
+                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                    /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                    quietAfterMinutes: number;
+                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                    typicalGameMinutes: number;
+                    /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                    isEnabled: boolean;
+                }[];
+            };
+        };
+        /** @description Changes to one of a provider's leagues; omitted fields are left alone. */
+        UpdateProviderLeagueRequest: {
+            quietAfterMinutes?: number;
+            typicalGameMinutes?: number;
+            isEnabled?: boolean;
+        };
+        /** @description A provider league as saved. */
+        ProviderLeagueResponse: {
+            /** @description One of a provider's own leagues (#1997). */
+            league: {
+                /**
+                 * Format: uuid
+                 * @description The provider league.
+                 */
+                id: string;
+                /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                code: string;
+                /** @description The provider's own name for the league. */
+                name: string;
+                /**
+                 * @description The sport the league plays.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /**
+                 * @description Which of the provider's webhook events the league sends for its games.
+                 * @enum {string}
+                 */
+                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                quietAfterMinutes: number;
+                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                typicalGameMinutes: number;
+                /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+            };
+        };
+        /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
+        ProviderSettingRangesDto: {
+            /** @description A provider's requestsPerMinute. */
+            requestsPerMinute: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
+            pollMinutes: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider's priority. */
+            priority: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
+            leagueMinutes: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+        };
+        /** @description Every registered provider, and the ranges their settings may take. */
         ProviderListResponse: {
             providers: {
-                /** @description Registered provider identifier. */
+                /** @description The id the provider's events carry as their providerId. */
                 providerId: string;
                 /** @description Provider display name. */
                 providerName: string;
                 /**
-                 * @description Health from a live check made for this request.
-                 * @enum {string}
+                 * @description Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
+                 * @enum {string|null}
                  */
-                status: "HEALTHY" | "DEGRADED" | "DOWN";
-                /** @description Provider-reported error rate over the last hour. */
-                errorRate: number;
-                /** @description Provider-reported p95 latency. */
-                latencyMs: number;
+                status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
+                /** @description Provider-reported error rate over the last hour; null when the provider is not running. */
+                errorRate: number | null;
+                /** @description Provider-reported p95 latency; null when the provider is not running. */
+                latencyMs: number | null;
                 /**
                  * Format: date-time
                  * @description When one of the provider's events last changed, else its last successful poll; null when neither is known.
                  */
                 lastEventAt: string | null;
-                /** @description Sports the provider covers that ingestion is scheduled for. */
+                /** @description Sports the provider's running adapter covers. */
                 sportsCovered: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
                 /** @description The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them. */
                 primaryForSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
@@ -24137,15 +24400,110 @@ export interface components {
                 activeEventCount: number;
                 /** @description True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can. */
                 supportsLiveSimulation: boolean;
-                /** @description The request rate core-api holds its calls to the provider to, a minute: the provider plan's limit, set in the deployment's provider bindings. Null when the provider is not paced. */
+                /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
                 requestsPerMinute: number | null;
-                /** @description True when the provider's webhooks are on: its signing secret is set, so its notifications are accepted. */
+                /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
                 webhooksEnabled: boolean;
-                /** @description The active sport leagues whose events this provider's sync creates. */
+                /** @description The active sport leagues whose selected provider mapping is to one of this provider's leagues. */
                 syncedSportLeagueCount: number;
                 /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
                 rateLimitedJobsLast24h: number;
+                /** @description The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed). */
+                settings: {
+                    /**
+                     * Format: uuid
+                     * @description The Provider row.
+                     */
+                    id: string;
+                    /**
+                     * @description Which provider the row is; it picks the adapter.
+                     * @enum {string}
+                     */
+                    code: "BALLDONTLIE";
+                    /** @description The provider's display name. */
+                    name: string;
+                    /**
+                     * Format: uri
+                     * @description Where the adapter calls the provider. Taken by each task within a minute.
+                     */
+                    baseUrl: string;
+                    /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+                    requestsPerMinute: number;
+                    /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+                    webhooksEnabled: boolean;
+                    /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+                    webhookSecretSet: boolean;
+                    /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+                    webhookPollMinutes: number;
+                    /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+                    webhookRoundPollMinutes: number;
+                    /** @description Whether the provider plan includes player box scores. */
+                    hasPlayerStats: boolean;
+                    /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+                    isEnabled: boolean;
+                    /** @description Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start. */
+                    priority: number;
+                    /** @description The provider's own leagues, by code. */
+                    leagues: {
+                        /**
+                         * Format: uuid
+                         * @description The provider league.
+                         */
+                        id: string;
+                        /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                        code: string;
+                        /** @description The provider's own name for the league. */
+                        name: string;
+                        /**
+                         * @description The sport the league plays.
+                         * @enum {string}
+                         */
+                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                        /**
+                         * @description Which of the provider's webhook events the league sends for its games.
+                         * @enum {string}
+                         */
+                        webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                        /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                        quietAfterMinutes: number;
+                        /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                        typicalGameMinutes: number;
+                        /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                        isEnabled: boolean;
+                    }[];
+                } | null;
             }[];
+            /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
+            settingRanges: {
+                /** @description A provider's requestsPerMinute. */
+                requestsPerMinute: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
+                pollMinutes: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider's priority. */
+                priority: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
+                leagueMinutes: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+            };
         };
         /** @description One feed's sync against a provider, with its diagnostics. */
         ProviderSyncRunDto: {
@@ -24889,7 +25247,7 @@ export interface components {
         ProviderCatalogEventListQuery: {
             /** @enum {string} */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
+            /** @description Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter. */
             sportLeagueId?: string;
             /**
              * Format: date-time
@@ -37141,7 +37499,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Every registered provider. */
+            /** @description Every registered provider, and the ranges their settings may take. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -37161,6 +37519,152 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    updateProviderSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The Provider row (ProviderSettingsDto.id). */
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProviderRequest"];
+            };
+        };
+        responses: {
+            /** @description A provider's settings as saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSettingsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    updateProviderLeague: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The Provider row (ProviderSettingsDto.id). */
+                providerId: string;
+                /** @description The provider league (ProviderLeagueDto.id). */
+                providerLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProviderLeagueRequest"];
+            };
+        };
+        responses: {
+            /** @description A provider league as saved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderLeagueResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37446,7 +37950,7 @@ export interface operations {
         parameters: {
             query: {
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter. */
+                /** @description Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter. */
                 sportLeagueId?: string;
                 /** @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today. */
                 from?: string;

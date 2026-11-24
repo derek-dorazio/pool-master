@@ -21,8 +21,11 @@ import type {
 import {
   BracketAdvancement,
   getSportDefinition,
+  providerSourceIdOf,
   sportPlaysMatches,
   type Participant,
+  type ProviderLeagueSettings,
+  type ProviderSettings,
   type Sport,
   type SportLeague,
 } from '@poolmaster/shared/domain';
@@ -55,10 +58,12 @@ export interface RankingUploadPreviewRow {
 }
 
 /**
- * The registered sport data providers, as far as a sport league's event sync needs them: which
- * one an id names and the sports it covers. The app's `ProviderRegistry` is one.
+ * The providers as far as a sport league's event sync needs them (#1997): a provider league by id
+ * with its provider (the `ProviderSettingsStore`), and whether that provider is running here and
+ * covers a sport (the app's `ProviderRegistry`).
  */
 export interface SportDataProviderLookup {
+  findLeague(providerLeagueId: string): { provider: Pick<ProviderSettings, 'code' | 'name' | 'isEnabled'>; league: Pick<ProviderLeagueSettings, 'sport' | 'isEnabled' | 'code'> } | undefined;
   getProviderById(providerId: string): { sportsCovered: readonly Sport[] } | null;
 }
 
@@ -101,7 +106,7 @@ export class SportLeagueService {
    */
   async createSportLeague(
     sport: Sport,
-    input: { name: string; matchKeyword?: string; bracketAdvancement?: BracketAdvancement } & SportLeagueProfileIds,
+    input: { name: string; bracketAdvancement?: BracketAdvancement } & SportLeagueProfileIds,
   ): Promise<SportLeagueSummary> {
     const sportRow = await requireSport(this.deps.sports, sport);
     this.assertAdvancementFits(sport, input.bracketAdvancement);
@@ -116,7 +121,6 @@ export class SportLeagueService {
     const sportLeague = await this.deps.sportLeagues.create({
       sportId: sportRow.id,
       name: input.name,
-      matchKeyword: input.matchKeyword ?? null,
       bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
       tierProfileId: input.tierProfileId,
       pricingProfileId: input.pricingProfileId,
@@ -140,10 +144,11 @@ export class SportLeagueService {
    * it had, so switching a reseeded bracket to fixed would strand the winners of its unlinked
    * games. Sending the rule the league already has changes nothing and is allowed.
    *
-   * `eventSyncProviderId` turns the league's event sync on or off (ADR 0011, #1725): 404
-   * PROVIDER_NOT_FOUND for a provider not registered, 422 PROVIDER_SPORT_MISMATCH for one that
-   * does not cover the league's sport, and 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD while a synced
-   * league would be left without the keyword its events are found by.
+   * `syncProviderLeagueId` turns the league's event sync on with a provider league, mapping the
+   * league to it when it is not yet, or off with null (ADR 0011, #1997): 404
+   * PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of
+   * another sport, and 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not
+   * running here.
    *
    * `tierProfileId` and `pricingProfileId` pick the league's profiles (#1844): 404
    * TIER_PROFILE_NOT_FOUND or PRICING_PROFILE_NOT_FOUND for one that does not exist. An event
@@ -152,7 +157,7 @@ export class SportLeagueService {
    */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'matchKeyword' | 'isActive' | 'bracketAdvancement' | 'eventSyncProviderId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>
+    updates: Pick<SportLeagueUpdate, 'name' | 'isActive' | 'bracketAdvancement' | 'syncProviderLeagueId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>
       & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
@@ -176,11 +181,10 @@ export class SportLeagueService {
     }
     const updated = await this.deps.sportLeagues.update(sportLeagueId, {
       name: updates.name,
-      matchKeyword: updates.matchKeyword,
       isActive: updates.isActive,
       currentEventYear: updates.currentEventYear,
       bracketAdvancement: updates.bracketAdvancement,
-      eventSyncProviderId: updates.eventSyncProviderId,
+      syncProviderLeagueId: updates.syncProviderLeagueId,
       autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart,
       tierProfileId: updates.tierProfileId,
       pricingProfileId: updates.pricingProfileId,
@@ -191,8 +195,8 @@ export class SportLeagueService {
     if (updates.pricingProfileId !== undefined && updates.pricingProfileId !== sportLeague.pricingProfileId) {
       this.deps.logger?.info({ sportLeagueId, pricingProfileId: updates.pricingProfileId }, 'Set sport league pricing profile');
     }
-    if (updates.eventSyncProviderId !== undefined && updates.eventSyncProviderId !== sportLeague.eventSyncProviderId) {
-      this.deps.logger?.info({ sportLeagueId, eventSyncProviderId: updates.eventSyncProviderId }, 'Set sport league event sync');
+    if (updates.syncProviderLeagueId !== undefined && updates.syncProviderLeagueId !== (sportLeague.selectedProviderMapping?.providerLeagueId ?? null)) {
+      this.deps.logger?.info({ sportLeagueId, syncProviderLeagueId: updates.syncProviderLeagueId }, 'Set sport league event sync');
     }
     if (updates.autoReleaseDaysBeforeStart !== undefined && updates.autoReleaseDaysBeforeStart !== sportLeague.autoReleaseDaysBeforeStart) {
       this.deps.logger?.info({ sportLeagueId, autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }, 'Set sport league automatic release window');
@@ -203,35 +207,30 @@ export class SportLeagueService {
     return (await this.summarize([updated]))[0];
   }
 
-  /**
-   * A synced league needs a provider that is registered and covers its sport, and a match keyword
-   * to find its events by: checked when either the provider or the keyword changes.
-   */
+  /** A provider league a sport league syncs from must exist, play the league's sport, and be running here. */
   private async assertEventSyncFits(
     sportLeague: SportLeague,
-    updates: Pick<SportLeagueUpdate, 'matchKeyword' | 'eventSyncProviderId'>,
+    updates: Pick<SportLeagueUpdate, 'syncProviderLeagueId'>,
   ): Promise<void> {
-    const providerId = updates.eventSyncProviderId === undefined ? sportLeague.eventSyncProviderId : updates.eventSyncProviderId;
-    if (providerId === null) return;
-    if (updates.eventSyncProviderId !== undefined && updates.eventSyncProviderId !== null) {
-      const provider = this.deps.providers.getProviderById(providerId);
-      if (!provider) {
-        throw new SportCatalogError(`Provider ${providerId} was not found.`, 'PROVIDER_NOT_FOUND', 404);
-      }
-      const sportRow = await this.deps.sports.findById(sportLeague.sportId);
-      if (!sportRow || !provider.sportsCovered.includes(sportRow.sport)) {
-        throw new SportCatalogError(
-          `Provider ${providerId} does not cover ${sportRow?.sport ?? 'this sport league\'s sport'}, so it cannot sync ${sportLeague.name}'s events.`,
-          'PROVIDER_SPORT_MISMATCH',
-          422,
-        );
-      }
+    const providerLeagueId = updates.syncProviderLeagueId;
+    if (providerLeagueId === undefined || providerLeagueId === null) return;
+    const found = this.deps.providers.findLeague(providerLeagueId);
+    if (found === undefined) {
+      throw new SportCatalogError(`Provider league ${providerLeagueId} was not found.`, 'PROVIDER_LEAGUE_NOT_FOUND', 404);
     }
-    const matchKeyword = updates.matchKeyword === undefined ? sportLeague.matchKeyword : updates.matchKeyword;
-    if (!matchKeyword?.trim()) {
+    const sportRow = await this.deps.sports.findById(sportLeague.sportId);
+    if (!sportRow || found.league.sport !== sportRow.sport) {
       throw new SportCatalogError(
-        `${sportLeague.name} has no match keyword, so a sync cannot find its events.`,
-        'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD',
+        `${found.provider.name}'s ${found.league.code} plays ${found.league.sport}, so it cannot sync ${sportLeague.name}'s events.`,
+        'PROVIDER_SPORT_MISMATCH',
+        422,
+      );
+    }
+    const running = this.deps.providers.getProviderById(providerSourceIdOf(found.provider.code));
+    if (!found.provider.isEnabled || !found.league.isEnabled || !running?.sportsCovered.includes(sportRow.sport)) {
+      throw new SportCatalogError(
+        `${found.provider.name}'s ${found.league.code} is switched off or not running, so it cannot sync ${sportLeague.name}'s events.`,
+        'PROVIDER_NOT_FOUND',
         422,
       );
     }

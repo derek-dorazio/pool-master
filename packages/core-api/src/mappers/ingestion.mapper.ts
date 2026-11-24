@@ -5,7 +5,10 @@
  */
 import type {
   ProviderEventDto,
+  ProviderLeagueDto,
+  ProviderSettingsDto,
   ProviderManualSyncSubmissionResponse,
+  ProviderListResponse,
   ProviderSummaryDto,
   ProviderSyncRunDetailDto,
   ProviderSyncRunDetailsDto,
@@ -13,7 +16,16 @@ import type {
   UnmappedProviderParticipantDto,
 } from '@poolmaster/shared/dto';
 import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
-import type { ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import {
+  PROVIDER_LEAGUE_MINUTES_RANGE,
+  PROVIDER_POLL_MINUTES_RANGE,
+  PROVIDER_PRIORITY_RANGE,
+  PROVIDER_REQUESTS_PER_MINUTE_RANGE,
+  type ProviderLeagueSettings,
+  type ProviderSettings,
+  type ProviderSyncRun,
+  type ProviderSyncRunWithDetails,
+} from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
@@ -21,6 +33,19 @@ import type {
   ProviderSummary,
   UnmappedParticipant,
 } from '../modules/ingestion/ingestion-service';
+
+/** The provider list, with the ranges each setting may take, from the constants the API checks against. */
+export function toProviderListResponse(providers: readonly ProviderSummary[]): ProviderListResponse {
+  return {
+    providers: providers.map(toProviderSummaryDto),
+    settingRanges: {
+      requestsPerMinute: { ...PROVIDER_REQUESTS_PER_MINUTE_RANGE },
+      pollMinutes: { ...PROVIDER_POLL_MINUTES_RANGE },
+      priority: { ...PROVIDER_PRIORITY_RANGE },
+      leagueMinutes: { ...PROVIDER_LEAGUE_MINUTES_RANGE },
+    },
+  };
+}
 
 export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummaryDto {
   return {
@@ -38,6 +63,38 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     webhooksEnabled: provider.webhooksEnabled,
     syncedSportLeagueCount: provider.syncedSportLeagueCount,
     rateLimitedJobsLast24h: provider.rateLimitedJobsLast24h,
+    settings: provider.settings === null ? null : toProviderSettingsDto(provider.settings, provider.settings.webhookSecretSet),
+  };
+}
+
+export function toProviderSettingsDto(provider: ProviderSettings, webhookSecretSet: boolean): ProviderSettingsDto {
+  return {
+    id: provider.id,
+    code: provider.code,
+    name: provider.name,
+    baseUrl: provider.baseUrl,
+    requestsPerMinute: provider.requestsPerMinute,
+    webhooksEnabled: provider.webhooksEnabled,
+    webhookSecretSet,
+    webhookPollMinutes: provider.webhookPollMinutes,
+    webhookRoundPollMinutes: provider.webhookRoundPollMinutes,
+    hasPlayerStats: provider.hasPlayerStats,
+    isEnabled: provider.isEnabled,
+    priority: provider.priority,
+    leagues: provider.leagues.map(toProviderLeagueDto),
+  };
+}
+
+export function toProviderLeagueDto(league: ProviderLeagueSettings): ProviderLeagueDto {
+  return {
+    id: league.id,
+    code: league.code,
+    name: league.name,
+    sport: league.sport,
+    webhookEventSet: league.webhookEventSet,
+    quietAfterMinutes: league.quietAfterMinutes,
+    typicalGameMinutes: league.typicalGameMinutes,
+    isEnabled: league.isEnabled,
   };
 }
 

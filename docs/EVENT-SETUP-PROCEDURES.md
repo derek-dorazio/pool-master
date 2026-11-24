@@ -76,13 +76,12 @@ tour's ranked players (about 150), not the 80-golfer field used below.
 To create a whole year of those listed events at once, open the tour's page (`/manage/sports/golf/leagues/:leagueId`),
 pick the year on its tournament calendar, and choose *Import {year} from provider*. Every
 event the mock lists for that tour and year is created and linked for scores; ones the tour
-already has are skipped, so it is safe to run again. The tour's match keyword must be the
-mock's tour name exactly, `PGA TOUR` or `LPGA Tour` (#385). The import starts on the tour's
-event sync provider when it has one, else the sport's primary, and asks that provider for the
-tour's league alone; when the provider's plan does not include that league, the dialog says so
-(#1797). The single-event browse
-accepts that keyword too, as well as words in event names: whole words only, so `NBA` does
-not match "WNBA Playoffs".
+already has are skipped, so it is safe to run again. The import needs the tour synced: its
+selected provider league mapping names the provider and the provider league, and the import asks
+that provider for that league alone, keeping only events stamped with its code (#1997). A tour
+with no selected mapping is refused (`SPORT_LEAGUE_NOT_SYNCED`); when the provider's plan does
+not include that league, the dialog says so (#1797). The single-event browse lists every event
+the provider gives for the sport, narrowed to the synced league's provider league when it has one.
 
 ## 3. Check the rounds
 

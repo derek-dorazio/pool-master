@@ -3,10 +3,26 @@ import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingesti
 import {
   loadProviderBindingsFromEnv,
   registerConfiguredProviders,
+  type ProviderRows,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-bindings';
+import type { ProviderSettings } from '../../../packages/shared/domain';
+import { providerByCode } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
+import { balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
+import { fakeLogger } from '../../support/fake-logger';
 
 /** A local run. `NODE_ENV` is what a bundler or Jest might set; it must not matter. */
 const LOCAL = { POOLMASTER_ENVIRONMENT: 'development' } as const;
+
+function rowsOf(providers: readonly ProviderSettings[]): ProviderRows {
+  return {
+    all: () => providers,
+    byCode: (code) => providerByCode(providers, code),
+    enabledLeagues: (code) => providerByCode(providers, code)?.leagues.filter((league) => league.isEnabled) ?? [],
+  };
+}
+
+/** No Provider rows: only the environment-bound mock can register. */
+const NO_ROWS = rowsOf([]);
 
 describe('provider bindings', () => {
   it('loads provider binding configuration from environment variables', () => {
@@ -30,7 +46,7 @@ describe('provider bindings', () => {
   it('registers the mock provider as the primary golf provider when selected', () => {
     const registry = new ProviderRegistry();
 
-    registerConfiguredProviders(registry, {
+    registerConfiguredProviders(registry, NO_ROWS, {
       ...LOCAL,
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
@@ -49,7 +65,7 @@ describe('provider bindings', () => {
     const registry = new ProviderRegistry();
 
     expect(() =>
-      registerConfiguredProviders(registry, {
+      registerConfiguredProviders(registry, NO_ROWS, {
         NODE_ENV: 'production',
         POOLMASTER_ENVIRONMENT: 'prod',
         SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
@@ -69,14 +85,14 @@ describe('provider bindings', () => {
     const qaRegistry = new ProviderRegistry();
 
     expect(() =>
-      registerConfiguredProviders(registry, {
+      registerConfiguredProviders(registry, NO_ROWS, {
         NODE_ENV: 'production',
         POOLMASTER_ENVIRONMENT: 'prod',
       }),
     ).toThrow('No sport data provider is configured for this runtime.');
 
     expect(() =>
-      registerConfiguredProviders(qaRegistry, {
+      registerConfiguredProviders(qaRegistry, NO_ROWS, {
         NODE_ENV: 'production',
         POOLMASTER_ENVIRONMENT: 'qa',
       }),
@@ -87,7 +103,7 @@ describe('provider bindings', () => {
     const registry = new ProviderRegistry();
 
     expect(() =>
-      registerConfiguredProviders(registry, {
+      registerConfiguredProviders(registry, NO_ROWS, {
         NODE_ENV: 'production',
         POOLMASTER_ENVIRONMENT: 'prod',
         SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME: 'true',
@@ -108,7 +124,7 @@ describe('provider bindings', () => {
     const qaRegistry = new ProviderRegistry();
     const productionOverrideRegistry = new ProviderRegistry();
 
-    registerConfiguredProviders(qaRegistry, {
+    registerConfiguredProviders(qaRegistry, NO_ROWS, {
       NODE_ENV: 'production',
       POOLMASTER_ENVIRONMENT: 'qa',
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
@@ -121,7 +137,7 @@ describe('provider bindings', () => {
       }),
     });
 
-    registerConfiguredProviders(productionOverrideRegistry, {
+    registerConfiguredProviders(productionOverrideRegistry, NO_ROWS, {
       NODE_ENV: 'production',
       POOLMASTER_ENVIRONMENT: 'prod',
       SPORT_DATA_ALLOW_MOCK_PROVIDER_IN_STRICT_RUNTIME: 'true',
@@ -142,7 +158,7 @@ describe('provider bindings', () => {
 
   it('rejects the mock provider in prod with the exact values Terraform sets (NODE_ENV=production, POOLMASTER_ENVIRONMENT=prod)', () => {
     expect(() =>
-      registerConfiguredProviders(new ProviderRegistry(), {
+      registerConfiguredProviders(new ProviderRegistry(), NO_ROWS, {
         NODE_ENV: 'production',
         POOLMASTER_ENVIRONMENT: 'prod',
         SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
@@ -156,7 +172,7 @@ describe('provider bindings', () => {
   it('ignores the retired ENVIRONMENT variable, so setting it cannot change provider selection', () => {
     const registry = new ProviderRegistry();
 
-    registerConfiguredProviders(registry, {
+    registerConfiguredProviders(registry, NO_ROWS, {
       ENVIRONMENT: 'prod',
       POOLMASTER_ENVIRONMENT: 'development',
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
@@ -173,7 +189,7 @@ describe('provider bindings', () => {
     const oddsRegistry = new ProviderRegistry();
 
     expect(() =>
-      registerConfiguredProviders(registry, {
+      registerConfiguredProviders(registry, NO_ROWS, {
         ...LOCAL,
         SPORT_DATA_DEFAULT_PROVIDER: 'pga-tour',
         SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
@@ -185,7 +201,7 @@ describe('provider bindings', () => {
     ).toThrow('Unsupported sport data provider "pga-tour" configured for this service runtime.');
 
     expect(() =>
-      registerConfiguredProviders(oddsRegistry, {
+      registerConfiguredProviders(oddsRegistry, NO_ROWS, {
         ...LOCAL,
         SPORT_DATA_DEFAULT_PROVIDER: 'the-odds-api',
         SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
@@ -201,7 +217,7 @@ describe('provider bindings', () => {
     // provider ids must now be rejected like any other unregistered adapter.
     for (const removedProviderId of ['espn', 'openf1']) {
       expect(() =>
-        registerConfiguredProviders(new ProviderRegistry(), {
+        registerConfiguredProviders(new ProviderRegistry(), NO_ROWS, {
           ...LOCAL,
           SPORT_DATA_DEFAULT_PROVIDER: removedProviderId,
           SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
@@ -217,7 +233,7 @@ describe('provider bindings', () => {
   it('does not silently register hidden providers when the environment is unconfigured', () => {
     const registry = new ProviderRegistry();
 
-    registerConfiguredProviders(registry, { ...LOCAL });
+    registerConfiguredProviders(registry, NO_ROWS, { ...LOCAL });
 
     expect(registry.getSupportedSports()).toEqual([]);
   });
@@ -251,7 +267,7 @@ describe('provider bindings', () => {
   it('fails startup when the default provider has no binding, rather than running without one', () => {
     const registry = new ProviderRegistry();
 
-    expect(() => registerConfiguredProviders(registry, {
+    expect(() => registerConfiguredProviders(registry, NO_ROWS, {
       ...LOCAL,
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: {} }),
@@ -262,7 +278,7 @@ describe('provider bindings', () => {
   it('fails startup when the mock provider is bound without a baseUrl', () => {
     const registry = new ProviderRegistry();
 
-    expect(() => registerConfiguredProviders(registry, {
+    expect(() => registerConfiguredProviders(registry, NO_ROWS, {
       ...LOCAL,
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: { 'mock-contest-feed': {} } }),
@@ -270,67 +286,88 @@ describe('provider bindings', () => {
     expect(registry.getAllProviders()).toEqual([]);
   });
 
-  describe('the BALLDONTLIE binding', () => {
-    const bdlEnv = (binding: Record<string, unknown>, apiKey?: string) => ({
-      ...LOCAL,
-      SPORT_DATA_DEFAULT_PROVIDER: 'balldontlie',
-      SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: { balldontlie: binding } }),
-      ...(apiKey === undefined ? {} : { BALLDONTLIE_API_KEY: apiKey }),
-    });
-    const fullBinding = { baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 5 };
+  describe('the Provider rows', () => {
+    const MOCK_BINDINGS = JSON.stringify({ providers: { 'mock-contest-feed': { baseUrl: 'http://mock-contest-feed-provider.qa.poolmaster.internal:3105' } } });
 
-    it('registers BALLDONTLIE as the primary golf provider with its base URL, plan rate limit and the key from the environment', () => {
+    it('registers an enabled BALLDONTLIE row as the primary provider of every sport its leagues cover, with the key from the environment', () => {
       const registry = new ProviderRegistry();
 
-      registerConfiguredProviders(registry, bdlEnv(fullBinding, 'a-key'));
+      registerConfiguredProviders(registry, rowsOf([balldontlieTestProvider()]), { ...LOCAL, BALLDONTLIE_API_KEY: 'a-key' });
 
       expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('balldontlie');
+      expect(registry.getProvider(Sport.BASEBALL)?.providerId).toBe('balldontlie');
     });
 
-    it('fails startup when the key is missing or blank, rather than calling the vendor unauthenticated', () => {
-      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv(fullBinding)))
-        .toThrow('Provider "balldontlie" requires the BALLDONTLIE_API_KEY environment variable.');
-      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv(fullBinding, '  ')))
-        .toThrow('requires the BALLDONTLIE_API_KEY environment variable');
-    });
-
-    it('fails startup without a baseUrl or a rate limit in the binding', () => {
-      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ requestsPerMinute: 5 }, 'a-key')))
-        .toThrow('Provider "balldontlie" requires a baseUrl binding.');
-      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ baseUrl: 'https://api.balldontlie.io' }, 'a-key')))
-        .toThrow('Provider "balldontlie" requires a requestsPerMinute binding: its plan\'s rate limit.');
-    });
-
-    it('fails startup on a rate limit that is not a whole number of at least one', () => {
-      expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ ...fullBinding, requestsPerMinute: 0 }, 'a-key')))
-        .toThrow('balldontlie requestsPerMinute must be a whole number of at least 1, not 0.');
-    });
-
-    it('registers BALLDONTLIE beside the mock when both are bound, the default as golf\'s primary and the other as a secondary', () => {
+    it('registers nothing for a row that is switched off', () => {
       const registry = new ProviderRegistry();
 
-      registerConfiguredProviders(registry, {
+      registerConfiguredProviders(registry, rowsOf([balldontlieTestProvider({ isEnabled: false })]), { ...LOCAL, BALLDONTLIE_API_KEY: 'a-key' });
+
+      expect(registry.getAllProviders()).toEqual([]);
+    });
+
+    it('skips an enabled row whose key is missing or blank and logs why, rather than calling the vendor unauthenticated', () => {
+      const logger = fakeLogger();
+      const missing = new ProviderRegistry();
+      const blank = new ProviderRegistry();
+
+      registerConfiguredProviders(missing, rowsOf([balldontlieTestProvider()]), LOCAL, logger);
+      registerConfiguredProviders(blank, rowsOf([balldontlieTestProvider()]), { ...LOCAL, BALLDONTLIE_API_KEY: '  ' }, logger);
+
+      expect(missing.getAllProviders()).toEqual([]);
+      expect(blank.getAllProviders()).toEqual([]);
+      expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.providers.apiKeyMissing', providerCode: 'BALLDONTLIE' }), expect.any(String));
+    });
+
+    it('fails a deployed startup when its only row is skipped for a missing key, as with nothing configured', () => {
+      expect(() => registerConfiguredProviders(new ProviderRegistry(), rowsOf([balldontlieTestProvider()]), { NODE_ENV: 'production', POOLMASTER_ENVIRONMENT: 'qa' }))
+        .toThrow('No sport data provider is configured for this runtime.');
+    });
+
+    it('registers the bound mock first when it is the environment\'s default, with the BALLDONTLIE row as a secondary for golf', () => {
+      const registry = new ProviderRegistry();
+
+      registerConfiguredProviders(registry, rowsOf([balldontlieTestProvider()]), {
         ...LOCAL,
         SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
-        SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({
-          providers: {
-            'mock-contest-feed': { baseUrl: 'http://mock-contest-feed-provider.qa.poolmaster.internal:3105' },
-            balldontlie: fullBinding,
-          },
-        }),
+        SPORT_DATA_PROVIDER_BINDINGS_JSON: MOCK_BINDINGS,
         BALLDONTLIE_API_KEY: 'a-key',
       });
 
       expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('mock-contest-feed');
       expect(registry.getProvidersForSport(Sport.GOLF).map((provider) => provider.providerId).sort()).toEqual(['balldontlie', 'mock-contest-feed']);
-      expect(registry.getProviderById('balldontlie')?.providerId).toBe('balldontlie');
+    });
+
+    it('registers the row first and the bound mock after it when the mock is not the default', () => {
+      const registry = new ProviderRegistry();
+
+      registerConfiguredProviders(registry, rowsOf([balldontlieTestProvider()]), {
+        ...LOCAL,
+        SPORT_DATA_PROVIDER_BINDINGS_JSON: MOCK_BINDINGS,
+        BALLDONTLIE_API_KEY: 'a-key',
+      });
+
+      expect(registry.getProvider(Sport.GOLF)?.providerId).toBe('balldontlie');
+      expect(registry.getProviderById('mock-contest-feed')?.providerId).toBe('mock-contest-feed');
+    });
+
+    it('ignores a BALLDONTLIE entry left in the environment\'s bindings, since its settings now live in its row', () => {
+      const registry = new ProviderRegistry();
+
+      registerConfiguredProviders(registry, NO_ROWS, {
+        ...LOCAL,
+        SPORT_DATA_DEFAULT_PROVIDER: 'balldontlie',
+        SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({ providers: { balldontlie: { baseUrl: 'https://api.balldontlie.io' } } }),
+      });
+
+      expect(registry.getAllProviders()).toEqual([]);
     });
   });
 
   it('fails startup and registers nothing, not even the default, when another bound provider is unsupported', () => {
     const registry = new ProviderRegistry();
 
-    expect(() => registerConfiguredProviders(registry, {
+    expect(() => registerConfiguredProviders(registry, NO_ROWS, {
       ...LOCAL,
       SPORT_DATA_DEFAULT_PROVIDER: 'mock-contest-feed',
       SPORT_DATA_PROVIDER_BINDINGS_JSON: JSON.stringify({

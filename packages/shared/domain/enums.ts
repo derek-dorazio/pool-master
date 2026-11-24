@@ -85,6 +85,39 @@ export const ProviderHealthStatusOrder = explicitOrder<ProviderHealthStatus>({
   [ProviderHealthStatus.DOWN]: 2,
 });
 
+/**
+ * Which data provider a Provider row is (#1997): the code picks the adapter in code, and nothing
+ * else about a provider is in code.
+ */
+export const ProviderCode = {
+  BALLDONTLIE: 'BALLDONTLIE',
+} as const;
+export type ProviderCode = (typeof ProviderCode)[keyof typeof ProviderCode];
+/** Alphabetical: no provider ranks before another by its code. */
+export const ProviderCodeOrder = explicitOrder<ProviderCode>({
+  [ProviderCode.BALLDONTLIE]: 0,
+});
+
+/**
+ * Which of its provider's webhook events a provider league sends for its games (#1997); the
+ * adapter maps each set to the provider's own event names.
+ */
+export const ProviderWebhookEventSet = {
+  /** A game's start, each period's end and its end. */
+  GAME_PERIODS: 'GAME_PERIODS',
+  /** A game's start, its half-time and its end. */
+  GAME_HALVES: 'GAME_HALVES',
+  /** A golf tournament's start, each round's start, each player's finished round and its end. */
+  GOLF_ROUNDS: 'GOLF_ROUNDS',
+} as const;
+export type ProviderWebhookEventSet = (typeof ProviderWebhookEventSet)[keyof typeof ProviderWebhookEventSet];
+/** Games by periods, then by halves, then golf's rounds. */
+export const ProviderWebhookEventSetOrder = explicitOrder<ProviderWebhookEventSet>({
+  [ProviderWebhookEventSet.GAME_PERIODS]: 0,
+  [ProviderWebhookEventSet.GAME_HALVES]: 1,
+  [ProviderWebhookEventSet.GOLF_ROUNDS]: 2,
+});
+
 export const InjuryStatusCode = {
   HEALTHY: 'HEALTHY',
   QUESTIONABLE: 'QUESTIONABLE',

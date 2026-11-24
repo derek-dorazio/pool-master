@@ -3,14 +3,15 @@ import { DataGrid, QueryState, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { providerColumns } from './provider-columns';
 import { ProviderDialog } from './provider-dialog';
-import { useProvidersQuery } from './use-providers-query';
+import { useProviderSettingRanges, useProvidersQuery } from './use-providers-query';
 
 /**
- * The Providers page's providers (#1873): one row per registered provider with its live check,
- * a row opening its view-only dialog.
+ * The Providers page's providers (#1873): one row per provider with its live check, a row
+ * opening its dialog, where its settings are edited (#1997).
  */
 export function ProvidersSection() {
   const providersQuery = useProvidersQuery();
+  const ranges = useProviderSettingRanges();
   const [openProviderId, setOpenProviderId] = useState<string | null>(null);
   // poolmaster-allow-list-lookup: the handful of registered providers
   const openProvider = providersQuery.data?.find((provider) => provider.providerId === openProviderId);
@@ -44,6 +45,7 @@ export function ProvidersSection() {
           onCheckNow={() => void providersQuery.refetch()}
           onClose={() => setOpenProviderId(null)}
           provider={openProvider}
+          ranges={ranges}
         />
       ) : null}
     </SectionCard>

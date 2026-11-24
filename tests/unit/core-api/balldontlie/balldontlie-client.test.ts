@@ -42,7 +42,7 @@ function virtualClock() {
 
 function setup(
   replies: Array<Response | Error>,
-  options: Partial<BalldontlieClientOptions> = {},
+  { requestsPerMinute = 60, ...options }: Partial<BalldontlieClientOptions> & { requestsPerMinute?: number } = {},
 ) {
   const clock = virtualClock();
   const sent: SentRequest[] = [];
@@ -58,9 +58,8 @@ function setup(
   const payloads = new ProviderPayloadRecorder('balldontlie.request');
   const client = new BalldontlieClient({
     providerId: BALLDONTLIE_PROVIDER_ID,
-    baseUrl: `${BASE_URL}/`,
+    connection: () => ({ baseUrl: `${BASE_URL}/`, requestsPerMinute }),
     apiKey: 'test-key',
-    requestsPerMinute: 60,
     payloads,
     now: clock.now,
     sleep: clock.sleep,
@@ -113,9 +112,8 @@ describe('BalldontlieClient', () => {
     const waits: number[] = [];
     const client = new BalldontlieClient({
       providerId: BALLDONTLIE_PROVIDER_ID,
-      baseUrl: BASE_URL,
+      connection: () => ({ baseUrl: BASE_URL, requestsPerMinute: 60 }),
       apiKey: 'k',
-      requestsPerMinute: 60,
       payloads: harness.payloads,
       now: () => 5_000,
       sleep: (ms) => { waits.push(ms); return Promise.resolve(); },
@@ -138,10 +136,33 @@ describe('BalldontlieClient', () => {
 
   it('refuses a rate limit that is not a whole number of at least one', () => {
     const payloads = new ProviderPayloadRecorder('balldontlie.request');
-    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, baseUrl: BASE_URL, apiKey: 'k', requestsPerMinute: 0, payloads }))
+    const connection = (requestsPerMinute: number) => () => ({ baseUrl: BASE_URL, requestsPerMinute });
+    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, connection: connection(0), apiKey: 'k', payloads }))
       .toThrow('balldontlie requestsPerMinute must be a whole number of at least 1, not 0.');
-    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, baseUrl: BASE_URL, apiKey: 'k', requestsPerMinute: 2.5, payloads }))
+    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, connection: connection(2.5), apiKey: 'k', payloads }))
       .toThrow('not 2.5');
+  });
+
+  it('reads the Provider row\'s base URL and rate for each request, so a Providers page edit reaches the next one', async () => {
+    const harness = setup([Response.json({ data: [] }), Response.json({ data: [] }), Response.json({ data: [] })]);
+    restore = harness.restore;
+    let connection = { baseUrl: BASE_URL, requestsPerMinute: 60 };
+    const client = new BalldontlieClient({
+      providerId: BALLDONTLIE_PROVIDER_ID,
+      connection: () => connection,
+      apiKey: 'k',
+      payloads: harness.payloads,
+      now: harness.clock.now,
+      sleep: harness.clock.sleep,
+    });
+
+    await client.get('/a', {}, rowsSchema);
+    await client.get('/b', {}, rowsSchema);
+    connection = { baseUrl: 'https://other.example.test', requestsPerMinute: 6 };
+    await client.get('/c', {}, rowsSchema);
+
+    expect(harness.sent.map((request) => request.url)).toEqual([`${BASE_URL}/a`, `${BASE_URL}/b`, 'https://other.example.test/c']);
+    expect(harness.sent[1].at - harness.sent[0].at).toBe(1_000);
   });
 
   it('takes this task\'s even share of the plan\'s limit: at 60 a minute over two tasks, a request every 2 seconds', async () => {
@@ -354,9 +375,8 @@ describe('BalldontlieClient', () => {
     restore = () => { global.fetch = originalFetch; };
     const client = new BalldontlieClient({
       providerId: BALLDONTLIE_PROVIDER_ID,
-      baseUrl: BASE_URL,
+      connection: () => ({ baseUrl: BASE_URL, requestsPerMinute: 6_000 }),
       apiKey: 'k',
-      requestsPerMinute: 6_000,
       payloads: new ProviderPayloadRecorder('balldontlie.request'),
     });
 

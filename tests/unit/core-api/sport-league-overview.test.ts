@@ -29,7 +29,7 @@ const at = (iso: string) => new Date(iso);
 
 function league(overrides: Partial<SportLeagueOverviewLeague> = {}): SportLeagueOverviewLeague {
   return {
-    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', eventSyncProviderId: 'balldontlie', isActive: true,
+    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', syncProviderId: 'balldontlie', isActive: true,
     ...overrides,
   };
 }
@@ -63,7 +63,7 @@ describe('sport league sync health', () => {
   });
 
   it('is OFF for a league on with no provider syncing it', () => {
-    expect(only(facts({ leagues: [league({ eventSyncProviderId: null })] })).syncHealth).toBe(SportLeagueSyncHealth.OFF);
+    expect(only(facts({ leagues: [league({ syncProviderId: null })] })).syncHealth).toBe(SportLeagueSyncHealth.OFF);
   });
 
   it('is NOT_RUN_YET for a synced league with no run of any sync', () => {
@@ -124,7 +124,7 @@ describe('sport league issues', () => {
   it('counts the league\'s overdue events as an OVERDUE issue after RELEASE, most overdue first, leaving out one not yet overdue and another league\'s', () => {
     const endedAgo = (ms: number) => new Date(NOW.getTime() - ms);
     const overdue = (id: string, sportLeagueId: string, name: string, endDate: Date) => ({
-      id, sportLeagueId, name, sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-01T00:00:00.000Z'), endDate, rounds: [],
+      id, sportLeagueId, name, sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-01T00:00:00.000Z'), endDate, rounds: [], typicalGameMinutes: 180,
     });
     const row = only(facts({
       heldEvents: [{ id: 'e9', sportLeagueId: 'mlb', name: 'Held', checkedAt: NOW, failedChecks: [ReleaseCheckKey.FIELD_LOADED] }],

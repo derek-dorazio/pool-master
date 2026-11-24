@@ -30,13 +30,21 @@ export interface BalldontliePage<Row> {
   meta?: { next_cursor?: number | null };
 }
 
+/**
+ * Where the client calls and how fast (#1997): the BALLDONTLIE Provider row's base URL and its
+ * plan's limit (5 on the free plan, 60 on ALL-STAR, 600 on GOAT and All-Access), read for each
+ * request so an edit on the Providers page takes effect without a restart.
+ */
+export interface BalldontlieConnection {
+  baseUrl: string;
+  requestsPerMinute: number;
+}
+
 export interface BalldontlieClientOptions {
   /** The provider's id (the adapter's `providerId`), naming it on a rate-limit refusal. */
   providerId: string;
-  baseUrl: string;
+  connection: () => BalldontlieConnection;
   apiKey: string;
-  /** The plan's limit: 5 on the free plan, 60 on ALL-STAR, 600 on GOAT and All-Access. */
-  requestsPerMinute: number;
   /** The most tasks that run background work at once; this task takes an even share of the limit. 1 when unset. */
   maxTasks?: number;
   payloads: ProviderPayloadRecorder;
@@ -104,19 +112,17 @@ export class BalldontlieRequestError extends Error implements ProviderCallFailur
 const RETRYABLE_STATUSES = new Set([500, 502, 503, 504]);
 
 export class BalldontlieClient {
-  private readonly baseUrl: string;
   private readonly timeoutMs: number;
   private readonly policy: ProviderCallPolicy;
 
   constructor(private readonly options: BalldontlieClientOptions) {
     this.policy = new ProviderCallPolicy({
       providerId: options.providerId,
-      requestsPerMinute: options.requestsPerMinute,
+      requestsPerMinute: () => options.connection().requestsPerMinute,
       maxTasks: options.maxTasks ?? 1,
       ...(options.now && { now: options.now }),
       ...(options.sleep && { sleep: options.sleep }),
     });
-    this.baseUrl = options.baseUrl.replace(/\/$/, '');
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
@@ -176,7 +182,7 @@ export class BalldontlieClient {
   private async attempt(pathAndQuery: string): Promise<unknown> {
     let response: Response;
     try {
-      response = await fetch(`${this.baseUrl}${pathAndQuery}`, {
+      response = await fetch(`${this.options.connection().baseUrl.replace(/\/$/, '')}${pathAndQuery}`, {
         headers: { Authorization: this.options.apiKey, Accept: 'application/json' },
         signal: AbortSignal.timeout(this.timeoutMs),
       });

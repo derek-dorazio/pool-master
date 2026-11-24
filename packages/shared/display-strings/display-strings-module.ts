@@ -24,6 +24,8 @@ export type SharedEnums = {
   ParticipantType: Enums.ParticipantType;
   ParticipantStatus: Enums.ParticipantStatus;
   ProviderHealthStatus: Enums.ProviderHealthStatus;
+  ProviderCode: Enums.ProviderCode;
+  ProviderWebhookEventSet: Enums.ProviderWebhookEventSet;
   InjuryStatusCode: Enums.InjuryStatusCode;
   FormTrend: Enums.FormTrend;
   MappingConfidence: Enums.MappingConfidence;

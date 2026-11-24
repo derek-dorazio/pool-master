@@ -4,7 +4,20 @@
  * Every operation is root-admin; `admin` is the permission, `ingestion` is what they administer.
  */
 import { z } from 'zod';
-import { IngestionJobStatus, JobTrigger, ProviderHealthStatus, ProviderSyncKind, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import {
+  IngestionJobStatus,
+  JobTrigger,
+  PROVIDER_LEAGUE_MINUTES_RANGE,
+  PROVIDER_POLL_MINUTES_RANGE,
+  PROVIDER_PRIORITY_RANGE,
+  PROVIDER_REQUESTS_PER_MINUTE_RANGE,
+  ProviderCode,
+  ProviderHealthStatus,
+  ProviderSyncKind,
+  ProviderSyncRunStatus,
+  ProviderWebhookEventSet,
+  Sport,
+} from '@poolmaster/shared/domain';
 import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
@@ -53,30 +66,110 @@ export type EventSyncRequest = z.infer<typeof EventSyncRequestSchema>;
 
 export const ProviderHealthStatusSchema = z.enum(ProviderHealthStatus);
 
+const RequestsPerMinuteSchema = z.number().int().min(PROVIDER_REQUESTS_PER_MINUTE_RANGE.min).max(PROVIDER_REQUESTS_PER_MINUTE_RANGE.max);
+const PollMinutesSchema = z.number().int().min(PROVIDER_POLL_MINUTES_RANGE.min).max(PROVIDER_POLL_MINUTES_RANGE.max);
+const LeagueMinutesSchema = z.number().int().min(PROVIDER_LEAGUE_MINUTES_RANGE.min).max(PROVIDER_LEAGUE_MINUTES_RANGE.max);
+const ProviderPrioritySchema = z.number().int().min(PROVIDER_PRIORITY_RANGE.min).max(PROVIDER_PRIORITY_RANGE.max);
+
+export const ProviderLeagueDtoSchema = z.object({
+  id: z.uuid().describe('The provider league.'),
+  code: z.string().describe('The provider\'s own code for the league, as its API names it, e.g. "nfl".'),
+  name: z.string().describe('The provider\'s own name for the league.'),
+  sport: SportDtoSchema.describe('The sport the league plays.'),
+  webhookEventSet: z.enum(ProviderWebhookEventSet).describe('Which of the provider\'s webhook events the league sends for its games.'),
+  quietAfterMinutes: LeagueMinutesSchema.describe('How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.'),
+  typicalGameMinutes: LeagueMinutesSchema.describe('How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.'),
+  isEnabled: z.boolean().describe('Whether the provider\'s adapter reads the league. A change takes effect when the server tasks next start.'),
+}).describe('One of a provider\'s own leagues (#1997).');
+export type ProviderLeagueDto = z.infer<typeof ProviderLeagueDtoSchema>;
+
+export const ProviderSettingsDtoSchema = z.object({
+  id: z.uuid().describe('The Provider row.'),
+  code: z.enum(ProviderCode).describe('Which provider the row is; it picks the adapter.'),
+  name: z.string().describe('The provider\'s display name.'),
+  baseUrl: z.url().describe('Where the adapter calls the provider. Taken by each task within a minute.'),
+  requestsPerMinute: RequestsPerMinuteSchema.describe('The provider plan\'s request limit a minute, which every sync service holds its calls to. Taken by each task within a minute.'),
+  webhooksEnabled: z.boolean().describe('Whether the provider\'s webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet).'),
+  webhookSecretSet: z.boolean().describe('Whether the provider\'s webhook signing secret is set in this environment (Secrets Manager). Read only.'),
+  webhookPollMinutes: PollMinutesSchema.describe('How often a notified event\'s scores are polled anyway while it is in play, in minutes.'),
+  webhookRoundPollMinutes: PollMinutesSchema.describe('How often a notified event played in rounds is polled while a round is under way, in minutes.'),
+  hasPlayerStats: z.boolean().describe('Whether the provider plan includes player box scores.'),
+  isEnabled: z.boolean().describe('Whether the provider is used at all. A change takes effect when the server tasks next start.'),
+  priority: ProviderPrioritySchema.describe('Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.'),
+  leagues: z.array(ProviderLeagueDtoSchema).describe('The provider\'s own leagues, by code.'),
+}).describe('A data provider\'s settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager.');
+export type ProviderSettingsDto = z.infer<typeof ProviderSettingsDtoSchema>;
+
 export const ProviderSummaryDtoSchema = z.object({
-  providerId: z.string().describe('Registered provider identifier.'),
+  providerId: z.string().describe('The id the provider\'s events carry as their providerId.'),
   providerName: z.string().describe('Provider display name.'),
-  status: ProviderHealthStatusSchema.describe('Health from a live check made for this request.'),
-  errorRate: z.number().describe('Provider-reported error rate over the last hour.'),
-  latencyMs: z.number().describe('Provider-reported p95 latency.'),
+  status: ProviderHealthStatusSchema.nullable().describe('Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).'),
+  errorRate: z.number().nullable().describe('Provider-reported error rate over the last hour; null when the provider is not running.'),
+  latencyMs: z.number().nullable().describe('Provider-reported p95 latency; null when the provider is not running.'),
   lastEventAt: DateTimeSchema.nullable().describe('When one of the provider\'s events last changed, else its last successful poll; null when neither is known.'),
-  sportsCovered: z.array(SportDtoSchema).describe('Sports the provider covers that ingestion is scheduled for.'),
+  sportsCovered: z.array(SportDtoSchema).describe('Sports the provider\'s running adapter covers.'),
   primaryForSports: z.array(SportDtoSchema).describe('The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.'),
   activeEventCount: z.number().int().describe('The provider\'s events that are scheduled or in progress.'),
   supportsLiveSimulation: z.boolean().describe('True when the provider can play a linked event\'s live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.'),
-  requestsPerMinute: z.number().int().min(1).nullable().describe('The request rate core-api holds its calls to the provider to, a minute: the provider plan\'s limit, set in the deployment\'s provider bindings. Null when the provider is not paced.'),
-  webhooksEnabled: z.boolean().describe('True when the provider\'s webhooks are on: its signing secret is set, so its notifications are accepted.'),
-  syncedSportLeagueCount: z.number().int().min(0).describe('The active sport leagues whose events this provider\'s sync creates.'),
+  requestsPerMinute: z.number().int().min(1).nullable().describe('The request rate core-api holds its calls to the provider to, a minute: its Provider row\'s requestsPerMinute. Null when the provider is not paced.'),
+  webhooksEnabled: z.boolean().describe('True when the provider\'s webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted.'),
+  syncedSportLeagueCount: z.number().int().min(0).describe('The active sport leagues whose selected provider mapping is to one of this provider\'s leagues.'),
   rateLimitedJobsLast24h: z.number().int().min(0).describe(
     'Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. '
     + 'A job belongs to the provider syncing its sport league, or the provider its event is linked to.',
   ),
-}).describe('A registered sports-data provider with its live health.');
+  settings: ProviderSettingsDtoSchema.nullable().describe('The provider\'s row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).'),
+}).describe('A sports-data provider with its live health and settings.');
 export type ProviderSummaryDto = z.infer<typeof ProviderSummaryDtoSchema>;
+
+export const UpdateProviderRequestSchema = z.object({
+  baseUrl: z.url({ protocol: /^https$/ }).optional().describe('An https URL.'),
+  requestsPerMinute: RequestsPerMinuteSchema.optional(),
+  webhooksEnabled: z.boolean().optional().describe('true is refused with 422 PROVIDER_WEBHOOK_SECRET_MISSING while the provider\'s signing secret is not set in this environment.'),
+  webhookPollMinutes: PollMinutesSchema.optional(),
+  webhookRoundPollMinutes: PollMinutesSchema.optional(),
+  hasPlayerStats: z.boolean().optional(),
+  isEnabled: z.boolean().optional(),
+  priority: ProviderPrioritySchema.optional().describe('409 PROVIDER_PRIORITY_TAKEN when another provider has it.'),
+}).refine((value) => Object.keys(value).length > 0, { message: 'At least one provider setting must be given.' })
+  .describe('Changes to a provider\'s settings; omitted fields are left alone.');
+export type UpdateProviderRequest = z.infer<typeof UpdateProviderRequestSchema>;
+
+export const ProviderSettingsResponseSchema = z.object({
+  provider: ProviderSettingsDtoSchema,
+}).describe('A provider\'s settings as saved.');
+export type ProviderSettingsResponse = z.infer<typeof ProviderSettingsResponseSchema>;
+
+export const UpdateProviderLeagueRequestSchema = z.object({
+  quietAfterMinutes: LeagueMinutesSchema.optional(),
+  typicalGameMinutes: LeagueMinutesSchema.optional(),
+  isEnabled: z.boolean().optional(),
+}).refine((value) => Object.keys(value).length > 0, { message: 'At least one league setting must be given.' })
+  .describe('Changes to one of a provider\'s leagues; omitted fields are left alone.');
+export type UpdateProviderLeagueRequest = z.infer<typeof UpdateProviderLeagueRequestSchema>;
+
+export const ProviderLeagueResponseSchema = z.object({
+  league: ProviderLeagueDtoSchema,
+}).describe('A provider league as saved.');
+export type ProviderLeagueResponse = z.infer<typeof ProviderLeagueResponseSchema>;
+
+const SettingRangeDtoSchema = z.object({
+  min: z.number().int().describe('The smallest value the API takes.'),
+  max: z.number().int().describe('The largest value the API takes.'),
+}).describe('The whole numbers a provider setting may take, inclusive.');
+
+export const ProviderSettingRangesDtoSchema = z.object({
+  requestsPerMinute: SettingRangeDtoSchema.describe('A provider\'s requestsPerMinute.'),
+  pollMinutes: SettingRangeDtoSchema.describe('A provider\'s webhookPollMinutes and webhookRoundPollMinutes.'),
+  priority: SettingRangeDtoSchema.describe('A provider\'s priority.'),
+  leagueMinutes: SettingRangeDtoSchema.describe('A provider league\'s quietAfterMinutes and typicalGameMinutes.'),
+}).describe('The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself.');
+export type ProviderSettingRangesDto = z.infer<typeof ProviderSettingRangesDtoSchema>;
 
 export const ProviderListResponseSchema = z.object({
   providers: z.array(ProviderSummaryDtoSchema),
-}).describe('Every registered provider.');
+  settingRanges: ProviderSettingRangesDtoSchema,
+}).describe('Every registered provider, and the ranges their settings may take.');
 export type ProviderListResponse = z.infer<typeof ProviderListResponseSchema>;
 
 // --- Sync runs ---
@@ -317,7 +410,7 @@ export type ProviderEventDto = z.infer<typeof ProviderEventDtoSchema>;
 
 export const ProviderCatalogEventListQuerySchema = z.object({
   sport: SportDtoSchema,
-  sportLeagueId: z.string().optional().describe('Resolves to that league\'s matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.'),
+  sportLeagueId: z.string().optional().describe('Keeps the events of the provider league that sport league\'s selected provider mapping names. A league with no selected mapping contributes no filter.'),
   from: DateTimeSchema.optional().describe('Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.'),
   to: DateTimeSchema.optional().describe('Only events starting at or before this.'),
   search: z.string().optional(),
@@ -331,7 +424,14 @@ export type ProviderCatalogEventListResponse = z.infer<typeof ProviderCatalogEve
 
 // --- Published contract (#192) -------------------------------------------------
 registerSchema('EventSyncRequest', EventSyncRequestSchema);
+registerSchema('ProviderLeagueDto', ProviderLeagueDtoSchema);
+registerSchema('ProviderSettingsDto', ProviderSettingsDtoSchema);
 registerSchema('ProviderSummaryDto', ProviderSummaryDtoSchema);
+registerSchema('UpdateProviderRequest', UpdateProviderRequestSchema);
+registerSchema('ProviderSettingsResponse', ProviderSettingsResponseSchema);
+registerSchema('UpdateProviderLeagueRequest', UpdateProviderLeagueRequestSchema);
+registerSchema('ProviderLeagueResponse', ProviderLeagueResponseSchema);
+registerSchema('ProviderSettingRangesDto', ProviderSettingRangesDtoSchema);
 registerSchema('ProviderListResponse', ProviderListResponseSchema);
 registerSchema('ProviderSyncRunDto', ProviderSyncRunDtoSchema);
 registerSchema('ProviderSyncRunDetailDto', ProviderSyncRunDetailDtoSchema);

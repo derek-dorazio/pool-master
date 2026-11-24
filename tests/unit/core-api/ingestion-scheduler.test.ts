@@ -93,7 +93,6 @@ function createMockRegistry(
 
 function createEnabledScheduleConfig() {
   return {
-    scheduledSports: ['GOLF'],
     healthCheck: { enabled: true, intervalMinutes: 5 },
     eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
     eventLiveScores: { enabled: true, intervalSeconds: 30 },
@@ -914,7 +913,6 @@ describe('IngestionScheduler', () => {
       const registry = createMockRegistry(provider, ['GOLF']);
       const configReader = {
         getConfig: jest.fn().mockResolvedValue({
-          scheduledSports: ['GOLF'],
           healthCheck: { enabled: true, intervalMinutes: 5 },
           eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
           eventLiveScores: { enabled: true, intervalSeconds: 30 },
@@ -1056,34 +1054,6 @@ describe('IngestionScheduler', () => {
 
       expect(await scheduler(off)['getFieldSyncDelayMs']()).toBe(360 * 60_000);
       expect(await scheduler(createEnabledScheduleConfig())['getFieldSyncDelayMs']()).toBe(360 * 60_000);
-    });
-
-    it('schedules no feed for a covered sport the ingestion sync config does not enable', async () => {
-      const provider = fakeSportDataProvider();
-      const eventReader = readerOf({});
-      const registry = createMockRegistry(provider, [Sport.GOLF]);
-      const configReader = {
-        getConfig: jest.fn().mockResolvedValue({
-          scheduledSports: [],
-          healthCheck: { enabled: true, intervalMinutes: 5 },
-          eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
-          eventLiveScores: { enabled: false, intervalSeconds: 30 },
-          eventList: { enabled: true, intervalMinutes: 360 },
-        }),
-      };
-      const scheduler = new IngestionScheduler(registry, mockCallbacks, undefined, {
-        configReader,
-        eventReader,
-      });
-
-      scheduler.start();
-
-      await Promise.resolve();
-      await Promise.resolve();
-      await jest.runOnlyPendingTimersAsync();
-
-      expect(eventReader.listEventsForFeed).not.toHaveBeenCalled();
-      expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalled();
     });
 
     it('start() is idempotent — calling twice does not double timers', () => {
@@ -1244,51 +1214,6 @@ describe('IngestionScheduler scheduled loops', () => {
     jest.useRealTimers();
   });
 
-  it('warns about a scheduled sport no provider is registered for, and runs no feed for it', async () => {
-    const logger = fakeLogger();
-    const config = { ...createEnabledScheduleConfig(), scheduledSports: ['GOLF', 'TENNIS'] };
-    const configReader = { getConfig: jest.fn().mockResolvedValue(config) };
-    const eventReader = readerOf({});
-    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), ['GOLF']), createMockCallbacks(), logger, { configReader, eventReader });
-
-    scheduler.start();
-    await jest.advanceTimersByTimeAsync(1000);
-    scheduler.stop();
-
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ unregisteredSports: ['TENNIS'] }),
-      'Configured scheduled ingestion sports have no registered provider',
-    );
-    expect(eventReader.listEventsForFeed).not.toHaveBeenCalledWith(expect.objectContaining({ sport: 'TENNIS' }));
-    expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalledWith(expect.objectContaining({ sport: 'TENNIS' }));
-  });
-
-  it('warns about the same unregistered scheduled sports once, logs repeats at debug, and warns again when the set changes', async () => {
-    const logger = fakeLogger();
-    let config = { ...createEnabledScheduleConfig(), scheduledSports: [Sport.HORSE_RACING] as Sport[] };
-    const configReader = { getConfig: jest.fn(() => Promise.resolve(config)) };
-    const scheduler = new IngestionScheduler(createMockRegistry(fakeSportDataProvider(), []), createMockCallbacks(), logger, { configReader });
-    const unregisteredWarnings = () => logger.warn.mock.calls.filter(
-      ([, message]) => message === 'Configured scheduled ingestion sports have no registered provider',
-    );
-
-    scheduler.start();
-    await jest.advanceTimersByTimeAsync(3 * 60 * 1000 + 1);
-
-    expect(unregisteredWarnings()).toHaveLength(1);
-    expect(logger.debug).toHaveBeenCalledWith(
-      expect.objectContaining({ unregisteredSports: [Sport.HORSE_RACING] }),
-      'Configured scheduled ingestion sports still have no registered provider',
-    );
-
-    config = { ...config, scheduledSports: [Sport.HORSE_RACING, Sport.GOLF] };
-    await jest.advanceTimersByTimeAsync(60 * 1000 + 1);
-    scheduler.stop();
-
-    expect(unregisteredWarnings()).toHaveLength(2);
-    expect(unregisteredWarnings()[1][0]).toMatchObject({ unregisteredSports: [Sport.HORSE_RACING, Sport.GOLF] });
-  });
-
   it('keeps every loop alive on the one-minute recheck when the ingestion config cannot be read', async () => {
     const logger = fakeLogger();
     const configReader = {
@@ -1300,7 +1225,6 @@ describe('IngestionScheduler scheduled loops', () => {
     await jest.advanceTimersByTimeAsync(2 * 60 * 1000 + 1);
     scheduler.stop();
 
-    expect(logger.error).toHaveBeenCalledWith(expect.anything(), 'Failed to reconcile configured sport ingestion loops');
     expect(logger.error).toHaveBeenCalledWith(expect.anything(), 'Falling back to config recheck delay because policy resolution failed');
     // Start, then a recheck at one and two minutes.
     expect(configReader.getConfig.mock.calls.length).toBeGreaterThanOrEqual(5);
@@ -1515,14 +1439,6 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
     expect(job?.status).toBe('FAILED');
   });
 
-  it('syncs nothing for a sport not scheduled for ingestion, as the scheduled sweep would not', async () => {
-    const { scheduler, provider, syncRunLedger } = schedulerFor({ ...createEnabledScheduleConfig(), scheduledSports: ['AMERICAN_FOOTBALL'] });
-
-    expect(await scheduler.runNotifiedEventSync(notified, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK })).toBeNull();
-    expect(provider.getLiveScores).not.toHaveBeenCalled();
-    expect(syncRunLedger.createSubmissions).not.toHaveBeenCalled();
-  });
-
   it('syncs nothing while live score syncs are switched off for the sport', async () => {
     const { scheduler, provider } = schedulerFor({
       ...createEnabledScheduleConfig(),
@@ -1546,7 +1462,6 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
   };
   const adminConfig = {
     ...createEnabledScheduleConfig(),
-    scheduledSports: ['GOLF', 'AMERICAN_FOOTBALL'],
     eventLiveScores: { enabled: true, intervalSeconds: 5 * 60 },
   };
 
@@ -1574,7 +1489,7 @@ describe('IngestionScheduler pace for providers that send webhook notifications 
       configReader: { getConfig: jest.fn().mockResolvedValue(config) },
       eventReader: { listEventsForFeed: jest.fn().mockResolvedValue([]), listLiveScoreEvents: jest.fn(async () => live) },
       now: () => clock.now,
-      notifiedProviderCadence: 'cadence' in options ? options.cadence : cadence,
+      notifiedProviderCadence: () => ('cadence' in options ? options.cadence : cadence),
     });
     const sweepAt = async (sport: Sport, minutes: number, events: LiveScoreEventRef[]) => {
       clock.now = new Date(T0.getTime() + minutes * MINUTE);

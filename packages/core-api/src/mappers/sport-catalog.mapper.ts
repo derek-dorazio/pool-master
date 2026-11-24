@@ -45,10 +45,9 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     sportId: sportLeague.sportId,
     sport: sportLeague.sport,
     name: sportLeague.name,
-    matchKeyword: sportLeague.matchKeyword,
     currentEventYear: sportLeague.currentEventYear,
     isActive: sportLeague.isActive,
-    eventSyncProviderId: sportLeague.eventSyncProviderId,
+    selectedProviderMapping: sportLeague.selectedProviderMapping === null ? null : { ...sportLeague.selectedProviderMapping },
     autoReleaseDaysBeforeStart: sportLeague.autoReleaseDaysBeforeStart,
     tierProfileId: sportLeague.tierProfileId,
     pricingProfileId: sportLeague.pricingProfileId,
@@ -121,7 +120,6 @@ export function mapSportLeagueSyncToDto(sync: SportLeagueSync): SportLeagueSyncD
         summary: sync.lastRun.summary,
         changedCount: sync.lastRun.changedCount,
       },
-    nextRunAt: sync.nextRunAt?.toISOString() ?? null,
   };
 }
 

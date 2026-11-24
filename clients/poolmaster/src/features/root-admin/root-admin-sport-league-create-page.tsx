@@ -17,7 +17,6 @@ import { upperFirst } from '@/lib/upper-first';
 
 const newTourSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
-  matchKeyword: z.string().trim().optional(),
   tierProfileId: z.string().min(1, 'Choose a tier profile'),
   pricingProfileId: z.string().min(1, 'Choose a pricing profile'),
 });
@@ -42,7 +41,7 @@ export function RootAdminSportLeagueCreatePage() {
 
   const form = useForm<NewTourValues>({
     resolver: zodResolver(newTourSchema),
-    defaultValues: { name: '', matchKeyword: '', tierProfileId: '', pricingProfileId: '' },
+    defaultValues: { name: '', tierProfileId: '', pricingProfileId: '' },
     mode: 'onChange',
   });
 
@@ -54,9 +53,6 @@ export function RootAdminSportLeagueCreatePage() {
           name: values.name,
           tierProfileId: values.tierProfileId,
           pricingProfileId: values.pricingProfileId,
-          ...(values.matchKeyword?.trim()
-            ? { matchKeyword: values.matchKeyword.trim() }
-            : {}),
         },
       });
       if (!response.data?.sportLeague) {
@@ -89,15 +85,6 @@ export function RootAdminSportLeagueCreatePage() {
         <Input
           data-testid="root-admin-sport-league-list-new-name"
           {...form.register('name')}
-        />
-      </FormField>
-      <FormField
-        helperText="Optional. A word a provider's event names carry, to filter its catalog when browsing."
-        label="Match keyword"
-      >
-        <Input
-          data-testid="root-admin-sport-league-list-new-keyword"
-          {...form.register('matchKeyword')}
         />
       </FormField>
       <FormField

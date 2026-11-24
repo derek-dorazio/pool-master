@@ -335,8 +335,8 @@ of #1917 as they land.
 
 What the code does **today**, while the follow-up tickets of #1723 land:
 
-- A sport league is synced once a root admin names its provider (`SportLeague.eventSyncProviderId`,
-  #1725). Every six hours `SyncedEventCreationScheduler` runs the admin's year import for each
+- A sport league is synced once a root admin selects its provider league
+  (`SportLeague.selectedProviderMapping`, a `SportLeagueProviderMapping`, #1997; first #1725). Every six hours `SyncedEventCreationScheduler` runs the admin's year import for each
   synced league, this calendar year and the next, so its events appear as linked drafts, then
   writes the provider's name, venue and dates over the league's linked events through
   `updateEvent` (#1727): every one before play, name, venue and end while in progress, nothing once

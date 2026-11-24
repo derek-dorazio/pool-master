@@ -65,7 +65,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 function league(overrides: Record<string, unknown> = {}) {
-  return { id: 'pga', sportId: 'sport-golf', name: 'PGA Tour', matchKeyword: 'PGA', isActive: true, ...overrides };
+  return { id: 'pga', sportId: 'sport-golf', name: 'PGA Tour', isActive: true, ...overrides };
 }
 
 function renderPage(path = '/manage/sports/golf/leagues/new') {
@@ -101,10 +101,6 @@ describe('RootAdminSportLeagueCreatePage', () => {
       await screen.findByTestId('root-admin-sport-league-list-new-name'),
       'DP World Tour',
     );
-    await userEvent.type(
-      screen.getByTestId('root-admin-sport-league-list-new-keyword'),
-      'DP World',
-    );
     await chooseProfiles();
     await userEvent.click(screen.getByTestId('root-admin-sport-league-list-new-save'));
 
@@ -114,7 +110,6 @@ describe('RootAdminSportLeagueCreatePage', () => {
           body: {
             sport: 'GOLF',
             name: 'DP World Tour',
-            matchKeyword: 'DP World',
             tierProfileId: GOLF_TIER_PROFILE_ID,
             pricingProfileId: STANDARD_PRICING_PROFILE_ID,
           },

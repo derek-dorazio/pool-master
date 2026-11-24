@@ -971,7 +971,6 @@ export type BillingConfig = {
  * Partial ingestion schedule update: only the policies and properties it names change.
  */
 export type IngestionScheduleConfigPatch = {
-    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
      * Partial feed-scheduling update payload.
      */
@@ -1062,10 +1061,6 @@ export type IngestionScheduleConfigPatch = {
  * Feed-aware ingestion scheduling configuration, one schedule for every sport league.
  */
 export type IngestionScheduleConfig = {
-    /**
-     * Sports that scheduled ingestion is allowed to run automatically.
-     */
-    scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
      * Scheduling policy for provider health checks.
      */
@@ -7716,6 +7711,40 @@ export type SportListResponse = {
 };
 
 /**
+ * A sport league's link to one provider's league (#1997).
+ */
+export type SportLeagueProviderMappingDto = {
+    /**
+     * The mapping.
+     */
+    id: string;
+    /**
+     * The provider league the sport league is mapped to (ProviderLeagueDto).
+     */
+    providerLeagueId: string;
+    /**
+     * The provider's own code for its league, e.g. "nfl".
+     */
+    providerLeagueCode: string;
+    /**
+     * The provider's own name for its league, e.g. "NFL".
+     */
+    providerLeagueName: string;
+    /**
+     * The provider.
+     */
+    providerCode: 'BALLDONTLIE';
+    /**
+     * The provider's name, e.g. "BALLDONTLIE".
+     */
+    providerName: string;
+    /**
+     * The id the provider's events carry as their providerId (SportEventDto.providerId).
+     */
+    providerId: string;
+};
+
+/**
  * A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League.
  */
 export type SportLeagueDto = {
@@ -7736,10 +7765,6 @@ export type SportLeagueDto = {
      */
     name: string;
     /**
-     * The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
-     */
-    matchKeyword: string | null;
-    /**
      * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
      */
     currentEventYear: number | null;
@@ -7748,9 +7773,38 @@ export type SportLeagueDto = {
      */
     isActive: boolean;
     /**
-     * The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events.
+     * The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced.
      */
-    eventSyncProviderId: string | null;
+    selectedProviderMapping: {
+        /**
+         * The mapping.
+         */
+        id: string;
+        /**
+         * The provider league the sport league is mapped to (ProviderLeagueDto).
+         */
+        providerLeagueId: string;
+        /**
+         * The provider's own code for its league, e.g. "nfl".
+         */
+        providerLeagueCode: string;
+        /**
+         * The provider's own name for its league, e.g. "NFL".
+         */
+        providerLeagueName: string;
+        /**
+         * The provider.
+         */
+        providerCode: 'BALLDONTLIE';
+        /**
+         * The provider's name, e.g. "BALLDONTLIE".
+         */
+        providerName: string;
+        /**
+         * The id the provider's events carry as their providerId (SportEventDto.providerId).
+         */
+        providerId: string;
+    } | null;
     /**
      * How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.
      */
@@ -7856,10 +7910,6 @@ export type SportLeagueListResponse = {
          */
         name: string;
         /**
-         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
-         */
-        matchKeyword: string | null;
-        /**
          * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
          */
         currentEventYear: number | null;
@@ -7868,9 +7918,38 @@ export type SportLeagueListResponse = {
          */
         isActive: boolean;
         /**
-         * The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events.
+         * The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced.
          */
-        eventSyncProviderId: string | null;
+        selectedProviderMapping: {
+            /**
+             * The mapping.
+             */
+            id: string;
+            /**
+             * The provider league the sport league is mapped to (ProviderLeagueDto).
+             */
+            providerLeagueId: string;
+            /**
+             * The provider's own code for its league, e.g. "nfl".
+             */
+            providerLeagueCode: string;
+            /**
+             * The provider's own name for its league, e.g. "NFL".
+             */
+            providerLeagueName: string;
+            /**
+             * The provider.
+             */
+            providerCode: 'BALLDONTLIE';
+            /**
+             * The provider's name, e.g. "BALLDONTLIE".
+             */
+            providerName: string;
+            /**
+             * The id the provider's events carry as their providerId (SportEventDto.providerId).
+             */
+            providerId: string;
+        } | null;
         /**
          * How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.
          */
@@ -7963,10 +8042,6 @@ export type SportLeagueResponse = {
          */
         name: string;
         /**
-         * The provider's tour name for this sport league (e.g. "PGA TOUR"), or words its event names carry. Catalog browse keeps an event that matches either way, a name matching only on whole words ("NBA" does not match "WNBA Playoffs"); the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set.
-         */
-        matchKeyword: string | null;
-        /**
          * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
          */
         currentEventYear: number | null;
@@ -7975,9 +8050,38 @@ export type SportLeagueResponse = {
          */
         isActive: boolean;
         /**
-         * The provider whose sync creates and keeps the sport league's events (ADR 0011): once a day it imports the provider's events for the league's tour (matchKeyword) for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when an admin authors its events.
+         * The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced.
          */
-        eventSyncProviderId: string | null;
+        selectedProviderMapping: {
+            /**
+             * The mapping.
+             */
+            id: string;
+            /**
+             * The provider league the sport league is mapped to (ProviderLeagueDto).
+             */
+            providerLeagueId: string;
+            /**
+             * The provider's own code for its league, e.g. "nfl".
+             */
+            providerLeagueCode: string;
+            /**
+             * The provider's own name for its league, e.g. "NFL".
+             */
+            providerLeagueName: string;
+            /**
+             * The provider.
+             */
+            providerCode: 'BALLDONTLIE';
+            /**
+             * The provider's name, e.g. "BALLDONTLIE".
+             */
+            providerName: string;
+            /**
+             * The id the provider's events carry as their providerId (SportEventDto.providerId).
+             */
+            providerId: string;
+        } | null;
         /**
          * How many days before its start a synced DRAFT event of the sport league is released for contests on its own, once every ready check passes (releaseChecks on the event). An hourly sweep tries each such event in the window, and logs each try with every check and its value. Null: events are released only by a root admin. 7 for a new sport league.
          */
@@ -8058,10 +8162,6 @@ export type CreateSportLeagueRequest = {
      */
     name: string;
     /**
-     * Provider event-name keyword for this sport league; set it to the provider's tour name (e.g. "PGA TOUR") to use the event-year import.
-     */
-    matchKeyword?: string;
-    /**
      * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
      */
     bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
@@ -8080,19 +8180,15 @@ export type CreateSportLeagueRequest = {
  */
 export type UpdateSportLeagueRequest = {
     name?: string;
-    /**
-     * null clears it.
-     */
-    matchKeyword?: string | null;
     isActive?: boolean;
     /**
      * Days before an event's start that its automatic release begins, 1 to 30; null turns automatic release off for the sport league.
      */
     autoReleaseDaysBeforeStart?: number | null;
     /**
-     * Turns the sport league's event sync on with that provider, or off with null. 404 PROVIDER_NOT_FOUND for a provider that is not registered; 422 PROVIDER_SPORT_MISMATCH for one that does not cover the sport league's sport; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when the sport league has no match keyword after the update, since the sync finds the league's events by it. Clearing the keyword of a synced league is refused the same way.
+     * Turns the sport league's event sync on with that provider league (a ProviderLeagueDto id), mapping the sport league to it when it is not yet, or off with null, which keeps the mapping. 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist; 422 PROVIDER_SPORT_MISMATCH for one of another sport; 422 PROVIDER_NOT_FOUND when its provider or the league is switched off or not running.
      */
-    eventSyncProviderId?: string | null;
+    syncProviderLeagueId?: string | null;
     /**
      * Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.
      */
@@ -8458,10 +8554,6 @@ export type SportLeagueSyncDto = {
          */
         changedCount: number | null;
     } | null;
-    /**
-     * When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-     */
-    nextRunAt: string | null;
 };
 
 /**
@@ -8510,10 +8602,6 @@ export type SportLeagueSyncListResponse = {
              */
             changedCount: number | null;
         } | null;
-        /**
-         * When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-         */
-        nextRunAt: string | null;
     }>;
 };
 
@@ -8910,10 +8998,6 @@ export type SportEventOverviewDto = {
              */
             changedCount: number | null;
         } | null;
-        /**
-         * When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-         */
-        nextRunAt: string | null;
     }>;
     /**
      * One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.
@@ -9120,10 +9204,6 @@ export type SportEventOverviewResponse = {
                  */
                 changedCount: number | null;
             } | null;
-            /**
-             * When the schedule runs it next: an interval of its policy after the latest run, or now when that has passed or it never ran. Null when nothing schedules it: the league or the policy is off, its sport is not scheduled, or the webhook drives it.
-             */
-            nextRunAt: string | null;
         }>;
         /**
          * One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.
@@ -10657,7 +10737,7 @@ export type CloneSportEventYearRequest = {
  */
 export type ImportSportEventYearFromProviderRequest = {
     /**
-     * The tour. Its matchKeyword must equal the provider's tour name for an event (case-insensitive), e.g. "PGA TOUR"; 422 SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD when it has none.
+     * The sport league. Its events are the provider league its selected provider mapping names; 422 SPORT_LEAGUE_NOT_SYNCED when it has none.
      */
     sportLeagueId: string;
     /**
@@ -16015,10 +16095,6 @@ export type SettingsGroup = {
      */
     value: {
         /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -16107,10 +16183,6 @@ export type SettingsGroup = {
      * The value a reset would store.
      */
     defaults: {
-        /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -17090,10 +17162,6 @@ export type SettingsGroupList = {
          */
         value: {
             /**
-             * Sports that scheduled ingestion is allowed to run automatically.
-             */
-            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-            /**
              * Scheduling policy for provider health checks.
              */
             healthCheck: {
@@ -17182,10 +17250,6 @@ export type SettingsGroupList = {
          * The value a reset would store.
          */
         defaults: {
-            /**
-             * Sports that scheduled ingestion is allowed to run automatically.
-             */
-            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -18133,10 +18197,6 @@ export type SettingsGroupUpdateRequest = {
      */
     value: {
         /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -18651,10 +18711,6 @@ export type SettingsChange = {
      */
     previousValue: {
         /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-        /**
          * Scheduling policy for provider health checks.
          */
         healthCheck: {
@@ -18743,10 +18799,6 @@ export type SettingsChange = {
      * The value the save stored.
      */
     newValue: {
-        /**
-         * Sports that scheduled ingestion is allowed to run automatically.
-         */
-        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -19682,10 +19734,6 @@ export type SettingsChangeList = {
          */
         previousValue: {
             /**
-             * Sports that scheduled ingestion is allowed to run automatically.
-             */
-            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-            /**
              * Scheduling policy for provider health checks.
              */
             healthCheck: {
@@ -19774,10 +19822,6 @@ export type SettingsChangeList = {
          * The value the save stored.
          */
         newValue: {
-            /**
-             * Sports that scheduled ingestion is allowed to run automatically.
-             */
-            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -27209,11 +27253,140 @@ export type EventSyncRequest = {
 };
 
 /**
- * A registered sports-data provider with its live health.
+ * One of a provider's own leagues (#1997).
+ */
+export type ProviderLeagueDto = {
+    /**
+     * The provider league.
+     */
+    id: string;
+    /**
+     * The provider's own code for the league, as its API names it, e.g. "nfl".
+     */
+    code: string;
+    /**
+     * The provider's own name for the league.
+     */
+    name: string;
+    /**
+     * The sport the league plays.
+     */
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Which of the provider's webhook events the league sends for its games.
+     */
+    webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+    /**
+     * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
+     */
+    quietAfterMinutes: number;
+    /**
+     * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+     */
+    typicalGameMinutes: number;
+    /**
+     * Whether the provider's adapter reads the league. A change takes effect when the server tasks next start.
+     */
+    isEnabled: boolean;
+};
+
+/**
+ * A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager.
+ */
+export type ProviderSettingsDto = {
+    /**
+     * The Provider row.
+     */
+    id: string;
+    /**
+     * Which provider the row is; it picks the adapter.
+     */
+    code: 'BALLDONTLIE';
+    /**
+     * The provider's display name.
+     */
+    name: string;
+    /**
+     * Where the adapter calls the provider. Taken by each task within a minute.
+     */
+    baseUrl: string;
+    /**
+     * The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute.
+     */
+    requestsPerMinute: number;
+    /**
+     * Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet).
+     */
+    webhooksEnabled: boolean;
+    /**
+     * Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only.
+     */
+    webhookSecretSet: boolean;
+    /**
+     * How often a notified event's scores are polled anyway while it is in play, in minutes.
+     */
+    webhookPollMinutes: number;
+    /**
+     * How often a notified event played in rounds is polled while a round is under way, in minutes.
+     */
+    webhookRoundPollMinutes: number;
+    /**
+     * Whether the provider plan includes player box scores.
+     */
+    hasPlayerStats: boolean;
+    /**
+     * Whether the provider is used at all. A change takes effect when the server tasks next start.
+     */
+    isEnabled: boolean;
+    /**
+     * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
+     */
+    priority: number;
+    /**
+     * The provider's own leagues, by code.
+     */
+    leagues: Array<{
+        /**
+         * The provider league.
+         */
+        id: string;
+        /**
+         * The provider's own code for the league, as its API names it, e.g. "nfl".
+         */
+        code: string;
+        /**
+         * The provider's own name for the league.
+         */
+        name: string;
+        /**
+         * The sport the league plays.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * Which of the provider's webhook events the league sends for its games.
+         */
+        webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+        /**
+         * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
+         */
+        quietAfterMinutes: number;
+        /**
+         * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+         */
+        typicalGameMinutes: number;
+        /**
+         * Whether the provider's adapter reads the league. A change takes effect when the server tasks next start.
+         */
+        isEnabled: boolean;
+    }>;
+};
+
+/**
+ * A sports-data provider with its live health and settings.
  */
 export type ProviderSummaryDto = {
     /**
-     * Registered provider identifier.
+     * The id the provider's events carry as their providerId.
      */
     providerId: string;
     /**
@@ -27221,23 +27394,23 @@ export type ProviderSummaryDto = {
      */
     providerName: string;
     /**
-     * Health from a live check made for this request.
+     * Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
      */
-    status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+    status: 'HEALTHY' | 'DEGRADED' | 'DOWN' | null;
     /**
-     * Provider-reported error rate over the last hour.
+     * Provider-reported error rate over the last hour; null when the provider is not running.
      */
-    errorRate: number;
+    errorRate: number | null;
     /**
-     * Provider-reported p95 latency.
+     * Provider-reported p95 latency; null when the provider is not running.
      */
-    latencyMs: number;
+    latencyMs: number | null;
     /**
      * When one of the provider's events last changed, else its last successful poll; null when neither is known.
      */
     lastEventAt: string | null;
     /**
-     * Sports the provider covers that ingestion is scheduled for.
+     * Sports the provider's running adapter covers.
      */
     sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
@@ -27253,30 +27426,349 @@ export type ProviderSummaryDto = {
      */
     supportsLiveSimulation: boolean;
     /**
-     * The request rate core-api holds its calls to the provider to, a minute: the provider plan's limit, set in the deployment's provider bindings. Null when the provider is not paced.
+     * The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced.
      */
     requestsPerMinute: number | null;
     /**
-     * True when the provider's webhooks are on: its signing secret is set, so its notifications are accepted.
+     * True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted.
      */
     webhooksEnabled: boolean;
     /**
-     * The active sport leagues whose events this provider's sync creates.
+     * The active sport leagues whose selected provider mapping is to one of this provider's leagues.
      */
     syncedSportLeagueCount: number;
     /**
      * Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to.
      */
     rateLimitedJobsLast24h: number;
+    /**
+     * The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).
+     */
+    settings: {
+        /**
+         * The Provider row.
+         */
+        id: string;
+        /**
+         * Which provider the row is; it picks the adapter.
+         */
+        code: 'BALLDONTLIE';
+        /**
+         * The provider's display name.
+         */
+        name: string;
+        /**
+         * Where the adapter calls the provider. Taken by each task within a minute.
+         */
+        baseUrl: string;
+        /**
+         * The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute.
+         */
+        requestsPerMinute: number;
+        /**
+         * Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet).
+         */
+        webhooksEnabled: boolean;
+        /**
+         * Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only.
+         */
+        webhookSecretSet: boolean;
+        /**
+         * How often a notified event's scores are polled anyway while it is in play, in minutes.
+         */
+        webhookPollMinutes: number;
+        /**
+         * How often a notified event played in rounds is polled while a round is under way, in minutes.
+         */
+        webhookRoundPollMinutes: number;
+        /**
+         * Whether the provider plan includes player box scores.
+         */
+        hasPlayerStats: boolean;
+        /**
+         * Whether the provider is used at all. A change takes effect when the server tasks next start.
+         */
+        isEnabled: boolean;
+        /**
+         * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
+         */
+        priority: number;
+        /**
+         * The provider's own leagues, by code.
+         */
+        leagues: Array<{
+            /**
+             * The provider league.
+             */
+            id: string;
+            /**
+             * The provider's own code for the league, as its API names it, e.g. "nfl".
+             */
+            code: string;
+            /**
+             * The provider's own name for the league.
+             */
+            name: string;
+            /**
+             * The sport the league plays.
+             */
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * Which of the provider's webhook events the league sends for its games.
+             */
+            webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+            /**
+             * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
+             */
+            quietAfterMinutes: number;
+            /**
+             * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+             */
+            typicalGameMinutes: number;
+            /**
+             * Whether the provider's adapter reads the league. A change takes effect when the server tasks next start.
+             */
+            isEnabled: boolean;
+        }>;
+    } | null;
 };
 
 /**
- * Every registered provider.
+ * Changes to a provider's settings; omitted fields are left alone.
+ */
+export type UpdateProviderRequest = {
+    /**
+     * An https URL.
+     */
+    baseUrl?: string;
+    requestsPerMinute?: number;
+    /**
+     * true is refused with 422 PROVIDER_WEBHOOK_SECRET_MISSING while the provider's signing secret is not set in this environment.
+     */
+    webhooksEnabled?: boolean;
+    webhookPollMinutes?: number;
+    webhookRoundPollMinutes?: number;
+    hasPlayerStats?: boolean;
+    isEnabled?: boolean;
+    /**
+     * 409 PROVIDER_PRIORITY_TAKEN when another provider has it.
+     */
+    priority?: number;
+};
+
+/**
+ * A provider's settings as saved.
+ */
+export type ProviderSettingsResponse = {
+    /**
+     * A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager.
+     */
+    provider: {
+        /**
+         * The Provider row.
+         */
+        id: string;
+        /**
+         * Which provider the row is; it picks the adapter.
+         */
+        code: 'BALLDONTLIE';
+        /**
+         * The provider's display name.
+         */
+        name: string;
+        /**
+         * Where the adapter calls the provider. Taken by each task within a minute.
+         */
+        baseUrl: string;
+        /**
+         * The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute.
+         */
+        requestsPerMinute: number;
+        /**
+         * Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet).
+         */
+        webhooksEnabled: boolean;
+        /**
+         * Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only.
+         */
+        webhookSecretSet: boolean;
+        /**
+         * How often a notified event's scores are polled anyway while it is in play, in minutes.
+         */
+        webhookPollMinutes: number;
+        /**
+         * How often a notified event played in rounds is polled while a round is under way, in minutes.
+         */
+        webhookRoundPollMinutes: number;
+        /**
+         * Whether the provider plan includes player box scores.
+         */
+        hasPlayerStats: boolean;
+        /**
+         * Whether the provider is used at all. A change takes effect when the server tasks next start.
+         */
+        isEnabled: boolean;
+        /**
+         * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
+         */
+        priority: number;
+        /**
+         * The provider's own leagues, by code.
+         */
+        leagues: Array<{
+            /**
+             * The provider league.
+             */
+            id: string;
+            /**
+             * The provider's own code for the league, as its API names it, e.g. "nfl".
+             */
+            code: string;
+            /**
+             * The provider's own name for the league.
+             */
+            name: string;
+            /**
+             * The sport the league plays.
+             */
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * Which of the provider's webhook events the league sends for its games.
+             */
+            webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+            /**
+             * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
+             */
+            quietAfterMinutes: number;
+            /**
+             * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+             */
+            typicalGameMinutes: number;
+            /**
+             * Whether the provider's adapter reads the league. A change takes effect when the server tasks next start.
+             */
+            isEnabled: boolean;
+        }>;
+    };
+};
+
+/**
+ * Changes to one of a provider's leagues; omitted fields are left alone.
+ */
+export type UpdateProviderLeagueRequest = {
+    quietAfterMinutes?: number;
+    typicalGameMinutes?: number;
+    isEnabled?: boolean;
+};
+
+/**
+ * A provider league as saved.
+ */
+export type ProviderLeagueResponse = {
+    /**
+     * One of a provider's own leagues (#1997).
+     */
+    league: {
+        /**
+         * The provider league.
+         */
+        id: string;
+        /**
+         * The provider's own code for the league, as its API names it, e.g. "nfl".
+         */
+        code: string;
+        /**
+         * The provider's own name for the league.
+         */
+        name: string;
+        /**
+         * The sport the league plays.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * Which of the provider's webhook events the league sends for its games.
+         */
+        webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+        /**
+         * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
+         */
+        quietAfterMinutes: number;
+        /**
+         * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+         */
+        typicalGameMinutes: number;
+        /**
+         * Whether the provider's adapter reads the league. A change takes effect when the server tasks next start.
+         */
+        isEnabled: boolean;
+    };
+};
+
+/**
+ * The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself.
+ */
+export type ProviderSettingRangesDto = {
+    /**
+     * A provider's requestsPerMinute.
+     */
+    requestsPerMinute: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+    /**
+     * A provider's webhookPollMinutes and webhookRoundPollMinutes.
+     */
+    pollMinutes: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+    /**
+     * A provider's priority.
+     */
+    priority: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+    /**
+     * A provider league's quietAfterMinutes and typicalGameMinutes.
+     */
+    leagueMinutes: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+};
+
+/**
+ * Every registered provider, and the ranges their settings may take.
  */
 export type ProviderListResponse = {
     providers: Array<{
         /**
-         * Registered provider identifier.
+         * The id the provider's events carry as their providerId.
          */
         providerId: string;
         /**
@@ -27284,23 +27776,23 @@ export type ProviderListResponse = {
          */
         providerName: string;
         /**
-         * Health from a live check made for this request.
+         * Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
          */
-        status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
+        status: 'HEALTHY' | 'DEGRADED' | 'DOWN' | null;
         /**
-         * Provider-reported error rate over the last hour.
+         * Provider-reported error rate over the last hour; null when the provider is not running.
          */
-        errorRate: number;
+        errorRate: number | null;
         /**
-         * Provider-reported p95 latency.
+         * Provider-reported p95 latency; null when the provider is not running.
          */
-        latencyMs: number;
+        latencyMs: number | null;
         /**
          * When one of the provider's events last changed, else its last successful poll; null when neither is known.
          */
         lastEventAt: string | null;
         /**
-         * Sports the provider covers that ingestion is scheduled for.
+         * Sports the provider's running adapter covers.
          */
         sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
@@ -27316,22 +27808,169 @@ export type ProviderListResponse = {
          */
         supportsLiveSimulation: boolean;
         /**
-         * The request rate core-api holds its calls to the provider to, a minute: the provider plan's limit, set in the deployment's provider bindings. Null when the provider is not paced.
+         * The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced.
          */
         requestsPerMinute: number | null;
         /**
-         * True when the provider's webhooks are on: its signing secret is set, so its notifications are accepted.
+         * True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted.
          */
         webhooksEnabled: boolean;
         /**
-         * The active sport leagues whose events this provider's sync creates.
+         * The active sport leagues whose selected provider mapping is to one of this provider's leagues.
          */
         syncedSportLeagueCount: number;
         /**
          * Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to.
          */
         rateLimitedJobsLast24h: number;
+        /**
+         * The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).
+         */
+        settings: {
+            /**
+             * The Provider row.
+             */
+            id: string;
+            /**
+             * Which provider the row is; it picks the adapter.
+             */
+            code: 'BALLDONTLIE';
+            /**
+             * The provider's display name.
+             */
+            name: string;
+            /**
+             * Where the adapter calls the provider. Taken by each task within a minute.
+             */
+            baseUrl: string;
+            /**
+             * The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute.
+             */
+            requestsPerMinute: number;
+            /**
+             * Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet).
+             */
+            webhooksEnabled: boolean;
+            /**
+             * Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only.
+             */
+            webhookSecretSet: boolean;
+            /**
+             * How often a notified event's scores are polled anyway while it is in play, in minutes.
+             */
+            webhookPollMinutes: number;
+            /**
+             * How often a notified event played in rounds is polled while a round is under way, in minutes.
+             */
+            webhookRoundPollMinutes: number;
+            /**
+             * Whether the provider plan includes player box scores.
+             */
+            hasPlayerStats: boolean;
+            /**
+             * Whether the provider is used at all. A change takes effect when the server tasks next start.
+             */
+            isEnabled: boolean;
+            /**
+             * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
+             */
+            priority: number;
+            /**
+             * The provider's own leagues, by code.
+             */
+            leagues: Array<{
+                /**
+                 * The provider league.
+                 */
+                id: string;
+                /**
+                 * The provider's own code for the league, as its API names it, e.g. "nfl".
+                 */
+                code: string;
+                /**
+                 * The provider's own name for the league.
+                 */
+                name: string;
+                /**
+                 * The sport the league plays.
+                 */
+                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+                /**
+                 * Which of the provider's webhook events the league sends for its games.
+                 */
+                webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+                /**
+                 * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
+                 */
+                quietAfterMinutes: number;
+                /**
+                 * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+                 */
+                typicalGameMinutes: number;
+                /**
+                 * Whether the provider's adapter reads the league. A change takes effect when the server tasks next start.
+                 */
+                isEnabled: boolean;
+            }>;
+        } | null;
     }>;
+    /**
+     * The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself.
+     */
+    settingRanges: {
+        /**
+         * A provider's requestsPerMinute.
+         */
+        requestsPerMinute: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+        /**
+         * A provider's webhookPollMinutes and webhookRoundPollMinutes.
+         */
+        pollMinutes: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+        /**
+         * A provider's priority.
+         */
+        priority: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+        /**
+         * A provider league's quietAfterMinutes and typicalGameMinutes.
+         */
+        leagueMinutes: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+    };
 };
 
 /**
@@ -28235,7 +28874,7 @@ export type ProviderEventDto = {
 export type ProviderCatalogEventListQuery = {
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
+     * Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter.
      */
     sportLeagueId?: string;
     /**
@@ -37040,12 +37679,108 @@ export type ListProvidersError = ListProvidersErrors[keyof ListProvidersErrors];
 
 export type ListProvidersResponses = {
     /**
-     * Every registered provider.
+     * Every registered provider, and the ranges their settings may take.
      */
     200: ProviderListResponse;
 };
 
 export type ListProvidersResponse = ListProvidersResponses[keyof ListProvidersResponses];
+
+export type UpdateProviderSettingsData = {
+    body: UpdateProviderRequest;
+    path: {
+        /**
+         * The Provider row (ProviderSettingsDto.id).
+         */
+        providerId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/provider-settings/{providerId}';
+};
+
+export type UpdateProviderSettingsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type UpdateProviderSettingsError = UpdateProviderSettingsErrors[keyof UpdateProviderSettingsErrors];
+
+export type UpdateProviderSettingsResponses = {
+    /**
+     * A provider's settings as saved.
+     */
+    200: ProviderSettingsResponse;
+};
+
+export type UpdateProviderSettingsResponse = UpdateProviderSettingsResponses[keyof UpdateProviderSettingsResponses];
+
+export type UpdateProviderLeagueData = {
+    body: UpdateProviderLeagueRequest;
+    path: {
+        /**
+         * The Provider row (ProviderSettingsDto.id).
+         */
+        providerId: string;
+        /**
+         * The provider league (ProviderLeagueDto.id).
+         */
+        providerLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/provider-settings/{providerId}/leagues/{providerLeagueId}';
+};
+
+export type UpdateProviderLeagueErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type UpdateProviderLeagueError = UpdateProviderLeagueErrors[keyof UpdateProviderLeagueErrors];
+
+export type UpdateProviderLeagueResponses = {
+    /**
+     * A provider league as saved.
+     */
+    200: ProviderLeagueResponse;
+};
+
+export type UpdateProviderLeagueResponse = UpdateProviderLeagueResponses[keyof UpdateProviderLeagueResponses];
 
 export type ListProviderSyncRunsData = {
     body?: never;
@@ -37252,7 +37987,7 @@ export type ListProviderCatalogEventsData = {
     query: {
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Resolves to that league's matchKeyword and keeps events whose provider tour name equals it (ignoring case) or whose name contains it. A league with no matchKeyword contributes no filter.
+         * Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter.
          */
         sportLeagueId?: string;
         /**

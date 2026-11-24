@@ -131,7 +131,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -215,15 +215,18 @@ export class InMemorySportEvents {
         && (filters.isActive === undefined || row.isActive === filters.isActive)
       )),
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
-      findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.eventSyncProviderId !== null),
+      findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, eventSyncProviderId: null, autoReleaseDaysBeforeStart: 7 });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },
-      update: async (id, updates) => {
+      update: async (id, { syncProviderLeagueId, ...updates }) => {
         const row = this.sportLeagues.find((candidate) => candidate.id === id) as SportLeague;
         Object.assign(row, Object.fromEntries(Object.entries<unknown>(updates).filter(([, value]) => value !== undefined)));
+        if (syncProviderLeagueId === null) row.selectedProviderMapping = null;
+        // The store holds no provider leagues to map to: a test sets `selectedProviderMapping` itself.
+        else if (syncProviderLeagueId !== undefined) throw new Error('The in-memory store cannot map a provider league; set selectedProviderMapping on the league.');
         return row;
       },
       deleteUnlessUsed: async () => { throw new Error('not used'); },
@@ -418,10 +421,10 @@ export class InMemorySportEvents {
       findAutoReleaseCandidates: async (now, horizon) => this.events.flatMap((row) => {
         const league = this.sportLeagues.find((candidate) => candidate.id === row.sportLeagueId);
         if (row.status !== 'DRAFT' || row.startDate <= now || row.startDate > horizon) return [];
-        if (!league?.isActive || league.eventSyncProviderId === null || league.autoReleaseDaysBeforeStart === null) return [];
+        if (!league?.isActive || league.selectedProviderMapping === null || league.autoReleaseDaysBeforeStart === null) return [];
         return [{
           id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope,
-          eventSyncProviderId: league.eventSyncProviderId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
+          syncProviderId: league.selectedProviderMapping.providerId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
         }];
       }),
       recordAutoReleaseCheck: async (sportEventId, check) => {

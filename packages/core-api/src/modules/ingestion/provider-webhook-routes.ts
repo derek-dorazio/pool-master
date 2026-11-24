@@ -9,6 +9,7 @@
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { BalldontlieWebhookNotification } from '@poolmaster/shared/dto';
+import { ProviderCode } from '@poolmaster/shared/domain';
 // Registers ErrorEnvelope and SuccessResponse, which this module's responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
 import '@poolmaster/shared/dto/common.dto';
@@ -17,14 +18,17 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import '@poolmaster/shared/dto/provider-webhooks.dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { sendError } from '../../core/error-handler';
-import { checkBalldontlieSignature, readBalldontlieNotification } from './adapters/balldontlie/balldontlie-webhooks';
-import { BALLDONTLIE_PROVIDER_ID } from './adapters/balldontlie/pga-mapping';
+import { checkBalldontlieSignature, readBalldontlieNotification, type BalldontlieWebhookLeague } from './adapters/balldontlie/balldontlie-webhooks';
 import type { ProviderNotificationService } from './provider-notifications';
+import type { ProviderSettingsStore } from './provider-settings-store';
+import type { ProviderWebhookSwitch } from './provider-webhook-switch';
 
 export interface ProviderWebhooksModuleOptions {
   notifications: Pick<ProviderNotificationService, 'receive'>;
-  /** The BALLDONTLIE endpoint's signing secret; unset, every delivery is refused. */
-  balldontlieSigningSecret: string | undefined;
+  /** The signing secret while BALLDONTLIE's webhooks are on (#1997); while they are off, every delivery is refused. */
+  webhooks: Pick<ProviderWebhookSwitch, 'activeSecret'>;
+  /** BALLDONTLIE's enabled leagues, which say which notifications are acted on. */
+  providerSettings: Pick<ProviderSettingsStore, 'enabledLeagues'>;
   now?: () => Date;
 }
 
@@ -34,14 +38,6 @@ const WEBHOOK_BODY_LIMIT_BYTES = 64 * 1024;
 /** The secret a webhook is signed with, from BALLDONTLIE_WEBHOOK_SECRET; undefined when unset or blank. */
 export function readBalldontlieWebhookSecret(env: NodeJS.ProcessEnv): string | undefined {
   return env['BALLDONTLIE_WEBHOOK_SECRET']?.trim() || undefined;
-}
-
-/**
- * The providers whose webhooks are on: those whose signing secret is set. Before it is, every
- * delivery is refused, so nothing arrives.
- */
-export function readWebhookProviderIds(env: NodeJS.ProcessEnv): readonly string[] {
-  return readBalldontlieWebhookSecret(env) === undefined ? [] : [BALLDONTLIE_PROVIDER_ID];
 }
 
 export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderWebhooksModuleOptions): void {
@@ -68,9 +64,9 @@ export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderW
       tags: ['Ingestion'],
       summary: 'Receive a BALLDONTLIE webhook notification',
       description:
-        'Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment\'s endpoint secret; several, separated by commas or spaces, while the secret rotates, any one of which may match), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while no secret is configured. '
+        'Public; called by BALLDONTLIE, never by the app. The delivery must carry X-BDL-Webhook-Timestamp (Unix seconds, within 5 minutes of now) and X-BDL-Webhook-Signature (`v1=` and the hex HMAC-SHA256 of `{timestamp}.{body}` under this environment\'s endpoint secret; several, separated by commas or spaces, while the secret rotates, any one of which may match), or the answer is 403 PROVIDER_WEBHOOK_UNVERIFIED, as it is for every delivery while the provider\'s webhooks are off: switched off on the Providers page, or no secret configured. '
         + 'A verified notification about a game or tournament linked to an in-progress event queues one live-score sync of that event, due about a minute later; notifications arriving while it waits queue nothing more. The sync reads the provider\'s current scores, so the notification\'s own contents are never written. '
-        + 'A notification about nothing linked, or of a type PoolMaster does not act on, is acknowledged and dropped. Every verified delivery answers 200, so the provider does not retry it.',
+        + 'A notification about nothing linked, or of a type PoolMaster does not act on for any of the provider\'s enabled leagues, is acknowledged and dropped. Every verified delivery answers 200, so the provider does not retry it.',
       operationId: 'receiveBalldontlieWebhook',
       body: schemaRef('BalldontlieWebhookNotification'),
       response: {
@@ -82,7 +78,7 @@ export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderW
     // Checked before the body's schema, so an unsigned caller learns nothing about its shape.
     preValidation: async (request: FastifyRequest, reply: FastifyReply) => {
       const logger = request.contextLogger ?? request.log;
-      const secret = opts.balldontlieSigningSecret;
+      const secret = opts.webhooks.activeSecret(ProviderCode.BALLDONTLIE);
       const check = secret === undefined
         ? 'NOT_CONFIGURED'
         : checkBalldontlieSignature({
@@ -100,7 +96,8 @@ export function providerWebhooksModule(fastify: FastifyInstance, opts: ProviderW
   }, async (request: FastifyRequest<{ Body: BalldontlieWebhookNotification }>, reply: FastifyReply) => {
     const logger = request.contextLogger ?? request.log;
     const deliveryId = singleHeader(request.headers['x-bdl-webhook-id']) ?? null;
-    const notification = readBalldontlieNotification(request.body);
+    const leagues: readonly BalldontlieWebhookLeague[] = opts.providerSettings.enabledLeagues(ProviderCode.BALLDONTLIE);
+    const notification = readBalldontlieNotification(request.body, leagues);
     if (!notification) {
       logger.info({
         action: 'ingestion.balldontlieWebhook.ignored',

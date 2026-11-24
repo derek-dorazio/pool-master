@@ -7,7 +7,7 @@
  * An admin's Sync now queues the same job, so a league is created and kept current one way.
  *
  * A sport league is synced when a root admin has named the provider that creates its events
- * (`SportLeague.eventSyncProviderId`). Every created event is born DRAFT, as any event is; status
+ * (`SportLeague.syncProviderId`). Every created event is born DRAFT, as any event is; status
  * is never set here, the lifecycle scheduler moves it on the event's dates.
  *
  * Every server task runs this scheduler, and the sweep runs on the one holding its job lock

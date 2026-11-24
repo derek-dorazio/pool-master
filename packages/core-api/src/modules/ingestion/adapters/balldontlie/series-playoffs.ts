@@ -22,7 +22,7 @@ import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 export interface PlayoffsLeague {
   /** The vendor's path segment and the scope and team id prefix: `nba`. */
   key: string;
-  /** Carried in `metadata.tour`, matched against the sport league's match keyword. */
+  /** Carried in `metadata.tour`, for display. */
   tour: string;
   sport: Sport;
   /** The event's name: "NBA Playoffs". */

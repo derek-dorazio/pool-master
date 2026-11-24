@@ -94,6 +94,33 @@ describe('provider call policy (league model 1c)', () => {
       expect(at[1] - at[0]).toBe(3_000);
     });
 
+    it('reads a limit given as a function for each request, so a Providers page edit paces the next one', async () => {
+      const clock = virtualClock();
+      let limit = 60;
+      const calls = policy({ requestsPerMinute: () => limit, ...clock });
+      const at: number[] = [];
+
+      await calls.execute(() => { at.push(clock.now()); return Promise.resolve('ok'); });
+      await calls.execute(() => { at.push(clock.now()); return Promise.resolve('ok'); });
+      limit = 6;
+      await calls.execute(() => { at.push(clock.now()); return Promise.resolve('ok'); });
+      await calls.execute(() => { at.push(clock.now()); return Promise.resolve('ok'); });
+
+      // The third's slot was reserved at the old pace; the gap after it is the new one.
+      expect(at.map((time) => time - START)).toEqual([0, 1_000, 2_000, 12_000]);
+      expect(calls.intervalMs).toBe(10_000);
+    });
+
+    it('refuses a request once a limit read for each request is no longer a whole number of at least one, sending nothing', async () => {
+      let limit = 60;
+      const calls = policy({ requestsPerMinute: () => limit, ...virtualClock() });
+      limit = 0;
+      const attempt = jest.fn(() => Promise.resolve('ok'));
+
+      await expect(calls.execute(attempt)).rejects.toThrow('TEST_PROVIDER requestsPerMinute must be a whole number of at least 1, not 0.');
+      expect(attempt).not.toHaveBeenCalled();
+    });
+
     it('gives calls made together consecutive slots, so jobs sharing a task share its one pace', async () => {
       const waits: number[] = [];
       const calls = policy({ requestsPerMinute: 60, now: () => START, sleep: (ms) => { waits.push(ms); return Promise.resolve(); } });

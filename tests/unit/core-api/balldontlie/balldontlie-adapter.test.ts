@@ -12,6 +12,7 @@ import {
 } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 import { golfRoundsOf } from '../../../support/live-score-rounds';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
 
 /**
  * The adapter against a fake BALLDONTLIE that checks every request it sends, and every reply
@@ -56,9 +57,9 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes): { adapter: Ba
   global.fetch = api.fetch;
   let now = 0;
   const adapter = new BalldontlieAdapter({
-    baseUrl: 'https://api.balldontlie.io',
+    connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
     apiKey: API_KEY,
-    requestsPerMinute: 600,
+    leagues: BALLDONTLIE_TEST_LEAGUES,
     now: () => now,
     sleep: (ms) => { now += ms; return Promise.resolve(); },
   });
@@ -288,7 +289,7 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
       const originalFetch = global.fetch;
       global.fetch = api.fetch;
       restore = () => { global.fetch = originalFetch; };
-      const adapter = new BalldontlieAdapter({ baseUrl: 'https://api.balldontlie.io', apiKey: 'a-wrong-key', requestsPerMinute: 600 });
+      const adapter = new BalldontlieAdapter({ connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }), apiKey: 'a-wrong-key', leagues: BALLDONTLIE_TEST_LEAGUES });
 
       const health = await adapter.healthCheck();
 

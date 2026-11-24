@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
-import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
@@ -20,6 +20,7 @@ import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { leagueProfiles } from '../../support/league-profiles';
+import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 
 // Sync-run history and score-source links, which only the HTTP contract tests reached before
 // (#508): which runs each filter keeps and in what order, and what a link or unlink writes.
@@ -213,60 +214,78 @@ describe('EventScoreSourceService links', () => {
 });
 
 describe('EventScoreSourceService tour reads', () => {
-  const providerEvent = (externalId: string, name: string, tour: string | null) => ({
+  // Synced leagues read their provider league through their selected mapping, which only a
+  // provider with a row can have (#1997): the feed stands in for BALLDONTLIE here.
+  const providerEvent = (externalId: string, name: string, providerLeagueCode: string | null) => ({
     externalId,
-    providerId: 'integration-feed',
+    providerId: SYNCED_PROVIDER_ID,
     sport: Sport.GOLF,
     name,
     startDate: new Date('2027-04-08T00:00:00.000Z'),
     status: 'SCHEDULED' as const,
-    metadata: tour ? { tour } : {},
+    ...(providerLeagueCode !== null && { providerLeagueCode }),
+    metadata: {},
   });
-  const provider = fakeSportDataProvider({
-    providerId: 'integration-feed',
-    getUpcomingEvents: jest.fn().mockResolvedValue([
-      providerEvent('pga-1', 'Spring Classic', 'PGA Tour'),
-      providerEvent('lpga-1', 'Spring Invitational', 'LPGA Tour'),
-      providerEvent('none-1', 'PGA Tour Charity Day', null),
-    ]),
-  });
+  const getUpcomingEvents = jest.fn().mockResolvedValue([
+    providerEvent('pga-1', 'Spring Classic', 'pga'),
+    providerEvent('lpga-1', 'Spring Invitational', 'lpga'),
+    providerEvent('none-1', 'PGA Tour Charity Day', null),
+  ]);
+  const provider = fakeSportDataProvider({ providerId: SYNCED_PROVIDER_ID, getUpcomingEvents });
 
   function service() {
     return new EventScoreSourceService(getAppPrisma(), registryWith(provider));
   }
 
-  async function createTourLeague(matchKeyword: string | null) {
+  async function createTourLeague(providerLeagueCode: string | null) {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    return prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Tour ${randomUUID()}`, matchKeyword } });
+    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Tour ${randomUUID()}` } });
+    if (providerLeagueCode !== null) await syncLeagueTo(prisma, league.id, providerLeagueCode);
+    return league;
   }
 
-  it("lists a tour's year by the stored league's keyword, matching the provider's tour exactly and ignoring case", async () => {
-    const league = await createTourLeague('pga tour');
+  it('lists a league\'s year from its selected provider league alone, by the code the provider stamps on each event', async () => {
+    const league = await createTourLeague('pga');
 
-    const events = await service().listTourEventsForYear('integration-feed', league.id, 2027);
+    const events = await service().listTourEventsForYear(SYNCED_PROVIDER_ID, league.id, 2027);
 
     expect(events.map((event) => event.externalId)).toEqual(['pga-1']);
+    expect(getUpcomingEvents).toHaveBeenLastCalledWith(Sport.GOLF, expect.any(Object), { providerLeagueCode: 'pga' });
   });
 
-  it('refuses a tour read for an unknown league, and for a league with no keyword', async () => {
-    const noKeyword = await createTourLeague(null);
+  it('refuses a tour read for an unknown league, and for a league with no selected provider league', async () => {
+    const unsynced = await createTourLeague(null);
 
-    await expect(service().listTourEventsForYear('integration-feed', randomUUID(), 2027))
+    await expect(service().listTourEventsForYear(SYNCED_PROVIDER_ID, randomUUID(), 2027))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
-    await expect(service().listTourEventsForYear('integration-feed', noKeyword.id, 2027))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_MATCH_KEYWORD', statusCode: 422 });
+    await expect(service().listTourEventsForYear(SYNCED_PROVIDER_ID, unsynced.id, 2027))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
   });
 
-  it("narrows browsed candidates to the stored league's keyword, by tour or by name", async () => {
-    const league = await createTourLeague('PGA Tour');
+  it('narrows browsed candidates to the league\'s selected provider league, and leaves an unsynced league\'s unnarrowed', async () => {
+    const synced = await createTourLeague('pga');
+    const unsynced = await createTourLeague(null);
 
-    const candidates = await service().listCandidateEvents('integration-feed', Sport.GOLF, { sportLeagueId: league.id });
+    const narrowed = await service().listCandidateEvents(SYNCED_PROVIDER_ID, Sport.GOLF, { sportLeagueId: synced.id });
+    const all = await service().listCandidateEvents(SYNCED_PROVIDER_ID, Sport.GOLF, { sportLeagueId: unsynced.id });
 
-    expect(candidates.map((event) => event.externalId)).toEqual(['pga-1', 'none-1']);
+    expect(narrowed.map((event) => event.externalId)).toEqual(['pga-1']);
+    expect(all.map((event) => event.externalId)).toEqual(['pga-1', 'lpga-1', 'none-1']);
+  });
+
+  it('narrows a mapped league\'s browse to its provider league even before the mapping is selected for its sync', async () => {
+    const prisma = getPrisma();
+    const mapped = await createTourLeague(null);
+    const providerLeague = await prisma.providerLeague.findFirstOrThrow({ where: { code: 'pga', provider: { code: ProviderCode.BALLDONTLIE } }, select: { id: true } });
+    await prisma.sportLeagueProviderMapping.create({ data: { sportLeagueId: mapped.id, providerLeagueId: providerLeague.id } });
+
+    const narrowed = await service().listCandidateEvents(SYNCED_PROVIDER_ID, Sport.GOLF, { sportLeagueId: mapped.id });
+
+    expect(narrowed.map((event) => event.externalId)).toEqual(['pga-1']);
   });
 });

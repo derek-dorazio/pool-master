@@ -3,6 +3,7 @@ import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
 
 /**
  * The adapter's NFL reads against a fake BALLDONTLIE that checks every request it sends, and
@@ -53,9 +54,9 @@ function setup(routes: Record<string, FakeRoute> = defaultRoutes): { adapter: Ba
   global.fetch = api.fetch;
   let now = NOW;
   const adapter = new BalldontlieAdapter({
-    baseUrl: 'https://api.balldontlie.io',
+    connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
     apiKey: API_KEY,
-    requestsPerMinute: 600,
+    leagues: BALLDONTLIE_TEST_LEAGUES,
     now: () => now,
     sleep: (ms) => { now += ms; return Promise.resolve(); },
   });
@@ -110,7 +111,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       const harness = setup();
       restore = harness.restore;
       jest.spyOn(Date, 'now').mockReturnValue(Date.UTC(2027, 1, 1));
-      const adapter = new BalldontlieAdapter({ baseUrl: 'https://api.balldontlie.io', apiKey: API_KEY, requestsPerMinute: 600 });
+      const adapter = new BalldontlieAdapter({ connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }), apiKey: API_KEY, leagues: BALLDONTLIE_TEST_LEAGUES });
 
       await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL);
 

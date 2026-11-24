@@ -74,7 +74,6 @@ import type { IngestionService } from '../ingestion/ingestion-service';
 import {
   SportEventSyncScopeError,
   SportProviderNotFoundError,
-  SportSyncNotConfiguredError,
 } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { EventScoreSourceService } from './event-score-source-service';
@@ -306,7 +305,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
         return reply.status(202).send(toProviderManualSyncSubmissionResponse(result));
       } catch (err) {
         if (err instanceof SportProviderNotFoundError) return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
-        if (err instanceof SportSyncNotConfiguredError) return sendError(reply, 422, 'SPORT_SYNC_NOT_CONFIGURED', err.message);
         if (err instanceof SportEventSyncScopeError) return sendError(reply, 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED', err.message);
         throw err;
       }
