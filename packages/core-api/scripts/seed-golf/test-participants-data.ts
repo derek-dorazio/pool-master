@@ -49,7 +49,7 @@ export function testLeagueName(sport: Sport, sportLeagueName: string): string {
  * them, so the run picks for itself instead. Null when none is offered: a week of a season's games
  * is picked game by game, so it has no roster template.
  */
-export function chooseContestTemplate(templates: readonly Template[], event: Pick<StoredEvent, 'sport' | 'sportLeagueId' | 'rounds'>): Template | null {
+export function chooseContestTemplate(templates: readonly Template[], event: Pick<StoredEvent, 'sport' | 'sportLeagueId' | 'rounds' | 'participantType' | 'scoringFamily'>): Template | null {
   const pickable = templates.filter((template) => isTemplateOfferedOn(template, event)
     && template.contestFormat === ContestFormat.ROSTER
     && template.selectionType !== SelectionType.RANDOM_DRAW);

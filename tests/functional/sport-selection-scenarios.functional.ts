@@ -78,7 +78,7 @@ function golfEvent(tag: string, season: number): SportDataFile {
   const golfers = Array.from({ length: 30 }, (_, index) => index + 1);
   return inSeason(parseSportDataFile(JSON.parse(JSON.stringify({
     schemaVersion: 1,
-    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], contents: [...TEST_SEED_CONTENTS] },
+    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', contents: [...TEST_SEED_CONTENTS] },
     testData: true,
     provenance: { gatheredAt: '2026-10-18', gatheredBy: 'functional test', sources: [{ name: 'Made-up strokes', url: 'https://example.com/scenario' }] },
     sportLeagues: [{

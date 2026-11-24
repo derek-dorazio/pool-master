@@ -29,6 +29,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportPlay } from '../support/sport-play';
 
 // A withdrawal after the draw end to end over HTTP (#704 slice 3): an admin releases a four-player
 // tennis draw, then a player withdraws before the first round and a lucky loser takes the place.
@@ -86,7 +87,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.TENNIS },
-      create: { sport: Sport.TENNIS, participantType: 'INDIVIDUAL', tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.TENNIS, tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Tournament Referee' });
@@ -94,7 +95,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     const a = admin.client;
 
     // --- A tour, a draw in it, its field, tiers and prices --------------------------------------
-    const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
+    const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), ...sportPlay(Sport.TENNIS), sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
     expect(tour.response?.status).toBe(201);
     const sportLeagueId = expectDefined(tour.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
@@ -152,7 +153,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     expect([released.data?.event.status, released.error]).toEqual(['SCHEDULED', undefined]);
 
     // --- The lucky loser is the tour's participant; a women's tour player is not, so is refused -----
-    const womensTour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
+    const womensTour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.TENNIS)), ...sportPlay(Sport.TENNIS), sport: Sport.TENNIS, name: `Harbour Women's Tour ${RUN}` } });
     const womensTourId = expectDefined(womensTour.data).sportLeague.id;
     created.sportLeagueIds.add(womensTourId);
     const womensPlayer = expectDefined((await createParticipant({ client: a, body: { sportLeagueId: womensTourId, participantType: 'INDIVIDUAL', name: `Swiatek ${RUN}` } })).data).participant.id;

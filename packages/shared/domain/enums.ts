@@ -848,6 +848,13 @@ export const ProviderSyncFindingStatusOrder = explicitOrder<ProviderSyncFindingS
  */
 export const ProviderSyncFindingKind = {
   /**
+   * A Provider has rate limited every call for a while (league model 1c), so its syncs keep
+   * being put off: a WARNING after a quarter of an hour, an ERROR once it has lasted the
+   * league's quiet threshold (`ProviderLeague.quietAfterMinutes`). Resolved by the Provider's
+   * next answer. Subject: each league it syncs, and the Provider.
+   */
+  PROVIDER_RATE_LIMITED: 'PROVIDER_RATE_LIMITED',
+  /**
    * The feed sent a participant id no participant of the league is mapped to, so its results
    * had nowhere to land. Subject: league, Provider and the provider's participant id.
    */

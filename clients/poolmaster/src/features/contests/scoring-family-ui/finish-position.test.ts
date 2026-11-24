@@ -1,9 +1,10 @@
+import { sportPlay } from '@/test/sport-play';
 import { describe, expect, it } from 'vitest';
 import {
-  getSportDefinition,
   RaceResultStatus,
   ScoringFamily,
   Sport,
+  sportLeagueDefinitionOf,
 } from '@poolmaster/shared/domain';
 import type {
   ContestEntryStandingDto,
@@ -15,7 +16,7 @@ import { buildLeaderboardView } from '../contest-leaderboard';
 import { getScoringFamilyUi } from './registry';
 import { finishPositionUi, formatFinish } from './finish-position';
 
-const horseRacing = getSportDefinition(Sport.HORSE_RACING);
+const horseRacing = sportLeagueDefinitionOf(Sport.HORSE_RACING, sportPlay(Sport.HORSE_RACING));
 
 function runner(
   race: Partial<NonNullable<SportEventParticipantDto['race']>> | null,
@@ -93,8 +94,8 @@ function raceLeaderboard(participants: SportEventParticipantDto[]): ContestLeade
     contestId: 'contest-1',
     sportEventId: 'event-1',
     sport: Sport.HORSE_RACING,
-    participantType: null,
-    scoringFamily: null,
+    participantType: 'INDIVIDUAL',
+    scoringFamily: 'FINISH_POSITION',
     scoringDefinitionId: 'FINISH_POSITION_POINTS',
     countingRule: { type: 'BEST_N', count: 3, pickCount: 6 },
     upsetBonus: false,
@@ -105,7 +106,7 @@ function raceLeaderboard(participants: SportEventParticipantDto[]): ContestLeade
 }
 
 describe('finish-position leaderboard', () => {
-  it('is the entry horse racing resolves to through its sport definition', () => {
+  it('is the entry horse racing resolves to through its sport league scoring family', () => {
     expect(horseRacing.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(getScoringFamilyUi(horseRacing)).toBe(finishPositionUi);
   });

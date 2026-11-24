@@ -126,8 +126,8 @@ export const SportEventDtoSchema = z.object({
   eventSeriesId: z.uuid().describe('The recurring tournament (event series) this is one edition of — the event\'s only parent.'),
   eventYear: z.number().int().describe('The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year.'),
   sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
-  participantType: z.enum(ParticipantType).nullable().describe('Who competes, when the event\'s sport league overrides its sport. Null competes as the sport does. Read through the series\' sport league.'),
-  scoringFamily: z.enum(ScoringFamily).nullable().describe('How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series\' sport league.'),
+  participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the series\' sport league.'),
+  scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the series\' sport league.'),
   syncScope: z.enum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
@@ -447,15 +447,6 @@ export const AddSportEventParticipantsResponseSchema = z.object({
 }).describe('What adding participants did.');
 export type AddSportEventParticipantsResponse = z.infer<typeof AddSportEventParticipantsResponseSchema>;
 
-export const SeedSportEventParticipantsResponseSchema = z.object({
-  added: z.number().int(),
-  skipped: z.number().int().describe('Already on the field.'),
-  total: z.number().int().describe('Active affiliations considered.'),
-  seedNumbersDerived: z.number().int(),
-  oddsDerived: z.number().int(),
-}).describe('What seeding the field from the event\'s sport league did.');
-export type SeedSportEventParticipantsResponse = z.infer<typeof SeedSportEventParticipantsResponseSchema>;
-
 /** The largest value the 32-bit integer columns behind ranking and seed number can hold (#437). */
 const MAX_INT32 = 2147483647;
 
@@ -590,7 +581,6 @@ registerSchema('SportEventParticipantDto', SportEventParticipantDtoSchema);
 registerSchema('SportEventParticipantListResponse', SportEventParticipantListResponseSchema);
 registerSchema('AddSportEventParticipantsRequest', AddSportEventParticipantsRequestSchema);
 registerSchema('AddSportEventParticipantsResponse', AddSportEventParticipantsResponseSchema);
-registerSchema('SeedSportEventParticipantsResponse', SeedSportEventParticipantsResponseSchema);
 registerSchema('UpdateSportEventParticipantsRequest', UpdateSportEventParticipantsRequestSchema);
 registerSchema('SportEventParticipantResponse', SportEventParticipantResponseSchema);
 registerSchema('SportEventParticipantUploadRequest', SportEventParticipantUploadRequestSchema);

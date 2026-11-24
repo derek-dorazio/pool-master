@@ -1,6 +1,5 @@
 import { displayString } from '../../display-strings/display-strings';
-import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import { ScoringFamily } from './scoring-family';
+import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /** What the rounds of a college hockey bracket are called, counted back from the final. */
@@ -22,8 +21,6 @@ const ROUND_NAMES_FROM_FINAL = ['National Championship', 'Frozen Four', 'Regiona
 export const hockeySportDefinition: SportDefinition = {
   sport: Sport.HOCKEY,
   name: 'Hockey',
-  participantType: ParticipantType.TEAM,
-  scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],

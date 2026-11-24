@@ -31,6 +31,5 @@ export const CONTRACT_VERIFICATION_GAPS = [
 
   // --- Events, participants and sport leagues (root admin) ---
   { schema: 'GolfRoundScorePreviewResponseSchema', endpoints: 'POST /api/v1/events/:eventId/rounds/:roundNumber/golf-scores/preview' },
-  { schema: 'SeedSportEventParticipantsResponseSchema', endpoints: 'POST /api/v1/events/:eventId/participants/seed' },
   { schema: 'ParticipantProviderMappingListResponseSchema', endpoints: 'GET /api/v1/participants/:id/provider-mappings' },
 ];

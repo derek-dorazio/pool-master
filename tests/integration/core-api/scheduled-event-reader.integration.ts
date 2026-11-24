@@ -15,6 +15,7 @@ import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-da
 import { leagueProfiles } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportPlay } from '../../support/sport-play';
 
 // The events' provider: BALLDONTLIE's id, since a synced league names a provider by its row (#1997).
 const PROVIDER = SYNCED_PROVIDER_ID;
@@ -207,10 +208,10 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
+    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${name} ${randomUUID()}`, isActive } });
     if (synced) await syncLeagueTo(prisma, league.id, 'pga');
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `${name} series ${randomUUID()}` } });
     return { eventSeriesId: series.id };

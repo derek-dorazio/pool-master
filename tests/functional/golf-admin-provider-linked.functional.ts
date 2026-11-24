@@ -26,6 +26,8 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { pinMockFeedEventState } from './mock-feed';
+import { Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '../support/sport-play';
 
 // plans/124 §8 — pool-master-cs8. The provider-linked half of the golf-admin
 // epic, which the flagship scenario (golf-admin-tournament.functional.ts)
@@ -86,7 +88,6 @@ async function ensureGolfSportRow(): Promise<string> {
     where: { sport: 'GOLF' },
     create: {
       sport: 'GOLF',
-      participantType: 'INDIVIDUAL',
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
@@ -235,7 +236,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     // --- Tour ------------------------------------------------------------
     const league = await createSportLeague({
       client: admin,
-      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), sport: 'GOLF', name: `USGA ${RUN}` },
+      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `USGA ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;

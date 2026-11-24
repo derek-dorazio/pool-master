@@ -73,12 +73,12 @@ export async function sportLeagueProfileIds(
  */
 export async function createJourneySportLeague(
   page: Page,
-  league: { sport: string; name: string; platformTierProfileCode: string },
+  league: { sport: string; name: string; participantType: string; scoringFamily: string; platformTierProfileCode: string },
 ): Promise<string> {
   const headers = { 'x-csrf-token': await readCsrfToken(page) };
   const profiles = await sportLeagueProfileIds(page.request, headers, league.platformTierProfileCode);
   const response = await expectOk(
-    page.request.post('/api/v1/sport-leagues/', { headers, data: { sport: league.sport, name: league.name, ...profiles } }),
+    page.request.post('/api/v1/sport-leagues/', { headers, data: { sport: league.sport, name: league.name, participantType: league.participantType, scoringFamily: league.scoringFamily, ...profiles } }),
     `create sport league ${league.name}`,
   );
   const { sportLeague } = (await response.json()) as { sportLeague: { id: string } };

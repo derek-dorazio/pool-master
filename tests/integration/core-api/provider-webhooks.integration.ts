@@ -8,6 +8,7 @@ import { createRoundRows, createSportEventRow } from '../../support/sport-event-
 import { BALLDONTLIE_WEBHOOK_PAYLOADS as PAYLOADS, signedBalldontlieDelivery } from '../../support/balldontlie-webhooks';
 import { cleanupTestData, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { leagueProfiles } from '../../support/league-profiles';
+import { sportPlay } from '../../support/sport-play';
 
 // BALLDONTLIE's webhook notifications reach POST /api/v1/provider-webhooks/balldontlie (#1498),
 // signed with the endpoint secret. A verified notification about a linked, in-progress event
@@ -39,10 +40,10 @@ async function linkedEvent(input: {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: input.sport },
-    create: { sport: input.sport, participantType: input.sport === Sport.GOLF ? 'INDIVIDUAL' : 'TEAM', tournamentFormat: input.sport === Sport.GOLF ? 'STROKE_PLAY_TOURNAMENT' : 'MATCHES' },
+    create: { sport: input.sport, tournamentFormat: input.sport === Sport.GOLF ? 'STROKE_PLAY_TOURNAMENT' : 'MATCHES' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League ${randomUUID()}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League ${randomUUID()}` } });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Series ${randomUUID()}` } });
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,

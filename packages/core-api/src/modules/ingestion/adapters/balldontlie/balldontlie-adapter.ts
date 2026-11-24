@@ -87,6 +87,7 @@ import { CFP_LEAGUE, parseCfpScope } from './ncaaf-mapping';
 import { NcaafReader } from './ncaaf-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, BalldontlieRequestError, type BalldontlieConnection, type BalldontlieQuery } from './balldontlie-client';
 import { jobDeferredUntilOf } from '../../../background-jobs/job-error-type';
+import type { ProviderRateLimitObserver } from '../../core/provider-call-policy';
 import {
   PgaCompetitorType,
   pgaPlayerListSchema,
@@ -121,6 +122,8 @@ export interface BalldontlieAdapterOptions {
   /** For tests: the client's clock and wait. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  /** Told how each call ends, for the Provider's rate-limit finding (league model 1c). */
+  rateLimits?: ProviderRateLimitObserver;
   /**
    * Where a read the adapter can do without logs that it was refused or failed: a series
    * playoffs' standings, or one league of a sport's list (#1797).

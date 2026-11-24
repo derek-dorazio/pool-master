@@ -1,6 +1,5 @@
 import { displayString } from '../../display-strings/display-strings';
-import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import { ScoringFamily } from './scoring-family';
+import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /** What the last rounds of a basketball bracket are called, counted back from the final. */
@@ -25,8 +24,6 @@ const OPENING_ROUND_NAMES = ['First Round', 'Second Round', 'Third Round'] as co
 export const basketballSportDefinition: SportDefinition = {
   sport: Sport.BASKETBALL,
   name: 'Basketball',
-  participantType: ParticipantType.TEAM,
-  scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 6,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],

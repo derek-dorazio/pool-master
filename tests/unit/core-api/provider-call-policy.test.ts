@@ -273,4 +273,42 @@ describe('provider call policy (league model 1c)', () => {
       expect((await settle(calls.execute(next.attempt))).value).toBe('ok');
     });
   });
+  describe('telling the rate-limit finding how calls end', () => {
+    function observed() {
+      const told: string[] = [];
+      return { told, rateLimits: { refused: () => { told.push('refused'); }, answered: () => { told.push('answered'); } } };
+    }
+
+    it('tells of each answered call, a retried one included, once', async () => {
+      const { told, rateLimits } = observed();
+      const calls = policy({ rateLimits });
+
+      await settle(calls.execute(scripted(['ok']).attempt));
+      await settle(calls.execute(scripted([rateLimited(), 'ok']).attempt));
+
+      expect(told).toEqual(['answered', 'answered']);
+    });
+
+    it('tells of a call that ended rate limited, whether its retries ran out or the open circuit refused it', async () => {
+      const { told, rateLimits } = observed();
+      const calls = policy({ rateLimits });
+
+      await settle(calls.execute(scripted([rateLimited(), rateLimited(), rateLimited(), rateLimited()]).attempt));
+      await settle(calls.execute(scripted([rateLimited(), rateLimited(), rateLimited(), rateLimited()]).attempt));
+      const refused = await settle(calls.execute(scripted(['ok']).attempt));
+
+      expect(refused.error).toBeInstanceOf(ProviderRateLimitedError);
+      expect(told).toEqual(['refused', 'refused', 'refused']);
+    });
+
+    it('tells nothing of a call that failed for another reason, which says nothing of the rate limit', async () => {
+      const { told, rateLimits } = observed();
+      const calls = policy({ rateLimits });
+
+      await settle(calls.execute(scripted([final()]).attempt));
+      await settle(calls.execute(scripted([transient(), transient(), transient(), transient()]).attempt));
+
+      expect(told).toEqual([]);
+    });
+  });
 });

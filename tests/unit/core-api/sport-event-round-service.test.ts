@@ -1,5 +1,5 @@
 import { ParticipantRoundStatus, RoundStatus } from '@poolmaster/shared/domain';
-import { dailyRoundSchedule, SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
+import { dailyRoundSchedule, providerEventRoundSchedule, SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
 
@@ -139,5 +139,24 @@ describe('SportEventRoundService.listRoundViews (#1889)', () => {
       [1, { status: RoundStatus.COMPLETED, resultCount: 3, completedAt }],
       [2, { status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null }],
     ]);
+  });
+});
+
+describe('providerEventRoundSchedule — a provider event created with no round count', () => {
+  const startDate = new Date('2027-04-08T00:00:00.000Z');
+
+  it('makes four rounds a day apart, the fourth on the provider\'s end date', () => {
+    const endDate = new Date('2027-04-12T00:00:00.000Z');
+
+    expect(providerEventRoundSchedule(startDate, endDate).map((round) => [round.roundNumber, round.scheduledDate.toISOString()])).toEqual([
+      [1, '2027-04-08T00:00:00.000Z'],
+      [2, '2027-04-09T00:00:00.000Z'],
+      [3, '2027-04-10T00:00:00.000Z'],
+      [4, '2027-04-12T00:00:00.000Z'],
+    ]);
+  });
+
+  it('puts the fourth round three days after the start when the provider sends no end date', () => {
+    expect(providerEventRoundSchedule(startDate, null).at(-1)).toEqual({ roundNumber: 4, scheduledDate: new Date('2027-04-11T00:00:00.000Z') });
   });
 });

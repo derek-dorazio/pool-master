@@ -7,6 +7,8 @@
       "NCAA Division I Men",
       "NCAA Division I Women"
     ],
+    "participantType": "TEAM",
+    "scoringFamily": "HEAD_TO_HEAD",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

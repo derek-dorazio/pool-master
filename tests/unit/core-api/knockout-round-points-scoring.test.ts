@@ -1,3 +1,4 @@
+import { sportPlay } from '../../support/sport-play';
 import {
   MatchEnding,
   MatchSide,
@@ -21,7 +22,7 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 // contest's round values and upset bonus, and when a team is left unscored.
 
 const family = getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD);
-const TOURNAMENT: FieldScoringEvent = { sport: Sport.BASKETBALL, rounds: 2, roundsPar: undefined, status: SportEventStatus.IN_PROGRESS };
+const TOURNAMENT: FieldScoringEvent = { sport: Sport.BASKETBALL, ...sportPlay(Sport.BASKETBALL), rounds: 2, roundsPar: undefined, status: SportEventStatus.IN_PROGRESS };
 const NO_BONUS: UpsetBonus = { rule: UpsetBonusRule.NONE };
 const SEED_DIFFERENCE: UpsetBonus = { rule: UpsetBonusRule.SEED_DIFFERENCE, multiplier: 1 };
 

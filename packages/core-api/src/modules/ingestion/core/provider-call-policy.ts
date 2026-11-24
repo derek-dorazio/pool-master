@@ -93,6 +93,17 @@ export interface ProviderCallPolicyOptions {
   /** Clock and wait for the pacing, injectable so it is testable without real time. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  /** Told of each call that ended rate limited and each that was answered, for the rate-limit finding. */
+  rateLimits?: ProviderRateLimitObserver;
+}
+
+/**
+ * What hears how a provider's calls end (league model 1c): a call the rate limit turned away, and
+ * a call the provider answered. Both are told synchronously and must not throw or wait.
+ */
+export interface ProviderRateLimitObserver {
+  refused(): void;
+  answered(): void;
 }
 
 function isProviderCallFailure(error: unknown): error is Error & ProviderCallFailure {
@@ -190,12 +201,17 @@ export class ProviderCallPolicy {
   /** Runs one provider request under the pacing, retries and breaker. `attempt` is tried once each time. */
   async execute<T>(attempt: () => Promise<T>): Promise<T> {
     try {
-      return await this.policy.execute(async () => {
+      const answer = await this.policy.execute(async () => {
         await this.takeSlot();
         return attempt();
       });
+      this.options.rateLimits?.answered();
+      return answer;
     } catch (error) {
-      throw this.refusalOf(error) ?? error;
+      const refusal = this.refusalOf(error);
+      if (refusal === null) throw error;
+      this.options.rateLimits?.refused();
+      throw refusal;
     }
   }
 

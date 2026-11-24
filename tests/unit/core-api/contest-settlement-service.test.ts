@@ -3,6 +3,7 @@
  * event completes, and only the last event's completion settles the contest itself, with each
  * entry's total the sum of its frozen event scores.
  */
+import { sportPlay } from '../../support/sport-play';
 import type {
   ContestEntryEventStandingRepository,
   ContestEntryEventStandingResult,
@@ -16,6 +17,7 @@ import type {
 import {
   ContestStatus,
   SelectionType,
+  Sport,
   SportEventStatus,
   parseContestScoringSettings,
   type BackgroundJobRequest,
@@ -106,8 +108,8 @@ function world({
   // Each major is four rounds of par 72, the par read off the golfers' finished rounds.
   const course = { rounds: 4 };
   const events = new Map<string, SportEvent>([
-    [MASTERS, { id: MASTERS, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-04-09T12:00:00.000Z'), ...course } as SportEvent],
-    [PGA, { id: PGA, sport: 'GOLF', status: SportEventStatus.SCHEDULED, startDate: new Date('2026-05-14T12:00:00.000Z'), ...course } as SportEvent],
+    [MASTERS, { id: MASTERS, sport: Sport.GOLF, ...sportPlay(Sport.GOLF), status: SportEventStatus.SCHEDULED, startDate: new Date('2026-04-09T12:00:00.000Z'), ...course } as SportEvent],
+    [PGA, { id: PGA, sport: Sport.GOLF, ...sportPlay(Sport.GOLF), status: SportEventStatus.SCHEDULED, startDate: new Date('2026-05-14T12:00:00.000Z'), ...course } as SportEvent],
   ]);
   // `majors`, and for `contestCount` above 1 more contests on the same majors, played alike.
   const contests = new Map<string, Contest>(Array.from({ length: contestCount }, (_, index) => {

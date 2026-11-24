@@ -5,6 +5,7 @@
  * the email service is the real one over an in-memory outbox, so the tests assert on the emails
  * recorded.
  */
+import { sportPlay } from '../../support/sport-play';
 import type { StandingsEmailPosition } from '@poolmaster/shared/db';
 import {
   ContestFormat,
@@ -16,6 +17,7 @@ import {
   PickOutcome,
   ParticipantStandingStatus,
   SelectionType,
+  Sport,
   SportEventStatus,
   SurvivorWeekOutcome,
   type Contest,
@@ -204,8 +206,7 @@ describe('LiveStandings.queueDue', () => {
             contestId: contest.id,
             sportEventId: sportEventId ?? '',
             sport: 'GOLF',
-            participantType: null,
-            scoringFamily: null,
+            ...sportPlay(Sport.GOLF),
             scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
             countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
             upsetBonus: false,

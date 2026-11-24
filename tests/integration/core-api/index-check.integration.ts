@@ -43,7 +43,7 @@ const MEMBERSHIPS_JOINED_WITH_USER = 'SELECT "m"."id" FROM "public"."users" AS "
 const USERS_IN_ID_ORDER = 'SELECT "public"."users"."id" FROM "public"."users" WHERE 1=1 ORDER BY "public"."users"."id" ASC OFFSET $1';
 const USERS_COUNTED = 'SELECT COUNT(*) FROM (SELECT "public"."users"."id" FROM "public"."users" WHERE 1=1 OFFSET $1) AS "sub"';
 const FIRST_USER_IN_ID_ORDER = 'SELECT "public"."users"."id" FROM "public"."users" WHERE 1=1 ORDER BY "public"."users"."id" ASC LIMIT $1 OFFSET $2';
-const SPORTS_BY_TYPE = 'SELECT "public"."sports"."id" FROM "public"."sports" WHERE "public"."sports"."participant_type" = $1';
+const SPORTS_BY_FORMAT = 'SELECT "public"."sports"."id" FROM "public"."sports" WHERE "public"."sports"."tournament_format" = $1';
 
 function sent(sql: string): Statement {
   return { sql, test: 'a probe' };
@@ -96,8 +96,8 @@ describe('missing-index check', () => {
 
   it('does not report a whole read of a reference table, which stays a handful of rows', async () => {
     const indexes = await readIndexLeads(getPrisma());
-    expect(await planWholeScans(getPrisma(), SPORTS_BY_TYPE, indexes)).toEqual([{ table: 'sports', how: 'a sequential scan' }]);
-    expect(await findUnindexedScans(getPrisma(), [sent(SPORTS_BY_TYPE)])).toEqual([]);
+    expect(await planWholeScans(getPrisma(), SPORTS_BY_FORMAT, indexes)).toEqual([{ table: 'sports', how: 'a sequential scan' }]);
+    expect(await findUnindexedScans(getPrisma(), [sent(SPORTS_BY_FORMAT)])).toEqual([]);
   });
 
   it('lists only reference tables the schema has, so a renamed one cannot linger', async () => {

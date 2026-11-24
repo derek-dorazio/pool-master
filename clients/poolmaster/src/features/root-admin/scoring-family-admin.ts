@@ -1,4 +1,4 @@
-import { ScoringFamily, eventSportDefinition, type SportLeagueEvent } from '@poolmaster/shared/domain';
+import { ScoringFamily, type SportLeagueEvent } from '@poolmaster/shared/domain';
 import type { ComponentType } from 'react';
 import type { SportEventDto } from '@/lib/api';
 import { BracketPanel } from './bracket-panel';
@@ -45,6 +45,6 @@ export const SCORING_FAMILY_ADMIN_UI: Readonly<Record<ScoringFamily, ScoringFami
   },
 };
 
-export function getScoringFamilyAdminUi(event: SportLeagueEvent): ScoringFamilyAdminUi {
-  return SCORING_FAMILY_ADMIN_UI[eventSportDefinition(event).scoringFamily];
+export function getScoringFamilyAdminUi(event: Pick<SportLeagueEvent, 'scoringFamily'>): ScoringFamilyAdminUi {
+  return SCORING_FAMILY_ADMIN_UI[event.scoringFamily];
 }

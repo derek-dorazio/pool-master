@@ -1,3 +1,4 @@
+import { sportPlay } from '../../support/sport-play';
 import { testDomainEvents } from '../../support/domain-events';
 import { Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
@@ -39,11 +40,11 @@ const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status
 
 describe('GolfScoreService — events of another scoring family', () => {
   it('takes golf round scores for a golf event, whose stroke-play family keeps them', () => {
-    expect(eventStoresGolfRoundScores({ sport: Sport.GOLF })).toBe(true);
+    expect(eventStoresGolfRoundScores({ sport: Sport.GOLF, ...sportPlay(Sport.GOLF) })).toBe(true);
   });
 
   it('refuses preview, apply and a single correction for a horse racing event with 422 EVENT_SCORING_FAMILY_MISMATCH, writing no golf round', async () => {
-    expect(eventStoresGolfRoundScores({ sport: Sport.HORSE_RACING })).toBe(false);
+    expect(eventStoresGolfRoundScores({ sport: Sport.HORSE_RACING, ...sportPlay(Sport.HORSE_RACING) })).toBe(false);
     const { store, service, event, anaEntry } = setup({ sport: Sport.HORSE_RACING });
     const mismatch = { code: 'EVENT_SCORING_FAMILY_MISMATCH', statusCode: 422 };
 

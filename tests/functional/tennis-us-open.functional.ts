@@ -106,7 +106,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.TENNIS },
-      create: { sport: Sport.TENNIS, participantType: 'INDIVIDUAL', tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.TENNIS, tournamentFormat: 'MATCHES' },
       update: {},
     });
   });

@@ -136,6 +136,50 @@ export class ProviderSyncFindingService {
     await this.raise(raises);
   }
 
+  /**
+   * A Provider that keeps rate limiting (league model 1c): one finding per league it syncs, at the
+   * severity the streak has reached there. The rate-limit watch raises only on a change, so each
+   * ERROR here, newly open or escalated from a WARNING, is logged once for the alarm.
+   */
+  async raiseProviderRateLimited(input: {
+    providerId: string;
+    leagues: readonly { sportLeagueId: string; severity: ProviderSyncFindingSeverity }[];
+  }): Promise<void> {
+    if (input.leagues.length === 0) return;
+    const opened = await this.deps.repository.raise(input.leagues.map((league) => ({
+      kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED,
+      severity: league.severity,
+      sportLeagueId: league.sportLeagueId,
+      sportEventId: null,
+      providerId: input.providerId,
+      providerValue: null,
+      providerValueName: null,
+    })), this.now());
+    const openedLeagues = new Set(opened.map((finding) => finding.sportLeagueId));
+    for (const league of input.leagues) {
+      if (league.severity !== ProviderSyncFindingSeverity.ERROR) continue;
+      this.deps.logger?.error(
+        {
+          action: 'ingestion.syncFinding.errorOpened',
+          kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED,
+          sportLeagueId: league.sportLeagueId,
+          providerId: input.providerId,
+          escalated: !openedLeagues.has(league.sportLeagueId),
+        },
+        'A sync finding opened as an error',
+      );
+    }
+    this.deps.logger?.warn(
+      { action: 'ingestion.syncFinding.providerRateLimited', providerId: input.providerId, leagues: input.leagues },
+      'A provider has rate limited every call for a while',
+    );
+  }
+
+  /** The Provider answered again: its rate-limit findings resolve. Returns how many did. */
+  async resolveProviderRateLimited(providerId: string): Promise<number> {
+    return this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, providerId }, this.now());
+  }
+
   /** Every finding kept, most recently seen first. Nothing pages it: resolved ones are cleared after 90 days. */
   async list(): Promise<ProviderSyncFinding[]> {
     return this.deps.repository.findAll();

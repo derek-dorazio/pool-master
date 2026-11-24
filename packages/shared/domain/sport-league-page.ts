@@ -4,6 +4,7 @@
  */
 import type {
   ParticipantAddedBy,
+  ProviderCode,
   ParticipantType,
   ProviderSyncKind,
   ProviderSyncRunStatus,
@@ -106,4 +107,27 @@ export interface SportEventOverview {
   fieldFeed: SportEventFieldFeedRow[];
   /** The slug of the event page (`/play/<sport>/<slug>`) offering its series; null when none does. */
   eventPageSlug: string | null;
+}
+
+/** One provider's code for a sport league position (#2001), with the provider league it is from. */
+export interface SportLeaguePositionProviderCode {
+  providerCode: string;
+  provider: ProviderCode;
+  providerLeagueCode: string;
+  providerLeagueName: string;
+}
+
+/**
+ * One of a sport league's playing positions (#2001), as the League page's Structure tab lists
+ * it: set by migration, never edited on screen.
+ */
+export interface SportLeaguePosition {
+  id: string;
+  code: string;
+  /** Where it sits in the list; display only. */
+  displayOrder: number;
+  /** Whether its players can be picked into an event's field. */
+  isFieldEligible: boolean;
+  /** Each provider's codes for it, by provider league then code. */
+  providerCodes: SportLeaguePositionProviderCode[];
 }

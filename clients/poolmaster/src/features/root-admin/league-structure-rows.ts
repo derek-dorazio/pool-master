@@ -1,6 +1,6 @@
 import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import { SeriesFormat, type LeaguePhase } from '@poolmaster/shared/domain';
-import type { SlotProviderMappingDto, SportLeaguePhaseDefinitionDto, SportLeagueSlotDefinitionDto } from '@/lib/api';
+import type { SlotProviderMappingDto, SportLeaguePhaseDefinitionDto, SportLeaguePositionProviderCodeDto, SportLeagueSlotDefinitionDto } from '@/lib/api';
 
 /** One slot definition on the Structure tab's grid, with the phase it is in. */
 export type SlotDefinitionRow = SportLeagueSlotDefinitionDto & { phase: LeaguePhase };
@@ -21,4 +21,9 @@ export function mappingText(mapping: SlotProviderMappingDto): string {
   const matched = enumLabel('SlotProviderMatchType', mapping.matchType);
   const on = mapping.providerValue === null ? matched : `${matched} ${mapping.providerValue}`;
   return `${mapping.providerName} ${mapping.providerLeagueCode} · ${on}`;
+}
+
+/** One provider code in a line, as the slots' mappings read: the provider and its league, then the code its feed sends. */
+export function positionCodeText(code: SportLeaguePositionProviderCodeDto): string {
+  return `${enumLabel('ProviderCode', code.provider)} ${code.providerLeagueCode} · ${code.providerCode}`;
 }

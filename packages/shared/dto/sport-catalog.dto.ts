@@ -46,7 +46,6 @@ import { FieldOrderBasis } from '../domain/field-ordering';
 export const SportDtoSchema = z.object({
   id: z.uuid().describe('Sport identifier — what Participant.sportId and SportLeague.sportId point at.'),
   sport: z.enum(Sport).describe('The sport.'),
-  participantType: z.enum(ParticipantType).describe('Whether the sport\'s competitors are individuals or teams.'),
   tournamentFormat: z.enum(TournamentFormat).describe('Structural format of the sport\'s events; decides which contest formats are valid.'),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
@@ -91,8 +90,8 @@ export const SportLeagueDtoSchema = z.object({
   squaresFromRound: z.number().int().min(1).nullable().describe('The first round whose matches are single games a squares contest can be played on, when not every round\'s are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round\'s matches can take one. Set with the league\'s reference data, never by a request.'),
   noun: z.enum(SportLeagueNoun).nullable().describe('What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport\'s noun. Set with the league\'s reference data, never by a request.'),
   displayName: z.string().nullable().describe('What screens call the sport league away from its sport\'s own pages, when its name alone does not say the sport: "NCAA Men\'s Basketball" for basketball\'s NCAA Division I Men. Null shows the name. Set with the league\'s reference data, never by a request.'),
-  participantType: z.enum(ParticipantType).nullable().describe('Who competes in the sport league\'s events, when not its sport\'s. Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
-  scoringFamily: z.enum(ScoringFamily).nullable().describe('How the sport league\'s events are scored, when not as its sport\'s. Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
+  participantType: z.enum(ParticipantType).describe('Who competes in the sport league\'s events: teams or individuals. Set when the league is created, never changed.'),
+  scoringFamily: z.enum(ScoringFamily).describe('How the sport league\'s events are scored. Set when the league is created, never changed.'),
   displayOrder: z.number().int().nullable().describe('Where the sport league sits among its sport\'s leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA\'s. Lower comes first; null comes after every ordered league, by name. Set with the league\'s reference data, never by a request.'),
   participantCount: z.number().int().describe('The sport league\'s participants.'),
   sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
@@ -121,6 +120,8 @@ export type SportLeagueResponse = z.infer<typeof SportLeagueResponseSchema>;
 export const CreateSportLeagueRequestSchema = z.object({
   sport: z.enum(Sport).describe('The sport the new sport league belongs to.'),
   name: z.string().min(1).describe('Unique within the sport.'),
+  participantType: z.enum(ParticipantType).describe('Who competes in its events: teams or individuals. Fixed once set.'),
+  scoringFamily: z.enum(ScoringFamily).describe('How its events are scored. Fixed once set.'),
   bracketAdvancement: z.enum(BracketAdvancement).optional().describe('FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.'),
   platformTierProfileId: z.uuid().describe('The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.'),
   platformPricingProfileId: z.uuid().describe('The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.'),
@@ -327,6 +328,27 @@ export const SportLeagueParticipantOverviewListResponseSchema = z.object({
 }).describe('A sport league\'s participants.');
 export type SportLeagueParticipantOverviewListResponse = z.infer<typeof SportLeagueParticipantOverviewListResponseSchema>;
 
+export const SportLeaguePositionProviderCodeDtoSchema = z.object({
+  providerCode: z.string().describe('The provider\'s own code for the position, exactly as its feed sends it.'),
+  provider: z.enum(ProviderCode).describe('The provider whose code it is.'),
+  providerLeagueCode: z.string().describe('The provider\'s own code for the league the code is from.'),
+  providerLeagueName: z.string().describe('The provider\'s own name for that league.'),
+}).describe('One provider\'s code for a sport league position.');
+export type SportLeaguePositionProviderCodeDto = z.infer<typeof SportLeaguePositionProviderCodeDtoSchema>;
+
+export const SportLeaguePositionDtoSchema = z.object({
+  id: z.uuid(),
+  code: z.string().describe('The position\'s key within its league (QB). Screens read its words by this code.'),
+  displayOrder: z.number().int().describe('Where it sits when the league\'s positions are listed. Display only.'),
+  isFieldEligible: z.boolean().describe('Whether its players can be picked into an event\'s field. The roster sync keeps only these players.'),
+  providerCodes: z.array(SportLeaguePositionProviderCodeDtoSchema).describe('Each provider\'s codes for the position, by provider league then code. A feed code with no row is not one of the league\'s positions.'),
+}).describe('One of a sport league\'s playing positions. Set by migration; never edited through the API.');
+export type SportLeaguePositionDto = z.infer<typeof SportLeaguePositionDtoSchema>;
+
+export const SportLeaguePositionListResponseSchema = z.object({
+  positions: z.array(SportLeaguePositionDtoSchema).describe('Every position of the sport league, by display order, never paged. Empty for a league with none.'),
+}).describe('A sport league\'s positions.');
+export type SportLeaguePositionListResponse = z.infer<typeof SportLeaguePositionListResponseSchema>;
 export const SlotProviderMappingDtoSchema = z.object({
   id: z.uuid(),
   providerId: z.uuid(),
@@ -415,6 +437,9 @@ registerSchema('SportEventOverviewDto', SportEventOverviewDtoSchema);
 registerSchema('SportEventOverviewResponse', SportEventOverviewResponseSchema);
 registerSchema('SportLeagueParticipantOverviewDto', SportLeagueParticipantOverviewDtoSchema);
 registerSchema('SportLeagueParticipantOverviewListResponse', SportLeagueParticipantOverviewListResponseSchema);
+registerSchema('SportLeaguePositionProviderCodeDto', SportLeaguePositionProviderCodeDtoSchema);
+registerSchema('SportLeaguePositionDto', SportLeaguePositionDtoSchema);
+registerSchema('SportLeaguePositionListResponse', SportLeaguePositionListResponseSchema);
 registerSchema('SlotProviderMappingDto', SlotProviderMappingDtoSchema);
 registerSchema('SportLeagueSlotDefinitionDto', SportLeagueSlotDefinitionDtoSchema);
 registerSchema('SportLeaguePhaseDefinitionDto', SportLeaguePhaseDefinitionDtoSchema);
