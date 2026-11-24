@@ -115,6 +115,8 @@ export interface BalldontlieAdapterOptions {
   baseUrl: string;
   apiKey: string;
   requestsPerMinute: number;
+  /** The most tasks that run background work at once, each taking an even share of the limit; 1 when unset. */
+  maxTasks?: number;
   /** For tests: the client's clock and wait. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;

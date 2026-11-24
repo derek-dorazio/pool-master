@@ -108,6 +108,27 @@ describe('background job table (#1440)', () => {
     expect(row).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 2, lastError: null });
   });
 
+  it('queues a deferred try again for its time with the attempt handed back, and a stale claim cannot defer it', async () => {
+    const jobs = repository();
+    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('deferred'), start: TEST_JOB_START });
+    const now = soonAfterQueued();
+    const [claimed] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
+    const deferUntil = new Date(now.getTime() + 2 * MINUTE);
+
+    await expect(jobs.markDeferred(claimed, { runAt: deferUntil, error: 'provider is rate limiting', errorType: JobErrorType.RATE_LIMITED })).resolves.toBe(true);
+    await expect(jobs.markDeferred(claimed, { runAt: deferUntil, error: 'again', errorType: JobErrorType.RATE_LIMITED })).resolves.toBe(false);
+
+    const row = await getPrisma().backgroundJob.findUniqueOrThrow({ where: { id: claimed.id } });
+    expect(row).toMatchObject({
+      status: BackgroundJobStatus.QUEUED,
+      attempts: 0,
+      runAt: deferUntil,
+      leaseUntil: null,
+      lastError: 'provider is rate limiting',
+      errorType: JobErrorType.RATE_LIMITED,
+    });
+  });
+
   it('lets a new job with the same dedupe key queue while the first waits to be retried', async () => {
     const jobs = repository();
     const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry-key'), dedupeKey: 'MANUAL_EVENT_SYNC:retry-key', start: TEST_JOB_START };

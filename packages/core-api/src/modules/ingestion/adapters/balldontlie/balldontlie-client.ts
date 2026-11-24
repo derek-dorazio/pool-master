@@ -1,7 +1,8 @@
 /**
- * The one HTTP client every BALLDONTLIE read goes through: the API key, the plan's rate limit,
- * retries on 429, 5xx and timeouts, cursor pagination, the run's payload capture, and parsing
- * each response against the schema of the fields PoolMaster reads.
+ * The one HTTP client every BALLDONTLIE read goes through: the API key, cursor pagination, the
+ * run's payload capture, and parsing each response against the schema of the fields PoolMaster
+ * reads. Each request is one attempt run under the provider's call policy, which paces it to this
+ * task's share of the plan's rate limit and is the only layer that retries (league model 1c).
  *
  * The API key is sent as the bare `Authorization` header value, as the vendor's OpenAPI
  * `ApiKeyAuth` scheme says (no "Bearer" prefix).
@@ -12,6 +13,7 @@ import { errorMessage } from '../../../../core/error-message';
 import type { ProviderPayloadRecorder } from '../provider-payload-recorder';
 import { JobErrorType } from '@poolmaster/shared/domain';
 import { jobErrorTypeOf, jobErrorTypeOfStatus } from '../../../background-jobs/job-error-type';
+import { ProviderCallPolicy, ProviderFailureKind, type ProviderCallFailure } from '../../core/provider-call-policy';
 
 /** A query value: arrays are sent once per item, under the key exactly as given (`tournament_ids[]`). */
 export type BalldontlieQueryValue = string | number | boolean | readonly (string | number)[];
@@ -33,20 +35,17 @@ export interface BalldontlieClientOptions {
   apiKey: string;
   /** The plan's limit: 5 on the free plan, 60 on ALL-STAR, 600 on GOAT and All-Access. */
   requestsPerMinute: number;
+  /** The most tasks that run background work at once; this task takes an even share of the limit. 1 when unset. */
+  maxTasks?: number;
   payloads: ProviderPayloadRecorder;
-  /** How long one attempt may take before it is abandoned and retried. */
+  /** How long one attempt may take before it is abandoned (and, by the call policy, retried). */
   timeoutMs?: number;
-  /** Attempts after the first, for a 429, a 5xx or a timeout. */
-  maxRetries?: number;
-  /** Clock and wait, injectable so the limiter and back-off are testable without real time. */
+  /** Clock and wait, injectable so the pacing is testable without real time. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
 }
 
 const DEFAULT_TIMEOUT_MS = 10_000;
-const DEFAULT_MAX_RETRIES = 3;
-/** Back-off before retry n (from 1) when the response names no Retry-After: 1 s, 2 s, 4 s... */
-const BACKOFF_BASE_MS = 1_000;
 /** The vendor's largest page; fewer pages keep a sweep inside the plan's rate limit. */
 export const BALLDONTLIE_MAX_PER_PAGE = 100;
 /** A cursor loop that has not ended after this many pages is treated as a vendor fault. */
@@ -66,16 +65,27 @@ export class BalldontlieContractError extends Error {
   }
 }
 
-/** The API answered with an error status, or never answered, after every retry. */
-export class BalldontlieRequestError extends Error {
+/** One request the API answered with an error status, or never answered. */
+export class BalldontlieRequestError extends Error implements ProviderCallFailure {
   constructor(
     readonly path: string,
     readonly status: number | null,
     message: string,
-    options?: { cause?: unknown },
+    options?: { cause?: unknown; retryAfterMs?: number | null },
   ) {
     super(`BALLDONTLIE request ${path} failed: ${message}`, options);
     this.name = 'BalldontlieRequestError';
+    this.retryAfterMs = options?.retryAfterMs ?? null;
+  }
+
+  /** The wait a 429's Retry-After named. */
+  readonly retryAfterMs: number | null;
+
+  /** A 429 is rate limited; a 5xx or no answer is worth trying again; anything else is final. */
+  get providerFailure(): ProviderFailureKind {
+    if (this.status === 429) return ProviderFailureKind.RATE_LIMITED;
+    if (this.status === null || RETRYABLE_STATUSES.has(this.status)) return ProviderFailureKind.TRANSIENT;
+    return ProviderFailureKind.FINAL;
   }
 
   /**
@@ -88,28 +98,24 @@ export class BalldontlieRequestError extends Error {
   }
 }
 
-const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+/** Statuses a later try may answer differently: the server's own failures. A 429 is rate limited. */
+const RETRYABLE_STATUSES = new Set([500, 502, 503, 504]);
 
 export class BalldontlieClient {
   private readonly baseUrl: string;
-  private readonly minIntervalMs: number;
   private readonly timeoutMs: number;
-  private readonly maxRetries: number;
-  private readonly now: () => number;
-  private readonly sleep: (ms: number) => Promise<void>;
-  /** When the next request may start; requests reserve their slot in call order. */
-  private nextSlotAt = 0;
+  private readonly policy: ProviderCallPolicy;
 
   constructor(private readonly options: BalldontlieClientOptions) {
-    if (!Number.isInteger(options.requestsPerMinute) || options.requestsPerMinute < 1) {
-      throw new Error(`BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not ${String(options.requestsPerMinute)}.`);
-    }
+    this.policy = new ProviderCallPolicy({
+      providerId: 'BALLDONTLIE',
+      requestsPerMinute: options.requestsPerMinute,
+      maxTasks: options.maxTasks ?? 1,
+      ...(options.now && { now: options.now }),
+      ...(options.sleep && { sleep: options.sleep }),
+    });
     this.baseUrl = options.baseUrl.replace(/\/$/, '');
-    this.minIntervalMs = Math.ceil(60_000 / options.requestsPerMinute);
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
-    this.now = options.now ?? Date.now;
-    this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => { setTimeout(resolve, ms); }));
   }
 
   /** One GET, parsed against `schema`. */
@@ -160,62 +166,41 @@ export class BalldontlieClient {
     return search ? `${path}?${search}` : path;
   }
 
-  /** Waits for the next free slot under the rate limit, then holds it. */
-  private async takeSlot(): Promise<void> {
-    const now = this.now();
-    const startAt = Math.max(now, this.nextSlotAt);
-    this.nextSlotAt = startAt + this.minIntervalMs;
-    if (startAt > now) {
-      await this.sleep(startAt - now);
-    }
+  private request(pathAndQuery: string): Promise<unknown> {
+    return this.policy.execute(() => this.attempt(pathAndQuery));
   }
 
-  private async request(pathAndQuery: string): Promise<unknown> {
-    for (let attempt = 0; ; attempt += 1) {
-      await this.takeSlot();
-      let response: Response;
+  /** One try: the parsed body, or the error that says what kind of failure it was. */
+  private async attempt(pathAndQuery: string): Promise<unknown> {
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${pathAndQuery}`, {
+        headers: { Authorization: this.options.apiKey, Accept: 'application/json' },
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+    } catch (error) {
+      throw new BalldontlieRequestError(pathAndQuery, null, `no response: ${errorMessage(error)}`, { cause: error });
+    }
+
+    if (response.ok) {
+      const text = await response.text();
+      let body: unknown;
       try {
-        response = await fetch(`${this.baseUrl}${pathAndQuery}`, {
-          headers: { Authorization: this.options.apiKey, Accept: 'application/json' },
-          signal: AbortSignal.timeout(this.timeoutMs),
-        });
+        body = JSON.parse(text);
       } catch (error) {
-        if (attempt < this.maxRetries) {
-          await this.sleep(backoffMs(attempt + 1));
-          continue;
-        }
-        throw new BalldontlieRequestError(pathAndQuery, null, `no response after ${String(attempt + 1)} attempts`, { cause: error });
+        throw new BalldontlieContractError(pathAndQuery, [`response is not JSON: ${errorMessage(error)}`]);
       }
-
-      if (response.ok) {
-        const text = await response.text();
-        let body: unknown;
-        try {
-          body = JSON.parse(text);
-        } catch (error) {
-          throw new BalldontlieContractError(pathAndQuery, [`response is not JSON: ${errorMessage(error)}`]);
-        }
-        this.options.payloads.record(pathAndQuery, text.length, body);
-        return body;
-      }
-
-      if (RETRYABLE_STATUSES.has(response.status) && attempt < this.maxRetries) {
-        // Release the connection now rather than when the unread body is collected.
-        await response.body?.cancel();
-        await this.sleep(retryAfterMs(response) ?? backoffMs(attempt + 1));
-        continue;
-      }
-      throw new BalldontlieRequestError(
-        pathAndQuery,
-        response.status,
-        `${String(response.status)} ${await readErrorMessage(response)}`,
-      );
+      this.options.payloads.record(pathAndQuery, text.length, body);
+      return body;
     }
-  }
-}
 
-function backoffMs(retry: number): number {
-  return BACKOFF_BASE_MS * 2 ** (retry - 1);
+    throw new BalldontlieRequestError(
+      pathAndQuery,
+      response.status,
+      `${String(response.status)} ${await readErrorMessage(response)}`,
+      { retryAfterMs: retryAfterMs(response) },
+    );
+  }
 }
 
 /** Retry-After in whole seconds, as a 429 may carry it; an HTTP-date or junk is ignored. */

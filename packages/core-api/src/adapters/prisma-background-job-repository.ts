@@ -156,6 +156,17 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     });
   }
 
+  async markDeferred(claim: BackgroundJobClaim, deferred: { runAt: Date; error: string; errorType: JobErrorType }): Promise<boolean> {
+    return this.markClaimed(claim, {
+      status: BackgroundJobStatus.QUEUED,
+      runAt: deferred.runAt,
+      leaseUntil: null,
+      attempts: { decrement: 1 },
+      lastError: truncateError(deferred.error),
+      errorType: deferred.errorType,
+    });
+  }
+
   async deleteClaimed(claim: BackgroundJobClaim): Promise<boolean> {
     const { count } = await this.prisma.backgroundJob.deleteMany({
       where: { id: claim.id, status: BackgroundJobStatus.RUNNING, attempts: claim.attempts },

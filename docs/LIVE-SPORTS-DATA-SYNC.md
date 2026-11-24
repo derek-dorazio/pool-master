@@ -42,11 +42,12 @@ flowchart LR
   subgraph Adapter["adapters/balldontlie"]
     A[BalldontlieAdapter<br/>routes by scope id]
     RD[League readers]
-    C[BalldontlieClient<br/>pacing, retry, Zod]
+    C[BalldontlieClient<br/>one attempt, Zod]
+    CP[ProviderCallPolicy<br/>pacing, cockatiel retry, breaker]
   end
   T1 & T2 --> E
   T1 & T2 & T3 --> S
-  E & S --> R --> A --> RD --> C --> V[(api.balldontlie.io)]
+  E & S --> R --> A --> RD --> CP --> C --> V[(api.balldontlie.io)]
   E & S --> L
   S -- scores --> P[publishLiveScoreUpdate] --> W[GOLF / GAME / STAT_LINE writer]
   S -- field --> IP[IngestionPersistence] --> GT[SYNC_EVENT_GAMES_AND_TIERS job<br/>games, then tiers and prices]
@@ -80,6 +81,23 @@ serves every sport league; there are no per-sport or per-league overrides.
 | `eventLiveScores.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
 
 Each loop re-reads its interval after every run, so a saved change applies without a restart.
+
+### Rate limit and retries
+
+Every provider request goes through one `ProviderCallPolicy` per provider
+(`ingestion/core/provider-call-policy.ts`), shared by every job on the task. The provider's HTTP
+client makes one attempt per call and says what its failure was (rate limited, transient or
+final); the policy is the only layer that retries.
+
+| What | Rule |
+|---|---|
+| Pacing | Each task starts a request at most every `60 s × BACKGROUND_JOB_MAX_TASKS / requestsPerMinute`: an even share of the plan's limit for each task that can run background work. Read from config once; no request waits on a database read. Set `BACKGROUND_JOB_MAX_TASKS` to the most such tasks a deploy or scale-out runs together (unset is 1, right for QA's one task). |
+| Retries | A 429, a 5xx or no answer is tried up to 3 more times. A 429's Retry-After (whole seconds) is honoured up to 30 s; otherwise the wait doubles from 1 s with half jitter, capped at 30 s. Any other status, or a body that breaks the contract, is not retried. |
+| Breaker | Five 429s in a row open the provider's circuit for 60 s; calls meanwhile are refused without reaching the provider. 5xx failures do not count toward it. |
+| RATE_LIMITED | A call the open circuit refuses, a 429 asking for more than 30 s, or a 429 still there after every retry throws `ProviderRateLimitedError`. The sync that made the call throws it on, and the job runner queues the job again for when the provider will answer (the circuit's reopening, or the Retry-After) without counting the try toward its attempts (`docs/BACKGROUND-JOBS.md`). A manual sync's feed it turned away is marked FAILED and the feeds still waiting run on the next try. A scheduled sweep stops at it and the next tick carries on. |
+
+A transient failure still there after the retries stays a provider error, and the job is
+retried on the usual 1, 5 and 30 minutes.
 
 **The Providers page** also counts each provider's rate-limited jobs of the last 24 hours (jobs
 whose latest try hit the client's 429). Jobs carry no provider: a job belongs to the provider
@@ -368,7 +386,7 @@ A new league usually touches only these:
 2. **Contract**: `<league>-contract.ts`, Zod schemas for exactly the fields read.
 3. **Mapping**: a scope id whose `parse…Scope` cannot claim another league's ids, a prefixed
    participant id, a `tour` equal to the league's keyword, states through `competition-status.ts`.
-4. **Reader**: reads through `BalldontlieClient` only (pacing, retries, payload capture). A series
+4. **Reader**: reads through `BalldontlieClient` only (its call policy's pacing and retries, payload capture). A series
    league supplies a `PlayoffsSource` instead.
 5. **Adapter routing**: a branch in `getEventDetails` and `getLiveScores` ahead of the PGA
    fallback, and the league in the `leagues` map.

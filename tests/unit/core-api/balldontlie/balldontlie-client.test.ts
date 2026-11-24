@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { expect } from '@jest/globals';
+import { JobErrorType } from '@poolmaster/shared/domain';
+import { ProviderRateLimitedError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import {
   BalldontlieClient,
   BalldontlieContractError,
@@ -139,68 +141,105 @@ describe('BalldontlieClient', () => {
       .toThrow('not 2.5');
   });
 
-  it('retries a 429 after the Retry-After seconds it names, then returns the parsed body', async () => {
-    const harness = setup([
-      new Response('{"error":"Too many requests"}', { status: 429, headers: { 'retry-after': '7' } }),
-      Response.json({ data: [{ id: 1 }] }),
-    ]);
-    restore = harness.restore;
-
-    const result = await harness.client.get('/a', {}, rowsSchema);
-
-    expect(result.data).toEqual([{ id: 1 }]);
-    expect(harness.clock.waits).toContain(7_000);
-    expect(harness.sent).toHaveLength(2);
-  });
-
-  it('releases a retryable reply\'s unread body before waiting to retry, so the connection is not held through the back-off', async () => {
-    const throttled = new Response('{"error":"Too many requests"}', { status: 429 });
-    const harness = setup([throttled, Response.json({ data: [] })]);
+  it('takes this task\'s even share of the plan\'s limit: at 60 a minute over two tasks, a request every 2 seconds', async () => {
+    const harness = setup([Response.json({ data: [] }), Response.json({ data: [] })], { maxTasks: 2 });
     restore = harness.restore;
 
     await harness.client.get('/a', {}, rowsSchema);
+    await harness.client.get('/b', {}, rowsSchema);
 
-    await expect(throttled.text()).rejects.toThrow();
+    expect(harness.sent[1].at - harness.sent[0].at).toBe(2_000);
   });
 
-  it('retries a 5xx with doubling back-off (1 s, 2 s, 4 s) and fails with the vendor\'s error message once retries run out', async () => {
-    const harness = setup([
-      new Response('{"error":"boom"}', { status: 503 }),
-      new Response('{"error":"boom"}', { status: 503 }),
-      new Response('{"error":"boom"}', { status: 503 }),
-      new Response('{"error":"still down"}', { status: 503, statusText: 'Service Unavailable' }),
-    ], { requestsPerMinute: 600 });
-    restore = harness.restore;
+  describe('retries, by the provider call policy', () => {
+    beforeEach(() => { jest.useFakeTimers({ now: 1_000_000 }); });
+    afterEach(() => { jest.useRealTimers(); });
 
-    const failure = harness.client.get('/a', {}, rowsSchema);
+    /** Runs the fake clock until the call settles. */
+    async function settle<T>(promise: Promise<T>): Promise<{ value?: T; error?: unknown }> {
+      let outcome: { value?: T; error?: unknown } | undefined;
+      promise.then((value) => { outcome = { value }; }, (error: unknown) => { outcome = { error }; });
+      for (let step = 0; step < 1_000 && outcome === undefined; step += 1) await jest.advanceTimersByTimeAsync(1_000);
+      return outcome ?? {};
+    }
 
-    await expect(failure).rejects.toThrow(new BalldontlieRequestError('/a', 503, '503 still down'));
-    await expect(failure).rejects.toMatchObject({ status: 503, path: '/a' });
-    expect(harness.clock.waits.filter((ms) => ms >= 1_000)).toEqual([1_000, 2_000, 4_000]);
-    expect(harness.sent).toHaveLength(4);
-  });
+    it('retries a 429 after the Retry-After seconds it names, then returns the parsed body', async () => {
+      const harness = setup([
+        new Response('{"error":"Too many requests"}', { status: 429, headers: { 'retry-after': '7' } }),
+        Response.json({ data: [{ id: 1 }] }),
+      ]);
+      restore = harness.restore;
+      const sentAt: number[] = [];
+      const fetchOnce = global.fetch;
+      global.fetch = ((...args: Parameters<typeof fetch>) => { sentAt.push(Date.now()); return fetchOnce(...args); });
 
-  it('retries a 429 whose Retry-After is an HTTP date with the ordinary back-off', async () => {
-    const harness = setup([
-      new Response('', { status: 429, headers: { 'retry-after': 'Wed, 11 Nov 2026 07:28:00 GMT' } }),
-      Response.json({ data: [] }),
-    ], { requestsPerMinute: 600 });
-    restore = harness.restore;
+      const { value } = await settle(harness.client.get('/a', {}, rowsSchema));
 
-    await harness.client.get('/a', {}, rowsSchema);
+      expect(value?.data).toEqual([{ id: 1 }]);
+      expect(sentAt[1] - sentAt[0]).toBe(7_000);
+    });
 
-    expect(harness.clock.waits.filter((ms) => ms >= 1_000)).toEqual([1_000]);
-  });
+    it('releases a retryable reply\'s unread body before waiting to retry, so the connection is not held through the back-off', async () => {
+      const throttled = new Response('{"error":"Too many requests"}', { status: 429 });
+      const harness = setup([throttled, Response.json({ data: [] })]);
+      restore = harness.restore;
 
-  it('retries a request that timed out or never connected, and names the attempts when every one fails', async () => {
-    const timeout = Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' });
-    const harness = setup([timeout, timeout], { maxRetries: 1 });
-    restore = harness.restore;
+      await settle(harness.client.get('/a', {}, rowsSchema));
 
-    const failure = harness.client.get('/a', {}, rowsSchema);
+      await expect(throttled.text()).rejects.toThrow();
+    });
 
-    await expect(failure).rejects.toThrow('BALLDONTLIE request /a failed: no response after 2 attempts');
-    await expect(failure).rejects.toMatchObject({ status: null, cause: timeout });
+    it('retries a 5xx three times and fails with the vendor\'s error message once retries run out', async () => {
+      const harness = setup([
+        new Response('{"error":"boom"}', { status: 503 }),
+        new Response('{"error":"boom"}', { status: 503 }),
+        new Response('{"error":"boom"}', { status: 503 }),
+        new Response('{"error":"still down"}', { status: 503, statusText: 'Service Unavailable' }),
+      ], { requestsPerMinute: 600 });
+      restore = harness.restore;
+
+      const { error } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(error).toEqual(new BalldontlieRequestError('/a', 503, '503 still down'));
+      expect(error).toMatchObject({ status: 503, path: '/a', jobErrorType: JobErrorType.PROVIDER_ERROR });
+      expect(harness.sent).toHaveLength(4);
+    });
+
+    it('ends a request still 429 after every retry as rate limited, so its job is queued again rather than failed', async () => {
+      const harness = setup(Array.from({ length: 4 }, () => new Response('', { status: 429, headers: { 'retry-after': '1' } })));
+      restore = harness.restore;
+
+      const { error } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(error).toBeInstanceOf(ProviderRateLimitedError);
+      expect(error).toMatchObject({ providerId: 'BALLDONTLIE', jobErrorType: JobErrorType.RATE_LIMITED, cause: expect.objectContaining({ status: 429 }) });
+      expect(harness.sent).toHaveLength(4);
+    });
+
+    it('retries a 429 whose Retry-After is an HTTP date with the ordinary back-off', async () => {
+      const harness = setup([
+        new Response('', { status: 429, headers: { 'retry-after': 'Wed, 11 Nov 2026 07:28:00 GMT' } }),
+        Response.json({ data: [] }),
+      ], { requestsPerMinute: 600 });
+      restore = harness.restore;
+
+      const { value } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(value).toEqual({ data: [] });
+      expect(harness.sent).toHaveLength(2);
+    });
+
+    it('retries a request that timed out or never connected, and names the timeout when every try fails', async () => {
+      const timeout = Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' });
+      const harness = setup([timeout, timeout, timeout, timeout]);
+      restore = harness.restore;
+
+      const { error } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(error).toMatchObject({ status: null, cause: timeout, jobErrorType: JobErrorType.TIMEOUT });
+      expect((error as Error).message).toBe('BALLDONTLIE request /a failed: no response: The operation was aborted due to timeout');
+      expect(harness.sent).toHaveLength(4);
+    });
   });
 
   it('fails a 401 at once, without retrying, naming the status and the vendor\'s message', async () => {
