@@ -15,7 +15,6 @@ import type {
   SeedSportEventParticipantsResponse,
   SportEventListQuery,
   SportEventListResponse,
-  SportEventLiveSimulationResponse,
   SportEventParticipantListResponse,
   SportEventParticipantResponse,
   SportEventParticipantUploadPreviewResponse,
@@ -26,7 +25,6 @@ import type {
   SportEventTierListResponse,
   SportEventYearListQuery,
   SportEventYearListResponse,
-  StartSportEventLiveSimulationRequest,
   TransitionSportEventRequest,
   UpdateSportEventParticipantsRequest,
   UpdateSportEventRequest,
@@ -58,7 +56,6 @@ import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
   mapGolfRoundScorePreviewToDto,
-  mapLiveSimulationToResponse,
   mapRaceResultPreviewToDto,
   mapProviderEventYearImportToResponse,
   mapSportEventMatchToDto,
@@ -264,20 +261,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     unlinkScoreSource: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
       await scoreSource.unlinkScoreSource(request.params.eventId);
       return eventResponse(request.params.eventId);
-    },
-
-    startLiveSimulation: async (
-      request: FastifyRequest<EventParams & { Body: StartSportEventLiveSimulationRequest | undefined }>,
-    ): Promise<SportEventLiveSimulationResponse> => {
-      const status = await scoreSource.startLiveSimulation(request.params.eventId, {
-        minutesPerRound: request.body?.minutesPerRound,
-      });
-      return mapLiveSimulationToResponse(request.params.eventId, status);
-    },
-
-    getLiveSimulation: async (request: FastifyRequest<EventParams>): Promise<SportEventLiveSimulationResponse> => {
-      const status = await scoreSource.getLiveSimulation(request.params.eventId);
-      return mapLiveSimulationToResponse(request.params.eventId, status);
     },
 
     /** Settle again (#1890): queues one rebuild of the event's contests' boards from the results stored now; 204. */

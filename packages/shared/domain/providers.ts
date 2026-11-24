@@ -27,8 +27,8 @@ export function providerSourceIdOf(code: ProviderCode): string {
 }
 
 /**
- * The Provider code whose events carry this `providerId`, or undefined for one with no Provider
- * row (the QA mock feed, until #2039), which syncs no league.
+ * The Provider code whose events carry this `providerId`, or undefined for an id no Provider
+ * code carries (`manual-admin`), which syncs no league.
  */
 export function providerCodeOfSourceId(providerId: string): ProviderCode | undefined {
   return (Object.keys(PROVIDER_SOURCE_IDS) as ProviderCode[]).find((code) => PROVIDER_SOURCE_IDS[code] === providerId);

@@ -368,7 +368,6 @@ function buildNormalizedSyncRequestContext(
   return {
     source: normalized.source,
     actor: normalized.actor,
-    mockEventState: normalized.scope.mockEventState ?? null,
     normalizedAt: normalized.normalizedAt.toISOString(),
   };
 }

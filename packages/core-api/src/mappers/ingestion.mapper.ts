@@ -58,7 +58,6 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     sportsCovered: provider.sportsCovered,
     primaryForSports: provider.primaryForSports,
     activeEventCount: provider.activeEventCount,
-    supportsLiveSimulation: provider.supportsLiveSimulation,
     requestsPerMinute: provider.requestsPerMinute,
     webhooksEnabled: provider.webhooksEnabled,
     syncedSportLeagueCount: provider.syncedSportLeagueCount,

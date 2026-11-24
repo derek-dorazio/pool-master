@@ -68,7 +68,7 @@ const minutes = (value: number) => (value === 1 ? '1 minute' : `${String(value)}
 /**
  * A provider's dialog (#1873, #1997): what the live check found and its settings, then Edit for
  * its settings from its Provider row. Check now reads the list again, which checks every provider
- * live. A provider with no row (the QA mock feed) has no Edit. Its API key and webhook secret stay
+ * live. A provider with no row has no Edit. Its API key and webhook secret stay
  * in Secrets Manager.
  */
 export function ProviderDialog({

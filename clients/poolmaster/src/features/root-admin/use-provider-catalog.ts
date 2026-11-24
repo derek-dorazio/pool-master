@@ -15,7 +15,7 @@ export type ProviderCatalogEvent = ProviderEventDto;
  * `preferredProviderId` when it covers the sport (the sport league's event sync provider, for the
  * year import, #1797), else the primary; null when none covers it, as for horse racing today.
  * Shared by the catalog browse below and the sport league year import (#385). Choosing matters
- * only where two providers cover the sport, as the QA mock and BALLDONTLIE do for golf (#1495).
+ * only where two providers cover the sport (#1495).
  */
 export function useSportProviderId(enabled: boolean, sport: Sport, preferredProviderId: string | null = null) {
   const providersQuery = useProvidersQuery({ enabled });

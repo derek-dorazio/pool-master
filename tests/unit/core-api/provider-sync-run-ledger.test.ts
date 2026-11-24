@@ -223,7 +223,6 @@ describe('ProviderSyncRunLedger', () => {
           eventId: 'event-1',
           source: 'SCHEDULED',
           actor: { type: 'SYSTEM', name: 'scheduler' },
-          mockEventState: null,
           normalizedAt: '2026-05-30T12:00:00.000Z',
         },
         outcome: {

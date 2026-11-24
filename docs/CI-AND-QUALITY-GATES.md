@@ -1075,7 +1075,7 @@ release, and the mock contest feed provider has its own suite.
 ### 6. Mock contest feed provider (`packages/mock-contest-feed-provider/src/**/*.test.ts`)
 
 - **Runner:** Node's built-in `node --test`, with `--import tsx` for TypeScript. The glob is quoted in the package script so Node expands it, not the shell; an unquoted `**` in `sh` only matches one directory level.
-- **Scope:** the mock provider's live golf simulation, scenario store, sandbox events and tour seed validation. The mock drives all live-score testing, so a regression here breaks fake-event testing everywhere downstream.
+- **Scope:** the mock provider's live golf simulation, scenario store, sandbox events and tour seed validation. It no longer runs in QA or any deployed environment (#2039); the functional and integration suites read it through a test-code fake provider (`tests/support/mock-contest-feed-provider.ts`), so a regression here breaks those suites. The module is deleted by #1981.
 - **Environment:** Node only. No database, no built `@poolmaster/shared`.
 - **Local command:** `npm test --workspace @poolmaster/mock-contest-feed-provider`
 - **CI job:** `service-mock-provider-build`, after the package's lint, typecheck and build (#392).

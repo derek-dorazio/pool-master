@@ -221,7 +221,6 @@ export function providerSummaryFixture(overrides: Partial<ProviderSummaryDto> = 
     sportsCovered: ['BASEBALL', 'BASKETBALL', 'GOLF'],
     primaryForSports: ['BASEBALL', 'BASKETBALL', 'GOLF'],
     activeEventCount: 3,
-    supportsLiveSimulation: false,
     requestsPerMinute: 5,
     webhooksEnabled: true,
     syncedSportLeagueCount: 16,

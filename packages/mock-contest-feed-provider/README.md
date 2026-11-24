@@ -57,11 +57,10 @@ event without a `mockEventState` token is computed from the replay clock
 - a few golfers withdraw mid-round (`DNF`)
 - four rounds only, never past hole 18
 
-In QA the mock is internal-only, so start a replay from PoolMaster instead: link the
-tournament to a mock event, then press **Start live simulation** on its score-source card
-(`startEventLiveSimulation`), and only then move the tournament to Live so the live-score sync
-polls it. Moving it to Live first stores the mock's fixed scores before the replay takes over.
-The card re-reads the replay's round every 30 seconds (`getEventLiveSimulation`).
+PoolMaster no longer runs the mock in QA or any deployed environment, and core-api has no adapter
+for it (#2039): the functional and integration suites read it through a test-code fake provider
+(`tests/support/mock-contest-feed-provider.ts`), which pins an event to a `mockEventState` when a
+test asks. The module is deleted by #1981.
 
 Restarting a replay part-way through starts again from round 1, but PoolMaster keeps every
 round it has already stored. Rounds the new replay has not reached yet stay at their old
@@ -111,7 +110,7 @@ The package includes its own local export and client-generation setup:
 - `npm run generate:client --workspace @poolmaster/mock-contest-feed-provider`
 - `npm run generate --workspace @poolmaster/mock-contest-feed-provider`
 
-The OpenAPI export writes to `packages/mock-contest-feed-provider/generated/openapi.json`, and its generated response types live in `packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts`. Only types are generated: core-api reads the feed through its own adapter, not a generated client.
+The OpenAPI export writes to `packages/mock-contest-feed-provider/generated/openapi.json`, and its generated response types live in `packages/mock-contest-feed-provider/generated/hey-api/types.gen.ts`. Only types are generated: the test-code fake provider reads the feed with them, not a generated client.
 
 ## Scenario Files
 

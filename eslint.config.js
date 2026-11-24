@@ -270,6 +270,24 @@ export default tseslint.config(
     },
   },
   {
+    // #2039 — the mock contest feed is test infrastructure: production source never imports it.
+    // Functional and integration tests register their fake provider through buildApp's provider
+    // factory (tests/support/mock-contest-feed-provider.ts).
+    files: ['packages/core-api/src/**/*.ts'],
+    ignores: ['**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [{
+            group: ['@poolmaster/mock-contest-feed-provider', '@poolmaster/mock-contest-feed-provider/**', '**/mock-contest-feed-provider/**'],
+            message: 'The mock contest feed is test infrastructure; production source never imports it (#2039).',
+          }],
+        },
+      ],
+    },
+  },
+  {
     // #149 — `ZodTypeAny` is `ZodType<any, any, any>`. The `any`s sit inside a named import,
     // so no-explicit-any cannot see them; this is the only rule that does.
     files: ['packages/shared/**/*.ts'],

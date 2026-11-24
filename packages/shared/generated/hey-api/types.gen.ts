@@ -11116,40 +11116,6 @@ export type LinkSportEventScoreSourceRequest = {
 };
 
 /**
- * Starts, or restarts from round 1, the score source's simulated live scoring for a linked event.
- */
-export type StartSportEventLiveSimulationRequest = {
-    /**
-     * How long each of the four simulated rounds lasts. Defaults to the provider's own default (20 on the mock feed).
-     */
-    minutesPerRound?: number;
-};
-
-/**
- * A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.
- */
-export type SportEventLiveSimulationResponse = {
-    sportEventId: string;
-    /**
-     * When simulated round 1 started.
-     */
-    startsAt: string;
-    /**
-     * When simulated round 4 finishes; scores stop changing after this.
-     */
-    endsAt: string;
-    minutesPerRound: number;
-    /**
-     * Where the simulation is on its own clock.
-     */
-    phase: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED';
-    /**
-     * The round being played now; null before the start and after the finish.
-     */
-    currentRound: number | null;
-};
-
-/**
  * A scheduled round of an event: its own date, and where its results stand.
  */
 export type SportEventRoundDto = {
@@ -27177,10 +27143,6 @@ export type EventSyncRequest = {
      * Feed types to run for a specific event sync request.
      */
     feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
-    /**
-     * Optional mock-provider-only event state override for manual QA event syncs.
-     */
-    mockEventState?: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction';
 };
 
 /**
@@ -27353,10 +27315,6 @@ export type ProviderSummaryDto = {
      */
     activeEventCount: number;
     /**
-     * True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.
-     */
-    supportsLiveSimulation: boolean;
-    /**
      * The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced.
      */
     requestsPerMinute: number | null;
@@ -27373,7 +27331,7 @@ export type ProviderSummaryDto = {
      */
     rateLimitedJobsLast24h: number;
     /**
-     * The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).
+     * The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row.
      */
     settings: {
         /**
@@ -27735,10 +27693,6 @@ export type ProviderListResponse = {
          */
         activeEventCount: number;
         /**
-         * True when the provider can play a linked event's live scoring forward on its own clock (startEventLiveSimulation). Only the QA mock feed can.
-         */
-        supportsLiveSimulation: boolean;
-        /**
          * The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced.
          */
         requestsPerMinute: number | null;
@@ -27755,7 +27709,7 @@ export type ProviderListResponse = {
          */
         rateLimitedJobsLast24h: number;
         /**
-         * The provider's row and leagues, which the Providers page edits; null for a provider set up outside the Provider table (the QA mock feed, until it is removed).
+         * The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row.
          */
         settings: {
             /**
@@ -28005,10 +27959,6 @@ export type ProviderSyncRunDto = {
                 email: string;
             };
             /**
-             * The mock feed state a manual QA sync asked for; null otherwise.
-             */
-            mockEventState: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction' | null;
-            /**
              * When the request was validated and normalized.
              */
             normalizedAt: string;
@@ -28165,10 +28115,6 @@ export type ProviderSyncRunDetailDto = {
                  */
                 email: string;
             };
-            /**
-             * The mock feed state a manual QA sync asked for; null otherwise.
-             */
-            mockEventState: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction' | null;
             /**
              * When the request was validated and normalized.
              */
@@ -28503,10 +28449,6 @@ export type ProviderSyncRunListResponse = {
                     email: string;
                 };
                 /**
-                 * The mock feed state a manual QA sync asked for; null otherwise.
-                 */
-                mockEventState: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction' | null;
-                /**
                  * When the request was validated and normalized.
                  */
                 normalizedAt: string;
@@ -28675,10 +28617,6 @@ export type ProviderManualSyncSubmissionResponse = {
                      */
                     email: string;
                 };
-                /**
-                 * The mock feed state a manual QA sync asked for; null otherwise.
-                 */
-                mockEventState: 'open' | 'locked' | 'live' | 'completed' | 'golf-pre-live' | 'golf-r1-in-progress' | 'golf-r1-complete' | 'golf-r2-complete' | 'golf-correction' | 'golf-r4-complete-pending-final' | 'golf-playoff' | 'golf-completed' | 'golf-late-correction' | null;
                 /**
                  * When the request was validated and normalized.
                  */
@@ -34413,96 +34351,6 @@ export type LinkEventScoreSourceResponses = {
 };
 
 export type LinkEventScoreSourceResponse = LinkEventScoreSourceResponses[keyof LinkEventScoreSourceResponses];
-
-export type GetEventLiveSimulationData = {
-    body?: never;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/live-simulation';
-};
-
-export type GetEventLiveSimulationErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type GetEventLiveSimulationError = GetEventLiveSimulationErrors[keyof GetEventLiveSimulationErrors];
-
-export type GetEventLiveSimulationResponses = {
-    /**
-     * A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.
-     */
-    200: SportEventLiveSimulationResponse;
-};
-
-export type GetEventLiveSimulationResponse = GetEventLiveSimulationResponses[keyof GetEventLiveSimulationResponses];
-
-export type StartEventLiveSimulationData = {
-    body: StartSportEventLiveSimulationRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/live-simulation';
-};
-
-export type StartEventLiveSimulationErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type StartEventLiveSimulationError = StartEventLiveSimulationErrors[keyof StartEventLiveSimulationErrors];
-
-export type StartEventLiveSimulationResponses = {
-    /**
-     * A running simulated live-scoring replay. Scores reach PoolMaster through the normal live-score sync, which polls only while the event is IN_PROGRESS.
-     */
-    200: SportEventLiveSimulationResponse;
-};
-
-export type StartEventLiveSimulationResponse = StartEventLiveSimulationResponses[keyof StartEventLiveSimulationResponses];
 
 export type ListEventRoundsData = {
     body?: never;

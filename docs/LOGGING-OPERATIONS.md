@@ -14,7 +14,7 @@ This logging contract applies to runtime services and operational browser
 signals:
 
 - `packages/core-api/src/**`
-- `packages/mock-contest-feed-provider/src/**`
+- `packages/mock-contest-feed-provider/src/**` while the test suites run it (it is deployed nowhere since #2039, and deleted by #1981)
 - `clients/poolmaster/src/**` via `/api/v1/client-logs`
 
 It does not treat one-off scripts or archived frontend code as part of the

@@ -596,64 +596,6 @@ describe('IngestionScheduler', () => {
       expect(jobs.map((job) => job.jobType)).toEqual(['EVENT_PARTICIPANTS_SYNC', 'EVENT_LIVE_SCORES_SYNC']);
     });
 
-    it('pool-master-33l.8.8 passes mock event state controls only to supporting providers', async () => {
-      const detail: SportEventDetail = {
-        externalId: 'evt-1',
-        providerId: 'mock-contest-feed',
-        sport: 'GOLF',
-        name: 'Mock Golf Event',
-        startDate: new Date('2026-04-30T12:00:00.000Z'),
-        status: 'IN_PROGRESS',
-        fieldLocked: true,
-        metadata: {},
-        participants: [],
-      };
-      const provider = fakeSportDataProvider({
-        providerId: 'mock-contest-feed',
-        getEventDetails: jest.fn().mockResolvedValue(detail),
-        getLiveScores: jest.fn().mockResolvedValue({
-          category: 'GOLF',
-          externalEventId: 'evt-1',
-          rounds: [],
-        } satisfies LiveScoreResult),
-      });
-      const scheduler = new IngestionScheduler(createMockRegistry(provider), mockCallbacks);
-
-      await scheduler.runEventSync({
-        sport: 'GOLF',
-        providerId: 'mock-contest-feed',
-        eventId: 'evt-1',
-        feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
-        mockEventState: 'live',
-      });
-
-      expect(provider.getEventDetails).toHaveBeenCalledWith('evt-1', { mockEventState: 'live' });
-      expect(provider.getLiveScores).toHaveBeenCalledWith('evt-1', { mockEventState: 'live' });
-
-      const unsupportedProvider = fakeSportDataProvider({
-        providerId: 'real-provider',
-      });
-      const unsupportedScheduler = new IngestionScheduler(
-        createMockRegistry(unsupportedProvider),
-        createMockCallbacks(),
-      );
-
-      const [job] = await unsupportedScheduler.runEventSync({
-        sport: 'GOLF',
-        providerId: 'real-provider',
-        eventId: 'evt-1',
-        feeds: ['EVENTLIVESCORES'],
-        mockEventState: 'live',
-      });
-
-      expect(job).toEqual(expect.objectContaining({
-        status: 'FAILED',
-        providerId: 'real-provider',
-        errors: 1,
-      }));
-      expect(unsupportedProvider.getLiveScores).not.toHaveBeenCalled();
-    });
-
     it('pool-master-dxd.28 fails event participant sync when the provider cannot resolve the event id', async () => {
       const provider = fakeSportDataProvider({
         getEventDetails: jest.fn().mockResolvedValue(null),
