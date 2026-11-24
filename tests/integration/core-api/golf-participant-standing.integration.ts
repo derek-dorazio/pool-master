@@ -42,7 +42,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       where: { sport: Sport.GOLF },
       create: {
         sport: Sport.GOLF,
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -175,7 +174,7 @@ describe('Golf live-score persistence', () => {
     const prisma = getPrisma();
     await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const createEvent = async (tag: string) => prisma.sportEvent.create({

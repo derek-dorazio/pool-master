@@ -1,11 +1,12 @@
 import { ContestTemplateEventType, isTemplateOfferedOn, Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '../../support/sport-play';
 
 const NFL = 'nfl-league';
 const CFP = 'cfp-league';
 
 describe('which events a contest template is offered on', () => {
-  const week = { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, rounds: 1 };
-  const playoffs = { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, rounds: 4 };
+  const week = { sport: Sport.AMERICAN_FOOTBALL, ...sportPlay(Sport.AMERICAN_FOOTBALL), sportLeagueId: NFL, rounds: 1 };
+  const playoffs = { sport: Sport.AMERICAN_FOOTBALL, ...sportPlay(Sport.AMERICAN_FOOTBALL), sportLeagueId: NFL, rounds: 4 };
 
   it('offers a knockout template on the playoffs and not on a week of games, and a week template only on the week', () => {
     const knockout = { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, eventType: ContestTemplateEventType.KNOCKOUT };
@@ -27,8 +28,8 @@ describe('which events a contest template is offered on', () => {
     const pgaCopy = { sport: Sport.GOLF, sportLeagueId: 'pga' };
 
     expect([
-      isTemplateOfferedOn(pgaCopy, { sport: Sport.GOLF, sportLeagueId: 'pga', rounds: 4 }),
-      isTemplateOfferedOn(pgaCopy, { sport: Sport.GOLF, sportLeagueId: 'lpga', rounds: 4 }),
+      isTemplateOfferedOn(pgaCopy, { sport: Sport.GOLF, ...sportPlay(Sport.GOLF), sportLeagueId: 'pga', rounds: 4 }),
+      isTemplateOfferedOn(pgaCopy, { sport: Sport.GOLF, ...sportPlay(Sport.GOLF), sportLeagueId: 'lpga', rounds: 4 }),
     ]).toEqual([true, false]);
   });
 });

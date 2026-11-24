@@ -1,6 +1,5 @@
 import type { ParticipantScoringDefinitionId } from '../contest-scoring';
-import type { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import type { ScoringFamily } from './scoring-family';
+import type { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
 
 /** A noun in its singular and plural, as the audience says it, read from the display strings. */
 export interface SportNoun {
@@ -39,8 +38,6 @@ export interface SportDefinition {
   sport: Sport;
   /** The sport's name as a heading or menu entry reads it: "Golf", "Horse racing". */
   name: string;
-  participantType: ParticipantType;
-  scoringFamily: ScoringFamily;
   /** The tournament format a new event of this sport gets. */
   tournamentFormat: TournamentFormat;
   /** How many rounds an admin-authored event gets when the admin gives no count. */

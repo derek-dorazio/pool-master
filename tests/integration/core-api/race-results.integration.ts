@@ -40,12 +40,12 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
   // cleanupTestData clears the sports table, the migration's reference row with it.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.HORSE_RACING },
-    create: { sport: Sport.HORSE_RACING, participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' },
+    create: { sport: Sport.HORSE_RACING, tournamentFormat: 'RACE' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { sport: Sport.HORSE_RACING })),
       externalId: `race-${suffix}`,
       providerId: 'manual-admin',
       sport: Sport.HORSE_RACING,

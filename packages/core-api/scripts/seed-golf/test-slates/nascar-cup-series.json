@@ -6,6 +6,8 @@
     "sportLeagues": [
       "NASCAR Cup Series"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "PLAYERS",
       "FIELDS"

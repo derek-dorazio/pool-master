@@ -17937,14 +17937,6 @@
             ],
             "description": "The sport."
           },
-          "participantType": {
-            "type": "string",
-            "enum": [
-              "INDIVIDUAL",
-              "TEAM"
-            ],
-            "description": "Whether the sport's competitors are individuals or teams."
-          },
           "tournamentFormat": {
             "type": "string",
             "enum": [
@@ -17968,7 +17960,6 @@
         "required": [
           "id",
           "sport",
-          "participantType",
           "tournamentFormat",
           "createdAt",
           "updatedAt"
@@ -18006,14 +17997,6 @@
                   ],
                   "description": "The sport."
                 },
-                "participantType": {
-                  "type": "string",
-                  "enum": [
-                    "INDIVIDUAL",
-                    "TEAM"
-                  ],
-                  "description": "Whether the sport's competitors are individuals or teams."
-                },
                 "tournamentFormat": {
                   "type": "string",
                   "enum": [
@@ -18037,7 +18020,6 @@
               "required": [
                 "id",
                 "sport",
-                "participantType",
                 "tournamentFormat",
                 "createdAt",
                 "updatedAt"
@@ -18277,29 +18259,21 @@
             ]
           },
           "participantType": {
-            "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed."
           },
           "scoringFamily": {
-            "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the sport league's events are scored. Set when the league is created, never changed."
           },
           "displayOrder": {
             "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.",
@@ -18568,29 +18542,21 @@
                   ]
                 },
                 "participantType": {
-                  "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed."
                 },
                 "scoringFamily": {
-                  "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the sport league's events are scored. Set when the league is created, never changed."
                 },
                 "displayOrder": {
                   "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.",
@@ -18838,29 +18804,21 @@
                 ]
               },
               "participantType": {
-                "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "INDIVIDUAL",
-                  "TEAM",
-                  null
-                ]
+                  "TEAM"
+                ],
+                "description": "Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed."
               },
               "scoringFamily": {
-                "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "STROKE_PLAY",
                   "FINISH_POSITION",
-                  "HEAD_TO_HEAD",
-                  null
-                ]
+                  "HEAD_TO_HEAD"
+                ],
+                "description": "How the sport league's events are scored. Set when the league is created, never changed."
               },
               "displayOrder": {
                 "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.",
@@ -18954,6 +18912,23 @@
             "minLength": 1,
             "description": "Unique within the sport."
           },
+          "participantType": {
+            "type": "string",
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM"
+            ],
+            "description": "Who competes in its events: teams or individuals. Fixed once set."
+          },
+          "scoringFamily": {
+            "type": "string",
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How its events are scored. Fixed once set."
+          },
           "bracketAdvancement": {
             "description": "FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.",
             "type": "string",
@@ -18976,6 +18951,8 @@
         "required": [
           "sport",
           "name",
+          "participantType",
+          "scoringFamily",
           "platformTierProfileId",
           "platformPricingProfileId"
         ],
@@ -22341,6 +22318,188 @@
         "additionalProperties": false,
         "description": "A sport league's participants."
       },
+      "SportLeaguePositionProviderCodeDto": {
+        "type": "object",
+        "properties": {
+          "providerCode": {
+            "type": "string",
+            "description": "The provider's own code for the position, exactly as its feed sends it."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "BALLDONTLIE"
+            ],
+            "description": "The provider whose code it is."
+          },
+          "providerLeagueCode": {
+            "type": "string",
+            "description": "The provider's own code for the league the code is from."
+          },
+          "providerLeagueName": {
+            "type": "string",
+            "description": "The provider's own name for that league."
+          }
+        },
+        "required": [
+          "providerCode",
+          "provider",
+          "providerLeagueCode",
+          "providerLeagueName"
+        ],
+        "additionalProperties": false,
+        "description": "One provider's code for a sport league position."
+      },
+      "SportLeaguePositionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "The position's key within its league (QB). Screens read its words by this code."
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Where it sits when the league's positions are listed. Display only."
+          },
+          "isFieldEligible": {
+            "type": "boolean",
+            "description": "Whether its players can be picked into an event's field. The roster sync keeps only these players."
+          },
+          "providerCodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the position, exactly as its feed sends it."
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "BALLDONTLIE"
+                  ],
+                  "description": "The provider whose code it is."
+                },
+                "providerLeagueCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the league the code is from."
+                },
+                "providerLeagueName": {
+                  "type": "string",
+                  "description": "The provider's own name for that league."
+                }
+              },
+              "required": [
+                "providerCode",
+                "provider",
+                "providerLeagueCode",
+                "providerLeagueName"
+              ],
+              "additionalProperties": false,
+              "description": "One provider's code for a sport league position."
+            },
+            "description": "Each provider's codes for the position, by provider league then code. A feed code with no row is not one of the league's positions."
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "displayOrder",
+          "isFieldEligible",
+          "providerCodes"
+        ],
+        "additionalProperties": false,
+        "description": "One of a sport league's playing positions. Set by migration; never edited through the API."
+      },
+      "SportLeaguePositionListResponse": {
+        "type": "object",
+        "properties": {
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The position's key within its league (QB). Screens read its words by this code."
+                },
+                "displayOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Where it sits when the league's positions are listed. Display only."
+                },
+                "isFieldEligible": {
+                  "type": "boolean",
+                  "description": "Whether its players can be picked into an event's field. The roster sync keeps only these players."
+                },
+                "providerCodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "providerCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the position, exactly as its feed sends it."
+                      },
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "BALLDONTLIE"
+                        ],
+                        "description": "The provider whose code it is."
+                      },
+                      "providerLeagueCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the league the code is from."
+                      },
+                      "providerLeagueName": {
+                        "type": "string",
+                        "description": "The provider's own name for that league."
+                      }
+                    },
+                    "required": [
+                      "providerCode",
+                      "provider",
+                      "providerLeagueCode",
+                      "providerLeagueName"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One provider's code for a sport league position."
+                  },
+                  "description": "Each provider's codes for the position, by provider league then code. A feed code with no row is not one of the league's positions."
+                }
+              },
+              "required": [
+                "id",
+                "code",
+                "displayOrder",
+                "isFieldEligible",
+                "providerCodes"
+              ],
+              "additionalProperties": false,
+              "description": "One of a sport league's playing positions. Set by migration; never edited through the API."
+            },
+            "description": "Every position of the sport league, by display order, never paged. Empty for a league with none."
+          }
+        },
+        "required": [
+          "positions"
+        ],
+        "additionalProperties": false,
+        "description": "A sport league's positions."
+      },
       "SlotProviderMappingDto": {
         "type": "object",
         "properties": {
@@ -23747,29 +23906,21 @@
             "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
           },
           "participantType": {
-            "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes: teams or individuals. Read through the series' sport league."
           },
           "scoringFamily": {
-            "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the event is scored. Read through the series' sport league."
           },
           "syncScope": {
             "type": "string",
@@ -24552,29 +24703,21 @@
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes: teams or individuals. Read through the series' sport league."
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the event is scored. Read through the series' sport league."
                 },
                 "syncScope": {
                   "type": "string",
@@ -25344,29 +25487,21 @@
                 "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
               },
               "participantType": {
-                "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "INDIVIDUAL",
-                  "TEAM",
-                  null
-                ]
+                  "TEAM"
+                ],
+                "description": "Who competes: teams or individuals. Read through the series' sport league."
               },
               "scoringFamily": {
-                "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "STROKE_PLAY",
                   "FINISH_POSITION",
-                  "HEAD_TO_HEAD",
-                  null
-                ]
+                  "HEAD_TO_HEAD"
+                ],
+                "description": "How the event is scored. Read through the series' sport league."
               },
               "syncScope": {
                 "type": "string",
@@ -26258,29 +26393,21 @@
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes: teams or individuals. Read through the series' sport league."
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the event is scored. Read through the series' sport league."
                 },
                 "syncScope": {
                   "type": "string",
@@ -31476,29 +31603,21 @@
             "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
           },
           "participantType": {
-            "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
           },
           "scoringFamily": {
-            "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
           }
         },
         "required": [
@@ -31725,29 +31844,21 @@
                   "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
                 }
               },
               "required": [
@@ -32659,29 +32770,21 @@
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
           "participantType": {
-            "description": "Who competes in the shown event, when its sport league overrides its sport. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes in the shown event, from its sport league. A client reads the event's definition from the sport and these two."
           },
           "scoringFamily": {
-            "description": "How the shown event is scored, when its sport league overrides its sport. Null scores as the sport does.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the shown event is scored, from its sport league."
           },
           "scoringDefinitionId": {
             "type": "string",
@@ -33696,29 +33799,21 @@
                       "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                     },
                     "participantType": {
-                      "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": "string",
                       "enum": [
                         "INDIVIDUAL",
-                        "TEAM",
-                        null
-                      ]
+                        "TEAM"
+                      ],
+                      "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
                     },
                     "scoringFamily": {
-                      "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": "string",
                       "enum": [
                         "STROKE_PLAY",
                         "FINISH_POSITION",
-                        "HEAD_TO_HEAD",
-                        null
-                      ]
+                        "HEAD_TO_HEAD"
+                      ],
+                      "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
                     }
                   },
                   "required": [
@@ -33966,29 +34061,21 @@
                         "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                       },
                       "participantType": {
-                        "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-                        "type": [
-                          "string",
-                          "null"
-                        ],
+                        "type": "string",
                         "enum": [
                           "INDIVIDUAL",
-                          "TEAM",
-                          null
-                        ]
+                          "TEAM"
+                        ],
+                        "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
                       },
                       "scoringFamily": {
-                        "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-                        "type": [
-                          "string",
-                          "null"
-                        ],
+                        "type": "string",
                         "enum": [
                           "STROKE_PLAY",
                           "FINISH_POSITION",
-                          "HEAD_TO_HEAD",
-                          null
-                        ]
+                          "HEAD_TO_HEAD"
+                        ],
+                        "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
                       }
                     },
                     "required": [
@@ -86044,7 +86131,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Adding a tour is one call, not a migration. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
+        "description": "A new sport league, with who competes in its events and how they are scored (#2001), both fixed once set. The platform's own leagues are added by migration (the add-sport skill). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -86354,6 +86441,69 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportLeagueSyncListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sport-leagues/{sportLeagueId}/positions": {
+      "get": {
+        "operationId": "listSportLeaguePositions",
+        "summary": "List a sport league's positions with their provider codes",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "The League page's Structure tab (#2001): every playing position of the sport league, by display order, never paged, with whether its players can be picked into a field and each provider's codes for it. Set by migration; read-only. Read in a fixed number of queries. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A sport league's positions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeaguePositionListResponse"
                 }
               }
             }

@@ -6,6 +6,8 @@
     "sportLeagues": [
       "World Marathon Majors (women)"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "PLAYERS",
       "FIELDS"

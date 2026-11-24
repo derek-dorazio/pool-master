@@ -37,7 +37,7 @@ export function useSportLeagueRoundLabel(sport: Sport | null | undefined, sportL
   const roundNames = league?.roundNames ?? [];
   // A contest with no sport has no round names to read; its rounds are numbered.
   return (roundNumber, roundCount) => (sport
-    ? eventRoundLabel({ sport, participantType: league?.participantType, scoringFamily: league?.scoringFamily }, roundNames, roundNumber, roundCount)
+    ? eventRoundLabel({ sport }, roundNames, roundNumber, roundCount)
     : `Round ${roundNumber}`);
 }
 

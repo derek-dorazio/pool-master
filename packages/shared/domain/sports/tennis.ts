@@ -1,6 +1,5 @@
 import { displayString } from '../../display-strings/display-strings';
-import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import { ScoringFamily } from './scoring-family';
+import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /** The last three rounds of any draw, counted back from the final. */
@@ -26,8 +25,6 @@ const EARLY_ROUND_NAMES = ['First round', 'Second round', 'Third round', 'Fourth
 export const tennisSportDefinition: SportDefinition = {
   sport: Sport.TENNIS,
   name: 'Tennis',
-  participantType: ParticipantType.INDIVIDUAL,
-  scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 7,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],

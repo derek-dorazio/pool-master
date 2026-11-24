@@ -420,8 +420,8 @@ fall back on.
 What differs between sports lives in exactly two places, so a new sport is added by
 filling them in rather than by finding guards scattered through the code:
 
-- **The sport registry** (`packages/shared/domain/sports/`) holds what is data: participant
-  type, scoring family, default tournament format, default round count,
+- **The sport registry** (`packages/shared/domain/sports/`) holds what is data: default
+  tournament format, default round count,
   allowed selection types, scoring definitions and round labels (never a league's choice such as its tier
   layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). It holds
   codes, never words: what a sport's audience calls things (golfer, tournament, "Cut") is a
@@ -430,12 +430,13 @@ filling them in rather than by finding guards scattered through the code:
   sport added to the enum fails the build until it has a definition. A sport is supported
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).
-  A sport league may set its own participant type (`SportLeague.participantType`, null keeping
-  the sport's); its scoring family is always its sport's, and a league row naming another
-  family is a broken reference row that `sportLeagueDefinitionOf` refuses. Every event carries
-  its league's overrides, so a reader of an event's selection types, scoring definitions,
-  family, tiers, rounds or whether it plays matches reads `eventSportDefinition(event)` (or
-  `eventPlaysMatches(event)`), never `getSportDefinition(event.sport)`. No event has a parent
+  Who competes and how a league is scored are the sport league's alone
+  (`SportLeague.participantType` and `scoringFamily`, both required, #2001); the registry and
+  the `sports` row carry neither, so no code reads either off a sport. Every event carries its
+  league's two, so a reader of an event's family, participant type, selection types, scoring
+  definitions, tiers, rounds or whether it plays matches reads `eventSportDefinition(event)`
+  (or `eventPlaysMatches(event)`, or the event's `scoringFamily` itself), never
+  `getSportDefinition(event.sport)`. No event has a parent
   event: the old Clutch Card round leagues were removed (#1998), and the Clutch Card returns as
   a contest type on the parent league.
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
@@ -461,9 +462,9 @@ filling them in rather than by finding guards scattered through the code:
   than invented.
   On the web, how a family's results read on the shared contest screens is its entry in
   `SCORING_FAMILY_UI` (`clients/poolmaster/src/features/contests/scoring-family-ui/`), also a
-  `Record<ScoringFamily, …>`, reached through the definition of the response's event: its `sport`
-  with the sport league overrides the response carries (`participantType`, `scoringFamily` on a
-  leaderboard and on each of a contest's `sportEvents`), read by `eventSportDefinition`.
+  `Record<ScoringFamily, …>`, reached through the response's event's own `scoringFamily` (on a
+  leaderboard and on each of a contest's `sportEvents`, from its sport league), read with its
+  `sport` by `eventSportDefinition`.
   How an admin enters a family's results in Manage is its entry in `SCORING_FAMILY_ADMIN_UI`
   (`clients/poolmaster/src/features/root-admin/scoring-family-admin.ts`), the same kind of
   record: one set of Manage event, field, tier, participant and sport league pages serves every

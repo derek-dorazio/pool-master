@@ -156,7 +156,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
 
   const circuitId = await test.step('create a racing circuit', async () => {
     // A league is added by migration, so a journey makes its own through the API.
-    const id = await createJourneySportLeague(page, { sport: 'HORSE_RACING', name: run.tourName, platformTierProfileCode: 'TIERS_3_OF_3' });
+    const id = await createJourneySportLeague(page, { sport: 'HORSE_RACING', name: run.tourName, participantType: 'INDIVIDUAL', scoringFamily: 'FINISH_POSITION', platformTierProfileCode: 'TIERS_3_OF_3' });
     // The Sports page's one grid lists every sport league, the new one too.
     await page.goto('/manage/sports');
     await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();

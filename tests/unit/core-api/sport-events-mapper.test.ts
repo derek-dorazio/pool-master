@@ -1,4 +1,5 @@
-import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, type SportEvent } from '@poolmaster/shared/domain';
+import { sportPlay } from '../../support/sport-play';
+import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, Sport, type SportEvent } from '@poolmaster/shared/domain';
 import {
   mapProviderEventYearImportToResponse,
   mapSportEventContestsToResponse,
@@ -29,6 +30,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     autoLifecycleEnabled: true,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+    ...sportPlay(overrides.sport ?? Sport.GOLF),
     ...overrides,
   };
 }

@@ -36,6 +36,7 @@ import {
   SportLeagueEventOverviewListResponseSchema,
   SportLeagueOverviewListResponseSchema,
   SportLeagueParticipantOverviewListResponseSchema,
+  SportLeaguePositionListResponseSchema,
   SportLeagueSyncListResponseSchema,
   SystemEmailListResponseSchema,
   SportLeagueStructureResponseSchema,
@@ -66,6 +67,7 @@ import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
 import { leagueProfiles } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportPlay } from '../../support/sport-play';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
 
@@ -119,7 +121,7 @@ beforeEach(() => cleanupTestData());
 async function golf() {
   return getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -212,7 +214,7 @@ async function seedLeagueActivity(jobs: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Tour ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Tour ${suffix}` } });
   const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Open ${suffix}` } });
   for (let index = 0; index < jobs; index += 1) {
     const onLeague = index % 2 === 0;
@@ -248,7 +250,7 @@ async function seedRateLimitedJobs() {
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
   const sportLeague = await prisma.sportLeague.create({
-    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Tour ${suffix}` },
+    data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Limited Tour ${suffix}` },
   });
   await syncLeagueTo(prisma, sportLeague.id, 'pga');
   const events = await Promise.all([provider, tennisProvider].map(async (owner) => prisma.sportEvent.create({
@@ -304,7 +306,7 @@ async function seedSyncFindings(findings: number) {
   const suffix = randomUUID().slice(0, 8);
   const providerRow = await prisma.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
   for (let index = 0; index < findings; index += 1) {
-    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Findings Tour ${suffix} ${String(index)}` } });
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Findings Tour ${suffix} ${String(index)}` } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Findings Open ${suffix} ${String(index)}` } });
     const event = await prisma.sportEvent.create({
       data: { eventSeriesId: series.id, eventYear: 2026, name: `Findings Open ${suffix} ${String(index)}`, sport: Sport.GOLF,
@@ -328,7 +330,7 @@ async function seedCatalogEvents(events: number) {
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
   const tour = `Scaling Tour ${suffix}`;
-  const sportLeague = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), sportId: sport.id, name: tour } });
+  const sportLeague = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: tour } });
   await syncLeagueTo(getPrisma(), sportLeague.id, 'pga');
   provider.events = Array.from({ length: events }, (_, index) => {
     const startDate = new Date(Date.now() + (index + 1) * 7 * DAY);
@@ -358,7 +360,7 @@ async function seedSportLeagueOverviews(leagues: number) {
   const suffix = randomUUID().slice(0, 8);
   for (let index = 0; index < leagues; index += 1) {
     const name = `Overview Tour ${suffix} ${String(index)}`;
-    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name } });
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name } });
     await syncLeagueTo(prisma, sportLeague.id, 'pga');
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${name} Open` } });
     const event = (key: string, eventYear: number, extra: Pick<Prisma.SportEventUncheckedCreateInput, 'status' | 'autoReleaseCheckedAt' | 'autoReleaseOutcome' | 'autoReleaseFailedChecks'> = {}) => prisma.sportEvent.create({
@@ -432,7 +434,7 @@ async function seedLeagueEventOverviews(events: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Tour ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Tour ${suffix}` } });
   await syncLeagueTo(prisma, sportLeague.id, 'pga');
   for (let index = 0; index < events; index += 1) {
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Open ${suffix} ${String(index)}` } });
@@ -461,12 +463,27 @@ async function seedLeagueParticipantOverviews(participants: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Roster ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Roster ${suffix}` } });
   for (let index = 0; index < participants; index += 1) {
     const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Roster Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL', ranking: index + 1 } });
     if (index % 2 === 0) {
       await prisma.participantProviderMapping.create({ data: { participantId: golfer.id, sportLeagueId: sportLeague.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: `golfer-${suffix}-${String(index)}`, lastSeenAt: new Date() } });
     }
+  }
+  return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+/** A sport league of `positions` positions, each named by two provider codes on the league's mapping. */
+async function seedLeaguePositions(positions: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Positions ${randomUUID().slice(0, 8)}` } });
+  const mappingId = await syncLeagueTo(prisma, sportLeague.id, 'pga');
+  for (let index = 0; index < positions; index += 1) {
+    const position = await prisma.sportLeaguePosition.create({ data: { sportLeagueId: sportLeague.id, code: `P${String(index)}`, displayOrder: index + 1, isFieldEligible: index % 2 === 0 } });
+    await prisma.sportLeaguePositionProviderMapping.createMany({
+      data: ['A', 'B'].map((letter) => ({ sportLeagueId: sportLeague.id, sportLeaguePositionId: position.id, sportLeagueProviderMappingId: mappingId, providerCode: `${letter}${String(index)}` })),
+    });
   }
   return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
@@ -478,7 +495,7 @@ async function seedLeagueParticipantOverviews(participants: number) {
 async function seedLeagueStructure(slots: number) {
   const prisma = getPrisma();
   const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL }, select: { id: true } });
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Structure ${randomUUID().slice(0, 8)}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `League Page Structure ${randomUUID().slice(0, 8)}` } });
   const mappingId = await syncLeagueTo(prisma, sportLeague.id, 'nba');
   const phase = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: sportLeague.id, phase: 'REGULAR', isSynced: true } });
   for (let week = 1; week <= slots; week += 1) {
@@ -599,6 +616,20 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
+  it('GET a sport league\'s positions with their provider codes: the same statements for 2 positions as for 20 (#2001)', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/positions',
+      seed: seedLeaguePositions,
+      call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/positions`, rootAdmin),
+      rowsShown: (response) => {
+        const { positions } = okBody(response, SportLeaguePositionListResponseSchema);
+        // Every position shows both its codes, so a read that dropped the codes would show here.
+        for (const position of positions) expect(position.providerCodes).toHaveLength(2);
+        return positions.length;
+      },
+    });
+  });
+
   it('GET a sport league\'s structure with each slot\'s provider mappings: the same statements for 2 slots as for 20 (#2002)', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/sport-leagues/{sportLeagueId}/structure',
@@ -613,7 +644,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
   it('GET a sport league\'s syncs: one row per sync kind, from the league with its sport and its sync provider (its selected mapping, provider league and provider, one read each, #1997) and the latest run of each kind in seven statements, however many runs (#1865)', async () => {
     const prisma = getPrisma();
     const sport = await golf();
-    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Syncs ${randomUUID().slice(0, 8)}` } });
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Syncs ${randomUUID().slice(0, 8)}` } });
     await syncLeagueTo(prisma, sportLeague.id, 'pga');
     await prisma.providerSyncRun.createMany({
       data: Array.from({ length: 20 }, (_, index) => ({

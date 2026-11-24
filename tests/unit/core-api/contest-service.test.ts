@@ -1,3 +1,4 @@
+import { sportPlay } from '../../support/sport-play';
 import type { ContestEntryCreateLimits } from '@poolmaster/shared/db';
 import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
 import {
@@ -193,6 +194,7 @@ const STARTED_EVENT = {
   name: 'The Masters',
   sportLeagueId: 'pga-tour',
   sport: Sport.GOLF,
+  ...sportPlay(Sport.GOLF),
   status: SportEventStatus.IN_PROGRESS,
   startDate: new Date('2026-01-01T12:00:00.000Z'),
 } as SportEvent;
@@ -1587,7 +1589,7 @@ describe('ContestService', () => {
       });
 
       await service.sendEntrySubmittedEmails(receiptInput(contest, {
-        sportEvent: { ...STARTED_EVENT, sport: Sport.AUTO_RACING },
+        sportEvent: { ...STARTED_EVENT, sport: Sport.AUTO_RACING, ...sportPlay(Sport.AUTO_RACING) },
         configuration: receiptConfiguration({
           selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 50_000, countedScores: 2,
         }),

@@ -1,3 +1,4 @@
+import { sportPlay } from '../../support/sport-play';
 import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType, isRosterSelectionType } from '@poolmaster/shared/domain';
 import type {
   Contest,
@@ -302,7 +303,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
       ],
       participantsById: new Map([['participant-1', participant('participant-1', { name: 'Eliminated Golfer' })]]),
       valuationBySportEventParticipantId: new Map(),
-      event: { sport: Sport.GOLF },
+      event: { sport: Sport.GOLF, ...sportPlay(Sport.GOLF) },
     });
 
     expect(participants).toEqual([
@@ -330,7 +331,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
       valuationBySportEventParticipantId: new Map([
         ['sep-1', { tierLabel: 'Tier 1', tierOrderIndex: 1, price: 25 }],
       ]),
-      event: { sport: Sport.GOLF },
+      event: { sport: Sport.GOLF, ...sportPlay(Sport.GOLF) },
     });
 
     expect(participants[0]).toEqual(
@@ -366,7 +367,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         ['participant-2', participant('participant-2', { name: 'Vermont' })],
       ]),
       valuationBySportEventParticipantId: new Map(),
-      event: { sport: Sport.BASKETBALL },
+      event: { sport: Sport.BASKETBALL, ...sportPlay(Sport.BASKETBALL) },
     });
 
     expect(participants.map((row) => [row.participantName, row.seedNumber])).toEqual([['Duke', 1], ['Vermont', null]]);
@@ -377,7 +378,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
       field: [fieldRow({ id: 'sep-1', participantId: 'participant-1', seedNumber: 1 })],
       participantsById: new Map([['participant-1', participant('participant-1', { name: 'Scottie Scheffler' })]]),
       valuationBySportEventParticipantId: new Map(),
-      event: { sport: Sport.GOLF },
+      event: { sport: Sport.GOLF, ...sportPlay(Sport.GOLF) },
     });
 
     expect(participants[0]?.seedNumber).toBeNull();
@@ -401,7 +402,7 @@ describe('#324 draft rules — buildSelectionParticipants', () => {
         ['sep-tier-1', { tierLabel: 'Tier 1', tierOrderIndex: 1, price: null }],
         ['sep-tier-2', { tierLabel: 'Tier 1', tierOrderIndex: 2, price: null }],
       ]),
-      event: { sport: Sport.GOLF },
+      event: { sport: Sport.GOLF, ...sportPlay(Sport.GOLF) },
     });
 
     expect(participants.map((p) => p.sportEventParticipantId)).toEqual([

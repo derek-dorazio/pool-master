@@ -3,8 +3,10 @@
  * Every file is test data: real events and fields reach the site through the provider sync
  * (docs/LIVE-SPORTS-DATA-SYNC.md), never through a file.
  *
- * The file carries its own scope in an envelope (sport, season, sport leagues, which kinds of
- * data it holds) ahead of the data. The loader checks the envelope and the data against it
+ * The file carries its own scope in an envelope (sport, season, sport leagues, who competes in
+ * them and how they are scored, which kinds of data it holds) ahead of the data. The participant
+ * type and scoring family are the sport leagues' own (#2001): the loader checks them against
+ * each league on the site, and makes a league it does not find with them. The loader checks the envelope and the data against it
  * before it reads the site, so a file whose data strays outside its scope writes nothing.
  * The filename is for people and is never parsed.
  *
@@ -32,7 +34,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -205,6 +207,8 @@ const SportDataFileSchema = z.object({
     sport: z.string(),
     season: z.number().int().min(2000).max(2100),
     sportLeagues: z.array(z.string().min(1)).min(1),
+    participantType: z.enum(ParticipantType),
+    scoringFamily: z.enum(ScoringFamily),
     contents: z.array(z.enum(SportDataContent)).min(1),
   }).strict(),
   /** Every file is test data (#1850): its made-up parts load only into a local or QA site. */
@@ -494,7 +498,7 @@ export function parseSportDataFile(json: unknown): SportDataFile {
     problems.push(`scope.sport ${sport} is not a sport in the sport registry.`);
   }
   const contents = new Set(file.scope.contents);
-  const strokePlay = isSport(sport) && getSportDefinition(sport).scoringFamily === ScoringFamily.STROKE_PLAY;
+  const strokePlay = file.scope.scoringFamily === ScoringFamily.STROKE_PLAY;
   const playsBracket = isSport(sport) && sportPlaysMatches(sport);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {
     problems.push('scope.contents has FIELDS without PLAYERS: a field names its players, so the file carries them.');
@@ -533,7 +537,7 @@ export function parseSportDataFile(json: unknown): SportDataFile {
   }
   // An unknown sport is already refused; its par is not worth a second problem.
   // An unknown sport's entries are read as a bracket's, which asks least of them.
-  const results = isSport(sport) ? SEED_RESULTS[getSportDefinition(sport).scoringFamily] : SeedResults.MATCH_RESULTS;
+  const results = isSport(sport) ? SEED_RESULTS[file.scope.scoringFamily] : SeedResults.MATCH_RESULTS;
   for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), playsBracket || !isSport(sport), results, problems);
 
   if (problems.length > 0 || !isSport(sport)) throw new SportDataFileError(problems);

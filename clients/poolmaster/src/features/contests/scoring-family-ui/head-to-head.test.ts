@@ -1,5 +1,6 @@
+import { sportPlay } from '@/test/sport-play';
 import { describe, expect, it } from 'vitest';
-import { getSportDefinition, ScoringFamily, Sport } from '@poolmaster/shared/domain';
+import { ScoringFamily, Sport, sportLeagueDefinitionOf } from '@poolmaster/shared/domain';
 import type {
   ContestEntryStandingDto,
   ContestLeaderboardResponse,
@@ -11,7 +12,7 @@ import { getScoringFamilyUi } from './registry';
 import { formatKnockoutStatus, headToHeadUi } from './head-to-head';
 import type { LeaderboardContext } from './types';
 
-const basketball = getSportDefinition(Sport.BASKETBALL);
+const basketball = sportLeagueDefinitionOf(Sport.BASKETBALL, sportPlay(Sport.BASKETBALL));
 
 function team(overrides: Partial<SportEventParticipantDto> = {}): SportEventParticipantDto {
   return {
@@ -83,8 +84,8 @@ function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderbo
     contestId: 'contest-1',
     sportEventId: 'event-1',
     sport: Sport.BASKETBALL,
-    participantType: null,
-    scoringFamily: null,
+    participantType: 'TEAM',
+    scoringFamily: 'HEAD_TO_HEAD',
     scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     upsetBonus: false,
@@ -140,7 +141,7 @@ const vermontOutInRoundOfThirtyTwo = [
 ];
 
 describe('head-to-head leaderboard', () => {
-  it('is the entry basketball resolves to through its sport definition', () => {
+  it('is the entry basketball resolves to through its sport league scoring family', () => {
     expect(basketball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(getScoringFamilyUi(basketball)).toBe(headToHeadUi);
   });

@@ -39,6 +39,7 @@ import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportPlay } from '../support/sport-play';
 
 // A golf contest over two tournaments end to end over HTTP (#713). An admin builds two one-round
 // tournaments on a tour of their own, each with the same seven golfers, ranked so the default
@@ -120,7 +121,7 @@ async function buildTwoTournamentContest(
   const a = admin.client;
 
   // --- A tour, its two tournaments, and the same seven golfers in each -----------------------
-  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, 'GOLF')), sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
+  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, 'GOLF')), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
   expect(tour.response?.status).toBe(201);
   const sportLeagueId = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);
