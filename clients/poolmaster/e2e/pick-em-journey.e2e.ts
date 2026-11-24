@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { adminApiHeaders, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
+import { adminApiHeaders, e2eLeagueUrlSegment, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
 import { logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
@@ -147,6 +147,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
       sport: 'AMERICAN_FOOTBALL',
       name: run.tourName,
+      urlSegment: e2eLeagueUrlSegment(),
       ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
       participantType: 'TEAM',
       scoringFamily: 'HEAD_TO_HEAD',
