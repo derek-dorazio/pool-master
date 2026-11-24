@@ -525,8 +525,10 @@ Each moves into the model in the slice named. None is new design; each follows a
 - `sport` copied onto SportEvent, ContestConfigTemplate and ProviderSyncRun: read through the
   league, columns dropped (slice 3).
 - `SportOrder` in code becomes `Sport.displayOrder` (slice 3).
-- Ties per sport (`pickEm.tiePicks`, `shootout`): a boolean `canEndTied` on the slot definition
-  (Derek 2026-11-23); how a game actually ended comes from the feed as the Game's ending;
+- Ties per sport (`pickEm.tiePicks`, `shootout`): there are no tie picks (Derek 2026-11-24,
+  §9c), so `pickEm.tiePicks` is deleted (slice 17). A boolean `canEndTied` on the slot
+  definition stays as the fact that its games can end level (Derek 2026-11-23), read by
+  result handling and never to offer a pick; how a game actually ended comes from the feed as the Game's ending;
   whether a spread is offered is template config (slices 5 and 17).
 - `selectionTypes` and `scoringDefinitions` per sport: the league's templates say it; the API
   returns the offered types and default scoring; the web app stops re-deriving (slice 19).
@@ -677,8 +679,7 @@ Contest:
     `ContestEntrySlotStanding`, keyed (contestEntryId, contestSeasonSlotId), with a row per
     covered slot that opens a pick window: each slot for pick'em and survivor, the first
     covered slot for every other type (a bracket is submitted once).
-  - `ContestEntryMatchPrediction` becomes `ContestEntryRoundMatchPrediction`: a Match and a
-    side (null only for a TIE pick, check constraint), plus the predicted team for a bracket,
+  - `ContestEntryMatchPrediction` becomes `ContestEntryRoundMatchPrediction`: a Match and a side (always set: there are no tie picks), plus the predicted team for a bracket,
     since a later-round side means "winner of match A" and can win while the picked team is
     out; voids are `voidedAt` and `voidReason`.
   - `ContestLeaderboardSnapshot` keys by a nullable ContestSeasonSlot FK (null = the default
@@ -803,6 +804,14 @@ Contest:
   play-in out; the play-in is still synced and fills the bracket before the cutoff.
 - Clutch Card coverage (Derek 2026-11-24, slice 26): a Clutch Card template covers slots of one
   event only (regular-season or playoffs, never both), so one field, pick list and tier set.
+- No tie picks (Derek 2026-11-24, slices 11 and 17): in every sport, soccer included, a pick'em,
+  survivor or bracket pick names one of the two sides. `PredictedResult.TIE`, `takesTiePicks`,
+  `tiePicksOffered`, `PREDICTION_TIE_NOT_OFFERED` and the web tie option are deleted in slice
+  17, and its migration deletes stored tie picks. Games can still end tied, and today's rules
+  for that are kept: in pick'em a pick on a tied game earns nothing (a tie has no winner; a
+  spread push is still a push), and in survivor a tied game puts the entry out, as a loss does.
+  Brackets cover POSTSEASON slots only, where one side always advances: a bracket template
+  that lists a slot outside a POSTSEASON phase is refused (slice 11).
 - No multi-tournament field pools (Derek 2026-11-24, slices 11 and 15: "not practical; the
   Majors cup serves that purpose"): tiered, budget and quick pick contests never span events.
   The PGA and LPGA majors pools and the ATP and WTA Grand Slam tiered pools are deleted by
@@ -1016,7 +1025,7 @@ and Actions; later slices add actions by kind. Sync kinds come from `ProviderSyn
   Game links to the feed's game by (slot, Match, game number 1). `homeAway` sits on the Game
   side result (it alternates in a series).
 - `isPlayInPlace` and the placeholder participant go: an undecided side is an empty Match
-  side. A null side means TIE (`predictedResult` goes); every TEAM pick stores the team.
+  side. There are no tie picks, so `predictedResult` goes and every pick stores its side and team.
 - One field row `status` enum (ACTIVE / WITHDRAWN / ELIMINATED / DISQUALIFIED); Standing
   reads it. Seed only on the field row. The shootout only as SHOOTOUT period rows.
 - `sportEventSlotId` is carried Round → Match → Game by composite FKs; a null outcome is tied
