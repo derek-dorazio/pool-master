@@ -5,6 +5,7 @@
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import {
   ProviderCode,
   ProviderSyncFindingAction,
@@ -144,6 +145,78 @@ describe('the sync findings table', () => {
     expect(deleted).toBe(1);
     const kept = await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id }, select: { id: true } });
     expect(kept.map((row) => row.id).sort()).toEqual([newResolved.id, oldOpen.id, oldWaived.id].sort());
+  });
+});
+
+/**
+ * The app's client with one interruption: on the first raise only, another writer adds `conflict`
+ * between the raise's read and its insert, as a second sync task can.
+ */
+function clientRacedOnce(conflict: () => Promise<unknown>): PrismaClient {
+  const prisma = getPrisma();
+  let raced = false;
+  return new Proxy(prisma, {
+    get(target, property, receiver) {
+      if (property !== '$transaction') return Reflect.get(target, property, receiver) as unknown;
+      return (run: (tx: Prisma.TransactionClient) => Promise<unknown>) => target.$transaction((tx) => run(new Proxy(tx, {
+        get(txTarget, txProperty, txReceiver) {
+          if (txProperty !== 'providerSyncFinding') return Reflect.get(txTarget, txProperty, txReceiver) as unknown;
+          return new Proxy(txTarget.providerSyncFinding, {
+            get(table, method, tableReceiver) {
+              const original = Reflect.get(table, method, tableReceiver) as unknown;
+              if (method !== 'createManyAndReturn' || raced || typeof original !== 'function') return original;
+              return async (...args: unknown[]) => {
+                raced = true;
+                await conflict();
+                return (original as (...callArgs: unknown[]) => Promise<unknown>).apply(table, args);
+              };
+            },
+          });
+        },
+      })));
+    },
+  });
+}
+
+describe('the sync findings table, edge cases', () => {
+  it('tries a raise once more when another writer adds the same subject first, and counts the sighting on that row', async () => {
+    const league = await golfLeague();
+    const provider = await balldontlie();
+    const racer = clientRacedOnce(() => new PrismaProviderSyncFindingRepository(getPrisma()).raise([unmapped(league.id, provider.id, 'g-race')], NOW));
+
+    const opened = await new PrismaProviderSyncFindingRepository(racer).raise([unmapped(league.id, provider.id, 'g-race')], NOW);
+
+    expect(opened).toEqual([]);
+    const rows = await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id } });
+    expect(rows).toEqual([expect.objectContaining({ providerValue: 'g-race', seenCount: 2, status: ProviderSyncFindingStatus.OPEN })]);
+  });
+
+  it('passes on a failure that is not a duplicate subject, without trying again', async () => {
+    const league = await golfLeague();
+    const provider = await balldontlie();
+    const racer = clientRacedOnce(() => Promise.reject(new Error('connection reset')));
+
+    await expect(new PrismaProviderSyncFindingRepository(racer).raise([unmapped(league.id, provider.id, 'g-x')], NOW)).rejects.toThrow('connection reset');
+    await expect(getPrisma().providerSyncFinding.count({ where: { sportLeagueId: league.id } })).resolves.toBe(0);
+  });
+
+  it('raises nothing for no findings, and deletes nothing when no finding is old enough', async () => {
+    const repository = new PrismaProviderSyncFindingRepository(getPrisma());
+
+    await expect(repository.raise([], NOW)).resolves.toEqual([]);
+    await expect(repository.deleteResolvedBatchBefore(NOW, 10)).resolves.toBe(0);
+  });
+
+  it('answers null for a status change on a finding that is gone, and passes on any other failure', async () => {
+    const league = await golfLeague();
+    const provider = await balldontlie();
+    const repository = new PrismaProviderSyncFindingRepository(getPrisma());
+    const [finding] = await repository.raise([unmapped(league.id, provider.id, 'g-1')], NOW);
+    const change = { status: ProviderSyncFindingStatus.RESOLVED, waiveNote: null, changedAt: NOW };
+
+    await expect(repository.setStatus(randomUUID(), { ...change, changedByUserId: (await createTestUser({ isRootAdmin: true })).user.id })).resolves.toBeNull();
+    // An admin with no account is a foreign key failure, not a missing finding.
+    await expect(repository.setStatus(finding.id, { ...change, changedByUserId: randomUUID() })).rejects.toMatchObject({ code: 'P2003' });
   });
 });
 
