@@ -16,8 +16,8 @@
  * winner's round of 64 game names it (`playInWinnerTeamExternalId`), and that game fills the place
  * (#1571).
  *
- * Team ids are prefixed by league (`ncaab-team-150`, `ncaaw-team-150`): the vendor numbers each
- * league's teams on its own, and a bare number would collide with another sport's. Each team
+ * Team ids are the provider's own (`participantFeedId`, #2040): the vendor numbers each league's
+ * teams on its own, and a mapping is kept per sport league. Each team
  * carries its league's keyword in `metadata.tour`, so a school's men's and women's teams, which
  * share a name, each link to the site's own. Where the site keeps one row for the school,
  * affiliated with both leagues (as a sport data file loads it), that row takes both links.
@@ -30,6 +30,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { NcaaBracketGame, NcaaBracketTeam, NcaaTeam } from './ncaa-tournament-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { participantFeedId } from './participant-feed-id';
 
 /** One of the vendor's NCAA basketball leagues and how its bracket numbers its rounds. */
 export interface NcaaTournamentLeague {
@@ -97,9 +98,6 @@ export function parseNcaaTournamentScope(eventId: string): NcaaTournamentScope |
   return match && league ? { league, season: Number(match[2]) } : null;
 }
 
-export function ncaaTeamExternalId(league: NcaaTournamentLeague, teamId: number): string {
-  return `${league.key}-team-${String(teamId)}`;
-}
 
 /** A field the document leaves optional but without which a row cannot be used. */
 function required<Value>(value: Value | null | undefined, path: string, row: string, field: string): Value {
@@ -142,7 +140,7 @@ export function toNcaaTeamParticipant(league: NcaaTournamentLeague, team: NcaaTe
   const path = teamsPathOf(league);
   const id = required(team.id, path, 'a team', 'id');
   return {
-    externalId: ncaaTeamExternalId(league, id),
+    externalId: participantFeedId(id),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.BASKETBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
@@ -171,7 +169,7 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
     for (const side of [game.home_team, game.away_team]) {
       const team = decidedTeam(side);
       if (!team || playIn.has(team.id)) continue;
-      const externalId = ncaaTeamExternalId(league, team.id);
+      const externalId = participantFeedId(team.id);
       if (teams.has(externalId)) continue;
       const seed = team.seed ? Number.parseInt(team.seed, 10) : Number.NaN;
       teams.set(externalId, {
@@ -213,12 +211,12 @@ export function toNcaaGameScoreUpdates(league: NcaaTournamentLeague, games: read
     const playInWinner = game.round === league.firstFourRound + 1 ? [home, away].find((team) => playInWinners.has(team.id)) : undefined;
     return [{
       externalGameId: String(required(game.game_id, path, 'a bracket game with both teams', 'game_id')),
-      homeTeamExternalId: ncaaTeamExternalId(league, home.id),
-      awayTeamExternalId: ncaaTeamExternalId(league, away.id),
+      homeTeamExternalId: participantFeedId(home.id),
+      awayTeamExternalId: participantFeedId(away.id),
       state,
       homeScore: started ? home.score ?? null : null,
       awayScore: started ? away.score ?? null : null,
-      ...(playInWinner ? { playInWinnerTeamExternalId: ncaaTeamExternalId(league, playInWinner.id) } : {}),
+      ...(playInWinner ? { playInWinnerTeamExternalId: participantFeedId(playInWinner.id) } : {}),
     }];
   });
 }
@@ -316,7 +314,7 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
       if (betterSeed === null || position === -1 || slots.has(position)) return null;
       const sideOf = (seed: number): string | null => {
         const team = sides.find((side) => seedOf(side) === seed && !firstFour.has(side.id));
-        if (team) return ncaaTeamExternalId(league, team.id);
+        if (team) return participantFeedId(team.id);
         const place = ncaaPlayInPlaceExternalId(scope, region, seed);
         return playInPlaces.has(place) ? place : null;
       };
@@ -383,8 +381,8 @@ export function toNcaaScheduledGames(league: NcaaTournamentLeague, games: readon
     return [{
       externalGameId: String(game.game_id),
       roundNumber: round - league.firstFourRound,
-      homeTeamExternalId: ncaaTeamExternalId(league, home.id),
-      awayTeamExternalId: ncaaTeamExternalId(league, away.id),
+      homeTeamExternalId: participantFeedId(home.id),
+      awayTeamExternalId: participantFeedId(away.id),
       scheduledAt: game.date ? new Date(game.date) : null,
       isNeutralSite: true,
     }];

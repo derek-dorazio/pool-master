@@ -76,18 +76,18 @@ describe('parseRaceResultUpload', () => {
 });
 
 describe('raceResultTemplateRows', () => {
-  it('lists every runner with its place and status blank and its stored post position and rider filled in', () => {
+  it('lists every runner by participant id with its place and status blank and its stored post position and rider filled in', () => {
     const rows = raceResultTemplateRows([
       fieldEntryFixture({
-        participant: participantFixture({ name: 'Sovereignty', externalId: 'h-1' }),
+        participant: participantFixture({ id: 'p-1', name: 'Sovereignty' }),
         race: { finishPosition: 1, startPosition: 4, resultStatus: 'FINISHED', isOfficial: false, riderName: 'J. Alvarado' },
       }),
-      fieldEntryFixture({ participant: participantFixture({ name: 'Journalism', externalId: undefined }) }),
+      fieldEntryFixture({ participant: participantFixture({ id: 'p-2', name: 'Journalism' }) }),
     ]);
 
     expect(rows).toEqual([
-      ['h-1', 'Sovereignty', '', '', '4', 'J. Alvarado'],
-      ['', 'Journalism', '', '', '', ''],
+      ['p-1', 'Sovereignty', '', '', '4', 'J. Alvarado'],
+      ['p-2', 'Journalism', '', '', '', ''],
     ]);
   });
 });

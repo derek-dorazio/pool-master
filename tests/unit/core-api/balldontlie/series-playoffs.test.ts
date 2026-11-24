@@ -108,10 +108,10 @@ describe('toPlayoffsEvents', () => {
 });
 
 describe('toPlayoffsFieldParticipants', () => {
-  it('lists each team once, by the league\'s prefixed id, keeping its facts and the league\'s tour', () => {
+  it('lists each team once, by the feed\'s raw id, keeping its facts and the league\'s tour', () => {
     const participants = toPlayoffsFieldParticipants(LEAGUE, semifinals());
 
-    expect(participants.map((participant) => participant.externalId)).toEqual(['tst-team-1', 'tst-team-4', 'tst-team-2', 'tst-team-3']);
+    expect(participants.map((participant) => participant.externalId)).toEqual(['1', '4', '2', '3']);
     expect(participants[0]).toMatchObject({ name: 'Team 1', sport: Sport.BASKETBALL, active: true, metadata: { abbreviation: 'T1', tour: 'TST' } });
   });
 });
@@ -119,7 +119,7 @@ describe('toPlayoffsFieldParticipants', () => {
 describe('toPlayoffsGameScoreUpdates', () => {
   it('passes each game\'s teams, state and score, holds back the score of a game not under way, and leaves out a game in an unknown state', () => {
     const [final] = semifinals();
-    const updates = toPlayoffsGameScoreUpdates(LEAGUE, [
+    const updates = toPlayoffsGameScoreUpdates([
       final,
       game(5, 1, 2, 40, 38, CompetitionStatusState.IN_PROGRESS),
       game(6, 2, 1, 0, 0, CompetitionStatusState.SCHEDULED),
@@ -127,7 +127,7 @@ describe('toPlayoffsGameScoreUpdates', () => {
     ]);
 
     expect(updates).toEqual([
-      { externalGameId: String(final.id), homeTeamExternalId: 'tst-team-1', awayTeamExternalId: 'tst-team-4', state: ProviderGameState.FINAL, homeScore: 100, awayScore: 90 },
+      { externalGameId: String(final.id), homeTeamExternalId: '1', awayTeamExternalId: '4', state: ProviderGameState.FINAL, homeScore: 100, awayScore: 90 },
       expect.objectContaining({ state: ProviderGameState.IN_PROGRESS, homeScore: 40, awayScore: 38 }),
       expect.objectContaining({ state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null }),
     ]);

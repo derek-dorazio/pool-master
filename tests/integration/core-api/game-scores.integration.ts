@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
@@ -73,7 +74,7 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const names = ['Duke', 'Houston', 'Auburn', 'Florida'];
   const teams = await Promise.all(names.map((name) => prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name, participantType: 'TEAM' } })));
   await prisma.participantProviderMapping.createMany({
-    data: teams.map((team, index) => ({ participantId: team.id, sportLeagueId: sportLeague.id, providerId: PROVIDER, externalId: `${externalId}-team-${String(index + 1)}` })),
+    data: teams.map((team, index) => ({ participantId: team.id, sportLeagueId: sportLeague.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId: `${externalId}-team-${String(index + 1)}` })),
   });
   const field = new PrismaSportEventParticipantRepository(getAppPrisma());
   await field.createMany(event.id, teams.map((team, index) => ({ participantId: team.id, seedNumber: index + 1 })));
@@ -259,7 +260,7 @@ describe('game scores from a provider', () => {
     // Houston's place is the play-in place "UMBC / Howard" instead; UMBC, linked to the provider, won it.
     const { sportLeagueId } = await prisma.participant.findUniqueOrThrow({ where: { id: entryOf('Houston').participantId } });
     const [pairing, umbc] = await Promise.all(['UMBC / Howard', 'UMBC Retrievers'].map((name) => prisma.participant.create({ data: { sportLeagueId, name, participantType: 'TEAM' } })));
-    await prisma.participantProviderMapping.create({ data: { participantId: umbc.id, sportLeagueId, providerId: PROVIDER, externalId: `${externalId}-team-umbc` } });
+    await prisma.participantProviderMapping.create({ data: { participantId: umbc.id, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId: `${externalId}-team-umbc` } });
     const place = entryOf('Houston');
     await prisma.sportEventParticipant.update({ where: { id: place.id }, data: { participantId: pairing.id, isPlayInPlace: true } });
     const roundOf64 = { externalGameId: 'p-1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: `${externalId}-team-umbc`, playInWinnerTeamExternalId: `${externalId}-team-umbc` };
@@ -326,6 +327,8 @@ describe('game scores from a provider', () => {
     expect(statementCounts(statements)).toEqual([
       ['SELECT event_series', 1],
       ['SELECT participant_provider_mappings', 1],
+      // The mappings' Provider rows, for their names (#2040): one read for the batch.
+      ['SELECT providers', 1],
       ['SELECT sport_event_match_period_scores', 1],
       ['SELECT sport_event_matches', 1],
       ['SELECT sport_event_participants', 1],
@@ -356,6 +359,8 @@ describe('game scores from a provider', () => {
       ['SELECT contests', 2],
       ['SELECT event_series', 3],
       ['SELECT participant_provider_mappings', 1],
+      // The mappings' Provider rows, for their names (#2040): one read for the batch.
+      ['SELECT providers', 1],
       ['SELECT sport_event_match_period_scores', 3],
       ['SELECT sport_event_matches', 3],
       ['SELECT sport_event_participant_golf_standings', 1],

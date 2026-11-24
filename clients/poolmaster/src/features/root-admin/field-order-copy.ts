@@ -2,7 +2,7 @@ import { FieldOrderBasis, fieldOrderDecision } from '@poolmaster/shared/domain';
 import type { EventFieldEntry } from './event-field-patch';
 
 /** Each value as the order names it, and as a participant without it is said to lack it. */
-const VALUE_WORD: Record<Exclude<FieldOrderBasis, typeof FieldOrderBasis.NAME>, { name: string; missing: string }> = {
+const VALUE_WORD: Record<FieldOrderBasis, { name: string; missing: string }> = {
   [FieldOrderBasis.ODDS]: { name: 'odds', missing: 'odds' },
   [FieldOrderBasis.SEED]: { name: 'seed', missing: 'a seed' },
   [FieldOrderBasis.RANKING]: { name: 'rank', missing: 'a rank' },
@@ -16,12 +16,13 @@ const VALUE_WORD: Record<Exclude<FieldOrderBasis, typeof FieldOrderBasis.NAME>, 
 export function describeFieldOrder(
   field: readonly Pick<EventFieldEntry, 'isActive' | 'oddsToWin' | 'seedNumber' | 'ranking' | 'participant'>[],
 ): string {
-  const { basis, coversField } = fieldOrderDecision(field
+  const decision = fieldOrderDecision(field
     .filter((entry) => entry.isActive)
     .map((entry) => ({ oddsToWin: entry.oddsToWin, seedNumber: entry.seedNumber, ranking: entry.ranking, name: entry.participant.name })));
-  if (basis === FieldOrderBasis.NAME) {
-    return `Ordered by name (no participant has odds, a seed or a rank).`;
+  if (decision === null) {
+    return 'Not ordered: no participant has odds, a seed or a rank, so nothing is assigned.';
   }
+  const { basis, coversField } = decision;
   const word = VALUE_WORD[basis];
   if (!coversField) {
     return `Ordered by ${word.name}, participants without ${word.missing} last (no value is set for every participant).`;

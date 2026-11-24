@@ -19,7 +19,6 @@ const newPlayerSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   shortName: z.string().trim().optional(),
   nationality: z.string().trim().optional(),
-  externalId: z.string().trim().optional(),
 });
 
 type NewPlayerValues = z.infer<typeof newPlayerSchema>;
@@ -45,7 +44,7 @@ export function RootAdminParticipantCreatePage() {
 
   const form = useForm<NewPlayerValues>({
     resolver: zodResolver(newPlayerSchema),
-    defaultValues: { sportLeagueId: startLeagueId ?? '', name: '', shortName: '', nationality: '', externalId: '' },
+    defaultValues: { sportLeagueId: startLeagueId ?? '', name: '', shortName: '', nationality: '' },
     mode: 'onChange',
   });
 
@@ -60,7 +59,6 @@ export function RootAdminParticipantCreatePage() {
           ...(values.nationality?.trim()
             ? { nationality: values.nationality.trim() }
             : {}),
-          ...(values.externalId?.trim() ? { externalId: values.externalId.trim() } : {}),
         },
       });
       if (!response.data?.participant) {
@@ -127,12 +125,6 @@ export function RootAdminParticipantCreatePage() {
           <Input {...form.register('nationality')} />
         </FormField>
       </div>
-      <FormField
-        helperText={`Optional. The provider's identifier for this ${participant.one}, if known.`}
-        label="External ID"
-      >
-        <Input {...form.register('externalId')} />
-      </FormField>
     </FormPage>
   );
 }

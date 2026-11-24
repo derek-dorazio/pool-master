@@ -39,10 +39,10 @@ describe('parseEventFieldUpload', () => {
 });
 
 describe('golf field upload helpers', () => {
-  it('pre-fills the template with each field golfer\'s stored values, blanks where none', () => {
+  it('pre-fills the template with each field golfer\'s participant id and stored values, blanks where none', () => {
     const entries = [
       fieldEntryFixture({
-        participant: participantFixture({ name: 'Rory McIlroy', externalId: 'ext-rory' }),
+        participant: participantFixture({ id: 'p-rory', name: 'Rory McIlroy' }),
         ranking: 2,
         oddsToWin: null,
         seedNumber: 1,
@@ -51,7 +51,7 @@ describe('golf field upload helpers', () => {
       }),
     ];
 
-    expect(eventFieldUploadTemplateRows(entries)).toEqual([['ext-rory', 'Rory McIlroy', 2, '', 1, 'false', 'WITHDRAWN']]);
+    expect(eventFieldUploadTemplateRows(entries)).toEqual([['p-rory', 'Rory McIlroy', 2, '', 1, 'false', 'WITHDRAWN']]);
   });
 
   it('formats a row\'s values for the preview, showing unset values and an inactive reason in words', () => {

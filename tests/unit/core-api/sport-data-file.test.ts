@@ -124,18 +124,18 @@ describe('sport data file envelope', () => {
   });
 
   it('reads a player\'s feed id at each provider, and refuses one feed id on two players of a league (#1850)', () => {
-    const feedIds = { balldontlie: '1001' };
+    const feedIds = { BALLDONTLIE: '1001' };
     const withFeedIds = golfTestSeed() as { sportLeagues: Array<{ players: Array<Record<string, unknown>> }> };
     withFeedIds.sportLeagues[0].players[0]['feedIds'] = feedIds;
 
     expect(parseSportDataFile(withFeedIds).sportLeagues[0].players[0].feedIds).toEqual(feedIds);
 
     withFeedIds.sportLeagues[0].players.push({ key: 'pga-b', name: 'Golfer B', countryCode: 'US', ranking: 2, feedIds });
-    expect(problemsOf(withFeedIds)).toEqual(['PGA TOUR: feed id balldontlie 1001 is on more than one player.']);
+    expect(problemsOf(withFeedIds)).toEqual(['PGA TOUR: feed id BALLDONTLIE 1001 is on more than one player.']);
   });
 
   it('refuses a feed id on an event, which a test event never carries: a real one would let the live-score poll write real results onto it (#1850)', () => {
-    const problems = problemsOf(edited((file) => { Object.assign(file.sportLeagues[0].events[0], { feedIds: { balldontlie: '40' } }); }));
+    const problems = problemsOf(edited((file) => { Object.assign(file.sportLeagues[0].events[0], { feedIds: { BALLDONTLIE: '40' } }); }));
 
     expect(problems.some((problem) => problem.includes('feedIds'))).toBe(true);
   });

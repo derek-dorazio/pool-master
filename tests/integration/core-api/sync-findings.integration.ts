@@ -304,7 +304,7 @@ describe('the sync findings routes (contract)', () => {
 
   it('maps an unmapped participant finding to a participant of its league, which binds the feed id and resolves it; a participant of another league is 422', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
-    const { league, findingId } = await seedUnmappedFinding();
+    const { league, provider, findingId } = await seedUnmappedFinding();
     const other = await golfLeague();
     const prisma = getPrisma();
     const participant = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Avery Hart', participantType: 'INDIVIDUAL' } });
@@ -322,8 +322,8 @@ describe('the sync findings routes (contract)', () => {
     expect(ErrorEnvelopeSchema.parse(missingRes.json()).error.code).toBe('PARTICIPANT_NOT_FOUND');
     expect(ProviderSyncFindingResponseSchema.parse(mappedRes.json()).finding).toMatchObject({ status: ProviderSyncFindingStatus.RESOLVED, actions: [ProviderSyncFindingAction.REOPEN] });
     const finding = await prisma.providerSyncFinding.findUniqueOrThrow({ where: { id: findingId } });
-    expect(await prisma.participantProviderMapping.findMany({ where: { participantId: participant.id }, select: { providerId: true, externalId: true, confidence: true } }))
-      .toEqual([{ providerId: 'balldontlie', externalId: finding.providerValue, confidence: 'MANUAL' }]);
+    expect(await prisma.participantProviderMapping.findMany({ where: { participantId: participant.id }, select: { providerId: true, externalId: true } }))
+      .toEqual([{ providerId: provider.id, externalId: finding.providerValue }]);
     expect(againRes.statusCode).toBe(409);
   });
 

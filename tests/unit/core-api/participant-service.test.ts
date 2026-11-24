@@ -70,7 +70,7 @@ describe('ParticipantService writes', () => {
     const participants = fakeParticipantRepo({ create: jest.fn().mockRejectedValue(new Error('duplicate')) });
     const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), logger);
 
-    await expect(service.create({ sportLeagueId: 'league-1', name: 'x', participantType: 'INDIVIDUAL', externalId: 'e' }))
+    await expect(service.create({ sportLeagueId: 'league-1', name: 'x', participantType: 'INDIVIDUAL' }))
       .rejects.toThrow('duplicate');
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'participants.create.failed' }), expect.any(String));
   });

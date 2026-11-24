@@ -36,7 +36,7 @@ vi.mock('@/lib/logger', () => ({
 
 const PASTE = 'externalId,playerName,strokes,scoreToPar,thru,status\next-1,Rory McIlroy,68,-3,18,COMPLETED';
 
-function renderCard(fieldPlayers: Array<{ externalId?: string; playerName: string }> = []) {
+function renderCard(fieldPlayers: Array<{ participantId: string; playerName: string }> = []) {
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <GolfRoundScoreUploadCard eventId="evt-1" fieldPlayers={fieldPlayers} round={2} />
@@ -80,16 +80,16 @@ describe('GolfRoundScoreUploadCard', () => {
       'download',
       'golf-round-2-scores-template.csv',
     );
-    expect(templateCsv()).toContain('ext-123,Rory McIlroy,70,-2,18,COMPLETED');
+    expect(templateCsv()).toContain('\n,Rory McIlroy,70,-2,18,COMPLETED');
   });
 
-  it('prefills the template with one row per field golfer, leaving the externalId blank when the golfer has none', () => {
-    renderCard([{ externalId: 'ext-9', playerName: 'Jon Rahm' }, { playerName: 'Sponsor Exemption' }]);
+  it('prefills the template with one row per field golfer, keyed by participant id', () => {
+    renderCard([{ participantId: 'p-9', playerName: 'Jon Rahm' }, { participantId: 'p-10', playerName: 'Sponsor Exemption' }]);
 
     const csv = templateCsv();
-    expect(csv).toContain('ext-9,Jon Rahm');
-    expect(csv).toContain('\n,Sponsor Exemption');
-    expect(csv).not.toContain('ext-123');
+    expect(csv).toContain('p-9,Jon Rahm');
+    expect(csv).toContain('p-10,Sponsor Exemption');
+    expect(csv).not.toContain('Rory McIlroy');
   });
 
   it('names preview rows by external id, then participant id, then "Unnamed row", and shows a dash for a missing result', async () => {

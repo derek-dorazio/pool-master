@@ -17,6 +17,7 @@ import type {
   SportLeagueUses,
   SportRepository,
   TierProfileRepository,
+  ParticipantProviderMappingRepository,
 } from '@poolmaster/shared/db';
 import {
   BracketAdvancement,
@@ -31,7 +32,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
-import { matchAmong, participantMatchQuery, resolveParticipantRow, type ParticipantRowResolution } from './participant-row-resolver';
+import { feedIdsOfCandidates, matchAmong, participantMatchQuery, resolveParticipantRow, type ParticipantRowResolution } from './participant-row-resolver';
 
 /** A sport league with its sport and the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
@@ -72,6 +73,8 @@ export interface SportLeagueServiceDeps {
   sportLeagues: SportLeagueRepository;
   sportEvents: SportEventRepository;
   participants: ParticipantRepository;
+  /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
+  mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
   /** Which providers can sync a sport league's events (ADR 0011). */
   providers: SportDataProviderLookup;
   /** The profiles a sport league names one of each (#1844). */
@@ -332,7 +335,8 @@ export class SportLeagueService {
       const query = participantMatchQuery(row);
       return query ? [query] : [];
     });
-    const findCandidates = matchAmong(await this.deps.participants.findMatchingAny(sportLeagueId, queries));
+    const candidates = await this.deps.participants.findMatchingAny(sportLeagueId, queries);
+    const findCandidates = matchAmong(candidates, await feedIdsOfCandidates(rows, candidates, this.deps.mappings));
     return Promise.all(rows.map(async (row) => {
       const { resolution, participant } = await resolveParticipantRow(row, findCandidates);
       return { row, resolution, participantId: participant?.id ?? null, participantName: participant?.name ?? null };

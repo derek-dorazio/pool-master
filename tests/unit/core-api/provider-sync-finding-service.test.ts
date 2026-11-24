@@ -59,7 +59,7 @@ function finding(overrides: Partial<ProviderSyncFinding> = {}): ProviderSyncFind
 function participant(overrides: Partial<Participant> = {}): Participant {
   return {
     id: 'participant-1', createdAt: NOW, updatedAt: NOW, sportLeagueId: LEAGUE.id, ranking: null, name: 'Avery Hart',
-    participantType: ParticipantType.INDIVIDUAL, status: ParticipantStatus.ACTIVE, injuryStatus: { status: 'HEALTHY' }, externalIds: {},
+    participantType: ParticipantType.INDIVIDUAL, status: ParticipantStatus.ACTIVE, injuryStatus: { status: 'HEALTHY' },
     ...overrides,
   };
 }
@@ -98,7 +98,7 @@ function service(overrides: Partial<ProviderSyncFindingServiceDeps> = {}) {
       findById: async (id) => (id === 'participant-1' ? participant() : id === 'elsewhere' ? participant({ id, sportLeagueId: 'league-2', name: 'Kai Moss' }) : null),
       bindProviderMapping: async (participantId, providerId, externalId) => {
         bound.push([participantId, providerId, externalId]);
-        return { id: 'mapping-1', participantId, sportLeagueId: LEAGUE.id, providerId, externalId, confidence: 'MANUAL', createdAt: NOW, updatedAt: NOW } as never;
+        return { id: 'mapping-1', participantId, sportLeagueId: LEAGUE.id, providerId, externalId, createdAt: NOW, updatedAt: NOW } as never;
       },
     },
     now: () => NOW,
@@ -262,13 +262,13 @@ describe('ProviderSyncFindingService.changeStatus', () => {
 });
 
 describe('ProviderSyncFindingService.mapParticipant', () => {
-  it('binds the feed\'s id to the league\'s participant under the Provider\'s source id, and resolves the finding', async () => {
+  it('binds the feed\'s id to the league\'s participant under the finding\'s Provider row, and resolves the finding', async () => {
     const table = inMemoryFindings([finding()]);
     const { findings, bound } = service({ repository: table.repository });
 
     const saved = await findings.mapParticipant('finding-1', { participantId: 'participant-1', userId: 'admin-1' });
 
-    expect(bound).toEqual([['participant-1', providerSourceIdOf(PROVIDER.code), 'golfer-9']]);
+    expect(bound).toEqual([['participant-1', PROVIDER.id, 'golfer-9']]);
     expect(saved).toMatchObject({ status: ProviderSyncFindingStatus.RESOLVED, statusChangedBy: { id: 'admin-1' } });
   });
 

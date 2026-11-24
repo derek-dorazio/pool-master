@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import {
   IngestionService,
@@ -24,7 +25,7 @@ function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns
     sportEvents: fakeSportEventRepo(),
     jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs, currentStart: testCurrentJobStart }),
     sportLeagues: { findEventSynced: () => Promise.resolve([]) },
-    providerSettings: { all: () => [] },
+    providerSettings: { all: () => [], bySourceId: () => undefined },
     webhooks: { isOn: () => false, isSecretSet: () => false },
     jobHistory: { countByScope: () => Promise.resolve([]) },
     ...overrides,
@@ -37,7 +38,7 @@ describe('IngestionService manual sync submission', () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const syncRuns = inMemorySyncRuns();
     const registry = registryWith(fakeSportDataProvider({
-      providerId: 'mock-contest-feed',
+      providerId: 'balldontlie',
       providerName: 'Mock Contest Feed Provider',
       sportsCovered: [Sport.GOLF],
       getEventDetails: jest.fn(),
@@ -45,7 +46,7 @@ describe('IngestionService manual sync submission', () => {
     const scheduler = stubInstance(IngestionScheduler, {
       runEventSync: jest.fn().mockResolvedValue([{
         jobType: 'EVENT_LIVE_SCORES_SYNC',
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         sport: Sport.GOLF,
         eventExternalId: 'golf-open-championship-2026',
         status: 'COMPLETED',
@@ -68,7 +69,7 @@ describe('IngestionService manual sync submission', () => {
 
     const result = await service.syncEventData({
       sport: Sport.GOLF,
-      providerId: 'mock-contest-feed',
+      providerId: 'balldontlie',
       eventId: '  golf-open-championship-2026  ',
       feeds: ['EVENTLIVESCORES', 'EVENTLIVESCORES'],
     }, 'admin-1', 'admin@example.com');
@@ -77,8 +78,8 @@ describe('IngestionService manual sync submission', () => {
     expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
     expect(syncRuns.rows).toEqual([expect.objectContaining({
       sport: Sport.GOLF,
-      providerId: 'mock-contest-feed',
-      eventId: 'golf-open-championship-2026',
+      providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+      providerName: 'BALLDONTLIE',
       status: 'SUBMITTED',
       payload: expect.objectContaining({
         requestedFeeds: ['EVENTLIVESCORES'],
@@ -105,7 +106,7 @@ describe('IngestionService manual sync submission', () => {
     await runner.drain();
     expect(scheduler.runEventSync).toHaveBeenCalledWith({
       sport: Sport.GOLF,
-      providerId: 'mock-contest-feed',
+      providerId: 'balldontlie',
       eventId: 'golf-open-championship-2026',
       feeds: ['EVENTLIVESCORES'],
     });
@@ -114,24 +115,24 @@ describe('IngestionService manual sync submission', () => {
   it('ends a manual sync\'s try when the provider rate limits a feed, and runs the feeds still waiting when the job is queued again, without counting the try', async () => {
     const syncRuns = inMemorySyncRuns();
     const completed = {
-      jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'mock-contest-feed', sport: Sport.GOLF, eventExternalId: 'open-2026',
+      jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: Sport.GOLF, eventExternalId: 'open-2026',
       status: 'COMPLETED', recordsProcessed: 1, errors: 0, errorLog: [], warnings: [], stats: {},
     };
     // Already due again, so the one drain runs the deferred try too.
-    const refusal = new ProviderRateLimitedError('mock-contest-feed', new Date(Date.now() - 1_000), 'its circuit is open');
+    const refusal = new ProviderRateLimitedError('balldontlie', new Date(Date.now() - 1_000), 'its circuit is open');
     const scheduler = stubInstance(IngestionScheduler, {
       runEventSync: jest.fn().mockRejectedValueOnce(refusal).mockResolvedValue([completed]),
     });
     const service = new IngestionService({
       ...ports({ syncRuns }),
-      registry: registryWith(fakeSportDataProvider({ providerId: 'mock-contest-feed', sportsCovered: [Sport.GOLF] })),
+      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie', sportsCovered: [Sport.GOLF] })),
       scheduler,
       logger: fakeLogger(),
       syncOrchestrator: new SyncOrchestrator({ now: () => new Date() }),
     });
     await service.syncEventData({
       sport: Sport.GOLF,
-      providerId: 'mock-contest-feed',
+      providerId: 'balldontlie',
       eventId: 'open-2026',
       feeds: ['EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
     }, 'admin-1', 'admin@example.com');
@@ -154,7 +155,7 @@ describe('IngestionService manual sync submission', () => {
   describe('pool-master-cgb: manual sync-trigger syncScope guard', () => {
     function buildManualSyncService(findByProviderRef: jest.Mock) {
       const registry = registryWith(fakeSportDataProvider({
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         providerName: 'Mock Contest Feed Provider',
         sportsCovered: [Sport.GOLF],
       }));
@@ -174,7 +175,7 @@ describe('IngestionService manual sync submission', () => {
 
       await expect(
         service.syncEventData(
-          { sport: Sport.GOLF, providerId: 'mock-contest-feed', eventId: 'manual-event-1', feeds: ['EVENTLIVESCORES'] },
+          { sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'manual-event-1', feeds: ['EVENTLIVESCORES'] },
           'admin-1',
           'admin@example.com',
         ),
@@ -191,7 +192,7 @@ describe('IngestionService manual sync submission', () => {
       );
       await expect(
         service.syncEventData(
-          { sport: Sport.GOLF, providerId: 'mock-contest-feed', eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
+          { sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
           'admin-1',
           'admin@example.com',
         ),
@@ -203,7 +204,7 @@ describe('IngestionService manual sync submission', () => {
 
       await expect(
         service.syncEventData(
-          { sport: Sport.GOLF, providerId: 'mock-contest-feed', eventId: 'not-yet-persisted', feeds: ['EVENTPARTICIPANTS'] },
+          { sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'not-yet-persisted', feeds: ['EVENTPARTICIPANTS'] },
           'admin-1',
           'admin@example.com',
         ),

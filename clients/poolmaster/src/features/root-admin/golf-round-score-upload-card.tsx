@@ -62,7 +62,7 @@ export function GolfRoundScoreUploadCard({
 }: {
   eventId: string;
   round: number;
-  fieldPlayers: Array<{ externalId?: string; playerName: string }>;
+  fieldPlayers: Array<{ participantId: string; playerName: string }>;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-scores-page',
@@ -109,14 +109,14 @@ export function GolfRoundScoreUploadCard({
     },
   });
 
-  // Prefill the template with one row per field golfer (externalId and playerName
+  // Prefill the template with one row per field golfer (participantId and playerName
   // populated, score cells blank) so the admin only fills in numbers (plans/124
-  // §6.3). #236: the field row embeds the participant, so its externalId is known.
+  // §6.3). #236: the field row embeds the participant; its id is the exact match (#2040).
   const templateRows =
     fieldPlayers.length > 0
-      ? fieldPlayers.map((golfer) => [golfer.externalId ?? '', golfer.playerName, '', '', '', ''])
+      ? fieldPlayers.map((golfer) => [golfer.participantId, golfer.playerName, '', '', '', ''])
       : undefined;
-  const templateSampleRow = ['ext-123', 'Rory McIlroy', 70, -2, 18, 'COMPLETED'];
+  const templateSampleRow = ['', 'Rory McIlroy', 70, -2, 18, 'COMPLETED'];
 
   return (
     <SectionCard headingLevel={3} padded title="Bulk load">

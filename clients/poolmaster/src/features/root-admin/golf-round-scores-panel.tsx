@@ -64,7 +64,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
 
   const fieldPlayers = useMemo(
     () => (fieldQuery.data ?? []).map((entry) => ({
-        externalId: entry.participant.externalId,
+        participantId: entry.participant.id,
         playerName: entry.participant.name,
       })),
     [fieldQuery.data],

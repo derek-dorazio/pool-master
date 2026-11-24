@@ -10,6 +10,7 @@ import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import type { ProviderSyncRun } from '@poolmaster/shared/domain';
 import { mockFn } from './mock-fn';
 import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs } from './in-memory-background-jobs';
+import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 
 export type InMemorySyncRuns = jest.Mocked<ProviderSyncRunRepository> & {
   /** Every run, in the order written. */
@@ -20,9 +21,13 @@ export type InMemorySyncRuns = jest.Mocked<ProviderSyncRunRepository> & {
 
 export function inMemorySyncRuns(jobs: InMemoryBackgroundJobs = inMemoryBackgroundJobs()): InMemorySyncRuns {
   const rows: ProviderSyncRun[] = [];
-  const toRun = (input: Parameters<ProviderSyncRunRepository['create']>[0]): ProviderSyncRun => ({
+  // A run is keyed to its Provider row by code (#2040); with no event table its eventId stays null.
+  const toRun = ({ providerCode, ...input }: Parameters<ProviderSyncRunRepository['create']>[0]): ProviderSyncRun => ({
     id: randomUUID(),
     ...input,
+    providerId: TEST_PROVIDER_ROWS[providerCode].id,
+    providerName: TEST_PROVIDER_ROWS[providerCode].name,
+    eventId: null,
     createdAt: input.createdAt ?? new Date(),
   });
   return {

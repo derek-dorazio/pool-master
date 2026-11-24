@@ -212,6 +212,14 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     expect(store.valuationRows).toEqual([]);
   });
 
+  it('skips a field with no odds, seeds or ranks, making no tiers or prices, since a name orders nothing', async () => {
+    const { store, event, valuation } = await setup({ fieldSize: 0 });
+    for (const id of ['p-01', 'p-02']) store.addToField(event.id, id);
+
+    expect(await valuation.afterFieldLoad(SYNCED)).toEqual({ outcome: 'SKIPPED', reason: 'NO_ORDER' });
+    expect(store.valuationRows).toEqual([]);
+  });
+
   it('prices but does not tier an event that has no tiers', async () => {
     const { valuation } = await setup({ tierCount: 0 });
 
@@ -243,11 +251,18 @@ describe('fieldValuationReport — what the field sync run shows', () => {
 
   it.each([
     [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'UNCHANGED' as const, basis: 'SEED' as const, tierCount: 4 }, prices: { result: 'KEPT_AS_EDITED' as const, unpriced: 0 } }, { tiersUnchanged: 4, pricesKeptAsEdited: 1 }],
-    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'KEPT_AS_EDITED' as const, untiered: 0 }, prices: { result: 'UNCHANGED' as const, basis: 'NAME' as const, pricedCount: 9, profileName: 'Small' } }, { tiersKeptAsEdited: 1, pricesUnchanged: 9 }],
+    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'KEPT_AS_EDITED' as const, untiered: 0 }, prices: { result: 'UNCHANGED' as const, basis: 'RANKING' as const, pricedCount: 9, profileName: 'Small' } }, { tiersKeptAsEdited: 1, pricesUnchanged: 9 }],
     [{ outcome: 'SKIPPED' as const, reason: 'LOCKED' as const }, { tiersAndPricesLocked: 1 }],
     [{ outcome: 'SKIPPED' as const, reason: 'NO_EVENT' as const }, {}],
   ])('counts outcome %j in the run\'s stats as %j, with no warning', (outcome, stats) => {
     expect(fieldValuationReport(outcome)).toEqual({ stats, warnings: [] });
+  });
+
+  it('reports a field with no order as a warning that no tiers or prices were made', () => {
+    expect(fieldValuationReport({ outcome: 'SKIPPED', reason: 'NO_ORDER' })).toEqual({
+      stats: {},
+      warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: no participant has odds, a seed or a rank to put it in order.' }],
+    });
   });
 
   it('reports an event with no tiers and a failure as warnings on the run', () => {

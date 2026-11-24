@@ -8,7 +8,7 @@
  */
 
 import type { BackgroundJobRepository } from '@poolmaster/shared/db';
-import type { BackgroundJob, BackgroundJobRequest, BackgroundJobType, JobStart } from '@poolmaster/shared/domain';
+import type { BackgroundJob, BackgroundJobRequest, BackgroundJobType, JobStart, ProviderCode } from '@poolmaster/shared/domain';
 import { BACKGROUND_JOB_PAYLOADS, BACKGROUND_JOB_SCOPES, type BackgroundJobPayload } from './background-job-payloads';
 
 /**
@@ -37,6 +37,11 @@ export interface BackgroundJobOptions {
   /** One job waiting for its first try per subject: a key such a job holds queues nothing. */
   dedupeKey?: string;
   /**
+   * The provider a sync job reads, by its Provider code (#2040), where its payload does not name
+   * one (`BACKGROUND_JOB_SCOPES`). The queue keys the job to that Provider row.
+   */
+  providerCode?: ProviderCode;
+  /**
    * What started it (#1861). Omitted, it is what the entry point in progress says: the queue's
    * `currentStart`, which in the app reads the request, sweep or job's handler under way
    * (`currentJobStart`) and throws when there is none.
@@ -58,6 +63,11 @@ export class BackgroundJobQueue {
     jobs: Pick<BackgroundJobRepository, 'enqueue' | 'enqueueAll' | 'enqueueReturning'>;
     /** What started the work in progress, for a job queued without its own `start` (#1861). */
     currentStart: () => JobStart;
+    /**
+     * The Provider row of a code (#2040), read from the provider settings the task holds, so a sync
+     * job is keyed to its Provider without a read; omitted, no job names a Provider.
+     */
+    providerIdOf?: (code: ProviderCode) => string | undefined;
   }) {}
 
   /**
@@ -78,13 +88,16 @@ export class BackgroundJobQueue {
     if (!parsed.success) throw new InvalidBackgroundJobPayloadError(type, parsed.error.message);
     // The registries are exhaustive over the type, so the scope for `type` reads this payload.
     const scopeOf = BACKGROUND_JOB_SCOPES[type] as (payload: unknown) => ReturnType<(typeof BACKGROUND_JOB_SCOPES)[T]>;
+    const { providerCode = options.providerCode, ...scope } = scopeOf(parsed.data);
+    const providerId = providerCode === undefined ? undefined : this.options.providerIdOf?.(providerCode);
     return {
       type,
       payload: parsed.data,
       runAt: options.runAt,
       dedupeKey: options.dedupeKey,
       start: options.start ?? this.options.currentStart(),
-      ...scopeOf(parsed.data),
+      ...scope,
+      ...(providerId !== undefined && { providerId }),
     };
   }
 

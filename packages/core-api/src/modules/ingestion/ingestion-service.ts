@@ -147,7 +147,7 @@ export interface IngestionServiceDependencies {
   /** The synced sport leagues, counted per provider on the provider list. */
   sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   /** The Provider rows (#1997). */
-  providerSettings: Pick<ProviderSettingsStore, 'all'>;
+  providerSettings: Pick<ProviderSettingsStore, 'all' | 'bySourceId'>;
   /** Whether each provider's webhooks are on, and its secret set. */
   webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   /** Background jobs that hit a provider's rate limit, counted per provider on the provider list. */
@@ -166,7 +166,7 @@ export class IngestionService {
   private readonly sportEvents: SportEventRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
   private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
-  private readonly providerSettings: Pick<ProviderSettingsStore, 'all'>;
+  private readonly providerSettings: Pick<ProviderSettingsStore, 'all' | 'bySourceId'>;
   private readonly webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   private readonly now: () => Date;

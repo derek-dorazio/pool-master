@@ -134,7 +134,7 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
       const detail = await harness.adapter.getEventDetails('ncaaw-2025-tournament');
 
       expect(detail).toMatchObject({ externalId: 'ncaaw-2025-tournament', name: 'NCAA Women\'s Tournament', participantCount: 5, rounds: 6, metadata: { tour: 'NCAAW', season: 2025 } });
-      expect(detail?.participants.map((team) => team.externalId)).toEqual(['ncaaw-team-41', 'ncaaw-team-2636', 'ncaaw-team-150', 'ncaaw-team-2655', 'ncaaw-team-2579']);
+      expect(detail?.participants.map((team) => team.externalId)).toEqual(['41', '2636', '150', '2655', '2579']);
       expect(requestLine(harness.api)).toEqual(['/ncaaw/v1/bracket?season=2025&per_page=100']);
     });
 
@@ -177,11 +177,11 @@ describe('BalldontlieAdapter (NCAA basketball tournaments)', () => {
     const teams = await harness.adapter.getParticipants(Sport.BASKETBALL);
 
     expect(teams.map((team) => [team.externalId, team.name])).toEqual([
-      ['ncaab-team-150', 'Duke Blue Devils'],
-      ['ncaab-team-57', 'Florida Gators'],
-      ['ncaab-team-2561', 'Siena Saints'],
-      ['ncaaw-team-41', 'UConn Huskies'],
-      ['ncaaw-team-150', 'Duke Blue Devils'],
+      ['150', 'Duke Blue Devils'],
+      ['57', 'Florida Gators'],
+      ['2561', 'Siena Saints'],
+      ['41', 'UConn Huskies'],
+      ['150', 'Duke Blue Devils'],
     ]);
     expect(teams.map((team) => team.metadata.tour)).toEqual(['NCAAM', 'NCAAM', 'NCAAM', 'NCAAW', 'NCAAW']);
     expect([...requestLine(harness.api)].sort()).toEqual(['/ncaab/v1/teams?', '/ncaaw/v1/teams?']);

@@ -132,7 +132,7 @@ export async function syncFindingsModule(fastify: FastifyInstance, opts: SyncFin
     schema: {
       tags: ['Ingestion'],
       summary: 'Map an unmapped participant finding to a participant',
-      description: 'An OPEN UNMAPPED_PARTICIPANT finding\'s fix (#1999): maps the feed\'s participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. '
+      description: 'An OPEN UNMAPPED_PARTICIPANT finding\'s fix (#1999): maps the feed\'s participant id (providerValue) from its Provider to a participant of its sport league, as bindParticipantProviderMapping does, and resolves the finding. '
         + '404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league.' + RATE_LIMITED,
       operationId: 'mapProviderSyncFindingParticipant',
       params: FINDING_PARAMS,

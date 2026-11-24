@@ -18,7 +18,16 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(input: ProviderSyncRunCreate): Promise<ProviderSyncRun> {
-    return toProviderSyncRun(await this.prisma.providerSyncRun.create({ data: toCreateData(input) }));
+    // One write: the Provider row and the event are reached by their keys.
+    const { providerCode, sportEventId, ...data } = toCreateData(input);
+    return toProviderSyncRun(await this.prisma.providerSyncRun.create({
+      data: {
+        ...data,
+        provider: { connect: { code: providerCode } },
+        ...(sportEventId !== null && { sportEvent: { connect: { id: sportEventId } } }),
+      },
+      include: RUN_RELATIONS,
+    }));
   }
 
   async createWithJob(
@@ -26,9 +35,19 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
     job: (runs: ProviderSyncRun[]) => BackgroundJobRequest,
   ): Promise<ProviderSyncRun[]> {
     // Ids chosen here, so the runs come back in the order given.
-    const data = inputs.map((input) => ({ id: randomUUID(), ...toCreateData(input) }));
+    const inputsWithIds = inputs.map((input) => ({ id: randomUUID(), ...toCreateData(input) }));
     return this.prisma.$transaction(async (tx) => {
-      const rows = await tx.providerSyncRun.createManyAndReturn({ data, omit: { detailsJson: true } });
+      // Each run is keyed to its Provider row (#2040), read once by code.
+      const providerIds = new Map((await tx.provider.findMany({
+        where: { code: { in: [...new Set(inputsWithIds.map((input) => input.providerCode))] } },
+        select: { id: true, code: true },
+      })).map((provider) => [provider.code, provider.id]));
+      const data = inputsWithIds.map(({ providerCode, ...input }) => {
+        const providerId = providerIds.get(providerCode);
+        if (providerId === undefined) throw new Error(`Provider ${providerCode} has no Provider row`);
+        return { ...input, providerId };
+      });
+      const rows = await tx.providerSyncRun.createManyAndReturn({ data, omit: { detailsJson: true }, include: RUN_RELATIONS });
       const byId = new Map(rows.map((row) => [row.id, row]));
       const runs = data.map(({ id }) => {
         const row = byId.get(id);
@@ -45,6 +64,7 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
     const rows = await this.prisma.providerSyncRun.findMany({
       where: { id: { in: [...ids] } },
       omit: { detailsJson: true },
+      include: RUN_RELATIONS,
     });
     return rows.map(toProviderSyncRun);
   }
@@ -54,6 +74,7 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
     const rows = await this.prisma.providerSyncRun.findMany({
       where: { backgroundJobId: { in: [...backgroundJobIds] } },
       omit: { detailsJson: true },
+      include: RUN_RELATIONS,
       orderBy: { createdAt: 'asc' },
     });
     return rows.map(toProviderSyncRun);
@@ -83,13 +104,14 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
         createdAt: { gte: filters.createdFrom, lte: filters.createdTo },
       },
       omit: { detailsJson: true },
+      include: RUN_RELATIONS,
       orderBy: { createdAt: 'desc' },
     });
     return rows.map(toProviderSyncRun);
   }
 
   async findById(id: string): Promise<ProviderSyncRunWithDetails | null> {
-    const row = await this.prisma.providerSyncRun.findUnique({ where: { id } });
+    const row = await this.prisma.providerSyncRun.findUnique({ where: { id }, include: RUN_RELATIONS });
     if (!row) return null;
     return {
       ...toProviderSyncRun(row),
@@ -125,12 +147,24 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
   }
 }
 
-function toProviderSyncRun(row: Omit<ProviderSyncRunRow, 'detailsJson'>): ProviderSyncRun {
+/** What a run reads with its row (#2040): its Provider's name, and its event's id at the provider. */
+const RUN_RELATIONS = {
+  provider: { select: { name: true } },
+  sportEvent: { select: { externalId: true } },
+} as const;
+
+type RunRow = Omit<ProviderSyncRunRow, 'detailsJson'> & {
+  provider: { name: string };
+  sportEvent: { externalId: string } | null;
+};
+
+function toProviderSyncRun(row: RunRow): ProviderSyncRun {
   return {
     id: row.id,
     providerId: row.providerId,
+    providerName: row.provider.name,
     sport: row.sport,
-    eventId: row.eventId,
+    eventId: row.sportEvent?.externalId ?? null,
     kind: row.kind,
     trigger: row.trigger,
     sportLeagueId: row.sportLeagueId,
@@ -153,9 +187,8 @@ function toPayload(payload: Prisma.JsonValue): Record<string, unknown> {
 
 function toCreateData(input: ProviderSyncRunCreate) {
   return {
-    providerId: input.providerId,
+    providerCode: input.providerCode,
     sport: input.sport,
-    eventId: input.eventId,
     kind: input.kind,
     trigger: input.trigger,
     sportLeagueId: input.sportLeagueId,

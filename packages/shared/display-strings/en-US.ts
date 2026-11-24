@@ -61,11 +61,6 @@ export const enUS = {
       STABLE: 'Stable',
       FALLING: 'Falling',
     },
-    MappingConfidence: {
-      EXACT: 'Exact',
-      HIGH: 'High',
-      MANUAL: 'Manual',
-    },
     PoolType: {
       EVENT_FIELD: 'Event field',
       CUSTOM: 'Custom',
@@ -372,7 +367,6 @@ export const enUS = {
       AUTO_ODDS: 'Auto odds',
       AUTO_SEED: 'Auto seed',
       AUTO_RANKING: 'Auto ranking',
-      AUTO_NAME: 'Auto name',
       MANUAL: 'Manual',
     },
     GolfCategoryKey: {
@@ -895,6 +889,7 @@ export const enUS = {
     EVENT_YEAR_HAS_NO_EVENTS: 'This league has no events in that year.',
     EVENT_YEAR_NOT_EMPTY: 'This league already has events in that year.',
     EXTERNAL_EVENT_ALREADY_LINKED: 'Another event is already linked to that provider event.',
+    FIELD_HAS_NO_ORDER: 'No one in the field has odds, a seed or a rank, so it cannot be put in tiers or priced.',
     FST_ERR_VALIDATION: 'The request is not valid. Check the details and try again.',
     INTERNAL_ERROR: 'Something went wrong. Please try again.',
     INVALID_CREDENTIALS: 'Invalid username, email, or password.',

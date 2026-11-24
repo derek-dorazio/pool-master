@@ -85,7 +85,7 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
 
     expect(teams.length).toBeGreaterThan(0);
-    expect(teams.every((team) => team.externalId.startsWith('nfl-team-'))).toBe(true);
+    expect(teams.every((team) => team.metadata.tour !== 'CFP')).toBe(true);
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'balldontlie.league.unavailable', league: 'CFP', read: 'participants', refused: true, status: 401 }),
       expect.any(String),

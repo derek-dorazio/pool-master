@@ -1,6 +1,7 @@
 import { expectDefined } from '../../support/expect-defined';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { expect } from '@jest/globals';
+import { providerCodeOfSourceId } from '../../../packages/shared/domain/providers';
 import {
   DEFAULT_SYNC_RUN_WINDOW_HOURS,
   IngestionService,
@@ -12,7 +13,7 @@ import { memoizedRead, ReadMemoKey, runWithReadMemo } from '../../../packages/co
 import type { PrismaClient } from '@prisma/client';
 import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { ProviderSyncRunRepository } from '../../../packages/shared/db';
-import { Sport, SportEventSyncScope, type SportEvent } from '../../../packages/shared/domain';
+import { ProviderCode, Sport, SportEventSyncScope, type ProviderSettings, type SportEvent } from '../../../packages/shared/domain';
 import { fakeSportEventRepo } from '../../support/repo-fakes';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { fakeLogger } from '../../support/fake-logger';
@@ -23,8 +24,16 @@ import { stubInstance } from '../../support/stub-instance';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 
-// The root-admin reads over ingestion (provider list, sync-run history, unmapped competitors)
+// The root-admin reads over ingestion (provider list, sync-run history)
 // and the manual sync submission's refusals and its background worker.
+
+/** The provider settings store over these Provider rows: each adapter finds its row by its source id. */
+function settingsOf(...rows: ProviderSettings[]): IngestionServiceDependencies['providerSettings'] {
+  return {
+    all: () => rows,
+    bySourceId: (sourceId) => rows.find((row) => row.code === providerCodeOfSourceId(sourceId)),
+  };
+}
 
 function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): InMemorySyncRuns {
   return Object.assign(inMemorySyncRuns(), overrides);
@@ -42,7 +51,7 @@ function service(
   const ingestion = new IngestionService({
     sportEvents: fakeSportEventRepo(),
     sportLeagues: { findEventSynced: () => Promise.resolve([]) },
-    providerSettings: { all: () => [] },
+    providerSettings: { all: () => [], bySourceId: () => undefined },
     webhooks: { isOn: () => false, isSecretSet: () => false },
     jobHistory: { countByScope: () => Promise.resolve([]) },
     logger: fakeLogger(),
@@ -135,7 +144,7 @@ describe('IngestionService.listProviders', () => {
     const providers = await service({
       registry,
       sportLeagues: { findEventSynced },
-      providerSettings: { all: () => [balldontlieTestProvider({ requestsPerMinute: 600 })] },
+      providerSettings: settingsOf(balldontlieTestProvider({ requestsPerMinute: 600 })),
       webhooks: { isOn: () => true, isSecretSet: () => true },
     }).listProviders();
 
@@ -149,7 +158,7 @@ describe('IngestionService.listProviders', () => {
   it('lists a provider that has a row but is not running here, as when its key is not set, with no status and its row\'s settings', async () => {
     const [summary] = await service({
       registry: registryWith(null),
-      providerSettings: { all: () => [balldontlieTestProvider({ requestsPerMinute: 5 })] },
+      providerSettings: settingsOf(balldontlieTestProvider({ requestsPerMinute: 5 })),
       webhooks: { isOn: () => false, isSecretSet: () => false },
     }).listProviders();
 
@@ -163,7 +172,7 @@ describe('IngestionService.listProviders', () => {
     const isOn = jest.fn().mockReturnValue(false);
     const [summary] = await service({
       registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' })),
-      providerSettings: { all: () => [balldontlieTestProvider({ webhooksEnabled: true })] },
+      providerSettings: settingsOf(balldontlieTestProvider({ webhooksEnabled: true })),
       webhooks: { isOn, isSecretSet: () => false },
     }).listProviders();
 
@@ -311,7 +320,7 @@ describe('IngestionService manual sync job (#1441)', () => {
   }
 
   const COMPLETED_JOB: IngestionJobRecord = {
-    jobType: 'EVENT_LIVE_SCORES_SYNC', providerId: 'mock-provider', sport: Sport.GOLF, eventExternalId: 'evt-1',
+    jobType: 'EVENT_LIVE_SCORES_SYNC', providerId: 'balldontlie', sport: Sport.GOLF, eventExternalId: 'evt-1',
     status: 'COMPLETED', recordsProcessed: 0, errors: 0, errorLog: [], warnings: [],
   };
 
@@ -320,10 +329,10 @@ describe('IngestionService manual sync job (#1441)', () => {
     const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
     const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
-    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs, sportEvents });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs, sportEvents });
 
     const submitted = await ingestion.syncEventData({
-      sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
+      sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
     }, 'admin', 'a@x.test');
 
     expect(runEventSync).not.toHaveBeenCalled();
@@ -331,7 +340,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     expect(runs.create).not.toHaveBeenCalled();
     expect(runs.jobs.rows).toEqual([expect.objectContaining({
       type: 'MANUAL_EVENT_SYNC',
-      payload: { syncRunIds: submitted.syncRuns.map((run) => run.id), sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1', sportEventId: 'event-1' },
+      payload: { syncRunIds: submitted.syncRuns.map((run) => run.id), sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', sportEventId: 'event-1' },
       sportEventId: 'event-1',
     })]);
     expect(submitted.syncRuns.map((run) => [run.kind, run.trigger, run.sportEventId])).toEqual([['FIELD', 'ADMIN', 'event-1'], ['SCORES', 'ADMIN', 'event-1']]);
@@ -349,12 +358,12 @@ describe('IngestionService manual sync job (#1441)', () => {
       .mockRejectedValueOnce(new Error('field feed exploded'))
       .mockResolvedValueOnce([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
-    const provider: SportDataProvider = fakeSportDataProvider();
+    const provider: SportDataProvider = fakeSportDataProvider({ providerId: 'balldontlie' });
     const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
     const ingestion = service({ registry: registryWith(provider), scheduler, syncRuns: runs, sportEvents });
 
     const submitted = await ingestion.syncEventData({
-      sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
+      sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
     }, 'admin', 'a@x.test');
     await ingestion.jobsDone();
 
@@ -371,19 +380,19 @@ describe('IngestionService manual sync job (#1441)', () => {
     const runs = syncRuns();
     const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
-    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const waiting = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
     });
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'IN_PROGRESS',
+      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
 
-    await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' }, { attempt: 2, jobId: 'job-1' });
+    await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' }, { attempt: 2, jobId: 'job-1' });
 
     expect(runEventSync).toHaveBeenCalledTimes(1);
     expect(runEventSync).toHaveBeenCalledWith(expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
@@ -399,24 +408,24 @@ describe('IngestionService manual sync job (#1441)', () => {
     const runs = syncRuns();
     const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
-    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'IN_PROGRESS',
+      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
 
-    await ingestion.runManualEventSync({ syncRunIds: [started.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' }, { attempt: 1, jobId: 'job-1' });
+    await ingestion.runManualEventSync({ syncRunIds: [started.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' }, { attempt: 1, jobId: 'job-1' });
 
     expect(runEventSync).not.toHaveBeenCalled();
     expect(runs.rows.find((run) => run.id === started.id)?.status).toBe('IN_PROGRESS');
   });
 
   it('fails the job when no scheduler is wired on the task that runs it, so the runner retries it', async () => {
-    const ingestion = service({ registry: registryWith(fakeSportDataProvider()) });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })) });
 
     await expect(ingestion.runManualEventSync({
-      syncRunIds: ['00000000-0000-4000-8000-000000000001'], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1',
+      syncRunIds: ['00000000-0000-4000-8000-000000000001'], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1',
     }, { attempt: 1, jobId: 'job-1' })).rejects.toThrow('Ingestion scheduler is required for manual event sync');
   });
 
@@ -435,18 +444,18 @@ describe('IngestionService manual sync job (#1441)', () => {
       .mockRejectedValueOnce(new Error('provider timed out'))
       .mockResolvedValue([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
-    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, syncRuns: runs });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const failing = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
     });
     const healthy = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerId: 'mock-provider', sport: Sport.GOLF, eventId: 'evt-1', status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
-    const payload = { syncRunIds: [failing.id, healthy.id], sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1' };
+    const payload = { syncRunIds: [failing.id, healthy.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' };
 
     await expect(ingestion.runManualEventSync(payload, { attempt: 1, jobId: 'job-1' })).rejects.toThrow(`without a recorded outcome: ${failing.id}`);
     expect(runs.rows.find((run) => run.id === failing.id)?.status).toBe('IN_PROGRESS');
@@ -469,11 +478,11 @@ describe('IngestionService manual sync job (#1441)', () => {
     });
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
     const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
-    const ingestion = service({ registry: registryWith(fakeSportDataProvider()), scheduler, sportEvents });
+    const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, sportEvents });
 
     await runWithReadMemo(async () => {
       await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
-      await ingestion.syncEventData({ sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTLIVESCORES'] }, 'admin', 'a@x.test');
+      await ingestion.syncEventData({ sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', feeds: ['EVENTLIVESCORES'] }, 'admin', 'a@x.test');
     });
     await ingestion.jobsDone();
 

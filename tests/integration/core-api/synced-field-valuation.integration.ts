@@ -27,9 +27,14 @@ function valuationService() {
   });
 }
 
-/** A golf event of `golfers` golfers with no odds, seeds or ranks, on two empty tiers. */
-async function syncedEvent(golfers: number, status: SportEventStatus = SportEventStatus.DRAFT) {
+/** A golf event of `golfers` golfers on two empty tiers, each with the feed's odds unless `withOdds` is false. */
+async function syncedEvent(golfers: number, status: SportEventStatus = SportEventStatus.DRAFT, withOdds = true) {
   const { event, field } = await seedEventWithField(golfers, { status });
+  if (withOdds) {
+    for (const [index, row] of field.entries()) {
+      await getPrisma().sportEventParticipant.update({ where: { id: row.id }, data: { oddsToWin: 5 + index } });
+    }
+  }
   await getPrisma().sportEventTier.createMany({
     data: [1, 2].map((tierNumber) => ({ sportEventId: event.id, tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber })),
   });
@@ -41,18 +46,18 @@ function valuationsOf(sportEventId: string) {
 }
 
 describe('Synced field valuation (#1822)', () => {
-  it('tiers and prices a synced draft field by name and stores the default pricing profile on the event', async () => {
+  it('tiers and prices a synced draft field by its odds and stores the default pricing profile on the event', async () => {
     const { event, ref } = await syncedEvent(4);
     const service = valuationService();
 
     expect(await service.afterFieldLoad(ref)).toMatchObject({
       outcome: 'VALUED',
-      tiers: { result: 'MADE', basis: 'NAME', tierCount: 2 },
-      prices: { result: 'MADE', basis: 'NAME', pricedCount: 4, profileName: 'Standard' },
+      tiers: { result: 'MADE', basis: 'ODDS', tierCount: 2 },
+      prices: { result: 'MADE', basis: 'ODDS', pricedCount: 4, profileName: 'Standard' },
     });
     const made = await valuationsOf(event.id);
     expect(made).toHaveLength(4);
-    expect(made.every((row) => row.sportEventTierId !== null && row.tierAssignedSource === 'AUTO_NAME' && row.priceAssignedSource === 'AUTO_NAME')).toBe(true);
+    expect(made.every((row) => row.sportEventTierId !== null && row.tierAssignedSource === 'AUTO_ODDS' && row.priceAssignedSource === 'AUTO_ODDS')).toBe(true);
     expect((await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } })).pricingConfig).toMatchObject({ profileName: 'Standard', salaryCap: 50_000 });
   });
 
@@ -68,6 +73,13 @@ describe('Synced field valuation (#1822)', () => {
 
     await getPrisma().sportEventParticipantValuation.update({ where: { id: expectDefined(made[0]).id }, data: { tierAssignedSource: 'MANUAL' } });
     expect(await service.afterFieldLoad(ref)).toMatchObject({ tiers: { result: 'KEPT_AS_EDITED' }, prices: { result: 'UNCHANGED' } });
+  });
+
+  it('writes no tier or price on a field with no odds, seeds or ranks, since a name orders nothing', async () => {
+    const { event, ref } = await syncedEvent(4, SportEventStatus.DRAFT, false);
+
+    expect(await valuationService().afterFieldLoad(ref)).toEqual({ outcome: 'SKIPPED', reason: 'NO_ORDER' });
+    expect(await valuationsOf(event.id)).toEqual([]);
   });
 
   it('writes no tier or price on a released event', async () => {

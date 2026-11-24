@@ -70,7 +70,7 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   });
   const [home, away] = await Promise.all(['Home', 'Away'].map(async (side) => {
     const participant = await prisma.participant.create({
-      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Squares ${side} ${suffix}`, participantType: ParticipantType.TEAM, externalIds: {} },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Squares ${side} ${suffix}`, participantType: ParticipantType.TEAM  },
     });
     return prisma.sportEventParticipant.create({ data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true } });
   }));

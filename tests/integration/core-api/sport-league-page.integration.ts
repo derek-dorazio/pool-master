@@ -4,6 +4,7 @@
  * issues and last sync, and its participants with their feed id and when a sync last saw them.
  * No mocks.
  */
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import {
@@ -74,7 +75,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
     const tour = await sportLeague('Page Tour', { synced: true });
     const other = await sportLeague('Page Other Tour', { synced: true });
     const run = (sportLeagueId: string, kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date) => ({
-      kind, trigger: 'SCHEDULE' as const, providerId: 'balldontlie', sport: Sport.GOLF, sportLeagueId, status, createdAt,
+      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId, status, createdAt,
       payloadJson: { stats: { writeCreated: 2, writeUpdated: 3 } },
     });
     await getPrisma().providerSyncRun.createMany({
@@ -116,7 +117,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
     await getPrisma().sportEventParticipant.create({ data: { sportEventId: released.id, participantId: golfer.id } });
     const synced = fromNow(-2 * HOUR_MS);
     await getPrisma().providerSyncRun.create({
-      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: 'balldontlie', sport: Sport.GOLF, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced, payloadJson: {} },
+      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced, payloadJson: {} },
     });
 
     const response = await get(`/api/v1/sport-leagues/${tour.id}/events/overview`);
@@ -169,7 +170,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/participants/overview', () =
     const fed = await prisma.participant.create({ data: { sportLeagueId: tour.id, name: 'Alpha Golfer', participantType: 'INDIVIDUAL', ranking: 1 } });
     const typed = await prisma.participant.create({ data: { sportLeagueId: tour.id, name: 'Beta Golfer', participantType: 'INDIVIDUAL' } });
     const seenAt = fromNow(-HOUR_MS);
-    await prisma.participantProviderMapping.create({ data: { participantId: fed.id, sportLeagueId: tour.id, providerId: 'balldontlie', externalId: 'bdl-7', lastSeenAt: seenAt } });
+    await prisma.participantProviderMapping.create({ data: { participantId: fed.id, sportLeagueId: tour.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'bdl-7', lastSeenAt: seenAt } });
 
     const response = await get(`/api/v1/sport-leagues/${tour.id}/participants/overview`);
 

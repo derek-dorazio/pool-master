@@ -17,7 +17,7 @@ export type RaceResultPreviewRow = RaceResultPreviewResponse['rows'][number];
 export type RaceResultValues = NonNullable<RaceResultPreviewRow['before']>;
 
 export const RACE_RESULT_UPLOAD_HEADERS = [
-  'externalId',
+  'participantId',
   'playerName',
   'finishPosition',
   'resultStatus',
@@ -116,7 +116,7 @@ export function parseRaceResultUpload(text: string, format: BulkUploadFormat): R
  */
 export function raceResultTemplateRows(field: readonly SportEventParticipantDto[]): string[][] {
   return field.map((entry) => [
-    entry.participant.externalId ?? '',
+    entry.participant.id,
     entry.participant.name,
     '',
     '',

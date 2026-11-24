@@ -15,7 +15,6 @@ import type { DateRange, ProviderBracketMatch, ProviderParticipant, SportEvent, 
 import {
   BracketShapeKind,
   playoffsScopeId,
-  playoffsTeamExternalId,
   toPlayoffsEvent,
   toPlayoffsEvents,
   toPlayoffsFieldParticipants,
@@ -26,6 +25,7 @@ import {
   type PlayoffTeam,
 } from './series-playoffs';
 import { hasWholeFirstRound, toPlayoffsBracket, toPlayoffSeriesGames, type PlayoffSeedRanks } from './series-playoff-bracket';
+import { participantFeedId } from './participant-feed-id';
 
 /** A league's own reads, normalized. */
 export interface PlayoffsSource {
@@ -104,14 +104,14 @@ export class PlayoffsReader {
     }
     const named = new Set(bracket?.flatMap((match) => [match.homeTeamExternalId, match.awayTeamExternalId]));
     const inField = new Set(participants.map((participant) => participant.externalId));
-    const byes = teams.filter((team) => named.has(playoffsTeamExternalId(league, team.id)) && !inField.has(playoffsTeamExternalId(league, team.id)));
+    const byes = teams.filter((team) => named.has(participantFeedId(team.id)) && !inField.has(participantFeedId(team.id)));
     const field = [...participants, ...byes.map((team) => toPlayoffsTeamParticipant(league, team))];
     return {
       ...event,
       participants: field,
       participantCount: field.length,
       rounds: league.rounds.length,
-      games: toPlayoffSeriesGames(league, games, bracket),
+      games: toPlayoffSeriesGames(games, bracket),
       ...(bracket !== null && { bracket }),
     };
   }
@@ -143,7 +143,7 @@ export class PlayoffsReader {
   /** Every game of a season's postseason, with its teams, state and score. */
   async liveScores(season: number): Promise<LiveScoreResult> {
     const games = await this.postseasonGames(season);
-    return { category: 'GAME', externalEventId: playoffsScopeId(this.source.league, season), games: toPlayoffsGameScoreUpdates(this.source.league, games) };
+    return { category: 'GAME', externalEventId: playoffsScopeId(this.source.league, season), games: toPlayoffsGameScoreUpdates(games) };
   }
 
   /** The season's games the vendor marks as its postseason, whatever the query's filters did. */

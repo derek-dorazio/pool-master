@@ -98,7 +98,7 @@ export interface SportEventOverview {
   releaseMode: SportEventReleaseMode;
   releaseAt: Date | null;
   releaseAtKind: SportEventReleaseAtKind | null;
-  /** The value that orders its active field for tiers and prices; null while it has no active field. */
+  /** The value that orders its active field for tiers and prices; null while it has no active field, or no participant has odds, a seed or a rank. */
   tierOrderBasis: FieldOrderBasis | null;
   /** False when no value covers the whole active field, so `tierOrderBasis` is the first value anyone has. */
   tierOrderCoversField: boolean;

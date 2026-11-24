@@ -95,7 +95,7 @@ export class LeagueEventsSync {
     return this.options.jobs.enqueueRequestReturning(syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: sportLeague.id,
       eventYears: input.eventYear === undefined ? this.scheduledYears() : [input.eventYear],
-    }, { start: { trigger: JobTrigger.ADMIN, startedByUserId: input.requestedByUserId } }));
+    }, { start: { trigger: JobTrigger.ADMIN, startedByUserId: input.requestedByUserId }, providerCode: sportLeague.selectedProviderMapping.providerCode }));
   }
 
   /** The schedule's pass: one job per active synced league, in one write; answers how many were queued. */
@@ -106,7 +106,7 @@ export class LeagueEventsSync {
     return this.options.jobs.enqueueAll(leagues.map((league) => syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: league.id,
       eventYears,
-    }, { start: SCHEDULE_START })));
+    }, { start: SCHEDULE_START, ...(league.selectedProviderMapping !== null && { providerCode: league.selectedProviderMapping.providerCode }) })));
   }
 
   /** The SYNC_LEAGUE_EVENTS job. */
@@ -115,8 +115,8 @@ export class LeagueEventsSync {
 
     const sportLeague = await this.options.sportLeagues.findById(payload.sportLeagueId);
     if (!sportLeague) throw new PermanentBackgroundJobError(`Sport league ${payload.sportLeagueId} no longer exists`);
-    const providerId = sportLeague.selectedProviderMapping?.providerId ?? null;
-    if (providerId === null) throw new PermanentBackgroundJobError(`No provider syncs ${sportLeague.name}'s events any more`);
+    const selected = sportLeague.selectedProviderMapping;
+    if (selected === null) throw new PermanentBackgroundJobError(`No provider syncs ${sportLeague.name}'s events any more`);
     const sport = (await this.options.sports.findById(sportLeague.sportId))?.sport;
     if (sport === undefined) throw new PermanentBackgroundJobError(`Sport league ${sportLeague.name} belongs to no known sport`);
 
@@ -124,10 +124,10 @@ export class LeagueEventsSync {
     if (!await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
     const startedAt = this.now();
     const basePayload = { runType: LEAGUE_EVENTS_SYNC_RUN_TYPE, eventYears: payload.eventYears };
+    const providerId = selected.providerId;
     const run = await this.options.syncRuns.create({
-      providerId,
+      providerCode: selected.providerCode,
       sport,
-      eventId: null,
       kind: ProviderSyncKind.EVENTS,
       trigger: context.trigger,
       sportLeagueId: sportLeague.id,

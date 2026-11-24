@@ -8,6 +8,7 @@ import { SportEventRoundService } from '../../../packages/core-api/src/modules/e
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 
 // A synced league's game week takes its games from its provider (ADR 0011, #1728), against an
 // in-memory store and the real bracket service: what a draft loads and replaces, what a released
@@ -15,7 +16,7 @@ import { fakeLogger } from '../../support/fake-logger';
 // readers' games are proved in their own mapping tests; the field load's call into this against
 // Postgres in provider-game-slate.integration.
 
-const PROVIDER = 'feed';
+const PROVIDER = 'balldontlie';
 const KICKOFF = new Date('2026-11-15T18:00:00.000Z');
 const HOUR = 60 * 60 * 1000;
 const TEAMS = ['Bears', 'Lions', 'Packers', 'Vikings'] as const;
@@ -37,7 +38,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
   void store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
   const field = Object.fromEntries(TEAMS.map((name) => {
     const team = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
-    void store.mappingRepo().bind({ participantId: team.id, sportLeagueId: team.sportLeagueId, providerId: PROVIDER, externalId: `team-${name}`, confidence: 'EXACT', mappedAt: KICKOFF });
+    void store.mappingRepo().bind({ participantId: team.id, sportLeagueId: team.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: `team-${name}`, participantType: 'TEAM', mappedAt: KICKOFF });
     return [name, store.addToField(event.id, team.id).id];
   })) as Record<(typeof TEAMS)[number], string>;
   let sequence = 0;
@@ -281,7 +282,7 @@ describe('ProviderGameSlateService', () => {
       void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: roundDefault(roundNumber) })));
       const field = new Map(SEEDS.map((seed) => {
         const participant = store.addParticipant(sport.id, `Seed ${seed}`, { participantType: 'TEAM' });
-        void store.mappingRepo().bind({ participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: PROVIDER, externalId: team(seed), confidence: 'EXACT', mappedAt: KICKOFF });
+        void store.mappingRepo().bind({ participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: team(seed), participantType: 'TEAM', mappedAt: KICKOFF });
         return [seed, store.addToField(event.id, participant.id, { seedNumber: seed }).id] as const;
       }));
       const rowOf = (seed: number) => field.get(seed) ?? '';

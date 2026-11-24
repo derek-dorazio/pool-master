@@ -90,7 +90,7 @@ describe('SDK Functional: Participants', () => {
     expect(updated.data?.participant.name).toBe(`${name} (renamed)`);
   });
 
-  it('saves a participant update\'s external id and injury status, returning the injury dates as sent', async () => {
+  it('saves a participant update\'s injury status, returning the injury dates as sent', async () => {
     const sportLeagueId = await golfTourId();
     const admin = await buildRegisteredUser({ displayName: 'Participant Update Root Admin' });
     await promoteToRootAdmin(admin);
@@ -102,19 +102,16 @@ describe('SDK Functional: Participants', () => {
     const participantId = created.data?.participant.id as string;
     createdParticipantIds.push(participantId);
 
-    const externalId = `ext-${randomUUID()}`;
     const updated = await updateParticipant({
       client: admin.client,
       path: { id: participantId },
       body: {
-        externalId,
         injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn: '2026-11-01T00:00:00.000Z' },
       },
     });
 
     expect(updated.response?.status).toBe(200);
     expect(updated.data?.participant).toMatchObject({
-      externalId,
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn: '2026-11-01T00:00:00.000Z' },
     });
   });

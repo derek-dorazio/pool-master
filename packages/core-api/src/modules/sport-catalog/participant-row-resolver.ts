@@ -10,8 +10,11 @@
  * several are ambiguous, none is unresolved.
  */
 
-import type { ParticipantMatchQuery } from '@poolmaster/shared/db';
+import type { ParticipantMatchQuery, ParticipantProviderMappingRepository } from '@poolmaster/shared/db';
 import type { Participant } from '@poolmaster/shared/domain';
+
+/** Each candidate's feed ids by participant id: a participant's feed ids are its provider mappings' (#2040). */
+export type FeedIdsByParticipant = ReadonlyMap<string, ReadonlySet<string>>;
 
 export interface ParticipantRowIdentifiers {
   participantId?: string;
@@ -53,11 +56,33 @@ export async function resolveParticipantRow(
   return { resolution: matches.length > 1 ? 'AMBIGUOUS' : 'UNRESOLVED', participant: null };
 }
 
-/** The same match rule over candidates already in hand: an event's field, or an upload's candidates read at once. */
-export function matchAmong(candidates: readonly Participant[]) {
+/**
+ * The same match rule over candidates already in hand: an event's field, or an upload's candidates
+ * read at once. A row naming a feed id matches a candidate one of whose provider mappings holds it
+ * (`feedIdsOfCandidates`).
+ */
+export function matchAmong(candidates: readonly Participant[], feedIds: FeedIdsByParticipant = new Map()) {
   return (query: ParticipantMatchQuery): Promise<Participant[]> => Promise.resolve(candidates.filter((candidate) => (
     (query.id === undefined || candidate.id === query.id)
-    && (query.externalId === undefined || candidate.externalId === query.externalId)
+    && (query.externalId === undefined || (feedIds.get(candidate.id)?.has(query.externalId) ?? false))
     && (query.name === undefined || candidate.name.toLowerCase() === query.name.toLowerCase())
   )));
+}
+
+/**
+ * The candidates' feed ids, in one read, for the rows that are matched by one; no read when no row
+ * is (`participantMatchQuery`).
+ */
+export async function feedIdsOfCandidates(
+  rows: readonly ParticipantRowIdentifiers[],
+  candidates: readonly Participant[],
+  mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>,
+): Promise<FeedIdsByParticipant> {
+  const byFeedId = rows.some((row) => participantMatchQuery(row)?.externalId !== undefined);
+  if (!byFeedId || candidates.length === 0) return new Map();
+  const feedIds = new Map<string, Set<string>>();
+  for (const mapping of await mappings.findByParticipantIds(candidates.map((candidate) => candidate.id))) {
+    feedIds.set(mapping.participantId, (feedIds.get(mapping.participantId) ?? new Set()).add(mapping.externalId));
+  }
+  return feedIds;
 }

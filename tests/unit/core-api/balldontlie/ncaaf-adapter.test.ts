@@ -178,10 +178,9 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
 
     const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
 
-    const college = teams.filter((team) => team.externalId.startsWith('ncaaf-team-'));
+    const college = teams.filter((team) => team.metadata.tour === 'CFP');
     expect(college.map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
-    expect(college.every((team) => team.metadata.tour === 'CFP')).toBe(true);
-    expect(teams.some((team) => team.externalId.startsWith('nfl-team-'))).toBe(true);
+    expect(teams.some((team) => team.metadata.tour === undefined)).toBe(true);
     expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/teams?']);
   });
 });

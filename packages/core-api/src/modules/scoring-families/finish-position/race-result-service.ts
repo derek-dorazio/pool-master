@@ -20,6 +20,7 @@ import type {
   SportEventParticipantRaceResultRepository,
   SportEventParticipantRepository,
   SportEventRepository,
+  ParticipantProviderMappingRepository,
 } from '@poolmaster/shared/db';
 import {
   RaceResultChange,
@@ -33,6 +34,7 @@ import {
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import {
   matchAmong,
+  feedIdsOfCandidates,
   resolveParticipantRow,
   type ParticipantRowIdentifiers,
   type ParticipantRowResolution,
@@ -94,6 +96,8 @@ export interface RaceResultServiceDeps {
   events: Pick<SportEventRepository, 'findById'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
+  /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
+  mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
   raceResults: SportEventParticipantRaceResultRepository;
   /**
    * Whether an event of this sport keeps race results, by its sport's scoring family. Any other
@@ -119,7 +123,8 @@ export class RaceResultService {
     const participants = await this.deps.participants.findByIds(field.map((entry) => entry.participantId));
     const entryIdByParticipantId = new Map(field.map((entry) => [entry.participantId, entry.id]));
     const storedByEntry = new Map(stored.map((result) => [result.sportEventParticipantId, result]));
-    const resolved = await Promise.all(input.rows.map((row) => resolveParticipantRow(row, matchAmong(participants))));
+    const feedIds = await feedIdsOfCandidates(input.rows, participants, this.deps.mappings);
+    const resolved = await Promise.all(input.rows.map((row) => resolveParticipantRow(row, matchAmong(participants, feedIds))));
 
     const rowCountByEntry = new Map<string, number>();
     for (const result of resolved) {

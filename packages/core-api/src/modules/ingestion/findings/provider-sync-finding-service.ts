@@ -13,7 +13,6 @@ import {
   ProviderSyncFindingSeverity,
   ProviderSyncFindingStatus,
   providerCodeOfSourceId,
-  providerSourceIdOf,
   providerSyncFindingActions,
   type ProviderSettings,
   type ProviderSyncFinding,
@@ -191,8 +190,8 @@ export class ProviderSyncFindingService {
     if (participant.sportLeagueId !== finding.sportLeague.id) {
       throw new ProviderSyncFindingError(`${participant.name} is not in ${finding.sportLeague.name}.`, 'SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE', 422);
     }
-    const source = this.sourceIdOfFinding(finding);
-    await this.deps.participants.bindProviderMapping(participant.id, source.providerSourceId, source.externalId);
+    const source = this.mappingSourceOf(finding);
+    await this.deps.participants.bindProviderMapping(participant.id, source.providerId, source.externalId);
     const saved = await this.deps.repository.setStatus(findingId, {
       status: ProviderSyncFindingStatus.RESOLVED,
       waiveNote: null,
@@ -217,13 +216,12 @@ export class ProviderSyncFindingService {
     }
   }
 
-  /** The id the feed's participants carry, and the value it sent. An UNMAPPED_PARTICIPANT finding always has both. */
-  private sourceIdOfFinding(finding: ProviderSyncFinding): { providerSourceId: string; externalId: string } {
-    const provider = finding.provider === null ? undefined : this.deps.providers.all().find((row) => row.id === finding.provider?.id);
-    if (provider === undefined || finding.providerValue === null) {
+  /** The Provider row a mapping names (#2040), and the value the feed sent. An UNMAPPED_PARTICIPANT finding always has both. */
+  private mappingSourceOf(finding: ProviderSyncFinding): { providerId: string; externalId: string } {
+    if (finding.provider === null || finding.providerValue === null) {
       throw new Error(`Finding ${finding.id} names no Provider row or feed value to map from`);
     }
-    return { providerSourceId: providerSourceIdOf(provider.code), externalId: finding.providerValue };
+    return { providerId: finding.provider.id, externalId: finding.providerValue };
   }
 
   private providerOfSourceId(providerSourceId: string): ProviderSettings | undefined {

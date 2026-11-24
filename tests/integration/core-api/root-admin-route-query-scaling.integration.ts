@@ -6,6 +6,7 @@
  * Some read a provider, so the case registers one whose participants and events it sets
  * per seed. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route needs one.
  */
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { randomUUID } from 'crypto';
 import type { Prisma } from '@prisma/client';
 import {
@@ -146,23 +147,24 @@ async function seedProviderMappings(mappings: number) {
   });
   await prisma.participantProviderMapping.createMany({
     data: Array.from({ length: mappings }, (_, index) => ({
-      participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: `provider-${suffix}-${String(index)}`, externalId: `golfer-${suffix}`,
+      participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: `golfer-${suffix}-${String(index)}`,
     })),
   });
   return { participant, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
-/** A root admin, and `mappings` golfers of one sport league each bound to one feed id of a provider of their own. */
+/** A root admin, and `mappings` golfers of one sport league each bound to one BALLDONTLIE feed id. */
 async function seedSportLeagueProviderMappings(mappings: number) {
   const prisma = getPrisma();
   const sport = await golf();
-  const providerId = `provider-${randomUUID().slice(0, 8)}`;
+  const providerId = BALLDONTLIE_TEST_PROVIDER_ID;
+  const suffix = randomUUID().slice(0, 8);
   const sportLeagueId = await participantLeagueId(prisma, sport.id);
   for (let index = 0; index < mappings; index += 1) {
     await prisma.participant.create({
       data: {
-        sportLeagueId, name: `${providerId} Golfer ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-        providerMappings: { create: { sportLeagueId, providerId, externalId: `golfer-${String(index)}` } },
+        sportLeagueId, name: `${suffix} Golfer ${String(index)}`, participantType: 'INDIVIDUAL', status: 'ACTIVE',
+        providerMappings: { create: { sportLeagueId, providerId, participantType: 'INDIVIDUAL', externalId: `golfer-${suffix}-${String(index)}` } },
       },
     });
   }
@@ -185,14 +187,13 @@ async function seedSettingsChanges(changes: number) {
   return createTestUser({ isRootAdmin: true });
 }
 
-/** A root admin, and `runs` sync runs against providers of their own, all submitted in the last hour. */
+/** A root admin, and `runs` BALLDONTLIE sync runs, all submitted in the last hour. */
 async function seedSyncRuns(runs: number) {
-  const suffix = randomUUID().slice(0, 8);
   await getPrisma().providerSyncRun.createMany({
-    data: Array.from({ length: runs }, (_, index) => ({
+    data: Array.from({ length: runs }, () => ({
       kind: 'SCORES',
       trigger: 'SCHEDULE',
-      providerId: `provider-${suffix}-${String(index)}`,
+      providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       sport: Sport.GOLF,
       status: ProviderSyncRunStatus.COMPLETED,
       payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
@@ -228,7 +229,7 @@ async function seedLeagueActivity(jobs: number) {
     if (onLeague) {
       await prisma.providerSyncRun.create({
         data: {
-          kind: 'EVENTS', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id,
+          kind: 'EVENTS', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id,
           backgroundJobId: job.id, status: ProviderSyncRunStatus.COMPLETED, payloadJson: { runType: 'LEAGUE_EVENTS_SYNC' },
         },
       });
@@ -275,7 +276,7 @@ async function seedSyncRunDetails(rows: number) {
     data: {
       kind: 'SCORES',
       trigger: 'SCHEDULE',
-      providerId: provider.providerId,
+      providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       sport: Sport.GOLF,
       status: ProviderSyncRunStatus.COMPLETED,
       payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
@@ -380,8 +381,8 @@ async function seedSportLeagueOverviews(leagues: number) {
     });
     await prisma.providerSyncRun.createMany({
       data: [
-        { kind: 'EVENTS', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.FAILED, payloadJson: { outcome: { summary: 'Interrupted before it finished.' } } },
-        { kind: 'FIELD', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, payloadJson: {} },
+        { kind: 'EVENTS', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.FAILED, payloadJson: { outcome: { summary: 'Interrupted before it finished.' } } },
+        { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, payloadJson: {} },
       ],
     });
   }
@@ -448,7 +449,7 @@ async function seedLeagueEventOverviews(events: number) {
     const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL' } });
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });
     await prisma.providerSyncRun.create({
-      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id, sportEventId: event.id, status: ProviderSyncRunStatus.FAILED, payloadJson: {} },
+      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: sportLeague.id, sportEventId: event.id, status: ProviderSyncRunStatus.FAILED, payloadJson: {} },
     });
   }
   return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
@@ -463,7 +464,7 @@ async function seedLeagueParticipantOverviews(participants: number) {
   for (let index = 0; index < participants; index += 1) {
     const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Roster Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL', ranking: index + 1 } });
     if (index % 2 === 0) {
-      await prisma.participantProviderMapping.create({ data: { participantId: golfer.id, sportLeagueId: sportLeague.id, providerId: provider.providerId, externalId: `golfer-${suffix}-${String(index)}`, lastSeenAt: new Date() } });
+      await prisma.participantProviderMapping.create({ data: { participantId: golfer.id, sportLeagueId: sportLeague.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: `golfer-${suffix}-${String(index)}`, lastSeenAt: new Date() } });
     }
   }
   return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
@@ -582,7 +583,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     await syncLeagueTo(prisma, sportLeague.id, 'pga');
     await prisma.providerSyncRun.createMany({
       data: Array.from({ length: 20 }, (_, index) => ({
-        kind: (['EVENTS', 'FIELD', 'SCORES'] as const)[index % 3], trigger: 'SCHEDULE' as const, providerId: provider.providerId, sport: Sport.GOLF,
+        kind: (['EVENTS', 'FIELD', 'SCORES'] as const)[index % 3], trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF,
         sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, createdAt: new Date(Date.now() - index * 60_000), payloadJson: {},
       })),
     });

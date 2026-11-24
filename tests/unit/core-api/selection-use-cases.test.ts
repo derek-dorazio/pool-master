@@ -160,7 +160,6 @@ function buildWorld(options: WorldOptions = {}) {
     participantType: 'INDIVIDUAL',
     status: 'ACTIVE',
     injuryStatus: { status: 'HEALTHY' },
-    externalIds: {},
     ...TIMESTAMPS,
   }));
   const tierGroups = TIERS.map((tier) => ({

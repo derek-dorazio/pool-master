@@ -28,7 +28,6 @@ export type SharedEnums = {
   ProviderWebhookEventSet: Enums.ProviderWebhookEventSet;
   InjuryStatusCode: Enums.InjuryStatusCode;
   FormTrend: Enums.FormTrend;
-  MappingConfidence: Enums.MappingConfidence;
   PoolType: Enums.PoolType;
   ContestFormat: Enums.ContestFormat;
   TournamentFormat: Enums.TournamentFormat;

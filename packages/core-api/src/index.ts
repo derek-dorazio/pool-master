@@ -215,7 +215,8 @@ export function buildApp(options: BuildAppOptions = {}) {
   // Work a request hands off rather than waits for (#1439): queued here, run by the runner below.
   const backgroundJobRepository = new PrismaBackgroundJobRepository(prisma);
   // Each job records what started it: the request, sweep or job's handler under way (#1861).
-  const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository, currentStart: currentJobStart });
+  // A sync job is keyed to its Provider row from the settings the task holds (#2040).
+  const backgroundJobs = new BackgroundJobQueue({ jobs: backgroundJobRepository, currentStart: currentJobStart, providerIdOf: (code) => providerSettings.byCode(code)?.id });
   const contestNotices = createContestNotices(prisma, { email, jobs: backgroundJobs, appBaseUrl, logger: app.log });
   // A contest going live or completing queues its league's email as a job (#1387).
   const contestEmailJobs = createContestEmailJobs(prisma, { notices: contestNotices, logger: app.log });
@@ -483,7 +484,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   app.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   app.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
   app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
-  app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
+  app.register(participantsModule, { prefix: '/api/v1/participants' });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
   app.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails });

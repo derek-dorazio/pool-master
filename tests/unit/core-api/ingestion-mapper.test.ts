@@ -18,7 +18,8 @@ import { fakeLogger } from '../../support/fake-logger';
 function buildRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
   return {
     id: 'run-1',
-    providerId: 'mock-contest-feed',
+    providerId: 'provider-row-1',
+    providerName: 'Mock contest feed',
     sport: Sport.GOLF,
     eventId: 'event-1',
     ...SCHEDULED_SCORES_RUN,
@@ -32,10 +33,11 @@ function buildRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
 }
 
 describe('toProviderSyncRunDto', () => {
-  it('pool-master-5h3 serializes dates to ISO strings and passes null start/completed through', () => {
+  it('serializes dates to ISO strings, names the run\'s provider, and passes null start/completed through', () => {
     expect(toProviderSyncRunDto(buildRun())).toEqual({
       id: 'run-1',
-      providerId: 'mock-contest-feed',
+      providerId: 'provider-row-1',
+      providerName: 'Mock contest feed',
       sport: 'GOLF',
       eventId: 'event-1',
       kind: 'SCORES',

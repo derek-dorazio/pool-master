@@ -7066,14 +7066,21 @@ export type ParticipantProviderMappingDto = {
      */
     sportLeagueId: string;
     /**
-     * The provider that knows the participant by externalId.
+     * The participant's kind: a team id and a player id the feed numbers alike never collide.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM';
+    /**
+     * The Provider that knows the participant by externalId.
      */
     providerId: string;
-    externalId: string;
     /**
-     * How the identity was matched.
+     * That provider's name.
      */
-    confidence: 'EXACT' | 'HIGH' | 'MANUAL';
+    providerName: string;
+    /**
+     * The provider's own id for the participant, never prefixed.
+     */
+    externalId: string;
     /**
      * ISO 8601 datetime string.
      */
@@ -7092,14 +7099,21 @@ export type ParticipantProviderMappingListResponse = {
          */
         sportLeagueId: string;
         /**
-         * The provider that knows the participant by externalId.
+         * The participant's kind: a team id and a player id the feed numbers alike never collide.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM';
+        /**
+         * The Provider that knows the participant by externalId.
          */
         providerId: string;
-        externalId: string;
         /**
-         * How the identity was matched.
+         * That provider's name.
          */
-        confidence: 'EXACT' | 'HIGH' | 'MANUAL';
+        providerName: string;
+        /**
+         * The provider's own id for the participant, never prefixed.
+         */
+        externalId: string;
         /**
          * ISO 8601 datetime string.
          */
@@ -7112,7 +7126,7 @@ export type ParticipantProviderMappingListResponse = {
  */
 export type BindParticipantProviderMappingRequest = {
     /**
-     * The provider whose identifier this binds.
+     * The Provider whose identifier this binds.
      */
     providerId: string;
     /**
@@ -7126,7 +7140,7 @@ export type BindParticipantProviderMappingRequest = {
  */
 export type SportLeagueProviderMappingListQuery = {
     /**
-     * The provider whose identities to list.
+     * The Provider whose identities to list.
      */
     providerId: string;
     /**
@@ -7150,14 +7164,21 @@ export type ParticipantProviderMappingResponse = {
          */
         sportLeagueId: string;
         /**
-         * The provider that knows the participant by externalId.
+         * The participant's kind: a team id and a player id the feed numbers alike never collide.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM';
+        /**
+         * The Provider that knows the participant by externalId.
          */
         providerId: string;
-        externalId: string;
         /**
-         * How the identity was matched.
+         * That provider's name.
          */
-        confidence: 'EXACT' | 'HIGH' | 'MANUAL';
+        providerName: string;
+        /**
+         * The provider's own id for the participant, never prefixed.
+         */
+        externalId: string;
         /**
          * ISO 8601 datetime string.
          */
@@ -7190,7 +7211,7 @@ export type ParticipantDto = {
      */
     participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * Primary provider identifier when one exists.
+     * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
      */
     externalId?: string;
     /**
@@ -7255,7 +7276,7 @@ export type ParticipantDto = {
      */
     photoLastUpdated?: string;
     /**
-     * Map of provider identifiers keyed by provider code.
+     * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
      */
     externalIds: {
         [key: string]: string;
@@ -7317,7 +7338,7 @@ export type ParticipantListResponse = {
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * Primary provider identifier when one exists.
+         * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
          */
         externalId?: string;
         /**
@@ -7382,7 +7403,7 @@ export type ParticipantListResponse = {
          */
         photoLastUpdated?: string;
         /**
-         * Map of provider identifiers keyed by provider code.
+         * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
          */
         externalIds: {
             [key: string]: string;
@@ -7427,7 +7448,7 @@ export type ParticipantResponse = {
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * Primary provider identifier when one exists.
+         * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
          */
         externalId?: string;
         /**
@@ -7492,7 +7513,7 @@ export type ParticipantResponse = {
          */
         photoLastUpdated?: string;
         /**
-         * Map of provider identifiers keyed by provider code.
+         * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
          */
         externalIds: {
             [key: string]: string;
@@ -7529,10 +7550,6 @@ export type CreateParticipantRequest = {
      */
     participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * Primary provider identifier.
-     */
-    externalId?: string;
-    /**
      * First name when the participant is a person.
      */
     firstName?: string;
@@ -7556,12 +7573,6 @@ export type CreateParticipantRequest = {
      * Current team affiliation.
      */
     teamAffiliation?: string;
-    /**
-     * Map of provider identifiers keyed by provider code.
-     */
-    externalIds?: {
-        [key: string]: string;
-    };
 };
 
 /**
@@ -7633,16 +7644,6 @@ export type UpdateParticipantRequest = {
      * Participant image URL.
      */
     photoUrl?: string;
-    /**
-     * Primary provider identifier.
-     */
-    externalId?: string;
-    /**
-     * Map of provider identifiers keyed by provider code.
-     */
-    externalIds?: {
-        [key: string]: string;
-    };
 };
 
 /**
@@ -9215,9 +9216,9 @@ export type SportEventOverviewDto = {
      */
     releaseAtKind: 'PLANNED' | 'ACTUAL' | null;
     /**
-     * The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+     * The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
      */
-    tierOrderBasis: 'ODDS' | 'SEED' | 'RANKING' | 'NAME' | null;
+    tierOrderBasis: 'ODDS' | 'SEED' | 'RANKING' | null;
     /**
      * False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.
      */
@@ -9440,9 +9441,9 @@ export type SportEventOverviewResponse = {
          */
         releaseAtKind: 'PLANNED' | 'ACTUAL' | null;
         /**
-         * The value that orders its active field for automatic tiers and prices: ODDS, SEED, RANKING (the first every participant has) or NAME. Null while it has no active field.
+         * The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
          */
-        tierOrderBasis: 'ODDS' | 'SEED' | 'RANKING' | 'NAME' | null;
+        tierOrderBasis: 'ODDS' | 'SEED' | 'RANKING' | null;
         /**
          * False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.
          */
@@ -11615,12 +11616,12 @@ export type SportEventParticipantValuationDto = {
      * Order within the tier.
      */
     tierOrderIndex: number | null;
-    tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+    tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
     /**
      * Price in a budget contest; null when unpriced.
      */
     price: number | null;
-    priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+    priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
 };
 
 /**
@@ -11736,7 +11737,7 @@ export type SportEventParticipantDto = {
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * Primary provider identifier when one exists.
+         * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
          */
         externalId?: string;
         /**
@@ -11801,7 +11802,7 @@ export type SportEventParticipantDto = {
          */
         photoLastUpdated?: string;
         /**
-         * Map of provider identifiers keyed by provider code.
+         * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
          */
         externalIds: {
             [key: string]: string;
@@ -11828,12 +11829,12 @@ export type SportEventParticipantDto = {
          * Order within the tier.
          */
         tierOrderIndex: number | null;
-        tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+        tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
         /**
          * Price in a budget contest; null when unpriced.
          */
         price: number | null;
-        priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+        priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
     } | null;
     /**
      * Null until the participant has a scored round, or a race result.
@@ -11989,7 +11990,7 @@ export type SportEventParticipantListResponse = {
              */
             participantType: 'INDIVIDUAL' | 'TEAM';
             /**
-             * Primary provider identifier when one exists.
+             * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
              */
             externalId?: string;
             /**
@@ -12054,7 +12055,7 @@ export type SportEventParticipantListResponse = {
              */
             photoLastUpdated?: string;
             /**
-             * Map of provider identifiers keyed by provider code.
+             * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
              */
             externalIds: {
                 [key: string]: string;
@@ -12081,12 +12082,12 @@ export type SportEventParticipantListResponse = {
              * Order within the tier.
              */
             tierOrderIndex: number | null;
-            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
             /**
              * Price in a budget contest; null when unpriced.
              */
             price: number | null;
-            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
          * Null until the participant has a scored round, or a race result.
@@ -12311,7 +12312,7 @@ export type SportEventParticipantResponse = {
              */
             participantType: 'INDIVIDUAL' | 'TEAM';
             /**
-             * Primary provider identifier when one exists.
+             * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
              */
             externalId?: string;
             /**
@@ -12376,7 +12377,7 @@ export type SportEventParticipantResponse = {
              */
             photoLastUpdated?: string;
             /**
-             * Map of provider identifiers keyed by provider code.
+             * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
              */
             externalIds: {
                 [key: string]: string;
@@ -12403,12 +12404,12 @@ export type SportEventParticipantResponse = {
              * Order within the tier.
              */
             tierOrderIndex: number | null;
-            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
             /**
              * Price in a budget contest; null when unpriced.
              */
             price: number | null;
-            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
          * Null until the participant has a scored round, or a race result.
@@ -13761,7 +13762,7 @@ export type ContestLeaderboardResponse = {
              */
             participantType: 'INDIVIDUAL' | 'TEAM';
             /**
-             * Primary provider identifier when one exists.
+             * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
              */
             externalId?: string;
             /**
@@ -13826,7 +13827,7 @@ export type ContestLeaderboardResponse = {
              */
             photoLastUpdated?: string;
             /**
-             * Map of provider identifiers keyed by provider code.
+             * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
              */
             externalIds: {
                 [key: string]: string;
@@ -13853,12 +13854,12 @@ export type ContestLeaderboardResponse = {
              * Order within the tier.
              */
             tierOrderIndex: number | null;
-            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+            tierAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
             /**
              * Price in a budget contest; null when unpriced.
              */
             price: number | null;
-            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'AUTO_NAME' | 'MANUAL' | null;
+            priceAssignedSource: 'AUTO_ODDS' | 'AUTO_SEED' | 'AUTO_RANKING' | 'MANUAL' | null;
         } | null;
         /**
          * Null until the participant has a scored round, or a race result.
@@ -28046,10 +28047,17 @@ export type ProviderListResponse = {
  */
 export type ProviderSyncRunDto = {
     id: string;
+    /**
+     * The Provider the run read.
+     */
     providerId: string;
+    /**
+     * That Provider's name.
+     */
+    providerName: string;
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
+     * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
     eventId: string | null;
     /**
@@ -28196,10 +28204,17 @@ export type ProviderSyncRunDto = {
  */
 export type ProviderSyncRunDetailDto = {
     id: string;
+    /**
+     * The Provider the run read.
+     */
     providerId: string;
+    /**
+     * That Provider's name.
+     */
+    providerName: string;
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
+     * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
     eventId: string | null;
     /**
@@ -28500,6 +28515,9 @@ export type ProviderSyncRunDetailDto = {
  * Filters over the sync-run history. A submission-time window bounds it; nothing pages it.
  */
 export type ProviderSyncRunListQuery = {
+    /**
+     * Only the runs of this Provider.
+     */
     providerId?: string;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
@@ -28519,10 +28537,17 @@ export type ProviderSyncRunListQuery = {
 export type ProviderSyncRunListResponse = {
     syncRuns: Array<{
         id: string;
+        /**
+         * The Provider the run read.
+         */
         providerId: string;
+        /**
+         * That Provider's name.
+         */
+        providerName: string;
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
+         * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
         eventId: string | null;
         /**
@@ -28681,10 +28706,17 @@ export type ProviderManualSyncSubmissionResponse = {
     submittedAt: string;
     syncRuns: Array<{
         id: string;
+        /**
+         * The Provider the run read.
+         */
         providerId: string;
+        /**
+         * That Provider's name.
+         */
+        providerName: string;
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Provider event identifier when the run was narrowed to one event; null for a whole-sport run.
+         * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
         eventId: string | null;
         /**
@@ -37233,7 +37265,7 @@ export type ListSportLeagueProviderMappingsData = {
     path?: never;
     query: {
         /**
-         * The provider whose identities to list.
+         * The Provider whose identities to list.
          */
         providerId: string;
         /**
@@ -37978,6 +38010,9 @@ export type ListProviderSyncRunsData = {
     body?: never;
     path?: never;
     query?: {
+        /**
+         * Only the runs of this Provider.
+         */
         providerId?: string;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
