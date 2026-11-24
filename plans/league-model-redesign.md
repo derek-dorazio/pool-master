@@ -237,6 +237,8 @@ The current model was built one sport at a time and leans on code to look right:
   family: when the feed supplies them, the sync writes the feed's own totals and tie-aware
   position (the provider is the source of truth, Derek 2026-11-22); one function per family
   computes only what the feed doesn't supply.
+  - Written only for events whose rounds are FIELD Matches; head-to-head results live on the
+    Match sides, and season standings belong to the Season (Derek 2026-11-24).
   - A cut golfer has no side in the rounds after the cut; CUT lives only here.
   - The field row's withdrawn and eliminated reasons stay the event-level status, and
     Standing reads them.
