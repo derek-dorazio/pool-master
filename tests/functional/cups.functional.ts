@@ -54,7 +54,7 @@ import {
   SquadHistoryResponseSchema,
   SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
@@ -137,7 +137,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const releaseRace = async (name: string, startDate: string, eventYear = SEASON) => {
       const eventId = expectDefined((await createEvent({
         client: a,
-        body: { sportLeagueId: majorsMen.id, eventYear, name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
+        body: { sportLeagueId: await inCurrentSeason(majorsMen.id, eventYear), name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });

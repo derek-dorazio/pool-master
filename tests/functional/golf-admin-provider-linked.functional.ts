@@ -17,7 +17,7 @@ import {
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { ProviderCode } from '@poolmaster/shared/domain';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -235,7 +235,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     // --- Tour ------------------------------------------------------------
     const league = await createSportLeague({
       client: admin,
-      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), sport: 'GOLF', name: `USGA ${RUN}` },
+      body: { ...(await sportLeagueProfiles(admin, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `USGA ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
@@ -253,8 +253,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         startDate: ADMIN_EVENT_START,
         endDate: ADMIN_EVENT_END,
         rounds: 4,
-        sportLeagueId,
-        eventYear: 2026,
+        sportLeagueId: await inCurrentSeason(sportLeagueId, 2026),
         autoLifecycleEnabled: false,
       },
     });
@@ -327,8 +326,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
         startDate: MOCK_EVENT_START,
         endDate: MOCK_EVENT_END,
         rounds: 4,
-        sportLeagueId,
-        eventYear: 2027,
+        sportLeagueId: await inCurrentSeason(sportLeagueId, 2027),
         autoLifecycleEnabled: false,
       },
     });

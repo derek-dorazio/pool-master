@@ -112,7 +112,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       startDate: event.startDate,
       sport: event.sport,
       sportLeagueId: event.sportLeagueId,
-      eventYear: event.eventYear,
+      championshipYear: event.championshipYear,
       // A sport league scored by its own family plays that family's format; any other plays its
       // sport's.
       tournamentFormat: (event.scoringFamily ?? null) === null

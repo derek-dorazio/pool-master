@@ -2,7 +2,6 @@ import {
   createEvent,
   getEventBracket,
   listEventParticipants,
-  listEvents,
   listParticipants,
   listSportLeagues,
 } from '@poolmaster/shared/generated/hey-api';
@@ -19,7 +18,7 @@ import {
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
+import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext, inCurrentSeason, seasonEvents } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { leagueProfiles } from '../support/league-profiles';
@@ -112,8 +111,8 @@ async function addSportLeague(name: string, sport: Sport = Sport.GOLF): Promise<
   await addRunSportLeague(admin.client, sport, name);
 }
 
-async function eventsOf(sportLeagueId: string, eventYear: number) {
-  return expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId, eventYear } })).data).events;
+async function eventsOf(sportLeagueId: string, championshipYear: number) {
+  return seasonEvents(admin.client, sportLeagueId, championshipYear);
 }
 
 async function fieldOf(eventId: string) {
@@ -232,7 +231,7 @@ describe('Loading a golf test seed through the admin API', () => {
     // What a run that stopped straight after creating the event leaves behind.
     expectDefined((await createEvent({
       client: admin.client,
-      body: { sportLeagueId: league.id, eventYear: 2026, name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(league.id, 2026), name: finale.name, startDate: finaleStart, rounds: 4, autoLifecycleEnabled: false },
     })).data);
 
     const rows = await loadSportData(parsed(withFinale), { getClient, now: NOW, mode: LoadMode.APPLY });
@@ -321,7 +320,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     const golfSportId = (await db.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id;
     const league = `${tour} known`;
     // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
-    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), sportId: golfSportId, name: league } });
+    const sportLeague = await db.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(db)), sportId: golfSportId, name: league } });
     const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL' } });
     await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: await providerRowId(), participantType: 'INDIVIDUAL', externalId: feedId('golfer-2') } });
 

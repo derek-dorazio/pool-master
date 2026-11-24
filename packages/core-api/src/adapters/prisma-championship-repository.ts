@@ -107,7 +107,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
             sportEvent: {
               select: {
                 id: true,
-                eventYear: true,
+                sportLeagueSeason: { select: { championshipYear: true } },
                 eventSeries: { select: { id: true, name: true, sportLeague: { select: { name: true } } } },
               },
             },
@@ -141,7 +141,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       eventSeriesId: event.eventSeries.id,
       seriesName: event.eventSeries.name,
       sportLeagueName: event.eventSeries.sportLeague.name,
-      eventYear: event.eventYear,
+      championshipYear: event.sportLeagueSeason.championshipYear,
       completedAt: row.endsAt,
       games: gamesByEvent.get(event.id) ?? { count: 0, roundCount: 0, sendingWinnerOn: 0 },
     }));

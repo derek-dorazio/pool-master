@@ -17,13 +17,12 @@ type CreateMode = 'manual' | 'provider';
 
 /**
  * plans/124 §6.3 / §4.4a — /manage/sports/:sport/events/new. Owns the create mode toggle and
- * the shared, required tour and event year (plans/147 — they replaced the season); the
+ * the shared, required tour (the event goes in its current Season, #2003); the
  * two modes themselves (manual form / provider-event browse) are separate components.
  */
 export function RootAdminSportEventCreatePage() {
   const [searchParams] = useSearchParams();
   const initialSportLeagueId = searchParams.get('sportLeagueId') ?? '';
-  const initialYear = searchParams.get('eventYear') ?? '';
 
   const [mode, setMode] = useState<CreateMode>('manual');
   const [selection, setSelection] = useState<Partial<SportEventEdition>>({});
@@ -39,15 +38,11 @@ export function RootAdminSportEventCreatePage() {
     [sportLeaguesQuery.data],
   );
 
-  // Defaults: the ?sportLeagueId= / ?eventYear= context, else the only tour, and that
-  // tour's current year or this calendar year. Computed during render (never written
-  // into state from a query effect) so a refetch can't clobber an explicit pick.
+  // Default: the ?sportLeagueId= context, else the only tour. Computed during render (never
+  // written into state from a query effect) so a refetch can't clobber an explicit pick.
   const sportLeagueId = selection.sportLeagueId
     ?? (initialSportLeagueId || (sportLeagues.length === 1 ? sportLeagues[0].id : ''));
-  const sportLeague = sportLeagues.find((candidate) => candidate.id === sportLeagueId);
-  const eventYear = selection.eventYear
-    ?? (initialYear || String(sportLeague?.currentEventYear ?? new Date().getFullYear()));
-  const edition: SportEventEdition = { sportLeagueId, eventYear };
+  const edition: SportEventEdition = { sportLeagueId };
 
   const sportLeaguesLoaded = !sportLeaguesQuery.isLoading && !sportLeaguesQuery.isError;
 

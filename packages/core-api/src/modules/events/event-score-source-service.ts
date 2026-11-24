@@ -26,6 +26,7 @@ import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
   ProviderLeagueRefusedError,
   type DateRange,
+  type ProviderEventListOptions,
   type SportEvent as ProviderCatalogSportEvent,
 } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
@@ -54,26 +55,40 @@ const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
 /**
- * The provider league codes a sport league is mapped to on this provider (#1997), selected for its
+ * The provider leagues a sport league is mapped to on this provider (#1997), selected for its
  * sync or not, so a mapped league that is not synced yet still browses its own provider league and
- * not the whole sport's feed. Empty for a league with no mapping to this provider.
+ * not the whole sport's feed; each with the provider's id for the league's current Season (#2003),
+ * null where that Season has none on it. Empty for a league with no mapping to this provider.
  */
-async function mappedProviderLeagueCodes(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<string[]> {
+async function mappedProviderLeagues(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<MappedProviderLeague[]> {
   const mappings = await prisma.sportLeagueProviderMapping.findMany({
     where: { sportLeagueId },
-    select: { providerLeague: { select: { code: true, provider: { select: { code: true } } } } },
+    select: {
+      providerLeague: { select: { code: true, provider: { select: { code: true } } } },
+      seasonMappings: { where: { season: { currentOf: { isNot: null } } }, select: { providerSeasonId: true } },
+    },
     orderBy: { providerLeague: { code: 'asc' } },
   });
   return mappings
     .filter((mapping) => providerSourceIdOf(mapping.providerLeague.provider.code) === providerId)
-    .map((mapping) => mapping.providerLeague.code);
+    .map((mapping) => ({ code: mapping.providerLeague.code, currentProviderSeasonId: mapping.seasonMappings.at(0)?.providerSeasonId ?? null }));
 }
 
-/** The browse's ask of its provider: the one provider league, when the league maps exactly one. */
-function askedForAlone(codes: ReadonlySet<string>): { providerLeagueCode: string } | undefined {
-  if (codes.size !== 1) return undefined;
-  const [code] = codes;
-  return { providerLeagueCode: code };
+interface MappedProviderLeague {
+  code: string;
+  currentProviderSeasonId: string | null;
+}
+
+/**
+ * The browse's ask of its provider: the one provider league, when the league maps exactly one,
+ * and with no date range its current Season by the provider's own id, so the browse lists the
+ * Season being played rather than a year worked out from a clock.
+ */
+function askedForAlone(leagues: readonly MappedProviderLeague[], dateRange: DateRange | undefined): ProviderEventListOptions | undefined {
+  if (leagues.length !== 1) return undefined;
+  const [league] = leagues;
+  const season = dateRange === undefined && league.currentProviderSeasonId !== null ? { providerSeasonId: league.currentProviderSeasonId } : {};
+  return { providerLeagueCode: league.code, ...season };
 }
 
 export class EventScoreSourceService {
@@ -107,10 +122,9 @@ export class EventScoreSourceService {
 
     // A league with no mapping to this provider names no provider league to keep. One mapped
     // league is asked for alone; several are read together and kept by their codes.
-    const providerLeagueCodes = options.sportLeagueId
-      ? new Set(await mappedProviderLeagueCodes(this.prisma, options.sportLeagueId, providerId))
-      : new Set<string>();
-    const events = await provider.getUpcomingEvents(sport, dateRange, askedForAlone(providerLeagueCodes));
+    const mapped = options.sportLeagueId ? await mappedProviderLeagues(this.prisma, options.sportLeagueId, providerId) : [];
+    const providerLeagueCodes = new Set(mapped.map((league) => league.code));
+    const events = await provider.getUpcomingEvents(sport, dateRange, askedForAlone(mapped, dateRange));
     const search = options.search?.trim().toLowerCase() || null;
 
     return events
@@ -120,17 +134,16 @@ export class EventScoreSourceService {
   }
 
   /**
-   * #385 — a sport league's slate for one year, for the bulk import and the league's events sync:
-   * the events of the provider league its selected provider mapping names (#1997), by the code
-   * the provider stamps on each, never by a name. The year is the event's UTC start date. The
-   * provider is asked for that league alone, and a refusal of it by the provider's plan is a
-   * `PROVIDER_LEAGUE_REFUSED` error (#1797). 422 SPORT_LEAGUE_NOT_SYNCED when the league has no
-   * selected mapping to this provider.
+   * One Season's slate, for the league's events sync (#2003): the events of the provider league its
+   * selected provider mapping names (#1997), by the code the provider stamps on each, never by a
+   * name, asked for by the provider's own id for the Season. The provider is asked for that league
+   * alone, and a refusal of it by the provider's plan is a `PROVIDER_LEAGUE_REFUSED` error (#1797).
+   * 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to this provider.
    */
-  async listTourEventsForYear(
+  async listSeasonEvents(
     providerId: string,
     sportLeagueId: string,
-    eventYear: number,
+    providerSeasonId: string,
   ): Promise<Array<ProviderEventDetailSummary & { externalId: string }>> {
     const provider = this.providerRegistry.getProviderById(providerId);
     if (!provider) {
@@ -153,10 +166,7 @@ export class EventScoreSourceService {
     }
     const providerLeagueCode = mapping.providerLeagueCode;
 
-    const events = await provider.getUpcomingEvents(sportLeague.sport.sport, {
-      from: new Date(Date.UTC(eventYear, 0, 1)),
-      to: new Date(Date.UTC(eventYear + 1, 0, 1) - 1),
-    }, { providerLeagueCode }).catch((error: unknown) => {
+    const events = await provider.getUpcomingEvents(sportLeague.sport.sport, undefined, { providerLeagueCode, providerSeasonId }).catch((error: unknown) => {
       // #1797 — the provider's plan leaves this league out: say so, not "something went wrong".
       if (error instanceof ProviderLeagueRefusedError) {
         throw new EventScoreSourceError(error.message, 'PROVIDER_LEAGUE_REFUSED', 422);

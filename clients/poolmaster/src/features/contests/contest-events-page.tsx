@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
-import { listEvents, listEventYears, setContestSportEvents, type ContestDto, type SportEventDto } from '@/lib/api';
+import { listEvents, setContestSportEvents, type ContestDto, type SportEventDto, type SportLeagueSeasonDto } from '@/lib/api';
+import { useSportLeagueSeasonsQuery } from './use-sport-league-seasons';
 import { buildLeagueAdminContestPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -58,12 +59,12 @@ function byStartDate(left: { startDate: string; id: string }, right: { startDate
   return Date.parse(left.startDate) - Date.parse(right.startDate) || left.id.localeCompare(right.id);
 }
 
-/** One season of a sport league's events, read when it is picked rather than every season at once (#1198). */
-function sportLeagueYearEventsQueryOptions(sportLeagueId: string, eventYear: number) {
+/** One Season's events, read when it is picked rather than every Season at once (#1198, #2003). */
+function seasonEventsQueryOptions(sportLeagueSeasonId: string) {
   return {
-    queryKey: QueryKeys.sportEvents.bySportLeagueYear(sportLeagueId, eventYear),
+    queryKey: QueryKeys.sportEvents.bySportLeagueSeason(sportLeagueSeasonId),
     queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sportLeagueId, eventYear } });
+      const response = await listEvents({ query: { sportLeagueSeasonId } });
       if (!response.data?.events) {
         throwApiError(response.error, 'Sport event list response is missing data.');
       }
@@ -82,13 +83,13 @@ function ContestEventsForm({
   contest,
   firstEvent,
   leagueCode,
-  eventYears,
+  seasons,
   leagueId,
 }: {
   contest: ContestDto;
   firstEvent: SportEventDto;
   leagueCode: string;
-  eventYears: number[];
+  seasons: SportLeagueSeasonDto[];
   leagueId: string;
 }) {
   const logger = useMemo(() => getLogger().child({ feature: 'contest-events-page' }), []);
@@ -101,32 +102,30 @@ function ContestEventsForm({
       { id: sportEvent.sportEventId, name: sportEvent.name, startDate: sportEvent.startDate },
     ])),
   );
-  const [year, setYear] = useState(firstEvent.eventYear);
-  const yearEventsQuery = useQuery(sportLeagueYearEventsQueryOptions(firstEvent.sportLeagueId, year));
+  // The picker opens on the first event's Season and lists the league's Seasons by name.
+  const [seasonId, setSeasonId] = useState(firstEvent.sportLeagueSeasonId);
+  const seasonName = seasons.find((season) => season.id === seasonId)?.name ?? '';
+  const seasonEventsQuery = useQuery(seasonEventsQueryOptions(seasonId));
   useEffect(() => {
-    if (yearEventsQuery.isError) {
-      logger.warn({ action: 'contest.events.year.load.failed', data: { leagueCode, contestId: contest.id, year }, err: yearEventsQuery.error }, 'Contest events page failed to load a season of events');
+    if (seasonEventsQuery.isError) {
+      logger.warn({ action: 'contest.events.season.load.failed', data: { leagueCode, contestId: contest.id, sportLeagueSeasonId: seasonId }, err: seasonEventsQuery.error }, 'Contest events page failed to load a Season of events');
     }
-  }, [contest.id, leagueCode, logger, year, yearEventsQuery.error, yearEventsQuery.isError]);
+  }, [contest.id, leagueCode, logger, seasonId, seasonEventsQuery.error, seasonEventsQuery.isError]);
   const contestEventIds = useMemo(
     () => new Set(contest.sportEvents.map((sportEvent) => sportEvent.sportEventId)),
     [contest.sportEvents],
   );
   // Once one of the contest's events has started, its events can be added to but not removed.
   const removalsLocked = contest.sportEvents.some((sportEvent) => hasContestEventStarted(sportEvent));
-  const years = useMemo(
-    () => [...new Set([firstEvent.eventYear, ...eventYears])].sort((a, b) => a - b),
-    [firstEvent.eventYear, eventYears],
+  const seasonEvents = useMemo(
+    () => [...(seasonEventsQuery.data ?? [])].sort(byStartDate),
+    [seasonEventsQuery.data],
   );
-  const yearEvents = useMemo(
-    () => [...(yearEventsQuery.data ?? [])].sort(byStartDate),
-    [yearEventsQuery.data],
-  );
-  const addable = yearEvents.filter((event) => !selected.has(event.id) && event.contestEligible);
+  const addable = seasonEvents.filter((event) => !selected.has(event.id) && event.contestEligible);
 
   // The chosen events in the order the contest will play them: by start, as the server keeps them.
   const chosen = useMemo(() => [...selected.values()].sort(byStartDate), [selected]);
-  const chosenThisYear = yearEvents.filter((event) => selected.has(event.id)).length;
+  const chosenThisSeason = seasonEvents.filter((event) => selected.has(event.id)).length;
   const { locale } = useDisplayPreferences();
 
   function toggle(event: SportEventDto) {
@@ -208,12 +207,12 @@ function ContestEventsForm({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <FormField className="w-40" label="Season">
           <Select
-            data-testid="contest-events-year"
-            onChange={(event) => setYear(Number(event.target.value))}
-            value={String(year)}
+            data-testid="contest-events-season"
+            onChange={(event) => setSeasonId(event.target.value)}
+            value={seasonId}
           >
-            {years.map((option) => (
-              <option key={option} value={option}>{option}</option>
+            {seasons.map((season) => (
+              <option key={season.id} value={season.id}>{season.name}</option>
             ))}
           </Select>
         </FormField>
@@ -230,21 +229,21 @@ function ContestEventsForm({
 
       <SectionCard
         testId="contest-events-options"
-        title={`${year} events`}
-        trailing={<span data-testid="contest-events-chosen-count">{`${formatNumber(chosenThisYear, locale)} chosen`}</span>}
+        title={`${seasonName} events`}
+        trailing={<span data-testid="contest-events-chosen-count">{`${formatNumber(chosenThisSeason, locale)} chosen`}</span>}
       >
         <QueryState
-          empty={`No events in ${year} yet.`}
-          error={`We couldn't load the ${year} events.`}
+          empty={`No events in ${seasonName} yet.`}
+          error={`We couldn't load the ${seasonName} events.`}
           isEmpty={(events) => events.length === 0}
-          loading={`Loading ${year} events...`}
-          query={yearEventsQuery}
+          loading={`Loading ${seasonName} events...`}
+          query={seasonEventsQuery}
           rows={3}
-          testId="contest-events-year"
+          testId="contest-events-season"
         >
           {() => (
             <SectionRows>
-              {yearEvents.map((event) => {
+              {seasonEvents.map((event) => {
                 const isChosen = selected.has(event.id);
                 const inContest = contestEventIds.has(event.id);
                 const locked = inContest && removalsLocked;
@@ -328,25 +327,14 @@ export function ContestEventsPage() {
   const firstEventQuery = useQuery(sportEventQueryOptions((contest ? firstContestEvent(contest)?.sportEventId : undefined) ?? ''));
   const firstEvent = firstEventQuery.data;
   const sportLeagueId = firstEvent?.sportLeagueId ?? null;
-  // The seasons the year picker offers, not every season's events (#1198).
-  const eventYearsQuery = useQuery({
-    queryKey: QueryKeys.sportEvents.yearsBySportLeague(sportLeagueId),
-    queryFn: async (): Promise<number[]> => {
-      const response = await listEventYears({ query: { sportLeagueId: sportLeagueId ?? '' } });
-      if (!response.data?.years) {
-        throwApiError(response.error, 'Sport event year list response is missing data.');
-      }
-      return response.data.years;
-    },
-    enabled: sportLeagueId !== null,
-    retry: false,
-  });
+  // The Seasons the picker offers, not every Season's events (#1198, #2003).
+  const seasonsQuery = useSportLeagueSeasonsQuery(sportLeagueId ?? '');
   const contestPath = buildLeagueAdminContestPath(leagueCode, contestId);
 
   if (!league) {
     return null;
   }
-  if (contestQuery.isLoading || firstEventQuery.isLoading || eventYearsQuery.isLoading) {
+  if (contestQuery.isLoading || firstEventQuery.isLoading || seasonsQuery.isLoading) {
     return <LoadingState body="Loading events..." testId="contest-events-loading" />;
   }
   // A missing contest or another league's, a final one, one that covers a single event (a draw, a bracket, squares), or a read that failed
@@ -355,7 +343,7 @@ export function ContestEventsPage() {
     !contest
     || contest.leagueId !== league.id
     || !firstEvent
-    || !eventYearsQuery.data
+    || !seasonsQuery.data
     || contest.status === ContestStatus.COMPLETED
     || coversOneEvent(contest.selectionType)
     || !league.isActive
@@ -368,7 +356,7 @@ export function ContestEventsPage() {
       firstEvent={firstEvent}
       key={contest.id}
       leagueCode={leagueCode}
-      eventYears={eventYearsQuery.data}
+      seasons={seasonsQuery.data}
       leagueId={league.id}
     />
   );

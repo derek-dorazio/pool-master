@@ -22,7 +22,7 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -91,7 +91,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
 
     const race = await createEvent({
       client: a,
-      body: { sportLeagueId: worldTour.id, eventYear: 2099, name: `Tour of the Harbour ${RUN}`, startDate: '2099-07-03T10:00:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(worldTour.id, 2099), name: `Tour of the Harbour ${RUN}`, startDate: '2099-07-03T10:00:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;

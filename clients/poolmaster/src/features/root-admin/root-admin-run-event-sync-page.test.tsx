@@ -4,11 +4,14 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminRunEventSyncPage } from './root-admin-run-event-sync-page';
+import { sportLeagueFixture } from './sport-test-fixtures';
 
 const {
   listProvidersMock,
   submitEventSyncMock,
   listEventsMock,
+  listSportLeaguesMock,
+  listSportLeagueSeasonsMock,
   mockLogger,
 } = vi.hoisted(() => {
   const mockLogger = {
@@ -25,6 +28,8 @@ const {
     listProvidersMock: vi.fn(),
     submitEventSyncMock: vi.fn(),
     listEventsMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
+    listSportLeagueSeasonsMock: vi.fn(),
     mockLogger,
   };
 });
@@ -33,7 +38,15 @@ bindApiMocks({
   listProviders: listProvidersMock,
   submitEventSync: submitEventSyncMock,
   listEvents: listEventsMock,
+  listSportLeagues: listSportLeaguesMock,
+  listSportLeagueSeasons: listSportLeagueSeasonsMock,
 });
+
+/** Each sport's one league, whose current Season is its 2026 one; every league has a 2025 and a 2026 Season. */
+const SEASONS = ['2026', '2025'].map((year) => ({
+  id: `season-${year}`, name: year, championshipYear: Number(year), startsAt: `${year}-01-01T00:00:00.000Z`, endsAt: `${year}-12-31T00:00:00.000Z`,
+  isCurrent: year === '2026', providerMappings: [], phases: [],
+}));
 
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
@@ -64,6 +77,10 @@ describe('RootAdminRunEventSyncPage', () => {
     listProvidersMock.mockReset();
     submitEventSyncMock.mockReset();
     listEventsMock.mockReset();
+    listSportLeaguesMock.mockImplementation(({ query }: { query: { sport: string } }) => Promise.resolve({
+      data: { sportLeagues: [sportLeagueFixture({ id: `league-${query.sport}`, sport: query.sport as never, currentSeasonId: 'season-2026' })] },
+    }));
+    listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons: SEASONS } });
 
     listProvidersMock.mockResolvedValue({
       data: {
@@ -119,12 +136,7 @@ describe('RootAdminRunEventSyncPage', () => {
     ).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(listEventsMock).toHaveBeenCalledWith({
-        query: {
-          sport: 'GOLF',
-          eventYear: new Date().getFullYear(),
-        },
-      });
+      expect(listEventsMock).toHaveBeenCalledWith({ query: { sportLeagueSeasonId: 'season-2026' } });
     });
 
     expect(screen.queryByPlaceholderText('golf-masters-2026')).not.toBeInTheDocument();
@@ -158,24 +170,22 @@ describe('RootAdminRunEventSyncPage', () => {
     ).toHaveTextContent('golf-masters-2026');
   });
 
-  it('reads only the chosen year of events, never every year of the sport, and reads the next year when the year changes', async () => {
-    const thisYear = new Date().getFullYear();
+  it('reads only the sport league\'s current Season of events, never every Season of the sport, and reads another Season when it is picked', async () => {
     renderPage();
 
     await waitFor(() => {
-      expect(listEventsMock).toHaveBeenCalledWith({ query: { sport: 'GOLF', eventYear: thisYear } });
+      expect(listEventsMock).toHaveBeenCalledWith({ query: { sportLeagueSeasonId: 'season-2026' } });
     });
-    expect(listEventsMock).not.toHaveBeenCalledWith({ query: { sport: 'GOLF' } });
+    expect(listSportLeaguesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'GOLF' } }));
+    expect(listSportLeagueSeasonsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'league-GOLF' } }));
 
-    fireEvent.change(screen.getByTestId('root-admin-event-sync-year'), {
-      target: { value: String(thisYear - 1) },
-    });
+    fireEvent.change(await screen.findByTestId('root-admin-event-sync-season'), { target: { value: 'season-2025' } });
 
     await waitFor(() => {
-      expect(listEventsMock).toHaveBeenCalledWith({ query: { sport: 'GOLF', eventYear: thisYear - 1 } });
+      expect(listEventsMock).toHaveBeenCalledWith({ query: { sportLeagueSeasonId: 'season-2025' } });
     });
-    const calls = listEventsMock.mock.calls as [{ query: { eventYear?: number } }][];
-    expect(calls.every(([options]) => typeof options.query.eventYear === 'number')).toBe(true);
+    const calls = listEventsMock.mock.calls as [{ query: { sportLeagueSeasonId?: string } }][];
+    expect(calls.every(([options]) => typeof options.query.sportLeagueSeasonId === 'string')).toBe(true);
   });
 
   it('offers only events linked to a provider event, names the sport by its display name, and explains the empty list when none is linked', async () => {
@@ -223,7 +233,8 @@ describe('RootAdminRunEventSyncPage', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(listEventsMock).toHaveBeenCalledWith({ query: { sport: 'BASKETBALL', eventYear: new Date().getFullYear() } });
+      expect(listSportLeaguesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'BASKETBALL' } }));
+      expect(listEventsMock).toHaveBeenCalledWith({ query: { sportLeagueSeasonId: 'season-2026' } });
     });
     expect(screen.getByTestId('root-admin-event-sync-sport')).toHaveValue('BASKETBALL');
   });

@@ -58,7 +58,8 @@ type JourneyState = {
   playerIds?: string[];
   eventId?: string;
   /** The tournament's year: its contest's season, so the year of the tour's cup (#841). */
-  eventYear?: number;
+  /** The championship year of the Season the tournament went in: the year its cup is in. */
+  championshipYear?: number;
   /** Field-entry ids in tier order: entry `i` sits alone in `tier-${i + 1}`. */
   fieldEntryIds?: string[];
   commissionerId?: string;
@@ -213,18 +214,17 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     });
     journey.playerIds = playerIds;
 
-    // plans/147 — a tournament is one year's edition on a tour; there is no season to create.
-    const { eventId, eventYear } = await test.step('create a tournament on the tour, in its start year', async () => {
+    // plans/147, #2003 — a tournament is one Season's edition on a tour, made in its current Season.
+    const { eventId, championshipYear } = await test.step('create a tournament on the tour, in its current Season', async () => {
       const now = new Date();
       const start = addDays(now, 7);
       start.setHours(8, 0, 0, 0);
       await page.goto('/manage/sports/golf/events/new');
       await page.getByTestId('root-admin-sport-event-create-tour').selectOption(tourId);
-      await page.getByTestId('root-admin-sport-event-create-event-year').fill(String(start.getFullYear()));
       await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
       await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
       await page.getByTestId('root-admin-sport-event-create-rounds').fill('4');
-      const created = await submitAndRead<{ event: { id: string } }>(
+      const created = await submitAndRead<{ event: { id: string; championshipYear: number } }>(
         page,
         'root-admin-sport-event-create-submit',
         'POST',
@@ -233,10 +233,10 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       const id = created.event.id;
       await expect(page).toHaveURL(new RegExp(`/manage/sports/golf/events/${id}/field$`));
       await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
-      return { eventId: id, eventYear: start.getFullYear() };
+      return { eventId: id, championshipYear: created.event.championshipYear };
     });
     journey.eventId = eventId;
-    journey.eventYear = eventYear;
+    journey.championshipYear = championshipYear;
 
     await test.step(`load the ${PLAYER_COUNT} players into the field in one submit`, async () => {
       await page.goto(`/manage/sports/golf/events/${eventId}/field`);
@@ -1127,7 +1127,7 @@ test('act 6: completing the event settles the contest and freezes its standing a
   });
 
   await test.step('the settled contest counts in its tour\'s cup: the Points race lists it as final, and the member\'s squad has points', async () => {
-    await page.goto(`/league/${run.leagueCode}/championships/${state.eventYear}/race/${state.tourId}`);
+    await page.goto(`/league/${run.leagueCode}/championships/${state.championshipYear}/race/${state.tourId}`);
     await expect(page.getByTestId('points-race')).toBeVisible();
     await expect(page.getByTestId(`cup-contest-${state.contestId}`)).toContainText('Final');
     await expect(page.getByTestId('cup-standings')).toBeVisible();
@@ -1373,7 +1373,6 @@ async function buildReleasedTournament(
 ): Promise<BuiltTournament> {
   await page.goto('/manage/sports/golf/events/new');
   await page.getByTestId('root-admin-sport-event-create-tour').selectOption(tourId);
-  await page.getByTestId('root-admin-sport-event-create-event-year').fill(String(start.getFullYear()));
   await page.getByTestId('root-admin-sport-event-create-name').fill(name);
   await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
   await page.getByTestId('root-admin-sport-event-create-rounds').fill('1');

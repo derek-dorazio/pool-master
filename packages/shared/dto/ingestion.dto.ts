@@ -314,7 +314,7 @@ export const ProviderSyncRunDetailDtoSchema = ProviderSyncRunDtoSchema.extend({
 export type ProviderSyncRunDetailDto = z.infer<typeof ProviderSyncRunDetailDtoSchema>;
 
 export const LeagueEventsSyncRequestSchema = z.object({
-  eventYear: z.number().int().min(1900).max(9999).optional().describe('The one event year to sync; omitted, this calendar year and the next, as the schedule syncs.'),
+  sportLeagueSeasonId: z.uuid().optional().describe('The one Season to sync (SportLeagueSeasonDto); omitted, the league\'s current Season and every later one, as the schedule syncs. 404 SPORT_LEAGUE_SEASON_NOT_FOUND for one that is not the league\'s.'),
 }).describe('A root admin\'s Sync now on a sport league\'s events.');
 export type LeagueEventsSyncRequest = z.infer<typeof LeagueEventsSyncRequestSchema>;
 

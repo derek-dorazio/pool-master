@@ -32,7 +32,7 @@ import {
   LeagueMembershipResponseSchema,
   SelectionStateResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
@@ -120,7 +120,7 @@ async function buildTwoTournamentContest(
   const a = admin.client;
 
   // --- A tour, its two tournaments, and the same seven golfers in each -----------------------
-  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, 'GOLF')), sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
+  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
   expect(tour.response?.status).toBe(201);
   const sportLeagueId = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);
@@ -137,7 +137,7 @@ async function buildTwoTournamentContest(
   const buildTournament = async (name: string, startDate: string) => {
     const event = await createEvent({
       client: a,
-      body: { sportLeagueId, eventYear: 2099, name: `${name} ${RUN}${tag}`, startDate, rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${name} ${RUN}${tag}`, startDate, rounds: 1, autoLifecycleEnabled: false },
     });
     expect(event.response?.status).toBe(201);
     const eventId = expectDefined(event.data).event.id;

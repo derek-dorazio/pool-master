@@ -4,7 +4,7 @@ import { errorMessage } from './error-message';
 
 /**
  * The nightly cleanup (#1175): once a day, each step deletes the rows its retention period no
- * longer keeps. Every server task runs this scheduler, and a run happens on one of them: the
+ * longer keeps, and the current-Season recompute (#2003) moves each sport league's current Season. Every server task runs this scheduler, and a run happens on one of them: the
  * task holding the cleanup's job lock (#1159).
  *
  * Steps belong to the module that owns their table, and the scheduler only sequences them. A
@@ -18,12 +18,16 @@ export type NightlyCleanupStepName =
   | 'syncRuns'
   | 'syncFindings'
   | 'abandonedDraftContests'
-  | 'backgroundJobs';
+  | 'backgroundJobs'
+  | 'currentSeasons';
 
 export interface NightlyCleanupStep {
   /** Names the step's count in the run's summary line. */
   readonly name: NightlyCleanupStepName;
-  /** Deletes what the step's retention period no longer keeps as of `now`; resolves to how many rows. */
+  /**
+   * Deletes what the step's retention period no longer keeps as of `now`, or for the current-Season
+   * recompute moves what the day changed; resolves to how many rows.
+   */
   purge(now: Date): Promise<number>;
 }
 

@@ -18137,21 +18137,24 @@
             "type": "string",
             "description": "Sport league name, e.g. \"PGA Tour\"."
           },
-          "currentEventYear": {
-            "description": "The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.",
+          "currentSeasonId": {
+            "description": "The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.",
             "type": [
-              "integer",
+              "string",
               "null"
             ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
+            "format": "uuid"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "The IANA time zone the sport league's calendar weeks break in, Monday to Sunday there, such as America/New_York. Set with the league's reference data."
           },
           "isActive": {
             "type": "boolean",
             "description": "Whether the sport league is in use; a read filter, not a write lock."
           },
           "selectedProviderMapping": {
-            "description": "The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced.",
+            "description": "The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for its current Season and every later one, each born DRAFT and linked for scores, skipping events already linked and series that already have that Season's edition. null when the league is not synced.",
             "type": [
               "object",
               "null"
@@ -18338,7 +18341,8 @@
           "sportId",
           "sport",
           "name",
-          "currentEventYear",
+          "currentSeasonId",
+          "timeZone",
           "isActive",
           "selectedProviderMapping",
           "autoReleaseDaysBeforeStart",
@@ -18428,21 +18432,24 @@
                   "type": "string",
                   "description": "Sport league name, e.g. \"PGA Tour\"."
                 },
-                "currentEventYear": {
-                  "description": "The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.",
+                "currentSeasonId": {
+                  "description": "The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.",
                   "type": [
-                    "integer",
+                    "string",
                     "null"
                   ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
+                  "format": "uuid"
+                },
+                "timeZone": {
+                  "type": "string",
+                  "description": "The IANA time zone the sport league's calendar weeks break in, Monday to Sunday there, such as America/New_York. Set with the league's reference data."
                 },
                 "isActive": {
                   "type": "boolean",
                   "description": "Whether the sport league is in use; a read filter, not a write lock."
                 },
                 "selectedProviderMapping": {
-                  "description": "The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced.",
+                  "description": "The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for its current Season and every later one, each born DRAFT and linked for scores, skipping events already linked and series that already have that Season's edition. null when the league is not synced.",
                   "type": [
                     "object",
                     "null"
@@ -18629,7 +18636,8 @@
                 "sportId",
                 "sport",
                 "name",
-                "currentEventYear",
+                "currentSeasonId",
+                "timeZone",
                 "isActive",
                 "selectedProviderMapping",
                 "autoReleaseDaysBeforeStart",
@@ -18698,21 +18706,24 @@
                 "type": "string",
                 "description": "Sport league name, e.g. \"PGA Tour\"."
               },
-              "currentEventYear": {
-                "description": "The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.",
+              "currentSeasonId": {
+                "description": "The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.",
                 "type": [
-                  "integer",
+                  "string",
                   "null"
                 ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
+                "format": "uuid"
+              },
+              "timeZone": {
+                "type": "string",
+                "description": "The IANA time zone the sport league's calendar weeks break in, Monday to Sunday there, such as America/New_York. Set with the league's reference data."
               },
               "isActive": {
                 "type": "boolean",
                 "description": "Whether the sport league is in use; a read filter, not a write lock."
               },
               "selectedProviderMapping": {
-                "description": "The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year's edition. null when the league is not synced.",
+                "description": "The provider league whose sync creates and keeps the sport league's events (ADR 0011): a scheduled pass imports that provider league's events for its current Season and every later one, each born DRAFT and linked for scores, skipping events already linked and series that already have that Season's edition. null when the league is not synced.",
                 "type": [
                   "object",
                   "null"
@@ -18899,7 +18910,8 @@
               "sportId",
               "sport",
               "name",
-              "currentEventYear",
+              "currentSeasonId",
+              "timeZone",
               "isActive",
               "selectedProviderMapping",
               "autoReleaseDaysBeforeStart",
@@ -18971,16 +18983,23 @@
             "type": "string",
             "format": "uuid",
             "description": "The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist."
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know."
           }
         },
         "required": [
           "sport",
           "name",
           "platformTierProfileId",
-          "platformPricingProfileId"
+          "platformPricingProfileId",
+          "timeZone"
         ],
         "additionalProperties": false,
-        "description": "A new sport league."
+        "description": "A new sport league. It has no Season until a migration adds one."
       },
       "UpdateSportLeagueRequest": {
         "type": "object",
@@ -19008,12 +19027,6 @@
               "null"
             ],
             "format": "uuid"
-          },
-          "currentEventYear": {
-            "description": "Set as current: 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in.",
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
           },
           "platformTierProfileId": {
             "description": "Names another tier profile. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.",
@@ -20103,10 +20116,10 @@
           "name": {
             "type": "string"
           },
-          "eventYear": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
+          "sportLeagueSeasonId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Season it is played in (SportLeagueSeasonDto)."
           },
           "startDate": {
             "type": "string",
@@ -20536,7 +20549,7 @@
         "required": [
           "id",
           "name",
-          "eventYear",
+          "sportLeagueSeasonId",
           "startDate",
           "endDate",
           "status",
@@ -20566,10 +20579,10 @@
                 "name": {
                   "type": "string"
                 },
-                "eventYear": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
+                "sportLeagueSeasonId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Season it is played in (SportLeagueSeasonDto)."
                 },
                 "startDate": {
                   "type": "string",
@@ -20999,7 +21012,7 @@
               "required": [
                 "id",
                 "name",
-                "eventYear",
+                "sportLeagueSeasonId",
                 "startDate",
                 "endDate",
                 "status",
@@ -22898,6 +22911,816 @@
         "additionalProperties": false,
         "description": "A sport league's phase and slot definitions, set by migration."
       },
+      "SportLeagueSeasonProviderMappingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerName": {
+            "type": "string"
+          },
+          "providerLeagueCode": {
+            "type": "string",
+            "description": "The provider's own code for the league, such as nfl."
+          },
+          "providerSeasonId": {
+            "type": "string",
+            "description": "The provider's own id for the Season, as the sync asks the feed for it."
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "providerName",
+          "providerLeagueCode",
+          "providerSeasonId"
+        ],
+        "additionalProperties": false,
+        "description": "A provider's id for one Season."
+      },
+      "SportLeagueSeasonSlotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slotDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+          },
+          "key": {
+            "type": "string",
+            "description": "Its definition's key."
+          },
+          "slotKind": {
+            "type": "string",
+            "enum": [
+              "WEEK",
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "ROUND_OF_16",
+              "QUARTERFINAL",
+              "SEMIFINAL",
+              "THIRD_PLACE",
+              "FINAL",
+              "TOURNAMENT"
+            ]
+          },
+          "weekNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "description": "Its definition's proper name; null when screens show the word for its kind.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startsAt": {
+            "description": "The earliest start of its Games; null until the sync has matched one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "description": "The latest end of its Games; null until the sync has matched one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED"
+            ]
+          },
+          "seriesFormat": {
+            "type": "string",
+            "enum": [
+              "SINGLE_GAME",
+              "BEST_OF",
+              "AGGREGATE"
+            ],
+            "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+          },
+          "seriesGames": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "pairing": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "RESEEDED"
+            ]
+          },
+          "isTestData": {
+            "type": "boolean",
+            "description": "A test slot: QA only, never read or written by the sync."
+          },
+          "label": {
+            "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slotDefinitionId",
+          "key",
+          "slotKind",
+          "weekNumber",
+          "name",
+          "startsAt",
+          "endsAt",
+          "status",
+          "seriesFormat",
+          "seriesGames",
+          "pairing",
+          "isTestData",
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "One slot of one Season."
+      },
+      "SportLeagueSeasonPhaseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRESEASON",
+              "REGULAR",
+              "POSTSEASON"
+            ]
+          },
+          "isSynced": {
+            "type": "boolean",
+            "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "slotDefinitionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "Its definition's key."
+                },
+                "slotKind": {
+                  "type": "string",
+                  "enum": [
+                    "WEEK",
+                    "PLAY_IN",
+                    "ROUND_OF_64",
+                    "ROUND_OF_32",
+                    "ROUND_OF_16",
+                    "QUARTERFINAL",
+                    "SEMIFINAL",
+                    "THIRD_PLACE",
+                    "FINAL",
+                    "TOURNAMENT"
+                  ]
+                },
+                "weekNumber": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "description": "Its definition's proper name; null when screens show the word for its kind.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "startsAt": {
+                  "description": "The earliest start of its Games; null until the sync has matched one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "description": "The latest end of its Games; null until the sync has matched one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED"
+                  ]
+                },
+                "seriesFormat": {
+                  "type": "string",
+                  "enum": [
+                    "SINGLE_GAME",
+                    "BEST_OF",
+                    "AGGREGATE"
+                  ],
+                  "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+                },
+                "seriesGames": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "pairing": {
+                  "type": "string",
+                  "enum": [
+                    "FIXED",
+                    "RESEEDED"
+                  ]
+                },
+                "isTestData": {
+                  "type": "boolean",
+                  "description": "A test slot: QA only, never read or written by the sync."
+                },
+                "label": {
+                  "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "slotDefinitionId",
+                "key",
+                "slotKind",
+                "weekNumber",
+                "name",
+                "startsAt",
+                "endsAt",
+                "status",
+                "seriesFormat",
+                "seriesGames",
+                "pairing",
+                "isTestData",
+                "label"
+              ],
+              "additionalProperties": false,
+              "description": "One slot of one Season."
+            },
+            "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
+          }
+        },
+        "required": [
+          "id",
+          "phase",
+          "isSynced",
+          "slots"
+        ],
+        "additionalProperties": false,
+        "description": "One phase of one Season."
+      },
+      "SportLeagueSeasonDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "What screens call the Season, such as 2025-26 or 2026."
+          },
+          "championshipYear": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Its span's first moment, in the league's time zone."
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Its span's last moment."
+          },
+          "isCurrent": {
+            "type": "boolean",
+            "description": "Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId)."
+          },
+          "providerMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "providerId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "providerName": {
+                  "type": "string"
+                },
+                "providerLeagueCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the league, such as nfl."
+                },
+                "providerSeasonId": {
+                  "type": "string",
+                  "description": "The provider's own id for the Season, as the sync asks the feed for it."
+                }
+              },
+              "required": [
+                "id",
+                "providerId",
+                "providerName",
+                "providerLeagueCode",
+                "providerSeasonId"
+              ],
+              "additionalProperties": false,
+              "description": "A provider's id for one Season."
+            },
+            "description": "Each provider's id for it, by provider name."
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "PRESEASON",
+                    "REGULAR",
+                    "POSTSEASON"
+                  ]
+                },
+                "isSynced": {
+                  "type": "boolean",
+                  "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                },
+                "slots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "slotDefinitionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "Its definition's key."
+                      },
+                      "slotKind": {
+                        "type": "string",
+                        "enum": [
+                          "WEEK",
+                          "PLAY_IN",
+                          "ROUND_OF_64",
+                          "ROUND_OF_32",
+                          "ROUND_OF_16",
+                          "QUARTERFINAL",
+                          "SEMIFINAL",
+                          "THIRD_PLACE",
+                          "FINAL",
+                          "TOURNAMENT"
+                        ]
+                      },
+                      "weekNumber": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "name": {
+                        "description": "Its definition's proper name; null when screens show the word for its kind.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "startsAt": {
+                        "description": "The earliest start of its Games; null until the sync has matched one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "description": "The latest end of its Games; null until the sync has matched one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "SCHEDULED",
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "CANCELLED"
+                        ]
+                      },
+                      "seriesFormat": {
+                        "type": "string",
+                        "enum": [
+                          "SINGLE_GAME",
+                          "BEST_OF",
+                          "AGGREGATE"
+                        ],
+                        "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+                      },
+                      "seriesGames": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "pairing": {
+                        "type": "string",
+                        "enum": [
+                          "FIXED",
+                          "RESEEDED"
+                        ]
+                      },
+                      "isTestData": {
+                        "type": "boolean",
+                        "description": "A test slot: QA only, never read or written by the sync."
+                      },
+                      "label": {
+                        "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "slotDefinitionId",
+                      "key",
+                      "slotKind",
+                      "weekNumber",
+                      "name",
+                      "startsAt",
+                      "endsAt",
+                      "status",
+                      "seriesFormat",
+                      "seriesGames",
+                      "pairing",
+                      "isTestData",
+                      "label"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One slot of one Season."
+                  },
+                  "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
+                }
+              },
+              "required": [
+                "id",
+                "phase",
+                "isSynced",
+                "slots"
+              ],
+              "additionalProperties": false,
+              "description": "One phase of one Season."
+            },
+            "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "championshipYear",
+          "startsAt",
+          "endsAt",
+          "isCurrent",
+          "providerMappings",
+          "phases"
+        ],
+        "additionalProperties": false,
+        "description": "One Season of a sport league, added by migration."
+      },
+      "SportLeagueSeasonListResponse": {
+        "type": "object",
+        "properties": {
+          "seasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "What screens call the Season, such as 2025-26 or 2026."
+                },
+                "championshipYear": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The year the Season is named for: NFL 2025 includes the Super Bowl played in February 2026; a Season split over New Year (NBA 2025-26) is its end year; a calendar-year league's is its year. Set by migration."
+                },
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Its span's first moment, in the league's time zone."
+                },
+                "endsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Its span's last moment."
+                },
+                "isCurrent": {
+                  "type": "boolean",
+                  "description": "Whether it is the sport league's current Season (SportLeagueDto.currentSeasonId)."
+                },
+                "providerMappings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "providerId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "providerName": {
+                        "type": "string"
+                      },
+                      "providerLeagueCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the league, such as nfl."
+                      },
+                      "providerSeasonId": {
+                        "type": "string",
+                        "description": "The provider's own id for the Season, as the sync asks the feed for it."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "providerId",
+                      "providerName",
+                      "providerLeagueCode",
+                      "providerSeasonId"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A provider's id for one Season."
+                  },
+                  "description": "Each provider's id for it, by provider name."
+                },
+                "phases": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "phase": {
+                        "type": "string",
+                        "enum": [
+                          "PRESEASON",
+                          "REGULAR",
+                          "POSTSEASON"
+                        ]
+                      },
+                      "isSynced": {
+                        "type": "boolean",
+                        "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                      },
+                      "slots": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "slotDefinitionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+                            },
+                            "key": {
+                              "type": "string",
+                              "description": "Its definition's key."
+                            },
+                            "slotKind": {
+                              "type": "string",
+                              "enum": [
+                                "WEEK",
+                                "PLAY_IN",
+                                "ROUND_OF_64",
+                                "ROUND_OF_32",
+                                "ROUND_OF_16",
+                                "QUARTERFINAL",
+                                "SEMIFINAL",
+                                "THIRD_PLACE",
+                                "FINAL",
+                                "TOURNAMENT"
+                              ]
+                            },
+                            "weekNumber": {
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "maximum": 9007199254740991
+                            },
+                            "name": {
+                              "description": "Its definition's proper name; null when screens show the word for its kind.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "startsAt": {
+                              "description": "The earliest start of its Games; null until the sync has matched one.",
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "endsAt": {
+                              "description": "The latest end of its Games; null until the sync has matched one.",
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "date-time"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "SCHEDULED",
+                                "IN_PROGRESS",
+                                "COMPLETED",
+                                "CANCELLED"
+                              ]
+                            },
+                            "seriesFormat": {
+                              "type": "string",
+                              "enum": [
+                                "SINGLE_GAME",
+                                "BEST_OF",
+                                "AGGREGATE"
+                              ],
+                              "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+                            },
+                            "seriesGames": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991
+                            },
+                            "pairing": {
+                              "type": "string",
+                              "enum": [
+                                "FIXED",
+                                "RESEEDED"
+                              ]
+                            },
+                            "isTestData": {
+                              "type": "boolean",
+                              "description": "A test slot: QA only, never read or written by the sync."
+                            },
+                            "label": {
+                              "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "slotDefinitionId",
+                            "key",
+                            "slotKind",
+                            "weekNumber",
+                            "name",
+                            "startsAt",
+                            "endsAt",
+                            "status",
+                            "seriesFormat",
+                            "seriesGames",
+                            "pairing",
+                            "isTestData",
+                            "label"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One slot of one Season."
+                        },
+                        "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "phase",
+                      "isSynced",
+                      "slots"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One phase of one Season."
+                  },
+                  "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "championshipYear",
+                "startsAt",
+                "endsAt",
+                "isCurrent",
+                "providerMappings",
+                "phases"
+              ],
+              "additionalProperties": false,
+              "description": "One Season of a sport league, added by migration."
+            },
+            "description": "Every Season of the sport league, latest first, never paged."
+          }
+        },
+        "required": [
+          "seasons"
+        ],
+        "additionalProperties": false,
+        "description": "A sport league's Seasons."
+      },
       "SportLeagueParticipantRankingsRequest": {
         "type": "object",
         "properties": {
@@ -23733,13 +24556,18 @@
           "eventSeriesId": {
             "type": "string",
             "format": "uuid",
-            "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
+            "description": "The recurring tournament (event series) this is one edition of. One edition of a series per Season."
           },
-          "eventYear": {
+          "sportLeagueSeasonId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Season the event is played in (SportLeagueSeasonDto)."
+          },
+          "championshipYear": {
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
+            "description": "The year the event's Season is named for: 2025 for the NFL 2025 Season's Super Bowl, played in February 2026; 2026 for an NBA 2025-26 game. Read through the Season."
           },
           "sportLeagueId": {
             "type": "string",
@@ -24160,7 +24988,8 @@
           "contestOpenings",
           "tiersLocked",
           "eventSeriesId",
-          "eventYear",
+          "sportLeagueSeasonId",
+          "championshipYear",
           "sportLeagueId",
           "participantType",
           "scoringFamily",
@@ -24218,11 +25047,10 @@
             "type": "string",
             "format": "uuid"
           },
-          "eventYear": {
-            "description": "Only editions branded with this year.",
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
+          "sportLeagueSeasonId": {
+            "description": "Only events of this Season (SportLeagueSeasonDto).",
+            "type": "string",
+            "format": "uuid"
           },
           "q": {
             "description": "Case-insensitive substring of the event name.",
@@ -24230,7 +25058,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Filters for the sport-event list. At least one of sport, sportLeagueId and eventYear is required."
+        "description": "Filters for the sport-event list. At least one of sport, sportLeagueId and sportLeagueSeasonId is required."
       },
       "SportEventListResponse": {
         "type": "object",
@@ -24538,13 +25366,18 @@
                 "eventSeriesId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
+                  "description": "The recurring tournament (event series) this is one edition of. One edition of a series per Season."
                 },
-                "eventYear": {
+                "sportLeagueSeasonId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Season the event is played in (SportLeagueSeasonDto)."
+                },
+                "championshipYear": {
                   "type": "integer",
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991,
-                  "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
+                  "description": "The year the event's Season is named for: 2025 for the NFL 2025 Season's Super Bowl, played in February 2026; 2026 for an NBA 2025-26 game. Read through the Season."
                 },
                 "sportLeagueId": {
                   "type": "string",
@@ -24965,7 +25798,8 @@
                 "contestOpenings",
                 "tiersLocked",
                 "eventSeriesId",
-                "eventYear",
+                "sportLeagueSeasonId",
+                "championshipYear",
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
@@ -24991,40 +25825,6 @@
         ],
         "additionalProperties": false,
         "description": "Sport events matching the filters."
-      },
-      "SportEventYearListQuery": {
-        "type": "object",
-        "properties": {
-          "sportLeagueId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The sport league whose event years are listed."
-          }
-        },
-        "required": [
-          "sportLeagueId"
-        ],
-        "additionalProperties": false,
-        "description": "The sport league to list the event years of."
-      },
-      "SportEventYearListResponse": {
-        "type": "object",
-        "properties": {
-          "years": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
-            },
-            "description": "Every event year the sport league has events in, earliest first. A year with only DRAFT events is listed for a root admin only."
-          }
-        },
-        "required": [
-          "years"
-        ],
-        "additionalProperties": false,
-        "description": "The event years of one sport league: what a year picker offers, without reading every event."
       },
       "SportEventResponse": {
         "type": "object",
@@ -25330,13 +26130,18 @@
               "eventSeriesId": {
                 "type": "string",
                 "format": "uuid",
-                "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
+                "description": "The recurring tournament (event series) this is one edition of. One edition of a series per Season."
               },
-              "eventYear": {
+              "sportLeagueSeasonId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The Season the event is played in (SportLeagueSeasonDto)."
+              },
+              "championshipYear": {
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
+                "description": "The year the event's Season is named for: 2025 for the NFL 2025 Season's Super Bowl, played in February 2026; 2026 for an NBA 2025-26 game. Read through the Season."
               },
               "sportLeagueId": {
                 "type": "string",
@@ -25757,7 +26562,8 @@
               "contestOpenings",
               "tiersLocked",
               "eventSeriesId",
-              "eventYear",
+              "sportLeagueSeasonId",
+              "championshipYear",
               "sportLeagueId",
               "participantType",
               "scoringFamily",
@@ -25788,13 +26594,7 @@
           "sportLeagueId": {
             "type": "string",
             "format": "uuid",
-            "description": "The sport league the event runs on; it decides the sport. The event's series is found or created in it by name."
-          },
-          "eventYear": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
+            "description": "The sport league the event runs on; it decides the sport. The event's series is found or created in it by name, and the event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
           },
           "name": {
             "type": "string",
@@ -25828,7 +26628,6 @@
         },
         "required": [
           "sportLeagueId",
-          "eventYear",
           "name",
           "startDate"
         ],
@@ -25841,13 +26640,7 @@
           "sportLeagueId": {
             "type": "string",
             "format": "uuid",
-            "description": "The sport league the event runs on; it decides the sport."
-          },
-          "eventYear": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "The year the edition is branded with. 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
+            "description": "The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it."
           },
           "providerId": {
             "type": "string",
@@ -25867,868 +26660,11 @@
         },
         "required": [
           "sportLeagueId",
-          "eventYear",
           "providerId",
           "externalId"
         ],
         "additionalProperties": false,
         "description": "An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched."
-      },
-      "CloneSportEventYearRequest": {
-        "type": "object",
-        "properties": {
-          "sportLeagueId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The sport league whose calendar is cloned."
-          },
-          "eventYear": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "The year cloned from. 422 EVENT_YEAR_HAS_NO_EVENTS when the sport league has no events in it."
-          },
-          "targetYear": {
-            "description": "The year cloned to; defaults to eventYear + 1. 409 EVENT_YEAR_NOT_EMPTY when the sport league already has events in it.",
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          }
-        },
-        "required": [
-          "sportLeagueId",
-          "eventYear"
-        ],
-        "additionalProperties": false,
-        "description": "Re-creates each of a sport league's events in one year as a fresh event in another, dates shifted by the year difference and in the same series. Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change."
-      },
-      "ImportSportEventYearFromProviderRequest": {
-        "type": "object",
-        "properties": {
-          "sportLeagueId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The sport league. Its events are the provider league its selected provider mapping names; 422 SPORT_LEAGUE_NOT_SYNCED when it has none."
-          },
-          "eventYear": {
-            "type": "integer",
-            "minimum": 2000,
-            "maximum": 2100,
-            "description": "Provider events starting in this calendar year (UTC) are imported, as editions branded with it."
-          },
-          "providerId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "sportLeagueId",
-          "eventYear",
-          "providerId"
-        ],
-        "additionalProperties": false,
-        "description": "Creates each of the provider's events for a tour and year that PoolMaster does not have yet, each linked to its provider event for scores (SCORES_ONLY). Fields are not loaded."
-      },
-      "ImportSportEventSkipReasonDto": {
-        "type": "string",
-        "enum": [
-          "ALREADY_LINKED",
-          "ALREADY_STARTED",
-          "EDITION_EXISTS"
-        ],
-        "description": "ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
-      },
-      "ImportSportEventYearFromProviderResponse": {
-        "type": "object",
-        "properties": {
-          "created": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Sport-event identifier."
-                },
-                "externalId": {
-                  "type": "string",
-                  "description": "Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)"
-                },
-                "providerId": {
-                  "type": "string",
-                  "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
-                },
-                "sport": {
-                  "type": "string",
-                  "enum": [
-                    "GOLF",
-                    "HORSE_RACING",
-                    "AUTO_RACING",
-                    "CYCLING",
-                    "RUNNING",
-                    "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
-                    "HOCKEY",
-                    "BASEBALL",
-                    "SOCCER",
-                    "TENNIS"
-                  ],
-                  "description": "Sport the event belongs to."
-                },
-                "name": {
-                  "type": "string",
-                  "description": "Event name shown in contest and event selectors."
-                },
-                "venue": {
-                  "description": "Venue name when known; null otherwise.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "location": {
-                  "description": "Human-readable location when known; null otherwise.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "DRAFT",
-                    "SCHEDULED",
-                    "IN_PROGRESS",
-                    "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
-                  ],
-                  "description": "Event lifecycle status."
-                },
-                "startDate": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "Scheduled or actual start time."
-                },
-                "endDate": {
-                  "description": "Scheduled or actual end time when known; null otherwise.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "format": "date-time"
-                },
-                "rounds": {
-                  "description": "Number of rounds when the format has them; null otherwise.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "roundsPar": {
-                  "description": "Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "participantCount": {
-                  "description": "Field size the provider reports, when it reports one; null otherwise.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "loadedParticipantCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Number of event participants currently persisted for the event."
-                },
-                "pricing": {
-                  "description": "The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "salaryCap": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 10000000,
-                      "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                    },
-                    "unit": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 10000000,
-                      "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                    },
-                    "topSharePercent": {
-                      "type": "number",
-                      "minimum": 0.1,
-                      "maximum": 100,
-                      "description": "The best seed's price, as a percentage of the salary cap."
-                    },
-                    "floorSharePercent": {
-                      "type": "number",
-                      "minimum": 0.1,
-                      "maximum": 100,
-                      "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                    },
-                    "steepness": {
-                      "type": "number",
-                      "minimum": 0.1,
-                      "maximum": 10,
-                      "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                    },
-                    "profileName": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 50,
-                      "description": "The profile the values started from. The admin may have changed any value before assigning.",
-                      "x-transform": [
-                        "trim"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "salaryCap",
-                    "unit",
-                    "topSharePercent",
-                    "floorSharePercent",
-                    "steepness",
-                    "profileName"
-                  ],
-                  "additionalProperties": false
-                },
-                "tierLayout": {
-                  "description": "The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "tierCount": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 20,
-                      "description": "How many tiers a new event starts with."
-                    },
-                    "tierSize": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 500,
-                      "description": "How many participants auto-tiering puts in each tier before the last."
-                    },
-                    "lastTier": {
-                      "type": "string",
-                      "enum": [
-                        "ALL_REMAINING",
-                        "CAPPED"
-                      ],
-                      "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
-                    },
-                    "lastTierMax": {
-                      "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": 1,
-                      "maximum": 500
-                    },
-                    "profileName": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 50,
-                      "description": "The tier profile the layout came from.",
-                      "x-transform": [
-                        "trim"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "tierCount",
-                    "tierSize",
-                    "lastTier",
-                    "lastTierMax",
-                    "profileName"
-                  ],
-                  "additionalProperties": false
-                },
-                "readinessStatus": {
-                  "type": "string",
-                  "enum": [
-                    "NOT_RELEASED",
-                    "PENDING_FIELD",
-                    "CONTEST_ELIGIBLE",
-                    "EVENT_STARTED"
-                  ],
-                  "description": "Contest-setup readiness right now."
-                },
-                "readinessReasons": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "EVENT_NOT_RELEASED",
-                      "FIELD_NOT_LOADED",
-                      "EVENT_STARTED"
-                    ]
-                  },
-                  "description": "Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started."
-                },
-                "contestEligible": {
-                  "type": "boolean",
-                  "description": "Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started."
-                },
-                "contestOpenings": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "selectionType": {
-                        "type": "string",
-                        "enum": [
-                          "TIERED",
-                          "BUDGET_PICK",
-                          "RANDOM_DRAW",
-                          "PICK_EM",
-                          "BRACKET",
-                          "SURVIVOR",
-                          "SQUARES"
-                        ],
-                        "description": "A way to pick that the event's sport league offers."
-                      },
-                      "opening": {
-                        "type": "string",
-                        "enum": [
-                          "OPEN",
-                          "NOT_YET",
-                          "CLOSED"
-                        ],
-                        "description": "OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to a second-chance bracket with a later round left to start at, and to squares, whose cutoff is its own game's kickoff; Create contest checks the chosen round or game itself."
-                      },
-                      "startsAtRounds": {
-                        "type": "array",
-                        "items": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "description": "For BRACKET, the rounds a bracket can start at: [1] (the full bracket) before the event starts, else each later round up to the one before the final, as a second-chance bracket. Empty for every other selection type."
-                      }
-                    },
-                    "required": [
-                      "selectionType",
-                      "opening",
-                      "startsAtRounds"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Whether one selection type can start a contest on the event now."
-                  },
-                  "description": "One row per selection type the event's sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN."
-                },
-                "tiersLocked": {
-                  "type": "boolean",
-                  "description": "Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED."
-                },
-                "eventSeriesId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The recurring tournament (event series) this is one edition of — the event's only parent."
-                },
-                "eventYear": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "The year this edition is branded with (\"the 2026 Masters\"), which is not always the year startDate falls in. One edition of a series per year."
-                },
-                "sportLeagueId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
-                },
-                "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
-                },
-                "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "enum": [
-                    "STROKE_PLAY",
-                    "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
-                },
-                "syncScope": {
-                  "type": "string",
-                  "enum": [
-                    "NONE",
-                    "SCORES_ONLY"
-                  ],
-                  "description": "How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)"
-                },
-                "providerSynced": {
-                  "type": "boolean",
-                  "description": "Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)"
-                },
-                "autoLifecycleEnabled": {
-                  "type": "boolean",
-                  "description": "Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)"
-                },
-                "tierCount": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991,
-                  "description": "Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier."
-                },
-                "releaseChecks": {
-                  "description": "A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released.",
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "items": {
-                    "description": "One ready check of a draft event's release, keyed by which check it is.",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "NOT_STARTED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "NOT_STARTED: the event's start, which must still be ahead. 409 SPORT_EVENT_ALREADY_STARTED from a release once it is not."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "ROUNDS_SCHEDULED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "ROUNDS_SCHEDULED: how many rounds the event has scheduled; at least one passes."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "FIELD_LOADED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "FIELD_LOADED: how many participants are in the field; at least one passes."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "TIERS_ASSIGNED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "TIERS_ASSIGNED: how many active field participants have no tier; 0 passes."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "TIERS_FILLED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "TIERS_FILLED: the labels of the tiers no active participant is in, in tier order; none passes, since no entry could pick from an empty tier."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "PRICES_ASSIGNED"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "description": "PRICES_ASSIGNED: how many active field participants have no price, or null while prices have not been assigned; 0 passes.",
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "BRACKET_COMPLETE"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "BRACKET_COMPLETE, only on an event played as matches: what its bracket still lacks, in words; none passes."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "key": {
-                            "type": "string",
-                            "enum": [
-                              "CONTEST_SETUPS_ON"
-                            ]
-                          },
-                          "passed": {
-                            "type": "boolean",
-                            "description": "Whether the check passed."
-                          },
-                          "value": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes."
-                          }
-                        },
-                        "required": [
-                          "key",
-                          "passed",
-                          "value"
-                        ],
-                        "additionalProperties": false
-                      }
-                    ]
-                  }
-                },
-                "lastAutoReleaseCheck": {
-                  "description": "The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. (Admin-only: operational detail no member surface reads.)",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "checkedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "When the hourly release sweep last judged the event."
-                    },
-                    "outcome": {
-                      "type": "string",
-                      "enum": [
-                        "RELEASED",
-                        "HELD"
-                      ],
-                      "description": "RELEASED: every ready check passed and the event was released. HELD: a check failed and it stays a draft."
-                    },
-                    "failedChecks": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "NOT_STARTED",
-                          "ROUNDS_SCHEDULED",
-                          "FIELD_LOADED",
-                          "TIERS_ASSIGNED",
-                          "TIERS_FILLED",
-                          "PRICES_ASSIGNED",
-                          "BRACKET_COMPLETE",
-                          "CONTEST_SETUPS_ON"
-                        ]
-                      },
-                      "description": "The ready checks that held it, in check order; empty when RELEASED."
-                    }
-                  },
-                  "required": [
-                    "checkedAt",
-                    "outcome",
-                    "failedChecks"
-                  ],
-                  "additionalProperties": false
-                },
-                "adminCounts": {
-                  "description": "The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.",
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "untieredParticipantCount": {
-                      "type": "integer",
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991,
-                      "description": "Active event participants with no tier. A DRAFT event can't be released while any remain."
-                    },
-                    "unpricedParticipantCount": {
-                      "type": "integer",
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991,
-                      "description": "Active event participants with no price. A DRAFT event can't be released while any remain."
-                    },
-                    "emptyTierLabels": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "description": "Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them."
-                    },
-                    "contestCount": {
-                      "type": "integer",
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991,
-                      "description": "Contests run on the event, across every league; an event with any cannot be deleted."
-                    }
-                  },
-                  "required": [
-                    "untieredParticipantCount",
-                    "unpricedParticipantCount",
-                    "emptyTierLabels",
-                    "contestCount"
-                  ],
-                  "additionalProperties": false
-                },
-                "allowedTransitions": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "DRAFT",
-                      "SCHEDULED",
-                      "IN_PROGRESS",
-                      "COMPLETED",
-                      "CANCELLED",
-                      "POSTPONED"
-                    ]
-                  },
-                  "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
-                },
-                "createdAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "When the event row was created."
-                },
-                "updatedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "When the event row was last updated."
-                }
-              },
-              "required": [
-                "id",
-                "externalId",
-                "providerId",
-                "sport",
-                "name",
-                "venue",
-                "location",
-                "status",
-                "startDate",
-                "endDate",
-                "rounds",
-                "roundsPar",
-                "participantCount",
-                "loadedParticipantCount",
-                "pricing",
-                "tierLayout",
-                "readinessStatus",
-                "readinessReasons",
-                "contestEligible",
-                "contestOpenings",
-                "tiersLocked",
-                "eventSeriesId",
-                "eventYear",
-                "sportLeagueId",
-                "participantType",
-                "scoringFamily",
-                "syncScope",
-                "providerSynced",
-                "autoLifecycleEnabled",
-                "tierCount",
-                "releaseChecks",
-                "lastAutoReleaseCheck",
-                "adminCounts",
-                "allowedTransitions",
-                "createdAt",
-                "updatedAt"
-              ],
-              "additionalProperties": false,
-              "description": "A real-world event a contest can be run on — a golf tournament, a race, a match."
-            },
-            "description": "The events created, in provider order."
-          },
-          "skipped": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "externalId": {
-                  "type": "string",
-                  "description": "The provider event id."
-                },
-                "name": {
-                  "type": "string"
-                },
-                "reason": {
-                  "type": "string",
-                  "enum": [
-                    "ALREADY_LINKED",
-                    "ALREADY_STARTED",
-                    "EDITION_EXISTS"
-                  ],
-                  "description": "ALREADY_LINKED: an event is already linked to this provider event. ALREADY_STARTED: the provider event's start has passed, and an event is created from a provider only before it starts. EDITION_EXISTS: the series already has an edition that year (link it from its page if it should score)."
-                }
-              },
-              "required": [
-                "externalId",
-                "name",
-                "reason"
-              ],
-              "additionalProperties": false
-            },
-            "description": "Provider events left alone because PoolMaster already has them, or because they already started."
-          }
-        },
-        "required": [
-          "created",
-          "skipped"
-        ],
-        "additionalProperties": false,
-        "description": "What an event-year import created and skipped. Running it again creates nothing new."
       },
       "UpdateSportEventRequest": {
         "type": "object",
@@ -54279,11 +54215,11 @@
             "type": "string",
             "description": "The edition's name, such as \"Conference Championships\"."
           },
-          "eventYear": {
+          "championshipYear": {
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991,
-            "description": "The year the edition is branded with."
+            "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
           },
           "startDate": {
             "type": "string",
@@ -54302,7 +54238,7 @@
         "required": [
           "sportEventId",
           "name",
-          "eventYear",
+          "championshipYear",
           "startDate",
           "endDate"
         ],
@@ -55799,11 +55735,11 @@
                 "type": "string",
                 "description": "The edition's name, such as \"Conference Championships\"."
               },
-              "eventYear": {
+              "championshipYear": {
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991,
-                "description": "The year the edition is branded with."
+                "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
               },
               "startDate": {
                 "type": "string",
@@ -55822,7 +55758,7 @@
             "required": [
               "sportEventId",
               "name",
-              "eventYear",
+              "championshipYear",
               "startDate",
               "endDate"
             ],
@@ -57411,11 +57347,11 @@
                       "type": "string",
                       "description": "The edition's name, such as \"Conference Championships\"."
                     },
-                    "eventYear": {
+                    "championshipYear": {
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991,
-                      "description": "The year the edition is branded with."
+                      "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
                     },
                     "startDate": {
                       "type": "string",
@@ -57434,7 +57370,7 @@
                   "required": [
                     "sportEventId",
                     "name",
-                    "eventYear",
+                    "championshipYear",
                     "startDate",
                     "endDate"
                   ],
@@ -59041,11 +58977,11 @@
                           "type": "string",
                           "description": "The edition's name, such as \"Conference Championships\"."
                         },
-                        "eventYear": {
+                        "championshipYear": {
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991,
-                          "description": "The year the edition is branded with."
+                          "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
                         },
                         "startDate": {
                           "type": "string",
@@ -59064,7 +59000,7 @@
                       "required": [
                         "sportEventId",
                         "name",
-                        "eventYear",
+                        "championshipYear",
                         "startDate",
                         "endDate"
                       ],
@@ -60708,11 +60644,11 @@
                             "type": "string",
                             "description": "The edition's name, such as \"Conference Championships\"."
                           },
-                          "eventYear": {
+                          "championshipYear": {
                             "type": "integer",
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991,
-                            "description": "The year the edition is branded with."
+                            "description": "The year the edition's Season is named for (SportEventDto.championshipYear)."
                           },
                           "startDate": {
                             "type": "string",
@@ -60731,7 +60667,7 @@
                         "required": [
                           "sportEventId",
                           "name",
-                          "eventYear",
+                          "championshipYear",
                           "startDate",
                           "endDate"
                         ],
@@ -70896,11 +70832,10 @@
       "LeagueEventsSyncRequest": {
         "type": "object",
         "properties": {
-          "eventYear": {
-            "description": "The one event year to sync; omitted, this calendar year and the next, as the schedule syncs.",
-            "type": "integer",
-            "minimum": 1900,
-            "maximum": 9999
+          "sportLeagueSeasonId": {
+            "description": "The one Season to sync (SportLeagueSeasonDto); omitted, the league's current Season and every later one, as the schedule syncs. 404 SPORT_LEAGUE_SEASON_NOT_FOUND for one that is not the league's.",
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false,
@@ -72019,7 +71954,8 @@
             "type": "string",
             "enum": [
               "UNMAPPED_PARTICIPANT",
-              "WEBHOOK_SECRET_MISSING"
+              "WEBHOOK_SECRET_MISSING",
+              "SEASON_MISSING"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
           },
@@ -72234,7 +72170,8 @@
                   "type": "string",
                   "enum": [
                     "UNMAPPED_PARTICIPANT",
-                    "WEBHOOK_SECRET_MISSING"
+                    "WEBHOOK_SECRET_MISSING",
+                    "SEASON_MISSING"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
                 },
@@ -72455,7 +72392,8 @@
                 "type": "string",
                 "enum": [
                   "UNMAPPED_PARTICIPANT",
-                  "WEBHOOK_SECRET_MISSING"
+                  "WEBHOOK_SECRET_MISSING",
+                  "SEASON_MISSING"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
               },
@@ -81884,7 +81822,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one sport league's `eventYear`: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.",
+        "description": "The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one Season's (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.",
         "parameters": [
           {
             "schema": {
@@ -81940,14 +81878,13 @@
           },
           {
             "schema": {
-              "type": "integer",
-              "minimum": -9007199254740991,
-              "maximum": 9007199254740991
+              "type": "string",
+              "format": "uuid"
             },
             "in": "query",
-            "name": "eventYear",
+            "name": "sportLeagueSeasonId",
             "required": false,
-            "description": "Only editions branded with this year."
+            "description": "Only events of this Season (SportLeagueSeasonDto)."
           },
           {
             "schema": {
@@ -82008,7 +81945,7 @@
         "tags": [
           "Events"
         ],
-        "description": "An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.",
+        "description": "An admin-authored edition of a series in its sport league's current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season; 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. The sport comes from the sport league. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -82071,60 +82008,6 @@
             }
           },
           "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/events/years": {
-      "get": {
-        "operationId": "listEventYears",
-        "summary": "List a sport league's event years",
-        "tags": [
-          "Events"
-        ],
-        "description": "The years a sport league has events in, for a year picker that then lists one year's events. Any signed-in user may read it; a year with only DRAFT events is listed for a root admin only.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "query",
-            "name": "sportLeagueId",
-            "required": true,
-            "description": "The sport league whose event years are listed."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The event years of one sport league: what a year picker offers, without reading every event.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventYearListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -82335,160 +82218,6 @@
         }
       }
     },
-    "/api/v1/events/clone-year": {
-      "post": {
-        "operationId": "cloneEventYear",
-        "summary": "Clone a sport league's event year forward",
-        "tags": [
-          "Events"
-        ],
-        "description": "Re-creates each of a sport league's events in one event year as a fresh event in another (default: the next), dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CloneSportEventYearRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Sport events matching the filters.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SportEventListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/events/import-year-from-provider": {
-      "post": {
-        "operationId": "importEventYearFromProvider",
-        "summary": "Import a tour's event year from a provider",
-        "tags": [
-          "Events"
-        ],
-        "description": "Creates each provider event for the sport league's tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when it is of the provider league the sport league's selected provider mapping names (#1997). Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. 404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to the provider; 422 PROVIDER_LEAGUE_REFUSED when the provider's plan does not include the tour's league (#1797). Root admin only.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ImportSportEventYearFromProviderRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "What an event-year import created and skipped. Running it again creates nothing new.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportSportEventYearFromProviderResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/events/from-provider-event": {
       "post": {
         "operationId": "createEventFromProviderEvent",
@@ -82496,7 +82225,7 @@
         "tags": [
           "Events"
         ],
-        "description": "An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. Root admin only.",
+        "description": "An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in the league's current Season, SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -86165,7 +85894,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Adding a tour is one call, not a migration. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
+        "description": "Adding a tour is one call; its Seasons are added by migration (#2003). 400 TIME_ZONE_UNKNOWN for a time zone the runtime does not know. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -86183,6 +85912,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportLeagueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -86319,7 +86058,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Setting currentEventYear is \"set as current\": one write, so the sport league never has two current years, and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.",
+        "description": "The current Season is never set here: the daily recompute sets it (#2003). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -86553,6 +86292,59 @@
             }
           },
           "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sport-leagues/{sportLeagueId}/seasons": {
+      "get": {
+        "operationId": "listSportLeagueSeasons",
+        "summary": "List a sport league's Seasons with their provider ids, phases and slots",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "Every Season of the sport league (#2003), latest first, each with whether it is current, each provider's id for it, and its phases and slots in play order, test slots included. Seasons are added by migration, so there is no write. What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. Any signed-in user may read it.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A sport league's Seasons.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeagueSeasonListResponse"
+                }
+              }
+            }
+          },
+          "401": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -89635,7 +89427,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Queues the sport league's events sync as a background job, the same job its schedule queues every six hours, and answers it at once (202): the provider's events for the league's tour become its events, and the ones already linked take the provider's name, venue and dates. The job records an EVENTS sync run with what it created, updated and skipped; follow it on Activity. When the league's sync is already waiting to run, answers that job. 404 SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when no provider syncs the league's events.",
+        "description": "Queues the sport league's events sync as a background job, the same job its schedule queues every six hours, and answers it at once (202): the provider's events for each Season it reads (the named one, or the current Season and every later one), asked for by the provider's own id for the Season, become its events in that Season, and the ones already linked take the provider's name, venue and dates. The job records an EVENTS sync run with what it created, updated and skipped; follow it on Activity. When the league's sync is already waiting to run, answers that job. 404 SPORT_LEAGUE_NOT_FOUND, or SPORT_LEAGUE_SEASON_NOT_FOUND for a Season that is not the league's; 422 SPORT_LEAGUE_NOT_SYNCED when no provider syncs the league's events, SPORT_LEAGUE_SEASON_NOT_MAPPED when the provider has no id for the named Season.",
         "requestBody": {
           "required": true,
           "content": {

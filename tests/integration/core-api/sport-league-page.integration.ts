@@ -27,6 +27,7 @@ import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapt
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { leagueProfiles } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { seriesSeasonId } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -51,7 +52,7 @@ async function golfSportId(): Promise<string> {
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
 async function sportLeague(name: string, { synced = false, ...extra }: { synced?: boolean; autoReleaseDaysBeforeStart?: number } = {}) {
   const league = await getPrisma().sportLeague.create({
-    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
+    data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
   });
   if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
   return league;
@@ -61,7 +62,7 @@ async function event(sportLeagueId: string, input: { startDate: Date; status?: '
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, eventYear: 2026, sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), syncScope: 'SCORES_ONLY', ...input },
+    data: { eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), syncScope: 'SCORES_ONLY', ...input },
   });
 }
 

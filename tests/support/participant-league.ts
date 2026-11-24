@@ -17,7 +17,7 @@ export async function participantLeagueId(prisma: PrismaClient, sportId: string)
   try {
     const league = await prisma.sportLeague.upsert({
       where,
-      create: { ...(await leagueProfiles(prisma)), sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
+      create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
       update: {},
       select: { id: true },
     });

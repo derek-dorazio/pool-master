@@ -36,7 +36,7 @@ const SYNCED_PROVIDER = 'balldontlie';
 /** A sport league row read with its selected provider mapping, as the service reads it; null code: not synced. */
 /** A sport league's provider mappings as the browse reads them, each to a BALLDONTLIE league. */
 function mappingRows(...providerLeagueCodes: string[]) {
-  return providerLeagueCodes.map((code) => ({ providerLeague: { code, provider: { code: 'BALLDONTLIE' } } }));
+  return providerLeagueCodes.map((code) => ({ providerLeague: { code, provider: { code: 'BALLDONTLIE' } }, seasonMappings: [] }));
 }
 
 function leagueRow(providerLeagueCode: string | null, extra: Record<string, unknown> = {}) {
@@ -139,6 +139,16 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { sportLeagueId: 'league-1' } }));
   });
 
+  it('asks a provider league with no date range for the provider\'s id of the sport league\'s current Season, not a Season worked out from the clock', async () => {
+    const provider = buildProvider({ providerId: SYNCED_PROVIDER, getUpcomingEvents: jest.fn().mockResolvedValue([]) });
+    const findMany = jest.fn().mockResolvedValue([{ ...mappingRows('nba')[0], seasonMappings: [{ providerSeasonId: '2025' }] }]);
+    const service = new EventScoreSourceService(asPrismaClient({ sportLeagueProviderMapping: { findMany } }), registryWith(provider));
+
+    await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1' });
+
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith(Sport.BASKETBALL, undefined, { providerLeagueCode: 'nba', providerSeasonId: '2025' });
+  });
+
   it('keeps the events of every provider league a sport league is mapped to on this provider, asking the provider for all of them', async () => {
     const provider = buildProvider({
       providerId: SYNCED_PROVIDER,
@@ -193,7 +203,7 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
 });
 
 // #385: a league's provider slate for one year, from the provider league its selected mapping names (#1997).
-describe('EventScoreSourceService.listTourEventsForYear', () => {
+describe('EventScoreSourceService.listSeasonEvents', () => {
   const pgaLeague = leagueRow('pga');
   const syncedProvider = (overrides: Partial<SportDataProvider> = {}) => buildProvider({ providerId: SYNCED_PROVIDER, ...overrides });
 
@@ -208,7 +218,7 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    const events = await service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027);
+    const events = await service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027');
 
     expect(events).toEqual([{
       externalId: 'pga-1',
@@ -219,17 +229,14 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     }]);
   });
 
-  it('asks the provider for the league\'s sport across that calendar year in UTC, naming its provider league so it reads only that league', async () => {
+  it('asks the provider for the league\'s sport by the provider\'s own Season id, with no date range, naming its provider league so it reads only that league', async () => {
     const provider = syncedProvider();
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    await service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027);
+    await service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027');
 
-    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', {
-      from: new Date('2027-01-01T00:00:00.000Z'),
-      to: new Date('2027-12-31T23:59:59.999Z'),
-    }, { providerLeagueCode: 'pga' });
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith('GOLF', undefined, { providerLeagueCode: 'pga', providerSeasonId: '2027' });
   });
 
   it('refuses with 422 PROVIDER_LEAGUE_REFUSED, naming the league, when the provider\'s plan refuses the tour\'s league', async () => {
@@ -237,7 +244,7 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    await expect(service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027)).rejects.toMatchObject({
+    await expect(service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027')).rejects.toMatchObject({
       code: 'PROVIDER_LEAGUE_REFUSED',
       statusCode: 422,
       message: expect.stringContaining('BALLDONTLIE refused NFL') as unknown,
@@ -250,7 +257,7 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(pgaLeague) } };
     const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
 
-    await expect(service.listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027)).rejects.toBe(outage);
+    await expect(service.listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027')).rejects.toBe(outage);
   });
 
   it('refuses a league with no selected mapping, or one to another provider, with 422 SPORT_LEAGUE_NOT_SYNCED and never calls the provider', async () => {
@@ -258,9 +265,9 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
     const otherProvider = buildProvider();
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValueOnce(leagueRow(null)).mockResolvedValueOnce(pgaLeague) } };
 
-    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider)).listTourEventsForYear(SYNCED_PROVIDER, 'pga', 2027))
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider)).listSeasonEvents(SYNCED_PROVIDER, 'pga', '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
-    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(otherProvider)).listTourEventsForYear('mock-golf', 'pga', 2027))
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(otherProvider)).listSeasonEvents('mock-golf', 'pga', '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
     expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
     expect(otherProvider.getUpcomingEvents).not.toHaveBeenCalled();
@@ -269,9 +276,9 @@ describe('EventScoreSourceService.listTourEventsForYear', () => {
   it('404s SPORT_LEAGUE_NOT_FOUND for an unknown league and PROVIDER_NOT_FOUND for an unknown provider', async () => {
     const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(null) } };
 
-    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(syncedProvider())).listTourEventsForYear(SYNCED_PROVIDER, 'nope', 2027))
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(syncedProvider())).listSeasonEvents(SYNCED_PROVIDER, 'nope', '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
-    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(null)).listTourEventsForYear('unknown', 'pga', 2027))
+    await expect(new EventScoreSourceService(asPrismaClient(prisma), registryWith(null)).listSeasonEvents('unknown', 'pga', '2027'))
       .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 404 });
   });
 });

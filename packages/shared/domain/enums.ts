@@ -199,6 +199,25 @@ export const SlotPairingOrder = explicitOrder<SlotPairing>({
   [SlotPairing.RESEEDED]: 1,
 });
 
+/** Where a Season's slot is in play (#2003, plan §2), in the order it moves through them. */
+export const SeasonSlotStatus = {
+  /** Not started. */
+  SCHEDULED: 'SCHEDULED',
+  /** A game of it has started. */
+  IN_PROGRESS: 'IN_PROGRESS',
+  /** Every game of it is decided; final, and never reopened on its own. */
+  COMPLETED: 'COMPLETED',
+  /** Not played: set from the feed or by a root admin (slice 14). */
+  CANCELLED: 'CANCELLED',
+} as const;
+export type SeasonSlotStatus = (typeof SeasonSlotStatus)[keyof typeof SeasonSlotStatus];
+export const SeasonSlotStatusOrder = explicitOrder<SeasonSlotStatus>({
+  [SeasonSlotStatus.SCHEDULED]: 0,
+  [SeasonSlotStatus.IN_PROGRESS]: 1,
+  [SeasonSlotStatus.COMPLETED]: 2,
+  [SeasonSlotStatus.CANCELLED]: 3,
+});
+
 /** How a provider's games are matched to a slot definition (#2002, plan §1 and §6), in matching order. */
 export const SlotProviderMatchType = {
   /** The code the provider's adapter reduces a game to (`REG:5`, `POST:3`). */
@@ -858,6 +877,12 @@ export const ProviderSyncFindingKind = {
    * Provider.
    */
   WEBHOOK_SECRET_MISSING: 'WEBHOOK_SECRET_MISSING',
+  /**
+   * The league's events sync has no Season to read from its selected Provider (#2003): its last
+   * Season mapped to the Provider has ended and no later one is mapped. Seasons are added by
+   * migration, so nothing of the next Season syncs until one lands. Subject: league and Provider.
+   */
+  SEASON_MISSING: 'SEASON_MISSING',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

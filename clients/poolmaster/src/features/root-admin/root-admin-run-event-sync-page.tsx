@@ -29,7 +29,9 @@ import {
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { EventYearSelect } from './event-year-select';
+import { SeasonSelect } from './season-select';
+import { useSportLeaguesQuery } from './use-sport-catalog';
+import { seasonIdOrCurrent, useSportLeagueSeasonsQuery } from '@/features/contests/use-sport-league-seasons';
 import { useProvidersQuery } from './use-providers-query';
 
 function getValidEventStatusesForPreset(presetId: EventSyncPresetId): SportEventDto['status'][] {
@@ -66,7 +68,8 @@ export function RootAdminRunEventSyncPage() {
   const [eventSyncPresetId, setEventSyncPresetId] = useState<EventSyncPresetId>(
     'EVENTPARTICIPANTS',
   );
-  const [eventYear, setEventYear] = useState(() => new Date().getFullYear());
+  const [chosenSportLeagueId, setChosenSportLeagueId] = useState<string | null>(null);
+  const [chosenSeasonId, setChosenSeasonId] = useState<string | null>(null);
   const [chosenEventId, setChosenEventId] = useState('');
 
   const providersQuery = useProvidersQuery();
@@ -80,15 +83,21 @@ export function RootAdminRunEventSyncPage() {
     ? chosenSyncSport
     : supportedSyncSports.at(0) ?? chosenSyncSport;
 
+  // The events are one Season's (#2003): a sport league, then its Season, opening on the first
+  // league and its current Season.
+  const sportLeaguesQuery = useSportLeaguesQuery(eventSyncSport);
+  const sportLeagues = sportLeaguesQuery.data ?? [];
+  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
+  const sportLeague = sportLeagues.find((league) => league.id === chosenSportLeagueId) ?? sportLeagues.at(0);
+  const seasonsQuery = useSportLeagueSeasonsQuery(sportLeague?.id ?? '');
+  // poolmaster-allow-list-lookup: a league's Seasons, a handful of rows
+  const chosenSeason = seasonsQuery.data?.find((season) => season.id === chosenSeasonId);
+  const seasonId = seasonIdOrCurrent(chosenSeason?.id ?? null, sportLeague);
+
   const eventsQuery = useQuery({
-    queryKey: QueryKeys.rootAdmin.eventSyncEvents(eventSyncSport, eventYear),
+    queryKey: QueryKeys.rootAdmin.eventSyncEvents(seasonId),
     queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({
-        query: {
-          sport: eventSyncSport,
-          eventYear,
-        },
-      });
+      const response = await listEvents({ query: { sportLeagueSeasonId: seasonId ?? undefined } });
 
       if (!response.data?.events) {
         throwApiError(response.error, 'Event list response is missing data.');
@@ -96,7 +105,7 @@ export function RootAdminRunEventSyncPage() {
 
       return response.data.events;
     },
-    enabled: supportedSyncSports.includes(eventSyncSport),
+    enabled: supportedSyncSports.includes(eventSyncSport) && seasonId !== null,
     retry: false,
   });
 
@@ -111,7 +120,7 @@ export function RootAdminRunEventSyncPage() {
   }, [eventSyncPresetId, eventsQuery.data]);
   // Events are chosen by id: two providers' events can share an external id.
   const selectedEvent = selectableEvents.find((event) => event.id === chosenEventId);
-  // An event the sport, year or preset rules out is no longer selected.
+  // An event the sport, Season or preset rules out is no longer selected.
   const selectedEventId = selectedEvent ? chosenEventId : '';
 
   const eventSyncMutation = useInvalidatingMutation({
@@ -253,7 +262,27 @@ export function RootAdminRunEventSyncPage() {
             </Select>
           </FormField>
 
-          <EventYearSelect onChange={setEventYear} testId="root-admin-event-sync-year" value={eventYear} />
+          <FormField label="Sport league">
+            <Select
+              data-testid="root-admin-event-sync-sport-league"
+              disabled={eventSyncMutation.isPending || sportLeagues.length === 0}
+              onChange={(event) => {
+                setChosenSportLeagueId(event.target.value);
+                setChosenSeasonId(null);
+              }}
+              value={sportLeague?.id ?? ''}
+            >
+              {sportLeagues.map((league) => (
+                <option key={league.id} value={league.id}>
+                  {league.name}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+
+          {seasonsQuery.data && seasonId !== null ? (
+            <SeasonSelect onChange={setChosenSeasonId} seasons={seasonsQuery.data} testId="root-admin-event-sync-season" value={seasonId} />
+          ) : null}
 
           <FormField label="Event">
             <Select

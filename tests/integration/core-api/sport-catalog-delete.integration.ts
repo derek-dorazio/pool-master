@@ -52,7 +52,7 @@ async function golfSportId(): Promise<string> {
 }
 
 async function tour(sportId: string): Promise<string> {
-  const row = await getPrisma().sportLeague.create({ data: { ...(await leagueProfiles(getPrisma())), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
+  const row = await getPrisma().sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
   made.sportLeagueIds.add(row.id);
   return row.id;
 }

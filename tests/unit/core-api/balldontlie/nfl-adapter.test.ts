@@ -97,25 +97,25 @@ describe('BalldontlieAdapter (NFL)', () => {
       ]);
     });
 
-    it('reads the season under way and the next when the range is open-ended, not every season ever played', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
 
-      expect(events.map((event) => event.externalId)).toEqual(['nfl-2026-week-12', 'nfl-2026-postseason']);
-      expect(requestLine(harness.api).map((line) => /seasons\[\]=(\d+)/.exec(line)?.[1])).toEqual(['2026', '2027']);
+      expect(events).toEqual([]);
+      expect(requestLine(harness.api)).toEqual([]);
     });
 
-    it('takes the season just ended as the one under way before March', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says', async () => {
       const harness = setup();
       restore = harness.restore;
       jest.spyOn(Date, 'now').mockReturnValue(Date.UTC(2027, 1, 1));
       const adapter = new BalldontlieAdapter({ connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }), apiKey: API_KEY, leagues: BALLDONTLIE_TEST_LEAGUES });
 
-      await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL);
+      await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerSeasonId: '2026' });
 
-      expect(requestLine(harness.api).map((line) => /seasons\[\]=(\d+)/.exec(line)?.[1])).toEqual(['2026', '2027']);
+      expect(requestLine(harness.api).map((line) => /seasons\[\]=(\d+)/.exec(line)?.[1])).toEqual(['2026']);
     });
 
     it('lists nothing for a sport it does not cover', async () => {

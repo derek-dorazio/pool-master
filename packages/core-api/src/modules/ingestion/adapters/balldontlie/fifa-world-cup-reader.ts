@@ -35,11 +35,13 @@ export class WorldCupReader {
   constructor(private readonly client: BalldontlieClient) {}
 
   /**
-   * The knockout brackets that start inside `dateRange`, read for each edition held in a year
-   * it covers. Without a range, or with one too wide to walk, it reads the vendor's current
-   * edition, which the endpoint gives when no edition is named.
+   * One edition's knockout bracket, when `season` names it (the events sync asks for a Season by
+   * its id, #2003); otherwise the brackets that start inside `dateRange`, read for each edition
+   * held in a year it covers. Without a range, or with one too wide to walk, it reads the vendor's
+   * current edition, which the endpoint gives when no edition is named.
    */
-  async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
+  async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
+    if (season !== undefined) return toWorldCupEvents(await this.matchesOf({ 'seasons[]': [season] }));
     const editions = editionsIn(dateRange);
     if (editions !== null && editions.length === 0) return [];
     const matches = await this.matchesOf(editions === null ? {} : { 'seasons[]': editions });

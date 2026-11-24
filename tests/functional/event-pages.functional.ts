@@ -2,7 +2,7 @@ import { createEvent, getEventPage, listEventPages, listSportLeagues } from '@po
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { EventPageOfferState, Sport } from '@poolmaster/shared/domain';
 import { EventPageListResponseSchema, EventPageResponseSchema } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
@@ -46,7 +46,7 @@ describe('SDK Functional: event pages (#1007)', () => {
       .find((league) => league.name === 'NFL')).id;
     const created = await createEvent({
       client: a,
-      body: { sportLeagueId: nflId, eventYear: YEAR, name: 'NFL Playoffs', startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(nflId, YEAR), name: 'NFL Playoffs', startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4, autoLifecycleEnabled: false },
     });
     expect(created.response?.status).toBe(201);
     createdEventIds.push(expectDefined(created.data).event.id);

@@ -17,6 +17,7 @@ import { findUnindexedScans } from '../index-check';
 import { recordStatements } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { fixtureSeasonId } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -41,29 +42,33 @@ async function golfSportId(): Promise<string> {
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
 async function sportLeague(name: string, { synced = false }: { synced?: boolean } = {}) {
   const league = await getPrisma().sportLeague.create({
-    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}` },
   });
   if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
   return league;
 }
 
-async function event(sportLeagueId: string, input: { eventYear: number; startDate: Date; endDate?: Date; status?: 'DRAFT' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' }) {
+async function event(sportLeagueId: string, { championshipYear, ...input }: { championshipYear: number; startDate: Date; endDate?: Date; status?: 'DRAFT' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' }) {
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
+  const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
   return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), ...input },
+    data: { eventSeriesId: series.id, sportLeagueSeasonId, sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), ...input },
   });
 }
 
 describe('PrismaSportLeagueOverviewReader', () => {
-  it('gathers each sport league\'s latest run per sync kind, held drafts, event years and next start', async () => {
+  it('gathers each sport league\'s latest run per sync kind, held drafts, the current Season\'s span and next start', async () => {
     const prisma = getPrisma();
     const tour = await sportLeague('Overview Tour', { synced: true });
-    const past = await event(tour.id, { eventYear: 2026, startDate: days(-200), endDate: days(-196), status: 'COMPLETED' });
-    const current = await event(tour.id, { eventYear: 2027, startDate: days(-20), endDate: days(-17), status: 'COMPLETED' });
-    const next = await event(tour.id, { eventYear: 2027, startDate: days(10), endDate: days(13) });
-    await event(tour.id, { eventYear: 2027, startDate: days(5), status: 'CANCELLED' });
-    const held = await event(tour.id, { eventYear: 2027, startDate: days(30), status: 'DRAFT' });
+    const other = await sportLeague('No Season Tour');
+    await getPrisma().sportLeague.update({ where: { id: tour.id }, data: { currentSeasonId: await fixtureSeasonId(prisma, tour.id, 2027) } });
+    const currentSeason = await prisma.sportLeagueSeason.findFirstOrThrow({ where: { sportLeagueId: tour.id, championshipYear: 2027 } });
+    await event(tour.id, { championshipYear: 2026, startDate: days(-200), endDate: days(-196), status: 'COMPLETED' });
+    await event(tour.id, { championshipYear: 2027, startDate: days(-20), endDate: days(-17), status: 'COMPLETED' });
+    const next = await event(tour.id, { championshipYear: 2027, startDate: days(10), endDate: days(13) });
+    await event(tour.id, { championshipYear: 2027, startDate: days(5), status: 'CANCELLED' });
+    const held = await event(tour.id, { championshipYear: 2027, startDate: days(30), status: 'DRAFT' });
     await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] });
     const run = (kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date, payloadJson: Prisma.InputJsonValue = {}) => ({
       kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, status, createdAt, payloadJson,
@@ -92,11 +97,10 @@ describe('PrismaSportLeagueOverviewReader', () => {
     ]);
     expect(facts.heldEvents).toEqual([{ id: held.id, sportLeagueId: tour.id, name: held.name, checkedAt: NOW, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }]);
     expect(facts.eventCounts.get(tour.id)).toBe(5);
-    // The cancelled event is in neither the 2027 span nor the next start.
-    expect(facts.eventYearSpans.filter((span) => span.sportLeagueId === tour.id).sort((left, right) => left.eventYear - right.eventYear)).toEqual([
-      { sportLeagueId: tour.id, eventYear: 2026, firstStart: past.startDate, lastStart: past.startDate, lastEnd: past.endDate },
-      { sportLeagueId: tour.id, eventYear: 2027, firstStart: current.startDate, lastStart: held.startDate, lastEnd: next.endDate },
-    ]);
+    // The season is the current Season's own span, set by migration, not one drawn from its events (#2003).
+    expect(facts.currentSeasonSpans.get(tour.id)).toEqual({ start: currentSeason.startsAt, end: currentSeason.endsAt });
+    expect(facts.currentSeasonSpans.has(other.id)).toBe(false);
+    // The cancelled event is not the next start.
     expect(facts.nextEventStarts.get(tour.id)).toEqual(next.startDate);
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'PrismaSportLeagueOverviewReader.readFacts' })))).resolves.toEqual([]);
   });
@@ -113,7 +117,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
 describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
   it('stores a held check and reads it back, overwrites it with a release, and clears it', async () => {
     const tour = await sportLeague('Release Tour');
-    const draft = await event(tour.id, { eventYear: 2027, startDate: days(3), status: 'DRAFT' });
+    const draft = await event(tour.id, { championshipYear: 2027, startDate: days(3), status: 'DRAFT' });
     const repository = new PrismaSportEventRepository(getAppPrisma());
     const stored = async () => getPrisma().sportEvent.findUniqueOrThrow({
       where: { id: draft.id },
@@ -136,7 +140,7 @@ describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
 
   it('refuses at the database a released check that names failed checks, and an outcome with no time', async () => {
     const tour = await sportLeague('Constraint Tour');
-    const draft = await event(tour.id, { eventYear: 2027, startDate: days(3), status: 'DRAFT' });
+    const draft = await event(tour.id, { championshipYear: 2027, startDate: days(3), status: 'DRAFT' });
 
     await expect(getPrisma().sportEvent.update({
       where: { id: draft.id },
@@ -150,7 +154,7 @@ describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
 describe('ProviderSyncRunLedger with the event repository', () => {
   it('records on a scheduled run the event and sport league its provider event is linked to', async () => {
     const tour = await sportLeague('Ledger Tour');
-    const linked = await event(tour.id, { eventYear: 2027, startDate: days(3) });
+    const linked = await event(tour.id, { championshipYear: 2027, startDate: days(3) });
     const ledger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
     const normalizedRequest = new SyncOrchestrator({ now: () => NOW }).normalizeRequest({
       source: 'SCHEDULED',

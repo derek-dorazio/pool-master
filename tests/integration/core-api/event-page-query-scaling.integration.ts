@@ -16,6 +16,7 @@ import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, tear
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { participantLeagueId } from '../../support/participant-league';
+import { seriesSeasonId } from '../../support/event-edition';
 
 // No mocks.
 
@@ -78,7 +79,7 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
     const event = await prisma.sportEvent.create({
       data: {
         eventSeriesId: series.id,
-        eventYear: startDate.getUTCFullYear(),
+        sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()),
         externalId: `scaling-weekend-${suffix}-${String(sortOrder)}`,
         providerId: 'integration-test',
         sport: Sport.AMERICAN_FOOTBALL,

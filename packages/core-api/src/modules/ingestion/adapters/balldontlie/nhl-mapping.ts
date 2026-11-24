@@ -30,7 +30,6 @@ export const NHL_PLAYOFFS: PlayoffsLeague = {
   // The 2025 season opens in October 2025; its playoffs run from April into June 2026.
   playoffYearOffset: 1,
   // September, ahead of October's opening night.
-  seasonRolloverMonth: 8,
   // Each division's winner meets a wild card and its second its third; the East's half is listed
   // first, as an admin loads it. The names are the vendor's `conference_name` and `division_name`.
   bracket: {

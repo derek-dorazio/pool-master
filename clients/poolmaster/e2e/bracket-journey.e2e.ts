@@ -139,12 +139,12 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
 
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
       sport: 'BASKETBALL',
+      timeZone: 'UTC',
       name: run.tourName,
       ...(await sportLeagueProfileIds(api, headers, 'TIERS_4_OF_16')),
     });
     const { event } = await postJson<{ event: { id: string } }>(api, headers, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,
-      eventYear: 2099,
       name: run.tournamentName,
       startDate: TOURNAMENT_START,
       rounds: 2,

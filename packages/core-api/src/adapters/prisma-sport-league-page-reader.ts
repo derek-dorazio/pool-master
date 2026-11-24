@@ -14,7 +14,7 @@ import type {
   SportLeaguePageRun,
   SportLeagueSyncFacts,
 } from '@poolmaster/shared/db';
-import type { SportLeaguePhaseDefinition, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
+import type { SportLeaguePhaseDefinition, SportLeagueSeasonDetail, SportLeagueSeasonSlot, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
 import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { outcomeSummary } from './prisma-sport-league-overview-reader';
@@ -34,7 +34,7 @@ const SLOT_SELECT = {
   },
 } as const;
 const EVENT_SELECT = {
-  id: true, name: true, eventYear: true, startDate: true, endDate: true, status: true, providerId: true, syncScope: true, releasedAt: true,
+  id: true, name: true, sportLeagueSeasonId: true, startDate: true, endDate: true, status: true, providerId: true, syncScope: true, releasedAt: true,
   autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true,
 } as const;
 
@@ -127,6 +127,56 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       slotsByPhase.set(sportLeaguePhaseId, list);
     }
     return phases.map((phase) => ({ ...phase, slots: slotsByPhase.get(phase.id) ?? [] }));
+  }
+
+  async readSeasons(sportLeagueId: string): Promise<SportLeagueSeasonDetail[] | null> {
+    const [league, seasons, phases, slots] = await Promise.all([
+      this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { currentSeasonId: true } }),
+      this.prisma.sportLeagueSeason.findMany({
+        where: { sportLeagueId },
+        select: {
+          id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true,
+          providerMappings: {
+            select: {
+              id: true, sportLeagueProviderMappingId: true, providerSeasonId: true,
+              sportLeagueProviderMapping: { select: { providerLeague: { select: { code: true, provider: { select: { id: true, name: true } } } } } },
+            },
+          },
+        },
+      }),
+      this.prisma.sportLeagueSeasonPhase.findMany({
+        where: { sportLeagueId },
+        select: { id: true, sportLeagueSeasonId: true, phase: { select: { phase: true, isSynced: true } } },
+      }),
+      this.prisma.sportLeagueSeasonPhaseSlot.findMany({
+        where: { sportLeagueId },
+        select: {
+          id: true, sportLeagueSeasonPhaseId: true, sportLeaguePhaseSlotId: true, startsAt: true, endsAt: true, status: true,
+          seriesFormat: true, seriesGames: true, pairing: true, isTestData: true, label: true,
+          definition: { select: { key: true, slotKind: true, weekNumber: true, name: true } },
+        },
+      }),
+    ]);
+    if (league === null) return null;
+    const slotsByPhase = new Map<string, SportLeagueSeasonSlot[]>();
+    for (const { sportLeagueSeasonPhaseId, sportLeaguePhaseSlotId, definition, ...slot } of slots) {
+      const list = slotsByPhase.get(sportLeagueSeasonPhaseId) ?? [];
+      list.push({ ...slot, ...definition, slotDefinitionId: sportLeaguePhaseSlotId });
+      slotsByPhase.set(sportLeagueSeasonPhaseId, list);
+    }
+    return seasons.map(({ providerMappings, ...season }) => ({
+      ...season,
+      isCurrent: season.id === league.currentSeasonId,
+      providerMappings: providerMappings.map(({ sportLeagueProviderMapping: { providerLeague }, ...mapping }) => ({
+        ...mapping,
+        providerId: providerLeague.provider.id,
+        providerName: providerLeague.provider.name,
+        providerLeagueCode: providerLeague.code,
+      })),
+      phases: phases
+        .filter((phase) => phase.sportLeagueSeasonId === season.id)
+        .map((phase) => ({ id: phase.id, ...phase.phase, slots: slotsByPhase.get(phase.id) ?? [] })),
+    }));
   }
 
   async readParticipants(sportLeagueId: string): Promise<SportLeaguePageParticipant[] | null> {

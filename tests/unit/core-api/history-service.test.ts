@@ -125,7 +125,7 @@ describe('HistoryService (#837)', () => {
         eventSeriesId: 'masters',
         seriesName: 'Masters Tournament',
         sportLeagueName: 'PGA Tour',
-        eventYear: year,
+        championshipYear: year,
         completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
         games: { count: 0, roundCount: 0, sendingWinnerOn: 0 },
       } });
@@ -151,7 +151,7 @@ describe('HistoryService (#837)', () => {
         eventSeriesId: 'masters',
         seriesName: 'Masters Tournament',
         sportLeagueName: 'PGA Tour',
-        eventYear: year,
+        championshipYear: year,
         completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
         games: { count: 0, roundCount: 0, sendingWinnerOn: 0 },
       } });

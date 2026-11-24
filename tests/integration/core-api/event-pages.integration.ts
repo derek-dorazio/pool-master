@@ -18,7 +18,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { cleanupFreshEventEditions, freshEventEdition } from '../../support/event-edition';
+import { cleanupFreshEventEditions, freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { leagueProfiles } from '../../support/league-profiles';
 
 beforeAll(() => setupIntegrationTests());
@@ -157,7 +157,7 @@ describe('Event page offers', () => {
     const prisma = getPrisma();
     const { page, remove } = await scratchPage(true);
     const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
-    const switchedOff = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
+    const switchedOff = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sport: Sport.GOLF } });
     try {
       await prisma.eventPageOffer.create({
@@ -177,9 +177,9 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     const prisma = getPrisma();
     const edition = await freshEventEdition(prisma, { name: 'Event page editions' });
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
-    const make = (eventYear: number, status: SportEventStatus, startDate: string) => prisma.sportEvent.create({
+    const make = async (eventYear: number, status: SportEventStatus, startDate: string) => prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, eventYear, status, startDate: new Date(startDate),
+        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventYear), status, startDate: new Date(startDate),
         externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF, name: `${series.name} ${eventYear}`,
       },
     });
@@ -192,7 +192,7 @@ describe('PrismaEventPageRepository.findEditionsNotOver', () => {
     const other = await prisma.eventSeries.findUniqueOrThrow({ where: { id: (await freshEventEdition(prisma, { name: 'Event page other series' })).eventSeriesId } });
     await prisma.sportEvent.create({
       data: {
-        eventSeriesId: other.id, eventYear: 2027, status: SportEventStatus.SCHEDULED, startDate: new Date('2027-01-10T12:00:00.000Z'),
+        eventSeriesId: other.id, sportLeagueSeasonId: await seriesSeasonId(prisma, other.id, 2027), status: SportEventStatus.SCHEDULED, startDate: new Date('2027-01-10T12:00:00.000Z'),
         externalId: `event-page-${randomUUID()}`, providerId: 'integration-test', sport: Sport.GOLF, name: `${other.name} 2027`,
       },
     });

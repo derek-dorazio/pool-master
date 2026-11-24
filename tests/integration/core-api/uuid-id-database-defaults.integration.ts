@@ -76,7 +76,7 @@ describe('#340 database-generated uuid ids', () => {
     // reference-data migrations had to supply gen_random_uuid() themselves.
     const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at") VALUES ($1::uuid, $2, $3::uuid, $4::uuid, NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "time_zone", "updated_at") VALUES ($1::uuid, $2, $3::uuid, $4::uuid, 'UTC', NOW())`,
       sportId,
       name,
       platformTierProfileId,
@@ -96,7 +96,7 @@ describe('#340 database-generated uuid ids', () => {
 
     // The claim #340 makes about write paths: `dbgenerated` does not take the id away from
     // the caller. Every repository in this codebase that supplies one keeps working.
-    const created = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), id: chosenId, sportId, name } });
+    const created = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), id: chosenId, sportId, name } });
 
     expect(created.id).toBe(chosenId);
     const reread = await prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } } });
@@ -107,7 +107,7 @@ describe('#340 database-generated uuid ids', () => {
     const prisma = getPrisma();
     const sportId = await golfSportId();
 
-    const created = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: uniqueName() } });
+    const created = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId, name: uniqueName() } });
 
     expect(created.id).toMatch(UUID_PATTERN);
   });
@@ -120,8 +120,8 @@ describe('#340 database-generated uuid ids', () => {
 
     const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at")
-       VALUES ($1::uuid, $2, $4::uuid, $5::uuid, NOW()), ($1::uuid, $3, $4::uuid, $5::uuid, NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "time_zone", "updated_at")
+       VALUES ($1::uuid, $2, $4::uuid, $5::uuid, 'UTC', NOW()), ($1::uuid, $3, $4::uuid, $5::uuid, 'UTC', NOW())`,
       sportId,
       first,
       second,
@@ -148,7 +148,7 @@ describe('#340 sport_leagues bounded text columns', () => {
 
     // The declared bound is the one the database has always had. 255 must still fit.
     const created = await prisma.sportLeague.create({
-      data: { ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(255) },
+      data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(255) },
     });
 
     expect(created.name).toHaveLength(255);
@@ -161,7 +161,7 @@ describe('#340 sport_leagues bounded text columns', () => {
     // Before #340 the schema declared unbounded `String` for a column the database bounded at
     // 255. The schema was the artifact that was wrong, and this is the behavior it misdescribed.
     await expect(
-      prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(256) } }),
+      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(256) } }),
     ).rejects.toThrow();
   });
 });

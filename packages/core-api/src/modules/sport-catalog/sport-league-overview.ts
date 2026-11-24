@@ -1,12 +1,11 @@
 /**
  * The root admin's sport league overview (#1847): one row per sport league for the Sports page,
- * with its sync health, what needs attention, its season and its next event. The reader gathers
+ * with its sync health, what needs attention, its current Season's span (#2003) and its next event. The reader gathers
  * every league's facts in a fixed number of grouped reads; everything here is computed from them.
  */
 import type {
   ProviderSyncFindingOpenCount,
   SportLeagueOverdueCandidate,
-  SportLeagueEventYearSpan,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
   SportLeagueOverviewReader,
@@ -22,7 +21,6 @@ import {
   SportLeagueSyncHealth,
   SportOrder,
   type OverdueEventFacts,
-  type SeasonSpan,
   type SportLeagueFindingsIssueItem,
   type SportLeagueIssue,
   type SportLeagueOverdueIssueItem,
@@ -43,7 +41,6 @@ export class SportLeagueOverviewService {
 export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: Date): SportLeagueOverview[] {
   const runsByLeague = groupBy(facts.latestSyncRuns, (run) => run.sportLeagueId);
   const heldByLeague = groupBy(facts.heldEvents, (event) => event.sportLeagueId);
-  const spansByLeague = groupBy(facts.eventYearSpans, (span) => span.sportLeagueId);
   const overdueByLeague = groupBy<SportLeagueOverdueCandidate>(facts.overdueCandidates, (event) => event.sportLeagueId);
   const findingsByLeague = groupBy(facts.openFindings, (count) => count.sportLeagueId);
 
@@ -62,7 +59,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
         ...findingsIssuesOf(findingsByLeague.get(league.id) ?? []),
         ...issuesOf(failedRuns, heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
       ],
-      season: seasonOf((spansByLeague.get(league.id) ?? []).map(yearSpan), now),
+      season: facts.currentSeasonSpans.get(league.id) ?? null,
       nextEventStartsAt: facts.nextEventStarts.get(league.id) ?? null,
       eventCount: facts.eventCounts.get(league.id) ?? 0,
     };
@@ -143,24 +140,6 @@ function overdueItemsOf(candidates: readonly OverdueEventFacts[], now: Date): Sp
       return expectedEnd === null ? [] : [{ label: event.name, occurredAt: expectedEnd, target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: event.id } }];
     })
     .sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime() || left.label.localeCompare(right.label));
-}
-
-/** One event year's span, from its first start to its last end or start, whichever is later. */
-function yearSpan(span: SportLeagueEventYearSpan): SeasonSpan & { eventYear: number } {
-  const end = span.lastEnd !== null && span.lastEnd > span.lastStart ? span.lastEnd : span.lastStart;
-  return { eventYear: span.eventYear, start: span.firstStart, end };
-}
-
-/**
- * The season to show: the event year under way now; between seasons the next one to start; with
- * no next one known, the latest that ended. Null when the league has no events yet.
- */
-export function seasonOf(spans: readonly (SeasonSpan & { eventYear: number })[], now: Date): SeasonSpan | null {
-  const byStart = [...spans].sort((left, right) => left.start.getTime() - right.start.getTime());
-  const chosen = byStart.find((span) => span.start <= now && now <= span.end)
-    ?? byStart.find((span) => span.start > now)
-    ?? [...byStart].sort((left, right) => right.end.getTime() - left.end.getTime()).at(0);
-  return chosen === undefined ? null : { start: chosen.start, end: chosen.end };
 }
 
 const compareSport = compareByEnumOrder(SportOrder);

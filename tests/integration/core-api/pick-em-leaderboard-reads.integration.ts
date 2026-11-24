@@ -39,6 +39,7 @@ import { createRoundRows, createSportEventRow } from '../../support/sport-event-
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
 import { leagueProfiles } from '../../support/league-profiles';
+import { seriesSeasonId } from '../../support/event-edition';
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
 // season has, the games of every week come from one query, and only the week under way loads its
@@ -66,13 +67,13 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NFL' },
+    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
-    eventYear: 2026,
+    sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
     externalId: `pickem-board-${randomUUID()}`,
     providerId: 'integration-test',
     sport: Sport.AMERICAN_FOOTBALL,

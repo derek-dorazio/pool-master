@@ -39,8 +39,6 @@ export interface PlayoffsLeague {
    * where they fall in the same year (MLB's, the WNBA's).
    */
   playoffYearOffset: 0 | 1;
-  /** The month (0-based) from which the reader takes a new season as the one under way. */
-  seasonRolloverMonth: number;
   /**
    * How the league's bracket is seeded, which the provider's slate loads whole (#1728); left out
    * where the bracket is not built from the feed yet. See `series-playoff-bracket.ts`.

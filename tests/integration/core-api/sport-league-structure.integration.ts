@@ -32,7 +32,7 @@ async function get(url: string) {
 async function testLeague() {
   const prisma = getPrisma();
   const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL }, select: { id: true } });
-  return prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Structure League ${randomUUID().slice(0, 8)}` } });
+  return prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Structure League ${randomUUID().slice(0, 8)}` } });
 }
 
 const SLOT_DEFAULTS = {

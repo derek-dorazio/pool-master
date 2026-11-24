@@ -39,9 +39,9 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
   },
   {
     table: 'sport_events',
-    sqlIncludes: 'GROUP BY "public"."sport_events"."event_series_id", "public"."sport_events"."event_year", "public"."sport_events"."status"',
-    reason: "The root admin's Sports page (#1847) counts every sport league's events and dates each of its seasons, so it groups every event: one row per series, "
-      + 'year and status, a few thousand events in all. Only that page reads it, and an index cannot narrow a read of every row.',
+    sqlIncludes: 'FROM "public"."sport_events" WHERE 1=1 GROUP BY "public"."sport_events"."event_series_id"',
+    reason: "The root admin's Sports page (#1847) counts every sport league's events, so it groups every event: one row per series, a few thousand "
+      + 'events in all. Only that page reads it, and an index cannot narrow a read of every row. (Its seasons are the current Season\'s own span since #2003.)',
   },
   {
     table: 'leagues',

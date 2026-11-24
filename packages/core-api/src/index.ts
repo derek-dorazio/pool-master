@@ -125,6 +125,8 @@ import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
 import { ProviderSyncFindingService } from './modules/ingestion/findings/provider-sync-finding-service';
 import { SyncFindingRetention } from './modules/ingestion/findings/sync-finding-retention';
+import { CurrentSeasonRecompute } from './modules/sport-catalog/current-season-recompute';
+import { PrismaSportLeagueSeasonRepository } from './adapters/prisma-sport-league-season-repository';
 import { syncFindingsModule } from './modules/ingestion/findings/routes';
 import { PrismaProviderSyncFindingRepository } from './adapters/prisma-provider-sync-finding-repository';
 import { ParticipantService } from './modules/participants/service';
@@ -286,6 +288,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       new SyncFindingRetention(syncFindingRepository),
       new AbandonedDraftRetention(new PrismaContestRepository(prisma), app.log),
       new BackgroundJobRetention(backgroundJobRepository),
+      new CurrentSeasonRecompute(new PrismaSportLeagueSeasonRepository(prisma), app.log),
     ],
     jobLock,
     logger: app.log,
@@ -371,9 +374,11 @@ export function buildApp(options: BuildAppOptions = {}) {
   // A sport league's events sync (#1819): the schedule and an admin's Sync now queue the same job.
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, registry, app.log),
     sportEvents: sportEventServices.sportEvents,
+    findings: syncFindings,
     syncRuns: providerSyncRuns,
     jobs: backgroundJobs,
     logger: app.log,

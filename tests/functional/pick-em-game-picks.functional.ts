@@ -31,7 +31,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -111,12 +111,12 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     // --- An event of two first-round games and a final, released ----------------------------
     const firstKickoff = new Date(Date.now() + 2 * DAY);
     const secondKickoff = new Date(firstKickoff.getTime() + DAY);
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Pickem Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Pickem Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const tournament = await createEvent({
       client: a,
-      body: { sportLeagueId, eventYear: 2099, name: `Pickem Classic ${RUN}`, startDate: firstKickoff.toISOString(), rounds: 2, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Pickem Classic ${RUN}`, startDate: firstKickoff.toISOString(), rounds: 2, autoLifecycleEnabled: false },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;

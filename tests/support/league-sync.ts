@@ -28,3 +28,35 @@ export async function syncLeagueTo(
   await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { selectedProviderMappingId: mapping.id } });
   return mapping.id;
 }
+
+/**
+ * Gives a synced test league the Seasons a migration would (#2003): one per `championshipYears`,
+ * each mapped to the provider's own id for it (BALLDONTLIE names a season by its year), the first
+ * made current, as the daily recompute would. Returns the Season ids in the order asked.
+ */
+export async function syncSeasonsTo(
+  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeagueSeasonProviderMapping' | 'sportLeague'>,
+  sportLeagueId: string,
+  sportLeagueProviderMappingId: string,
+  championshipYears: readonly number[],
+): Promise<string[]> {
+  const ids: string[] = [];
+  for (const championshipYear of championshipYears) {
+    const { id } = await prisma.sportLeagueSeason.create({
+      data: {
+        sportLeagueId,
+        championshipYear,
+        name: String(championshipYear),
+        startsAt: new Date(Date.UTC(championshipYear, 0, 1)),
+        endsAt: new Date(Date.UTC(championshipYear + 1, 0, 1) - 1),
+      },
+      select: { id: true },
+    });
+    await prisma.sportLeagueSeasonProviderMapping.create({
+      data: { sportLeagueId, sportLeagueSeasonId: id, sportLeagueProviderMappingId, providerSeasonId: String(championshipYear) },
+    });
+    ids.push(id);
+  }
+  if (ids.length > 0) await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { currentSeasonId: ids[0] } });
+  return ids;
+}

@@ -28,6 +28,7 @@ import {
   BackgroundJobRunner,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { leagueProfiles } from '../../support/league-profiles';
+import { seriesSeasonId } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
@@ -300,11 +301,11 @@ describe('Activity reads and job results (#1819)', () => {
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
+    const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Jobs Open ${suffix}` } });
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, eventYear: 2026, name: `Activity Jobs Open ${suffix}`, sport: Sport.GOLF,
+        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Activity Jobs Open ${suffix}`, sport: Sport.GOLF,
         providerId: 'integration-background-jobs', externalId: `activity-${suffix}`, startDate: new Date(),
       },
     });
@@ -326,7 +327,7 @@ describe('Activity reads and job results (#1819)', () => {
     const { sportLeague, event } = await leagueWithEvent();
     const queue = new BackgroundJobQueue({ jobs: repository(), currentStart: testCurrentJobStart });
 
-    await queue.enqueue(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId: sportLeague.id, eventYears: [2026] });
+    await queue.enqueue(BackgroundJobType.SYNC_LEAGUE_EVENTS, { sportLeagueId: sportLeague.id });
     await queue.enqueueAll([queue.request(BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS, { sportEventId: event.id, completedAt: new Date().toISOString() })]);
 
     const rows = await getPrisma().backgroundJob.findMany({ orderBy: { createdAt: 'asc' } });
@@ -418,7 +419,7 @@ describe('Activity reads and job results (#1819)', () => {
       create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const empty = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
+    const empty = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
     const job = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', trigger: JobTrigger.SYSTEM, payload: {}, sportLeagueId: empty.id } });
 
     await expect(repository().findActivity({ sportLeagueId: empty.id, createdFrom: new Date(Date.now() - HOUR), createdTo: new Date(Date.now() + HOUR) }))

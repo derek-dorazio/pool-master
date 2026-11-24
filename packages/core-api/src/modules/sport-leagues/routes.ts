@@ -1,7 +1,7 @@
 /**
  * The SportLeague operation set and its roster: the participants that belong to it and their
- * ranks (#236, #1853). A sport league's events are reached through the event list,
- * filtered by sport league and event year (plans/147). Before #236 the same operations were reachable
+ * ranks (#236, #1853), and its Seasons (#2003). A sport league's events are reached through the
+ * event list, filtered by sport league and Season. Before #236 the same operations were reachable
  * only as `adminGetGolfLeagueRoster` and siblings, golf-named doors onto cross-sport
  * services. Reads need a signed-in user, except the list, which the public How to Play page reads;
  * writes need the root-admin claim (A10).
@@ -118,10 +118,10 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'Create a sport league',
-      description: 'Adding a tour is one call, not a migration. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
+      description: 'Adding a tour is one call; its Seasons are added by migration (#2003). 400 TIME_ZONE_UNKNOWN for a time zone the runtime does not know. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
       operationId: 'createSportLeague',
       body: schemaRef('CreateSportLeagueRequest'),
-      response: { 201: schemaRef('SportLeagueResponse'), ...errors(403, 404, 409, 422) },
+      response: { 201: schemaRef('SportLeagueResponse'), ...errors(400, 403, 404, 409, 422) },
     },
     handler: handler.createSportLeague,
   });
@@ -131,8 +131,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'Update a sport league',
-      description: 'Setting currentEventYear is "set as current": one write, so the sport league never has two current years, '
-        + 'and 422 EVENT_YEAR_HAS_NO_EVENTS for a year the sport league has no events in (plans/147 decision 6). '
+      description: 'The current Season is never set here: the daily recompute sets it (#2003). '
         + '422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. '
         + '409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: '
         + 'the loaded bracket\'s links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. '
@@ -190,6 +189,21 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       response: { 200: schemaRef('SportLeagueStructureResponse'), ...errors(401, 403, 404) },
     },
     handler: handler.getStructure,
+  });
+
+  fastify.get('/:sportLeagueId/seasons', {
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport league\'s Seasons with their provider ids, phases and slots',
+      description: 'Every Season of the sport league (#2003), latest first, each with whether it is current, each provider\'s id for it, '
+        + 'and its phases and slots in play order, test slots included. Seasons are added by migration, so there is no write. '
+        + 'What the Structure tab lists and every Season picker offers, labelled by name. Read from a fixed number of queries, however many Seasons and slots. '
+        + 'Any signed-in user may read it.',
+      operationId: 'listSportLeagueSeasons',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 200: schemaRef('SportLeagueSeasonListResponse'), ...errors(401, 404) },
+    },
+    handler: handler.listSeasons,
   });
 
   fastify.get('/:sportLeagueId/events/overview', {

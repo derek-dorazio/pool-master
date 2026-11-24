@@ -49,7 +49,9 @@ import type {
   AutoAssignSportEventPricesRequest,
   LoadSportEventBracketRequest,
   SportEventBracketResponse,
+  SportEventDto,
   SportEventListResponse,
+  SportLeagueDto,
   SportEventParticipantResponse,
   UpdateSportEventRoundMatchRequest,
   UpdateSportEventParticipantsRequest,
@@ -380,7 +382,7 @@ class Loader {
    * The league's id. The league must be on the site already: a missing one is refused. A bracket
    * rule the file names is changed on a league that has another.
    */
-  private async ensureLeague(client: Client, league: SportDataLeague): Promise<string> {
+  private async ensureLeague(client: Client, league: SportDataLeague): Promise<SportLeagueDto> {
     const { name, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
     const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
@@ -391,7 +393,7 @@ class Loader {
       const row = { sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, name };
       if (!changed) {
         this.report({ ...row, action: LoadAction.SKIP, detail: null });
-        return existing.id;
+        return existing;
       }
       // The server refuses the change while an event of the league has its bracket loaded (#730).
       // A dry run cannot know that without the write, so it reports the change it would ask for.
@@ -399,12 +401,12 @@ class Loader {
         const result = await updateSportLeague({ client, path: { sportLeagueId: existing.id }, body: { bracketAdvancement } });
         if (result.error?.error.code === 'SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED') {
           this.report({ ...row, action: LoadAction.CONFLICT, detail: `${change} not changed: an event of the league has its bracket loaded` });
-          return existing.id;
+          return existing;
         }
         await must(Promise.resolve(result), `Update sport league ${name}`);
       }
       this.report({ ...row, action: LoadAction.UPDATE, detail: change });
-      return existing.id;
+      return existing;
     }
     // A sport league is added by migration with its phases and slots (the add-sport skill), never by
     // a test data file, so a file naming a league the site lacks is refused, in a dry run too.
@@ -504,12 +506,13 @@ class Loader {
 
   private async loadLeague(league: SportDataLeague): Promise<void> {
     const client = await this.options.getClient();
-    const sportLeagueId = await this.ensureLeague(client, league);
+    const siteLeague = await this.ensureLeague(client, league);
+    const sportLeagueId = siteLeague.id;
     const participantIds = this.contents.has(SportDataContent.PLAYERS)
       ? await this.ensurePlayers(client, league, sportLeagueId)
       : new Map<string, string | null>();
 
-    const { events: stored } = await must(listEvents({ client, query: { sportLeagueId, eventYear: this.file.scope.season } }), `List ${league.name} events`);
+    const stored = await currentSeasonEvents(client, siteLeague);
     const matches = this.matchEvents(league, stored);
     for (const event of league.events) {
       await this.loadEvent(await this.options.getClient(), { league, sportLeagueId, event, stored: matches.get(event) ?? null, participantIds });
@@ -712,7 +715,6 @@ class Loader {
         client,
         body: {
           sportLeagueId: input.sportLeagueId,
-          eventYear: this.file.scope.season,
           name: event.name,
           ...(event.venue ? { venue: event.venue } : {}),
           ...(event.location ? { location: event.location } : {}),
@@ -881,7 +883,7 @@ class Loader {
     const at = { sportLeague: league.name, name: eventName };
     if (named.length === 0) throw new Error(`No ${league.name} event named ${eventName}.`);
     if (editable.length > 1) {
-      throw new Error(`${editable.length} ${league.name} events not yet started are named ${eventName} (${editable.map((event) => event.eventYear).join(', ')}); rename one so the name picks one event.`);
+      throw new Error(`${editable.length} ${league.name} events not yet started are named ${eventName} (${editable.map((event) => event.championshipYear).join(', ')}); rename one so the name picks one event.`);
     }
     if (editable.length === 0) {
       this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `${named.map((event) => event.status).join(', ')}, so its field is not changed` });
@@ -1050,7 +1052,7 @@ export async function catchUpTestEvents(
   for (const league of file.sportLeagues) {
     const siteLeague = sportLeagues.find((row) => row.name.toLowerCase() === league.name.toLowerCase());
     if (!siteLeague) continue;
-    const { events } = await must(listEvents({ client, query: { sportLeagueId: siteLeague.id, eventYear: file.scope.season } }), `List ${league.name} events`);
+    const events = await currentSeasonEvents(client, siteLeague);
     for (const stored of events) {
       if (stored.status !== SportEventStatus.SCHEDULED && stored.status !== SportEventStatus.IN_PROGRESS) continue;
       const fileName = testSeedEventNameOf(stored.name);
@@ -1114,10 +1116,23 @@ export async function selectTestSeedEventsOnSite(
   for (const league of file.sportLeagues) {
     const existing = sportLeagues.find((row) => row.name.toLowerCase() === league.name.toLowerCase());
     if (!existing) continue;
-    const { events } = await must(listEvents({ client, query: { sportLeagueId: existing.id, eventYear: file.scope.season } }), `List ${league.name} events`);
+    const events = await currentSeasonEvents(client, existing);
     stored.set(league.name.toLowerCase(), events.map((event) => ({ name: event.name, status: event.status, startDate: event.startDate })));
   }
   return selectTestSeedEvents(file, stored, eventsPerLeague, now);
+}
+
+/**
+ * A site league's events in its current Season (#2003). Test events are dated forward to now, so
+ * they are created in, and read from, the Season under way; a league with no Season is refused,
+ * since Seasons are added by migration.
+ */
+async function currentSeasonEvents(client: Client, league: Pick<SportLeagueDto, 'id' | 'name' | 'currentSeasonId'>): Promise<SportEventDto[]> {
+  if (league.currentSeasonId === null) {
+    throw new Error(`${league.name} has no current Season: a sport league's Seasons are added by migration, not by test data.`);
+  }
+  const { events } = await must(listEvents({ client, query: { sportLeagueSeasonId: league.currentSeasonId } }), `List ${league.name} events`);
+  return events;
 }
 
 /** Loads the file, or in a dry run reports what loading it would do. Returns one row per subject. */

@@ -23,7 +23,6 @@ import type { SportLeagueDto } from '@/lib/api';
 import { SportEventEditionFields } from './sport-event-edition-fields';
 import {
   isCompleteEdition,
-  parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
 import { buildSportEventPath } from './manage-navigation';
@@ -87,7 +86,6 @@ export function SportEventManualCreateForm({
           ...(endDate ? { endDate } : {}),
           rounds: values.rounds,
           sportLeagueId: edition.sportLeagueId,
-          eventYear: parseEventYear(edition.eventYear) as number,
           autoLifecycleEnabled: values.autoLifecycleEnabled,
         },
       });
@@ -192,7 +190,7 @@ export function SportEventManualCreateForm({
           <InlineError>
             {extractErrorMessage(createMutation.error, {
               context: 'createEvent',
-              values: { sportLeague: sportLeagueNoun.one, year: edition.eventYear, event: event.one },
+              values: { sportLeague: sportLeagueNoun.one, event: event.one },
               fallback: `We could not create this ${event.one}.`,
             })}
           </InlineError>

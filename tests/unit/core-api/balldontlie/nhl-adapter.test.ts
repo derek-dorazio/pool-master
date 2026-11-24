@@ -90,22 +90,22 @@ describe('BalldontlieAdapter (NHL)', () => {
       expect(events.map((event) => event.externalId)).toEqual(['nhl-2025-postseason']);
     });
 
-    it('reads the season under way and the next when the range is open-ended, from September on', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
       await expect(harness.adapter.getUpcomingEvents(Sport.HOCKEY, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') })).resolves.toEqual([]);
-      expect(requestLine(harness.api).map((line) => /seasons=(\d+)/.exec(line)?.[1])).toEqual(['2026', '2027']);
+      expect(requestLine(harness.api).map((line) => /seasons=(\d+)/.exec(line)?.[1])).toEqual([]);
     });
 
-    it('takes the season whose playoffs are this spring as the one under way before September', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says', async () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 4, 1));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY);
+      const events = await harness.adapter.getUpcomingEvents(Sport.HOCKEY, undefined, { providerSeasonId: '2025' });
 
       expect(events.map((event) => event.externalId)).toEqual(['nhl-2025-postseason']);
-      expect(requestLine(harness.api).map((line) => /seasons=(\d+)/.exec(line)?.[1])).toEqual(['2025', '2026']);
+      expect(requestLine(harness.api).map((line) => /seasons=(\d+)/.exec(line)?.[1])).toEqual(['2025']);
     });
   });
 

@@ -119,7 +119,8 @@ describe('CommissionerNotices', () => {
     return world.addSportEvent({
       sportLeagueId: 'pga-tour',
       eventSeriesId: `series-${overrides.name ?? 'The Masters'}`,
-      eventYear: 2026,
+      sportLeagueSeasonId: 'season-2026',
+      championshipYear: 2026,
       ...overrides,
     });
   }
@@ -171,13 +172,13 @@ describe('CommissionerNotices', () => {
       const family = world.addLeague({ name: 'Family League' });
       const casey = person(office.id, 'Casey');
       const jordan = person(family.id, 'Jordan');
-      const previous = event({ name: 'The Masters', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-10T12:00:00.000Z') });
-      event({ name: 'Another Open', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-17T12:00:00.000Z') });
+      const previous = event({ name: 'The Masters', sportLeagueSeasonId: 'season-2025', championshipYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-10T12:00:00.000Z') });
+      event({ name: 'Another Open', sportLeagueSeasonId: 'season-2025', championshipYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-17T12:00:00.000Z') });
       const pick6 = world.addContest(office.id, { name: 'Masters Pick 6', status: ContestStatus.COMPLETED, sportEventIds: [previous.id] });
       const tied = world.addContest(office.id, { name: 'Masters Salary Cap', status: ContestStatus.COMPLETED, sportEventIds: [previous.id] });
       settle(pick6.id, [['Green Jackets', 1], ['Amen Corner', 2]]);
       settle(tied.id, [['Azalea', 1], ['Magnolia', 1], ['Rae\'s Creek', 3]]);
-      const otherMajor = event({ name: 'The Open', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-07-17T12:00:00.000Z') });
+      const otherMajor = event({ name: 'The Open', sportLeagueSeasonId: 'season-2025', championshipYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-07-17T12:00:00.000Z') });
       const season = world.addContest(office.id, { name: 'Majors Pool', status: ContestStatus.COMPLETED, sportEventIds: [previous.id, otherMajor.id] });
       settle(season.id, [['Season Champs', 1]]);
       event({ name: 'The Masters', startDate: inDays(9) });
@@ -194,7 +195,7 @@ describe('CommissionerNotices', () => {
     it("reads last year's winners of every league's contests on the previous edition in one read, however many contests (#1336)", async () => {
       const office = world.addLeague({ name: 'Office League' });
       const casey = person(office.id, 'Casey');
-      const previous = event({ name: 'The Masters', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-10T12:00:00.000Z') });
+      const previous = event({ name: 'The Masters', sportLeagueSeasonId: 'season-2025', championshipYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-04-10T12:00:00.000Z') });
       for (const name of ['Pick 6', 'Salary Cap', 'Pick 4']) {
         const contest = world.addContest(office.id, { name: `Masters ${name}`, status: ContestStatus.COMPLETED, sportEventIds: [previous.id] });
         settle(contest.id, [[`${name} Champs`, 1], [`${name} Runners-up`, 2]]);
@@ -231,7 +232,8 @@ describe('CommissionerNotices', () => {
         sport: Sport.AMERICAN_FOOTBALL,
         rounds: 1,
         sportLeagueId: 'nfl',
-        eventYear: 2026,
+        sportLeagueSeasonId: 'season-2026',
+        championshipYear: 2026,
         startDate: inDays(days),
       });
       week('Week 1', 8);
@@ -507,7 +509,8 @@ describe('CommissionerNotices', () => {
         sport: Sport.AMERICAN_FOOTBALL,
         rounds: 1,
         sportLeagueId: 'nfl',
-        eventYear: 2026,
+        sportLeagueSeasonId: 'season-2026',
+        championshipYear: 2026,
         startDate: mondayPlus(days),
       });
       week('Week 1', 5);

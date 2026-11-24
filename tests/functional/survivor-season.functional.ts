@@ -41,7 +41,7 @@ import {
   SurvivorLeaderboardResponseSchema,
   type SurvivorLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -114,7 +114,7 @@ type Side = 'home' | 'away';
 async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly string[], name: string, startDate: string, run = RUN) {
   const event = await createEvent({
     client: a,
-    body: { sportLeagueId, eventYear: 2099, name: `${name} ${run}`, startDate, rounds: 1, autoLifecycleEnabled: false },
+    body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${name} ${run}`, startDate, rounds: 1, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);
@@ -188,7 +188,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     const a = admin.client;
 
     // --- Two released weeks of the same four games -----------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Survivor Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Survivor Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
@@ -337,7 +337,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Survivor Cancel Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];

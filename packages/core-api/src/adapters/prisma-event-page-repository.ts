@@ -90,10 +90,10 @@ export class PrismaEventPageRepository implements EventPageRepository {
         status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] },
       },
       select: {
-        id: true, name: true, eventYear: true, startDate: true, endDate: true, status: true,
+        id: true, name: true, sportLeagueSeason: { select: { championshipYear: true } }, startDate: true, endDate: true, status: true,
         eventSeries: { select: { sportLeagueId: true, name: true } },
       },
-      orderBy: [{ startDate: 'asc' }, { eventYear: 'asc' }],
+      orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
     });
     return series.map(({ sportLeagueId, eventSeriesName }) => {
       const editions = rows.filter((row) => row.eventSeries.sportLeagueId === sportLeagueId && row.eventSeries.name === eventSeriesName);
@@ -103,7 +103,7 @@ export class PrismaEventPageRepository implements EventPageRepository {
       return [...underWay, ...rest].map((row) => ({
         sportEventId: row.id,
         name: row.name,
-        eventYear: row.eventYear,
+        championshipYear: row.sportLeagueSeason.championshipYear,
         startDate: row.startDate,
         endDate: row.endDate,
       }));

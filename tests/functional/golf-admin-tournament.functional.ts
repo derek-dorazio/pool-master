@@ -5,13 +5,10 @@ import {
   applySportLeagueRankingUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
-  cloneEventYear,
   createEvent,
   createParticipant,
   createSportLeague,
   getEvent,
-  getSportLeague,
-  importEventYearFromProvider,
   listEventParticipants,
   listEventRounds,
   listEvents,
@@ -28,7 +25,7 @@ import {
   updateEventParticipants,
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -137,7 +134,7 @@ afterAll(async () => {
 const ANY_UUID = '00000000-0000-4000-8000-000000000000';
 
 describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8; operations per #236)', () => {
-  it('UC-GOLF-ADMIN-01/02: walks the full manual authoring journey and clones the event year forward', async () => {
+  it('UC-GOLF-ADMIN-01/02: walks the full manual authoring journey, the event going in the tour\'s current Season', async () => {
     await ensureGolfSportRow();
 
     const admin = await buildRegisteredUser({ displayName: 'Golf Admin Pilot' });
@@ -148,12 +145,13 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     // --- Sport league (tour) ------------------------------------------------------
     const league = await createSportLeague({
       client: c,
-      body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `PGA Tour ${RUN}` },
+      body: { ...(await sportLeagueProfiles(c, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `PGA Tour ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
-    expect(expectDefined(league.data).sportLeague.currentEventYear).toBeNull();
+    // A league no migration gave a Season has none until one is added.
+    expect(expectDefined(league.data).sportLeague.currentSeasonId).toBeNull();
 
     // --- 20 participants of the tour + a ranking upload (incl. a tied ranking pair) ------
     const players: Array<{ id: string; rank: number }> = [];
@@ -187,15 +185,14 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         startDate: '2099-07-16T08:00:00.000Z',
         endDate: '2099-07-19T20:00:00.000Z',
         rounds: 4,
-        sportLeagueId,
-        eventYear: 2026,
+        sportLeagueId: await inCurrentSeason(sportLeagueId, 2026),
         autoLifecycleEnabled: false,
       },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
-    expect(expectDefined(tournament.data).event).toMatchObject({ syncScope: 'NONE', sportLeagueId, eventYear: 2026 });
+    expect(expectDefined(tournament.data).event).toMatchObject({ syncScope: 'NONE', sportLeagueId, championshipYear: 2026 });
 
     const rounds = await listEventRounds({ client: c, path: { eventId } });
     expect(expectDefined(rounds.data).rounds.length).toBe(4);
@@ -231,7 +228,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(wd.response?.status).toBe(200);
 
     // --- 21st participant, of another tour, added straight to the field -------
-    const guestTour = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `LIV ${RUN}` } });
+    const guestTour = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `LIV ${RUN}` } });
     const guestTourId = expectDefined(guestTour.data).sportLeague.id;
     created.sportLeagueIds.add(guestTourId);
     const guest = await createParticipant({
@@ -429,68 +426,27 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const afterResettle = await listEventParticipants({ client: c, path: { eventId } });
     const corrected = expectDefined(expectDefined(afterResettle.data).participants.find((row) => row.id === correctedId));
     expect(corrected.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
-
-    // --- Set the current year: refused for a year with no events (plans/147 decision 6) ---
-    const noEvents = await updateSportLeague({ client: c, path: { sportLeagueId }, body: { currentEventYear: 1823 } });
-    expectFunctionalError(noEvents, { status: 422, code: 'EVENT_YEAR_HAS_NO_EVENTS' });
-    const unchanged = await getSportLeague({ client: c, path: { sportLeagueId } });
-    expect(expectDefined(unchanged.data).sportLeague.currentEventYear).toBeNull();
-
-    const setCurrent = await updateSportLeague({ client: c, path: { sportLeagueId }, body: { currentEventYear: 2026 } });
-    expect(setCurrent.response?.status).toBe(200);
-    expect(expectDefined(setCurrent.data).sportLeague.currentEventYear).toBe(2026);
-
-    // --- Clone the 2026 calendar one year forward -------------------------------------
-    const clone = await cloneEventYear({ client: c, body: { sportLeagueId, eventYear: 2026 } });
-    expect(clone.response?.status).toBe(201);
-    expect(expectDefined(clone.data).events).toHaveLength(1);
-    const [clonedEvent] = expectDefined(clone.data).events;
-    created.sportEventIds.add(clonedEvent.id);
-    // Next year's edition of the same series: a fresh event — empty field, 6 default
-    // tiers, no provider data — with its dates shifted exactly one calendar year.
-    expect(clonedEvent).toMatchObject({
-      eventYear: 2027,
-      eventSeriesId: expectDefined(tournament.data).event.eventSeriesId,
-      sportLeagueId,
-      syncScope: 'NONE',
-      loadedParticipantCount: 0,
-      tierCount: 6,
-    });
-    expect(clonedEvent.startDate.startsWith('2100-07-16')).toBe(true);
-
-    // The current year is unchanged by the clone.
-    const leagueAfter = await getSportLeague({ client: c, path: { sportLeagueId } });
-    expect(expectDefined(leagueAfter.data).sportLeague).toMatchObject({ currentEventYear: 2026, sportEventCount: 2 });
-
-    // A second clone into a year that now has events is refused whole.
-    expectFunctionalError(
-      await cloneEventYear({ client: c, body: { sportLeagueId, eventYear: 2026 } }),
-      { status: 409, code: 'EVENT_YEAR_NOT_EMPTY' },
-    );
-
-    const leagueEvents = await listEvents({ client: c, query: { sportLeagueId } });
-    expect(expectDefined(leagueEvents.data).events.map((event) => event.eventYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
   }, 60_000);
 
-  // plans/147 decision 5 — @@unique([eventSeriesId, eventYear]): there is one 2026 edition of
-  // a series. Driven through createEvent, so it proves the constraint reaches the caller as a
-  // 409 rather than a 500, and that the same series in another year is still allowed.
-  it('BR-EVENT-EDITION-UNIQUE: refuses a second edition of a series in one year with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
+  // @@unique([eventSeriesId, sportLeagueSeasonId]): there is one edition of a series a Season.
+  // Driven through createEvent, so it proves the constraint reaches the caller as a 409 rather
+  // than a 500, and that the same series in another Season is still allowed.
+  it('BR-EVENT-EDITION-UNIQUE: refuses a second edition of a series in one Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
     await ensureGolfSportRow();
     const admin = await buildRegisteredUser({ displayName: 'Golf Admin Editions' });
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `Editions Tour ${RUN}` } });
+    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `Editions Tour ${RUN}` } });
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
-    const edition = (eventYear: number) => createEvent({
+    // A new event goes in the league's current Season, so each edition first makes its year's current.
+    const edition = async (championshipYear: number) => createEvent({
       client: c,
       body: {
-        sportLeagueId,
-        eventYear,
+        sportLeagueId: await inCurrentSeason(sportLeagueId, championshipYear),
         name: `The ${RUN} Masters`,
-        startDate: `${eventYear}-04-09T12:00:00.000Z`,
+        startDate: `${championshipYear}-04-09T12:00:00.000Z`,
       },
     });
 
@@ -506,26 +462,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(nextYear.data).event.eventSeriesId).toBe(expectDefined(first.data).event.eventSeriesId);
 
     const editions = await listEvents({ client: c, query: { sportLeagueId } });
-    expect(expectDefined(editions.data).events.map((event) => event.eventYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
+    expect(expectDefined(editions.data).events.map((event) => event.championshipYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
   });
-
-  // #385, #1997 — a league's year import reads the provider league its selected mapping names. The
-  // FAPI daemon's fake feed (test code, #2039) has no Provider row, so no league can be mapped to it
-  // and its import is refused; the import itself is covered against a stand-in provider in the
-  // integration suite.
-  it('refuses a year import for a league with no selected provider league with 422 SPORT_LEAGUE_NOT_SYNCED', async () => {
-    await ensureGolfSportRow();
-    const admin = await buildRegisteredUser({ displayName: 'Golf Admin Import' });
-    created.userIds.add(admin.userId);
-    await promoteToRootAdmin(admin);
-    const c = admin.client;
-    const unsynced = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `Unsynced Tour ${RUN}` } });
-    created.sportLeagueIds.add(expectDefined(unsynced.data).sportLeague.id);
-    expectFunctionalError(
-      await importEventYearFromProvider({ client: c, body: { sportLeagueId: expectDefined(unsynced.data).sportLeague.id, eventYear: 2027, providerId: 'balldontlie' } }),
-      { status: 422, code: 'SPORT_LEAGUE_NOT_SYNCED' },
-    );
-  }, 60_000);
 
   it('BR-GOLF-ADMIN-AUTHZ: every golf administration write rejects a non-root-admin caller with 403, before validating its input', async () => {
     const member = await buildRegisteredUser({ displayName: 'Golf Non Admin' });
@@ -534,10 +472,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const deny = { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' };
 
     // Deliberately malformed ids and bodies: the refusal must not depend on — or reveal — the input's shape.
-    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', name: `denied-${RUN}`, platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
-    expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { currentEventYear: 2030 } }), deny);
-    expectFunctionalError(await cloneEventYear({ client: c, body: { sportLeagueId: 'x', eventYear: 2030 } }), deny);
-    expectFunctionalError(await importEventYearFromProvider({ client: c, body: { sportLeagueId: 'x', eventYear: 2030, providerId: 'x' } }), deny);
+    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', timeZone: 'UTC', name: `denied-${RUN}`, platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
+    expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { name: 'x' } }), deny);
     expectFunctionalError(await seedEventParticipants({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await rebuildEventLeaderboards({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
@@ -550,7 +486,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,
-      body: { sportLeagueId: ANY_UUID, eventYear: 2030, name: 'x', startDate: '2030-01-01T00:00:00.000Z' },
+      body: { sportLeagueId: ANY_UUID, name: 'x', startDate: '2030-01-01T00:00:00.000Z' },
     }), deny);
     expectFunctionalError(await createParticipant({ client: c, body: { sportLeagueId: ANY_UUID, participantType: 'INDIVIDUAL', name: `denied-${RUN}` } }), deny);
   });
