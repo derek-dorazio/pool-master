@@ -37,30 +37,31 @@ describe('createScheduledEventReader', () => {
     expect(logger.warn).toHaveBeenCalledTimes(2);
   });
 
-  it('asks each provider for its next two events to load a field, from now or the given start and up to the given end, earliest first', async () => {
-    const { read, findMany } = reader(['mock', 'bdl']);
+  it('asks a provider for its next two events to load a field, from now or the given start and up to the given end, earliest first', async () => {
+    const { read, findMany } = reader(['balldontlie']);
     const from = new Date('2026-11-10T00:00:00.000Z');
     const to = new Date('2026-11-20T00:00:00.000Z');
 
     await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW })).resolves.toEqual([
-      { providerId: 'mock', externalId: 'mock-ext' },
-      { providerId: 'bdl', externalId: 'bdl-ext' },
+      { providerId: 'balldontlie', externalId: 'balldontlie-ext' },
     ]);
     findMany.mockClear();
     await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', from, now: NOW, to });
 
     const statuses = { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] };
     expect(findMany.mock.calls.map(([query]) => query.where)).toEqual([
-      { sport: Sport.GOLF, providerId: { in: ['mock'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY },
-      { sport: Sport.GOLF, providerId: { in: ['bdl'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY },
+      {
+        sport: Sport.GOLF, providerId: { in: ['balldontlie'] }, externalId: { not: '' }, status: statuses, startDate: { gte: from, lte: to }, syncScope: SportEventSyncScope.SCORES_ONLY,
+        eventSeries: { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: 'BALLDONTLIE' } } } } } },
+      },
     ]);
     expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 2, orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }] }));
   });
 
-  it('narrows a provider\'s field query to active sport leagues whose selected mapping names that provider when asked for synced leagues only, and asks nothing of a provider no league can sync from', async () => {
+  it('narrows a provider\'s field query to active sport leagues whose selected mapping names that provider, and asks nothing of a provider no league can sync from', async () => {
     const { read, findMany } = reader(['mock', 'balldontlie']);
 
-    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW, syncedLeaguesOnly: true })).resolves.toEqual([
+    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW })).resolves.toEqual([
       { providerId: 'balldontlie', externalId: 'balldontlie-ext' },
     ]);
 
@@ -70,11 +71,11 @@ describe('createScheduledEventReader', () => {
     ]);
   });
 
-  it('issues exactly one query per provider for the field feed and exactly one in all for the scores feed, however many events they hold', async () => {
-    const { read, findMany } = reader(['mock', 'bdl']);
+  it('issues one query per provider a league can sync from for the field feed and exactly one in all for the scores feed, however many events they hold', async () => {
+    const { read, findMany } = reader(['mock', 'balldontlie']);
 
     await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW });
-    expect(findMany).toHaveBeenCalledTimes(2);
+    expect(findMany).toHaveBeenCalledTimes(1);
 
     findMany.mockClear();
     await read.listLiveScoreEvents({ sport: Sport.GOLF, now: NOW });

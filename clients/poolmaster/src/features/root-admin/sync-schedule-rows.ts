@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import type { IngestionScheduleConfig, IngestionScheduleConfigPatch } from '@/lib/api';
+import type { IngestionSchedule, IngestionScheduleConfigPatch, IngestionSyncSchedule } from '@/lib/api';
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { assertNever, explicitOrderValues, ProviderSyncKind, ProviderSyncKindOrder } from '@poolmaster/shared/domain';
+import { explicitOrderValues, ProviderSyncKind, ProviderSyncKindOrder } from '@poolmaster/shared/domain';
 import { plural } from '@/lib/plural';
 
 /** The schedule's syncs, one row each on the Providers page (#1873), keyed by sync kind (#1999) in the order they run for an event. */
@@ -10,8 +10,10 @@ const SYNC_SCHEDULE_KINDS = explicitOrderValues(ProviderSyncKindOrder);
 export type SyncScheduleRow = {
   key: ProviderSyncKind;
   sync: string;
-  /** Whether it runs on its interval. Field always does, so it has no switch. */
+  /** Whether it runs on its interval, as the API says (#2086). */
   enabled: boolean;
+  /** Whether it has a switch; a sync with none always runs (the API says which, #2086). */
+  switchable: boolean;
   /** How often it runs in seconds, for sorting; null while it is off. */
   everySeconds: number | null;
   every: string;
@@ -19,7 +21,7 @@ export type SyncScheduleRow = {
   unit: 'minutes' | 'seconds';
   /** The interval in its own unit, as the edit form starts from it. */
   interval: number;
-  /** Field only: how many days ahead a run looks. */
+  /** How many days ahead a run looks, for a sync that looks ahead; null for one that does not. */
   lookaheadDays: number | null;
 };
 
@@ -35,50 +37,36 @@ export function formatInterval(seconds: number): string {
 }
 
 /** The unit a sync's interval is set in: seconds when the schedule holds it in seconds, else minutes. */
-function unitOf(policy: IngestionScheduleConfig[ProviderSyncKind]): 'minutes' | 'seconds' {
+function unitOf(policy: IngestionSyncSchedule): 'minutes' | 'seconds' {
   return policy.intervalSeconds === undefined ? 'minutes' : 'seconds';
 }
 
-function intervalOf(policy: IngestionScheduleConfig[ProviderSyncKind]): number {
+function intervalOf(policy: IngestionSyncSchedule): number {
   return (unitOf(policy) === 'seconds' ? policy.intervalSeconds : policy.intervalMinutes) ?? 0;
 }
 
-/**
- * Whether the sync runs on its interval. The field sync runs for synced sport leagues whatever its
- * switch says (ADR 0011), so its row always shows its interval.
- */
-function runs(kind: ProviderSyncKind, config: IngestionScheduleConfig): boolean {
-  return kind === ProviderSyncKind.FIELD || config[kind].enabled;
-}
-
-function whichEvents(kind: ProviderSyncKind, config: IngestionScheduleConfig): string {
-  switch (kind) {
-    case ProviderSyncKind.FIELD:
-      return `Events starting in the next ${plural(config.FIELD.lookaheadDays ?? 0, 'day')}`;
-    case ProviderSyncKind.SCORES:
-      return 'Events in progress; webhooks arrive between runs';
-    case ProviderSyncKind.EVENTS:
-      return '—';
-    default:
-      return assertNever(kind);
-  }
+/** Which events a run covers: the days ahead for a sync that looks ahead; the live scores sync's own words; else none. */
+function whichEvents(kind: ProviderSyncKind, policy: IngestionSyncSchedule): string {
+  if (policy.lookaheadDays !== undefined) return `Events starting in the next ${plural(policy.lookaheadDays, 'day')}`;
+  return kind === ProviderSyncKind.SCORES ? 'Events in progress; webhooks arrive between runs' : '—';
 }
 
 /** One row per sync kind for the Sync schedules grid, from the one schedule every sport league follows. */
-export function syncScheduleRows(config: IngestionScheduleConfig): SyncScheduleRow[] {
+export function syncScheduleRows(schedule: IngestionSchedule): SyncScheduleRow[] {
   return SYNC_SCHEDULE_KINDS.map((kind) => {
-    const policy = config[kind];
+    const policy = schedule[kind];
     const unit = unitOf(policy);
     const interval = intervalOf(policy);
     const seconds = unit === 'seconds' ? interval : interval * 60;
-    const on = runs(kind, config);
+    const on = policy.runs;
     return {
       key: kind,
       sync: enumLabel('ProviderSyncKind', kind),
       enabled: on,
+      switchable: policy.switchable,
       everySeconds: on ? seconds : null,
       every: on ? formatInterval(seconds) : 'Off',
-      whichEvents: whichEvents(kind, config),
+      whichEvents: whichEvents(kind, policy),
       unit,
       interval,
       lookaheadDays: policy.lookaheadDays ?? null,
@@ -91,7 +79,7 @@ const wholeNumber = (min: number, message: string) => z.string().trim().refine(
   message,
 );
 
-/** The edit form: whether it runs, the interval in the row's unit, and Field's days ahead. */
+/** The edit form: whether it runs, the interval in the row's unit, and the days ahead of a sync that looks ahead. */
 export const syncScheduleFormSchema = z.object({
   enabled: z.boolean(),
   interval: wholeNumber(1, 'Enter a whole number, 1 or more'),
@@ -103,12 +91,17 @@ export function syncScheduleFormValues(row: SyncScheduleRow): SyncScheduleFormVa
   return { enabled: row.enabled, interval: String(row.interval), lookaheadDays: String(row.lookaheadDays ?? 0) };
 }
 
-/** The save for one row: only that sync's switch and interval, and Field's days ahead (Field has no switch). */
+/**
+ * The save for one row: only that sync's interval, its switch when it has one, and its days ahead
+ * when it looks ahead.
+ */
 export function syncSchedulePatch(row: SyncScheduleRow, values: SyncScheduleFormValues): IngestionScheduleConfigPatch {
   const interval = Number(values.interval);
-  if (row.key === ProviderSyncKind.FIELD) {
-    return { FIELD: { intervalMinutes: interval, lookaheadDays: Number(values.lookaheadDays) } };
-  }
-  const every = row.unit === 'seconds' ? { intervalSeconds: interval } : { intervalMinutes: interval };
-  return { [row.key]: { enabled: values.enabled, ...every } };
+  return {
+    [row.key]: {
+      ...(row.unit === 'seconds' ? { intervalSeconds: interval } : { intervalMinutes: interval }),
+      ...(row.switchable && { enabled: values.enabled }),
+      ...(row.lookaheadDays !== null && { lookaheadDays: Number(values.lookaheadDays) }),
+    },
+  };
 }

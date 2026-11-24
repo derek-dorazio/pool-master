@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import { fakeParticipantProviderMappingRepo, fakeParticipantRepo } from '../../support/repo-fakes';
@@ -10,14 +11,14 @@ const PARTICIPANT = { id: 'participant-1', sportLeagueId: 'league-1', name: 'Sco
 describe('ParticipantService reads', () => {
   it('reads a participant by id straight from the store', async () => {
     const participants = fakeParticipantRepo({ findById: jest.fn().mockResolvedValue(PARTICIPANT) });
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo());
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents());
 
     await expect(service.findById('participant-1')).resolves.toBe(PARTICIPANT);
   });
 
   it('searches with an empty query when none is given, so the filters alone narrow the list', async () => {
     const participants = fakeParticipantRepo({ search: jest.fn().mockResolvedValue([PARTICIPANT]) });
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents(), fakeLogger());
 
     await expect(service.search({ filters: { sportLeagueId: 'league-1' } })).resolves.toEqual([PARTICIPANT]);
     expect(participants.search).toHaveBeenCalledWith('', { sportLeagueId: 'league-1' });
@@ -26,7 +27,7 @@ describe('ParticipantService reads', () => {
   it('lists a participant\'s provider mappings', async () => {
     const mapping = { participantId: 'participant-1', providerId: 'feed', externalId: 'ext-9' };
     const mappings = fakeParticipantProviderMappingRepo({ findByParticipant: jest.fn().mockResolvedValue([mapping]) });
-    const service = new ParticipantService(fakeParticipantRepo(), mappings);
+    const service = new ParticipantService(fakeParticipantRepo(), mappings, testDomainEvents());
 
     await expect(service.getProviderMappings('participant-1')).resolves.toEqual([mapping]);
   });
@@ -34,7 +35,7 @@ describe('ParticipantService reads', () => {
   it('lists the feed ids one provider has mapped among one sport league\'s participants', async () => {
     const mapping = { participantId: 'participant-1', providerId: 'feed', externalId: 'ext-9' };
     const mappings = fakeParticipantProviderMappingRepo({ findByProviderAndSportLeague: jest.fn().mockResolvedValue([mapping]) });
-    const service = new ParticipantService(fakeParticipantRepo(), mappings, fakeLogger());
+    const service = new ParticipantService(fakeParticipantRepo(), mappings, testDomainEvents(), fakeLogger());
 
     await expect(service.listSportLeagueProviderMappings('feed', 'league-1')).resolves.toEqual([mapping]);
     expect(mappings.findByProviderAndSportLeague).toHaveBeenCalledWith('feed', 'league-1');
@@ -47,7 +48,7 @@ describe('ParticipantService writes', () => {
       findById: jest.fn().mockResolvedValue(PARTICIPANT),
       update: jest.fn().mockResolvedValue({ ...PARTICIPANT, name: 'S. Scheffler' }),
     });
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents(), fakeLogger());
 
     await expect(service.update('participant-1', { name: 'S. Scheffler' })).resolves.toMatchObject({ name: 'S. Scheffler' });
     expect(participants.update).toHaveBeenCalledWith('participant-1', { name: 'S. Scheffler' });
@@ -59,7 +60,7 @@ describe('ParticipantService writes', () => {
       findById: jest.fn().mockResolvedValue(PARTICIPANT),
       update: jest.fn().mockRejectedValue(new Error('constraint violated')),
     });
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), logger);
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents(), logger);
 
     await expect(service.update('participant-1', { name: 'x' })).rejects.toThrow('constraint violated');
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'participants.update.failed' }), expect.any(String));
@@ -68,7 +69,7 @@ describe('ParticipantService writes', () => {
   it('logs and rethrows a store failure on create rather than reporting success', async () => {
     const logger = fakeLogger();
     const participants = fakeParticipantRepo({ create: jest.fn().mockRejectedValue(new Error('duplicate')) });
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), logger);
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents(), logger);
 
     await expect(service.create({ sportLeagueId: 'league-1', name: 'x', participantType: 'INDIVIDUAL' }))
       .rejects.toThrow('duplicate');
@@ -79,7 +80,7 @@ describe('ParticipantService writes', () => {
 describe('ParticipantService delete (#1400)', () => {
   it('deletes a participant no event field holds', async () => {
     const participants = fakeParticipantRepo();
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents(), fakeLogger());
 
     await expect(service.delete('participant-1')).resolves.toBeUndefined();
 
@@ -88,14 +89,14 @@ describe('ParticipantService delete (#1400)', () => {
 
   it('refuses with 409 PARTICIPANT_IN_USE when the locked count finds them on an event field', async () => {
     const participants = fakeParticipantRepo({ deleteUnlessOnAField: jest.fn().mockResolvedValue(2) });
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents(), fakeLogger());
 
     await expect(service.delete('participant-1')).rejects.toMatchObject({ code: 'PARTICIPANT_IN_USE', statusCode: 409 });
   });
 
   it('answers 404 PARTICIPANT_NOT_FOUND for an unknown participant', async () => {
     const participants = fakeParticipantRepo({ deleteUnlessOnAField: jest.fn().mockResolvedValue(null) });
-    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), fakeLogger());
+    const service = new ParticipantService(participants, fakeParticipantProviderMappingRepo(), testDomainEvents(), fakeLogger());
 
     await expect(service.delete('participant-9')).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
   });

@@ -680,6 +680,17 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ created: 1 }), 'Persisted participants from ingestion');
   });
 
+  it('writes the job that resolves the new feed ids\' unmapped participant findings with the new participants\' mappings', async () => {
+    const prisma = unmappedPrisma();
+
+    await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler'), golfer('bdl-2', 'Rory McIlroy')]);
+
+    const jobs = prisma.backgroundJob.createMany.mock.calls.flatMap(([{ data }]) => data as Array<{ type: string; payload: unknown }>);
+    expect(jobs.filter((job) => job.type === 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS')).toEqual([expect.objectContaining({
+      payload: { sportLeagueId: EVENT_LEAGUE.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalIds: ['bdl-1', 'bdl-2'] },
+    })]);
+  });
+
   it('reads the feed ids\' mappings within the synced event\'s sport league only, and no participant by name', async () => {
     const prisma = unmappedPrisma([{ id: 'site-scheffler', sportLeagueId: EVENT_LEAGUE.id, name: 'Scottie Scheffler' }]);
 

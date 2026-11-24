@@ -36,6 +36,11 @@ export const DomainEventType = {
   CONTEST_STATUS_CHANGED: 'CONTEST_STATUS_CHANGED',
   /** A provider's field sync wrote a sport event's field (`IngestionPersistence.persistEventDetailWithDiagnostics`). */
   SPORT_EVENT_FIELD_SYNCED: 'SPORT_EVENT_FIELD_SYNCED',
+  /**
+   * A provider's feed ids in a sport league were mapped to participants: by a root admin's bind,
+   * a finding's Map participant fix, or a roster or field sync creating the participant (#2069).
+   */
+  PARTICIPANT_PROVIDER_MAPPED: 'PARTICIPANT_PROVIDER_MAPPED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
 
@@ -117,8 +122,17 @@ export interface SportEventFieldSynced {
   bracket?: readonly ProviderBracketMatch[];
 }
 
+export interface ParticipantProviderMapped {
+  type: typeof DomainEventType.PARTICIPANT_PROVIDER_MAPPED;
+  sportLeagueId: string;
+  /** The Provider row whose feed ids were mapped. */
+  providerId: string;
+  /** The feed's participant ids now mapped, at least one. */
+  externalIds: readonly string[];
+}
+
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventResultsChanged | GameDecided | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventResultsChanged | GameDecided | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced | ParticipantProviderMapped;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;

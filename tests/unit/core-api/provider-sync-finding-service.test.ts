@@ -1,3 +1,5 @@
+import { resolveMappedParticipantFindingsJobHandler } from '../../../packages/core-api/src/modules/ingestion/findings/mapped-participant-findings-job';
+import { DISCARD_BACKGROUND_JOB } from '../../../packages/core-api/src/modules/background-jobs/background-job-outcome';
 /**
  * Sync findings (#1999): what the service raises for the sync, what a root admin's status change
  * and participant mapping do, which actions a finding offers, and the retention cleanup. The
@@ -174,7 +176,7 @@ describe('ProviderSyncFindingService raising', () => {
     );
   });
 
-  it('raises a missing webhook secret ERROR on each league the Provider syncs, and on no other league', async () => {
+  it('raises a missing webhook secret ERROR on each league the Provider syncs, and resolves it on every league it no longer syncs', async () => {
     const { findings, table } = service();
 
     await findings.checkWebhookSecrets({
@@ -185,7 +187,8 @@ describe('ProviderSyncFindingService raising', () => {
       isMissingSecret: () => true,
     });
 
-    expect(table.resolved).toEqual([]);
+    // A league the Provider no longer syncs has its finding resolved (#2070).
+    expect(table.resolved).toEqual([{ kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, providerId: PROVIDER.id, exceptSportLeagueIds: ['nfl'] }]);
     expect(table.raised).toEqual([[
       { kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, severity: ProviderSyncFindingSeverity.ERROR, sportLeagueId: 'nfl', sportEventId: null, providerId: PROVIDER.id, providerValue: null, providerValueName: null },
     ]]);
@@ -244,6 +247,28 @@ describe('ProviderSyncFindingService rate-limit findings', () => {
     await findings.resolveProviderRateLimited(PROVIDER.id);
 
     expect(table.resolved).toEqual([{ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, providerId: PROVIDER.id }]);
+  });
+});
+
+describe('The resolve mapped participant findings job', () => {
+  const payload = { sportLeagueId: 'nfl', providerId: PROVIDER.id, externalIds: ['p-1'] };
+
+  it('keeps how many findings it resolved on the job', async () => {
+    await expect(resolveMappedParticipantFindingsJobHandler({ resolveMappedParticipants: async () => 2 })(payload)).resolves.toEqual({ changedCount: 2 });
+  });
+
+  it('leaves no Activity row when the mapped ids had no open finding', async () => {
+    await expect(resolveMappedParticipantFindingsJobHandler({ resolveMappedParticipants: async () => 0 })(payload)).resolves.toBe(DISCARD_BACKGROUND_JOB);
+  });
+});
+
+describe('ProviderSyncFindingService mapped participants', () => {
+  it('resolves the league\'s unmapped participant findings of exactly the feed ids a mapping named', async () => {
+    const { findings, table } = service();
+
+    await findings.resolveMappedParticipants({ sportLeagueId: 'nfl', providerId: PROVIDER.id, externalIds: ['p-1', 'p-2'] });
+
+    expect(table.resolved).toEqual([{ kind: ProviderSyncFindingKind.UNMAPPED_PARTICIPANT, sportLeagueId: 'nfl', providerId: PROVIDER.id, providerValues: ['p-1', 'p-2'] }]);
   });
 });
 

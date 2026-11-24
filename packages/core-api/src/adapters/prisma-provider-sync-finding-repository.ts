@@ -49,10 +49,10 @@ export class PrismaProviderSyncFindingRepository implements ProviderSyncFindingR
       where: {
         kind: filter.kind,
         status: ProviderSyncFindingStatus.OPEN,
-        sportLeagueId: filter.sportLeagueId,
+        sportLeagueId: filter.exceptSportLeagueIds === undefined ? filter.sportLeagueId : { notIn: [...filter.exceptSportLeagueIds] },
         sportEventId: filter.sportEventId,
         providerId: filter.providerId,
-        providerValue: filter.providerValue,
+        providerValue: filter.providerValues === undefined ? filter.providerValue : { in: [...filter.providerValues] },
       },
       data: { status: ProviderSyncFindingStatus.RESOLVED, statusChangedAt: resolvedAt, statusChangedByUserId: null },
     });

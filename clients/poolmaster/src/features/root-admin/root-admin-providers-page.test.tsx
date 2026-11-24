@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { IngestionScheduleConfig, ProviderSummaryDto, SettingsGroup } from '@/lib/api';
+import type { IngestionSchedule, IngestionScheduleConfig, ProviderSummaryDto, SettingsGroup } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminProvidersPage } from './root-admin-providers-page';
 import { providerSettingsFixture, providerSummaryFixture } from './sport-test-fixtures';
@@ -14,6 +14,7 @@ import { providerSettingsFixture, providerSummaryFixture } from './sport-test-fi
 const mocks = vi.hoisted(() => ({
   listProviders: vi.fn(),
   getSettingsGroup: vi.fn(),
+  getIngestionSchedule: vi.fn(),
   updateProviderSettings: vi.fn(),
   updateProviderLeague: vi.fn(),
   updateIngestionSchedule: vi.fn(),
@@ -27,9 +28,17 @@ function provider(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryD
 
 const SCHEDULE: IngestionScheduleConfig = {
   EVENTS: { enabled: true, intervalMinutes: 360 },
-  FIELD: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
+  FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
   SCORES: { enabled: true, intervalSeconds: 300 },
 };
+
+// The schedule as the API reads it (#2086): whether each sync runs and has a switch is the API's word.
+const SCHEDULE_READ: IngestionSchedule = {
+  EVENTS: { enabled: true, intervalMinutes: 360, runs: true, switchable: true },
+  FIELD: { intervalMinutes: 360, lookaheadDays: 14, runs: true, switchable: false },
+  SCORES: { enabled: true, intervalSeconds: 300, runs: true, switchable: true },
+};
+const EVENTS_OFF: IngestionSchedule = { ...SCHEDULE_READ, EVENTS: { enabled: false, intervalMinutes: 360, runs: false, switchable: true } };
 
 function scheduleGroup(value: IngestionScheduleConfig = SCHEDULE, saved = true): SettingsGroup {
   return {
@@ -53,9 +62,10 @@ const settingRanges = {
   leagueMinutes: { min: 5, max: 600 },
 };
 
-function seed({ providers = [provider(), provider({ providerId: 'mock', providerName: 'Mock feed', status: 'DOWN', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0, rateLimitedJobsLast24h: 0, settings: null })], group = scheduleGroup() } = {}) {
+function seed({ providers = [provider(), provider({ providerId: 'mock', providerName: 'Mock feed', status: 'DOWN', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0, rateLimitedJobsLast24h: 0, settings: null })], group = scheduleGroup(), schedule = SCHEDULE_READ } = {}) {
   mocks.listProviders.mockResolvedValue({ data: { providers, settingRanges } });
   mocks.getSettingsGroup.mockResolvedValue({ data: group });
+  mocks.getIngestionSchedule.mockResolvedValue({ data: schedule });
 }
 
 function renderPage() {
@@ -268,7 +278,7 @@ describe('RootAdminProvidersPage', () => {
   });
 
   it('shows a row per sync with how often it runs and which events it covers, Field always running and a switched-off sync as Off', async () => {
-    seed({ group: scheduleGroup({ ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 } }) });
+    seed({ schedule: EVENTS_OFF });
     renderPage();
 
     const rows = await screen.findAllByTestId(/^root-admin-sync-schedule-(EVENTS|FIELD|SCORES)$/);
@@ -285,7 +295,7 @@ describe('RootAdminProvidersPage', () => {
 
   it('opens a sync in view with who last changed the schedule, then Edit saves only that sync\'s interval and comes back to the view', async () => {
     seed();
-    mocks.updateIngestionSchedule.mockResolvedValue({ data: { ...SCHEDULE, EVENTS: { enabled: true, intervalMinutes: 120 } } });
+    mocks.updateIngestionSchedule.mockResolvedValue({ data: { ...SCHEDULE_READ, EVENTS: { enabled: true, intervalMinutes: 120, runs: true, switchable: true } } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
@@ -306,8 +316,8 @@ describe('RootAdminProvidersPage', () => {
   });
 
   it('switches a sync that is off back on, saving its switch with its interval, while Field has no switch', async () => {
-    seed({ group: scheduleGroup({ ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 } }) });
-    mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE });
+    seed({ schedule: EVENTS_OFF });
+    mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE_READ });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
@@ -327,9 +337,24 @@ describe('RootAdminProvidersPage', () => {
     expect(screen.queryByTestId('root-admin-sync-schedule-dialog-enabled')).not.toBeInTheDocument();
   });
 
+  it('shows no switch for a sync the API says has none, whichever sync it is, and saves it without one', async () => {
+    seed({ schedule: { ...SCHEDULE_READ, SCORES: { intervalSeconds: 300, runs: true, switchable: false } } });
+    mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE_READ });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-SCORES'));
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
+    expect(screen.queryByTestId('root-admin-sync-schedule-dialog-enabled')).not.toBeInTheDocument();
+    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
+    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '60');
+    await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
+
+    await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({ body: { SCORES: { intervalSeconds: 60 } } })));
+  });
+
   it('saves the live score interval in seconds and Field\'s interval with its days ahead', async () => {
     seed();
-    mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE });
+    mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE_READ });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-SCORES'));
@@ -410,6 +435,7 @@ describe('RootAdminProvidersPage', () => {
   it('says so when the providers cannot be checked or the schedule cannot be read', async () => {
     mocks.listProviders.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } } });
     mocks.getSettingsGroup.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } } });
+    mocks.getIngestionSchedule.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } } });
     renderPage();
 
     expect(await screen.findByTestId('root-admin-providers-state-error')).toBeInTheDocument();
