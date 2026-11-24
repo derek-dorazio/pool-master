@@ -40,7 +40,7 @@ async function seedLeague() {
     sportLeagueId?: string;
     places?: Array<[squadId: string, position: number | null]>;
   } = {}) => {
-    const edition = await freshEventEdition(prisma, { eventYear: options.seasonYear ?? 2026 });
+    const edition = await freshEventEdition(prisma, { championshipYear: options.seasonYear ?? 2026 });
     if (options.sportLeagueId !== undefined) {
       await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: options.sportLeagueId } });
     }
@@ -118,7 +118,7 @@ describe('PrismaCupRepository (#841)', () => {
     const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
     const otherTour = await prisma.sportLeague.upsert({
       where: { sportId_name: { sportId: sport.id, name: 'Fixture Tour B (cups)' } },
-      create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
+      create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
       update: {},
     });
     await contest('Other tour', { sportLeagueId: otherTour.id });
@@ -142,7 +142,7 @@ describe('PrismaCupRepository (#841)', () => {
     const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: 'GOLF' } });
     const otherTour = await prisma.sportLeague.upsert({
       where: { sportId_name: { sportId: sport.id, name: 'Fixture Tour B (cups)' } },
-      create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
+      create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'Fixture Tour B (cups)' },
       update: {},
     });
     await contest('Other tour', { sportLeagueId: otherTour.id, startDate: '2026-05-01T12:00:00.000Z' });

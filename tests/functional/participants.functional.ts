@@ -24,7 +24,7 @@ async function golfTourId(): Promise<string> {
     create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await database.sportLeague.create({ data: { ...(await leagueProfiles(database)), ...sportPlay(sport.sport), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
+  const tour = await database.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(database)), ...sportPlay(sport.sport), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
   createdSportLeagueIds.push(tour.id);
   return tour.id;
 }

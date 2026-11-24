@@ -16,7 +16,7 @@ export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto
     edition: {
       sportEventId: view.edition.sportEventId,
       name: view.edition.name,
-      eventYear: view.edition.eventYear,
+      championshipYear: view.edition.championshipYear,
       startDate: view.edition.startDate.toISOString(),
       endDate: view.edition.endDate?.toISOString() ?? null,
     },

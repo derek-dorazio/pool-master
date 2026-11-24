@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ContestDto, SportEventDto } from '@/lib/api';
+import type { ContestDto, SportEventDto, SportLeagueSeasonDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import {
@@ -27,7 +27,7 @@ const getEventMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const getContestMock = vi.fn();
 const listEventsMock = vi.fn();
-const listEventYearsMock = vi.fn();
+const listSportLeagueSeasonsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 const setContestSportEventsMock = vi.fn();
 
@@ -37,7 +37,7 @@ bindApiMocks({
   getUser: getCurrentUserMock,
   getContest: getContestMock,
   listEvents: listEventsMock,
-  listEventYears: listEventYearsMock,
+  listSportLeagueSeasons: listSportLeagueSeasonsMock,
   refreshToken: refreshTokenMock,
   setContestSportEvents: setContestSportEventsMock,
 });
@@ -45,18 +45,24 @@ bindApiMocks({
 const SPORT_LEAGUE_ID = '00000000-0000-4000-8000-000000000002';
 
 // One golf season of the contest's sport league, listed out of start order on purpose.
-const masters = buildSportEvent({ id: 'event-1', name: 'The Masters', startDate: '2099-04-09T12:40:00.000Z', eventYear: 2099 });
-const usOpen = buildSportEvent({ id: 'event-3', name: 'U.S. Open', startDate: '2099-06-18T12:00:00.000Z', eventYear: 2099 });
-const pga = buildSportEvent({ id: 'event-2', name: 'PGA Championship', startDate: '2099-05-14T12:00:00.000Z', eventYear: 2099 });
+const masters = buildSportEvent({ id: 'event-1', name: 'The Masters', startDate: '2099-04-09T12:40:00.000Z' });
+const usOpen = buildSportEvent({ id: 'event-3', name: 'U.S. Open', startDate: '2099-06-18T12:00:00.000Z' });
+const pga = buildSportEvent({ id: 'event-2', name: 'PGA Championship', startDate: '2099-05-14T12:00:00.000Z' });
 const openChampionship = buildSportEvent({
   id: 'event-4',
   name: 'The Open',
   startDate: '2099-07-16T12:00:00.000Z',
-  eventYear: 2099,
   contestEligible: false,
   readinessStatus: 'PENDING_FIELD',
 });
-const nextSeasonMasters = buildSportEvent({ id: 'event-9', name: 'The Masters 2100', startDate: '2100-04-08T12:40:00.000Z', eventYear: 2100 });
+const nextSeasonMasters = buildSportEvent({ id: 'event-9', name: 'The Masters 2100', startDate: '2100-04-08T12:40:00.000Z', sportLeagueSeasonId: 'season-2100', championshipYear: 2100 });
+
+function seasonFixture(id: string, year: number): SportLeagueSeasonDto {
+  return {
+    id, name: String(year), championshipYear: year, startsAt: `${year}-01-01T00:00:00.000Z`, endsAt: `${year}-12-31T00:00:00.000Z`,
+    isCurrent: year === 2099, providerMappings: [], phases: [],
+  };
+}
 
 const contestOnMasters = buildContest({
   status: 'OPEN',
@@ -100,13 +106,11 @@ function primeMocks({
   )));
   getContestMock.mockResolvedValue(apiSuccess({ contest }));
   getEventMock.mockResolvedValue(apiSuccess({ event: firstEvent }));
-  // The server narrows the list to the season asked for, and lists the seasons on their own.
-  listEventsMock.mockImplementation(({ query }: { query: { eventYear: number } }) => apiSuccess({
-    events: leagueEvents.filter((event) => event.eventYear === query.eventYear),
+  // The server narrows the list to the Season asked for, and lists the Seasons on their own, latest first.
+  listEventsMock.mockImplementation(({ query }: { query: { sportLeagueSeasonId: string } }) => apiSuccess({
+    events: leagueEvents.filter((event) => event.sportLeagueSeasonId === query.sportLeagueSeasonId),
   }));
-  listEventYearsMock.mockResolvedValue(apiSuccess({
-    years: [...new Set(leagueEvents.map((event) => event.eventYear))].sort((left, right) => left - right),
-  }));
+  listSportLeagueSeasonsMock.mockResolvedValue(apiSuccess({ seasons: [seasonFixture('season-2100', 2100), seasonFixture('season-2099', 2099)] }));
 }
 
 const EVENTS_PATH = '/league/BIGDAWGS/admin/contests/contest-1/events';
@@ -117,7 +121,7 @@ function option(eventId: string) {
 
 afterEach(() => {
   for (const mock of [
-    getCurrentUserMock, getEventMock, getLeagueByCodeMock, getContestMock, listEventsMock, listEventYearsMock,
+    getCurrentUserMock, getEventMock, getLeagueByCodeMock, getContestMock, listEventsMock, listSportLeagueSeasonsMock,
     refreshTokenMock, setContestSportEventsMock,
   ]) {
     mock.mockReset();
@@ -131,10 +135,10 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     renderAt(EVENTS_PATH);
 
     await screen.findByTestId('contest-events-options');
-    expect(listEventYearsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: SPORT_LEAGUE_ID } }));
+    expect(listSportLeagueSeasonsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: SPORT_LEAGUE_ID } }));
     expect(listEventsMock).toHaveBeenCalledTimes(1);
-    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: SPORT_LEAGUE_ID, eventYear: 2099 } }));
-    expect(within(screen.getByTestId('contest-events-year')).getAllByRole('option').map((year) => year.textContent)).toEqual(['2099', '2100']);
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueSeasonId: 'season-2099' } }));
+    expect(within(screen.getByTestId('contest-events-season')).getAllByRole('option').map((season) => season.textContent)).toEqual(['2100', '2099']);
   });
 
   it('says the season\'s events could not load, in red with Retry, and lists them once Retry succeeds', async () => {
@@ -144,7 +148,7 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
 
     renderAt(EVENTS_PATH);
 
-    const error = await screen.findByTestId('contest-events-year-error');
+    const error = await screen.findByTestId('contest-events-season-error');
     expect(error).toHaveTextContent("We couldn't load the 2099 events.");
     listEventsMock.mockImplementation(listSeason);
     fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
@@ -158,10 +162,10 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     renderAt(EVENTS_PATH);
 
     fireEvent.click(await screen.findByTestId('contest-events-option-event-2'));
-    fireEvent.change(screen.getByTestId('contest-events-year'), { target: { value: '2100' } });
+    fireEvent.change(screen.getByTestId('contest-events-season'), { target: { value: 'season-2100' } });
 
     await waitFor(() => expect(option('event-9')).toBeInTheDocument());
-    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: SPORT_LEAGUE_ID, eventYear: 2100 } }));
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueSeasonId: 'season-2100' } }));
     fireEvent.click(option('event-9'));
     expect(screen.getByTestId('contest-events-chosen')).toHaveTextContent('3 events, in order');
     expect(screen.getByTestId('contest-events-chosen')).toHaveTextContent(/The Masters.*PGA Championship.*The Masters 2100/);
@@ -178,7 +182,7 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
       'The Masters', 'PGA Championship', 'U.S. Open', 'The Open',
     ]);
     expect(screen.queryByText('The Masters 2100')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-events-year')).toHaveValue('2099');
+    expect(screen.getByTestId('contest-events-season')).toHaveValue('season-2099');
     expect(option('event-1')).toBeChecked();
     expect(option('event-2')).not.toBeChecked();
     // An event whose field is not loaded can't be added yet, and says why.
@@ -222,8 +226,8 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
 
     renderAt(EVENTS_PATH);
 
-    const error = await screen.findByTestId('contest-events-year-error');
-    expect(within(screen.getByRole('region', { name: '2099 events' })).getByTestId('contest-events-year-error')).toBe(error);
+    const error = await screen.findByTestId('contest-events-season-error');
+    expect(within(screen.getByRole('region', { name: '2099 events' })).getByTestId('contest-events-season-error')).toBe(error);
   });
 
   it('reads the one contest by id and goes back to the contest page for a contest of another league', async () => {

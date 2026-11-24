@@ -137,7 +137,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       tags: TAGS,
       summary: 'List sport events',
       description:
-        'The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one sport league\'s `eventYear`: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). '
+        'The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one Season\'s (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). '
         + 'Each event carries its loaded field '
         + 'size, contest-setup readiness and tier count; a root admin\'s list also carries each event\'s adminCounts. '
         + 'DRAFT events (not yet released for contests) are listed for a root admin only.',
@@ -146,19 +146,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SportEventListResponse'), ...errors(400, 401, 403) },
     },
     handler: handler.listEvents,
-  });
-
-  fastify.get('/years', {
-    schema: {
-      tags: TAGS,
-      summary: 'List a sport league\'s event years',
-      description: 'The years a sport league has events in, for a year picker that then lists one year\'s events. '
-        + 'Any signed-in user may read it; a year with only DRAFT events is listed for a root admin only.',
-      operationId: 'listEventYears',
-      querystring: schemaRef('SportEventYearListQuery'),
-      response: { 200: schemaRef('SportEventYearListResponse'), ...errors(400, 401) },
-    },
-    handler: handler.listEventYears,
   });
 
   fastify.get('/:eventId', {
@@ -179,48 +166,14 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       tags: TAGS,
       summary: 'Create a sport event',
       description:
-        'An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. '
-        + 'The series is found or created in the sport league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. '
+        'An admin-authored edition of a series in its sport league\'s current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. '
+        + 'The series is found or created in the sport league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition in that Season; 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. '
         + 'The sport comes from the sport league. Root admin only.',
       operationId: 'createEvent',
       body: schemaRef('CreateSportEventRequest'),
       response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.createEvent,
-  });
-
-  fastify.post('/clone-year', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Clone a sport league\'s event year forward',
-      description:
-        'Re-creates each of a sport league\'s events in one event year as a fresh event in another (default: the next), '
-        + 'dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, '
-        + 'and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.',
-      operationId: 'cloneEventYear',
-      body: schemaRef('CloneSportEventYearRequest'),
-      response: { 201: schemaRef('SportEventListResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.cloneEventYear,
-  });
-
-  fastify.post('/import-year-from-provider', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Import a tour\'s event year from a provider',
-      description:
-        'Creates each provider event for the sport league\'s tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) '
-        + 'exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when it is of the provider league the sport league\'s selected provider mapping names (#1997). '
-        + 'Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. '
-        + '404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to the provider; 422 PROVIDER_LEAGUE_REFUSED when the provider\'s plan '
-        + 'does not include the tour\'s league (#1797). Root admin only.',
-      operationId: 'importEventYearFromProvider',
-      body: schemaRef('ImportSportEventYearFromProviderRequest'),
-      response: { 201: schemaRef('ImportSportEventYearFromProviderResponse'), ...errors(401, 403, 404, 422) },
-    },
-    handler: handler.importEventYearFromProvider,
   });
 
   fastify.post('/from-provider-event', {
@@ -231,7 +184,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       description:
         'An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; '
         + 'refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, '
-        + 'EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event\'s start has passed. Root admin only.',
+        + 'EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in the league\'s current Season, SPORT_EVENT_ALREADY_STARTED when the provider event\'s start has passed. Root admin only.',
       operationId: 'createEventFromProviderEvent',
       body: schemaRef('CreateSportEventFromProviderEventRequest'),
       response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },

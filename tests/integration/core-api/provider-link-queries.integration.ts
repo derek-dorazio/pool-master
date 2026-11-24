@@ -278,26 +278,26 @@ describe('EventScoreSourceService tour reads', () => {
       create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Tour ${randomUUID()}` } });
+    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Tour ${randomUUID()}` } });
     if (providerLeagueCode !== null) await syncLeagueTo(prisma, league.id, providerLeagueCode);
     return league;
   }
 
-  it('lists a league\'s year from its selected provider league alone, by the code the provider stamps on each event', async () => {
+  it('lists a league\'s Season from its selected provider league alone, asked for by the provider\'s Season id and filtered by the code the provider stamps on each event', async () => {
     const league = await createTourLeague('pga');
 
-    const events = await service().listTourEventsForYear(SYNCED_PROVIDER_ID, league.id, 2027);
+    const events = await service().listSeasonEvents(SYNCED_PROVIDER_ID, league.id, '2027');
 
     expect(events.map((event) => event.externalId)).toEqual(['pga-1']);
-    expect(getUpcomingEvents).toHaveBeenLastCalledWith(Sport.GOLF, expect.any(Object), { providerLeagueCode: 'pga' });
+    expect(getUpcomingEvents).toHaveBeenLastCalledWith(Sport.GOLF, undefined, { providerLeagueCode: 'pga', providerSeasonId: '2027' });
   });
 
-  it('refuses a tour read for an unknown league, and for a league with no selected provider league', async () => {
+  it('refuses a Season read for an unknown league, and for a league with no selected provider league', async () => {
     const unsynced = await createTourLeague(null);
 
-    await expect(service().listTourEventsForYear(SYNCED_PROVIDER_ID, randomUUID(), 2027))
+    await expect(service().listSeasonEvents(SYNCED_PROVIDER_ID, randomUUID(), '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
-    await expect(service().listTourEventsForYear(SYNCED_PROVIDER_ID, unsynced.id, 2027))
+    await expect(service().listSeasonEvents(SYNCED_PROVIDER_ID, unsynced.id, '2027'))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
   });
 

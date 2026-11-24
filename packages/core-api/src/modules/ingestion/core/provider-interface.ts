@@ -100,6 +100,12 @@ export interface ProviderEventListOptions {
    * tell ignores it, and the caller filters by `SportEvent.providerLeagueCode`.
    */
   providerLeagueCode?: string;
+  /**
+   * The provider's own id for one Season (a SportLeagueSeasonProviderMapping's `providerSeasonId`,
+   * #2003), when that Season's whole schedule is wanted rather than a date range. A provider that
+   * reads by season reads that one; one that does not ignores it.
+   */
+  providerSeasonId?: string;
 }
 
 /**

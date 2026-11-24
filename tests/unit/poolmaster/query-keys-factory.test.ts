@@ -12,19 +12,11 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
       'offerable',
       'GOLF',
     ]);
-    expect(QueryKeys.sportEvents.bySportLeagueYear('league-1', 2026)).toEqual([
+    expect(QueryKeys.sportEvents.bySportLeagueSeason('season-1')).toEqual([
       'poolmaster',
       'sport-events',
-      'sport-league',
-      'league-1',
-      2026,
-    ]);
-    expect(QueryKeys.sportEvents.yearsBySportLeague('league-1')).toEqual([
-      'poolmaster',
-      'sport-events',
-      'sport-league',
-      'league-1',
-      'years',
+      'season',
+      'season-1',
     ]);
     expect(QueryKeys.sportEvents.detail('event-1')).toEqual([
       'poolmaster',

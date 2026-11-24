@@ -58,7 +58,7 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
   };
   const event = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
   // Each event on a sport league of its own, so a test sees only the participants it makes.
-  const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
   await prisma.eventSeries.update({ where: { id: event.eventSeriesId }, data: { sportLeagueId: league.id } });
   return { golfer, detail, event, sportLeagueId: league.id, suffix };
 }

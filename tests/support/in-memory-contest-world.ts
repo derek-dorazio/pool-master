@@ -808,7 +808,8 @@ export class InMemoryContestWorld {
       findAll: async (filters) => [...this.sportEvents.values()]
         .filter((event) => (filters.statuses === undefined || filters.statuses.includes(event.status))
           && (filters.sportLeagueId === undefined || event.sportLeagueId === filters.sportLeagueId)
-          && (filters.eventYear === undefined || event.eventYear === filters.eventYear)
+          && (filters.sportLeagueSeasonId === undefined || event.sportLeagueSeasonId === filters.sportLeagueSeasonId)
+          && (filters.eventSeriesId === undefined || event.eventSeriesId === filters.eventSeriesId)
           && (filters.startsFrom === undefined || event.startDate >= filters.startsFrom)
           && (filters.startsBefore === undefined || event.startDate < filters.startsBefore))
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),

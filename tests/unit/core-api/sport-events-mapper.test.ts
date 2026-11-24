@@ -1,14 +1,12 @@
 import { sportPlay } from '../../support/sport-play';
 import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, Sport, type SportEvent } from '@poolmaster/shared/domain';
 import {
-  mapProviderEventYearImportToResponse,
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
   mapSportEventTierToDto,
   mapSportEventToDto,
-  mapSportEventYearsToResponse,
 } from '../../../packages/core-api/src/mappers/sport-events.mapper';
-import type { SportEventAdminSummary, SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
+import type { SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
 import { standardEventPricing } from '../../support/budget-pricing';
 
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
@@ -24,7 +22,8 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     participantCount: 144,
     metadata: {},
     eventSeriesId: '22222222-2222-4222-8222-222222222222',
-    eventYear: 2026,
+    sportLeagueSeasonId: 'season-2026',
+    championshipYear: 2026,
     sportLeagueId: '33333333-3333-4333-8333-333333333333',
     syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: true,
@@ -120,12 +119,13 @@ describe('SportEvent readiness on the wire', () => {
     });
   });
 
-  // plans/147 — the series, its year and the sport league reached through the series are
-  // always present: an event has exactly one parent.
-  it('carries the event\'s series, its event year and its sport league', () => {
+  // The series, the Season and the sport league reached through the series are always present:
+  // an event has exactly one parent.
+  it('carries the event\'s series, its Season with that Season\'s championship year, and its sport league', () => {
     expect(mapSportEventToDto(summary(event(), 1))).toMatchObject({
       eventSeriesId: '22222222-2222-4222-8222-222222222222',
-      eventYear: 2026,
+      sportLeagueSeasonId: 'season-2026',
+      championshipYear: 2026,
       sportLeagueId: '33333333-3333-4333-8333-333333333333',
     });
   });
@@ -192,7 +192,7 @@ describe('SportEvent next statuses on the wire', () => {
   });
 });
 
-describe('the event\'s rounds, tiers, years and year import on the wire', () => {
+describe('the event\'s rounds and tiers on the wire', () => {
   const AT = new Date('2026-04-09T12:00:00.000Z');
 
   it('sends a round\'s scheduled end as ISO, and a round with none as null', () => {
@@ -220,25 +220,6 @@ describe('the event\'s rounds, tiers, years and year import on the wire', () => 
   it('sends a tier\'s key, label and number', () => {
     expect(mapSportEventTierToDto({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 } as never))
       .toEqual({ id: 't1', sportEventId: 'e1', tierKey: 'A', label: 'Tier A', tierNumber: 1 });
-  });
-
-  it('sends an edition\'s years as a copy, in the order given', () => {
-    const years = [2026, 2025];
-
-    expect(mapSportEventYearsToResponse(years)).toEqual({ years: [2026, 2025] });
-    expect(mapSportEventYearsToResponse(years).years).not.toBe(years);
-  });
-
-  it('sends a year import\'s created events in full and each skipped one\'s id, name and reason only', () => {
-    const created = summary(event(), 0) as SportEventAdminSummary;
-
-    const dto = mapProviderEventYearImportToResponse({
-      created: [created],
-      skipped: [{ externalId: 'x1', name: 'Old Open', reason: 'ALREADY_LINKED', extra: true } as never],
-    });
-
-    expect(dto.created.map((item) => item.id)).toEqual(['11111111-1111-4111-8111-111111111111']);
-    expect(dto.skipped).toEqual([{ externalId: 'x1', name: 'Old Open', reason: 'ALREADY_LINKED' }]);
   });
 });
 

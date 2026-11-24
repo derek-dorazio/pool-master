@@ -32,7 +32,7 @@ import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -119,7 +119,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // --- A league that reseeds its playoffs, and a week of three games --------------------------
     const nfl = await createSportLeague({
       client: a,
-      body: { ...(await sportLeagueProfiles(a, Sport.AMERICAN_FOOTBALL)), ...sportPlay(Sport.AMERICAN_FOOTBALL), sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+      body: { ...(await sportLeagueProfiles(a, Sport.AMERICAN_FOOTBALL)), ...sportPlay(Sport.AMERICAN_FOOTBALL), timeZone: 'UTC', sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
     });
     const sportLeagueId = expectDefined(nfl.data, JSON.stringify(nfl.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
@@ -132,7 +132,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     }
     const event = await createEvent({
       client: a,
-      body: { sportLeagueId, eventYear: 2099, name: `Week 1 ${RUN}`, startDate: '2099-09-10T17:00:00.000Z', rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Week 1 ${RUN}`, startDate: '2099-09-10T17:00:00.000Z', rounds: 1, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
     created.sportEventIds.add(eventId);

@@ -29,7 +29,7 @@ import {
   SportEventParticipantUploadPreviewResponseSchema,
   RaceResultPreviewResponseSchema,
   SportEventResponseSchema,
-  ImportSportEventYearFromProviderResponseSchema,
+  SportLeagueSeasonListResponseSchema,
   ActivityJobResponseSchema,
   ActivityListResponseSchema,
   SportEventRoundListResponseSchema,
@@ -98,7 +98,7 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
-  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings } from '../helpers';
+  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings } from '../helpers';
 import type {
   ProviderParticipant,
   ProviderPayloadCapture,
@@ -108,14 +108,15 @@ import type {
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-import { freshEventEdition } from '../../support/event-edition';
+import { freshEventEdition, withCurrentSeason } from '../../support/event-edition';
 import type { z } from 'zod';
 import { expectDefined } from '../../support/expect-defined';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
 import { participantLeagueId } from '../../support/participant-league';
 import { leagueProfiles } from '../../support/league-profiles';
-import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
+import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
 
@@ -328,6 +329,8 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     sportEvents: integrationSportEventServices(getAppPrisma(), providerRows.providers).sportEvents,
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
     jobs: backgroundJobs.queue,
+    seasons: new PrismaSportLeagueSeasonRepository(getAppPrisma()),
+    findings: integrationSyncFindings(getAppPrisma(), providerRows.store),
   });
   backgroundJobs.runWith({
     MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
@@ -443,7 +446,7 @@ describe('Contract verification (root admin)', () => {
   });
 
   // #1348 — the participant catalog and a sport's events across every year are the root admin's
-  // reads. A league lists only events that can still take a contest, or one sport league season.
+  // reads. A league lists only events that can still take a contest, or one Season's (#2003).
   it('refuses the catalog lists to a non-root-admin with 403 and answers only the bounded event lists', async () => {
     const member = await createTestUser({ displayName: 'Contract Non Admin Catalog Reader' });
     const sportLeagueId = randomUUID();
@@ -454,7 +457,6 @@ describe('Contract verification (root admin)', () => {
       '/api/v1/events?sport=GOLF',
       '/api/v1/events?sport=GOLF&status=SCHEDULED&status=COMPLETED',
       `/api/v1/events?sportLeagueId=${sportLeagueId}`,
-      '/api/v1/events?eventYear=2026',
     ];
     for (const url of refused) {
       const response = await getApp().inject({ method: 'GET', url, headers: member.headers });
@@ -473,7 +475,7 @@ describe('Contract verification (root admin)', () => {
 
     const answered = [
       '/api/v1/events?sport=GOLF&status=SCHEDULED&status=POSTPONED&status=IN_PROGRESS',
-      `/api/v1/events?sportLeagueId=${sportLeagueId}&eventYear=2026`,
+      `/api/v1/events?sportLeagueSeasonId=${randomUUID()}`,
     ];
     for (const url of answered) {
       const response = await getApp().inject({ method: 'GET', url, headers: member.headers });
@@ -1186,8 +1188,8 @@ describe('Contract verification (root admin)', () => {
   it('pool-master-z3l, plans/147: the sport-league, participant and event operations golf administration uses match their DTOs on happy paths', async () => {
     // plans/124 §8 — a happy-path contract case per operation this epic adds to
     // the golf admin module. Drives one coherent authoring flow (tour -> players
-    // -> tournament in an event year -> field/tiers/rounds reads -> set-current
-    // year -> clone the year) through getApp().inject() and safeParses every response against its
+    // -> tournament in the current Season -> field/tiers/rounds reads -> the league's
+    // Seasons) through getApp().inject() and safeParses every response against its
     // published schema. Golf admin rows are not covered by cleanupTestData(), so
     // this test tears down everything it creates child-first in a finally block.
     const rootAdmin = await createTestUser({
@@ -1217,12 +1219,14 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
       const leagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
       created.sportLeagueId = leagueId;
+      // A migration adds a league's Seasons and the daily recompute makes one current; the test's own league stands in.
+      const currentSeasonId = await withCurrentSeason(getPrisma(), leagueId, 2081);
 
       // --- listSportLeagues (200) --------------------------------------------
       const leagueListRes = await getApp().inject({
@@ -1352,7 +1356,6 @@ describe('Contract verification (root admin)', () => {
           endDate: '2081-07-19T20:00:00.000Z',
           rounds: 4,
           sportLeagueId: leagueId,
-          eventYear: 2081,
           autoLifecycleEnabled: false,
         },
       });
@@ -1360,7 +1363,8 @@ describe('Contract verification (root admin)', () => {
       expect(SportEventResponseSchema.safeParse(tournamentRes.json()).success).toBe(true);
       const eventId = tournamentRes.json<SportEventResponse>().event.id;
       created.eventIds.push(eventId);
-      expect(tournamentRes.json<SportEventResponse>().event).toMatchObject({ sportLeagueId: leagueId, eventYear: 2081 });
+      // A new event goes in the league's current Season (#2003).
+      expect(tournamentRes.json<SportEventResponse>().event).toMatchObject({ sportLeagueId: leagueId, sportLeagueSeasonId: currentSeasonId, championshipYear: 2081 });
 
       // pool-master-54u — the create response's counts must reflect the default
       // tiers/rounds seeded in the same request (not the pre-seed zero snapshot)
@@ -1376,10 +1380,10 @@ describe('Contract verification (root admin)', () => {
       expect(tournamentGetRes.json<SportEventResponse>().event.tierCount).toBe(tournamentRes.json<SportEventResponse>().event.tierCount);
       expect(tournamentGetRes.json<SportEventResponse>().event.loadedParticipantCount).toBe(tournamentRes.json<SportEventResponse>().event.loadedParticipantCount);
 
-      // --- listEvents by sport league and event year (200) -------------------
+      // --- listEvents by Season (200) -----------------------------------------
       const tournamentListRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/events?sportLeagueId=${leagueId}&eventYear=2081`,
+        url: `/api/v1/events?sportLeagueSeasonId=${currentSeasonId}`,
         headers: rootAdmin.headers,
       });
       expect(tournamentListRes.statusCode).toBe(200);
@@ -1575,39 +1579,13 @@ describe('Contract verification (root admin)', () => {
       expect(leagueStructureRes.statusCode).toBe(200);
       expect(SportLeagueStructureResponseSchema.safeParse(leagueStructureRes.json()).success).toBe(true);
 
-      // --- updateSportLeague: set as current (200: { sportLeague }) ------------
-      const setCurrentRes = await getApp().inject({
-        method: 'PATCH',
-        url: `/api/v1/sport-leagues/${leagueId}`,
-        headers: rootAdmin.headers,
-        payload: { currentEventYear: 2081 },
-      });
-      expect(setCurrentRes.statusCode).toBe(200);
-      expect(SportLeagueResponseSchema.safeParse(setCurrentRes.json()).success).toBe(true);
-      expect(setCurrentRes.json<SportLeagueResponse>().sportLeague.currentEventYear).toBe(2081);
-
-      // --- cloneEventYear (201: { events }) ------------------------------------
-      const cloneRes = await getApp().inject({
-        method: 'POST',
-        url: '/api/v1/events/clone-year',
-        headers: rootAdmin.headers,
-        payload: { sportLeagueId: leagueId, eventYear: 2081 },
-      });
-      expect(cloneRes.statusCode).toBe(201);
-      expect(SportEventListResponseSchema.safeParse(cloneRes.json()).success).toBe(true);
-      const clonedEvents = cloneRes.json<SportEventListResponse>().events;
-      created.eventIds.push(...clonedEvents.map((e) => e.id));
-      expect(clonedEvents).toHaveLength(1);
-      // Next year's edition of the same series.
-      expect(clonedEvents[0]).toMatchObject({ eventYear: 2082, eventSeriesId: tournamentRes.json<SportEventResponse>().event.eventSeriesId });
-
-      // The current event year is unchanged by the clone (§4.2a).
-      const leagueAfterRes = await getApp().inject({
-        method: 'GET',
-        url: `/api/v1/sport-leagues/${leagueId}`,
-        headers: rootAdmin.headers,
-      });
-      expect(leagueAfterRes.json<SportLeagueResponse>().sportLeague.currentEventYear).toBe(2081);
+      // --- listSportLeagueSeasons (200: { seasons }) — the Structure tab and every Season picker (#2003) ---
+      const seasonsRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}/seasons`, headers: rootAdmin.headers });
+      expect(seasonsRes.statusCode).toBe(200);
+      const seasons = SportLeagueSeasonListResponseSchema.safeParse(seasonsRes.json());
+      expect(seasons.success).toBe(true);
+      // Latest first: the 2081 Season the test made current, then the calendar year's the create began with.
+      expect(seasons.data?.seasons.map((season) => [season.championshipYear, season.isCurrent])).toEqual([[2081, true], [new Date().getUTCFullYear(), false]]);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
@@ -1697,10 +1675,11 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
+      await withCurrentSeason(getPrisma(), created.sportLeagueId, 2083);
 
       const tournamentRes = await getApp().inject({
         method: 'POST',
@@ -1712,7 +1691,6 @@ describe('Contract verification (root admin)', () => {
           endDate: '2083-06-19T20:00:00.000Z',
           rounds: 4,
           sportLeagueId: created.sportLeagueId,
-          eventYear: 2083,
           autoLifecycleEnabled: false,
         },
       });
@@ -1763,84 +1741,6 @@ describe('Contract verification (root admin)', () => {
       await app.close();
     }
   });
-  it('importEventYearFromProvider creates the league\'s missing events and reports the rest as skipped, and refuses a league with no selected provider league with 422', async () => {
-    const stamp = Date.now().toString().slice(-8);
-    const tour = `CTOUR${stamp}`;
-    const app = await buildIngestionApp(new TourSlateContractProvider(tour));
-    const rootAdmin = await createTestUser({ displayName: 'Root Admin Import Year Contract User', isRootAdmin: true });
-    await getPrisma().sport.upsert({
-      where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
-      update: {},
-    });
-    const created = { sportLeagueIds: [] as string[] };
-
-    try {
-      const leagueRes = await getApp().inject({
-        method: 'POST',
-        url: '/api/v1/sport-leagues',
-        headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `Import Contract Tour ${stamp}` },
-      });
-      expect(leagueRes.statusCode).toBe(201);
-      const sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
-      created.sportLeagueIds.push(sportLeagueId);
-      await syncLeagueTo(getPrisma(), sportLeagueId, 'pga');
-
-      // --- importEventYearFromProvider (201: { created, skipped }) ---------------
-      const importYear = () => app.inject({
-        method: 'POST',
-        url: '/api/v1/events/import-year-from-provider',
-        headers: rootAdmin.headers,
-        payload: { sportLeagueId, eventYear: 2085, providerId: SYNCED_PROVIDER_ID },
-      });
-      const firstRes = await importYear();
-      expect(firstRes.statusCode).toBe(201);
-      const first = ImportSportEventYearFromProviderResponseSchema.safeParse(firstRes.json());
-      expect(first.success).toBe(true);
-      expect(expectDefined(first.data).created.map((event) => event.externalId)).toEqual([`${tour}-alpha`, `${tour}-bravo`]);
-      expect(expectDefined(first.data).created.every((event) => event.syncScope === 'SCORES_ONLY')).toBe(true);
-      expect(expectDefined(first.data).skipped).toEqual([]);
-
-      const againRes = await importYear();
-      expect(againRes.statusCode).toBe(201);
-      expect(ImportSportEventYearFromProviderResponseSchema.safeParse(againRes.json()).success).toBe(true);
-      expect(againRes.json()).toEqual({
-        created: [],
-        skipped: [
-          { externalId: `${tour}-alpha`, name: `${tour} Alpha Open`, reason: 'ALREADY_LINKED' },
-          { externalId: `${tour}-bravo`, name: `${tour} Bravo Classic`, reason: 'ALREADY_LINKED' },
-        ],
-      });
-
-      // --- 422 SPORT_LEAGUE_NOT_SYNCED -------------------------------------------
-      const bareRes = await getApp().inject({
-        method: 'POST',
-        url: '/api/v1/sport-leagues',
-        headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `Import Contract Bare Tour ${stamp}` },
-      });
-      created.sportLeagueIds.push(bareRes.json<SportLeagueResponse>().sportLeague.id);
-      const noKeywordRes = await app.inject({
-        method: 'POST',
-        url: '/api/v1/events/import-year-from-provider',
-        headers: rootAdmin.headers,
-        payload: { sportLeagueId: bareRes.json<SportLeagueResponse>().sportLeague.id, eventYear: 2085, providerId: SYNCED_PROVIDER_ID },
-      });
-      expect(noKeywordRes.statusCode).toBe(422);
-      expect(ErrorEnvelopeSchema.parse(noKeywordRes.json()).error.code).toBe('SPORT_LEAGUE_NOT_SYNCED');
-    } finally {
-      const prisma = getPrisma();
-      const eventIds = (await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: { in: created.sportLeagueIds } } }, select: { id: true } }))
-        .map((event) => event.id);
-      await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-      await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
-      await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-      await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: created.sportLeagueIds } } });
-      await prisma.sportLeague.deleteMany({ where: { id: { in: created.sportLeagueIds } } });
-      await app.close();
-    }
-  });
   it('syncLeagueEvents queues the league\'s events sync (202), whose job creates the tour\'s events and shows on listActivity with its EVENTS run; a league no provider syncs is refused with 422', async () => {
     const stamp = Date.now().toString().slice(-8);
     const tour = `SNOW${stamp}`;
@@ -1852,16 +1752,17 @@ describe('Contract verification (root admin)', () => {
       create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const synced = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
-    await syncLeagueTo(prisma, synced.id, 'pga');
-    const unsynced = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
+    const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
+    // A migration's league has its Seasons mapped to the provider's, one of them current (#2003).
+    const [seasonId] = await syncSeasonsTo(prisma, synced.id, await syncLeagueTo(prisma, synced.id, 'pga'), [2085]);
+    const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
 
     try {
       const syncRes = await app.inject({
         method: 'POST',
         url: `/api/v1/ingestion/sport-leagues/${synced.id}/events-sync`,
         headers: rootAdmin.headers,
-        payload: { eventYear: 2085 },
+        payload: { sportLeagueSeasonId: seasonId },
       });
       expect(syncRes.statusCode).toBe(202);
       const queued = ActivityJobResponseSchema.parse(syncRes.json()).job;
@@ -1882,7 +1783,7 @@ describe('Contract verification (root admin)', () => {
       }
       expect(jobs).toHaveLength(1);
       const [job] = jobs;
-      expect(job).toMatchObject({ id: queued.id, status: 'SUCCEEDED', result: { eventYears: [2085], created: 2, updated: 0, skipped: 0 } });
+      expect(job).toMatchObject({ id: queued.id, status: 'SUCCEEDED', result: { sportLeagueSeasonIds: [seasonId], created: 2, updated: 0, skipped: 0 } });
       expect(job.syncRunIds).toHaveLength(1);
       // #1861: the admin who asked, what the job changed, and how long its try took.
       expect(queued).toMatchObject({ trigger: 'ADMIN', startedBy: { id: rootAdmin.user.id, displayName: rootAdmin.user.displayName }, startedAt: null, durationSeconds: null });
@@ -1897,7 +1798,7 @@ describe('Contract verification (root admin)', () => {
       expect(ProviderSyncRunDetailDtoSchema.parse(runRes.json())).toMatchObject({
         kind: 'EVENTS', trigger: 'ADMIN', sportLeagueId: synced.id, backgroundJobId: queued.id, status: 'COMPLETED',
       });
-      expect(await prisma.sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id }, eventYear: 2085 } })).toBe(2);
+      expect(await prisma.sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id }, sportLeagueSeasonId: seasonId } })).toBe(2);
 
       const refusedRes = await app.inject({
         method: 'POST',

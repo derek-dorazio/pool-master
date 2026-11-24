@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { DataGrid, QueryState, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { plural } from '@/lib/plural';
-import { defaultEventYear, leagueEventColumns } from './league-event-columns';
+import { defaultSeasonId, leagueEventColumns } from './league-event-columns';
+import { useSportLeagueSeasonsQuery } from '@/features/contests/use-sport-league-seasons';
 import { useLeaguePage } from './league-page-context';
 import { LeagueSyncsCard } from './league-syncs-card';
 import { buildSportEventPath } from './manage-navigation';
@@ -11,20 +12,22 @@ import { useSportLeagueEventOverviewsQuery } from './use-sport-league-page';
 
 /**
  * The League page's Events tab (#1866): the syncs that feed the league's events, then every event
- * of every year in one grid, opening on the current season. A row opens its event page.
+ * of every Season in one grid, opening on the current Season. A row opens its event page.
  */
 export function LeagueEventsTab() {
   const { isSynced, sportLeague } = useLeaguePage();
   const eventsQuery = useSportLeagueEventOverviewsQuery(sportLeague.id);
   const [openSyncRunId, setOpenSyncRunId] = useState<string | null>(null);
+  const seasonsQuery = useSportLeagueSeasonsQuery(sportLeague.id);
   const events = eventsQuery.data;
   const columns = useMemo(
     () => leagueEventColumns({
-      initialYear: defaultEventYear(events ?? [], sportLeague.currentEventYear, new Date()),
+      initialSeasonId: defaultSeasonId(events ?? [], sportLeague.currentSeasonId),
       onOpenSyncRun: setOpenSyncRunId,
+      seasons: seasonsQuery.data ?? [],
       sport: sportLeague.sport,
     }),
-    [events, sportLeague.currentEventYear, sportLeague.sport],
+    [events, seasonsQuery.data, sportLeague.currentSeasonId, sportLeague.sport],
   );
 
   return (

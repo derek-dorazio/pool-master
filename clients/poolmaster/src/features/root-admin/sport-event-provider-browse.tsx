@@ -28,7 +28,6 @@ import type { SportLeagueDto } from '@/lib/api';
 import { SportEventEditionFields } from './sport-event-edition-fields';
 import {
   isCompleteEdition,
-  parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
 import {
@@ -91,7 +90,6 @@ export function SportEventProviderBrowse({
       const response = await createEventFromProviderEvent({
         body: {
           sportLeagueId: edition.sportLeagueId,
-          eventYear: parseEventYear(edition.eventYear) as number,
           providerId,
           externalId: selectedEvent.externalId,
           ...(Number.isNaN(roundsValue) ? {} : { rounds: roundsValue }),
@@ -256,7 +254,6 @@ export function SportEventProviderBrowse({
                   context: 'createEvent',
                   values: {
                     sportLeague: sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one,
-                    year: edition.eventYear,
                     event: eventNoun.one,
                   },
                   fallback: `We could not create this ${eventNoun.one}.`,

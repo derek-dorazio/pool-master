@@ -72,6 +72,7 @@ export interface ProviderSyncFindingStatusChange {
 const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSyncFindingAction[]>> = {
   [ProviderSyncFindingKind.UNMAPPED_PARTICIPANT]: [ProviderSyncFindingAction.MAP_PARTICIPANT],
   [ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING]: [],
+  [ProviderSyncFindingKind.SEASON_MISSING]: [],
   [ProviderSyncFindingKind.PROVIDER_RATE_LIMITED]: [],
   [ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS]: [],
   [ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES]: [],

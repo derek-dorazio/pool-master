@@ -10,7 +10,7 @@ import { MatchSide, MatchStatus, Sport, SportEventStatus } from '@poolmaster/sha
 import type { Response } from 'light-my-request';
 import type { z } from 'zod';
 import { createTestUser, getApp, getPrisma, type TestUserResult } from './helpers';
-import { freshEventEdition } from '../support/event-edition';
+import { freshEventEdition, seriesSeasonId } from '../support/event-edition';
 import { leagueProfiles } from '../support/league-profiles';
 import { sportPlay } from '../support/sport-play';
 
@@ -67,9 +67,9 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
     update: {},
   });
   const startDate = new Date(Date.now() + startsInDays * DAY);
-  const edition = await freshEventEdition(prisma, { eventYear: startDate.getUTCFullYear() });
+  const edition = await freshEventEdition(prisma, { championshipYear: startDate.getUTCFullYear() });
   if (ownSportLeague) {
-    const tour = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Tour ${suffix}` } });
+    const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Tour ${suffix}` } });
     await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
   }
   // The field's golfers belong to the event's sport league (#1853).
@@ -124,14 +124,14 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
+    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Week ${suffix}` } });
   const event = await prisma.sportEvent.create({
     data: {
       eventSeriesId: eventSeries.id,
-      eventYear: startDate.getUTCFullYear(),
+      sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, startDate.getUTCFullYear()),
       externalId: `scaling-week-${suffix}`,
       providerId: 'integration-test',
       sport: Sport.AMERICAN_FOOTBALL,

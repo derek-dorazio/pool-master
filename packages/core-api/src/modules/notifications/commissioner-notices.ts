@@ -262,7 +262,7 @@ export class CommissionerNotices implements DueNotifications {
   /** False for a later week of a season whose events are weeks: only its first week is told of. */
   private async isToldOf(sportEvent: SportEvent, firstWeeks: Map<string, Promise<string | undefined>>): Promise<boolean> {
     if (contestTemplateEventTypeOf(sportEvent) !== ContestTemplateEventType.WEEK) return true;
-    const season = `${sportEvent.sportLeagueId}:${sportEvent.eventYear}`;
+    const season = sportEvent.sportLeagueSeasonId;
     const firstWeek = firstWeeks.get(season) ?? this.firstWeekOf(sportEvent);
     firstWeeks.set(season, firstWeek);
     return await firstWeek === sportEvent.id;
@@ -339,7 +339,7 @@ export class CommissionerNotices implements DueNotifications {
 
   /** The id of the first week of `sportEvent`'s season in its sport league. */
   private async firstWeekOf(sportEvent: SportEvent): Promise<string | undefined> {
-    const season = await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, eventYear: sportEvent.eventYear });
+    const season = await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, sportLeagueSeasonId: sportEvent.sportLeagueSeasonId });
     return season
       .filter((week) => week.status !== SportEventStatus.CANCELLED
         && contestTemplateEventTypeOf(week) === ContestTemplateEventType.WEEK)
@@ -416,8 +416,9 @@ export class CommissionerNotices implements DueNotifications {
 
   /** Each of `leagueIds`' settled one-event contests on the event's previous edition, with their winners. */
   private async lastYearWinners(sportEvent: SportEvent, leagueIds: Set<string>): Promise<Map<string, PreviousContestWinners[]>> {
-    const previous = (await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, eventYear: sportEvent.eventYear - 1 }))
-      .find((candidate) => candidate.eventSeriesId === sportEvent.eventSeriesId);
+    // The series' latest edition before this one (#2003): last Season's, or the last World Cup's.
+    const previous = (await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, eventSeriesId: sportEvent.eventSeriesId, startsBefore: sportEvent.startDate }))
+      .reduce<SportEvent | undefined>((latest, edition) => (latest === undefined || edition.startDate > latest.startDate ? edition : latest), undefined);
     const byLeague = new Map<string, PreviousContestWinners[]>();
     if (!previous) return byLeague;
     const contests = (await this.deps.contests.findBySportEvent(previous.id, { statuses: [ContestStatus.COMPLETED] }))

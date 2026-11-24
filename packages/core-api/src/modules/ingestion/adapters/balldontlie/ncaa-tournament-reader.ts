@@ -24,31 +24,28 @@ import {
   type NcaaTournamentLeague,
 } from './ncaa-tournament-mapping';
 
-/** A range spanning more seasons than this reads the last tournament and the next instead. */
+/** A range spanning more seasons than this reads none. */
 const MAX_SEASONS_READ = 3;
-
-/** The month (0-based) a new college basketball season is under way: November. */
-const SEASON_START_MONTH = 10;
 
 export class NcaaTournamentReader {
   constructor(
     private readonly client: BalldontlieClient,
     private readonly league: NcaaTournamentLeague,
-    private readonly now: () => number,
   ) {}
 
   /**
-   * The tournaments that start inside `dateRange`. A season's tournament is played in the spring
-   * after it starts, so a range reads the seasons starting the year before each year it covers.
-   * Without a range, or with one too wide to walk, it reads the last tournament and the next.
+   * One season's tournament, when `season` names it (the events sync asks for a Season by its id,
+   * #2003); otherwise the tournaments that start inside `dateRange`. A season's tournament is
+   * played in the spring after it starts, so a range reads the seasons starting the year before
+   * each year it covers. With neither, or a range too wide to walk, it reads none.
    */
-  async upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]> {
+  async upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
     const events: SportEvent[] = [];
-    for (const season of this.seasonsFor(dateRange)) {
-      const games = await this.bracketOf(season);
-      if (games.length > 0) events.push(toNcaaTournamentEvent({ league: this.league, season }, games));
+    for (const each of season === undefined ? this.seasonsFor(dateRange) : [season]) {
+      const games = await this.bracketOf(each);
+      if (games.length > 0) events.push(toNcaaTournamentEvent({ league: this.league, season: each }, games));
     }
-    return events.filter((event) => !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
+    return events.filter((event) => season !== undefined || !dateRange || (event.startDate >= dateRange.from && event.startDate <= dateRange.to));
   }
 
   /** The season's tournament with its teams; null when the vendor has no bracket for it yet. */
@@ -89,15 +86,11 @@ export class NcaaTournamentReader {
   }
 
   private seasonsFor(dateRange?: DateRange): number[] {
-    if (dateRange) {
-      // Season s's tournament is played in calendar year s + 1, so the years from..to are
-      // seasons from - 1 to to - 1.
-      const first = dateRange.from.getUTCFullYear() - 1;
-      const seasonCount = dateRange.to.getUTCFullYear() - first;
-      if (seasonCount <= MAX_SEASONS_READ) return Array.from({ length: seasonCount }, (_, index) => first + index);
-    }
-    const today = new Date(this.now());
-    const current = today.getUTCMonth() >= SEASON_START_MONTH ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
-    return [current - 1, current];
+    if (!dateRange) return [];
+    // Season s's tournament is played in calendar year s + 1, so the years from..to are
+    // seasons from - 1 to to - 1.
+    const first = dateRange.from.getUTCFullYear() - 1;
+    const seasonCount = dateRange.to.getUTCFullYear() - first;
+    return seasonCount <= MAX_SEASONS_READ ? Array.from({ length: seasonCount }, (_, index) => first + index) : [];
   }
 }

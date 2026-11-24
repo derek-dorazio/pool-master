@@ -267,7 +267,7 @@ function createSportEventReader(overrides?: Partial<{
   startDate: Date;
   sport: Sport;
   sportLeagueId: string;
-  eventYear: number;
+  championshipYear: number;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
@@ -307,7 +307,7 @@ function createSportEventReader(overrides?: Partial<{
       startDate: overrides?.startDate ?? new Date('2026-05-14T12:00:00.000Z'),
       sport: overrides?.sport ?? Sport.GOLF,
       sportLeagueId: overrides?.sportLeagueId ?? PGA_TOUR_LEAGUE_ID,
-      eventYear: overrides?.eventYear ?? 2026,
+      championshipYear: overrides?.championshipYear ?? 2026,
       tournamentFormat:
         overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: overrides?.participantCount ?? 72,
@@ -1946,7 +1946,7 @@ describe('ContestManagementService — a contest of several events', () => {
     status: SportEventStatus;
     sportLeagueId: string;
     salaryCap: number | null;
-    eventYear: number;
+    championshipYear: number;
   }
 
   /** A reader over several events, each the default eligible PGA Tour event unless overridden. */
@@ -1961,7 +1961,7 @@ describe('ContestManagementService — a contest of several events', () => {
       rounds: 4,
       salaryCap: null,
       squaresFromRound: null,
-      eventYear: 2026,
+      championshipYear: 2026,
       ...event,
       startDate: new Date(event.startDate),
     }]));
@@ -2129,7 +2129,7 @@ describe('ContestManagementService — a contest of several events', () => {
   it('moves a draft swapped onto next year\'s edition into that season: its season year becomes 2027 and the 2027 cup is made', async () => {
     const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
     const { service, contestRepo, cupsAsked } = build({
-      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', eventYear: 2027 }]),
+      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
       contest: { status: ContestStatus.DRAFT },
     });
 
@@ -2142,7 +2142,7 @@ describe('ContestManagementService — a contest of several events', () => {
   it('refuses moving a contest into a season with no room for its sports league on the league\'s plan with 409 PLAN_SPORTS_LEAGUE_LIMIT_REACHED, changing its events and cups not at all', async () => {
     const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
     const { service, contestRepo, cupsAsked } = build({
-      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', eventYear: 2027 }]),
+      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
       contest: { status: ContestStatus.DRAFT },
       planEntitlements: planEntitlementsOver({ findById: async (id) => buildLeague({ id, plan: LeaguePlan.FREE }) }),
     });
@@ -2230,7 +2230,7 @@ describe('ContestManagementService — a contest of several events', () => {
   });
 
   describe('a released edition joining the contests made from a template covering its series (#714, #1318)', () => {
-    const PGA_EDITION = { id: PGA, eventSeriesId: 'series-pga-championship', eventYear: 2026 };
+    const PGA_EDITION = { id: PGA, eventSeriesId: 'series-pga-championship', sportLeagueSeasonId: 'season-2026' };
     const startedMasters = multiEventReader([
       { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
       { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },

@@ -31,7 +31,6 @@ export const WNBA_PLAYOFFS: PlayoffsLeague = {
   // The 2026 season's playoffs are played in September and October 2026.
   playoffYearOffset: 0,
   // May, when the new season tips off.
-  seasonRolloverMonth: 4,
   // The eight best records are seeded 1 to 8 across the league, whatever their conference.
   bracket: { kind: BracketShapeKind.SEEDED, groups: null },
 };

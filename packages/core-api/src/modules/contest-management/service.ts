@@ -109,8 +109,8 @@ export interface ContestCreateSportEventState {
   sport: Sport;
   /** The event's sport league, read through its series. */
   sportLeagueId: string;
-  /** The year the edition is branded with: a majors pool's events share one (#714). */
-  eventYear: number;
+  /** Its Season's championship year (#2003): a majors pool's events share one (#714). */
+  championshipYear: number;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
@@ -296,9 +296,9 @@ export class ContestManagementService {
       { requested: resolvedConfiguration.scoring, kept: null },
     );
     const sportEventIds = orderContestEvents(sportEvents);
-    // Its season is its first event's year (#841): a pick'em season's January playoff weeks keep
-    // the season's year, because an edition's year is the one it is branded with.
-    const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.eventYear ?? sportEvent.eventYear;
+    // Its season is its first event's Season's championship year (#841, #2003): a pick'em season's
+    // January playoff weeks keep the season's year, because they are in the same Season.
+    const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.championshipYear ?? sportEvent.championshipYear;
     const limits = await this.seasonLimits(context.leagueId, sportEvent.sportLeagueId);
     const created = await this.contestRepo.create({
       leagueId: context.leagueId,
@@ -659,13 +659,13 @@ export class ContestManagementService {
     // A contest's season is its first event's year, so new events can move it to another cup, and
     // into a season the plan has no room for its sports league in (#947): then nothing changes.
     const newFirst = sportEvents.find((sportEvent) => sportEvent.id === orderedIds[0]);
-    const movesSeason = newFirst !== undefined && newFirst.eventYear !== contest.seasonYear;
+    const movesSeason = newFirst !== undefined && newFirst.championshipYear !== contest.seasonYear;
     if (movesSeason) {
       const limits = await this.seasonLimits(leagueId, newFirst.sportLeagueId);
-      const moved = await this.contestRepo.moveToSeason(contestId, newFirst.eventYear, limits);
+      const moved = await this.contestRepo.moveToSeason(contestId, newFirst.championshipYear, limits);
       if (moved.status === 'sportsLeagueLimitReached') {
-        this.logger.warn({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear, used: moved.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management set sport events refused a move past the plan\'s sports leagues a year');
-        throw sportsLeagueLimitError(moved.sportLeaguesPerYear, newFirst.eventYear, moved.sportLeagueCount, `This contest can't move into ${newFirst.eventYear}.`);
+        this.logger.warn({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.championshipYear, used: moved.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management set sport events refused a move past the plan\'s sports leagues a year');
+        throw sportsLeagueLimitError(moved.sportLeaguesPerYear, newFirst.championshipYear, moved.sportLeagueCount, `This contest can't move into ${newFirst.championshipYear}.`);
       }
     }
     const replaced = options.onlyIfUnchanged
@@ -678,8 +678,8 @@ export class ContestManagementService {
     // New events move the reminders of a contest already open (#1170).
     await this.contestRepo.recheckReminders({ contestIds: [contestId] }, this.now());
     if (movesSeason) {
-      await this.cups.ensureCup({ leagueId, seasonYear: newFirst.eventYear, sportLeagueId: newFirst.sportLeagueId });
-      this.logger.info({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear }, 'contest management set sport events moved the contest to another season');
+      await this.cups.ensureCup({ leagueId, seasonYear: newFirst.championshipYear, sportLeagueId: newFirst.sportLeagueId });
+      this.logger.info({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.championshipYear }, 'contest management set sport events moved the contest to another season');
     }
     this.logger.info({
       contestId,

@@ -1901,8 +1901,8 @@ describe('Commissioner tools › Contests › Create contest › the plan\'s spo
     listEventsMock.mockResolvedValue({
       data: {
         events: [
-          { ...singleEvent().data.events[0], sportLeagueId: PGA, eventYear: 2099 },
-          { ...singleEvent({ id: 'event-2', name: 'RBC Heritage', startDate: '2099-04-16T12:00:00.000Z' }).data.events[0], sportLeagueId: LPGA, eventYear: 2099 },
+          { ...singleEvent().data.events[0], sportLeagueId: PGA, championshipYear: 2099 },
+          { ...singleEvent({ id: 'event-2', name: 'RBC Heritage', startDate: '2099-04-16T12:00:00.000Z' }).data.events[0], sportLeagueId: LPGA, championshipYear: 2099 },
         ],
       },
     });

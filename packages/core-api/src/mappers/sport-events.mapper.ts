@@ -15,18 +15,16 @@ import {
   eventProviderNameOf,
 } from '@poolmaster/shared/domain';
 import type {
-  ImportSportEventYearFromProviderResponse,
   ReleaseCheckDto,
   SportEventContestListResponse,
   SportEventDto,
   SportEventRoundDto,
   SportEventTierDto,
-  SportEventYearListResponse,
 } from '@poolmaster/shared/dto/events.dto';
 import { eventContestOpenings } from '../modules/contest-management/contest-opening';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 import { areTiersAndPricesEditable } from '../modules/events/sport-event-tier-service';
-import type { ProviderEventYearImport, SportEventSummary } from '../modules/events/service';
+import type { SportEventSummary } from '../modules/events/service';
 import type { SportEventRoundView } from '../modules/events/sport-event-round-service';
 
 /**
@@ -78,7 +76,8 @@ export function mapSportEventToDto({
     contestOpenings: eventContestOpenings({ ...event, loadedParticipantCount }, now),
     tiersLocked: !areTiersAndPricesEditable(event),
     eventSeriesId: event.eventSeriesId,
-    eventYear: event.eventYear,
+    sportLeagueSeasonId: event.sportLeagueSeasonId,
+    championshipYear: event.championshipYear,
     sportLeagueId: event.sportLeagueId,
     participantType: event.participantType,
     scoringFamily: event.scoringFamily,
@@ -100,10 +99,6 @@ export function mapSportEventToDto({
 /** A ready check for the wire: the start as an ISO string, every other value as it is. */
 export function mapReleaseCheckToDto(check: ReleaseCheck): ReleaseCheckDto {
   return check.key === ReleaseCheckKey.NOT_STARTED ? { ...check, value: check.value.toISOString() } : { ...check };
-}
-
-export function mapSportEventYearsToResponse(years: readonly number[]): SportEventYearListResponse {
-  return { years: [...years] };
 }
 
 export function mapSportEventRoundToDto(round: SportEventRoundView): SportEventRoundDto {
@@ -143,12 +138,5 @@ export function mapSportEventTierToDto(tier: SportEventTier): SportEventTierDto 
     tierKey: tier.tierKey,
     label: tier.label,
     tierNumber: tier.tierNumber,
-  };
-}
-
-export function mapProviderEventYearImportToResponse(result: ProviderEventYearImport): ImportSportEventYearFromProviderResponse {
-  return {
-    created: result.created.map(mapSportEventToDto),
-    skipped: result.skipped.map(({ externalId, name, reason }) => ({ externalId, name, reason })),
   };
 }

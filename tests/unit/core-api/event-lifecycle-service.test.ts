@@ -254,7 +254,7 @@ describe('EventLifecycleService release guard (#431)', () => {
 
   it('writes a released edition\'s template contest jobs with the release itself, and only on release (#714, #1318)', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', name: 'PGA Championship', startDate: new Date('2026-05-14T12:00:00.000Z'), status: SportEventStatus.DRAFT, eventSeriesId: 'event-series-2', eventYear: 2026 });
+    store.addEvent({ id: 'sport-event-1', name: 'PGA Championship', startDate: new Date('2026-05-14T12:00:00.000Z'), status: SportEventStatus.DRAFT, eventSeriesId: 'event-series-2', sportLeagueSeasonId: 'season-2026' });
     const jobs = startedJobs();
     const contests = releasedEditionContests(['contest-1', 'contest-2']);
     const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, contests);
@@ -263,7 +263,7 @@ describe('EventLifecycleService release guard (#431)', () => {
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
 
     expect(contests.releasedEditionJobs).toHaveBeenCalledTimes(1);
-    expect(contests.releasedEditionJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', eventSeriesId: 'event-series-2', eventYear: 2026 }), jobs);
+    expect(contests.releasedEditionJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', eventSeriesId: 'event-series-2', sportLeagueSeasonId: 'season-2026' }), jobs);
     // Each status change also rebuilds the event's boards; the start adds no template contest job,
     // only the one that takes its contests live.
     expect(store.backgroundJobs.map((job) => job.payload)).toEqual([

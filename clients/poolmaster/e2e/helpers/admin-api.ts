@@ -78,7 +78,7 @@ export async function createJourneySportLeague(
   const headers = { 'x-csrf-token': await readCsrfToken(page) };
   const profiles = await sportLeagueProfileIds(page.request, headers, league.platformTierProfileCode);
   const response = await expectOk(
-    page.request.post('/api/v1/sport-leagues/', { headers, data: { sport: league.sport, name: league.name, participantType: league.participantType, scoringFamily: league.scoringFamily, ...profiles } }),
+    page.request.post('/api/v1/sport-leagues/', { headers, data: { sport: league.sport, name: league.name, timeZone: 'UTC', participantType: league.participantType, scoringFamily: league.scoringFamily, ...profiles } }),
     `create sport league ${league.name}`,
   );
   const { sportLeague } = (await response.json()) as { sportLeague: { id: string } };

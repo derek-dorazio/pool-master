@@ -35,7 +35,8 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     noun: null,
     displayName: null,
     displayOrder: null,
-    currentEventYear: null,
+    currentSeasonId: null,
+    timeZone: 'America/New_York',
     isActive: true,
     selectedProviderMapping: null,
     autoReleaseDaysBeforeStart: 7,
@@ -88,6 +89,7 @@ function buildService(overrides: {
   providers?: SportDataProviderLookup;
   platformTierProfiles?: { findById: jest.Mock };
   platformPricingProfiles?: { findById: jest.Mock };
+  now?: () => Date;
 } = {}) {
   const deps = {
     sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), findAll: jest.fn().mockResolvedValue([GOLF, BASKETBALL]), ...overrides.sports }),
@@ -103,6 +105,7 @@ function buildService(overrides: {
     providers: overrides.providers ?? registeredProviders({}),
     platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
     platformPricingProfiles: overrides.platformPricingProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: 'Standard' })) },
+    now: overrides.now,
   };
   return { service: new SportLeagueService(deps), deps };
 }
@@ -132,7 +135,7 @@ describe('SportLeagueService — sport leagues', () => {
   it('creates a sport league — adding the Champions Tour is one call, not a migration', async () => {
     const { service } = buildService();
 
-    const created = await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour' });
+    const created = await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York' });
 
     expect(created).toMatchObject({ sportId: 'sport-golf', name: 'Champions Tour' });
   });
@@ -140,7 +143,7 @@ describe('SportLeagueService — sport leagues', () => {
   it('rejects a sport league name already used for the sport with 409', async () => {
     const { service } = buildService({ sportLeagues: { findBySportAndName: jest.fn().mockResolvedValue(sportLeague()) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'PGA Tour' }))
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'PGA Tour', timeZone: 'America/New_York' }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS', statusCode: 409 });
   });
 });
@@ -149,15 +152,15 @@ describe('SportLeagueService — tier and pricing profiles', () => {
   it('creates a sport league naming the tier and pricing profiles it is given', async () => {
     const { service, deps } = buildService();
 
-    await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour' });
+    await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York' });
 
-    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining(PROFILES));
+    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining(PROFILES), expect.anything());
   });
 
   it('refuses a new sport league naming an unknown tier profile with 404 PLATFORM_TIER_PROFILE_NOT_FOUND, creating nothing', async () => {
     const { service, deps } = buildService({ platformTierProfiles: { findById: jest.fn().mockResolvedValue(null) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour' }))
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York' }))
       .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NOT_FOUND', statusCode: 404 });
     expect(deps.sportLeagues.create).not.toHaveBeenCalled();
   });
@@ -183,15 +186,15 @@ describe('SportLeagueService — bracket advancement', () => {
   it('creates a sport league fixed by default, and one that reseeds when its sport plays a bracket', async () => {
     const { service } = buildService({ sports: { findBySport: jest.fn().mockResolvedValue(BASKETBALL) } });
 
-    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, ...sportPlay(Sport.BASKETBALL), name: 'Harbour Conference' })).resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.FIXED });
-    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, ...sportPlay(Sport.BASKETBALL), name: 'Gridiron League', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
+    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, ...sportPlay(Sport.BASKETBALL), name: 'Harbour Conference', timeZone: 'America/New_York' })).resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.FIXED });
+    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, ...sportPlay(Sport.BASKETBALL), name: 'Gridiron League', timeZone: 'America/New_York', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
       .resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
   });
 
   it('refuses (422 SPORT_LEAGUE_NOT_BRACKET) a golf sport league that reseeds, on create and on update, writing nothing', async () => {
     const { service, deps } = buildService({ sports: { findById: jest.fn().mockResolvedValue(GOLF) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
     await expect(service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
@@ -232,8 +235,6 @@ describe('SportLeagueService — bracket advancement', () => {
   });
 });
 
-// plans/147 decision 6 — "set as current" used to be a foreign key to a season, so the database
-// guaranteed the target existed. currentEventYear is a plain integer; this check is that guarantee.
 describe('SportLeagueService — event sync (ADR 0011)', () => {
   const leagues: TestProviderLeague[] = [
     { id: 'pl-pga', code: 'pga', sport: Sport.GOLF },
@@ -298,34 +299,31 @@ describe('SportLeagueService — event sync (ADR 0011)', () => {
   });
 });
 
-describe('SportLeagueService — set as current (plans/147 decision 6)', () => {
-  it('refuses a year the sport league has no events in with 422 EVENT_YEAR_HAS_NO_EVENTS, writing nothing', async () => {
-    const countBySportLeagues = jest.fn().mockResolvedValue(new Map([['sl-pga', 0]]));
-    const { service, deps } = buildService({ sportEvents: { countBySportLeagues } });
+describe('SportLeagueService — the league\'s time zone (#2003)', () => {
+  it('refuses a new sport league whose time zone is not a known IANA zone with 400 TIME_ZONE_UNKNOWN, creating nothing', async () => {
+    const { service, deps } = buildService();
 
-    await expect(service.updateSportLeague('sl-pga', { currentEventYear: 1823 }))
-      .rejects.toMatchObject({ code: 'EVENT_YEAR_HAS_NO_EVENTS', statusCode: 422 });
-    expect(countBySportLeagues).toHaveBeenCalledWith(['sl-pga'], { eventYear: 1823 });
-    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'Mars/Olympus_Mons' }))
+      .rejects.toMatchObject({ code: 'TIME_ZONE_UNKNOWN', statusCode: 400 });
+    expect(deps.sportLeagues.create).not.toHaveBeenCalled();
   });
 
-  it('sets a year the sport league has events in, in one write on the sport league', async () => {
-    const { service, deps } = buildService({
-      sportEvents: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 4]])) },
+  it('creates a sport league in the time zone it is given', async () => {
+    const { service, deps } = buildService();
+
+    await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'Europe/London' });
+
+    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining({ timeZone: 'Europe/London' }), expect.anything());
+  });
+
+  it('starts a new sport league with the calendar year\'s Season, named for it, as the journeys\' own leagues need until test slots land', async () => {
+    const { service, deps } = buildService({ now: () => new Date('2027-03-04T05:06:07.000Z') });
+
+    await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'UTC' });
+
+    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.anything(), {
+      name: '2027', championshipYear: 2027, startsAt: new Date('2027-01-01T00:00:00.000Z'), endsAt: new Date('2027-12-31T23:59:59.999Z'),
     });
-
-    await service.updateSportLeague('sl-pga', { currentEventYear: 2026 });
-
-    expect(deps.sportLeagues.update).toHaveBeenCalledWith('sl-pga', expect.objectContaining({ currentEventYear: 2026 }));
-  });
-
-  it('checks nothing when the update does not touch the current year', async () => {
-    const countBySportLeagues = jest.fn().mockResolvedValue(new Map());
-    const { service } = buildService({ sportEvents: { countBySportLeagues } });
-
-    await service.updateSportLeague('sl-pga', { name: 'PGA TOUR' });
-
-    expect(countBySportLeagues).not.toHaveBeenCalledWith(['sl-pga'], expect.objectContaining({ eventYear: expect.anything() }));
   });
 });
 

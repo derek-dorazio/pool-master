@@ -84,23 +84,23 @@ describe('BalldontlieAdapter (MLB)', () => {
       ]);
     });
 
-    it('reads this season and the next when the range is open-ended, from March on', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASEBALL);
 
-      expect(events.map((event) => event.externalId)).toEqual(['mlb-2026-postseason']);
-      expect(seasonsRead(harness.api)).toEqual(['2026', '2027']);
+      expect(events).toEqual([]);
+      expect(seasonsRead(harness.api)).toEqual([]);
     });
 
-    it('takes last year\'s season as the one under way before March', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says', async () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 1, 1));
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.BASEBALL);
+      await harness.adapter.getUpcomingEvents(Sport.BASEBALL, undefined, { providerSeasonId: '2025' });
 
-      expect(seasonsRead(harness.api)).toEqual(['2025', '2026']);
+      expect(seasonsRead(harness.api)).toEqual(['2025']);
     });
   });
 

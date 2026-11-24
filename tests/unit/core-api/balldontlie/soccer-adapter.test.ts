@@ -112,23 +112,23 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
       ]);
     });
 
-    it('reads the season under way and the next when the range is open-ended, not every season ever played', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock, and the vendor\'s current World Cup edition', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const events = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
 
-      expect(events.map((event) => event.externalId)).toEqual(['epl-2026-matchweek-11', 'epl-2026-matchweek-12', 'fifa-wc-2026-knockout']);
-      expect(eplRequests(harness.api).map((line) => /season=(\d+)/.exec(line)?.[1])).toEqual(['2026', '2027']);
+      expect(events.map((event) => event.externalId)).toEqual(['fifa-wc-2026-knockout']);
+      expect(eplRequests(harness.api)).toEqual([]);
     });
 
-    it('takes the season that started last summer as the one under way until the next July', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says', async () => {
       const harness = setup(defaultRoutes, Date.UTC(2027, 5, 30));
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.SOCCER);
+      await harness.adapter.getUpcomingEvents(Sport.SOCCER, undefined, { providerSeasonId: '2026' });
 
-      expect(eplRequests(harness.api).map((line) => /season=(\d+)/.exec(line)?.[1])).toEqual(['2026', '2027']);
+      expect(eplRequests(harness.api).map((line) => /season=(\d+)/.exec(line)?.[1])).toEqual(['2026']);
     });
   });
 
@@ -208,28 +208,39 @@ describe('BalldontlieAdapter (soccer: the FIFA World Cup)', () => {
   let restore: (() => void) | undefined;
   afterEach(() => restore?.());
 
-  it('lists the knockout bracket of each edition held in a range, asking only for those editions', async () => {
+  it('reads the vendor\'s current edition for a range, never an edition worked out from its years, and keeps only the brackets starting inside it', async () => {
     const harness = setup();
     restore = harness.restore;
 
-    const events = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2021-01-01T00:00:00Z'), to: new Date('2026-12-31T00:00:00Z') });
+    const inside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2021-01-01T00:00:00Z'), to: new Date('2026-12-31T00:00:00Z') });
+    const outside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2023-01-01T00:00:00Z'), to: new Date('2024-12-31T00:00:00Z') });
 
-    expect(events.filter((event) => event.externalId.startsWith('fifa-')).map((event) => [event.externalId, event.status])).toEqual([
-      ['fifa-wc-2022-knockout', 'COMPLETED'],
+    expect(inside.filter((event) => event.externalId.startsWith('fifa-')).map((event) => [event.externalId, event.status])).toEqual([
       ['fifa-wc-2026-knockout', 'IN_PROGRESS'],
     ]);
-    expect(worldCupRequests(harness.api)).toEqual(['/fifa/worldcup/v1/matches?seasons[]=2022&seasons[]=2026&per_page=100']);
+    expect(outside.filter((event) => event.externalId.startsWith('fifa-'))).toEqual([]);
+    expect(worldCupRequests(harness.api)).toEqual(['/fifa/worldcup/v1/matches?per_page=100', '/fifa/worldcup/v1/matches?per_page=100']);
   });
 
-  it('asks for nothing in a range that holds no edition, and for the current edition when the range is open-ended', async () => {
+  it('asks only for the edition a Season names', async () => {
     const harness = setup();
     restore = harness.restore;
 
-    await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2023-01-01T00:00:00Z'), to: new Date('2024-12-31T00:00:00Z') });
-    expect(worldCupRequests(harness.api)).toEqual([]);
+    const named = await harness.adapter.getUpcomingEvents(Sport.SOCCER, undefined, { providerLeagueCode: 'worldcup', providerSeasonId: '2022' });
+    expect(named.map((event) => event.externalId)).toEqual(['fifa-wc-2022-knockout']);
+    expect(worldCupRequests(harness.api)).toEqual(['/fifa/worldcup/v1/matches?seasons[]=2022&per_page=100']);
+  });
 
-    await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
-    expect(worldCupRequests(harness.api)).toEqual(['/fifa/worldcup/v1/matches?per_page=100']);
+  it('keeps only the brackets starting inside a range when a Season names its edition', async () => {
+    const harness = setup();
+    restore = harness.restore;
+
+    const options = { providerLeagueCode: 'worldcup', providerSeasonId: '2022' };
+    const inside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2022-01-01T00:00:00Z'), to: new Date('2022-12-31T00:00:00Z') }, options);
+    const outside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2023-01-01T00:00:00Z'), to: new Date('2023-12-31T00:00:00Z') }, options);
+
+    expect(inside.map((event) => event.externalId)).toEqual(['fifa-wc-2022-knockout']);
+    expect(outside).toEqual([]);
   });
 
   it('gives an edition\'s bracket with the teams decided so far, and nothing for an edition with no knockout match', async () => {

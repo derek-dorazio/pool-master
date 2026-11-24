@@ -59,12 +59,12 @@ describe('useUpdateSportLeague', () => {
       onSuccess,
       refusedMessage: 'Refused',
       sportLeagueId: 'pga',
-      toBody: (year: number) => ({ currentEventYear: year }),
+      toBody: (name: string) => ({ name }),
     }), { wrapper: wrapperFor(queryClient) });
 
-    await act(() => result.current.mutateAsync(2027));
+    await act(() => result.current.mutateAsync('PGA TOUR'));
 
-    expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'pga' }, body: { currentEventYear: 2027 } }));
+    expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'pga' }, body: { name: 'PGA TOUR' } }));
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(invalidate).toHaveBeenCalledWith({ queryKey: QueryKeys.rootAdmin.manageSport.leagues });
   });

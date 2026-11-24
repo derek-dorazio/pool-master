@@ -29,13 +29,13 @@ describe("ServerErrorBar", () => {
 
     render(
       <ServerErrorBar
-        context="leagueYear"
-        values={{ sportLeagueName: "PGA Tour", events: "tournaments", year: 2027 }}
+        context="createEvent"
+        values={{ sportLeague: "tour", event: "tournament" }}
         error={
           new ApiError({
             error: {
-              code: "EVENT_YEAR_NOT_EMPTY",
-              message: "Sport league sl-1 already has events in 2027",
+              code: "EVENT_EDITION_ALREADY_EXISTS",
+              message: "Series sr-1 already has an edition in season s-1",
             },
           })
         }
@@ -45,8 +45,8 @@ describe("ServerErrorBar", () => {
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent("Sync failed");
-    expect(screen.getByText("PGA Tour already has tournaments in 2027.")).toBeInTheDocument();
-    expect(screen.queryByText("Sport league sl-1 already has events in 2027")).not.toBeInTheDocument();
+    expect(screen.getByText("This tour already has this tournament in its current Season.")).toBeInTheDocument();
+    expect(screen.queryByText("Series sr-1 already has an edition in season s-1")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(onRetry).toHaveBeenCalledTimes(1);

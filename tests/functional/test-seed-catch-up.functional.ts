@@ -1,9 +1,9 @@
-import { getEventBracket, listEvents, listSportLeagues } from '@poolmaster/shared/generated/hey-api';
+import { getEventBracket, listSportLeagues } from '@poolmaster/shared/generated/hey-api';
 import { MatchStatus, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode, LoadSubject } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { catchUpTestEvents, loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { TEST_EVENT_NAME_PREFIX, type SportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { oneEventOf } from '../support/sport-test-seed';
@@ -71,7 +71,7 @@ describe('SDK Functional: a test seed\'s results as its games are played', () =>
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
-    const readEvent = async () => expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id, eventYear: 2026 } })).data).events
+    const readEvent = async () => expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === eventName), eventName);
     const event = await readEvent();
     created.sportEventIds.add(event.id);

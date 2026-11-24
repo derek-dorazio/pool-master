@@ -37,7 +37,8 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     participantCount: 88,
     metadata: {},
     eventSeriesId: 'series-1',
-    eventYear: 2026,
+    sportLeagueSeasonId: 'season-2026',
+    championshipYear: 2026,
     sportLeagueId: 'pga',
     syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: true,
@@ -76,14 +77,11 @@ function fakes() {
   const services = {
     sportEvents: {
       listEvents: fn([summary]),
-      listEventYears: fn([2026, 2025]),
       requireSummary: fn(summary),
       requireAdminSummary: fn(summary),
       requireEvent: fn(sportEvent()),
       createEvent: fn(summary),
       createEventFromProviderEvent: fn(summary),
-      cloneEventYear: fn([summary]),
-      importProviderEventYear: fn({ created: [summary], skipped: [] }),
       updateEvent: fn(summary),
       deleteEvent: fn(undefined),
       releaseEvent: fn(summary),
@@ -125,7 +123,6 @@ function fakes() {
   const lifecycle = { applySportEventStatusTransition: fn(undefined) };
   const scoreSource = {
     getProviderEventDetail: fn({ externalId: 'x1' }),
-    listTourEventsForYear: fn([]),
     linkScoreSource: fn(undefined),
     unlinkScoreSource: fn(undefined),
   };
@@ -154,15 +151,15 @@ describe('event reads: drafts and admin counts are a root admin\'s', () => {
     expect(reply.body).toMatchObject({ events: [{ id: EVENT_ID }] });
   });
 
-  it('lets a member list the events open for contests, or one sport league\'s season, released only and without counts', async () => {
+  it('lets a member list the events open for contests, or one Season\'s, released only and without counts', async () => {
     const { services, handlers } = fakes();
 
     await callHandler(handlers.listEvents, stubRequest({ query: { status: [SportEventStatus.SCHEDULED] }, authUser: member }));
-    await callHandler(handlers.listEvents, stubRequest({ query: { sportLeagueId: 'pga', eventYear: 2026 } }));
+    await callHandler(handlers.listEvents, stubRequest({ query: { sportLeagueSeasonId: 'season-2026' } }));
 
     expect(services.sportEvents.listEvents.mock.calls).toEqual([
       [{ statuses: [SportEventStatus.SCHEDULED], releasedOnly: true, activeSportLeaguesOnly: true }, { adminCounts: false }],
-      [{ sportLeagueId: 'pga', eventYear: 2026, statuses: undefined, releasedOnly: true, activeSportLeaguesOnly: false }, { adminCounts: false }],
+      [{ sportLeagueSeasonId: 'season-2026', statuses: undefined, releasedOnly: true, activeSportLeaguesOnly: false }, { adminCounts: false }],
     ]);
   });
 
@@ -182,7 +179,7 @@ describe('event reads: drafts and admin counts are a root admin\'s', () => {
     ['no filter', {}],
     ['a status that cannot take a contest', { status: [SportEventStatus.COMPLETED] }],
     ['an empty status list', { status: [] }],
-    ['a sport league without a year', { sportLeagueId: 'pga' }],
+    ['a sport league without a Season', { sportLeagueId: 'pga' }],
   ])('refuses a member\'s unbounded list with %s with 403 ROOT_ADMIN_ACCESS_REQUIRED', async (_label, query) => {
     const { services, handlers } = fakes();
 
@@ -191,17 +188,13 @@ describe('event reads: drafts and admin counts are a root admin\'s', () => {
     expect(services.sportEvents.listEvents).not.toHaveBeenCalled();
   });
 
-  it('reads years, an event and its bracket released only for a member, and with drafts for a root admin', async () => {
+  it('reads an event and its bracket released only for a member, and with drafts for a root admin', async () => {
     const { services, handlers } = fakes();
 
-    const years = await callHandler(handlers.listEventYears, stubRequest({ query: { sportLeagueId: 'pga' }, authUser: member }));
-    await callHandler(handlers.listEventYears, stubRequest({ query: { sportLeagueId: 'pga' }, authUser: admin }));
     const event = await callHandler(handlers.getEvent, stubRequest({ params, authUser: member }));
     await callHandler(handlers.getEvent, stubRequest({ params, authUser: admin }));
     const bracket = await callHandler(handlers.getEventBracket, stubRequest({ params }));
 
-    expect(years.body).toEqual({ years: [2026, 2025] });
-    expect(services.sportEvents.listEventYears.mock.calls).toEqual([['pga', { releasedOnly: true }], ['pga', { releasedOnly: false }]]);
     expect(event.body).toMatchObject({ event: { id: EVENT_ID } });
     expect(services.sportEvents.requireSummary.mock.calls).toEqual([
       [EVENT_ID, { releasedOnly: true, adminCounts: false }],
@@ -228,24 +221,13 @@ describe('event writes', () => {
 
   it('creates an event from the provider event the body names, with 201', async () => {
     const { services, scoreSource, handlers } = fakes();
-    const body = { sportLeagueId: 'pga', eventYear: 2026, providerId: 'feed', externalId: 'x1', rounds: 4 };
+    const body = { sportLeagueId: 'pga', providerId: 'feed', externalId: 'x1', rounds: 4 };
 
     const reply = await callHandler(handlers.createEventFromProviderEvent, stubRequest({ body }));
 
     expect(scoreSource.getProviderEventDetail).toHaveBeenCalledWith('feed', 'x1');
     expect(services.sportEvents.createEventFromProviderEvent).toHaveBeenCalledWith({ ...body, providerEvent: { externalId: 'x1' } });
     expect(reply.statusCode).toBe(201);
-  });
-
-  it('clones a year and imports a provider\'s year, each with 201', async () => {
-    const { scoreSource, handlers } = fakes();
-
-    const cloned = await callHandler(handlers.cloneEventYear, stubRequest({ body: { sportLeagueId: 'pga', fromYear: 2025, toYear: 2026 } }));
-    const imported = await callHandler(handlers.importEventYearFromProvider, stubRequest({ body: { sportLeagueId: 'pga', eventYear: 2026, providerId: 'feed' } }));
-
-    expect(cloned).toMatchObject({ statusCode: 201, body: { events: [{ id: EVENT_ID }] } });
-    expect(scoreSource.listTourEventsForYear).toHaveBeenCalledWith('feed', 'pga', 2026);
-    expect(imported).toMatchObject({ statusCode: 201, body: { created: [{ id: EVENT_ID }], skipped: [] } });
   });
 
   it('updates an event, telling members unless the body says not to, and clears an end sent as null', async () => {

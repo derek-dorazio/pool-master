@@ -124,6 +124,7 @@ import { activityModule } from '../../packages/core-api/src/modules/activity/rou
 import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestion/findings/routes';
 import { ProviderSyncFindingService } from '../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
 import { PrismaProviderSyncFindingRepository } from '../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
+import { PrismaSportLeagueSeasonRepository } from '../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { ParticipantService } from '../../packages/core-api/src/modules/participants/service';
 import { ActivityService } from '../../packages/core-api/src/modules/activity/activity-service';
 import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
@@ -385,9 +386,11 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const providerSyncRuns = new PrismaProviderSyncRunRepository(prisma);
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
     sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providers).sportEvents,
+    findings: integrationSyncFindings(prisma, providerSettings),
     syncRuns: providerSyncRuns,
     jobs: backgroundJobs.queue,
   });

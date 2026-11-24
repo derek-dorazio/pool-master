@@ -42,7 +42,7 @@ export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventT
 export interface SportEventStatusChanged {
   type: typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED;
   /** The event as it stood before the change, so no handler reads it again. */
-  sportEvent: Pick<SportEvent, 'id' | 'startDate' | 'eventSeriesId' | 'eventYear'>;
+  sportEvent: Pick<SportEvent, 'id' | 'startDate' | 'eventSeriesId' | 'sportLeagueSeasonId'>;
   from: SportEventStatus;
   to: SportEventStatus;
   /** When the event's contests settle if `to` finishes it: its end, or the moment it was cancelled. */
