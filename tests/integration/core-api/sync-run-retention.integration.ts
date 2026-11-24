@@ -4,7 +4,7 @@
  */
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { Prisma } from '@prisma/client';
-import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository } from '../../../packages/core-api/src/adapters';
 import {
   SyncRunDetailsRetention,
@@ -31,9 +31,8 @@ async function seedRun(label: string, createdAt: Date, details: object | null = 
   const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
   const run = await repo.create({
     ...SCHEDULED_SCORES_RUN,
-    providerId: 'retention-feed',
+    providerCode: ProviderCode.BALLDONTLIE,
     sport: Sport.GOLF,
-    eventId: label,
     status: ProviderSyncRunStatus.COMPLETED,
     startedAt: null,
     completedAt: null,
@@ -47,10 +46,12 @@ async function seedRun(label: string, createdAt: Date, details: object | null = 
 }
 
 async function detailsByLabel(): Promise<Record<string, { details: Prisma.JsonValue; payload: Prisma.JsonValue }>> {
-  const rows = await getPrisma().providerSyncRun.findMany({ select: { eventId: true, detailsJson: true, payloadJson: true } });
+  const rows = await getPrisma().providerSyncRun.findMany({ select: { detailsJson: true, payloadJson: true } });
   const byLabel: Record<string, { details: Prisma.JsonValue; payload: Prisma.JsonValue }> = {};
   for (const row of rows) {
-    byLabel[row.eventId ?? ''] = { details: row.detailsJson, payload: row.payloadJson };
+    // A run's label is its payload's detail, which retention keeps.
+    const label = (row.payloadJson as { detail?: string } | null)?.detail ?? '';
+    byLabel[label] = { details: row.detailsJson, payload: row.payloadJson };
   }
   return byLabel;
 }

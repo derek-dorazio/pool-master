@@ -32,8 +32,8 @@ async function cleanup(): Promise<void> {
     await db.sportEvent.deleteMany({ where: series });
     await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
-  const participantIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((row) => row.id);
-  await db.participant.deleteMany({ where: { id: { in: participantIds } } });
+  // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).
+  if (leagueIds.length) await db.participant.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   if (leagueIds.length) await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
 }
 

@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import type { SportEventParticipantResponse } from '@poolmaster/shared/dto';
@@ -46,7 +47,7 @@ async function createField(suffix: string) {
     data: {
       ...(await freshEventEdition(prisma)),
       externalId: `golf-round-scores-${suffix}`,
-      providerId: 'integration-test',
+      providerId: 'balldontlie',
       sport: 'GOLF',
       name: `Round Scores Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
@@ -56,9 +57,9 @@ async function createField(suffix: string) {
   const round1 = await prisma.sportEventRound.create({
     data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-05-07T12:00:00.000Z') },
   });
-  const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth'].map(async (name, index) => {
+  const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth'].map(async (name) => {
     const participant = await prisma.participant.create({
-      data: { sportLeagueId: await fixtureTourId(prisma), name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
+      data: { sportLeagueId: await fixtureTourId(prisma), name, participantType: 'INDIVIDUAL' },
     });
     const sep = await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id },
@@ -343,8 +344,8 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
     });
     await prisma.participantProviderMapping.createMany({
       data: [
-        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
-        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id, sportLeagueId: jordan.participant.sportLeagueId },
+        { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
+        { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-jordan', participantId: jordan.participant.id, sportLeagueId: jordan.participant.sportLeagueId },
       ],
     });
     const update = (participantExternalId: string, round: number, thru = 18) => ({
@@ -355,7 +356,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [1, 2, 3, 4].map((round) => update('ext-rory', round)).concat(update('ext-rory', 5), update('ext-jordan', 1, 19)),
-    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'integration-test', domainEvents: testDomainEvents(), scoringFamilyForEvent });
+    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents(), scoringFamilyForEvent });
 
     expect(result).toMatchObject({ updatesReturned: 6, updatesPersisted: 4, updatesSkipped: 2 });
     const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort((left, right) => left - right);
@@ -399,8 +400,8 @@ describe('Golf round scores — a live sync writes only what changed', () => {
     await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
     await prisma.participantProviderMapping.createMany({
       data: [
-        { providerId: 'integration-test', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
-        { providerId: 'integration-test', externalId: 'ext-jordan', participantId: jordan.participant.id, sportLeagueId: jordan.participant.sportLeagueId },
+        { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
+        { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-jordan', participantId: jordan.participant.id, sportLeagueId: jordan.participant.sportLeagueId },
       ],
     });
     const tick = (jordanToPar: number) => publishLiveScoreUpdate({
@@ -410,7 +411,7 @@ describe('Golf round scores — a live sync writes only what changed', () => {
         { participantExternalId: 'ext-rory', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const },
         { participantExternalId: 'ext-jordan', round: 1, strokes: 36 + jordanToPar, scoreToPar: jordanToPar, thru: 9, status: 'IN_PROGRESS' as const },
       ],
-    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'integration-test', domainEvents: testDomainEvents(), scoringFamilyForEvent });
+    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents(), scoringFamilyForEvent });
     const stamps = async (): Promise<Record<string, Array<string | undefined>>> => {
       const byEntry: Record<string, Array<string | undefined>> = {};
       for (const { sep } of [rory, jordan]) {
@@ -483,13 +484,13 @@ describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () 
     const { event, rory } = await createField('live-rebuild');
     const prisma = getPrisma();
     await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
-    await prisma.participantProviderMapping.create({ data: { providerId: 'integration-test', externalId: 'ext-rory-live', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId } });
+    await prisma.participantProviderMapping.create({ data: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-rory-live', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId } });
 
     await publishLiveScoreUpdate({
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [{ participantExternalId: 'ext-rory-live', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const }],
-    }, { prisma: getAppPrisma(), providerId: 'integration-test', domainEvents: testDomainEvents({ queue: integrationBackgroundJobs().queue }), contestActivation: NO_CONTEST_ACTIVATION, scoringFamilyForEvent });
+    }, { prisma: getAppPrisma(), providerId: 'balldontlie', domainEvents: testDomainEvents({ queue: integrationBackgroundJobs().queue }), contestActivation: NO_CONTEST_ACTIVATION, scoringFamilyForEvent });
 
     await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
   });

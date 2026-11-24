@@ -31,7 +31,7 @@
  * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
  * with that winner (`play-in-fill.ts`), so the game links to the place's match in the same sync.
  */
-import { MatchResultSource, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchResultSource, requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
@@ -348,7 +348,7 @@ async function participantsOfSides(deps: GameScoreWriterDeps, matches: readonly 
 async function participantsOfTeams(deps: GameScoreWriterDeps, sportEventId: string, games: readonly GameScoreUpdate[]): Promise<Map<string, string>> {
   const ids = [...new Set(games.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]))];
   if (ids.length === 0) return new Map();
-  const mappings = await deps.mappings.findByProviderExternalIds(deps.providerId, { sportEventId }, ids);
+  const mappings = await deps.mappings.findByProviderExternalIds(requireProviderCodeOfSourceId(deps.providerId), { sportEventId }, ids);
   return new Map(mappings.map((mapping) => [mapping.externalId, mapping.participantId]));
 }
 

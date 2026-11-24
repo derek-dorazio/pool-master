@@ -113,7 +113,7 @@ describe('a College Football Playoff as an event', () => {
     const field = toCfpFieldParticipants(window2025);
     expect(field).toHaveLength(14);
     expect(field[0]).toEqual({
-      externalId: 'ncaaf-team-93',
+      externalId: '93',
       providerId: 'balldontlie',
       sport: Sport.AMERICAN_FOOTBALL,
       name: 'Navy Midshipmen',
@@ -133,12 +133,12 @@ describe('a College Football Playoff as an event', () => {
 });
 
 describe('College Football Playoff game scores', () => {
-  it('passes on each game\'s prefixed teams, state and score, the national championship among them', () => {
+  it('passes on each game\'s teams, state and score, the national championship among them', () => {
     const updates = toCfpGameScoreUpdates(cfpGamesOf(CFP_2025, season2025));
     expect(updates.at(-1)).toEqual({
       externalGameId: '5041',
-      homeTeamExternalId: 'ncaaf-team-64',
-      awayTeamExternalId: 'ncaaf-team-76',
+      homeTeamExternalId: '64',
+      awayTeamExternalId: '76',
       state: ProviderGameState.FINAL,
       homeScore: 27,
       awayScore: 21,

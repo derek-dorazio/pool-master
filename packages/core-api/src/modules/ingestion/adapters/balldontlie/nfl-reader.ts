@@ -12,7 +12,6 @@ import { NflSeasonType, nflGameListSchema, nflStandingListSchema, nflTeamListSch
 import {
   nflScopeId,
   NflScopeKind,
-  nflTeamExternalId,
   seasonTypeOf,
   toGameScoreUpdates,
   toNflFieldParticipants,
@@ -25,6 +24,7 @@ import {
   toNflTeamParticipant,
   type NflScope,
 } from './nfl-mapping';
+import { participantFeedId } from './participant-feed-id';
 
 const GAMES_PATH = '/nfl/v1/games';
 const TEAMS_PATH = '/nfl/v1/teams';
@@ -95,7 +95,7 @@ export class NflReader {
    */
   private async nflTeamsPlaying(games: readonly NflGame[]): Promise<ProviderParticipant[]> {
     const nflTeams = new Set((await this.teams()).map((team) => team.externalId));
-    const isNflTeam = (teamId: number | undefined) => teamId !== undefined && nflTeams.has(nflTeamExternalId(teamId));
+    const isNflTeam = (teamId: number | undefined) => teamId !== undefined && nflTeams.has(participantFeedId(teamId));
     return toNflFieldParticipants(games.filter((game) => isNflTeam(game.home_team?.id) && isNflTeam(game.visitor_team?.id)));
   }
 

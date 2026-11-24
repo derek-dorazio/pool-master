@@ -13,7 +13,7 @@ import type {
   ParticipantProviderMapping,
   InjuryStatus, ParticipantType
 } from '@poolmaster/shared/domain';
-import { InjuryStatusCode, MappingConfidence, ParticipantStatus } from '@poolmaster/shared/domain';
+import { InjuryStatusCode, ParticipantStatus } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 // --- Input DTOs ---
@@ -23,14 +23,12 @@ export interface CreateParticipantInput {
   ranking?: number | null;
   name: string;
   participantType: ParticipantType;
-  externalId?: string;
   firstName?: string;
   lastName?: string;
   shortName?: string;
   nationality?: string;
   role?: string;
   teamAffiliation?: string;
-  externalIds?: Record<string, string>;
 }
 
 export interface UpdateParticipantInput {
@@ -45,8 +43,6 @@ export interface UpdateParticipantInput {
   status?: Participant['status'];
   injuryStatus?: InjuryStatus;
   photoUrl?: string;
-  externalId?: string;
-  externalIds?: Record<string, string>;
 }
 
 export interface SearchParticipantsInput {
@@ -88,7 +84,6 @@ export class ParticipantService {
         data: {
           sportLeagueId: input.sportLeagueId,
           participantType: input.participantType,
-          hasExternalId: input.externalId !== undefined,
         },
       },
       'Creating participant',
@@ -100,7 +95,6 @@ export class ParticipantService {
         ranking: input.ranking ?? null,
         name: input.name,
         participantType: input.participantType,
-        externalId: input.externalId,
         firstName: input.firstName,
         lastName: input.lastName,
         shortName: input.shortName,
@@ -109,7 +103,6 @@ export class ParticipantService {
         teamAffiliation: input.teamAffiliation,
         status: ParticipantStatus.ACTIVE,
         injuryStatus: DEFAULT_INJURY_STATUS,
-        externalIds: input.externalIds ?? {},
       });
 
       this.logger?.info(
@@ -237,7 +230,8 @@ export class ParticipantService {
   /**
    * A root admin binding a provider identity to this participant by hand — how a competitor
    * the provider could not match gets their synced data. An identity already bound to another
-   * of the participant's sport league moves here.
+   * of the participant's sport league moves here. `providerId` is the Provider row's id: 404
+   * PROVIDER_NOT_FOUND for one with no row.
    */
   async bindProviderMapping(
     participantId: string,
@@ -251,11 +245,18 @@ export class ParticipantService {
     const mapping = await this.providerMappingRepo.bind({
       participantId,
       sportLeagueId: participant.sportLeagueId,
+      participantType: participant.participantType,
       providerId,
       externalId,
-      confidence: MappingConfidence.MANUAL,
       mappedAt: new Date(),
     });
+    if (!mapping) {
+      this.logger?.warn(
+        { action: 'participants.service.bindProviderMapping.providerNotFound', data: { participantId, providerId } },
+        'Refused to bind a provider identity of an unknown provider',
+      );
+      throw new ProviderNotFoundError(providerId);
+    }
     this.logger?.info(
       { action: 'participants.service.bindProviderMapping.success', data: { participantId, providerId, externalId } },
       'Bound provider identity to participant',
@@ -271,6 +272,16 @@ export class ParticipantNotFoundError extends Error {
   constructor(participantId: string) {
     super(`Participant not found: ${participantId}`);
     this.name = 'ParticipantNotFoundError';
+  }
+}
+
+export class ProviderNotFoundError extends Error {
+  readonly code: ApiErrorCode = 'PROVIDER_NOT_FOUND';
+  readonly statusCode = 404;
+
+  constructor(providerId: string) {
+    super(`Provider not found: ${providerId}`);
+    this.name = 'ProviderNotFoundError';
   }
 }
 

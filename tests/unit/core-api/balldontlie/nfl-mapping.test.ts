@@ -124,10 +124,10 @@ describe('NFL events', () => {
 });
 
 describe('NFL teams', () => {
-  it('makes a team a participant with a prefixed id, so it never shares an id with a golfer', () => {
+  it('makes a team a participant under the feed\'s raw id, as the provider gives it', () => {
     const [team] = toNflFieldParticipants([weekFinal]);
     expect(team).toEqual({
-      externalId: 'nfl-team-25',
+      externalId: '25',
       providerId: 'balldontlie',
       sport: Sport.AMERICAN_FOOTBALL,
       name: 'Detroit Lions',
@@ -152,9 +152,9 @@ describe('NFL teams', () => {
 describe('NFL game scores', () => {
   it('passes on each game\'s teams, state and score, and leaves out a game whose state the vendor cannot classify', () => {
     expect(toGameScoreUpdates(week12)).toEqual([
-      { externalGameId: '401201', homeTeamExternalId: 'nfl-team-25', awayTeamExternalId: 'nfl-team-27', state: ProviderGameState.FINAL, homeScore: 27, awayScore: 24 },
-      { externalGameId: '401202', homeTeamExternalId: 'nfl-team-9', awayTeamExternalId: 'nfl-team-4', state: ProviderGameState.IN_PROGRESS, homeScore: 14, awayScore: 10 },
-      { externalGameId: '401203', homeTeamExternalId: 'nfl-team-17', awayTeamExternalId: 'nfl-team-3', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
+      { externalGameId: '401201', homeTeamExternalId: '25', awayTeamExternalId: '27', state: ProviderGameState.FINAL, homeScore: 27, awayScore: 24 },
+      { externalGameId: '401202', homeTeamExternalId: '9', awayTeamExternalId: '4', state: ProviderGameState.IN_PROGRESS, homeScore: 14, awayScore: 10 },
+      { externalGameId: '401203', homeTeamExternalId: '17', awayTeamExternalId: '3', state: ProviderGameState.SCHEDULED, homeScore: null, awayScore: null },
     ]);
   });
 

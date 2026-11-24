@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
@@ -23,6 +24,17 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
+/** A golfer of the league mapped to a BALLDONTLIE feed id, the identity an upload row may name it by (#2040). */
+async function mappedGolfer(sportLeagueId: string, name: string, externalId: string) {
+  const participant = await getPrisma().participant.create({
+    data: {
+      sportLeagueId, name, participantType: 'INDIVIDUAL',
+      providerMappings: { create: { sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId } },
+    },
+  });
+  return { ...participant, externalId };
+}
+
 async function createField(suffix: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
@@ -42,17 +54,13 @@ async function createField(suffix: string) {
     },
   });
   const golfers = await Promise.all(['Rory McIlroy', 'Jordan Spieth', 'Tommy Fleetwood'].map(async (name, index) => {
-    const participant = await prisma.participant.create({
-      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name, participantType: 'INDIVIDUAL', externalId: `${suffix}-golfer-${index}` },
-    });
+    const participant = await mappedGolfer(await participantLeagueId(prisma, sport.id), name, `${suffix}-golfer-${index}`);
     const sep = await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id, ranking: 10 + index, oddsToWin: 20 + index, seedNumber: index + 1 },
     });
     return { participant, sep };
   }));
-  const offField = await prisma.participant.create({
-    data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: 'Off Field', participantType: 'INDIVIDUAL', externalId: `${suffix}-off-field` },
-  });
+  const offField = await mappedGolfer(await participantLeagueId(prisma, sport.id), 'Off Field', `${suffix}-off-field`);
   return { event, rory: golfers[0], jordan: golfers[1], tommy: golfers[2], offField };
 }
 
@@ -72,7 +80,7 @@ describe('Field upload — adjusting golfers already on the field', () => {
     const service = createSportEventParticipantService(getAppPrisma(), testDomainEvents());
     const rows = [
       { participantId: rory.participant.id, ranking: 1, oddsToWin: 6.5 },
-      { externalId: jordan.participant.externalId as string, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, oddsToWin: null },
+      { externalId: jordan.participant.externalId, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, oddsToWin: null },
       { playerName: 'tommy fleetwood', ranking: 12 },
     ];
 
@@ -103,7 +111,7 @@ describe('Field upload — adjusting golfers already on the field', () => {
 
     const attempt = service.applyUpload(event.id, [
       { participantId: rory.participant.id, ranking: 1 },
-      { externalId: offField.externalId as string, ranking: 2 },
+      { externalId: offField.externalId, ranking: 2 },
     ]);
 
     await expect(attempt).rejects.toBeInstanceOf(SportEventError);

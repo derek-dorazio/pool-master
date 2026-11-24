@@ -136,10 +136,10 @@ describe('BalldontlieAdapter (NFL)', () => {
 
       expect(detail).toMatchObject({ externalId: 'nfl-2026-week-12', sport: Sport.AMERICAN_FOOTBALL, participantCount: 8, rounds: 1 });
       expect(detail?.participants.map((team) => team.externalId)).toEqual(
-        ['nfl-team-25', 'nfl-team-27', 'nfl-team-9', 'nfl-team-4', 'nfl-team-17', 'nfl-team-3', 'nfl-team-31', 'nfl-team-30'],
+        ['25', '27', '9', '4', '17', '3', '31', '30'],
       );
       expect(detail?.games).toHaveLength(4);
-      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: 'nfl-team-25', awayTeamExternalId: 'nfl-team-27', isNeutralSite: false });
+      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '25', awayTeamExternalId: '27', isNeutralSite: false });
       expect(detail?.games?.[0].externalGameId).toMatch(/^\d+$/);
       expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
       const teamsInGames = detail?.games?.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]);
@@ -154,10 +154,10 @@ describe('BalldontlieAdapter (NFL)', () => {
       const detail = await harness.adapter.getEventDetails('nfl-2026-postseason');
 
       expect(detail).toMatchObject({ name: 'NFL Playoffs', status: 'IN_PROGRESS', participantCount: 14, rounds: 4 });
-      expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.metadata.seed])).toEqual([['nfl-team-17', 1], ['nfl-team-3', 2]]);
+      expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.metadata.seed])).toEqual([['17', 1], ['3', 2]]);
       expect(detail?.games?.map((game) => [game.externalGameId, game.roundNumber])).toEqual([['403601', 1], ['403602', 1], ['403603', 2]]);
       expect(detail?.bracket).toHaveLength(13);
-      expect(detail?.bracket?.[2]).toMatchObject({ matchNumber: 3, homeTeamExternalId: 'nfl-team-13', awayTeamExternalId: 'nfl-team-18', scheduledAt: new Date('2027-01-16T21:30:00.000Z') });
+      expect(detail?.bracket?.[2]).toMatchObject({ matchNumber: 3, homeTeamExternalId: '13', awayTeamExternalId: '18', scheduledAt: new Date('2027-01-16T21:30:00.000Z') });
       expect(requestLine(harness.api)).toEqual([
         '/nfl/v1/games?seasons[]=2026&season_types[]=3&per_page=100',
         '/nfl/v1/standings?season=2026',
@@ -174,7 +174,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       const detail = await harness.adapter.getEventDetails('nfl-2026-postseason');
 
       expect(detail).toMatchObject({ participantCount: 5 });
-      expect(detail?.participants.map((team) => team.externalId)).not.toContain('nfl-team-901');
+      expect(detail?.participants.map((team) => team.externalId)).not.toContain('901');
       expect(detail?.games?.map((game) => game.externalGameId)).toEqual(['403601', '403602', '403603']);
       expect(detail?.bracket).toBeUndefined();
     });
@@ -194,7 +194,7 @@ describe('BalldontlieAdapter (NFL)', () => {
     const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
 
     expect(teams).toHaveLength(14);
-    expect(teams[0]).toMatchObject({ externalId: 'nfl-team-17', name: 'Kansas City Chiefs', sport: Sport.AMERICAN_FOOTBALL });
+    expect(teams[0]).toMatchObject({ externalId: '17', name: 'Kansas City Chiefs', sport: Sport.AMERICAN_FOOTBALL });
     expect(requestLine(harness.api)).toEqual(['/nfl/v1/teams?']);
   });
 

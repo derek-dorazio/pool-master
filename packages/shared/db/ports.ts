@@ -6,6 +6,7 @@
  */
 
 import type {
+  ProviderCode,
   BackgroundJobRequest,
   Contest,
   SportEventStatus,
@@ -469,19 +470,23 @@ export type ProviderMappingScope = { sportLeagueId: string } | { sportEventId: s
 
 export interface ParticipantProviderMappingRepository {
   findByParticipant(participantId: string): Promise<ParticipantProviderMapping[]>;
+  /** Every mapping of these participants, in one read. */
+  findByParticipantIds(participantIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   /**
    * Every mapping a provider has for these of its identifiers within the scope (#1853): a feed id
    * names one participant per sport league, so a lookup is always scoped to a league, the league
-   * of the event being synced, or every league of a sport.
+   * of the event being synced, or every league of a sport. The provider is named by its Provider
+   * code, as a sync knows it from the adapter (#2040).
    */
-  findByProviderExternalIds(providerId: string, scope: ProviderMappingScope, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
+  findByProviderExternalIds(providerCode: ProviderCode, scope: ProviderMappingScope, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   /** Every mapping a provider has for the participants of one sport league, in one read. Never paged. */
   findByProviderAndSportLeague(providerId: string, sportLeagueId: string): Promise<ParticipantProviderMapping[]>;
   /**
    * Binds a provider identity to a participant. A provider identity maps to one participant per
-   * sport league, so an identity already bound to another of the league's participants moves here.
+   * sport league and kind, so an identity already bound to another of the league's participants
+   * moves here. Null when `providerId` names no Provider row.
    */
-  bind(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt'>): Promise<ParticipantProviderMapping>;
+  bind(mapping: Omit<ParticipantProviderMapping, 'id' | 'createdAt' | 'updatedAt' | 'providerName'>): Promise<ParticipantProviderMapping | null>;
 }
 
 // --- Contest ---

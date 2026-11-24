@@ -24,7 +24,7 @@ const START = Date.parse('2026-04-18T17:00:00.000Z');
 /** A team id: the conference's hundred plus its seed, West 100s and East 200s. */
 const id = (conference: 'West' | 'East', seed: number) => (conference === 'West' ? 100 : 200) + seed;
 const teamOf = (conference: 'West' | 'East', seed: number): PlayoffTeam => ({ id: id(conference, seed), name: `${conference} ${String(seed)}`, metadata: { conference } });
-const external = (conference: 'West' | 'East', seed: number) => `nba-team-${String(id(conference, seed))}`;
+const external = (conference: 'West' | 'East', seed: number) => String(id(conference, seed));
 
 let nextGameId = 1;
 function game(home: PlayoffTeam, away: PlayoffTeam, daysIn: number): PlayoffGame {
@@ -130,7 +130,7 @@ describe('series playoffs bracket', () => {
     const second = game(west1, west8, 2);
     const third = game(west8, west1, 4);
 
-    expect(toPlayoffSeriesGames(NBA_PLAYOFFS, [third, second, opener], null)).toEqual([
+    expect(toPlayoffSeriesGames([third, second, opener], null)).toEqual([
       { externalGameId: String(opener.id), roundNumber: 1, homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 8), scheduledAt: new Date(opener.start), isNeutralSite: false },
     ]);
   });
@@ -141,7 +141,7 @@ describe('series playoffs bracket', () => {
     // The West's 1 seed (the home half of match 9) meets the 5 seed (its away half), and the vendor has the 5 seed host Game 1.
     const semifinal = game(teamOf('West', 5), teamOf('West', 1), 14);
 
-    const games = toPlayoffSeriesGames(NBA_PLAYOFFS, [...opening, semifinal], bracket);
+    const games = toPlayoffSeriesGames([...opening, semifinal], bracket);
 
     expect(games.find((each) => each.roundNumber === 2)).toMatchObject({ homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 5) });
   });
@@ -171,7 +171,7 @@ describe('series playoffs bracket by division', () => {
     .map((match) => [match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId]);
 
   it('lists each division\'s winner against its wild card, then its second against its third, divisions and conferences in the league\'s order', () => {
-    const team = (rank: number) => `nhl-team-${String(rank)}`;
+    const team = (rank: number) => String(rank);
 
     expect(sides(firstRound())).toEqual([
       ['East', team(1), team(8)], ['East', team(4), team(5)], ['East', team(2), team(7)], ['East', team(3), team(6)],
@@ -183,7 +183,7 @@ describe('series playoffs bracket by division', () => {
     // The Atlantic's own wild card (7) meets its winner (1): both of its series are within the division.
     const games = [game(atl(1), atl(7), 0), game(atl(4), atl(5), 0), game(met(2), met(8), 0), game(met(3), met(6), 0), ...firstRound().slice(4)];
 
-    expect(sides(games)?.slice(0, 2)).toEqual([['East', 'nhl-team-1', 'nhl-team-7'], ['East', 'nhl-team-4', 'nhl-team-5']]);
+    expect(sides(games)?.slice(0, 2)).toEqual([['East', '1', '7'], ['East', '4', '5']]);
   });
 
   it('places a division\'s winner by its division even when the wild card it meets has more points, with the wild card at home', () => {
@@ -191,7 +191,7 @@ describe('series playoffs bracket by division', () => {
     // with 6 and 7, and the Atlantic's 8 takes the other wild card. The better wild card (4)
     // meets the lesser winner (5) and out-ranks it.
     const games = [game(met(1), atl(8), 0), game(met(2), met(3), 0), game(atl(5), met(4), 0), game(atl(6), atl(7), 0), ...firstRound().slice(4)];
-    const team = (rank: number) => `nhl-team-${String(rank)}`;
+    const team = (rank: number) => String(rank);
 
     expect(sides(games)?.slice(0, 4)).toEqual([['East', team(4), team(5)], ['East', team(6), team(7)], ['East', team(1), team(8)], ['East', team(2), team(3)]]);
   });
@@ -241,7 +241,7 @@ describe('series playoffs bracket with byes', () => {
     const bracket = toPlayoffsBracket(MLB_POSTSEASON, wildCard(), seeds, teams);
 
     expect(bracket?.filter((match) => match.roundNumber === 2).map((match) => [match.regionLabel, match.homeTeamExternalId])).toEqual([
-      ['AL', 'mlb-team-101'], ['AL', 'mlb-team-102'], ['NL', 'mlb-team-201'], ['NL', 'mlb-team-202'],
+      ['AL', '101'], ['AL', '102'], ['NL', '201'], ['NL', '202'],
     ]);
   });
 

@@ -1768,7 +1768,7 @@ export const replaceEventTiers = <ThrowOnError extends boolean = false>(options:
 /**
  * Fill a sport event's tiers from its active field
  *
- * Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
+ * Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.
  */
 export const autoAssignEventTiers = <ThrowOnError extends boolean = false>(options: Options<AutoAssignEventTiersData, ThrowOnError>): RequestResult<AutoAssignEventTiersResponses, AutoAssignEventTiersErrors, ThrowOnError> => (options.client ?? client).post<AutoAssignEventTiersResponses, AutoAssignEventTiersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1798,7 +1798,7 @@ export const replaceEventTierAssignments = <ThrowOnError extends boolean = false
 /**
  * Price a sport event's seeded field
  *
- * Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0.
+ * Prices the active field on the budget curve with the values sent, best seed first and golfers with no seed last, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has odds, a seed or a rank: a field is never ordered by name.
  */
 export const autoAssignEventPrices = <ThrowOnError extends boolean = false>(options: Options<AutoAssignEventPricesData, ThrowOnError>): RequestResult<AutoAssignEventPricesResponses, AutoAssignEventPricesErrors, ThrowOnError> => (options.client ?? client).post<AutoAssignEventPricesResponses, AutoAssignEventPricesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -1,3 +1,4 @@
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { expect } from '@jest/globals';
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import {
@@ -48,7 +49,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
     const participant = await prisma.participant.create({
       data: {
         sportLeagueId: await fixtureTourId(prisma),
-        externalId: 'golf-standing-player-1',
         name: 'Golf Standing Player',
         participantType: 'INDIVIDUAL',
         status: 'ACTIVE',
@@ -58,7 +58,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       data: {
         participantId: participant.id,
         sportLeagueId: participant.sportLeagueId,
-        providerId: 'integration-test',
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL',
         externalId: 'golf-standing-player-1',
       },
     });
@@ -66,7 +66,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       data: {
         ...(await freshEventEdition(prisma)),
         externalId: 'golf-standing-event-1',
-        providerId: 'integration-test',
+        providerId: 'balldontlie',
         sport: 'GOLF',
         name: 'Golf Standing Invitational',
         startDate: new Date('2026-05-07T12:00:00.000Z'),
@@ -107,7 +107,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       },
       { contestActivation: NO_CONTEST_ACTIVATION,
         prisma: getAppPrisma(),
-        providerId: 'integration-test', domainEvents: testDomainEvents(),
+        providerId: 'balldontlie', domainEvents: testDomainEvents(),
         scoringFamilyForEvent,
       },
     );
@@ -168,7 +168,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
 // lands as a core SportEventParticipantRound plus its golf extension; their standing is
 // recomputed as a core SportEventParticipantStanding plus its golf extension.
 describe('Golf live-score persistence', () => {
-  const PROVIDER = 'integration-test';
+  const PROVIDER = 'balldontlie';
 
   async function createLiveField(suffix: string, golferKeys: string[]) {
     const prisma = getPrisma();
@@ -198,7 +198,7 @@ describe('Golf live-score persistence', () => {
         data: { sportLeagueId: await fixtureTourId(prisma), name: `Golfer ${externalId}`, participantType: 'INDIVIDUAL' },
       });
       await prisma.participantProviderMapping.create({
-        data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: PROVIDER, externalId },
+        data: { participantId: participant.id, sportLeagueId: participant.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId },
       });
       // The same golfer is also in a second event, so scoping to the named event is observable.
       sepByKey.set(key, (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } })).id);

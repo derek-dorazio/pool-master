@@ -18,13 +18,8 @@ import { createParticipantHandlers } from './handler';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
 import { eventFieldCache } from '../events/wiring';
-import type { ProviderRegistry } from '../ingestion/core/provider-registry';
 
-export interface ParticipantsModuleOptions {
-  providerRegistry: ProviderRegistry;
-}
-
-export function participantsModule(fastify: FastifyInstance, opts: ParticipantsModuleOptions): void {
+export function participantsModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -37,7 +32,7 @@ export function participantsModule(fastify: FastifyInstance, opts: ParticipantsM
     fastify.log.child({ module: 'participants.service' }),
   );
 
-  const handler = createParticipantHandlers(participantService, opts.providerRegistry);
+  const handler = createParticipantHandlers(participantService);
 
   // A write here changes what every event's field shows of a participant (#1163): its name,
   // photo or status. Rare enough to forget every event field this container read.

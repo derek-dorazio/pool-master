@@ -43,13 +43,6 @@ export const FEED_LABELS = {
   EVENTLIVESCORES: 'Live scores',
 } as const;
 
-export function getProviderName(
-  providerId: string,
-  providers: readonly ProviderSummary[] | undefined,
-) {
-  return providers?.find((provider) => provider.providerId === providerId)?.providerName ?? providerId;
-}
-
 export type ProviderSyncRunPayload = ProviderSyncRun['payload'];
 
 export function getPayloadOutcome(payload: ProviderSyncRunPayload) {

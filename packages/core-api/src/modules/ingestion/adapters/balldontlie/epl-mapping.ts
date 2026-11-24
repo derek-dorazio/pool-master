@@ -9,7 +9,7 @@
  * event's externalId, as an NFL week's is.
  *
  * A match names its teams by id alone, so their names come from the season's teams list. Team
- * ids are prefixed (`epl-team-3`): a bare number would collide with another sport's. Each team
+ * ids are the provider's own (`participantFeedId`, #2040). Each team
  * carries the league's keyword in `metadata.tour`, so it links by name only to the site's team
  * in the Premier League.
  *
@@ -23,6 +23,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { SoccerMatch, SoccerTeam } from './soccer-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { participantFeedId } from './participant-feed-id';
 
 export const EPL_MATCHES_PATH = '/epl/v2/matches';
 export const EPL_TEAMS_PATH = '/epl/v2/teams';
@@ -51,9 +52,6 @@ export function parseEplScope(eventId: string): EplScope | null {
   return match ? { season: Number(match[1]), matchweek: Number(match[2]) } : null;
 }
 
-export function eplTeamExternalId(teamId: number): string {
-  return `epl-team-${String(teamId)}`;
-}
 
 /** A field the document leaves optional but without which a row cannot be used. */
 function required<Value>(value: Value | null | undefined, path: string, row: string, field: string): Value {
@@ -105,7 +103,7 @@ export function toEplMatchweekEvents(season: number, matches: readonly SoccerMat
 export function toEplTeamParticipant(team: SoccerTeam): ProviderParticipant {
   const id = required(team.id, EPL_TEAMS_PATH, 'a team', 'id');
   return {
-    externalId: eplTeamExternalId(id),
+    externalId: participantFeedId(id),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.SOCCER,
     name: required(team.name, EPL_TEAMS_PATH, `team ${String(id)}`, 'name'),
@@ -141,8 +139,8 @@ export function toEplScheduledGames(matches: readonly SoccerMatch[]): ProviderSc
   return matches.map((match) => ({
     externalGameId: String(required(match.id, EPL_MATCHES_PATH, 'a match', 'id')),
     roundNumber: 1,
-    homeTeamExternalId: eplTeamExternalId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
-    awayTeamExternalId: eplTeamExternalId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
+    homeTeamExternalId: participantFeedId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
+    awayTeamExternalId: participantFeedId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
     scheduledAt: new Date(required(match.date, EPL_MATCHES_PATH, matchName(match), 'date')),
     isNeutralSite: false,
   }));
@@ -160,8 +158,8 @@ export function toEplGameScoreUpdates(matches: readonly SoccerMatch[]): GameScor
     const started = hasStarted(state);
     return [{
       externalGameId: String(required(match.id, EPL_MATCHES_PATH, 'a match', 'id')),
-      homeTeamExternalId: eplTeamExternalId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
-      awayTeamExternalId: eplTeamExternalId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
+      homeTeamExternalId: participantFeedId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
+      awayTeamExternalId: participantFeedId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
       state,
       homeScore: started ? match.home_score ?? null : null,
       awayScore: started ? match.away_score ?? null : null,

@@ -106,7 +106,6 @@ function participant(id: string, overrides: Partial<Participant> = {}): Particip
     participantType: 'INDIVIDUAL',
     status: 'ACTIVE',
     injuryStatus: { status: 'HEALTHY' },
-    externalIds: {},
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ...overrides,

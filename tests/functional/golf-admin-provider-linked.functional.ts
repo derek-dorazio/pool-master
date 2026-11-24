@@ -16,6 +16,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
+import { ProviderCode } from '@poolmaster/shared/domain';
 import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
 import {
   disconnectFunctionalPrisma,
@@ -59,7 +60,7 @@ import { pinMockFeedEventState } from './mock-feed';
 //   - scheduled-event-reader.integration.ts — both scheduled feeds pick only linked
 //     (SCORES_ONLY) events, never an unlinked NONE one (#435).
 
-const MOCK_PROVIDER_ID = 'mock-contest-feed';
+const MOCK_PROVIDER_ID = 'balldontlie';
 // A fixed, dateable event from the static golf-major-2026 scenario, so the catalog
 // window is deterministic.
 const MOCK_EVENT_EXTERNAL_ID = 'golf-us-open-2026';
@@ -174,7 +175,8 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.providerSyncRun.deleteMany({ where: { providerId: MOCK_PROVIDER_ID, eventId: MOCK_EVENT_EXTERNAL_ID } });
+    // A run names its Provider row and links its event (#2040).
+    await db.providerSyncRun.deleteMany({ where: { provider: { code: ProviderCode.BALLDONTLIE }, sportEvent: { externalId: MOCK_EVENT_EXTERNAL_ID } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
 
@@ -447,7 +449,7 @@ describe('SDK Functional: Golf provider-linked live scoring + settlement (pool-m
     expect(r1RoundRows.length).toBe(fieldSize);
 
     const liveScoreRun = await db.providerSyncRun.findFirst({
-      where: { eventId: MOCK_EVENT_EXTERNAL_ID, providerId: MOCK_PROVIDER_ID, status: 'COMPLETED' },
+      where: { sportEvent: { externalId: MOCK_EVENT_EXTERNAL_ID }, provider: { code: ProviderCode.BALLDONTLIE }, status: 'COMPLETED' },
       orderBy: { createdAt: 'desc' },
     });
     expect(liveScoreRun).not.toBeNull();

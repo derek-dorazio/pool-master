@@ -4,7 +4,7 @@
  */
 
 import type { z } from 'zod';
-import { BackgroundJobType, type BackgroundJobScope } from '@poolmaster/shared/domain';
+import { BackgroundJobType, providerCodeOfSourceId, type BackgroundJobScope, type ProviderCode } from '@poolmaster/shared/domain';
 import { SyncLeagueEventsJobPayloadSchema } from '../events/league-events-sync-job';
 import { AddReleasedEditionToContestJobPayloadSchema } from '../contest-management/released-edition-job-requests';
 import { ManualEventSyncJobPayloadSchema } from '../ingestion/manual-event-sync-job';
@@ -49,10 +49,11 @@ export type BackgroundJobPayload<T extends BackgroundJobType> = z.infer<(typeof 
  * must say what it is about. A job on an event names the event only; its league is the event's.
  */
 export const BACKGROUND_JOB_SCOPES: {
-  [T in BackgroundJobType]: (payload: BackgroundJobPayload<T>) => BackgroundJobScope;
+  [T in BackgroundJobType]: (payload: BackgroundJobPayload<T>) => BackgroundJobScope & { providerCode?: ProviderCode };
 } = {
-  [BackgroundJobType.MANUAL_EVENT_SYNC]: ({ sportEventId }) => ({ sportEventId }),
-  [BackgroundJobType.PROVIDER_EVENT_SYNC]: ({ sportEventId }) => ({ sportEventId }),
+  // An event sync names the provider it reads (#2040), by the id its adapter's events carry.
+  [BackgroundJobType.MANUAL_EVENT_SYNC]: ({ sportEventId, providerId }) => ({ sportEventId, providerCode: providerCodeOfSourceId(providerId) }),
+  [BackgroundJobType.PROVIDER_EVENT_SYNC]: ({ sportEventId, providerId }) => ({ sportEventId, providerCode: providerCodeOfSourceId(providerId) }),
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: ({ sportEventId }) => ({ sportEventId }),
   // A contest's results may span several events, so the job names none.
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: () => ({}),

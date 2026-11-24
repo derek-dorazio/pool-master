@@ -118,8 +118,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
         endDate: new Date('2025-06-23T00:30:00Z'),
       });
       expect(detail?.participants.map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-        ['nba-team-21', 'Oklahoma City Thunder', { abbreviation: 'OKC', conference: 'West', division: 'Northwest', tour: 'NBA' }],
-        ['nba-team-12', 'Indiana Pacers', { abbreviation: 'IND', conference: 'East', division: 'Central', tour: 'NBA' }],
+        ['21', 'Oklahoma City Thunder', { abbreviation: 'OKC', conference: 'West', division: 'Northwest', tour: 'NBA' }],
+        ['12', 'Indiana Pacers', { abbreviation: 'IND', conference: 'East', division: 'Central', tour: 'NBA' }],
       ]);
       expect(requestLine(harness.api)).toEqual(['/nba/v1/games?seasons[]=2024&season_type=playoffs&per_page=100']);
     });
@@ -141,8 +141,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
       expect(detail?.bracket).toBeUndefined();
       expect(detail?.games?.map((game) => [game.roundNumber, game.homeTeamExternalId, game.awayTeamExternalId])).toEqual([
-        [1, 'nba-team-20', 'nba-team-6'],
-        [1, 'nba-team-8', 'nba-team-10'],
+        [1, '20', '6'],
+        [1, '8', '10'],
       ]);
       expect(requestLine(harness.api).filter((line) => line.startsWith('/nba/v1/standings'))).toEqual([]);
     });
@@ -153,7 +153,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
       const detail = await harness.adapter.getEventDetails('nba-2023-postseason');
 
-      const team = (id: number) => `nba-team-${String(id)}`;
+      const team = (id: number) => String(id);
       // New Orleans ranked 7th in the West but lost the play-in to the Lakers, so meets Oklahoma City as the 8 seed.
       expect(detail?.bracket?.filter((match) => match.roundNumber === 1).map((match) => [match.matchNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId])).toEqual([
         [1, 'West', team(21), team(19)],
@@ -188,7 +188,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     const teams = await harness.adapter.getParticipants(Sport.BASKETBALL);
 
     expect(teams).toHaveLength(8);
-    expect(teams[0]).toMatchObject({ externalId: 'nba-team-21', name: 'Oklahoma City Thunder', sport: Sport.BASKETBALL, metadata: { tour: 'NBA' } });
+    expect(teams[0]).toMatchObject({ externalId: '21', name: 'Oklahoma City Thunder', sport: Sport.BASKETBALL, metadata: { tour: 'NBA' } });
     expect(requestLine(harness.api)).toEqual(['/nba/v1/teams?']);
   });
 
@@ -203,8 +203,8 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     expect(scores).toHaveLength(7);
     expect(scores[0]).toEqual({
       externalGameId: '18444001',
-      homeTeamExternalId: 'nba-team-21',
-      awayTeamExternalId: 'nba-team-12',
+      homeTeamExternalId: '21',
+      awayTeamExternalId: '12',
       state: ProviderGameState.FINAL,
       homeScore: 110,
       awayScore: 111,

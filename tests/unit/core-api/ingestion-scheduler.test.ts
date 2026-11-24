@@ -658,7 +658,8 @@ describe('IngestionScheduler', () => {
       const eventReader = readerOf({ live: [{ providerId: 'mock-provider', externalId: 'live-event' }] });
       const syncRun = {
         id: 'scheduled-event-sync-run-1',
-        providerId: 'mock-provider',
+        providerId: 'provider-row-1',
+        providerName: 'Mock Provider',
         sport: 'GOLF' as Sport,
         eventId: 'live-event',
         ...SCHEDULED_SCORES_RUN,
@@ -1322,7 +1323,8 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
   function schedulerFor(config: ReturnType<typeof createEnabledScheduleConfig>, provider = fakeSportDataProvider()) {
     const syncRun = {
       id: 'webhook-sync-run-1',
-      providerId: 'mock-provider',
+      providerId: 'provider-row-1',
+      providerName: 'Mock Provider',
       sport: Sport.GOLF,
       eventId: 'live-event',
       ...SCHEDULED_SCORES_RUN,

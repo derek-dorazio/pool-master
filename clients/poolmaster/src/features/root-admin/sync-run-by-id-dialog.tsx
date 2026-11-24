@@ -5,14 +5,12 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ProviderSyncRunDetail } from './root-admin-sync-utils';
 import { SyncRunDialog } from './sync-run-dialog';
-import { useProvidersQuery } from './use-providers-query';
 
 /**
  * A sync run opened by its id, from a page that names a run without holding it (the Sports page's
  * Sync issues): the run's own dialog once it has loaded, and a short dialog saying so until then.
  */
 export function SyncRunByIdDialog({ onClose, syncRunId }: { onClose: () => void; syncRunId: string }) {
-  const providersQuery = useProvidersQuery();
   const runQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providerSyncRun(syncRunId),
     queryFn: async (): Promise<ProviderSyncRunDetail> => {
@@ -26,7 +24,7 @@ export function SyncRunByIdDialog({ onClose, syncRunId }: { onClose: () => void;
   });
 
   if (runQuery.data) {
-    return <SyncRunDialog onClose={onClose} providers={providersQuery.data} run={runQuery.data} />;
+    return <SyncRunDialog onClose={onClose} run={runQuery.data} />;
   }
   return (
     <ReadOnlyDetailModal

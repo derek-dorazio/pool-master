@@ -100,7 +100,6 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Invariant Participant ${name} ${suffix}`,
         participantType: ParticipantType.INDIVIDUAL,
-        externalIds: {},
       },
     });
     const sep = await prisma.sportEventParticipant.create({

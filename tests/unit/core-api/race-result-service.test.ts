@@ -29,7 +29,7 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
   const service = new RaceResultService({
     events: store.sportEventRepo(),
     field: store.fieldRepo(),
-    participants: store.participantRepo(),
+    participants: store.participantRepo(), mappings: store.mappingRepo(),
     raceResults: store.raceResultRepo(),
     storesRaceResults: eventStoresRaceResults,
     domainEvents,
@@ -250,7 +250,7 @@ describe('RaceResultService — clock', () => {
     const service = new RaceResultService({ domainEvents: testDomainEvents(),
       events: store.sportEventRepo(),
       field: store.fieldRepo(),
-      participants: store.participantRepo(),
+      participants: store.participantRepo(), mappings: store.mappingRepo(),
       raceResults: store.raceResultRepo(),
       storesRaceResults: eventStoresRaceResults,
     });

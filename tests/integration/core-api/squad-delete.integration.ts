@@ -82,7 +82,6 @@ async function seedLeagueWithContestHistory() {
       sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Golfer ${suffix}`,
       participantType: ParticipantType.INDIVIDUAL,
-      externalIds: {},
     },
   });
   const eventParticipant = await prisma.sportEventParticipant.create({

@@ -155,7 +155,6 @@ const SORTED_IN_CODE: Readonly<Partial<Record<string, string>>> = {
 /** A shared enum's name in schema.prisma, where it differs from both `X` and `PrismaX`. */
 const PRISMA_NAME: Readonly<Record<string, string>> = {
   FormTrend: 'PrismaParticipantFormTrend',
-  MappingConfidence: 'PrismaParticipantMappingConfidence',
   InvitationStatus: 'PrismaLeagueInvitationStatus',
   InviteType: 'PrismaLeagueInviteType',
   TeamIconKey: 'PrismaSquadIconKey',

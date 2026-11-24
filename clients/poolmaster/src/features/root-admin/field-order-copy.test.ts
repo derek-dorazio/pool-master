@@ -21,9 +21,9 @@ describe('describeFieldOrder — which value auto-assigned tiers and prices orde
       .toBe('Ordered by rank (not every participant has odds or a seed).');
   });
 
-  it('says name when no participant has any value, the fallback that keeps auto-assign unblocked', () => {
+  it('says the field is not ordered, so nothing is assigned, when no participant has odds, a seed or a rank', () => {
     expect(describeFieldOrder([row('A'), row('B')]))
-      .toBe('Ordered by name (no participant has odds, a seed or a rank).');
+      .toBe('Not ordered: no participant has odds, a seed or a rank, so nothing is assigned.');
   });
 
   it('says the partial value, those without it last, when no value covers the field', () => {

@@ -244,6 +244,7 @@ function toCreateData(request: BackgroundJobRequest): Prisma.BackgroundJobCreate
     dedupeKey: request.dedupeKey ?? null,
     sportLeagueId: request.sportLeagueId ?? null,
     sportEventId: request.sportEventId ?? null,
+    providerId: request.providerId ?? null,
     trigger: request.start.trigger,
     startedByUserId: 'startedByUserId' in request.start ? request.start.startedByUserId : null,
   };

@@ -10,7 +10,14 @@ import {
   type ProviderSettings,
 } from '../../packages/shared/domain';
 
-const PROVIDER_ID = '6f1e9a52-3b7d-4c1a-9e2f-0d5b8a7c4e11';
+/** BALLDONTLIE's Provider row id as the migration seeds it. */
+export const BALLDONTLIE_TEST_PROVIDER_ID = '6f1e9a52-3b7d-4c1a-9e2f-0d5b8a7c4e11';
+const PROVIDER_ID = BALLDONTLIE_TEST_PROVIDER_ID;
+
+/** Each Provider row's id and name by its code, for fakes that key mappings and runs to a Provider row (#2040). */
+export const TEST_PROVIDER_ROWS: Readonly<Record<ProviderCode, { id: string; name: string }>> = {
+  [ProviderCode.BALLDONTLIE]: { id: BALLDONTLIE_TEST_PROVIDER_ID, name: 'BALLDONTLIE' },
+};
 
 function league(code: string, name: string, sport: Sport, webhookEventSet: ProviderWebhookEventSet, quietAfterMinutes: number, typicalGameMinutes: number): ProviderLeagueSettings {
   return { id: `00000000-0000-4000-8000-${code.padStart(12, '0').replace(/[^0-9a-f]/g, 'a')}`, providerId: PROVIDER_ID, code, name, sport, webhookEventSet, quietAfterMinutes, typicalGameMinutes, isEnabled: true };
