@@ -15,7 +15,7 @@ import {
   Sport,
   SportEventStatus,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/final-standings';
@@ -36,7 +36,7 @@ const HOUR = 60 * 60 * 1000;
 describe('ContestNotices', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
-  let matches: SportEventMatch[];
+  let matches: SportEventRoundMatch[];
   let roundNames: string[];
   let tierCount: number;
   let final: ContestFinalStandings;
@@ -209,7 +209,7 @@ describe('ContestNotices', () => {
         roundNumber,
         status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
         scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : STARTS_AT,
-      }) as SportEventMatch);
+      }) as SportEventRoundMatch);
       const nora = member(league.id, 'Nora');
 
       await notices().contestOpened(contest.id);
@@ -275,7 +275,7 @@ describe('ContestNotices', () => {
         selectionType: SelectionType.PICK_EM,
         configJson: { selectionType: SelectionType.PICK_EM, mode: 'STRAIGHT_UP', againstTheSpread: false },
       });
-      matches = [1, 2].map((matchNumber) => ({ id: `game-${String(matchNumber)}`, sportEventId: week.id, matchNumber }) as SportEventMatch);
+      matches = [1, 2].map((matchNumber) => ({ id: `game-${String(matchNumber)}`, sportEventId: week.id, matchNumber }) as SportEventRoundMatch);
       const entrant = member(league.id, 'Sam');
       const drafting = member(league.id, 'Dana');
       const onlooker = member(league.id, 'Nora');
@@ -325,7 +325,7 @@ describe('ContestNotices', () => {
 
     it('reads the event\'s matches, sport league and tiers once each, and never the event it was handed', async () => {
       const event = world.addSportEvent({ startDate: STARTS_AT });
-      matches = [1, 2].map((matchNumber) => ({ id: `game-${String(matchNumber)}`, sportEventId: event.id, matchNumber }) as SportEventMatch);
+      matches = [1, 2].map((matchNumber) => ({ id: `game-${String(matchNumber)}`, sportEventId: event.id, matchNumber }) as SportEventRoundMatch);
       const league = world.addLeague();
       member(league.id, 'Nora');
       const contest = world.addContest(league.id, { sportEventIds: [event.id] });

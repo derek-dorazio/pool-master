@@ -1,18 +1,22 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useState } from 'react';
 import { formatDollars } from '@poolmaster/shared/domain';
-import { deletePricingProfile, type PricingProfileDto } from '@/lib/api';
+import { deletePlatformPricingProfile, type PlatformPricingProfileDto } from '@/lib/api';
 import { Button, DataGrid, QueryState, RowActionsMenu, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { PricingProfileEditor } from './pricing-profile-editor';
+import { PlatformPricingProfileEditor } from './pricing-profile-editor';
 import { ProfileDeleteDialog } from './profile-delete-dialog';
 import { ProfileDialog, type ProfileDialogState } from './profile-dialog';
-import { usePricingProfilesQuery } from './use-profiles';
+import { usePlatformPricingProfilesQuery } from './use-profiles';
 
-const columnHelper = createColumnHelper<PricingProfileDto>();
+const columnHelper = createColumnHelper<PlatformPricingProfileDto>();
 
 const columns = [
+  columnHelper.accessor('code', {
+    header: 'Code',
+    meta: { info: 'The pricing profile\'s key: what migrations, seed scripts and test data find it by.', type: { kind: 'text' } },
+  }),
   columnHelper.accessor('name', {
     header: 'Name',
     meta: { info: 'The pricing profile\'s name, as a sport league\'s settings and the price dialog offer it.', type: { kind: 'text' } },
@@ -50,10 +54,10 @@ const columns = [
  * one grid, a row opening its dialog (see it, then Edit), New for another, and Delete in each
  * row's menu, which the server refuses while a sport league names the profile.
  */
-export function PricingProfilesSection() {
-  const profilesQuery = usePricingProfilesQuery();
-  const [dialog, setDialog] = useState<ProfileDialogState<PricingProfileDto>>(null);
-  const [deleting, setDeleting] = useState<PricingProfileDto | null>(null);
+export function PlatformPricingProfilesSection() {
+  const profilesQuery = usePlatformPricingProfilesQuery();
+  const [dialog, setDialog] = useState<ProfileDialogState<PlatformPricingProfileDto>>(null);
+  const [deleting, setDeleting] = useState<PlatformPricingProfileDto | null>(null);
 
   return (
     <SectionCard
@@ -89,7 +93,7 @@ export function PricingProfilesSection() {
             )}
             rowTestId={(profile) => `root-admin-pricing-profile-${profile.id}`}
             tableTestId="root-admin-pricing-profiles-table"
-            urlKey="pricingProfiles"
+            urlKey="platformPricingProfiles"
           />
         )}
       </QueryState>
@@ -104,20 +108,20 @@ export function PricingProfilesSection() {
         ]}
         // poolmaster-allow-list-lookup: pricing profiles are reference data, a handful of rows
         liveProfile={(id) => profilesQuery.data?.find((profile) => profile.id === id)}
-        names={(league, profile) => league.pricingProfileId === profile.id}
+        names={(league, profile) => league.platformPricingProfileId === profile.id}
         onStateChange={setDialog}
-        renderEditor={(props) => <PricingProfileEditor {...props} />}
+        renderEditor={(props) => <PlatformPricingProfileEditor {...props} />}
         state={dialog}
         testId="root-admin-pricing-profile-dialog"
       />
       {deleting ? (
         <ProfileDeleteDialog
-          invalidates={QueryKeys.rootAdmin.pricingProfiles}
+          invalidates={QueryKeys.rootAdmin.platformPricingProfiles}
           kindLabel="pricing profile"
           name={deleting.name}
           onClose={() => setDeleting(null)}
           remove={async () => {
-            const response = await deletePricingProfile({ path: { profileId: deleting.id } });
+            const response = await deletePlatformPricingProfile({ path: { profileId: deleting.id } });
             if (response.error) throwApiError(response.error, 'Pricing profile delete failed.');
           }}
           testId="root-admin-pricing-profile-delete"

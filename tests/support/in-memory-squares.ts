@@ -18,7 +18,7 @@ import {
   isMatchUnplayed,
   MatchStatus,
   SelectionType,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type ContestEntrySquare,
   type ContestSquaresDraw,
   type ContestSquaresWinner,
@@ -36,7 +36,7 @@ export class InMemorySquares {
     private readonly world: InMemoryContestWorld,
     private readonly claimedAt: Date = new Date('2026-09-01T00:00:00.000Z'),
     /** The games the contests are played on, which the automatic draw's read looks at (#1760). */
-    private readonly games: { matches: ReadonlyMap<string, SportEventMatch> } = { matches: new Map() },
+    private readonly games: { matches: ReadonlyMap<string, SportEventRoundMatch> } = { matches: new Map() },
   ) {}
 
   /** Puts a box straight in the store, as a claim made before the test. */

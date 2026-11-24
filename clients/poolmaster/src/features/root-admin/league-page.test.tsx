@@ -383,7 +383,7 @@ describe('League page', () => {
     expect(updateContestConfigTemplateMock).not.toHaveBeenCalled();
   });
 
-  it('lists the league\'s phases and its slots in the API\'s order, each named by its proper name or the word for its kind, and opens a slot to read with no Edit', async () => {
+  it('lists the league\'s phases and its slots in the API\'s order, each named by its proper name or the word for its kind, opens a slot to read with no Edit, and closes it on Escape', async () => {
     getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
 
@@ -400,9 +400,12 @@ describe('League page', () => {
     const dialog = await screen.findByTestId('root-admin-league-structure-slot');
     expect(within(dialog).getByTestId('root-admin-league-structure-slot-mappings')).toHaveTextContent('BALLDONTLIE nba · Provider code POST:5');
     expect(within(dialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-slot')).not.toBeInTheDocument());
   });
 
-  it('opens a phase to read with its slot count, and says so when a slot has no provider', async () => {
+  it('opens a phase to read with its slot count, closes it on Escape, and says so when a slot has no provider', async () => {
     getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
 
@@ -410,7 +413,8 @@ describe('League page', () => {
     await userEvent.click(within(regular).getByRole('button', { name: 'Open details' }));
     const dialog = await screen.findByTestId('root-admin-league-structure-phase');
     expect(within(dialog).getByTestId('root-admin-league-structure-phase-facts')).toHaveTextContent(/Regular season.*Yes.*1/);
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-phase')).not.toBeInTheDocument());
 
     await userEvent.click(within(screen.getByTestId('root-admin-league-structure-slot-SEMIFINAL')).getByRole('button', { name: 'Open details' }));
     expect(await screen.findByTestId('root-admin-league-structure-slot-mappings')).toHaveTextContent('No provider');

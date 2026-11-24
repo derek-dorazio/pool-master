@@ -9,7 +9,7 @@ import { releasedEditionContests, type ReleasedEditionContests } from './release
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventRepository,
@@ -21,7 +21,7 @@ import {
   PrismaContestConfigurationRepository,
   PrismaContestRepository,
   PrismaParticipantContestScoringRuleRepository,
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
@@ -61,7 +61,7 @@ export function createContestManagementService(
       sports: new PrismaSportRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),
       valuations: new PrismaSportEventParticipantValuationRepository(prisma),
-      matches: new PrismaSportEventMatchRepository(prisma),
+      matches: new PrismaSportEventRoundMatchRepository(prisma),
     }),
     cups: createCupService(prisma, logger, planEntitlements),
     planEntitlements,
@@ -89,7 +89,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
   sports: SportRepository;
   field: SportEventParticipantRepository;
   valuations: SportEventParticipantValuationRepository;
-  matches: SportEventMatchRepository;
+  matches: SportEventRoundMatchRepository;
 }): ContestCreateSportEventReader {
   /**
    * The events' states from one read each of the events, their sports and their loaded field
@@ -153,8 +153,8 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
       return findBracketProblem(contestBracketGames(games, startsAtRound), knockoutSeeds(entries), startsAtRound);
     },
-    findGame: async (sportEventId, sportEventMatchId) => {
-      const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventMatchId);
+    findGame: async (sportEventId, sportEventRoundMatchId) => {
+      const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventRoundMatchId);
       return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber };
     },
     findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
@@ -173,7 +173,7 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
   const sportEvents = new PrismaSportEventRepository(prisma);
   const sports = new PrismaSportRepository(prisma);
   const field = new PrismaSportEventParticipantRepository(prisma);
-  const eventMatches = new PrismaSportEventMatchRepository(prisma);
+  const eventMatches = new PrismaSportEventRoundMatchRepository(prisma);
   const eventsById = batchedByIds((ids) => sportEvents.findByIds(ids), (event) => event.id);
   const participantCounts = new BatchedRead<string, number>(async (sportEventIds) => {
     const counts = await sportEvents.countParticipants([...new Set(sportEventIds)]);
@@ -201,7 +201,7 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
       const games = await matches.findBySportEvent(sportEvent.id);
       const kickoffs = games
         .filter((game) => game.status !== MatchStatus.CANCELLED && isSquaresRound(sportEvent.squaresFromRound, game.roundNumber))
-        .map((game) => cutoffTiming({ kind: ContestCutoffKind.MATCH_START, sportEventMatchId: game.id }, sportEvent, games))
+        .map((game) => cutoffTiming({ kind: ContestCutoffKind.MATCH_START, sportEventRoundMatchId: game.id }, sportEvent, games))
         .filter((timing) => !hasSportEventStarted(timing, now))
         .map((timing) => timing.startDate.getTime());
       return kickoffs.length === 0 ? null : new Date(Math.min(...kickoffs));

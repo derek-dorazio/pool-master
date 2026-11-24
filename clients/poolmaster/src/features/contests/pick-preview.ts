@@ -135,7 +135,7 @@ export function toPreviewWeek(preview: GamePickPreviewResponse, tiebreakerValue:
 /** The trial picks that still stand on the screen: what the next tap builds on. */
 function standingPicks(week: PickEmWeek): GamePickWrite[] {
   return week.games.flatMap((game) => (game.pick ? [{
-    sportEventMatchId: game.sportEventMatchId,
+    sportEventRoundMatchId: game.sportEventRoundMatchId,
     predictedResult: game.pick.predictedResult,
     sportEventParticipantId: game.pick.sportEventParticipantId,
     ...(week.mode === PickEmMode.CONFIDENCE ? { confidence: game.pick.confidence } : {}),
@@ -150,8 +150,8 @@ function withWrites(week: PickEmWeek, writes: GamePickWrite[]): GamePickWrite[] 
   if (week.selectionType === SelectionType.SURVIVOR) {
     return writes;
   }
-  const written = new Set(writes.map((write) => write.sportEventMatchId));
-  return [...standingPicks(week).filter((pick) => !written.has(pick.sportEventMatchId)), ...writes];
+  const written = new Set(writes.map((write) => write.sportEventRoundMatchId));
+  return [...standingPicks(week).filter((pick) => !written.has(pick.sportEventRoundMatchId)), ...writes];
 }
 
 /** The trial picks after a tap on a team. */

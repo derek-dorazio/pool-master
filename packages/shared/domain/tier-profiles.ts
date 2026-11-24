@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TierProfileLastTier } from './enums';
+import { PlatformTierProfileLastTier } from './enums';
 import type { DomainEntity } from './types';
 
 /**
@@ -14,18 +14,18 @@ import type { DomainEntity } from './types';
  * profile setting.
  */
 
-export const TIER_PROFILE_TIER_COUNT_MAX = 20;
-export const TIER_PROFILE_TIER_SIZE_MAX = 500;
+export const PLATFORM_TIER_PROFILE_TIER_COUNT_MAX = 20;
+export const PLATFORM_TIER_PROFILE_TIER_SIZE_MAX = 500;
 
 /** The four values a field is laid out in tiers with. */
 export const TierLayoutValuesSchema = z.object({
-  tierCount: z.number().int().min(1).max(TIER_PROFILE_TIER_COUNT_MAX)
+  tierCount: z.number().int().min(1).max(PLATFORM_TIER_PROFILE_TIER_COUNT_MAX)
     .describe('How many tiers a new event starts with.'),
-  tierSize: z.number().int().min(1).max(TIER_PROFILE_TIER_SIZE_MAX)
+  tierSize: z.number().int().min(1).max(PLATFORM_TIER_PROFILE_TIER_SIZE_MAX)
     .describe('How many participants auto-tiering puts in each tier before the last.'),
-  lastTier: z.enum(TierProfileLastTier)
+  lastTier: z.enum(PlatformTierProfileLastTier)
     .describe('What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.'),
-  lastTierMax: z.number().int().min(1).max(TIER_PROFILE_TIER_SIZE_MAX).nullable()
+  lastTierMax: z.number().int().min(1).max(PLATFORM_TIER_PROFILE_TIER_SIZE_MAX).nullable()
     .describe('The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.'),
 }).describe('The values a field is laid out in pick tiers with.');
 export type TierLayoutValues = z.infer<typeof TierLayoutValuesSchema>;
@@ -39,17 +39,19 @@ export const EventTierConfigSchema = TierLayoutValuesSchema.extend({
 }).describe('The tier layout an event\'s field was last auto-tiered with.');
 export type EventTierConfig = z.infer<typeof EventTierConfigSchema>;
 
-/** A named tier layout, defined once for the platform; each sport league names one (`SportLeague.tierProfileId`). */
-export interface TierProfile extends DomainEntity, TierLayoutValues {
+/** A named tier layout, defined once for the platform; each sport league names one (`SportLeague.platformTierProfileId`). */
+export interface PlatformTierProfile extends DomainEntity, TierLayoutValues {
+  /** The profile's key: what migrations, seed scripts and test data find it by, never its name. */
+  code: string;
   name: string;
 }
 
 /** Why a set of tier layout values can't lay out a field, or null when it can. */
 export function findTierLayoutProblem(values: TierLayoutValues): string | null {
-  if (values.lastTier === TierProfileLastTier.CAPPED && values.lastTierMax === null) {
+  if (values.lastTier === PlatformTierProfileLastTier.CAPPED && values.lastTierMax === null) {
     return 'A capped last tier needs the most it takes.';
   }
-  if (values.lastTier === TierProfileLastTier.ALL_REMAINING && values.lastTierMax !== null) {
+  if (values.lastTier === PlatformTierProfileLastTier.ALL_REMAINING && values.lastTierMax !== null) {
     return 'A last tier that takes everyone left has no cap.';
   }
   return null;
@@ -83,7 +85,7 @@ export function placeInTiers(
     return { tierIndexes: Array.from({ length: fieldSize }, (_, index) => tierIndexAt(index)), spread: 'EVEN', tierSize: null };
   }
   const beforeLastTier = (tierCount - 1) * tierSize;
-  const placesInTiers = layout.lastTier === TierProfileLastTier.CAPPED && layout.lastTierMax !== null
+  const placesInTiers = layout.lastTier === PlatformTierProfileLastTier.CAPPED && layout.lastTierMax !== null
     ? beforeLastTier + layout.lastTierMax
     : Number.POSITIVE_INFINITY;
   return {

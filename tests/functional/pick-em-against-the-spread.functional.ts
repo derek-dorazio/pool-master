@@ -85,9 +85,9 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
-    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventMatch: { sportEventId: { in: eventIds } } } });
+    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -186,7 +186,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const games = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
     const game = (matchNumber: number) => expectDefined(games.find((match) => match.matchNumber === matchNumber), `game ${matchNumber}`);
     const pick = (matchNumber: number, side: Side) => ({
-      sportEventMatchId: game(matchNumber).id,
+      sportEventRoundMatchId: game(matchNumber).id,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
     });

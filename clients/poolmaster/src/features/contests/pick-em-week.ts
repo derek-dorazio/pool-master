@@ -74,7 +74,7 @@ export function tiebreakerLabel(gamePicks: Pick<PickEmWeek, 'games' | 'tiebreake
 
 /** The game whose total points the week's tiebreaker guesses, or null while the week has none. */
 export function tiebreakerGame(gamePicks: Pick<PickEmWeek, 'games' | 'tiebreakerMatchId'>): PickEmGame | null {
-  return gamePicks.games.find((game) => game.sportEventMatchId === gamePicks.tiebreakerMatchId) ?? null;
+  return gamePicks.games.find((game) => game.sportEventRoundMatchId === gamePicks.tiebreakerMatchId) ?? null;
 }
 
 /**
@@ -135,7 +135,7 @@ export function missedWeek(gamePicks: Pick<GamePicksResponse, 'games' | 'ownEntr
 /** A pick of the team, keeping the game's confidence value in a confidence pool. */
 export function teamPick(game: PickEmGame, team: PickEmTeam, mode: GamePicksResponse['mode']): GamePickWrite {
   return {
-    sportEventMatchId: game.sportEventMatchId,
+    sportEventRoundMatchId: game.sportEventRoundMatchId,
     predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: team.sportEventParticipantId,
     ...(mode === PickEmMode.CONFIDENCE ? { confidence: game.pick?.confidence ?? null } : {}),
@@ -145,7 +145,7 @@ export function teamPick(game: PickEmGame, team: PickEmTeam, mode: GamePicksResp
 /** A pick of a tie (#792), a draw in soccer, keeping the game's confidence value in a confidence pool. */
 export function tiePick(game: PickEmGame, mode: GamePicksResponse['mode']): GamePickWrite {
   return {
-    sportEventMatchId: game.sportEventMatchId,
+    sportEventRoundMatchId: game.sportEventRoundMatchId,
     predictedResult: PredictedResult.TIE,
     sportEventParticipantId: null,
     ...(mode === PickEmMode.CONFIDENCE ? { confidence: game.pick?.confidence ?? null } : {}),
@@ -167,17 +167,17 @@ export function confidencePicks(games: readonly PickEmGame[], game: PickEmGame, 
     return [];
   }
   const picks: GamePickWrite[] = [{
-    sportEventMatchId: game.sportEventMatchId,
+    sportEventRoundMatchId: game.sportEventRoundMatchId,
     predictedResult: game.pick.predictedResult,
     sportEventParticipantId: game.pick.sportEventParticipantId,
     confidence: value,
   }];
   const holder = value === null
     ? undefined
-    : games.find((other) => other.sportEventMatchId !== game.sportEventMatchId && !other.locked && other.pick?.confidence === value);
+    : games.find((other) => other.sportEventRoundMatchId !== game.sportEventRoundMatchId && !other.locked && other.pick?.confidence === value);
   if (holder?.pick) {
     picks.push({
-      sportEventMatchId: holder.sportEventMatchId,
+      sportEventRoundMatchId: holder.sportEventRoundMatchId,
       predictedResult: holder.pick.predictedResult,
       sportEventParticipantId: holder.pick.sportEventParticipantId,
       confidence: game.pick.confidence,
@@ -193,7 +193,7 @@ export function confidencePicks(games: readonly PickEmGame[], game: PickEmGame, 
 export function confidenceOptions(gamePicks: Pick<PickEmWeek, 'gameCount' | 'games'>, game: PickEmGame): number[] {
   const { gameCount, games } = gamePicks;
   const held = new Set(games.flatMap((other) => (
-    other.sportEventMatchId !== game.sportEventMatchId && other.locked && other.pick?.confidence != null
+    other.sportEventRoundMatchId !== game.sportEventRoundMatchId && other.locked && other.pick?.confidence != null
       ? [other.pick.confidence]
       : []
   )));

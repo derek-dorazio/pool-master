@@ -25,7 +25,7 @@ import {
   SportEventStatus,
   SurvivorWeekOutcome,
   type ContestEntry,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { ContestService } from '../../../packages/core-api/src/modules/contests/service';
@@ -62,7 +62,7 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
     teamRow[`T${index * 2 + 2}` as Team] = expectDefined(game.awaySportEventParticipantId ?? undefined);
   });
   /** A later-round game, its teams not yet known. */
-  const laterGame = (matchNumber: number, roundNumber: number, kickoff: Date): SportEventMatch => ({
+  const laterGame = (matchNumber: number, roundNumber: number, kickoff: Date): SportEventRoundMatch => ({
     ...round1[0],
     id: `game-${matchNumber}`,
     matchNumber,
@@ -135,7 +135,7 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
     actorUserId: expectDefined(users.get(name)),
   });
   const game = (matchNumber: number) => expectDefined(games.matches.get(`game-${matchNumber}`));
-  const pick = (matchNumber: number, team: Team) => ({ sportEventMatchId: `game-${matchNumber}`, predictedResult: PredictedResult.TEAM, sportEventParticipantId: teamRow[team], confidence: null });
+  const pick = (matchNumber: number, team: Team) => ({ sportEventRoundMatchId: `game-${matchNumber}`, predictedResult: PredictedResult.TEAM, sportEventParticipantId: teamRow[team], confidence: null });
   const save = (name: Name, matchNumber: number, team: Team) => predictions.saveGamePicks({ ...input(name), picks: [pick(matchNumber, team)] });
   /** The game is played: `winner` wins it. */
   const play = (matchNumber: number, winner: MatchSide) => {
@@ -147,7 +147,7 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
   };
   const storedPicks = (name: Name) => [...games.predictions.values()]
     .filter((row) => row.contestEntryId === `entry-${name.toLowerCase()}`)
-    .map((row) => row.sportEventMatchId)
+    .map((row) => row.sportEventRoundMatchId)
     .sort();
 
   return {

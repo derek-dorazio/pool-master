@@ -4,7 +4,7 @@ import {
   PredictedResult,
   SportEventStatus,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import type { ContestEntrySeasonPrediction, ContestEntryWithSquad } from '@poolmaster/shared/db';
 import {
@@ -22,8 +22,8 @@ function week(id: string, startDate: Date, overrides: Partial<SportEvent> = {}):
   return { id, name: id, startDate, status: SportEventStatus.SCHEDULED, rounds: null, sport: 'AMERICAN_FOOTBALL', ...overrides } as SportEvent;
 }
 
-function game(id: string, sportEventId: string, roundNumber = 1): SportEventMatch {
-  return { id, sportEventId, roundNumber, status: MatchStatus.SCHEDULED, scheduledDate: null, homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`, winnerSide: null } as SportEventMatch;
+function game(id: string, sportEventId: string, roundNumber = 1): SportEventRoundMatch {
+  return { id, sportEventId, roundNumber, status: MatchStatus.SCHEDULED, scheduledDate: null, homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`, winnerSide: null } as SportEventRoundMatch;
 }
 
 function entry(id: string, entryNumber: number, submittedFor: string[]): ContestEntryWithSquad {
@@ -34,7 +34,7 @@ function entry(id: string, entryNumber: number, submittedFor: string[]): Contest
   };
 }
 
-function deps(events: SportEvent[], matches: SportEventMatch[], entries: ContestEntryWithSquad[] = [], predictions: ContestEntrySeasonPrediction[] = []): SurvivorStandingsReadDeps {
+function deps(events: SportEvent[], matches: SportEventRoundMatch[], entries: ContestEntryWithSquad[] = [], predictions: ContestEntrySeasonPrediction[] = []): SurvivorStandingsReadDeps {
   return {
     sportEvents: { findByIds: async (ids) => events.filter((event) => ids.includes(event.id)) },
     matches: { findBySportEvents: async (ids) => matches.filter((match) => ids.includes(match.sportEventId)) },
@@ -63,7 +63,7 @@ describe('loadSurvivorSeason', () => {
   it('runs an entry with no picks through the season, and leaves out a pick on a game no week has', async () => {
     const started = week('week-1', new Date('2026-09-13T17:00:00.000Z'), { status: SportEventStatus.IN_PROGRESS });
     const stray = {
-      id: 'stray', contestEntryId: 'picker', sportEventMatchId: 'not-a-week-game', sportEventId: 'week-1',
+      id: 'stray', contestEntryId: 'picker', sportEventRoundMatchId: 'not-a-week-game', sportEventId: 'week-1',
       predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'g1-home', participantId: 'p1', confidence: null,
     } as unknown as ContestEntrySeasonPrediction;
 

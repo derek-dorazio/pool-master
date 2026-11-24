@@ -108,9 +108,9 @@ function ownWeek2Picks() {
     sportEventId: 'week-2',
     status: 'SUBMITTED',
     games: week1Games({
-      1: { sportEventMatchId: 'week2-game-3', pick: weekPick(NFL_TEAMS.packers) },
-      2: { sportEventMatchId: 'week2-game-1', status: 'COMPLETED', pick: weekPick(NFL_TEAMS.bills, { outcome: 'BUSTED', points: 0 }) },
-      3: { sportEventMatchId: 'week2-game-2', status: 'COMPLETED', pick: weekPick(NFL_TEAMS.eagles, { outcome: 'CORRECT', points: 1 }) },
+      1: { sportEventRoundMatchId: 'week2-game-3', pick: weekPick(NFL_TEAMS.packers) },
+      2: { sportEventRoundMatchId: 'week2-game-1', status: 'COMPLETED', pick: weekPick(NFL_TEAMS.bills, { outcome: 'BUSTED', points: 0 }) },
+      3: { sportEventRoundMatchId: 'week2-game-2', status: 'COMPLETED', pick: weekPick(NFL_TEAMS.eagles, { outcome: 'CORRECT', points: 1 }) },
     }),
   });
 }

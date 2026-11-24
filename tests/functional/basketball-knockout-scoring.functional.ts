@@ -79,7 +79,7 @@ async function cleanup(): Promise<void> {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -268,11 +268,11 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // The final is decided, so a first-round winner can no longer change; its score still can.
     expectFunctionalError(
       await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 71, awayScore: 66 } }),
-      { status: 409, code: 'SPORT_EVENT_MATCH_RESULT_LOCKED' },
+      { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
     expectFunctionalError(
       await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } }),
-      { status: 409, code: 'SPORT_EVENT_MATCH_RESULT_LOCKED' },
+      { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
     const corrected = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 73 } });
     expect(expectDefined(corrected.data).matches.find((match) => match.matchNumber === 2)).toMatchObject({ status: MatchStatus.COMPLETED, awayScore: 73 });

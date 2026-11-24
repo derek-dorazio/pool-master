@@ -2,7 +2,7 @@ import { expect } from '@jest/globals';
 import {
   EventTierConfigSchema,
   TierLayoutValuesSchema,
-  TierProfileLastTier,
+  PlatformTierProfileLastTier,
   findTierLayoutProblem,
   placeInTiers,
   type TierLayoutValues,
@@ -13,8 +13,8 @@ import {
 // its cap, and an even spread, larger tiers first, for a field too small or an event whose tier
 // count an admin changed.
 
-const SIX_OF_TEN: TierLayoutValues = { tierCount: 6, tierSize: 10, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null };
-const SIX_OF_TEN_CAPPED: TierLayoutValues = { ...SIX_OF_TEN, lastTier: TierProfileLastTier.CAPPED, lastTierMax: 15 };
+const SIX_OF_TEN: TierLayoutValues = { tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
+const SIX_OF_TEN_CAPPED: TierLayoutValues = { ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 };
 
 /** How many places land in each of `tierCount` tiers, and how many in none. */
 function sizes(tierIndexes: ReadonlyArray<number | null>, tierCount: number) {

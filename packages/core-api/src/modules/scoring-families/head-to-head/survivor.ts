@@ -18,7 +18,7 @@
  * - **The score** is the weeks survived: entries out in the same week tie, and entries still
  *   standing at the end with the same lives left share the win.
  */
-import { MatchSide, MatchStatus, SurvivorWeekOutcome, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchSide, MatchStatus, SurvivorWeekOutcome, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 
 /** One week of the entry's season, as its read sees it. */
 export interface SurvivorWeek {
@@ -32,9 +32,9 @@ export interface SurvivorWeek {
   /** Whether the entry submitted the week's event: a playoff is submitted once, for all its rounds. */
   submitted: boolean;
   /** The week's games, cancelled ones included: a pick on a cancelled game survives. */
-  games: readonly SportEventMatch[];
+  games: readonly SportEventRoundMatch[];
   /** The entry's pick in the week, when it has one: the game and the team's field row. */
-  pick: { sportEventMatchId: string; sportEventParticipantId: string } | null;
+  pick: { sportEventRoundMatchId: string; sportEventParticipantId: string } | null;
   /** The picked team's participant, which "each team once" is checked on. */
   pickedParticipantId: string | null;
 }
@@ -62,10 +62,10 @@ export interface SurvivorRun {
 
 /** How a submitted pick stands against its game. */
 export function survivorPickOutcome(
-  games: readonly SportEventMatch[],
-  pick: { sportEventMatchId: string; sportEventParticipantId: string },
+  games: readonly SportEventRoundMatch[],
+  pick: { sportEventRoundMatchId: string; sportEventParticipantId: string },
 ): SurvivorWeekOutcome {
-  const game = games.find((candidate) => candidate.id === pick.sportEventMatchId);
+  const game = games.find((candidate) => candidate.id === pick.sportEventRoundMatchId);
   // A pick on a game no longer in the week (moved away before release) has nothing to lose.
   if (!game || game.status === MatchStatus.CANCELLED) return SurvivorWeekOutcome.SURVIVED;
   if (game.status !== MatchStatus.COMPLETED) return SurvivorWeekOutcome.PENDING;

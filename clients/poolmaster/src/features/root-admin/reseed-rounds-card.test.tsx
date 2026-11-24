@@ -4,7 +4,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { RoundMatchupDto, SportEventDto, SportEventMatchDto, SportLeagueDto } from '@/lib/api';
+import type { RoundMatchupDto, SportEventDto, SportEventRoundMatchDto, SportLeagueDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { EventRoundsTab } from './event-rounds-tab';
 import { EventTabOutlet } from './test/event-tab-outlet';
@@ -82,7 +82,7 @@ const texans = team('sep-4', 4, 'Texans');
 const chargers = team('sep-5', 5, 'Chargers');
 const steelers = team('sep-6', 6, 'Steelers');
 
-function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventMatchDto {
+function match(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
   return {
     sportEventId: 'evt-1',
     homeSportEventParticipantId: null,
@@ -112,7 +112,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
  * its home sides on a bye and the Wild Card winners join them. The Divisional games feed the
  * Conference Championship by their links.
  */
-function bracket(options: { wildCard?: 'final' | 'one-left'; divisional?: Partial<SportEventMatchDto> } = {}): SportEventMatchDto[] {
+function bracket(options: { wildCard?: 'final' | 'one-left'; divisional?: Partial<SportEventRoundMatchDto> } = {}): SportEventRoundMatchDto[] {
   const finished = options.wildCard !== 'one-left';
   return [
     match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-6', status: 'COMPLETED', winnerSide: 'HOME' }),
@@ -140,7 +140,7 @@ async function findLoadedDivisionalRound() {
   await waitFor(() => expect(within(screen.getByTestId('root-admin-bracket-round-2')).getByRole('heading')).toHaveTextContent('Divisional Round'));
 }
 
-function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; bracketAdvancement?: SportLeagueDto['bracketAdvancement'] } = {}) {
+function seed(matches: SportEventRoundMatchDto[], options: { event?: SportEventDto; bracketAdvancement?: SportLeagueDto['bracketAdvancement'] } = {}) {
   getEventMock.mockResolvedValue({ data: { event: options.event ?? playoffs } });
   listSportLeaguesMock.mockResolvedValue({
     data: {

@@ -732,8 +732,8 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
         required: ['eventId', 'matchNumber'],
         properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
       },
-      body: schemaRef('UpdateSportEventMatchRequest'),
-      response: { 200: schemaRef('SportEventMatchResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+      body: schemaRef('UpdateSportEventRoundMatchRequest'),
+      response: { 200: schemaRef('SportEventRoundMatchResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     handler: handler.updateEventBracketMatch,
   });
@@ -743,7 +743,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     required: ['eventId', 'matchNumber'],
     properties: { eventId: uuid, matchNumber: { type: 'integer', minimum: 1 } },
   } as const;
-  const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first.';
+  const MATCH_RESULT_LOCKED = '409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first.';
 
   fastify.put('/:eventId/bracket/matches/:matchNumber/result', {
     ...write,
@@ -758,7 +758,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
         + `${MATCH_RESULT_LOCKED} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
       operationId: 'recordEventMatchResult',
       params: MATCH_PARAMS,
-      body: schemaRef('RecordSportEventMatchResultRequest'),
+      body: schemaRef('RecordSportEventRoundMatchResultRequest'),
       response: { 200: schemaRef('SportEventBracketResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     handler: handler.recordEventMatchResult,

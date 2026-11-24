@@ -13,10 +13,10 @@ import {
   PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
-  PrismaPricingProfileRepository,
+  PrismaPlatformPricingProfileRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRaceResultRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantValuationRepository,
@@ -25,7 +25,7 @@ import {
   PrismaSportEventTierRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
-  PrismaTierProfileRepository,
+  PrismaPlatformTierProfileRepository,
 } from '../../adapters';
 import { GolfScoreService } from '../golf/golf-score-service';
 import type { GameScoreWriterDeps } from '../scoring-families/head-to-head/game-score-writer';
@@ -56,8 +56,8 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
-    tierProfiles: new PrismaTierProfileRepository(prisma),
-    pricingProfiles: new PrismaPricingProfileRepository(prisma),
+    platformTierProfiles: new PrismaPlatformTierProfileRepository(prisma),
+    platformPricingProfiles: new PrismaPlatformPricingProfileRepository(prisma),
     logger,
   });
 }
@@ -111,7 +111,7 @@ export function createSportEventBracketService(
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
-    matches: new PrismaSportEventMatchRepository(prisma),
+    matches: new PrismaSportEventRoundMatchRepository(prisma),
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
@@ -146,7 +146,7 @@ export function createMatchResultService(
 ): MatchResultService {
   return new MatchResultService({
     sportEvents: new PrismaSportEventRepository(prisma),
-    matches: new PrismaSportEventMatchRepository(prisma),
+    matches: new PrismaSportEventRoundMatchRepository(prisma),
     contestActivation,
     domainEvents,
     logger,
@@ -167,7 +167,7 @@ export function createGameScoreWriterDeps(
 ): GameScoreWriterDeps {
   return {
     providerId,
-    matches: new PrismaSportEventMatchRepository(prisma),
+    matches: new PrismaSportEventRoundMatchRepository(prisma),
     eventParticipants: new PrismaSportEventParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     results: createMatchResultService(prisma, domainEvents, contestActivation, logger),
@@ -203,7 +203,7 @@ export function createSportEventParticipantService(
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
-    matches: new PrismaSportEventMatchRepository(prisma),
+    matches: new PrismaSportEventRoundMatchRepository(prisma),
     tiers: new PrismaSportEventTierRepository(prisma),
     valuations: new PrismaSportEventParticipantValuationRepository(prisma),
     fieldCache: eventFieldCache,
@@ -258,7 +258,7 @@ export function createSportEventServices(
     field: createSportEventParticipantService(prisma, domainEvents, logger),
     providerGames: new ProviderGameSlateService({
       sportEvents: events,
-      matches: new PrismaSportEventMatchRepository(prisma),
+      matches: new PrismaSportEventRoundMatchRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),
       mappings: new PrismaParticipantProviderMappingRepository(prisma),
       bracket,
@@ -286,8 +286,8 @@ export function createSportLeagueService(
     participants: new PrismaParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     providers,
-    tierProfiles: new PrismaTierProfileRepository(prisma),
-    pricingProfiles: new PrismaPricingProfileRepository(prisma),
+    platformTierProfiles: new PrismaPlatformTierProfileRepository(prisma),
+    platformPricingProfiles: new PrismaPlatformPricingProfileRepository(prisma),
     logger,
   });
 }
@@ -310,7 +310,7 @@ export function createEventLifecycleService(
     {
       contests: new PrismaContestRepository(prisma),
       configurations: new PrismaContestConfigurationRepository(prisma),
-      matches: new PrismaSportEventMatchRepository(prisma),
+      matches: new PrismaSportEventRoundMatchRepository(prisma),
     },
     new PrismaSportEventRepository(prisma),
     options.domainEvents,

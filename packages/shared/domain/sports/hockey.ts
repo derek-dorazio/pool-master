@@ -17,7 +17,7 @@ const ROUND_NAMES_FROM_FINAL = ['National Championship', 'Frozen Four', 'Regiona
  * The NHL and the men's tournament are 16 teams in four rounds, four tiers of four. The women's
  * tournament seeds five teams and fills three quarterfinal places from a first round, through
  * play-in places as March Madness's First Four does. The PWHL's four teams start on two tiers
- * (its tier profile, `SportLeague.tierProfileId`).
+ * (its tier profile, `SportLeague.platformTierProfileId`).
  */
 export const hockeySportDefinition: SportDefinition = {
   sport: Sport.HOCKEY,

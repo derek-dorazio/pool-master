@@ -4,7 +4,7 @@ import { BackgroundJobType, Sport, SportEventStatus } from '@poolmaster/shared/d
 import {
   PrismaContestConfigurationRepository,
   PrismaContestRepository,
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventRepository,
 } from '../../../packages/core-api/src/adapters';
 import {
@@ -42,7 +42,7 @@ function lifecycleCountingSettlements() {
     {
       contests: new PrismaContestRepository(getAppPrisma()),
       configurations: new PrismaContestConfigurationRepository(getAppPrisma()),
-      matches: new PrismaSportEventMatchRepository(getAppPrisma()),
+      matches: new PrismaSportEventRoundMatchRepository(getAppPrisma()),
     },
     new PrismaSportEventRepository(getAppPrisma()),
     testDomainEvents({ queue }),

@@ -120,7 +120,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       return only === undefined ? [] : [{ row, event: only }];
     });
     // The games are counted per event and round rather than read game by game.
-    const rounds = contests.length === 0 ? [] : await this.prisma.sportEventMatch.groupBy({
+    const rounds = contests.length === 0 ? [] : await this.prisma.sportEventRoundMatch.groupBy({
       by: ['sportEventId', 'sportEventRoundId'],
       where: { sportEventId: { in: [...new Set(contests.map(({ event }) => event.id))] } },
       _count: { _all: true, advancesToMatchId: true },

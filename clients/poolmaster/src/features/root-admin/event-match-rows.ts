@@ -1,10 +1,10 @@
 import { MatchSide } from '@poolmaster/shared/domain';
-import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { describeEntry, sideEntry } from './bracket-copy';
 
 /** One row of the Event page's Matches grid: the match, its sides and score read flat. */
 export type EventMatchRow = {
-  match: SportEventMatchDto;
+  match: SportEventRoundMatchDto;
   id: string;
   roundNumber: number;
   roundLabel: string;
@@ -12,20 +12,20 @@ export type EventMatchRow = {
   /** "Duke vs UNC" on a neutral site, else "Away @ Home"; a side not decided yet is "TBD". */
   pairingLabel: string;
   scheduledDate: string | null;
-  status: SportEventMatchDto['status'];
+  status: SportEventRoundMatchDto['status'];
   /** "Home–Away", with the shoot-out after it; null until either side has a score. */
   score: string | null;
   winner: string | null;
-  resultSource: SportEventMatchDto['resultSource'];
+  resultSource: SportEventRoundMatchDto['resultSource'];
   completedAt: string | null;
 };
 
-function sideName(match: SportEventMatchDto, side: MatchSide, fieldById: ReadonlyMap<string, SportEventParticipantDto>): string {
+function sideName(match: SportEventRoundMatchDto, side: MatchSide, fieldById: ReadonlyMap<string, SportEventParticipantDto>): string {
   const entry = sideEntry(match, side, fieldById);
   return entry === undefined ? 'TBD' : describeEntry(entry);
 }
 
-function scoreOf(match: SportEventMatchDto): string | null {
+function scoreOf(match: SportEventRoundMatchDto): string | null {
   if (match.homeScore === null && match.awayScore === null) return null;
   const score = `${String(match.homeScore ?? 0)}–${String(match.awayScore ?? 0)}`;
   return match.homeShootoutScore === null || match.awayShootoutScore === null
@@ -35,7 +35,7 @@ function scoreOf(match: SportEventMatchDto): string | null {
 
 /** The Matches grid's rows, in match order, each named by its round and its two sides. */
 export function eventMatchRows(
-  matches: readonly SportEventMatchDto[],
+  matches: readonly SportEventRoundMatchDto[],
   field: readonly SportEventParticipantDto[],
   roundLabel: (roundNumber: number, roundCount: number) => string,
   roundCount: number,

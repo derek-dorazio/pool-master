@@ -23,7 +23,7 @@ import {
   UpsetBonusRule,
   assertNever,
   type KnockoutRoundPointsSettings,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type UpsetBonus,
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
@@ -34,7 +34,7 @@ import type { SportEventParticipantView } from '../../events/sport-event-partici
  */
 export function withdrawnRowIds(
   field: ReadonlyArray<{ id: string; isActive: boolean; inactiveReason?: ParticipantInactiveReason | null }>,
-  bracket: ReadonlyArray<Pick<SportEventMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>>,
+  bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>>,
 ): Set<string> {
   const named = new Set(bracket.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId]));
   return new Set(field
@@ -58,7 +58,7 @@ export interface KnockoutTeamScore {
 }
 
 /** The field row on the winning or losing side of a completed match. */
-function sideRowId(match: SportEventMatch, side: MatchSide): string | null {
+function sideRowId(match: SportEventRoundMatch, side: MatchSide): string | null {
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
 }
 
@@ -96,7 +96,7 @@ export function scoreKnockoutField(
   field: readonly SportEventParticipantView[],
   settings: KnockoutRoundPointsSettings,
 ): KnockoutTeamScore[] {
-  const decided = new Map<string, SportEventMatch & { winnerSide: MatchSide }>();
+  const decided = new Map<string, SportEventRoundMatch & { winnerSide: MatchSide }>();
   for (const row of field) {
     for (const match of row.matches) {
       if (match.status === MatchStatus.COMPLETED && match.winnerSide !== null) {

@@ -10,7 +10,7 @@ import { SURVIVOR_LIVES_MAX } from '../domain/contest-rules';
 // --- Requests ---
 
 export const GamePickWriteSchema = z.object({
-  sportEventMatchId: z.uuid().describe('The game picked: one of the event\'s games.'),
+  sportEventRoundMatchId: z.uuid().describe('The game picked: one of the event\'s games.'),
   predictedResult: z.enum(PredictedResult).describe('What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick\'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.'),
   sportEventParticipantId: z.uuid().nullable().describe('With TEAM, the team picked to win: the field row of one of the two teams the game offers the entry. In a bracket a later game offers the teams the entry picked to win the games before it. Null with TIE.'),
   confidence: z.number().int().min(1).nullable().optional().describe('A confidence pool\'s value for this pick, 1 to the week\'s number of games. Omitted or null in a straight-up pool, and until the entry gives one. A value may repeat until the week is submitted.'),
@@ -24,7 +24,7 @@ export const GAME_PICKS_TIEBREAKER_MAX = 999;
 
 export const SaveGamePicksRequestSchema = z.object({
   picks: z.array(GamePickWriteSchema)
-    .refine((picks) => new Set(picks.map((pick) => pick.sportEventMatchId)).size === picks.length, {
+    .refine((picks) => new Set(picks.map((pick) => pick.sportEventRoundMatchId)).size === picks.length, {
       message: 'Each game is picked at most once per request.',
     })
     .describe('The picks to save, one per game; may be empty when only the tiebreaker changes. Each replaces the entry\'s pick on that game; the entry\'s other picks are kept, except that in a bracket a later pick that no longer follows from the entry\'s picks is cleared, and in a survivor pool, which takes one pick, the entry\'s pick on another game is cleared. Saved together or not at all, so two confidence values can be swapped, or a whole bracket filled, in one request.'),
@@ -54,7 +54,7 @@ export const GamePickDtoSchema = z.object({
 export type GamePickDto = z.infer<typeof GamePickDtoSchema>;
 
 export const GamePickGameDtoSchema = z.object({
-  sportEventMatchId: z.uuid(),
+  sportEventRoundMatchId: z.uuid(),
   matchNumber: z.number().int(),
   roundNumber: z.number().int(),
   kickoff: z.iso.datetime().describe('When the game starts: its scheduled time, else its event\'s start. Its pick locks then.'),
@@ -178,7 +178,7 @@ export const PickEmLeaderboardEntryWeekDtoSchema = z.object({
 export type PickEmLeaderboardEntryWeekDto = z.infer<typeof PickEmLeaderboardEntryWeekDtoSchema>;
 
 export const PickEmLeaderboardEntryPickDtoSchema = z.object({
-  sportEventMatchId: z.uuid(),
+  sportEventRoundMatchId: z.uuid(),
   sportEventParticipantId: z.uuid().nullable().describe('The field row of the team picked; null for a tie pick.'),
   outcome: z.enum(PickOutcome).describe('How the pick stands: CORRECT or BUSTED once its game is played, PUSH for a game that landed on the spread, PENDING until then.'),
 }).describe('One entry\'s pick on one game of the current week, shown once the game has kicked off.');

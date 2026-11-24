@@ -1,5 +1,5 @@
 import { ContestFormat, ContestStatus, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
-import type { Contest, SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
+import type { Contest, SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
 
 /** What a live contest's progress counts: its one event's games, or its weeks or events. */
 export type ContestProgressUnit = 'GAMES' | 'WEEKS' | 'EVENTS';
@@ -19,7 +19,7 @@ export type ContestProgress = { played: number; total: number; unit: ContestProg
 export function describeContestProgress(
   contest: Pick<Contest, 'contestFormat' | 'status'>,
   events: readonly Pick<SportEvent, 'status'>[],
-  games: readonly Pick<SportEventMatch, 'status'>[],
+  games: readonly Pick<SportEventRoundMatch, 'status'>[],
 ): ContestProgress | null {
   if (contest.status !== ContestStatus.ACTIVE) {
     return null;

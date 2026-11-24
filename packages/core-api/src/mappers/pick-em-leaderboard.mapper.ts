@@ -36,7 +36,7 @@ export interface PickEmLeaderboardMissedPickRow {
 }
 
 export interface PickEmLeaderboardEntryPickRow {
-  sportEventMatchId: string;
+  sportEventRoundMatchId: string;
   sportEventParticipantId: string | null;
   outcome: PickOutcome;
 }

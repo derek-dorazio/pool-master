@@ -19,7 +19,7 @@ import { MatchSide, MatchStatus, Sport } from '@poolmaster/shared/domain';
 import {
   AddSportEventParticipantsResponseSchema,
   SportEventBracketResponseSchema,
-  SportEventMatchResponseSchema,
+  SportEventRoundMatchResponseSchema,
   SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
@@ -61,7 +61,7 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -215,7 +215,7 @@ describe('SDK Functional: Basketball bracket', () => {
       path: { eventId, matchNumber: 3 },
       body: { scheduledDate: '2099-03-21T18:30:00.000Z' },
     });
-    expect(expectMatchesSchema(SportEventMatchResponseSchema, moved.data).match.scheduledDate).toBe('2099-03-21T18:30:00.000Z');
+    expect(expectMatchesSchema(SportEventRoundMatchResponseSchema, moved.data).match.scheduledDate).toBe('2099-03-21T18:30:00.000Z');
 
     // A row that is not a play-in place cannot take a play-in winner, so a real team stays put.
     expectFunctionalError(

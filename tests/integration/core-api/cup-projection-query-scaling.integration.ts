@@ -187,14 +187,14 @@ const liveBracketContest: LiveContestSeed = async (seeded, index) => {
     where: { id: expectDefined(game.homeSportEventParticipantId) }, data: { seedNumber: seed + 1 },
   })));
   const finalRound = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date(Date.now() + DAY) } });
-  const final = await prisma.sportEventMatch.create({
+  const final = await prisma.sportEventRoundMatch.create({
     data: {
       sportEventId: event.id, sportEventRoundId: finalRound.id, matchNumber: 3, isNeutralSite: true,
       homeSportEventParticipantId: first.homeSportEventParticipantId, awaySportEventParticipantId: second.homeSportEventParticipantId,
     },
   });
-  await prisma.sportEventMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSide: 'HOME' } });
-  await prisma.sportEventMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSide: 'AWAY' } });
+  await prisma.sportEventRoundMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSide: 'HOME' } });
+  await prisma.sportEventRoundMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSide: 'AWAY' } });
   await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 2 } });
   const contest = await prisma.contest.create({
     data: {
@@ -236,7 +236,7 @@ async function savePicks(contestEntryId: string, event: { id: string; startDate:
     contestEntryId,
     sportEventId: event.id,
     saves: picks.map(({ game, team }) => ({
-      sportEventMatchId: game.id,
+      sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(team ?? undefined),
       confidence: null,

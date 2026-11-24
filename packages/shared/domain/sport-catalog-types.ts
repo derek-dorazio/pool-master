@@ -59,9 +59,9 @@ export interface SportLeague extends DomainEntity {
    * The tier profile a new event of the league starts with and is auto-tiered by (#1844): the
    * College Football Playoff's six tiers of two. Every league names one.
    */
-  tierProfileId: string;
+  platformTierProfileId: string;
   /** The pricing profile its events' fields are priced with after a sync (#1844). Every league names one. */
-  pricingProfileId: string;
+  platformPricingProfileId: string;
   /**
    * The periods its games are played in, when not its sport's (#786: men's college basketball's
    * halves); null plays the sport's layout. Read through `matchPeriodsOf`. Reference data, set
@@ -223,7 +223,7 @@ export interface SportEventParticipantRaceResult extends DomainEntity {
  * waiting on its feeder match). A COMPLETED match with no `winnerSide` is a draw, which a knockout
  * never allows. In a series (the NBA's best of seven) the scores are games won.
  */
-export interface SportEventMatch extends DomainEntity {
+export interface SportEventRoundMatch extends DomainEntity {
   sportEventId: string;
   /** The round it is played in, by number. */
   roundNumber: number;

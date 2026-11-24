@@ -11,7 +11,7 @@ import type {
   EventPricingConfig,
   EventSeries,
   EventTierConfig,
-  PricingProfile,
+  PlatformPricingProfile,
   MatchSide,
   OverdueEventFacts,
   ParticipantInactiveReason,
@@ -25,7 +25,7 @@ import type {
   SportConfig,
   SportEvent,
   SportEventContest,
-  SportEventMatch,
+  SportEventRoundMatch,
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
@@ -39,7 +39,7 @@ import type {
   SportEventTier,
   SportLeague,
   TierLayoutValues,
-  TierProfile,
+  PlatformTierProfile,
   ValuationSource,
   SportLeaguePhaseDefinition,
 } from '../domain';
@@ -55,7 +55,7 @@ export interface SportLeagueFilters {
   isActive?: boolean;
 }
 
-export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>> & {
+export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'isActive' | 'currentEventYear' | 'bracketAdvancement' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>> & {
   /**
    * The provider league whose sync the sport league takes (#1997): its mapping to it is made when
    * missing and selected, in the same write. Null stops the sync and keeps the mapping.
@@ -89,7 +89,7 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
+  create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -399,7 +399,7 @@ export interface SportEventParticipantView {
   /** The finish-position extension: how the runner's race ended, once a result is entered. */
   raceResult: SportEventParticipantRaceResult | null;
   /** The bracket matches naming this row on either side, in match order: head to head scores from them (#699). */
-  matches: SportEventMatch[];
+  matches: SportEventRoundMatch[];
   /** Whether the participant is affiliated with the event's sport league — false flags an invite from elsewhere. */
   affiliatedWithSportLeague: boolean;
 }
@@ -718,9 +718,12 @@ export interface SportLeaguePageReader {
   readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
 }
 
-/** A profile write: its name and values. */
-export type TierProfileWrite = Pick<TierProfile, 'name'> & TierLayoutValues;
-export type PricingProfileWrite = Omit<PricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
+/** A profile write: its code, name and values. */
+export type PlatformTierProfileWrite = Pick<PlatformTierProfile, 'code' | 'name'> & TierLayoutValues;
+export type PlatformPricingProfileWrite = Omit<PlatformPricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
+
+/** Which of a profile's unique keys another profile of the kind already holds. */
+export type ProfileTaken = 'codeTaken' | 'nameTaken';
 
 /**
  * A profile kind's operation set (#1844): platform-level definitions each sport league names one
@@ -736,10 +739,13 @@ export interface ProfileRepository<TProfile, TWrite> {
   countSportLeagues(): Promise<Map<string, number>>;
   /** How many sport leagues name this one profile. */
   countSportLeaguesNaming(id: string): Promise<number>;
-  /** The new profile, or `'nameTaken'` when another profile of the kind has the name (its unique index). */
-  create(input: TWrite): Promise<TProfile | 'nameTaken'>;
-  /** The replaced profile, or `'nameTaken'` when another profile of the kind has the name (its unique index). */
-  update(id: string, input: TWrite): Promise<TProfile | 'nameTaken'>;
+  /**
+   * The new profile, or which unique index refused it: `'codeTaken'` or `'nameTaken'` when another
+   * profile of the kind has the code or the name.
+   */
+  create(input: TWrite): Promise<TProfile | ProfileTaken>;
+  /** The replaced profile, or which unique index refused it, as for create. */
+  update(id: string, input: TWrite): Promise<TProfile | ProfileTaken>;
   /**
    * Deletes the profile unless a sport league names it; the foreign key refuses a delete a league
    * named meanwhile. Returns how many sport leagues name it: zero means it was deleted. Null when no such profile
@@ -748,8 +754,8 @@ export interface ProfileRepository<TProfile, TWrite> {
   deleteUnlessUsed(id: string): Promise<number | null>;
 }
 
-export type TierProfileRepository = ProfileRepository<TierProfile, TierProfileWrite>;
-export type PricingProfileRepository = ProfileRepository<PricingProfile, PricingProfileWrite>;
+export type PlatformTierProfileRepository = ProfileRepository<PlatformTierProfile, PlatformTierProfileWrite>;
+export type PlatformPricingProfileRepository = ProfileRepository<PlatformPricingProfile, PlatformPricingProfileWrite>;
 
 /** The customer contests on one sport event (#1889), for the root admin's Event page. */
 export interface SportEventContestReader {

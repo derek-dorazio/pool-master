@@ -50,9 +50,9 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
-    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventMatch: { sportEventId: { in: eventIds } } } });
+    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -96,7 +96,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
       const team = rowOf(key);
       const game = expectDefined(bracket.find((match) => match.roundNumber === roundNumber
         && (match.homeSportEventParticipantId === team || match.awaySportEventParticipantId === team)), `${key}'s round ${roundNumber} game`);
-      return { sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team };
+      return { sportEventRoundMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team };
     };
 
     // --- A survivor contest on the playoffs, entered by four teams ---------------------------------

@@ -418,7 +418,7 @@ describe('ContestRepository', () => {
       ...(gameMatchId !== undefined && { squaresGameMatchId: gameMatchId }),
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: eventId, roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') } });
-    const game = await prisma.sportEventMatch.create({
+    const game = await prisma.sportEventRoundMatch.create({
       data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true },
     });
     return {

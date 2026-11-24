@@ -31,10 +31,10 @@
  * A game a play-in winner plays (the First Four's, #1571) first fills the bracket's play-in place
  * with that winner (`play-in-fill.ts`), so the game links to the place's match in the same sync.
  */
-import { MatchResultSource, requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchResultSource, requireProviderCodeOfSourceId, MatchSide, MatchStatus, isMatchUnplayed, ProviderGameState, roundSeriesLength, seriesWinsNeeded, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { FastifyBaseLogger } from 'fastify';
-import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
+import type { MatchLiveScoreWrite, ParticipantProviderMappingRepository, SportEventRoundMatchRepository, SportEventParticipantRepository } from '@poolmaster/shared/db';
 import { SportEventError } from '../../events/errors';
 import type { LiveScorePersistenceResult } from '../../ingestion/core/score-publisher';
 import { summarizeSyncWriteRows, type SyncWriteDetailRow } from '../../ingestion/core/sync-write-diagnostics';
@@ -44,7 +44,7 @@ import { fillPlayInPlaces, type PlayInFillDeps } from './play-in-fill';
 
 export interface GameScoreWriterDeps {
   providerId: string;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'linkGames' | 'applyLiveScores'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'linkGames' | 'applyLiveScores'>;
   eventParticipants: Pick<SportEventParticipantRepository, 'findByIds' | 'findBySportEvent'>;
   playIns: PlayInFillDeps['playIns'];
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
@@ -80,7 +80,7 @@ export async function writeGameScores(
   const loaded = await deps.matches.findBySportEvent(sportEventId);
   await fillPlayInPlaces(deps, sportEventId, loaded, games);
   const roundCount = event.rounds ?? loaded.reduce((most, match) => Math.max(most, match.roundNumber), 0);
-  const seriesLengthOf = (match: SportEventMatch): number => roundSeriesLength(event.roundSeriesLengths, match.roundNumber, roundCount);
+  const seriesLengthOf = (match: SportEventRoundMatch): number => roundSeriesLength(event.roundSeriesLengths, match.roundNumber, roundCount);
   const seriesMatches = loaded.filter((match): match is SidedMatch => seriesLengthOf(match) > 1 && hasBothSides(match));
   const linkedGameIds = new Set(loaded.flatMap((match) => (match.externalGameId === null ? [] : [match.externalGameId])));
   const unlinkedGames = games.filter((game) => !linkedGameIds.has(game.externalGameId));
@@ -116,7 +116,7 @@ export async function writeGameScores(
     ...games.flatMap((game) => {
       const match = matchByGame.get(game.externalGameId);
       return match !== undefined && game.state === ProviderGameState.FINAL
-        ? [{ match, externalId: game.externalGameId, resultOn: (current: SportEventMatch) => resultFromGame(game, current, sidesOf, teamsOf) }]
+        ? [{ match, externalId: game.externalGameId, resultOn: (current: SportEventRoundMatch) => resultFromGame(game, current, sidesOf, teamsOf) }]
         : [];
     }),
     ...series.flatMap((each) => {
@@ -126,7 +126,7 @@ export async function writeGameScores(
     }),
   ].sort((left, right) => left.match.roundNumber - right.match.roundNumber || left.match.matchNumber - right.match.matchNumber);
   /** Each match as the latest result in this batch wrote it. */
-  const rewritten = new Map<string, SportEventMatch>();
+  const rewritten = new Map<string, SportEventRoundMatch>();
 
   const rows: SyncWriteDetailRow[] = [];
   for (const final of finals) {
@@ -147,7 +147,7 @@ export async function writeGameScores(
       homeShootoutScore: match.homeShootoutScore,
       awayShootoutScore: match.awayShootoutScore,
     };
-    const row = { id: match.id, entityType: 'SportEventMatch', providerId: deps.providerId, externalId, internalId: match.id, name: `Match ${match.matchNumber}`, before, after: { ...result } };
+    const row = { id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: `Match ${match.matchNumber}`, before, after: { ...result } };
     if (hasResult(match, result)) {
       rows.push({ ...row, disposition: 'UNCHANGED' });
       continue;
@@ -195,7 +195,7 @@ export async function writeGameScores(
     const unchanged = before.status === score.status && before.homeScore === score.homeScore && before.awayScore === score.awayScore;
     if (!unchanged) live.push({ id: match.id, ...score });
     rows.push({
-      id: match.id, entityType: 'SportEventMatch', providerId: deps.providerId, externalId, internalId: match.id, name: `Match ${match.matchNumber}`,
+      id: match.id, entityType: 'SportEventRoundMatch', providerId: deps.providerId, externalId, internalId: match.id, name: `Match ${match.matchNumber}`,
       before, after: { ...score }, disposition: unchanged ? 'UNCHANGED' : 'UPDATED',
     });
   }
@@ -212,10 +212,10 @@ export async function writeGameScores(
 
 /** A match's final result in this batch, read against the match as the batch last wrote it. */
 interface FinalResult {
-  match: SportEventMatch;
+  match: SportEventRoundMatch;
   /** The provider game it comes from; a series' games, comma-separated. */
   externalId: string;
-  resultOn(match: SportEventMatch): MatchResultFromGame | null;
+  resultOn(match: SportEventRoundMatch): MatchResultFromGame | null;
 }
 
 /** A best-of series in this batch: its games' wins from the match's sides, and its winner once decided. */
@@ -241,7 +241,7 @@ function seriesStandings(
   sportEventId: string,
   games: readonly GameScoreUpdate[],
   seriesMatches: readonly SidedMatch[],
-  seriesLengthOf: (match: SportEventMatch) => number,
+  seriesLengthOf: (match: SportEventRoundMatch) => number,
   sidesOf: ReadonlyMap<string, string>,
   teamsOf: ReadonlyMap<string, string>,
 ): SeriesStanding[] {
@@ -297,7 +297,7 @@ function groupByTeams<T>(items: readonly T[], teamsOf: (item: T) => readonly [st
  * The live score a series puts on its match while no side has won it: the wins so far once a game
  * has started, or none while no game has. Null when there is nothing to write, as for a game.
  */
-function seriesLiveScoreOf(series: SeriesStanding, match: SportEventMatch): Omit<MatchLiveScoreWrite, 'id'> | null {
+function seriesLiveScoreOf(series: SeriesStanding, match: SportEventRoundMatch): Omit<MatchLiveScoreWrite, 'id'> | null {
   if (!isMatchUnplayed(match.status) && match.status !== MatchStatus.IN_PROGRESS) return null;
   if (!series.started) {
     return match.status === MatchStatus.IN_PROGRESS ? { status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null } : null;
@@ -306,16 +306,16 @@ function seriesLiveScoreOf(series: SeriesStanding, match: SportEventMatch): Omit
 }
 
 /** A match with both sides known. */
-type SidedMatch = SportEventMatch & { homeSportEventParticipantId: string; awaySportEventParticipantId: string };
+type SidedMatch = SportEventRoundMatch & { homeSportEventParticipantId: string; awaySportEventParticipantId: string };
 
-function hasBothSides(match: SportEventMatch): match is SidedMatch {
+function hasBothSides(match: SportEventRoundMatch): match is SidedMatch {
   return match.homeSportEventParticipantId !== null && match.awaySportEventParticipantId !== null;
 }
 
 /** A match with no game linked yet and both sides known. */
 type OpenMatch = SidedMatch & { externalGameId: null };
 
-function isOpenMatch(match: SportEventMatch): match is OpenMatch {
+function isOpenMatch(match: SportEventRoundMatch): match is OpenMatch {
   return match.externalGameId === null && hasBothSides(match);
 }
 
@@ -337,7 +337,7 @@ function gamesToLink(
 }
 
 /** The participant behind each match side, by event-participant id. */
-async function participantsOfSides(deps: GameScoreWriterDeps, matches: readonly SportEventMatch[]): Promise<Map<string, string>> {
+async function participantsOfSides(deps: GameScoreWriterDeps, matches: readonly SportEventRoundMatch[]): Promise<Map<string, string>> {
   const ids = [...new Set(matches.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId].filter((id) => id !== null)))];
   if (ids.length === 0) return new Map();
   const rows = await deps.eventParticipants.findByIds(ids);
@@ -360,7 +360,7 @@ async function participantsOfTeams(deps: GameScoreWriterDeps, sportEventId: stri
  */
 function resultFromGame(
   game: GameScoreUpdate,
-  match: SportEventMatch,
+  match: SportEventRoundMatch,
   sidesOf: ReadonlyMap<string, string>,
   teamsOf: ReadonlyMap<string, string>,
 ): MatchResultFromGame | null {
@@ -412,7 +412,7 @@ const SCORED_STATES: ReadonlySet<ProviderGameState> = new Set([ProviderGameState
  */
 function liveScoreOf(
   game: GameScoreUpdate,
-  match: SportEventMatch,
+  match: SportEventRoundMatch,
   sidesOf: ReadonlyMap<string, string>,
   teamsOf: ReadonlyMap<string, string>,
 ): Omit<MatchLiveScoreWrite, 'id'> | null {
@@ -430,7 +430,7 @@ function liveScoreOf(
 }
 
 /** Whether the match already holds this result, so a repeated sync writes nothing. */
-function hasResult(match: SportEventMatch, result: MatchResultFromGame): boolean {
+function hasResult(match: SportEventRoundMatch, result: MatchResultFromGame): boolean {
   return match.status === MatchStatus.COMPLETED
     && match.winnerSide === result.winnerSide
     && match.homeScore === result.homeScore

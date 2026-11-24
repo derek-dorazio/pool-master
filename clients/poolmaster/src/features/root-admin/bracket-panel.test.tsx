@@ -4,7 +4,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { SportEventDto, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { EventRoundsTab } from './event-rounds-tab';
 import { EventTabOutlet } from './test/event-tab-outlet';
@@ -111,7 +111,7 @@ const vermont = fieldEntryFixture({ id: 'sep-2', participantId: 'p-2', seedNumbe
 const houston = fieldEntryFixture({ id: 'sep-3', participantId: 'p-3', seedNumber: 2, participant: participantFixture({ id: 'p-3', name: 'Houston' }) });
 const texas = fieldEntryFixture({ id: 'sep-4', participantId: 'p-4', seedNumber: 15, participant: participantFixture({ id: 'p-4', name: 'Texas' }) });
 
-function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventMatchDto {
+function match(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
   return {
     sportEventId: 'evt-1',
     homeSportEventParticipantId: null,
@@ -136,7 +136,7 @@ function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto,
   };
 }
 
-function seed(matches: SportEventMatchDto[], options: { event?: SportEventDto; field?: SportEventParticipantDto[]; roundNames?: string[]; matchPeriodLayout?: 'HALVES' } = {}) {
+function seed(matches: SportEventRoundMatchDto[], options: { event?: SportEventDto; field?: SportEventParticipantDto[]; roundNames?: string[]; matchPeriodLayout?: 'HALVES' } = {}) {
   getEventMock.mockResolvedValue({ data: { event: options.event ?? tournament } });
   listSportLeaguesMock.mockResolvedValue({
     data: { sportLeagues: [sportLeagueFixture({ id: tournament.sportLeagueId, name: 'NCAA Division I Men', roundNames: options.roundNames ?? [], matchPeriodLayout: options.matchPeriodLayout ?? null })] },
@@ -321,7 +321,7 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
       match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', advancesToMatchId: 'm-3', advancesToSide: 'HOME', status: 'COMPLETED', winnerSide: 'HOME' }),
       match({ id: 'm-3', matchNumber: 3, roundNumber: 2, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-3', status: 'COMPLETED', winnerSide: 'HOME' }),
     ]);
-    recordEventMatchResultMock.mockResolvedValue({ error: { error: { code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', message: 'Match 1 winner already played match 3.' } } });
+    recordEventMatchResultMock.mockResolvedValue({ error: { error: { code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', message: 'Match 1 winner already played match 3.' } } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-bracket-winner-1-AWAY'));
@@ -554,7 +554,7 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
   // score, overtime included, is the game's result.
   describe('quarter scores for an American football game', () => {
     const playoffs = sportEventFixture({ id: 'evt-1', sport: 'AMERICAN_FOOTBALL', name: 'NFL Playoffs', status: 'IN_PROGRESS', rounds: 1, roundsPar: null, allowedTransitions: [] });
-    const superBowl = (overrides: Partial<SportEventMatchDto> = {}) => match({
+    const superBowl = (overrides: Partial<SportEventRoundMatchDto> = {}) => match({
       id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', ...overrides,
     });
 
@@ -826,7 +826,7 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
       match({ id: 'm2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4' }),
     ];
 
-    function seedWithdrawals(matches: SportEventMatchDto[] = firstRound) {
+    function seedWithdrawals(matches: SportEventRoundMatchDto[] = firstRound) {
       seed(matches);
       rosterOf(duke.participant, replacement);
     }

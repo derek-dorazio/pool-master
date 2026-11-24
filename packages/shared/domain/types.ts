@@ -451,7 +451,7 @@ export interface ContestEntryPick extends DomainEntity {
  */
 export type ContestEntryMatchPrediction = DomainEntity & PredictedChoice & {
   contestEntryId: string;
-  sportEventMatchId: string;
+  sportEventRoundMatchId: string;
   /** Null in a straight-up pool, and in a confidence pool until the entry gives one. */
   confidence: number | null;
   pickedAt: Date;

@@ -188,7 +188,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
 
   const leagueId = await test.step('create a basketball league', async () => {
     // A league is added by migration, so a journey makes its own through the API.
-    const id = await createJourneySportLeague(page, { sport: 'BASKETBALL', name: run.tourName, tierProfileName: '4 tiers of 16' });
+    const id = await createJourneySportLeague(page, { sport: 'BASKETBALL', name: run.tourName, platformTierProfileCode: 'TIERS_4_OF_16' });
     // The Sports page's one grid lists every sport league, the new one too.
     await page.goto('/manage/sports');
     await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();

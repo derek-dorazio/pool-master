@@ -22,7 +22,7 @@ import {
   type ContestConfiguration,
   type SportLeague,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import type { BracketLeaderboardEntryRow } from '../../../packages/core-api/src/mappers/bracket-leaderboard.mapper';
 import type { ContestLeaderboardEntryRow, ContestLeaderboardModel } from '../../../packages/core-api/src/mappers/contests.mapper';
@@ -122,8 +122,8 @@ describe('lastFinishedRound', () => {
   });
 });
 
-function game(roundNumber: number, status: MatchStatus, updatedAt: Date, extra: Partial<SportEventMatch> = {}): SportEventMatch {
-  return { roundNumber, status, updatedAt, scheduledDate: null, ...extra } as SportEventMatch;
+function game(roundNumber: number, status: MatchStatus, updatedAt: Date, extra: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
+  return { roundNumber, status, updatedAt, scheduledDate: null, ...extra } as SportEventRoundMatch;
 }
 
 describe('lastFinishedMatchRound', () => {
@@ -156,7 +156,7 @@ describe('LiveStandings.queueDue', () => {
   let pickEmBoards: Map<string, PickEmLeaderboardModel>;
   let survivorBoards: Map<string, SurvivorLeaderboardModel>;
   let bracketBoards: Map<string, { entries: BracketLeaderboardEntryRow[] }>;
-  let matches: Map<string, SportEventMatch[]>;
+  let matches: Map<string, SportEventRoundMatch[]>;
   let roundNames: string[];
   let positions: Map<string, number | null>;
   let failingContestId: string | null;

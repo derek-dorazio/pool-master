@@ -19,13 +19,13 @@ import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../
 const AS_OF = new Date('2027-03-19T04:00:00.000Z');
 
 /** The job a decided game's write carries to settle its squares contests, as the handler map builds it. */
-function settleGameJob(sportEventId: string, sportEventMatchId: string): BackgroundJobRequest {
+function settleGameJob(sportEventId: string, sportEventRoundMatchId: string): BackgroundJobRequest {
   return {
     type: BackgroundJobType.SETTLE_GAME_CONTESTS,
-    payload: { sportEventId, sportEventMatchId, completedAt: AS_OF.toISOString() },
+    payload: { sportEventId, sportEventRoundMatchId, completedAt: AS_OF.toISOString() },
     sportEventId,
     runAt: undefined,
-    dedupeKey: `SETTLE_GAME_CONTESTS:${sportEventMatchId}`,
+    dedupeKey: `SETTLE_GAME_CONTESTS:${sportEventRoundMatchId}`,
     start: TEST_JOB_START,
   };
 }
@@ -35,8 +35,8 @@ function gameSettlement() {
   const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
   const queued = jest.spyOn(queue, 'queued');
   const domainEvents = new RecordingDomainEvents({ queue });
-  const decided = (sportEventId: string, sportEventMatchId: string) => domainEvents.collected.filter((event) => event.type === DomainEventType.GAME_DECIDED
-    && event.sportEventId === sportEventId && event.sportEventMatchId === sportEventMatchId && event.decidedAt.getTime() === AS_OF.getTime());
+  const decided = (sportEventId: string, sportEventRoundMatchId: string) => domainEvents.collected.filter((event) => event.type === DomainEventType.GAME_DECIDED
+    && event.sportEventId === sportEventId && event.sportEventRoundMatchId === sportEventRoundMatchId && event.decidedAt.getTime() === AS_OF.getTime());
   return { domainEvents, queued, decided };
 }
 
@@ -289,14 +289,14 @@ describe('MatchResultService.recordResult', () => {
     expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(vermont.id);
   });
 
-  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new winner once the next match has a result, but still fixes the scores', async () => {
+  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new winner once the next match has a result, but still fixes the scores', async () => {
     const { service, event } = await setup();
     await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
     await service.recordResult(event.id, 2, homeWins, MatchResultSource.ADMIN);
     await service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN);
 
     await expect(service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN))
-      .rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
     const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 81, awayScore: 70 }, MatchResultSource.ADMIN);
     expect(bracket.find((match) => match.matchNumber === 1)?.homeScore).toBe(81);
   });
@@ -350,16 +350,16 @@ describe('MatchResultService once the next game has quarter scores', () => {
     return context;
   }
 
-  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new winner for a game whose winner is playing a game with quarter scores', async () => {
+  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new winner for a game whose winner is playing a game with quarter scores', async () => {
     const { service, event } = await scoredFinal();
 
-    await expect(service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
   });
 
-  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) clearing the result of a game whose winner is playing a game with quarter scores', async () => {
+  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) clearing the result of a game whose winner is playing a game with quarter scores', async () => {
     const { service, event } = await scoredFinal();
 
-    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
   });
 });
 
@@ -560,13 +560,13 @@ describe('MatchResultService.clearResult', () => {
     expect(store.standingRows).toEqual([]);
   });
 
-  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) once the next match has a result', async () => {
+  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) once the next match has a result', async () => {
     const { service, event } = await setup();
     await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
     await service.recordResult(event.id, 2, homeWins, MatchResultSource.ADMIN);
     await service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN);
 
-    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
   });
 });
 
@@ -993,23 +993,23 @@ describe('MatchResultService on a reseeded bracket', () => {
     expect(matchOf(3).awaySportEventParticipantId).toBeNull();
   });
 
-  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new first-round winner once the match it was placed in has a result', async () => {
+  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new first-round winner once the match it was placed in has a result', async () => {
     const { service, event, six, matchOf } = await reseeded();
     await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
     matchOf(3).awaySportEventParticipantId = six.id;
     await service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN);
 
-    await expect(service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
   });
 
-  it('refuses (409 SPORT_EVENT_MATCH_RESULT_LOCKED) a new first-round winner once its next-round game is played, even when the final is numbered first', async () => {
+  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new first-round winner once its next-round game is played, even when the final is numbered first', async () => {
     const { service, event, six, matchOf } = await reseeded({ finalFirst: true });
     await service.recordResult(event.id, 3, awayWins, MatchResultSource.ADMIN);
     matchOf(5).awaySportEventParticipantId = six.id;
     await service.recordResult(event.id, 5, awayWins, MatchResultSource.ADMIN);
     expect(matchOf(1).homeSportEventParticipantId).toBe(six.id);
 
-    await expect(service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
     expect([matchOf(5).awaySportEventParticipantId, matchOf(1).homeSportEventParticipantId]).toEqual([six.id, six.id]);
   });
 

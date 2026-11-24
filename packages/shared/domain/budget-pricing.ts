@@ -53,8 +53,11 @@ export const EventPricingConfigSchema = BudgetPricingValuesSchema.extend({
 }).describe('The values an event\'s field was priced with for budget contests.');
 export type EventPricingConfig = z.infer<typeof EventPricingConfigSchema>;
 
-/** A pricing profile, defined once for the platform; each sport league names one (`SportLeague.pricingProfileId`). */
-export interface PricingProfile extends DomainEntity, BudgetPricingProfile {}
+/** A pricing profile, defined once for the platform; each sport league names one (`SportLeague.platformPricingProfileId`). */
+export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfile {
+  /** The profile's key: what migrations, seed scripts and test data find it by, never its name. */
+  code: string;
+}
 
 /** A profile as an event stores the values it was priced with. */
 export function eventPricingOf({ name, ...values }: BudgetPricingProfile): EventPricingConfig {

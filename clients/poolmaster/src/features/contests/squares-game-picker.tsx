@@ -14,7 +14,7 @@ export function SquaresGamePicker({
 }: {
   choices: ReturnType<typeof useSquaresGameChoices>;
   event: SportEventDto;
-  onChange: (sportEventMatchId: string) => void;
+  onChange: (sportEventRoundMatchId: string) => void;
   value: string;
 }) {
   const displayPreferences = useDisplayPreferences();

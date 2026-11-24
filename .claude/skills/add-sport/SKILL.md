@@ -46,8 +46,8 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
    - Head to head: a bracket of matches, points per round won plus an optional seed upset
      bonus (basketball, American football, hockey, baseball, soccer, tennis). A league whose rounds the sport's names
      do not fit names its own (`SportLeague.roundNames`, seeded with the league: the NBA's). Every league names a tier
-     profile and a pricing profile (`tierProfileId`, `pricingProfileId`): the migration that seeds a new league
-     points it at an existing profile, or adds one first (the College Football Playoff names "6 tiers of 2"). Its matches are `SportEventMatch` rows in the event core, not family tables.
+     profile and a pricing profile (`platformTierProfileId`, `platformPricingProfileId`): the migration that seeds a new league
+     points it at an existing profile, or adds one first (the College Football Playoff names "6 tiers of 2"). Its matches are `SportEventRoundMatch` rows in the event core, not family tables.
      A sport whose level match is settled by a shoot-out sets the definition's `shootout` to
      true and gives the shoot-out its word (`sport.<SPORT>.shootout`, soccer's "pens"); every
      other sport sets it to false. The score stays level and the shoot-out's winner goes

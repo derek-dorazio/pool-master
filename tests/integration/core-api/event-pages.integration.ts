@@ -223,10 +223,10 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
       },
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: sportEvent.id, roundNumber: 1, scheduledDate: sportEvent.startDate } });
-    await prisma.sportEventMatch.create({
+    await prisma.sportEventRoundMatch.create({
       data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false, status: 'COMPLETED', scheduledDate: sportEvent.startDate },
     });
-    const ahead = await prisma.sportEventMatch.create({
+    const ahead = await prisma.sportEventRoundMatch.create({
       data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 2, isNeutralSite: false, scheduledDate: new Date('2030-01-24T20:00:00.000Z') },
     });
     const reader = createContestOpeningReader(getAppPrisma());
@@ -234,7 +234,7 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     if (state === null) throw new Error('The event was not read back.');
 
     expect(await reader.nextSquaresKickoff(state, NOW)).toEqual(new Date('2030-01-24T20:00:00.000Z'));
-    await prisma.sportEventMatch.update({ where: { id: ahead.id }, data: { status: 'CANCELLED' } });
+    await prisma.sportEventRoundMatch.update({ where: { id: ahead.id }, data: { status: 'CANCELLED' } });
     expect(await reader.nextSquaresKickoff(state, NOW)).toBeNull();
   });
 });

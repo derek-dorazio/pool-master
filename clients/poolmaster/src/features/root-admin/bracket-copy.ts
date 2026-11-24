@@ -1,6 +1,6 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { isMatchUnplayed, MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
-import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { DisplayStringValues } from '@poolmaster/shared/display-strings';
 import type { ExtractErrorMessageOptions } from '@/lib/errors';
 
@@ -19,7 +19,7 @@ export function describeEntry(entry: SportEventParticipantDto): string {
 
 /** The field row on one side of a match, if a team is named there. */
 export function sideEntry(
-  match: SportEventMatchDto,
+  match: SportEventRoundMatchDto,
   side: MatchSide,
   fieldById: ReadonlyMap<string, SportEventParticipantDto>,
 ): SportEventParticipantDto | undefined {
@@ -32,7 +32,7 @@ export function sideEntry(
  * match, a first-round match not yet started, and not a play-in place, which takes its winner instead.
  */
 export function replaceableEntries(
-  bracket: readonly SportEventMatchDto[],
+  bracket: readonly SportEventRoundMatchDto[],
   fieldById: ReadonlyMap<string, SportEventParticipantDto>,
 ): SportEventParticipantDto[] {
   const firstRound = Math.min(...bracket.map((match) => match.roundNumber));
@@ -50,7 +50,7 @@ export function replaceableEntries(
 }
 
 /** The earlier match whose winner fills one side of this one, if any. */
-export function feederOf(match: SportEventMatchDto, side: MatchSide, bracket: readonly SportEventMatchDto[]): SportEventMatchDto | undefined {
+export function feederOf(match: SportEventRoundMatchDto, side: MatchSide, bracket: readonly SportEventRoundMatchDto[]): SportEventRoundMatchDto | undefined {
   return bracket.find((other) => other.advancesToMatchId === match.id && other.advancesToSide === side);
 }
 
@@ -76,8 +76,8 @@ function bracketErrorValues(vocabulary: SportVocabulary): DisplayStringValues {
  */
 export function bracketErrors(
   vocabulary: SportVocabulary,
-  match?: SportEventMatchDto,
-  bracket: readonly SportEventMatchDto[] = [],
+  match?: SportEventRoundMatchDto,
+  bracket: readonly SportEventRoundMatchDto[] = [],
 ): BracketErrorOptions {
   const next = match ? bracket.find((candidate) => candidate.id === match.advancesToMatchId) : undefined;
   return next
@@ -120,7 +120,7 @@ export function reseedErrors(vocabulary: SportVocabulary, action: ReseedAction):
  * order: each after a round with a match that links nowhere, below the last round. The same rule
  * the server applies before it will propose or set a round's matchups.
  */
-export function reseededRounds(bracket: readonly SportEventMatchDto[]): number[] {
+export function reseededRounds(bracket: readonly SportEventRoundMatchDto[]): number[] {
   const lastRound = Math.max(0, ...bracket.map((match) => match.roundNumber));
   const rounds = new Set(bracket
     .filter((match) => match.advancesToMatchId === null && match.roundNumber < lastRound)
@@ -129,13 +129,13 @@ export function reseededRounds(bracket: readonly SportEventMatchDto[]): number[]
 }
 
 /** Whether a round has begun: a match is no longer still to play (scheduled or postponed), or has a period's score (#772). */
-export function roundStarted(bracket: readonly SportEventMatchDto[], roundNumber: number): boolean {
+export function roundStarted(bracket: readonly SportEventRoundMatchDto[], roundNumber: number): boolean {
   return bracket.some((match) => match.roundNumber === roundNumber
     && (!isMatchUnplayed(match.status) || match.periodScores.length > 0));
 }
 
 /** The matches of the round before this one that have no result yet, in match-number order. */
-export function unfinishedBefore(bracket: readonly SportEventMatchDto[], roundNumber: number): SportEventMatchDto[] {
+export function unfinishedBefore(bracket: readonly SportEventRoundMatchDto[], roundNumber: number): SportEventRoundMatchDto[] {
   return bracket
     .filter((match) => match.roundNumber === roundNumber - 1 && match.status !== MatchStatus.COMPLETED)
     .sort((left, right) => left.matchNumber - right.matchNumber);
@@ -146,6 +146,6 @@ export function unfinishedBefore(bracket: readonly SportEventMatchDto[], roundNu
  * and all are in one round. Only such a game can be cancelled, since a bracket can't lose one,
  * and only such games carry a spread column (#720).
  */
-export function formsNoBracket(bracket: readonly SportEventMatchDto[]): boolean {
+export function formsNoBracket(bracket: readonly SportEventRoundMatchDto[]): boolean {
   return bracket.every((game) => game.advancesToMatchId === null && game.roundNumber === bracket[0]?.roundNumber);
 }

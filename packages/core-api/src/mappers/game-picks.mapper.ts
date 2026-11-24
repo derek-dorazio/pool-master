@@ -20,7 +20,7 @@ import { selectionErrors } from '../modules/selections/selection-errors';
 function toGamePickGameDto(game: GamePickGame): GamePickGameDto {
   const { match, pick, pickScore } = game;
   return {
-    sportEventMatchId: match.id,
+    sportEventRoundMatchId: match.id,
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
     kickoff: game.kickoff.toISOString(),
@@ -84,13 +84,13 @@ function toChoice(pick: GamePickWrite): PredictedChoice {
   if (pick.predictedResult === PredictedResult.TEAM && pick.sportEventParticipantId !== null) {
     return { predictedResult: PredictedResult.TEAM, sportEventParticipantId: pick.sportEventParticipantId };
   }
-  throw selectionErrors.pickInvalid(pick.sportEventMatchId);
+  throw selectionErrors.pickInvalid(pick.sportEventRoundMatchId);
 }
 
 /** The picks a save request, or a preview's trial picks (#1612), name, with an omitted confidence as none. */
 export function toGamePickWrites(request: SaveGamePicksRequest | GamePickPreviewRequest): ContestEntryMatchPredictionWrite[] {
   return request.picks.map((pick) => ({
-    sportEventMatchId: pick.sportEventMatchId,
+    sportEventRoundMatchId: pick.sportEventRoundMatchId,
     ...toChoice(pick),
     confidence: pick.confidence ?? null,
   }));
@@ -99,7 +99,7 @@ export function toGamePickWrites(request: SaveGamePicksRequest | GamePickPreview
 function toGamePickPreviewGameDto(game: GamePreview): GamePickPreviewGameDto {
   const { match, pick } = game;
   return {
-    sportEventMatchId: match.id,
+    sportEventRoundMatchId: match.id,
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
     kickoff: game.kickoff.toISOString(),

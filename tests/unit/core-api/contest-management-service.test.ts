@@ -2820,7 +2820,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   const squaresRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
     name: 'Super Bowl Squares',
     sportEventIds: [EVENT_ID],
-    sportEventMatchId: GAME_ID,
+    sportEventRoundMatchId: GAME_ID,
     contestFormat: 'SQUARES',
     selectionType: SelectionType.SQUARES,
     configuration: { selectionType: SelectionType.SQUARES, maxEntriesPerSquad: 1, maxSquaresPerEntry: 10 },
@@ -2834,8 +2834,8 @@ describe('ContestManagementService squares rules (#711)', () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const reader = createSportEventReader({ sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
-    reader.findGame.mockImplementation(async (sportEventId: string, sportEventMatchId: string) =>
-      sportEventId === EVENT_ID && sportEventMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
+    reader.findGame.mockImplementation(async (sportEventId: string, sportEventRoundMatchId: string) =>
+      sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
@@ -2895,7 +2895,7 @@ describe('ContestManagementService squares rules (#711)', () => {
 
   it('refuses a squares contest sent no game with CONTEST_SQUARES_GAME_REQUIRED, writing nothing', async () => {
     const { contestCoreRepo, service } = squaresService();
-    const withoutGame = { ...squaresRequest(), sportEventMatchId: undefined };
+    const withoutGame = { ...squaresRequest(), sportEventRoundMatchId: undefined };
 
     await expect(service.createContest({ leagueId: 'league-1' }, withoutGame))
       .rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_REQUIRED });

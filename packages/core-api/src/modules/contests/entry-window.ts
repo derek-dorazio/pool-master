@@ -42,7 +42,7 @@ export type ContestCutoffKind = (typeof ContestCutoffKind)[keyof typeof ContestC
 export type ContestCutoff =
   | { kind: typeof ContestCutoffKind.EVENT_START }
   | { kind: typeof ContestCutoffKind.ROUND_START; roundNumber: number }
-  | { kind: typeof ContestCutoffKind.MATCH_START; sportEventMatchId: string };
+  | { kind: typeof ContestCutoffKind.MATCH_START; sportEventRoundMatchId: string };
 
 const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
 
@@ -63,7 +63,7 @@ export function contestCutoff(
     return { kind: ContestCutoffKind.ROUND_START, roundNumber: rules.startsAtRound };
   }
   if (rules?.selectionType === SelectionType.SQUARES && squaresGameMatchId !== undefined) {
-    return { kind: ContestCutoffKind.MATCH_START, sportEventMatchId: squaresGameMatchId };
+    return { kind: ContestCutoffKind.MATCH_START, sportEventRoundMatchId: squaresGameMatchId };
   }
   return AT_EVENT_START;
 }
@@ -96,7 +96,7 @@ export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, gam
       if (isSportEventStatusFinished(sportEvent.status)) {
         return sportEvent;
       }
-      const game = games.find((candidate) => candidate.id === cutoff.sportEventMatchId);
+      const game = games.find((candidate) => candidate.id === cutoff.sportEventRoundMatchId);
       if (!game) {
         return sportEvent;
       }

@@ -4,10 +4,10 @@
  * the head-to-head family.
  */
 
-import type { BackgroundJobRequest, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, SportEventMatch, SportEventMatchPeriodScore } from '../domain';
+import type { BackgroundJobRequest, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, SportEventRoundMatch, SportEventMatchPeriodScore } from '../domain';
 
 /** One match of a bracket being loaded. `id` is chosen by the caller so links can name it. */
-export interface SportEventMatchWrite {
+export interface SportEventRoundMatchWrite {
   id: string;
   roundNumber: number;
   matchNumber: number;
@@ -21,7 +21,7 @@ export interface SportEventMatchWrite {
 }
 
 /** What one match edit changes; a value left out keeps what is stored. */
-export interface SportEventMatchPatch {
+export interface SportEventRoundMatchPatch {
   homeSportEventParticipantId?: string | null;
   awaySportEventParticipantId?: string | null;
   isNeutralSite?: boolean;
@@ -86,20 +86,20 @@ export interface MatchResultApply {
   jobs?: readonly BackgroundJobRequest[];
 }
 
-export interface SportEventMatchRepository {
+export interface SportEventRoundMatchRepository {
   /** One match, or null when there is none: a squares grid's game (#1201). */
-  findById(id: string): Promise<SportEventMatch | null>;
+  findById(id: string): Promise<SportEventRoundMatch | null>;
   /** The event's matches in match-number order. */
-  findBySportEvent(sportEventId: string): Promise<SportEventMatch[]>;
+  findBySportEvent(sportEventId: string): Promise<SportEventRoundMatch[]>;
   /** Several events' matches in one read (#762), each event's in match-number order. */
-  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventMatch[]>;
+  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventRoundMatch[]>;
   /**
    * Replaces every match of the event with `matches`, all or none. Every round named must exist.
    * Each bracket write takes the background jobs it causes (the event's leaderboard rebuild,
    * #1466) and writes them with it.
    */
-  replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
-  update(id: string, patch: SportEventMatchPatch, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+  replaceBracket(sportEventId: string, matches: readonly SportEventRoundMatchWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+  update(id: string, patch: SportEventRoundMatchPatch, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Each match linked to the provider game whose teams are its own (#1496), all or none. */
   linkGames(links: readonly { id: string; externalGameId: string }[]): Promise<void>;
   /**
@@ -115,10 +115,10 @@ export interface SportEventMatchRepository {
    * Creates or replaces the score at the end of one period of a match (#772), with any background
    * jobs it causes in the same transaction.
    */
-  savePeriodScore(sportEventMatchId: string, score: SportEventMatchPeriodScore, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+  savePeriodScore(sportEventRoundMatchId: string, score: SportEventMatchPeriodScore, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /**
    * Removes the score at the end of one period of a match, with any background jobs it causes in
    * the same transaction; removing none changes nothing but still writes the jobs.
    */
-  deletePeriodScore(sportEventMatchId: string, periodNumber: number, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
+  deletePeriodScore(sportEventRoundMatchId: string, periodNumber: number, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
 }

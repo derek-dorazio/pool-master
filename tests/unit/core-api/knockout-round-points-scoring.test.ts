@@ -8,7 +8,7 @@ import {
   SportEventStatus,
   UpsetBonusRule,
   type ContestScoringSettings,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type UpsetBonus,
 } from '@poolmaster/shared/domain';
 import { getScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
@@ -60,7 +60,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     return { name, entry, participant };
   });
   const idOf = (name: string | null) => (name === null ? null : rows.find((row) => row.name === name)?.entry.id ?? null);
-  const matches: SportEventMatch[] = matchInputs.map((input) => ({
+  const matches: SportEventRoundMatch[] = matchInputs.map((input) => ({
     id: `match-${input.matchNumber}`,
     sportEventId: event.id,
     roundNumber: input.round,

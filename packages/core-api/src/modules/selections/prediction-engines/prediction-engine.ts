@@ -14,7 +14,7 @@ import type {
   ContestSelectionConfig,
   PredictedChoice,
   PredictionSelectionType,
-  SportEventMatch,
+  SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import type { PickWindow } from '../../contests/entry-window';
 import type { BracketScore, PredictedSides } from '../../scoring-families/head-to-head/bracket-picks';
@@ -67,7 +67,7 @@ export interface PredictionSeason {
 
 /** One pick as the week's rules read it: a team, or a tie (#792). */
 export type WeekPrediction = PredictedChoice & {
-  sportEventMatchId: string;
+  sportEventRoundMatchId: string;
   confidence: number | null;
 };
 
@@ -102,7 +102,7 @@ export interface PredictionEngine {
    * last game by kickoff; null while there is none. The tiebreaker locks, and is revealed, with
    * that game's pick, and every entry gives one to submit.
    */
-  tiebreakerGame(input: { games: readonly SportEventMatch[]; eventStart: Date }): SportEventMatch | null;
+  tiebreakerGame(input: { games: readonly SportEventRoundMatch[]; eventStart: Date }): SportEventRoundMatch | null;
 
   /**
    * The teams each game offers the entry, and which of its picks stand: the game's own two teams
@@ -110,7 +110,7 @@ export interface PredictionEngine {
    * when it was already saved, and refused when it is being saved.
    */
   resolvePicks<Pick extends WeekPrediction>(input: {
-    games: readonly SportEventMatch[];
+    games: readonly SportEventRoundMatch[];
     predictions: readonly Pick[];
     seedOf: ReadonlyMap<string, number | null>;
     /** The field rows withdrawn after the draw (#704), out of their games. */
@@ -134,7 +134,7 @@ export interface PredictionEngine {
    */
   scorePicks(input: {
     configuration: ContestSelectionConfig | undefined;
-    games: readonly SportEventMatch[];
+    games: readonly SportEventRoundMatch[];
     predictions: readonly WeekPrediction[];
     seedOf: ReadonlyMap<string, number | null>;
     withdrawn: ReadonlySet<string>;

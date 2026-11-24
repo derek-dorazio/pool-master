@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
-import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { SportEventDto, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { Button, InlineError, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -30,7 +30,7 @@ export function WithdrawalsCard({
   vocabulary,
 }: {
   event: SportEventDto;
-  bracket: readonly SportEventMatchDto[];
+  bracket: readonly SportEventRoundMatchDto[];
   field: readonly SportEventParticipantDto[];
   vocabulary: SportVocabulary;
 }) {

@@ -39,7 +39,7 @@ export const pickEmPredictionEngine: PredictionEngine = {
     }]));
     // A tie pick stands on any of the week's games; the service takes one only where the sport offers it.
     const stands = (prediction: (typeof predictions)[number]) => {
-      const game = sides.get(prediction.sportEventMatchId);
+      const game = sides.get(prediction.sportEventRoundMatchId);
       return game !== undefined && (!isTeamChoice(prediction)
         || prediction.sportEventParticipantId === game.home || prediction.sportEventParticipantId === game.away);
     };
@@ -70,7 +70,7 @@ export const pickEmPredictionEngine: PredictionEngine = {
   findWeekIssues({ configuration, gameMatchIds, predictions, tiebreakerValue }) {
     const issues: PredictionIssue[] = [];
     const games = new Set(gameMatchIds);
-    const picked = predictions.filter((prediction) => games.has(prediction.sportEventMatchId));
+    const picked = predictions.filter((prediction) => games.has(prediction.sportEventRoundMatchId));
     if (picked.length < games.size) {
       issues.push({ kind: PredictionIssueKind.WEEK_INCOMPLETE, pickedCount: picked.length, gameCount: games.size });
     }

@@ -13,7 +13,7 @@ import type {
   ContestEntrySeasonPrediction,
   LockedPredictionWeek,
   ParticipantRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventParticipantRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -25,7 +25,7 @@ import {
   type BackgroundJobRequest,
   type ContestEntryMatchPrediction,
   type Participant,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
 import { expectDefined } from './expect-defined';
@@ -36,7 +36,7 @@ import type { InMemoryContestWorld } from './in-memory-contest-world';
 const T0 = new Date('2026-09-01T00:00:00.000Z');
 
 export class InMemoryGamePicks {
-  readonly matches = new Map<string, SportEventMatch>();
+  readonly matches = new Map<string, SportEventRoundMatch>();
   readonly field = new Map<string, SportEventParticipant>();
   readonly participants = new Map<string, Participant>();
   readonly predictions = new Map<string, ContestEntryMatchPrediction>();
@@ -86,10 +86,10 @@ export class InMemoryGamePicks {
     kickoff: Date | null,
     status: MatchStatus = MatchStatus.SCHEDULED,
     teams?: { home: string; away: string },
-  ): SportEventMatch {
+  ): SportEventRoundMatch {
     const home = this.addTeam(sportEventId, `Home ${matchNumber}`, { participantId: teams?.home });
     const away = this.addTeam(sportEventId, `Away ${matchNumber}`, { participantId: teams?.away });
-    const match: SportEventMatch = {
+    const match: SportEventRoundMatch = {
       id: `game-${matchNumber}`,
       sportEventId,
       roundNumber: 1,
@@ -120,7 +120,7 @@ export class InMemoryGamePicks {
   }
 
   /** Stores games as they are, replacing any with the same id: a bracket, or its results. */
-  putMatches(matches: readonly SportEventMatch[]): void {
+  putMatches(matches: readonly SportEventRoundMatch[]): void {
     for (const match of matches) this.matches.set(match.id, match);
   }
 
@@ -128,7 +128,7 @@ export class InMemoryGamePicks {
    * Stores a bracket and a field row for every team it names, the row id being the team's id and
    * its seed taken from `seedOf`.
    */
-  addBracket(matches: readonly SportEventMatch[], seedOf: ReadonlyMap<string, number | null>): void {
+  addBracket(matches: readonly SportEventRoundMatch[], seedOf: ReadonlyMap<string, number | null>): void {
     this.putMatches(matches);
     for (const match of matches) {
       for (const team of [match.homeSportEventParticipantId, match.awaySportEventParticipantId]) {
@@ -138,7 +138,7 @@ export class InMemoryGamePicks {
     }
   }
 
-  matchRepo(): Pick<SportEventMatchRepository, 'findById' | 'findBySportEvent' | 'findBySportEvents'> {
+  matchRepo(): Pick<SportEventRoundMatchRepository, 'findById' | 'findBySportEvent' | 'findBySportEvents'> {
     const findBySportEvents = async (sportEventIds: readonly string[]) => [...this.matches.values()]
       .filter((match) => sportEventIds.includes(match.sportEventId))
       .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber);
@@ -185,11 +185,11 @@ export class InMemoryGamePicks {
   }
 
   private inEvent(row: ContestEntryMatchPrediction, sportEventId: string): boolean {
-    return this.matches.get(row.sportEventMatchId)?.sportEventId === sportEventId;
+    return this.matches.get(row.sportEventRoundMatchId)?.sportEventId === sportEventId;
   }
 
   private matchNumberOf(row: ContestEntryMatchPrediction): number {
-    return expectDefined(this.matches.get(row.sportEventMatchId)).matchNumber;
+    return expectDefined(this.matches.get(row.sportEventRoundMatchId)).matchNumber;
   }
 
   /** Mirrors the adapter: all or none, unique per entry and game, confidence at least 1, the week's status and tiebreaker written with the picks. */
@@ -207,12 +207,12 @@ export class InMemoryGamePicks {
         .filter((row) => contestEntryIds.includes(row.contestEntryId)
           && sportEventIds.some((sportEventId) => this.inEvent(row, sportEventId)))
         .map((row): ContestEntrySeasonPrediction => {
-          const sportEventId = expectDefined(this.matches.get(row.sportEventMatchId)).sportEventId;
+          const sportEventId = expectDefined(this.matches.get(row.sportEventRoundMatchId)).sportEventId;
           return row.predictedResult === PredictedResult.TIE
             ? { ...row, sportEventId, participantId: null }
             : { ...row, sportEventId, participantId: expectDefined(this.field.get(row.sportEventParticipantId)).participantId };
         }),
-      hasAnyOnMatch: async (sportEventMatchId) => [...this.predictions.values()].some((row) => row.sportEventMatchId === sportEventMatchId),
+      hasAnyOnMatch: async (sportEventRoundMatchId) => [...this.predictions.values()].some((row) => row.sportEventRoundMatchId === sportEventRoundMatchId),
       save: async ({ contestEntryId, sportEventId, at: when, decide }) => {
         const week = (): LockedPredictionWeek => ({
           predictions: [...this.predictions.values()]
@@ -228,9 +228,9 @@ export class InMemoryGamePicks {
         }
         for (const matchId of clearedMatchIds) this.predictions.delete(key(contestEntryId, matchId));
         for (const save of saves) {
-          const existing = this.predictions.get(key(contestEntryId, save.sportEventMatchId));
-          this.predictions.set(key(contestEntryId, save.sportEventMatchId), {
-            id: existing?.id ?? `prediction-${contestEntryId}-${save.sportEventMatchId}`,
+          const existing = this.predictions.get(key(contestEntryId, save.sportEventRoundMatchId));
+          this.predictions.set(key(contestEntryId, save.sportEventRoundMatchId), {
+            id: existing?.id ?? `prediction-${contestEntryId}-${save.sportEventRoundMatchId}`,
             contestEntryId,
             ...save,
             pickedAt: when,

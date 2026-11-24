@@ -40,7 +40,7 @@ function prismaDouble(options: { league?: unknown } = {}) {
     eventSeries: { findMany: jest.fn().mockResolvedValue([{ id: 'series-1' }]) },
     sportEvent: { findMany: jest.fn().mockResolvedValue([]) },
     sportEventRound: { findMany: jest.fn().mockResolvedValue([]) },
-    sportEventMatch: { groupBy: jest.fn().mockResolvedValue([]) },
+    sportEventRoundMatch: { groupBy: jest.fn().mockResolvedValue([]) },
     sportEventParticipant: { groupBy: jest.fn().mockResolvedValue([]) },
     participant: { findMany: jest.fn().mockResolvedValue([]) },
     participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]) },
@@ -248,7 +248,7 @@ describe('readOverdueCandidates', () => {
     ]);
     const round = (roundNumber: number) => ({ id: `r${String(roundNumber)}`, sportEventId: 'parent', roundNumber, scheduledDate: at(`2027-04-1${String(roundNumber)}T00:00:00.000Z`), scheduledEndAt: null });
     prisma.sportEventRound.findMany.mockResolvedValue([round(1), round(2)]);
-    prisma.sportEventMatch.groupBy.mockResolvedValue([{ sportEventRoundId: 'r2', _max: { scheduledDate: at('2027-04-12T18:00:00.000Z') } }]);
+    prisma.sportEventRoundMatch.groupBy.mockResolvedValue([{ sportEventRoundId: 'r2', _max: { scheduledDate: at('2027-04-12T18:00:00.000Z') } }]);
     prisma.eventSeries.findMany.mockResolvedValue([{ id: 'series-1', sportLeagueId: 'tour' }]);
     prisma.providerLeague.findMany.mockResolvedValue([{ typicalGameMinutes: 300, sportLeagues: [{ sportLeagueId: 'tour' }] }]);
 

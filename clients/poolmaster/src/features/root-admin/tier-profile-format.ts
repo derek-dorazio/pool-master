@@ -1,10 +1,10 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { TierProfileLastTier } from '@poolmaster/shared/domain';
-import type { TierProfileDto } from '@/lib/api';
+import { PlatformTierProfileLastTier } from '@poolmaster/shared/domain';
+import type { PlatformTierProfileDto } from '@/lib/api';
 
 /** "All remaining", or "Capped at 15" with the most the last tier takes. */
-export function describeLastTier(profile: Pick<TierProfileDto, 'lastTier' | 'lastTierMax'>): string {
-  return profile.lastTier === TierProfileLastTier.CAPPED && profile.lastTierMax !== null
+export function describeLastTier(profile: Pick<PlatformTierProfileDto, 'lastTier' | 'lastTierMax'>): string {
+  return profile.lastTier === PlatformTierProfileLastTier.CAPPED && profile.lastTierMax !== null
     ? `Capped at ${profile.lastTierMax}`
-    : enumLabel('TierProfileLastTier', profile.lastTier);
+    : enumLabel('PlatformTierProfileLastTier', profile.lastTier);
 }
