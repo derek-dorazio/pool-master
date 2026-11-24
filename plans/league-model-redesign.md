@@ -742,7 +742,10 @@ Contest:
   template gets none. Named from the template, sport league and slot by the API; one plate per
   Season with that Season's winners; "repeat winner" means consecutive Seasons. A trophy shows
   from its first Season (`PERPETUAL_TROPHY_MIN_YEARS` goes). Templates have no versions and
-  are edited in place, so a trophy's history survives setup changes.
+  are edited in place, so a trophy's history survives setup changes. Squares (Derek 2026-11-24)
+  keep a perpetual trophy: each Season's plate is the team whose box won the final score
+  (the frozen final-period `ContestSquaresWinner`); still no medals, Championship points or
+  records.
 - Points scales (Derek 2026-11-24, slice 20e): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
   `CupPointsScale` enum move to `PlatformPointsProfile` (code, name, `kind` TABLE |
   FIELD_BEATEN, `points` list for TABLE, `pointsAfterTable` for STANDARD's tail), seeded by
