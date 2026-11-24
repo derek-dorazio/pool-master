@@ -1,9 +1,11 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import {
-  SportEventReleaseMode,
+  type SportEventReleaseMode,
   SportEventReleaseModeOrder,
   SportEventStatusOrder,
   SportLeagueIssueTypeOrder,
+  type SportLeagueIssueType,
   type Sport,
 } from '@poolmaster/shared/domain';
 import { StatusBadge, Text } from '@/features/shared/ui';
@@ -11,14 +13,8 @@ import type { SportLeagueEventOverviewDto } from '@/lib/api';
 import { formatSportEventStatus, sportEventStatusTone } from './sport-admin-utils';
 import { SportLeagueIssueChips } from './sport-league-issue-chips';
 import { LeagueEventReleaseDate } from './league-event-release-date';
-import { SPORT_LEAGUE_ISSUE_LABELS } from './sport-league-overview-text';
 
 const columnHelper = createColumnHelper<SportLeagueEventOverviewDto>();
-
-export const RELEASE_MODE_LABELS: Record<SportEventReleaseMode, string> = {
-  [SportEventReleaseMode.AUTO]: 'Auto',
-  [SportEventReleaseMode.MANUAL]: 'Manual',
-};
 
 /**
  * The year the Events grid opens on: the league's current event year, else this calendar year,
@@ -77,9 +73,9 @@ export function leagueEventColumns({
       header: 'Release',
       meta: {
         info: 'Auto: released on its own once every ready check passes, a set number of days before it starts. Manual: you release it.',
-        type: { kind: 'enum', order: SportEventReleaseModeOrder, label: (mode) => RELEASE_MODE_LABELS[mode as SportEventReleaseMode] },
+        type: { kind: 'enum', order: SportEventReleaseModeOrder, label: (mode) => enumLabel('SportEventReleaseMode', mode as SportEventReleaseMode, { form: 'short' }) },
       },
-      cell: ({ getValue }) => RELEASE_MODE_LABELS[getValue()],
+      cell: ({ getValue }) => enumLabel('SportEventReleaseMode', getValue(), { form: 'short' }),
     }),
     columnHelper.accessor('releaseAt', {
       header: 'Release date',
@@ -102,7 +98,7 @@ export function leagueEventColumns({
           kind: 'enum',
           manyPerCell: true,
           order: SportLeagueIssueTypeOrder,
-          label: (type) => SPORT_LEAGUE_ISSUE_LABELS[type as keyof typeof SPORT_LEAGUE_ISSUE_LABELS],
+          label: (type) => enumLabel('SportLeagueIssueType', type as SportLeagueIssueType),
         },
       },
       enableSorting: false,

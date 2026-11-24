@@ -1,9 +1,8 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { BackgroundJobStatus, BackgroundJobType, SelectionType } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
-import { leaderboardChangesOf, LeaderboardRebuildSubject } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
+import { JobLeaderboardRebuilds, leaderboardChangesOf, LeaderboardRebuildSubject } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import {
-  JobLeaderboardRebuilds,
   LEADERBOARD_BOARD_FORMAT,
   LEADERBOARD_SNAPSHOT_MAX_AGE_MS,
   isSnapshotCurrent,
@@ -12,7 +11,7 @@ import {
   nextKickoffAfter,
   readLeaderboardSnapshotMaxAgeMs,
 } from '../../../packages/core-api/src/modules/contests/leaderboard-snapshots';
-import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
+import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 function setup() {
   const jobs = inMemoryBackgroundJobs();
@@ -27,41 +26,6 @@ const waiting = (jobs: InMemoryBackgroundJobs) => jobs.rows
   .map((row) => ({ type: row.type, payload: row.payload }));
 
 describe('JobLeaderboardRebuilds', () => {
-  it('hands a write the event\'s rebuild job without queuing it, and wakes the runner only when the write says it committed (#1466)', () => {
-    const { jobs, rebuilds, runner } = setup();
-
-    const rebuild = rebuilds.forEvent('event-1');
-
-    expect(rebuild.jobs).toEqual([{
-      type: BackgroundJobType.REBUILD_LEADERBOARDS,
-      payload: { subject: LeaderboardRebuildSubject.EVENT, id: 'event-1' },
-      sportEventId: 'event-1',
-      dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:EVENT:event-1`,
-      start: TEST_JOB_START,
-    }]);
-    expect(waiting(jobs)).toEqual([]);
-    expect(runner.wake).not.toHaveBeenCalled();
-    rebuild.queued();
-    expect(runner.wake).toHaveBeenCalledTimes(1);
-  });
-
-  it('hands a pick\'em or survivor write the contest\'s rebuild job without queuing it, and wakes the runner only once it committed (#1466)', () => {
-    const { jobs, rebuilds, runner } = setup();
-
-    const rebuild = rebuilds.forContest('contest-9');
-
-    expect(rebuild.jobs).toEqual([{
-      type: BackgroundJobType.REBUILD_LEADERBOARDS,
-      payload: { subject: LeaderboardRebuildSubject.CONTEST, id: 'contest-9' },
-      dedupeKey: `${BackgroundJobType.REBUILD_LEADERBOARDS}:CONTEST:contest-9`,
-      start: TEST_JOB_START,
-    }]);
-    expect(waiting(jobs)).toEqual([]);
-    expect(runner.wake).not.toHaveBeenCalled();
-    rebuild.queued();
-    expect(runner.wake).toHaveBeenCalledTimes(1);
-  });
-
   it('queues one rebuild job per event a burst of writes names, however often each is named', async () => {
     const { jobs, rebuilds, runner } = setup();
 

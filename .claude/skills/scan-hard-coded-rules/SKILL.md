@@ -45,6 +45,27 @@ rg -l "${EXCL[@]}" "" packages/core-api/src/modules/ingestion | rg -i "mapping|r
 rg -n "${EXCL[@]}" "getFullYear\(|getUTCFullYear\(|new Date\(\)\.getMonth" $SRC
 rg -n "${EXCL[@]}" "\[[^\]]*Status\.[A-Z_]+,[^\]]*Status\.[A-Z_]+[^\]]*\]\.includes" $SRC
 rg -n "${EXCL[@]}" -i "keep in sync|mirrors? the (server|backend|api)|same rule as" $SRC
+
+# 6. Provider keys outside a ProviderMapping table
+rg -n "^\s+(externalId|externalIds|externalGameId|providerRef|provider[A-Z]\w*Id|matchKeyword)\b" packages/core-api/prisma/schema.prisma
+rg -n "${EXCL[@]}" "\b(externalId|externalGameId|providerRef|matchKeyword)\b" $BACKEND
+
+# 7. Either/or parent pairs: models with two or more optional foreign keys
+awk '/^model /{m=$2} /^[[:space:]]+[A-Za-z]+Id[[:space:]]+String\?/{n[m]++; f[m]=f[m]" "$1}
+  END{for (k in n) if (n[k] > 1) print k ":" f[k]}' packages/core-api/prisma/schema.prisma
+
+# 8. Generic words stored as data
+rg -n "^\s+(label|displayName|\w+Names|\w+Labels)\s" packages/core-api/prisma/schema.prisma
+rg -n -i "'(Week \d+|Round \d+|Quarterfinals?|Semifinals?|Final)'" packages/core-api/prisma/migrations $BACKEND
+
+# 9. Facts the feed supplies, recomputed
+rg -n "${EXCL[@]}" -i "(compute|derive|calc)\w*(Position|ToPar|Total|Tie|Cut|Status)\b" $BACKEND
+
+# 10. Domain values in the web app
+WEB="clients/poolmaster/src"
+rg -n "${EXCL[@]}" "(OPTIONS|_MAX|_MIN|DEFAULT|LIMIT|THRESHOLD|PENALTY)[A-Z_]*\s*=|Array\.from\(\{ *length:" $WEB
+rg -n "${EXCL[@]}" "(min|max|step)=\{-?[0-9]|\.(min|max)\(-?[0-9]|defaultValues" $WEB
+rg -n "${EXCL[@]}" "from '@poolmaster/shared[^']*'" $WEB | rg "_(MAX|MIN|DEFAULT|LIMIT)"
 ```
 
 Then do the search no pattern does: **list the facts, not the code.** For each concept in
@@ -52,7 +73,21 @@ Then do the search no pattern does: **list the facts, not the code.** For each c
 event is over or started, the final round, round labels, whether an event is a week of games,
 a contest's event limit, which events can take a contest, whether a league is synced and by
 which provider), find every place that works it out. Two or more is a finding even when no
-single line looks wrong; note whether the copies already disagree.
+single line looks wrong; note whether the copies already disagree. For each fact, also ask
+whether the feed already supplies it: a value we compute that the provider sends is a finding
+even with one copy (`rules/domain-model-conventions-rules.md` §17 *One computation per
+fact*).
+
+Read each hit of search 10 against `rules/domain-model-conventions-rules.md` §17 *The web app
+holds no domain values*: every value of a shared enum in its declared order and a display cap
+are fine, and anything else is a finding whose home is a field the API returns.
+
+Read each hit of searches 6 to 8 against its rule: a provider key belongs only in a
+`…ProviderMapping` table (§17 *Provider keys live only in ProviderMapping tables*); a model
+with two optional foreign keys is a finding only when exactly one is meant to be set (§9 *No
+nullable either/or parents*); a stored word is a finding when every league shares it, and fine
+when it is one real thing's proper name (§17 *Proper names are data, generic words are
+strings*).
 
 ## Step 2 — sort the hits
 
@@ -62,6 +97,8 @@ the router. Keep the rest and group them:
 
 - **Hard-coded rules that move into the model** — one row per rule, however many files carry
   it.
+- **Model shapes that break a convention** — a provider key outside a mapping, an either/or
+  parent pair, a generic word stored as data — one row per table.
 - **Facts worked out in several places** — one row per fact.
 
 ## Step 3 — write the report

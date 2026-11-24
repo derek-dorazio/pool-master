@@ -39,21 +39,22 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   BracketAdvancement,
+  eventPlaysMatches,
   eventRoundLabel,
+  eventSportDefinition,
   getSportDefinition,
   isMatchUnplayed,
   MatchSide,
-  ParticipantStatus,
-  eventSportDefinition,
-  eventPlaysMatches,
-  SportEventStatus,
   type Participant,
+  ParticipantStatus,
   type SportEvent,
   type SportEventMatch,
+  SportEventStatus,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
-import { NO_JOBS_FOR_WRITE, type JobsForWrite } from '../background-jobs/background-job-queue';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
+import type { JobsForWrite } from '../background-jobs/background-job-queue';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 import { findReseededPlaceGaps, findRoundMatchupProblems, proposeRoundMatchups, reseededRounds, roundPlacementBlocker, type RoundMatchup } from './bracket-reseed';
 
 /** Where a match's winner moves on to: the next match, by number, and the side it fills there. */
@@ -193,8 +194,8 @@ export interface SportEventBracketServiceDeps {
   predictions: Pick<ContestEntryMatchPredictionRepository, 'hasAnyOnMatch'>;
   /** A game's new time can move its contests' entry reminders (#1170). */
   contests: Pick<ContestRepository, 'recheckReminders'>;
-  /** The event's leaderboard rebuild, written with each bracket write (#1466); none without it. */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /** What follows each results, field or game change it writes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   newId?: () => string;
   now?: () => Date;
   logger?: FastifyBaseLogger;
@@ -239,7 +240,7 @@ export class SportEventBracketService {
       advancesToMatchId: advancesTo ? idByNumber.get(advancesTo.matchNumber) as string : null,
       advancesToSide: advancesTo?.side ?? null,
     }));
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     await this.deps.matches.replaceBracket(sportEventId, writes, rebuild.jobs);
     rebuild.queued();
     this.deps.logger?.info({ sportEventId, matches: writes.length }, 'Loaded bracket');
@@ -275,7 +276,7 @@ export class SportEventBracketService {
       this.assertSpreadKept(event, match, edit.homeSpread);
       await this.assertSpreadUnpicked(event, match);
     }
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     await this.deps.matches.update(match.id, edit, rebuild.jobs);
     rebuild.queued();
     // A squares grid or a second-chance bracket closes at a game's start (#1170).
@@ -326,7 +327,7 @@ export class SportEventBracketService {
       }
     }
 
-    const { participant } = eventSportDefinition(event).vocabulary;
+    const { participant } = sportVocabulary(eventSportDefinition(event));
     const blockers: string[] = [];
     if (emptySides > 0) {
       blockers.push(`${emptySides} bracket place(s) have no ${participant.one} and no earlier match to fill them`);
@@ -382,7 +383,7 @@ export class SportEventBracketService {
       throw new SportEventError(`Round ${roundNumber} cannot be set: ${problems.join('; ')}.`, 'BRACKET_INVALID', 422);
     }
     const idByNumber = new Map(bracket.map((match) => [match.matchNumber, match.id]));
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     await this.deps.matches.placeSides(matchups.map((matchup) => ({
       id: idByNumber.get(matchup.matchNumber) as string,
       homeSportEventParticipantId: matchup.homeSportEventParticipantId,
@@ -484,7 +485,7 @@ export class SportEventBracketService {
         409,
       );
     }
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     await this.deps.field.fillPlayInSlot({ id: entry.id, winnerParticipantId, pairingParticipantId: pairing.id }, rebuild.jobs);
     rebuild.queued();
     this.deps.logger?.info(
@@ -577,7 +578,7 @@ export class SportEventBracketService {
     }
 
     const valuation = await this.bottomValuation(sportEventId);
-    const rebuild = this.rebuild(sportEventId);
+    const rebuild = await this.rebuild(sportEventId);
     const replacementId = await this.deps.field.replaceWithdrawn({
       withdrawnId: entry.id,
       matchId: place.match.id,
@@ -711,9 +712,9 @@ export class SportEventBracketService {
     );
   }
 
-  /** The job rebuilding the event's boards, written with a bracket write that may change them (#1466). */
-  private rebuild(sportEventId: string): JobsForWrite {
-    return this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE;
+  /** The job rebuilding the event's boards, written with a bracket write that may change them (#1466, #1946). */
+  private rebuild(sportEventId: string): Promise<JobsForWrite> {
+    return this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
   }
 
   private async requireBracketEvent(sportEventId: string): Promise<SportEvent> {

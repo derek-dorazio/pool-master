@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
@@ -20,17 +21,8 @@ export const cyclingSportDefinition: SportDefinition = {
   defaultRounds: 1,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
-  shootout: null,
+  shootout: false,
   composite: null,
-  vocabulary: {
-    participant: { one: 'rider', many: 'riders' },
-    event: { one: 'race', many: 'races' },
-    sportLeague: { one: 'tour', many: 'tours' },
-    round: { one: 'race', many: 'races' },
-    withdrawn: 'Withdrawn',
-    // Copy reads "Entries close at the start", so the word carries no article of its own.
-    eventStart: 'start',
-  },
   // An event run as several numbered races would read "Race 2".
-  roundLabel: (roundNumber, roundCount) => (roundCount > 1 ? `Race ${roundNumber}` : 'Race'),
+  roundLabel: (roundNumber, roundCount, locale) => (roundCount > 1 ? displayString('word.raceNumber', { n: roundNumber }, locale) : displayString('word.singleRace', undefined, locale)),
 };

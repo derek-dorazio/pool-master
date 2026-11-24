@@ -31,11 +31,12 @@ import {
   createListSportLeaguesUsedHandler,
 } from './handler';
 import { createContestManagementService } from '../contest-management/wiring';
+import type { DomainEventsModuleOptions } from '../domain-events';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import type { PlanModuleOptions } from '../plans/routes';
 
-export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
+export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions & DomainEventsModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -46,7 +47,7 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
   const handlers = createContestHandlers(contestService);
-  const contestManagementService = createContestManagementService(prisma, fastify.log, opts.planEntitlements);
+  const contestManagementService = createContestManagementService(prisma, fastify.log, opts.planEntitlements, { domainEvents: opts.domainEvents });
   const createContest = createCreateContestHandler(contestService, contestManagementService);
   const listSportLeaguesUsed = createListSportLeaguesUsedHandler(contestManagementService);
   const getLeaguePlanUsage = createGetLeaguePlanUsageHandler(contestService, contestManagementService);

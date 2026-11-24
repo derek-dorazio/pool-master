@@ -1,8 +1,7 @@
-import { CupTrophy } from '@poolmaster/shared/domain';
+import { CupTrophy, DigestEventState } from '@poolmaster/shared/domain';
 import {
   ContestEventChangeKind,
   ContestResultsKind,
-  DigestEventState,
   EmailChangedBy,
   EntryReceiptKind,
   EntryReminderKind,

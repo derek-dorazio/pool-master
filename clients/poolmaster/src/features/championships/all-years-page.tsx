@@ -1,5 +1,6 @@
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { useEffect, useMemo } from 'react';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
@@ -24,7 +25,6 @@ import { ChampionshipsHeader } from './championships-header';
 import { joinNames } from './cup-view';
 import { RecordBook } from './record-book';
 import {
-  SUMMARY_TILE_LABELS,
   describeHistoryChampions,
   describeHistoryCup,
   historyYearTitle,
@@ -83,7 +83,7 @@ export function AllYearsPage() {
               <div data-testid={`all-years-tile-${tile.tile}`} key={tile.tile}>
                 <MetricTile
                   helperText={tile.squads.length ? joinNames(tile.squads.map((squad) => squad.squadName)) : 'Nobody yet'}
-                  label={SUMMARY_TILE_LABELS[tile.tile]}
+                  label={enumLabel('SummaryTile', tile.tile)}
                   value={tile.count}
                 />
               </div>

@@ -1,4 +1,4 @@
-import { ContestStatus, SelectionType, eventSportDefinition, formatSelectionTypeName } from '@poolmaster/shared/domain';
+import { ContestStatus, eventSportDefinition, formatSelectionTypeName, SelectionType, sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -32,7 +32,6 @@ import {
 import { bracketStartRoundOptions } from './bracket-start-round';
 import { bracketStartRoundsOf } from './contest-template-events';
 import { firstContestEvent } from './contest-events';
-import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
   CONTEST_RULES_FORM_SHAPE,
@@ -96,7 +95,7 @@ function EditContestForm({
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
   // Every event of a tiered contest has the same number of tiers; the server checks it.
   const tierCount = managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0;
-  const { participant } = eventSportDefinition(event).vocabulary;
+  const { participant } = sportVocabulary(eventSportDefinition(event));
   const { selectionType } = configuration;
   const salaryCap = configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null;
   const [rulesError, setRulesError] = useState<string | null>(null);
@@ -172,7 +171,7 @@ function EditContestForm({
     ?? form.formState.errors.contestName?.message
     ?? (saveMutation.isError
       ? extractErrorMessage(saveMutation.error, {
-        codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+        context: 'contestSetup',
         fallback: 'We could not save that contest. Please try again.',
       })
       : null);

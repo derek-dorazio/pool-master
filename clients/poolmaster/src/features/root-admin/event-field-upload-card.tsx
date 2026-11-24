@@ -1,4 +1,4 @@
-import { getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
+import { type Sport, sportPathSegment, sportVocabulary } from '@poolmaster/shared/domain';
 import { applyEventParticipantUpload, previewEventParticipantUpload } from '@/lib/api';
 import { BulkUploadPanel, Button, SectionCard, StatusBadge, UploadPreviewTable } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -51,7 +51,7 @@ export function EventFieldUploadCard({
   onClose?: () => void;
   sport: Sport;
 }) {
-  const { participant } = getSportDefinition(sport).vocabulary;
+  const { participant } = sportVocabulary(sport);
   const logger = getLogger().child({ feature: 'root-admin-sport-event-field-page' });
 
   const previewMutation = useInvalidatingMutation({

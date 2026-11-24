@@ -187,7 +187,7 @@ describe('Notifications page: the Emails grid', () => {
   });
 
   it('shows an error state, not sample rows, when the emails cannot load', async () => {
-    listSystemEmailsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } }, status: 500 });
+    listSystemEmailsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'down' } }, status: 500 });
     renderPage();
 
     expect(await screen.findByTestId('root-admin-system-emails-state-error')).toBeInTheDocument();
@@ -555,7 +555,7 @@ describe('Notifications page: Email settings', () => {
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
 
     const error = await screen.findByTestId('root-admin-email-settings-error');
-    expect(error).toHaveTextContent('changed by someone else');
+    expect(error).toHaveTextContent('Someone else changed these settings.');
     getSettingsGroupMock.mockResolvedValue({ data: theirs });
     fireEvent.click(within(error).getByRole('button', { name: 'Load the latest settings' }));
 

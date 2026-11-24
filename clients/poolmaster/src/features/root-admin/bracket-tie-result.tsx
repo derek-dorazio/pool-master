@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { MatchStatus } from '@poolmaster/shared/domain';
 import { recordEventMatchResult } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
-import { tieWord } from '@/features/contests/contest-sport';
 import { Button, InlineError, Input, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { bracketErrorMessages } from './bracket-copy';
+import { bracketErrors } from './bracket-copy';
 import { type BracketContext, useMatchWrite } from './bracket-match-write';
 
 /**
@@ -15,7 +14,7 @@ import { type BracketContext, useMatchWrite } from './bracket-match-write';
 export function TieResult({ match, context }: { match: SportEventMatchDto; context: BracketContext }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
-  const word = tieWord(context.vocabulary);
+  const word = context.vocabulary.tie;
   const isTie = match.status === MatchStatus.COMPLETED && match.winnerSide === null;
   const score = /^\d{1,3}$/.test(value.trim()) ? Number(value.trim()) : null;
   const testId = `root-admin-bracket-tie-${match.matchNumber}`;
@@ -74,7 +73,7 @@ export function TieResult({ match, context }: { match: SportEventMatchDto; conte
       {save.isError ? (
         <InlineError className="w-full" testId={`${testId}-error`}>
           {extractErrorMessage(save.error, {
-            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            ...bracketErrors(context.vocabulary, match, context.bracket),
             fallback: `This ${word.toLowerCase()} could not be saved. Try again.`,
           })}
         </InlineError>

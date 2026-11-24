@@ -823,7 +823,7 @@ lower layers, stop expanding E2E and strengthen the lower-layer tests first.
 
 - Application seed flows are never a place for test fixtures. No agent may add QA data, functional-test data, E2E data, fake contests, fake odds, or fake results to `prisma/seed.ts` or any other application seed path.
 - Keep seed data limited to production-required bootstrap records and default configuration.
-- Non-production fixture catalogs belong behind dedicated test infrastructure such as `mock-contest-feed-provider`.
+- Non-production fixture catalogs, recorded provider payloads and fake provider servers belong in test code under `tests/`, injected by the test, never in a package that production source or configuration can select (`rules/architecture-rules.md` §3 *Provider and Adapter Registry Discipline*).
 
 ### Backend Functional API Tests
 
@@ -1026,7 +1026,11 @@ handler). `getByTestId` passes through all of those.
 
 - `getByRole` with an accessible name is the default.
 - `getByLabelText` for form fields.
-- Text queries (`getByText`) are fine.
+- Text queries (`getByText`) are fine. A query or assertion on the words for a code (an enum
+  value's label, an error code's message) reads them from the display-string module,
+  `enumLabel('ContestStatus', ContestStatus.OPEN)` or `displayString('error.CONTEST_FULL')`,
+  never a typed copy, so a change of wording does not break the test
+  (`rules/ux-rules.md` §16 *Display Strings*).
 - `getByTestId` only where no accessible query reaches the element. Which case it is decides
   what to do:
   - An interactive or user-meaningful element (a control, a field, a status a user reads)
@@ -1086,12 +1090,24 @@ export async function buildContestWithEntries(
 
 ---
 
-## 8. Domain Event Testing — removed
+## 8. Domain Event Handler Testing
 
-There is no event bus to test (`architecture-rules.md` *No event bus — modules call each
-other*; #261). Assert the outcome a change produces — the rows written, the status moved, the
-standing settled — not that something was announced. The section number is kept so references
-to the sections after it stay valid.
+Follow-up work goes through the domain event handler map (`architecture-rules.md` §4
+*Follow-up work is a domain event handler*), and each piece of it is tested where it lives:
+
+- **The map is pinned.** One unit test holds `{ eventType: [handler keys] }` as a literal, so
+  adding, removing or reordering a follow-up changes the pin and shows in review, like the
+  leaderboard format hash.
+- **Each handler is unit-tested from event to job requests**: this event in, these requests
+  out, and none when its `when` says no, covering every line. A test also checks that the job
+  types a handler queues are the ones it declares, since the generated table in
+  `docs/BACKGROUND-JOBS.md` reads them.
+- **Each writer is tested to hand its collected jobs to its write** and to call `queued()` only
+  once the write landed: none on a write that fails or loses a guarded race.
+- **Integration tests stay outcome tests**: the rows a change writes, its job rows among them,
+  the status moved, the standing settled. Never a mocked map in production code; a test that
+  is not about a follow-up passes the real `DomainEvents` over test ports
+  (`tests/support/domain-events.ts`).
 
 ---
 
@@ -1178,6 +1194,13 @@ timing them, so it catches the per-row read at any data size.
   breaks the pin. The helper refuses a response showing fewer than two of the items that could each
   cost a query, since one item costs the same either way. Never use it for a list a user or a sync
   can grow.
+- **The event leaderboard is also pinned at full size.** Twenty rows hide reads that cost per
+  round or per side, and a real field is far larger than twenty. The one event leaderboard
+  read and its score write are pinned at the largest realistic field, today a 150-competitor,
+  4-round `FIELD` event (a golf tournament), to an exact statement count: the standings come
+  from one query and every round's Game side result scores from one event-wide query, and a
+  score update is a batch upsert, not a write per competitor. It lands with the slice that
+  builds the read on Game side results and Standing.
 - **Seed the rows that could each cost a query:** the teams of a team list, the years of a history,
   the contests of a cup, and each parent of the row (give each contest its own event, so a read per
   event shows too). The helper refuses a case whose larger seed the response does not show, or whose

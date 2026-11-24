@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { RaceResultStatus, Sport } from '@poolmaster/shared/domain';
@@ -246,7 +247,7 @@ describe('horse racing contest — read and settled from the finishing order', (
 
   it('ranks entries by points, higher first, with a scratched pick scoring the did-not-finish points', async () => {
     const { suffix, event, owner, contest, winners, scratch } = await seedContest();
-    await createRaceResultService(getAppPrisma()).applyResults(event.id, officialOrder(suffix));
+    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, officialOrder(suffix));
 
     const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contest.id}/leaderboard`, headers: owner.headers });
 
@@ -263,7 +264,7 @@ describe('horse racing contest — read and settled from the finishing order', (
 
   it('shows no points on the board while the result is provisional', async () => {
     const { suffix, event, owner, contest } = await seedContest();
-    await createRaceResultService(getAppPrisma()).applyResults(event.id, { ...officialOrder(suffix), isOfficial: false });
+    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, { ...officialOrder(suffix), isOfficial: false });
 
     const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contest.id}/leaderboard`, headers: owner.headers });
 
@@ -273,9 +274,9 @@ describe('horse racing contest — read and settled from the finishing order', (
 
   it('settles the contest, freezing each entry\'s points as its standing total, and the completed board reads them back', async () => {
     const { prisma, suffix, event, owner, contest, winners, scratch } = await seedContest();
-    await createRaceResultService(getAppPrisma()).applyResults(event.id, officialOrder(suffix));
+    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, officialOrder(suffix));
 
-    await expect(createContestSettlementService(getAppPrisma()).settleFinishedSportEvent(event.id))
+    await expect(createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() }).settleFinishedSportEvent(event.id))
       .resolves.toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
 
     const standings = await prisma.contestEntryStanding.findMany({

@@ -1,8 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { Text } from '@/features/shared/ui';
 import { LeaguePlanOrder, type LeaguePlan } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { CustomerLeagueDto } from '@/lib/api';
-import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 
 const columnHelper = createColumnHelper<CustomerLeagueDto>();
 
@@ -21,9 +21,9 @@ export const customerLeagueColumns = [
     header: 'Plan',
     meta: {
       info: 'The plan the league is on, which decides its features and caps.',
-      type: { kind: 'enum', order: LeaguePlanOrder, label: (plan) => LEAGUE_PLAN_LABEL[plan as LeaguePlan] },
+      type: { kind: 'enum', order: LeaguePlanOrder, label: (plan) => enumLabel('LeaguePlan', plan as LeaguePlan) },
     },
-    cell: ({ getValue }) => LEAGUE_PLAN_LABEL[getValue()],
+    cell: ({ getValue }) => enumLabel('LeaguePlan', getValue()),
   }),
   columnHelper.accessor('memberCount', {
     header: 'Members',

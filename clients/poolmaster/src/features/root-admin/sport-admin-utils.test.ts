@@ -27,8 +27,8 @@ describe('pool-master-3dg sport-admin-utils: sync scope', () => {
 });
 
 describe('pool-master-3dg sport-admin-utils: status formatting', () => {
-  it('pool-master-3dg title-cases SCREAMING_SNAKE statuses per word', () => {
-    expect(formatSportEventStatus('IN_PROGRESS')).toBe('In Progress');
+  it('an event status reads its display string, sentence case like every other status', () => {
+    expect(formatSportEventStatus('IN_PROGRESS')).toBe('In progress');
     expect(formatSportEventStatus('SCHEDULED')).toBe('Scheduled');
   });
 

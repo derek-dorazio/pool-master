@@ -1,4 +1,4 @@
-import { sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { createEventFromProviderEvent } from '@/lib/api';
@@ -63,7 +63,7 @@ export function SportEventProviderBrowse({
   });
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
-  const { event: eventNoun, round } = definition.vocabulary;
+  const { event: eventNoun, round } = sportVocabulary(definition);
 
   const [browseFrom, setBrowseFrom] = useState(() => defaultWindowValue(0, displayPreferences.timeZone));
   const [browseTo, setBrowseTo] = useState(() => defaultWindowValue(45, displayPreferences.timeZone));
@@ -253,9 +253,11 @@ export function SportEventProviderBrowse({
             {createMutation.isError ? (
               <InlineError>
                 {extractErrorMessage(createMutation.error, {
-                  codeMessages: {
-                    EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one} already has a ${edition.eventYear} edition of this ${eventNoun.one}.`,
-                    SPORT_EVENT_ALREADY_STARTED: `This ${eventNoun.one} has already started, so it can’t be added.`,
+                  context: 'createEvent',
+                  values: {
+                    sportLeague: sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one,
+                    year: edition.eventYear,
+                    event: eventNoun.one,
                   },
                   fallback: `We could not create this ${eventNoun.one}.`,
                 })}

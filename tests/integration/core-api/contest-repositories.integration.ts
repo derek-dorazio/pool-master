@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobType, ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport, SportEventStatus, type BackgroundJobOutcome } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
@@ -16,7 +17,7 @@ import {
   PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
 import { recordStatements, statementCounts, statementShape } from '../statement-log';
-import { createContestManagementService } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { createContestManagementService, createReleasedEditionContests } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import { ContestEventsChangedError } from '../../../packages/core-api/src/modules/contest-management/service';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
@@ -43,6 +44,8 @@ import { fakeLogger } from '../../support/fake-logger';
 import { createContestRow } from '../../support/contest-rows';
 import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
+import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -1202,8 +1205,10 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
 
   /** The release as the events routes make it, with the app's job queue: its jobs wait for a drain. */
   function releasing() {
-    const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()));
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { jobs: integrationBackgroundJobs().queue, releasedEditionContests: contestManagement });
+    const { queue } = integrationBackgroundJobs();
+    const domainEvents = testDomainEvents({ queue, releasedEditionContests: createReleasedEditionContests(getAppPrisma(), fakeLogger()) });
+    const contestManagement = createContestManagementService(getAppPrisma(), fakeLogger(), integrationPlanEntitlements(getAppPrisma()), { domainEvents });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents, ...NO_SETTLE_JOBS });
     const release = (sportEventId: string) => lifecycle.applySportEventStatusTransition({
       sportEventId, toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true,
     });
@@ -1897,15 +1902,49 @@ describe('ContestEntryEventStandingRepository', () => {
       settledAt: new Date('2026-06-07T22:00:00.000Z'),
       totalScore: 9,
     };
-    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id }, { ...write, sportEventId: second.id, totalScore: 11 }]);
+    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id }, { ...write, sportEventId: second.id, totalScore: 11 }], []);
     const [first] = await prisma.contestEntryEventStanding.findMany({ where: { contestId: contest.id, sportEventId: event.id } });
 
-    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id, position: 1, displayPosition: '1', totalScore: 12 }]);
+    await repos().eventStandings.upsertMany(contest.id, [{ ...write, sportEventId: event.id, position: 1, displayPosition: '1', totalScore: 12 }], []);
 
     const rows = await repos().eventStandings.findByContest(contest.id);
     expect(rows.map((row) => [row.sportEventId, row.position, row.totalScore]).sort((left, right) => String(left[0]).localeCompare(String(right[0]))))
       .toEqual([[event.id, 1, 12], [second.id, 2, 11]].sort((left, right) => String(left[0]).localeCompare(String(right[0]))));
     expect(rows.find((row) => row.sportEventId === event.id)?.id).toBe(first.id);
+  });
+
+  it('writes the jobs passed with the standings, also when no row changed or none is written, so a settled event\'s board rebuild is never lost (#1973)', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Rebuild with standings');
+    const entry = await prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Weekly' } });
+    const write = {
+      contestId: contest.id,
+      contestEntryId: entry.id,
+      sportEventId: event.id,
+      position: 1,
+      displayPosition: '1',
+      countingPickLimit: 4,
+      scoredPickCount: 4,
+      asOf: new Date('2026-06-07T21:00:00.000Z'),
+      settledAt: new Date('2026-06-07T22:00:00.000Z'),
+      totalScore: 7,
+    };
+    const rebuild = rebuildLeaderboardsJob(integrationBackgroundJobs().queue, LeaderboardRebuildSubject.EVENT, event.id);
+    const rebuilds = () => prisma.backgroundJob.findMany({ where: { dedupeKey: rebuild.dedupeKey } });
+
+    await repos().eventStandings.upsertMany(contest.id, [write], [rebuild]);
+    const [written] = await rebuilds();
+    expect(written).toMatchObject({ type: BackgroundJobType.REBUILD_LEADERBOARDS, payload: { subject: LeaderboardRebuildSubject.EVENT, id: event.id } });
+    await expect(prisma.contestEntryEventStanding.count({ where: { contestId: contest.id } })).resolves.toBe(1);
+
+    await prisma.backgroundJob.deleteMany({ where: { dedupeKey: rebuild.dedupeKey } });
+    await repos().eventStandings.upsertMany(contest.id, [write], [rebuild]);
+    await expect(rebuilds()).resolves.toHaveLength(1);
+
+    await prisma.backgroundJob.deleteMany({ where: { dedupeKey: rebuild.dedupeKey } });
+    await repos().eventStandings.upsertMany(contest.id, [], [rebuild]);
+    await expect(rebuilds()).resolves.toHaveLength(1);
   });
 
   it('names the contests holding standings for the event, once each however many entries, leaving out other events and contests not asked about', async () => {
@@ -1928,7 +1967,7 @@ describe('ContestEntryEventStandingRepository', () => {
       const rows = await Promise.all(Array.from({ length: entries }, (_, index) => prisma.contestEntry.create({
         data: { contestId, squadId: squads[index % 2].id, entryNumber: index + 1, name: `Entry ${String(index + 1)}` },
       })));
-      await repos().eventStandings.upsertMany(contestId, rows.map((entry) => ({ ...write, contestId, contestEntryId: entry.id, sportEventId })));
+      await repos().eventStandings.upsertMany(contestId, rows.map((entry) => ({ ...write, contestId, contestEntryId: entry.id, sportEventId })), []);
     };
     await settleOn(settledHere.id, event.id, 3);
     await settleOn(settledElsewhere.id, other.id, 1);
@@ -1974,7 +2013,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const jobs = integrationBackgroundJobs();
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { jobs: jobs.queue });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }), ...NO_SETTLE_JOBS });
     const emailJobs = createContestEmailJobs(getAppPrisma(), {
       notices: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
@@ -1983,17 +2022,27 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
       }),
       logger: fakeLogger(),
     });
-    // Held until the transition has returned, so the good luck emails are seen to come from its job.
-    const runner = integrationBackgroundJobs().runWith({ CONTEST_STARTED_EMAILS: (payload) => emailJobs.contestStarted(payload) });
+    // Held until the transition has returned, so the contest is seen to go live in the job written
+    // with the start (#1952), and the good luck emails to come from the job that move writes.
+    // The start also rebuilds the event's boards (#1466), which this test of the emails does not follow.
+    const runner = integrationBackgroundJobs().runWith({
+      ACTIVATE_EVENT_CONTESTS: (payload) => lifecycle.activateEventContests(payload),
+      CONTEST_STARTED_EMAILS: (payload) => emailJobs.contestStarted(payload),
+      REBUILD_LEADERBOARDS: async () => ({ changedCount: 0 }),
+    });
 
     await lifecycle.applySportEventStatusTransition({
       sportEventId: event.id, toStatus: 'IN_PROGRESS', actor: { type: 'ROOT_ADMIN' },
     });
     await deliverQueuedEmail();
     expect(send).not.toHaveBeenCalled();
-    await expect(prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true } })).resolves.toEqual([
-      { type: 'CONTEST_STARTED_EMAILS', payload: { contestId: open.id, sportEventId: event.id }, status: 'QUEUED' },
-    ]);
+    const queued = await prisma.backgroundJob.findMany({ select: { type: true, payload: true, status: true } });
+    expect(queued).toHaveLength(2);
+    expect(queued).toEqual(expect.arrayContaining([
+      { type: 'ACTIVATE_EVENT_CONTESTS', payload: { sportEventId: event.id }, status: 'QUEUED' },
+      { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: event.id }, status: 'QUEUED' },
+    ]));
+    await expect(repos().contests.findById(open.id)).resolves.toEqual(expect.objectContaining({ status: ContestStatus.OPEN }));
     await runner.drain();
 
     const [started, untouched] = await Promise.all([
@@ -2019,7 +2068,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await runner.drain();
     await deliverQueuedEmail();
     expect(send).toHaveBeenCalledTimes(3);
-    await expect(prisma.backgroundJob.count()).resolves.toBe(1);
+    await expect(prisma.backgroundJob.count({ where: { type: 'CONTEST_STARTED_EMAILS' } })).resolves.toBe(1);
 
     // A retry of the job, after a try that queued the emails but was not marked done, finds
     // each one recorded and sends nothing twice.
@@ -2027,7 +2076,8 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await runner.drain();
     await deliverQueuedEmail();
     expect(send).toHaveBeenCalledTimes(3);
-    await expect(prisma.backgroundJob.findMany({ select: { status: true } })).resolves.toEqual([{ status: 'SUCCEEDED' }, { status: 'SUCCEEDED' }]);
+    await expect(prisma.backgroundJob.findMany({ where: { type: 'CONTEST_STARTED_EMAILS' }, select: { status: true } }))
+      .resolves.toEqual([{ status: 'SUCCEEDED' }, { status: 'SUCCEEDED' }]);
   });
 });
 
@@ -2063,9 +2113,8 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     });
     const emailJobs = createContestEmailJobs(getAppPrisma(), { notices, logger: fakeLogger() });
     const lifecycle = createEventLifecycleService(getAppPrisma(), {
-      jobs: jobs.queue,
-      sportEventChanged: notices,
-      contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger()),
+      domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }),
+      contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger(), { domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }) }),
     });
     // Held until the transition has returned, so the email is seen to come from its jobs (#1448, #1458).
     const runner = integrationBackgroundJobs().runWith({
@@ -2079,9 +2128,8 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     await deliverQueuedEmail();
     expect(send).not.toHaveBeenCalled();
 
-    // The settle job decides which contests hear of the cancellation and writes one job for the
-    // one contest that goes on, building no email itself (#1458), then settles.
-    await runner.drain();
+    // The cancellation's own write decides which contests hear of it and carries one job for the
+    // one contest that goes on, building no email itself (#1458); its settle job then settles.
     await expect(prisma.backgroundJob.findMany({ where: { type: 'CONTEST_EVENT_CHANGED_EMAILS' }, select: { payload: true } })).resolves.toEqual([{
       payload: { contestId: open.id, sportEventId: event.id, change: { kind: 'CANCELLED', startsAt: event.startDate.toISOString() } },
     }]);

@@ -30,27 +30,28 @@ import {
 } from '../../adapters';
 import type { EmailService } from '../email';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
-import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
-import type { SportEventParticipantService } from '../events/sport-event-participant-service';
+import { createEventFieldReader, createSportEventTierService } from '../events/wiring';
+import type { EventFieldReads } from '../events/event-field-reader';
 import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
-import { JobLeaderboardRebuilds, readLeaderboardSnapshotMaxAgeMs, type LeaderboardRebuilds } from './leaderboard-snapshots';
+import { readLeaderboardSnapshotMaxAgeMs } from './leaderboard-snapshots';
+import { JobLeaderboardRebuilds } from './leaderboard-rebuild-job-requests';
 import { createChampionshipService } from '../championship/wiring';
 import { BackgroundJobQueue } from '../background-jobs';
+import type { DomainEvents } from '../domain-events';
 import { currentJobStart } from '../../core/job-start';
 
 /** The bracket, pick'em and survivor reads, plus the batched match read the season leaderboards take (#762). */
 function createContestLeaderboardReadDeps(
   prisma: PrismaClient,
-  logger?: FastifyBaseLogger,
 ): BracketStandingsReadDeps & {
-  eventParticipants: SportEventParticipantService;
+  eventParticipants: EventFieldReads;
   matches: PrismaSportEventMatchRepository;
   predictions: PrismaContestEntryMatchPredictionRepository;
 } {
   return {
-    eventParticipants: createSportEventParticipantService(prisma, logger),
+    eventParticipants: createEventFieldReader(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
     scoringRules: new PrismaParticipantContestScoringRuleRepository(prisma),
     entries: new PrismaContestEntryRepository(prisma),
@@ -69,7 +70,7 @@ export function createContestService(
   options: { planEntitlements: PlanEntitlementsService; email?: EmailService; appBaseUrl?: string },
 ): ContestService {
   return new ContestService({
-    ...createContestLeaderboardReadDeps(prisma, logger),
+    ...createContestLeaderboardReadDeps(prisma),
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
@@ -98,19 +99,21 @@ export function createContestService(
 
 export function createContestSettlementService(
   prisma: PrismaClient,
-  logger?: FastifyBaseLogger,
-  options?: { jobs?: Pick<BackgroundJobQueue, 'request' | 'queued'>; leaderboards?: Pick<LeaderboardRebuilds, 'eventsChanged'> },
+  logger: FastifyBaseLogger | undefined,
+  options: {
+    /** What follows settlement's writes (#1949, #1973): the app's one handler map, built in index.ts. */
+    domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
+  },
 ): ContestSettlementService {
   return new ContestSettlementService({
-    ...createContestLeaderboardReadDeps(prisma, logger),
+    ...createContestLeaderboardReadDeps(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
     contests: new PrismaContestRepository(prisma),
     standings: new PrismaContestEntryStandingRepository(prisma),
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     squares: new PrismaSquaresRepository(prisma),
     championship: createChampionshipService(prisma, logger),
-    jobs: options?.jobs,
-    leaderboards: options?.leaderboards,
+    domainEvents: options.domainEvents,
     logger,
   });
 }

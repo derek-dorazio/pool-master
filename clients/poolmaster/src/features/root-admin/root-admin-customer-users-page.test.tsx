@@ -201,7 +201,7 @@ describe('RootAdminCustomerUsersPage', () => {
     fireEvent.click(screen.getByTestId(`${DIALOG}-open-reset-password`));
     fireEvent.click(await screen.findByTestId(`${DIALOG}-submit-reset-password`));
 
-    expect(await screen.findByText('USER_NOT_FOUND: User was not found.')).toBeInTheDocument();
+    expect(await screen.findByText('USER_NOT_FOUND: User not found.')).toBeInTheDocument();
     expect(screen.getByTestId(`${DIALOG}-reset-password`)).toBeInTheDocument();
   });
 
@@ -236,14 +236,14 @@ describe('RootAdminCustomerUsersPage', () => {
 
   it('keeps the deactivate confirm open with the reason when it is refused, as for the last root admin', async () => {
     seed();
-    mocks.disableUser.mockResolvedValue({ error: { error: { code: 'LAST_ROOT_ADMIN', message: 'The last root admin cannot be deactivated.' } } });
+    mocks.disableUser.mockResolvedValue({ error: { error: { code: 'ACCOUNT_LAST_ROOT_ADMIN', message: 'The last root admin cannot be deactivated.' } } });
     renderPage();
 
     await openUser();
     fireEvent.click(screen.getByTestId(`${DIALOG}-open-lifecycle`));
     fireEvent.click(await screen.findByTestId(`${DIALOG}-submit-lifecycle`));
 
-    expect(await screen.findByText('LAST_ROOT_ADMIN: The last root admin cannot be deactivated.')).toBeInTheDocument();
+    expect(await screen.findByText('ACCOUNT_LAST_ROOT_ADMIN: Cannot remove the last remaining root admin.')).toBeInTheDocument();
     expect(screen.getByTestId(`${DIALOG}-lifecycle`)).toBeInTheDocument();
   });
 
@@ -286,7 +286,7 @@ describe('RootAdminCustomerUsersPage', () => {
 
   it('keeps the delete confirm open with the reason when the delete is refused', async () => {
     seed([customer({ isActive: false })]);
-    mocks.deleteUser.mockResolvedValue({ error: { error: { code: 'USER_DELETE_BLOCKED', message: 'This account still owns a league.' } } });
+    mocks.deleteUser.mockResolvedValue({ error: { error: { code: 'ACCOUNT_DELETE_DEPENDENCIES_EXIST', message: 'This account still owns a league.' } } });
     renderPage();
 
     await openUser();
@@ -294,7 +294,7 @@ describe('RootAdminCustomerUsersPage', () => {
     fireEvent.change(await screen.findByTestId(`${DIALOG}-delete-confirmation`), { target: { value: 'target@example.com' } });
     fireEvent.click(screen.getByTestId(`${DIALOG}-submit-delete`));
 
-    expect(await screen.findByText('USER_DELETE_BLOCKED: This account still owns a league.')).toBeInTheDocument();
+    expect(await screen.findByText('ACCOUNT_DELETE_DEPENDENCIES_EXIST: This account still belongs to leagues. Remove it from them before deleting it.')).toBeInTheDocument();
     expect(screen.getByTestId(DIALOG)).toBeInTheDocument();
   });
 
@@ -325,7 +325,7 @@ describe('RootAdminCustomerUsersPage', () => {
 
   it('sends only the role when the name is unchanged, and shows a refused save in the form', async () => {
     seed([customer({ isRootAdmin: true })]);
-    mocks.setUserRootAdmin.mockResolvedValue({ error: { error: { code: 'LAST_ROOT_ADMIN', message: 'The last root admin cannot be removed.' } } });
+    mocks.setUserRootAdmin.mockResolvedValue({ error: { error: { code: 'ACCOUNT_LAST_ROOT_ADMIN', message: 'The last root admin cannot be removed.' } } });
     renderPage();
 
     await openUser();
@@ -336,7 +336,7 @@ describe('RootAdminCustomerUsersPage', () => {
     expect(await screen.findByText('Remove root admin from Target User?')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId(`${DIALOG}-submit-role`));
 
-    expect(await screen.findByText(/The last root admin cannot be removed\./)).toBeInTheDocument();
+    expect(await screen.findByText(/Cannot remove the last remaining root admin\./)).toBeInTheDocument();
     expect(mocks.updateUserProfile).not.toHaveBeenCalled();
     expect(screen.getByTestId(`${DIALOG}-save`)).toBeInTheDocument();
   });

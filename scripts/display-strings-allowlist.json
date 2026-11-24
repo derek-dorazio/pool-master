@@ -1,0 +1,21 @@
+{
+  "clients/poolmaster/src/features/account/my-account/my-account-helpers.ts": [
+    "AuthProvider",
+    "EmailSuppressionReason"
+  ],
+  "clients/poolmaster/src/features/contest-types/sport-blurbs.ts": [
+    "Sport"
+  ],
+  "clients/poolmaster/src/features/event-pages/clutch-card-copy.ts": [
+    "Sport"
+  ],
+  "clients/poolmaster/src/features/plans/plan-labels.ts": [
+    "PlanCap",
+    "LeaguePlan",
+    "PlanFeature"
+  ],
+  "packages/shared/domain/contest-rules-text.ts": [
+    "SelectionType",
+    "PickEmMode"
+  ]
+}

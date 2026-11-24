@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { blocksManualRelease } from '@poolmaster/shared/domain';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
@@ -10,7 +11,7 @@ import {
   SectionRows,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
+import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
@@ -18,12 +19,6 @@ import { releaseCheckValueText, releaseTriesText } from './event-release-checks-
 import { RELEASE_CHECK_LABELS } from './sport-league-overview-text';
 
 const logger = getLogger().child({ feature: 'root-admin-event-release' });
-
-const RELEASE_CODE_MESSAGES: ErrorCodeMessages = {
-  SPORT_EVENT_NOT_DRAFT: 'This event has already been released.',
-  SPORT_EVENT_ALREADY_STARTED: 'This event has already started, so it can no longer be released.',
-  SPORT_EVENT_NOT_READY: 'This event is not ready yet: one of its ready checks no longer passes. Reload it to see which.',
-};
 
 /**
  * The header's Release chip opens this (#1890): how the draft event is released, when automatic
@@ -92,7 +87,7 @@ export function EventReleaseChecksDialog({
           </SectionRows>
         )}
         details={[
-          { id: 'mode', label: 'Release mode', value: overview === undefined ? '…' : overview.releaseMode === 'AUTO' ? 'Automatic' : 'Manual' },
+          { id: 'mode', label: 'Release mode', value: overview === undefined ? '…' : enumLabel('SportEventReleaseMode', overview.releaseMode) },
           { id: 'tries', label: 'Tries', value: releaseTriesText(overview, preferences) },
           {
             id: 'lastTry',
@@ -111,7 +106,7 @@ export function EventReleaseChecksDialog({
         confirmTestId="root-admin-sport-event-release-confirm"
         description={'Commissioners will be able to create contests on this event. Its tiers and prices lock for good; the field, ranks, odds and withdrawals stay editable. It can\'t be returned to a draft.'}
         error={releaseMutation.isError
-          ? extractErrorMessage(releaseMutation.error, { codeMessages: RELEASE_CODE_MESSAGES, fallback: 'The release was rejected.' })
+          ? extractErrorMessage(releaseMutation.error, { fallback: 'The release was rejected.' })
           : undefined}
         isPending={releaseMutation.isPending}
         onCancel={() => setConfirmOpen(false)}

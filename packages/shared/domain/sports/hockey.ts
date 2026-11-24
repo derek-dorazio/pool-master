@@ -1,7 +1,8 @@
-import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import { displayString } from '../../display-strings/display-strings';
+import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat, SportStat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
-import { SportStat, statValue, type SportComposite } from './sport-stats';
+import { statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of a college hockey bracket are called, counted back from the final. */
 const ROUND_NAMES_FROM_FINAL = ['National Championship', 'Frozen Four', 'Regional Finals', 'Regional Semifinals'] as const;
@@ -42,26 +43,14 @@ export const hockeySportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // Playoff games play overtime to a goal, so none ends in a shoot-out (#791).
-  shootout: null,
+  shootout: false,
   composite: hockeyComposite,
   matchPeriodLayout: MatchPeriodLayout.THREE_PERIODS,
-  vocabulary: {
-    participant: { one: 'team', many: 'teams' },
-    event: { one: 'playoffs', many: 'playoffs' },
-    sportLeague: { one: 'league', many: 'leagues' },
-    round: { one: 'round', many: 'rounds' },
-    eliminated: 'Eliminated',
-    withdrawn: 'Withdrawn',
-    eventStart: 'opening puck drop',
-    match: { one: 'game', many: 'games' },
-    tie: 'Tie',
-    scoreUnit: 'goals',
-  },
   // A four-round bracket reads Regional Semifinals, Regional Finals, Frozen Four, National
   // Championship; a shorter one keeps the names counted back from its final.
-  roundLabel: (roundNumber, roundCount) => {
+  roundLabel: (roundNumber, roundCount, locale) => {
     const fromFinal = roundCount - roundNumber;
     const name = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return name ?? `Round ${roundNumber}`;
+    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
   },
 };

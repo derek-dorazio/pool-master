@@ -28,6 +28,7 @@ import {
   transitionEvent,
   updateContestEntry,
 } from '@poolmaster/shared/generated/hey-api';
+import { testDomainEvents } from '../support/domain-events';
 import {
   BracketAdvancement,
   ContestEntryStatus,
@@ -60,6 +61,7 @@ import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
 import { PrismaSportEventRepository } from '../../packages/core-api/src/adapters';
+import { NO_SETTLE_JOBS } from '../support/event-settlement';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -646,7 +648,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
 
     // The lifecycle sweep of an event in progress (the scheduler's step, run here as the system
     // would) leaves the bracket OPEN before round 2's first game...
-    const lifecycle = createEventLifecycleService(getFunctionalPrisma());
+    const lifecycle = createEventLifecycleService(getFunctionalPrisma(), { domainEvents: testDomainEvents(), ...NO_SETTLE_JOBS });
     const liveEvent = async () => expectDefined(await new PrismaSportEventRepository(getFunctionalPrisma()).findById(eventId));
     await lifecycle.activateContestsPastCutoff(await liveEvent(), new Date(Date.parse(ROUND_TWO_FIRST_GAME) - 60 * 60 * 1000));
     expect(expectDefined((await getContest({ client: bob.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.OPEN);

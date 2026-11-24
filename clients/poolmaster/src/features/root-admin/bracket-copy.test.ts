@@ -1,7 +1,8 @@
-import { MatchEnding, Sport, SportLeagueNoun, getSportDefinition, sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { MatchEnding, Sport, SportLeagueNoun, sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import type { SportEventMatchDto } from '@/lib/api';
-import { offLeagueRosterMessages, reseededRounds, roundStarted, unfinishedBefore } from './bracket-copy';
+import { errorCodeMessage } from '@/lib/errors';
+import { bracketErrors, replacementErrors, ReseedAction, reseededRounds, reseedErrors, roundStarted, unfinishedBefore } from './bracket-copy';
 
 function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventMatchDto {
   return {
@@ -72,13 +73,45 @@ describe('unfinishedBefore', () => {
   });
 });
 
-describe('offLeagueRosterMessages', () => {
-  const tennis = getSportDefinition(Sport.TENNIS).vocabulary;
+describe('replacementErrors', () => {
+  const tennis = sportVocabulary(Sport.TENNIS);
 
   it('names a tour\'s roster for the ATP and a league\'s roster for the NCAA when a player is refused as off it', () => {
-    expect(offLeagueRosterMessages(tennis, sportLeagueNounOf(Sport.TENNIS, null)).PARTICIPANT_NOT_IN_SPORT_LEAGUE)
+    expect(errorCodeMessage('PARTICIPANT_NOT_IN_SPORT_LEAGUE', replacementErrors(tennis, sportLeagueNounOf(Sport.TENNIS, null))))
       .toBe('That player isn\'t on this tour\'s roster, so they can\'t join this draw. Pick another.');
-    expect(offLeagueRosterMessages(tennis, sportLeagueNounOf(Sport.TENNIS, SportLeagueNoun.LEAGUE)).PARTICIPANT_NOT_IN_SPORT_LEAGUE)
+    expect(errorCodeMessage('PARTICIPANT_NOT_IN_SPORT_LEAGUE', replacementErrors(tennis, sportLeagueNounOf(Sport.TENNIS, SportLeagueNoun.LEAGUE))))
       .toBe('That player isn\'t on this league\'s roster, so they can\'t join this draw. Pick another.');
+  });
+
+  it('keeps the bracket\'s wording for the bracket\'s other refusals', () => {
+    expect(errorCodeMessage('EVENT_PARTICIPANT_IS_PLAY_IN_PLACE', replacementErrors(tennis, sportLeagueNounOf(Sport.TENNIS, null))))
+      .toBe(errorCodeMessage('EVENT_PARTICIPANT_IS_PLAY_IN_PLACE', bracketErrors(tennis)));
+  });
+});
+
+describe('bracketErrors', () => {
+  const tennis = sportVocabulary(Sport.TENNIS);
+
+  it('names the next match to clear when the admin\'s match feeds one, and says "its next match" when it feeds none known', () => {
+    const divisional = match({ id: 'm-3', matchNumber: 3, roundNumber: 2, advancesToMatchId: 'm-5' });
+    expect(errorCodeMessage('SPORT_EVENT_MATCH_RESULT_LOCKED', bracketErrors(tennis, divisional, nfl)))
+      .toBe('This match\'s winner is already in match 5, which has a score. Clear match 5\'s score first.');
+    expect(errorCodeMessage('SPORT_EVENT_MATCH_RESULT_LOCKED', bracketErrors(tennis)))
+      .toBe('This match\'s winner is already in its next match, which has a score. Clear that score first.');
+  });
+
+  it('words a refusal with no bracket wording by the code\'s own message', () => {
+    expect(errorCodeMessage('CONTEST_FULL', bracketErrors(tennis))).toBe('This contest is full.');
+  });
+});
+
+describe('reseedErrors', () => {
+  const tennis = sportVocabulary(Sport.TENNIS);
+
+  it('words a refused suggestion and a refused save of a reseeded round differently', () => {
+    expect(errorCodeMessage('BRACKET_INVALID', reseedErrors(tennis, ReseedAction.SUGGEST)))
+      .toBe('The players left don\'t fit this round\'s matches. Check the results of the round before.');
+    expect(errorCodeMessage('BRACKET_INVALID', reseedErrors(tennis, ReseedAction.SAVE)))
+      .toMatch(/^These matches could not be saved\. Each player left plays once/);
   });
 });

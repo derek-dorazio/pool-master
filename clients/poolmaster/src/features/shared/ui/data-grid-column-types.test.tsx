@@ -199,7 +199,7 @@ describe("enum columns", () => {
   it("sort an alphabetical enum A to Z by its words", () => {
     const words: Record<string, string> = { GOLF: "Zebra", BASKETBALL: "Apple", AMERICAN_FOOTBALL: "Mango", HOCKEY: "Kiwi" };
     renderGrid([
-      helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: alphabeticalOrder(), label: (value) => words[value] } } }),
+      helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: alphabeticalOrder("Sport"), label: (value) => words[value] } } }),
     ]);
 
     sortBy("sport");

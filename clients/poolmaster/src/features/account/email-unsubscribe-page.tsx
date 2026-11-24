@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { unsubscribeFromEmail } from '@/lib/api';
 import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Button, LinkButton, Notice, StatusPage } from '@/features/shared/ui';
-import { EMAIL_CATEGORY_LABELS } from './email-preferences';
 import { SELF_USER_ID } from './user-routing';
 
 function readToken(search: string): string | null {
@@ -50,7 +50,7 @@ export function EmailUnsubscribePage() {
   }
 
   if (unsubscribeMutation.isSuccess) {
-    const { label } = EMAIL_CATEGORY_LABELS[unsubscribeMutation.data.category];
+    const label = enumLabel('OptionalEmailCategory', unsubscribeMutation.data.category);
     return (
       <StatusPage
         action={<LinkButton to="/my-account" variant="secondary">Email notifications</LinkButton>}

@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LEAGUE_PLANS, LeaguePlan } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { FormField, Select } from '@/features/shared/ui';
-import { LEAGUE_PLAN_LABEL, PLAN_FEATURE_GROUP_LABEL } from '@/features/plans/plan-labels';
 import { PlanRowDialog, type PlanSettingsGroup } from './plan-row-dialog';
 import { withPlanFeature, type PlanFeatureGridRow } from './plan-rows';
 
@@ -16,8 +16,8 @@ export function PlanFeatureDialog({ group, onClose, row }: { group: PlanSettings
   return (
     <PlanRowDialog<FeatureFormValues>
       facts={[
-        { id: 'group', label: 'Group', value: PLAN_FEATURE_GROUP_LABEL[row.group], testId: `${testId}-group` },
-        { id: 'starts-at', label: 'Starts at', value: LEAGUE_PLAN_LABEL[row.startsAt], testId: `${testId}-starts-at` },
+        { id: 'group', label: 'Group', value: enumLabel('PlanFeatureGroup', row.group), testId: `${testId}-group` },
+        { id: 'starts-at', label: 'Starts at', value: enumLabel('LeaguePlan', row.startsAt), testId: `${testId}-starts-at` },
       ]}
       group={group}
       name={row.name}
@@ -31,7 +31,7 @@ export function PlanFeatureDialog({ group, onClose, row }: { group: PlanSettings
         <FormField help="The first plan with it; every plan above has it too." label="Starts at">
           <Select data-testid={`${testId}-starts-at-select`} {...form.register('startsAt')}>
             {LEAGUE_PLANS.map((plan) => (
-              <option key={plan} value={plan}>{LEAGUE_PLAN_LABEL[plan]}</option>
+              <option key={plan} value={plan}>{enumLabel('LeaguePlan', plan)}</option>
             ))}
           </Select>
         </FormField>

@@ -90,6 +90,7 @@ import type { IngestionCallbacks, SportEventDetail } from './modules/ingestion/c
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './modules/events/wiring';
+import { DomainEvents } from './modules/domain-events';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
@@ -103,7 +104,8 @@ import { ActivityService } from './modules/activity/activity-service';
 import { customersModule } from './modules/customers/routes';
 import { CustomerService } from './modules/customers/customer-service';
 import { PrismaCustomerReader } from './adapters/prisma-customer-reader';
-import { SyncedFieldValuationService, fieldValuationReport } from './modules/events/synced-field-valuation';
+import { SyncedFieldValuationService } from './modules/events/synced-field-valuation';
+import { SyncedFieldFollowUps } from './modules/events/synced-field-follow-ups';
 import {
   createContestEmailJobs,
   createContestExpandedNotices,
@@ -118,9 +120,8 @@ import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/p
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
-import { JobLeaderboardRebuilds } from './modules/contests/leaderboard-snapshots';
-import { leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService } from './modules/contest-management/wiring';
+import { JobLeaderboardRebuilds, leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
+import { createContestManagementService, createReleasedEditionContests } from './modules/contest-management/wiring';
 import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
@@ -190,21 +191,27 @@ export function buildApp() {
   // board is computed from tells this, which queues one rebuild job per event or contest (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs);
   const leaderboardRebuilder = createContestService(prisma, app.log, { planEntitlements });
-  const contestSettlement = createContestSettlementService(prisma, app.log, { jobs: backgroundJobs, leaderboards });
-  // A released edition joins its template contests by a job per contest (#1318).
-  const releasedEditionContests = createContestManagementService(prisma, app.log, planEntitlements);
-  const eventLifecycleService = createEventLifecycleService(prisma, {
-    logger: app.log,
-    jobs: backgroundJobs,
+  // What follows each change (#1946): built once, with every dependency its handlers need. A
+  // released edition joins its template contests by a job per contest (#1318).
+  const domainEvents = new DomainEvents({
+    queue: backgroundJobs,
+    releasedEditionContests: createReleasedEditionContests(prisma, app.log),
     sportEventChanged: contestNotices,
-    contestSettlement,
-    releasedEditionContests,
-    leaderboards,
   });
+  const contestSettlement = createContestSettlementService(prisma, app.log, { domainEvents });
+  // Each job that adds a released edition to a template contest is run by contest management.
+  const contestManagement = createContestManagementService(prisma, app.log, planEntitlements, { domainEvents });
+  const eventLifecycleService = createEventLifecycleService(prisma, {
+    domainEvents,
+    logger: app.log,
+    contestSettlement,
+  });
+  // One set of event services for the admin routes, the synced event creation sweep and the draft event notices.
+  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, domainEvents, registry);
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
   const cdn = createCdnInvalidator(process.env, app.log);
-  const ingestionPersistence = new IngestionPersistence(prisma, app.log, eventFieldCache, cdn, leaderboards);
+  const ingestionPersistence = new IngestionPersistence(prisma, domainEvents, app.log, eventFieldCache, cdn);
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -231,6 +238,7 @@ export function buildApp() {
       logger: app.log,
       planEntitlements,
       memberJoined,
+      releaseReadiness: sportEventServices.sportEvents,
     }),
     // A quick pick draw's receipts, queued by the draw for the sweep (#1171).
     { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, app.log, { email, appBaseUrl, planEntitlements }) },
@@ -290,11 +298,8 @@ export function buildApp() {
       }, 'Ingested event detail');
       const persisted = await ingestionPersistence.persistEventDetailWithDiagnostics(detail);
       app.log.info({ persisted: persisted.value }, 'Persisted event detail');
-      // A synced league's event takes its games once its field is in (ADR 0011, #1728).
-      await sportEventServices.providerGames.afterFieldLoad(detail);
-      // Then its tiers and prices, from the field just written (#1822).
-      const fieldValuation = fieldValuationReport(await syncedFieldValuation.afterFieldLoad(detail));
-      return { ...persisted, fieldValuation };
+      // Its games and then its tiers and prices follow in a job written with the field (#1952).
+      return persisted;
     },
     async onLiveScores(result: LiveScoreResult, providerId: string) {
       app.log.info({
@@ -304,17 +309,16 @@ export function buildApp() {
       return publishLiveScoreUpdate(result, {
         prisma,
         providerId,
+        domainEvents,
+        contestActivation: eventLifecycleService,
         logger: app.log,
         scoringFamilyForEvent,
         fieldCache: eventFieldCache,
-        leaderboards,
       });
     },
   };
 
   const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, new PrismaSportEventRepository(prisma));
-  // One set of event services for the admin routes and the synced event creation sweep.
-  const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, leaderboards, registry);
   // A synced draft event is released on its own once its ready checks pass, in its league's window (#1823).
   const sportEventAutoReleaseScheduler = new SportEventAutoReleaseScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -327,6 +331,9 @@ export function buildApp() {
     tiers: sportEventServices.tiers,
     logger: app.log.child({ module: 'events.syncedFieldValuation' }),
   });
+  // A field sync's follow-ups, in its job: a synced league's event takes its games once its field
+  // is in (ADR 0011, #1728), then its tiers and prices from that field (#1822, #1952).
+  const syncedFieldFollowUps = new SyncedFieldFollowUps({ providerGames: sportEventServices.providerGames, valuation: syncedFieldValuation });
   // A sport league's events sync (#1819): the schedule and an admin's Sync now queue the same job.
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
@@ -381,9 +388,12 @@ export function buildApp() {
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
       REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-      ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
+      ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
       RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
+      SYNC_EVENT_GAMES_AND_TIERS: (payload) => syncedFieldFollowUps.run(payload),
+      ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
+      FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -408,11 +418,12 @@ export function buildApp() {
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   app.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email, memberJoined });
-  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements });
+  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements, domainEvents });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
     email,
     planEntitlements,
+    domainEvents,
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
@@ -425,6 +436,7 @@ export function buildApp() {
     ingestionService,
     providerRegistry: registry,
     cdn,
+    domainEvents,
     leaderboards,
     services: sportEventServices,
     schedule: ingestionConfigService,
@@ -479,8 +491,8 @@ export function buildApp() {
   // =========================================================================
   // Draft module
   // =========================================================================
-  app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
-  app.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
+  app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, domainEvents });
+  app.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements, domainEvents });
 
   // =========================================================================
   // Lifecycle hooks

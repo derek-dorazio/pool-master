@@ -462,6 +462,21 @@ export default tseslint.config(
     rules: { 'poolmaster/no-query-in-loop': 'error' },
   },
   {
+    // Backend source: a write's follow-up jobs come from the domain event handler map, not from
+    // the writer (#1946, #1951). Not linted: the job builders and the handlers beside them, and
+    // the queue itself. Entry points that start work say so with an allow marker at the call.
+    files: ['packages/core-api/src/**/*.ts'],
+    ignores: [
+      'packages/core-api/src/**/*-job-requests.ts',
+      'packages/core-api/src/**/*-job.ts',
+      'packages/core-api/src/modules/background-jobs/**',
+      '**/*.test.ts',
+      '**/__tests__/**',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/follow-ups-via-domain-events': 'error' },
+  },
+  {
     // Test files across every workspace, matching the scanner's walk roots
     // (tests/, packages/, clients/poolmaster/src/), plus the Playwright suites in
     // clients/poolmaster/e2e/ since they joined lint (#616). The rule also fires on the

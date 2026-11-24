@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { RegisterRequestSchema } from "@poolmaster/shared/dto";
 import { registerUser, registerWithTeamOwnerInvitation } from "@/lib/api";
-import { ApiError, extractErrorMessage, throwApiError, type ExtractErrorMessageOptions } from "@/lib/errors";
+import { ApiError, extractErrorMessage, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
 import { QueryKeys } from "@/lib/query-keys";
@@ -69,8 +69,6 @@ export type SignUpFormProps = {
   submitLabel?: string;
   pendingLabel?: string;
   mode?: SignUpMode;
-  /** Words for particular server refusals on this page, such as an invitation already accepted. */
-  errorMessages?: ExtractErrorMessageOptions["codeMessages"];
 };
 
 /**
@@ -78,7 +76,6 @@ export type SignUpFormProps = {
  * that also sends the browser's locale. Used by the sign-in home and the co-owner invitation.
  */
 export function SignUpForm({
-  errorMessages,
   mode = { kind: "account" },
   onRegistered,
   pendingLabel = "Creating account...",
@@ -171,7 +168,6 @@ export function SignUpForm({
         <Notice data-testid="sign-up-error" tone="danger">
           {extractErrorMessage(mutation.error, {
             fallback: "We could not create your account. Please try again.",
-            codeMessages: errorMessages,
           })}
         </Notice>
       ) : null}

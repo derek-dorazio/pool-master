@@ -58,8 +58,29 @@ git diff origin/main...HEAD -U0 -- 'packages/*/src' packages/shared clients/pool
 ```
 
 A hit is a place to read, not a verdict; the calibration paragraph in §9 says what is fine.
-Then ask the question no search answers: **does this compute something the codebase already
-computes?** Search for the fact (the current season, whether an event is over, the final
+If the diff touches `schema.prisma` or a migration, also read every added column and model for
+a provider key outside a `…ProviderMapping` table, an either/or pair of nullable parents, and a
+generic word stored as data (`rules/review-triggers.md` §9 items 6 to 8):
+
+```bash
+git diff origin/main...HEAD -U0 -- packages/core-api/prisma \
+  | grep '^+' | grep -v '^+++' \
+  | grep -nE "externalId|Ref\b|provider[A-Z][A-Za-z]*Id|matchKeyword|[a-z]+Id +String\?|label|displayName|Names\b"
+```
+
+If the diff touches `clients/poolmaster/src`, search its added lines for a domain value
+(`rules/review-triggers.md` §9 item 10):
+
+```bash
+git diff origin/main...HEAD -U0 -- clients/poolmaster/src \
+  | grep '^+' | grep -v '^+++' \
+  | grep -nE "(OPTIONS|_MAX|_MIN|DEFAULT|LIMIT|THRESHOLD|PENALTY)[A-Z_]*\s*=|Array\.from\(\{ *length:|(min|max|step)=\{-?[0-9]|defaultValues|\.(min|max)\(-?[0-9]"
+```
+
+The §9 calibration says which hits are fine (a whole enum in its declared order, a display cap).
+
+Then ask the questions no search answers: **does this compute something the codebase already
+computes, or something the feed already supplies?** Search for the fact (the current season, whether an event is over, the final
 round, a contest's event limit), not for the function name the author chose
 (`rules/domain-model-conventions-rules.md` §15 *Residue — The Right Mechanism, Built Then
 Bypassed*). On the web side, ask whether the screen is re-deriving what the API decides.
@@ -92,8 +113,9 @@ A re-review after fixes reads only the new commits, plus anything a merge from m
 - **Reviewing the hunk, not the codebase.** A constant that looks local may be the fourth
   copy. Search before accepting it.
 - **Accepting "the provider sends a name" as the end of the story.** It is acceptable only
-  inside the adapter, as a mapping table with a `WARNING` or `ERROR` finding for an unmatched
-  string; everything past the adapter is keyed.
+  inside the adapter, as an inclusion-only mapping table whose miss raises the finding
+  `rules/domain-model-conventions-rules.md` §17 *Provider keys live only in ProviderMapping
+  tables* describes; everything past the adapter is keyed.
 - **Waving through a positional pick because the array is sorted.** Sorting is fine; "the
   last one is the final" is identity by position.
 - **Letting a web helper mirror a server rule because it is small.** It is the copy that

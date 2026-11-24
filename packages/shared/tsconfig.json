@@ -8,6 +8,7 @@
   },
   "include": [
     "domain/**/*",
+    "display-strings/**/*",
     "db/**/*",
     "utils/**/*",
     "src/**/*",

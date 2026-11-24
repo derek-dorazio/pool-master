@@ -1,9 +1,11 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
 import { MatchEnding, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
-import { RecordingLeaderboardRebuilds, eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
+import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { standardEventPricing } from '../../support/budget-pricing';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import type { SportEventParticipantView } from '@poolmaster/shared/db';
@@ -17,16 +19,16 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
   const sportLeague = store.addSportLeague(sport.id);
   // A draft, so its prices are still editable (#431); pass a released status to lock them.
   const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: sportName, status });
-  const leaderboards = new RecordingLeaderboardRebuilds();
+  const domainEvents = new RecordingDomainEvents();
   const service = new SportEventParticipantService({
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
-    leaderboards,
+    domainEvents,
     random: () => 0.5,
   });
-  return { store, service, sport, sportLeague, event, leaderboards };
+  return { store, service, sport, sportLeague, event, domainEvents };
 }
 
 describe('SportEventParticipantService.listEventParticipants', () => {
@@ -82,7 +84,7 @@ describe('SportEventParticipantService — the field viewers share', () => {
     const context = setup();
     const fieldCache = new ReadCache<SportEventParticipantView[]>();
     let now = T0;
-    const serviceSharing = () => new SportEventParticipantService({
+    const serviceSharing = () => new SportEventParticipantService({ domainEvents: testDomainEvents(),
       sportEvents: context.store.sportEventRepo(),
       field: context.store.fieldRepo(),
       participants: context.store.participantRepo(),
@@ -203,7 +205,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const event = store.addEvent({ sportLeagueId: store.addSportLeague(sport.id).id, sport: Sport.GOLF, status: SportEventStatus.DRAFT });
     const field = store.fieldRepo();
     const updateMany = jest.spyOn(field, 'updateMany');
-    const service = new SportEventParticipantService({
+    const service = new SportEventParticipantService({ domainEvents: testDomainEvents(),
       sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(),
       matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(), random: () => 0.5,
     });
@@ -218,7 +220,7 @@ describe('SportEventParticipantService — changing the field', () => {
     expect(updateMany).toHaveBeenCalledWith([
       { id: same.id, updates: {}, price: undefined },
       { id: moved.id, updates: { ranking: 2 }, price: undefined },
-    ], []);
+    ], [eventRebuildJob(event.id)]);
     expect([same.ranking, moved.ranking]).toEqual([4, 2]);
   });
 
@@ -484,7 +486,7 @@ describe('SportEventParticipantService — field upload', () => {
     const { store, event, anaEntry } = fieldWithTwo();
     const fieldRepo = store.fieldRepo();
     const updateMany = jest.spyOn(fieldRepo, 'updateMany');
-    const guarded = new SportEventParticipantService({
+    const guarded = new SportEventParticipantService({ domainEvents: testDomainEvents(),
       sportEvents: store.sportEventRepo(),
       field: fieldRepo,
       participants: store.participantRepo(),
@@ -541,7 +543,7 @@ describe('SportEventParticipantService — play-in places', () => {
 
 describe('SportEventParticipantService — leaderboard rebuild (#1466)', () => {
   it('writes the event\'s rebuild job with each field write (seed, add, grid save, removal) and wakes the runner after each', async () => {
-    const { store, service, sport, sportLeague, event, leaderboards } = setup();
+    const { store, service, sport, sportLeague, event, domainEvents } = setup();
     store.affiliate(sportLeague.id, store.addParticipant(sport.id, 'Seeded').id, 1);
     const guest = store.addParticipant(sport.id, 'Guest', { sportLeagueId: store.addSportLeague(sport.id, 'LIV Golf').id });
 
@@ -552,11 +554,11 @@ describe('SportEventParticipantService — leaderboard rebuild (#1466)', () => {
     await service.removeParticipant(event.id, added.id);
 
     expect(store.backgroundJobs).toEqual(Array.from({ length: 4 }, () => eventRebuildJob(event.id)));
-    expect(leaderboards.sportEventIds).toEqual([event.id, event.id, event.id, event.id]);
+    expect(domainEvents.changedSportEventIds).toEqual([event.id, event.id, event.id, event.id]);
   });
 
   it('writes no rebuild when an add finds everyone already on the field, and none for a refused removal', async () => {
-    const { store, service, sport, event, leaderboards } = setup();
+    const { store, service, sport, event, domainEvents } = setup();
     const already = store.addParticipant(sport.id, 'Already');
     const picked = store.addToField(event.id, already.id);
     store.picksByEntry.set(picked.id, 1);
@@ -565,6 +567,6 @@ describe('SportEventParticipantService — leaderboard rebuild (#1466)', () => {
     await expect(service.removeParticipant(event.id, picked.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_HAS_PICKS' });
 
     expect(store.backgroundJobs).toEqual([]);
-    expect(leaderboards.handedOut).toEqual([]);
+    expect(domainEvents.handedOutSportEventIds).toEqual([]);
   });
 });

@@ -100,6 +100,10 @@ export default defineConfig(() => {
           replacement: path.resolve(import.meta.dirname, '../../packages/shared/api-routes.ts'),
         },
         {
+          find: '@poolmaster/shared/display-strings',
+          replacement: path.resolve(import.meta.dirname, '../../packages/shared/display-strings/index.ts'),
+        },
+        {
           find: '@poolmaster/shared/domain',
           replacement: path.resolve(import.meta.dirname, '../../packages/shared/domain/index.ts'),
         },

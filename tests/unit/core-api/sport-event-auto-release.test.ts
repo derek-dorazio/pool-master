@@ -1,4 +1,5 @@
 import { expect, jest } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import {
   AutoReleaseCheckOutcome,
   BackgroundJobType,
@@ -24,6 +25,7 @@ import { standardEventPricing } from '../../support/budget-pricing';
 import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 const NOW = new Date('2026-01-15T12:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -38,15 +40,17 @@ function setup() {
   const lifecycle = new EventLifecycleService(
     { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
     sportEvents,
+    testDomainEvents(),
+    NO_SETTLE_JOBS,
   );
-  const service = new SportEventService({
+  const service = new SportEventService({ domainEvents: testDomainEvents(),
     sportEvents,
     eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), tierProfiles: store.tierProfileRepo(), pricingProfiles: store.pricingProfileRepo() }),
-    bracket: new SportEventBracketService({
+    bracket: new SportEventBracketService({ domainEvents: testDomainEvents(),
       sportEvents,
       sportLeagues: store.sportLeagueRepo(),
       rounds: store.roundRepo(),

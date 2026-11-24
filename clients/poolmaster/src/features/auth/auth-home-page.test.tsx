@@ -383,7 +383,7 @@ describe('AuthHomePage', () => {
     registerUserMock.mockResolvedValue({
       error: {
         error: {
-          code: 'AUTH_EMAIL_IN_USE',
+          code: 'ACCOUNT_EMAIL_TAKEN',
           message: 'Email is already in use.',
         },
       },

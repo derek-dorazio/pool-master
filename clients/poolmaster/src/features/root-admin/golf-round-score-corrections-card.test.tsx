@@ -193,7 +193,7 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     await userEvent.click(screen.getByTestId('root-admin-golf-scores-save-sep-1'));
 
     expect(await screen.findByTestId('root-admin-golf-scores-correction-save-error'))
-      .toHaveTextContent('Round 2 is beyond the event\'s 1 scheduled rounds.');
+      .toHaveTextContent('That round is beyond the event\'s schedule.');
     expect(strokes).toHaveValue('68');
   });
 

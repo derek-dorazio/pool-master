@@ -341,7 +341,6 @@ export class PrismaContestRepository implements ContestRepository {
       where: { id },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
-        ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
       },

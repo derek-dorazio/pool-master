@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { OptionalEmailCategory } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { updateUserEmailPreference } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { HelpTip, Notice, QueryState, SectionBody, SectionCard, SectionRow, SectionRows, Switch } from '@/features/shared/ui';
-import { EMAIL_CATEGORY_LABELS, SELF_EMAIL_PREFERENCES_KEY, useOwnEmailPreferences } from '../email-preferences';
+import { EMAIL_CATEGORY_COPY, SELF_EMAIL_PREFERENCES_KEY, useOwnEmailPreferences } from '../email-preferences';
 import { SELF_USER_ID } from '../user-routing';
 
 type EmailPreferenceChange = { category: OptionalEmailCategory; enabled: boolean };
@@ -59,7 +60,8 @@ export function MyAccountNotificationsSection() {
         testId="my-account-notifications"
       >
         {(data) => <SectionRows>{data.preferences.map(({ category, enabled }) => {
-          const { label, description } = EMAIL_CATEGORY_LABELS[category];
+          const { description } = EMAIL_CATEGORY_COPY[category];
+          const label = enumLabel('OptionalEmailCategory', category);
           const checked = pending?.category === category ? pending.enabled : enabled;
           return (
             <SectionRow

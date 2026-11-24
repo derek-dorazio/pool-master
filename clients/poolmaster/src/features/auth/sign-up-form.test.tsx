@@ -110,7 +110,7 @@ describe('SignUpForm', () => {
   });
 
   it("shows the server's refusal and leaves the member on the form", async () => {
-    registerUserMock.mockResolvedValue({ error: { error: { code: 'AUTH_EMAIL_IN_USE', message: 'Email is already in use.' } } });
+    registerUserMock.mockResolvedValue({ error: { error: { code: 'ACCOUNT_EMAIL_TAKEN', message: 'Email is already in use.' } } });
     const { onRegistered } = renderForm();
     fillAccount();
 
@@ -120,16 +120,16 @@ describe('SignUpForm', () => {
     expect(onRegistered).not.toHaveBeenCalled();
   });
 
-  it("uses the page's own words for a refusal it names", async () => {
+  it("words an already-accepted invitation by its display string, telling the person to sign in", async () => {
     registerWithTeamOwnerInvitationMock.mockResolvedValue({
       error: { error: { code: 'SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED', message: 'accepted' } },
     });
-    renderForm({ errorMessages: { SQUAD_OWNER_INVITATION_ALREADY_ACCEPTED: 'Already accepted. Sign in.' }, mode: { kind: 'teamInvite', inviteCode: 'TEAM123' } });
+    renderForm({ mode: { kind: 'teamInvite', inviteCode: 'TEAM123' } });
     fillAccount({ email: null });
 
     fireEvent.click(screen.getByTestId('sign-up-submit'));
 
-    expect(await screen.findByTestId('sign-up-error')).toHaveTextContent('Already accepted. Sign in.');
+    expect(await screen.findByTestId('sign-up-error')).toHaveTextContent('This invitation has already been accepted. Sign in to reach the league.');
   });
 
   it('on a co-owner invitation asks no email and signs up against the invitation', async () => {

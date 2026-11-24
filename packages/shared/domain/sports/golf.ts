@@ -1,3 +1,4 @@
+import { displayString } from '../../display-strings/display-strings';
 import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
@@ -11,16 +12,7 @@ export const golfSportDefinition: SportDefinition = {
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
-  shootout: null,
+  shootout: false,
   composite: null,
-  vocabulary: {
-    participant: { one: 'golfer', many: 'golfers' },
-    event: { one: 'tournament', many: 'tournaments' },
-    sportLeague: { one: 'tour', many: 'tours' },
-    round: { one: 'round', many: 'rounds' },
-    eliminated: 'Cut',
-    withdrawn: 'Withdrawn',
-    eventStart: 'first tee time',
-  },
-  roundLabel: (roundNumber) => `Round ${roundNumber}`,
+  roundLabel: (roundNumber, _roundCount, locale) => displayString('word.roundNumber', { n: roundNumber }, locale),
 };

@@ -28,7 +28,7 @@ export type FormModalProps = BaseModalTemplateProps & {
   children: ReactNode;
   error?: Error | null;
   /** What a refused save says for a code whose own message would mislead here. */
-  errorCodeMessages?: ServerErrorDisplayProps["codeMessages"];
+  errorContext?: ServerErrorDisplayProps["context"];
   errorFallback?: string;
   errorMessage?: ReactNode;
   errorTitle?: string;
@@ -46,7 +46,7 @@ export function FormModal({
   children,
   description,
   error,
-  errorCodeMessages,
+  errorContext,
   errorFallback,
   errorMessage,
   errorTitle,
@@ -89,7 +89,7 @@ export function FormModal({
       {error ? (
         <ServerErrorBar
           className="mt-4"
-          codeMessages={errorCodeMessages}
+          context={errorContext}
           error={error}
           fallback={errorFallback}
           title={errorTitle ?? "Save failed"}

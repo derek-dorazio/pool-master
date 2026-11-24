@@ -140,7 +140,7 @@ describe('GolfRoundScoreUploadCard', () => {
 
   it('shows the server\'s reason when the preview is refused', async () => {
     previewEventGolfRoundScoresMock.mockResolvedValue({
-      error: { error: { code: 'VALIDATION_ERROR', message: 'Round 2 is not part of this tournament.' } },
+      error: { error: { code: 'BAD_REQUEST', message: 'Round 2 is not part of this tournament.' } },
       response: { status: 422 },
     });
     renderCard();
@@ -148,7 +148,7 @@ describe('GolfRoundScoreUploadCard', () => {
     pasteAndPreview();
 
     expect(await screen.findByTestId('root-admin-golf-scores-upload-preview-error')).toHaveTextContent(
-      'Round 2 is not part of this tournament.',
+      'The request is not valid. Check the details and try again.',
     );
   });
 
@@ -160,7 +160,7 @@ describe('GolfRoundScoreUploadCard', () => {
       },
     });
     applyEventGolfRoundScoresMock.mockResolvedValue({
-      error: { error: { code: 'SPORT_EVENT_COMPLETED', message: 'Scores of a completed tournament cannot change.' } },
+      error: { error: { code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', message: 'Scores of a completed tournament cannot change.' } },
       response: { status: 409 },
     });
     renderCard();
@@ -171,7 +171,7 @@ describe('GolfRoundScoreUploadCard', () => {
     fireEvent.click(screen.getByTestId('root-admin-golf-scores-upload-apply'));
 
     expect(await screen.findByTestId('root-admin-golf-scores-upload-apply-error')).toHaveTextContent(
-      'Scores of a completed tournament cannot change.',
+      'This result can no longer change.',
     );
   });
 

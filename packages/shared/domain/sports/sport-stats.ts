@@ -1,36 +1,5 @@
-/**
- * The component stats a sport's composite is made of (#934), one shared enum across the sports
- * that have one, so a stat line's key is one Postgres enum. Each sport's composite names the
- * stats it counts (`SportComposite.stats`).
- */
-export const SportStat = {
-  // Baseball: Box Score.
-  TOTAL_BASES: 'TOTAL_BASES',
-  RUNS: 'RUNS',
-  RUNS_BATTED_IN: 'RUNS_BATTED_IN',
-  WALKS: 'WALKS',
-  STOLEN_BASES: 'STOLEN_BASES',
-  // Basketball: Triple Threat.
-  POINTS: 'POINTS',
-  REBOUNDS: 'REBOUNDS',
-  /** Basketball's, hockey's and soccer's: a pass that set up a score. */
-  ASSISTS: 'ASSISTS',
-  // Hockey: Power Play.
-  /** Hockey's and soccer's. */
-  GOALS: 'GOALS',
-  SHOTS_ON_GOAL: 'SHOTS_ON_GOAL',
-  // Soccer: Hat Trick.
-  SHOTS_ON_TARGET: 'SHOTS_ON_TARGET',
-  // American football: Redzone.
-  PASSING_TOUCHDOWNS: 'PASSING_TOUCHDOWNS',
-  RUSHING_TOUCHDOWNS: 'RUSHING_TOUCHDOWNS',
-  RECEIVING_TOUCHDOWNS: 'RECEIVING_TOUCHDOWNS',
-  RECEPTIONS: 'RECEPTIONS',
-  PASSING_YARDS: 'PASSING_YARDS',
-  RUSHING_YARDS: 'RUSHING_YARDS',
-  RECEIVING_YARDS: 'RECEIVING_YARDS',
-} as const;
-export type SportStat = (typeof SportStat)[keyof typeof SportStat];
+/** `SportStat` is declared in enums.ts with the other shared enums, so its words live in the display strings. */
+import { SportStat } from '../enums';
 
 /** The largest count of one stat a stat line stores for one game, and, for yards, the most lost. */
 export const SPORT_STAT_VALUE_MAX = 9999;

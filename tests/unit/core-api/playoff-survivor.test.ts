@@ -35,6 +35,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { fakeSquaresRepo } from '../../support/repo-fakes';
+import { testDomainEvents } from '../../support/domain-events';
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -111,8 +112,9 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
+  const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
   const predictions = new PredictionService({
+    domainEvents: testDomainEvents(),
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     scoringRules: world.scoringRuleRepo(),

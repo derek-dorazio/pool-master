@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router';
 import { PlanCap, PlanFeatureGroup, type LeaguePlan } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { updateLeaguePlan, type LeagueDto, type LeaguePlanUsageResponse, type PlanEntitlementsDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -18,7 +19,6 @@ import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
 import { buildFeatureLines } from './plan-highlights';
-import { LEAGUE_PLAN_LABEL } from './plan-labels';
 import { useLeaguePlanUsageQuery } from './use-league-plan-usage-query';
 import { useLeaguePlansQuery } from './use-league-plans-query';
 
@@ -113,7 +113,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       ) : (
         <>
           {chosen ? (
-            <SectionCard headingLevel={3} padded testId="league-plan-confirm" title={`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}>
+            <SectionCard headingLevel={3} padded testId="league-plan-confirm" title={`Move to ${enumLabel('LeaguePlan', chosen.plan)}?`}>
               <div className="space-y-4">
                 <SectionNote tone="default">Plan changes are free for now, so this takes effect at once and costs nothing.</SectionNote>
                 {usageQuery.data ? (
@@ -139,7 +139,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
                     disabled={saveMutation.isPending}
                     onClick={() => saveMutation.mutate(chosen.plan)}
                   >
-                    {saveMutation.isPending ? 'Saving...' : `Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}`}
+                    {saveMutation.isPending ? 'Saving...' : `Move to ${enumLabel('LeaguePlan', chosen.plan)}`}
                   </Button>
                   <Button
                     data-testid="league-plan-confirm-cancel"
@@ -147,7 +147,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
                     onClick={() => setChoice(null)}
                     variant="secondary"
                   >
-                    {`Keep ${LEAGUE_PLAN_LABEL[current.plan]}`}
+                    {`Keep ${enumLabel('LeaguePlan', current.plan)}`}
                   </Button>
                 </div>
               </div>
@@ -172,7 +172,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
                   onClick={() => choose(plan)}
                   variant={isHigher ? 'primary' : 'secondary'}
                 >
-                  {isHigher ? `Move up to ${LEAGUE_PLAN_LABEL[plan]}` : `Move to ${LEAGUE_PLAN_LABEL[plan]}`}
+                  {isHigher ? `Move up to ${enumLabel('LeaguePlan', plan)}` : `Move to ${enumLabel('LeaguePlan', plan)}`}
                 </Button>
               );
             }}
@@ -225,7 +225,7 @@ function YourLeagueNow({
     <SectionCard headingLevel={3} padded testId="league-plan-now" title="Your league now">
       <FactList
         facts={[
-          { id: 'plan', label: 'Plan', testId: 'league-plan-now-plan', value: LEAGUE_PLAN_LABEL[current.plan] },
+          { id: 'plan', label: 'Plan', testId: 'league-plan-now-plan', value: enumLabel('LeaguePlan', current.plan) },
           ...(usage
             ? [
                 {
@@ -274,7 +274,7 @@ function PlanChangeWarnings({
 }) {
   const { locale } = useDisplayPreferences();
   const effects = buildPlanChangeEffects(current, target, usage);
-  const label = LEAGUE_PLAN_LABEL[target.plan];
+  const label = enumLabel('LeaguePlan', target.plan);
   const named = effects.contestsOverEntries.slice(0, NAMED_CONTEST_LIMIT);
   const more = effects.contestsOverEntries.length - named.length;
   if (!effects.contestsOverEntries.length && !effects.sportLeaguesOver && !effects.hiddenFeatures.length) {

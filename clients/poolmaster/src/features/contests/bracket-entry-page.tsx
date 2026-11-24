@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router';
-import { ContestEntryStatus, PredictedResult, type Sport } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PredictedResult } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ContestDto } from '@/lib/api';
 import {
   Notice,
@@ -9,8 +10,8 @@ import {
   StatStrip,
 } from '@/features/shared/ui';
 import { buildHowToPlayFormatPath } from '@/features/event-pages/event-page-paths';
-import { extractErrorMessage, type ErrorCodeMessages } from '@/lib/errors';
-import { buildBracketRounds, describeBracketClose, describeBracketTiebreaker, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
+import { extractErrorMessage } from '@/lib/errors';
+import { buildBracketRounds, describeBracketClose, describeBracketTiebreaker, formatEntryScore, type BracketGame, type BracketTeam } from './bracket-layout';
 import { BracketView } from './bracket-view';
 import { drawBracket } from './bracket-view-model';
 import { ContestEntryFrame } from './contest-header';
@@ -18,37 +19,15 @@ import { EntryFinishCard } from './entry-finish-card';
 import { entryFinishStatus, entryStatusLine } from './entry-status-line';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { useContestLeagueCode } from './use-contest-league';
-import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
+import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, gamePickErrorValues } from './contest-sport';
 import { firstContestEvent } from './contest-events';
-import { canRenameEntries, CONTEST_ENTRY_STATUS_LABELS, contestStatusLabel } from './contest-status';
+import { canRenameEntries } from './contest-status';
 import { useBracketRoundLabel } from './use-bracket-round-label';
 import { useContestEntryQuery } from './use-contest-entries';
 import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
 import { useEntryName } from './use-entry-name';
 import { useGamePicks } from './use-game-picks';
 import { TiebreakerNumberField } from './tiebreaker-number-field';
-
-/**
- * Copy for the refusals a bracket's picks, tiebreaker and submit can meet (#721), in the
- * contest's sport's words (#704). The codes are the contract; the server's own sentences are a
- * fallback for anything not listed.
- */
-function bracketCodeMessages(sport: Sport | null | undefined): ErrorCodeMessages {
-  const match = contestMatchNoun(sport);
-  const participant = contestParticipantNoun(sport);
-  return {
-    PREDICTION_WEEK_INCOMPLETE: `Every ${match.one} needs a pick before your bracket can be submitted.`,
-    PREDICTION_TIEBREAKER_MISSING: `Enter your tiebreaker, the total ${contestScoreUnit(sport)} of the final, before you submit.`,
-    PREDICTION_GAME_STARTED: `That ${match.one} has started, so its pick is locked.`,
-    PREDICTION_TEAM_NOT_IN_GAME: `That ${participant.one} can’t reach this ${match.one} in your bracket any more. Your bracket has been refreshed.`,
-    CONTEST_ENTRY_LOCKED: `The ${match.many} have started, so this bracket can no longer change.`,
-  };
-}
-
-/** What the entry has scored, once anyone can see it; a dash before. */
-function formatScore(points: number | null) {
-  return points === null ? '—' : formatPoints(points);
-}
 
 /**
  * A bracket contest's entry page (#721): the entry's own bracket to fill in and submit before the
@@ -108,7 +87,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     });
   };
   const errorMessage = (error: Error | null, fallback: string) => (error
-    ? extractErrorMessage(error, { codeMessages: bracketCodeMessages(contest.sport), fallback })
+    ? extractErrorMessage(error, { context: ['bracketEntry', 'gamePicks'], values: gamePickErrorValues(contest.sport), fallback })
     : null);
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
   const scoreUnit = contestScoreUnit(contest.sport);
@@ -141,7 +120,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       entry={entrySummary}
       leagueCode={leagueCode}
-      phase={isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
+      phase={isOpen ? `Open until ${closesAt}` : enumLabel('ContestStatus', contest.status)}
       status={status}
       statusLine={entryStatusLine({ closes: closesAt, isOpen: canPick, status })}
       testId="bracket-entry-page"
@@ -157,8 +136,8 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           <StatStrip
             items={[
               { label: 'Picked', value: `${gamePicks.pickedCount} of ${gamePicks.gameCount}`, testId: 'bracket-picked-count' },
-              { label: 'Points', value: formatScore(gamePicks.points), testId: 'bracket-points' },
-              { label: 'Max', value: formatScore(gamePicks.maxPossiblePoints), testId: 'bracket-max-possible' },
+              { label: 'Points', value: formatEntryScore(gamePicks.points), testId: 'bracket-points' },
+              { label: 'Max', value: formatEntryScore(gamePicks.maxPossiblePoints), testId: 'bracket-max-possible' },
             ]}
             testId="bracket-progress"
           />
@@ -200,7 +179,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
               error={finishError}
               errorTestId="bracket-submit-error"
               name={nameEditable ? { disabled: isFinishing, onChange: name.onChange, testId: 'contest-entry-name-input', value: name.value } : null}
-              status={canPick ? entryFinishStatus({ closes: closesAt, hint, isSubmitted }) : CONTEST_ENTRY_STATUS_LABELS[gamePicks.status]}
+              status={canPick ? entryFinishStatus({ closes: closesAt, hint, isSubmitted }) : enumLabel('ContestEntryStatus', gamePicks.status)}
               statusTestId="bracket-finish-status"
               testId="bracket-finish"
               title="Name and submit"

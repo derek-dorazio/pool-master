@@ -1,13 +1,12 @@
 import { QueryClient } from '@tanstack/react-query';
 import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { describe, expect, it, vi } from 'vitest';
 import {
   isContestPickingOver,
   areContestEntriesOpen,
   CONTEST_POLL_INTERVAL_MS,
-  CONTEST_STATUS_LABELS,
   CONTEST_STATUS_TONES,
-  contestStatusLabel,
   contestRefetchInterval,
   isHistoricalContest,
   refreshOnContestStatusChange,
@@ -15,21 +14,20 @@ import {
 } from './contest-status';
 
 describe('contest status helpers', () => {
-  it('gives every contest status a readable label and a badge colour, so a new status without one fails', () => {
+  it('gives every contest status a readable display-string label and a badge colour, so a new status without one fails', () => {
     const statuses = Object.values(ContestStatus).sort();
-    expect(Object.keys(CONTEST_STATUS_LABELS).sort()).toEqual(statuses);
     expect(Object.keys(CONTEST_STATUS_TONES).sort()).toEqual(statuses);
     const unreadable = statuses.filter(
-      (status) => !CONTEST_STATUS_LABELS[status] || CONTEST_STATUS_LABELS[status] === status,
+      (status) => !enumLabel('ContestStatus', status) || enumLabel('ContestStatus', status) === status,
     );
     expect(unreadable).toEqual([]);
   });
 
   it('labels contests by their lifecycle stage: "Set up", "Open", "Live" and "Final"', () => {
-    expect(contestStatusLabel('DRAFT')).toBe('Set up');
-    expect(contestStatusLabel('OPEN')).toBe('Open');
-    expect(contestStatusLabel('ACTIVE')).toBe('Live');
-    expect(contestStatusLabel('COMPLETED')).toBe('Final');
+    expect(enumLabel('ContestStatus', 'DRAFT')).toBe('Set up');
+    expect(enumLabel('ContestStatus', 'OPEN')).toBe('Open');
+    expect(enumLabel('ContestStatus', 'ACTIVE')).toBe('Live');
+    expect(enumLabel('ContestStatus', 'COMPLETED')).toBe('Final');
   });
 
   it('pool-master-dxd.13.3 classifies only completed contests as historical', () => {

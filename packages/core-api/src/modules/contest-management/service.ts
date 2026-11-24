@@ -8,8 +8,9 @@ import type {
 } from '@poolmaster/shared/db';
 import type { SportEventTierGroup, SportEventTierService } from '../events/sport-event-tier-service';
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
-import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import { addReleasedEditionToContestJob, type AddReleasedEditionToContestJobPayload } from './released-edition-job-requests';
+import type { DomainEvents } from '../domain-events';
+import { ContestLifecycle } from '../contests/contest-lifecycle';
+import type { AddReleasedEditionToContestJobPayload } from './released-edition-job-requests';
 import type { CupService } from '../cups/service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type {
@@ -66,10 +67,8 @@ import type {
   TieredContestRules,
   TournamentFormat,
   Sport,
-  SportEvent,
   CupWeight,
   BackgroundJobOutcome,
-  BackgroundJobRequest,
   OneEventSelectionType,
 } from '@poolmaster/shared/domain';
 import {
@@ -179,6 +178,8 @@ export interface ContestManagementServiceDeps {
   logger?: LifecycleLogger;
   /** Tells the league a contest has opened (#845, the "New contest open" email). */
   contestOpened?: ContestOpenedNotice;
+  /** What follows a contest's status change (#1949), for the contest writer opening a draft moves it through. */
+  domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
   now?: () => Date;
 }
 
@@ -209,6 +210,8 @@ export class ContestManagementService {
   private readonly planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   private readonly logger: LifecycleLogger;
   private readonly contestOpened?: ContestOpenedNotice;
+  /** The one writer of a contest's status (#1949). */
+  private readonly contestLifecycle: ContestLifecycle;
   private readonly now: () => Date;
 
   constructor(deps: ContestManagementServiceDeps) {
@@ -222,6 +225,7 @@ export class ContestManagementService {
     this.planEntitlements = deps.planEntitlements;
     this.logger = deps.logger ?? createNoopLogger();
     this.contestOpened = deps.contestOpened;
+    this.contestLifecycle = new ContestLifecycle(deps.contests, deps.domainEvents);
     this.now = deps.now ?? (() => new Date());
   }
 
@@ -532,7 +536,7 @@ export class ContestManagementService {
 
     // Compare-and-set: of two presses racing, only one moves the contest.
     const openedAt = this.now();
-    const opened = await this.contestRepo.transitionStatus(contestId, {
+    const opened = await this.contestLifecycle.transition(contestId, {
       from: [ContestStatus.DRAFT],
       to: ContestStatus.OPEN,
       openedAt,
@@ -686,29 +690,6 @@ export class ContestManagementService {
       addedCount: added.length,
       removedCount: removed.length,
     }, 'contest management set sport events completed');
-  }
-
-  /**
-   * A released edition joins the contests made from a template covering its series (#714): a
-   * majors pool takes each major of its year as the major is released. A contest takes it while
-   * it can change its events (not finished, not drawn), when its events are all of the edition's
-   * year; a contest that already has it is left alone.
-   *
-   * A release can reach hundreds of pools across as many leagues, too many for its request, so it
-   * only finds those contests: this answers one job per contest (#1318), for the release to write
-   * with its own status change. Each job adds the edition (`addReleasedEditionToContest`).
-   */
-  async releasedEditionJobs(
-    sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
-    jobs: Pick<BackgroundJobQueue, 'request'>,
-  ): Promise<BackgroundJobRequest[]> {
-    // The repository filters status, draw, the edition and the year in one query (#1179), so a
-    // series' years of finished pools are never read back.
-    const contestIds = (await this.contestRepo.findJoinableByReleasedEdition(sportEvent)).map((contest) => contest.id);
-    if (contestIds.length > 0) {
-      this.logger.info({ sportEventId: sportEvent.id, contestIds }, 'contest management queues a released edition for its template contests');
-    }
-    return contestIds.map((contestId) => addReleasedEditionToContestJob(jobs, contestId, sportEvent.id));
   }
 
   /**

@@ -10,7 +10,9 @@
 import { z } from 'zod';
 import { BackgroundJobType, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import type { LeaderboardChanges } from './leaderboard-snapshots';
+import type { DomainEventType } from '../domain-events/domain-event';
+import type { DomainEventHandler } from '../domain-events/domain-event-handler';
+import type { LeaderboardChanges, LeaderboardRebuilds } from './leaderboard-snapshots';
 
 /** What a rebuild job covers. */
 export const LeaderboardRebuildSubject = {
@@ -43,4 +45,72 @@ export function leaderboardChangesOf(payload: RebuildLeaderboardsJobPayload): Le
   return payload.subject === LeaderboardRebuildSubject.EVENT
     ? { sportEventIds: [payload.id], contestIds: [] }
     : { sportEventIds: [], contestIds: [payload.id] };
+}
+
+/** A sport event's status shows on its contests' boards, so they are rebuilt by a job written with it (#1466). */
+export const rebuildEventLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
+  key: 'rebuild-event-leaderboards',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEvent.id)],
+};
+
+/**
+ * A score, result, standing, field or game of an event is what its contests' boards are computed
+ * from, so every write changing one carries the job rebuilding them (#1466): a write that fails
+ * queues no rebuild.
+ */
+export const rebuildChangedResultsLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_RESULTS_CHANGED> = {
+  key: 'rebuild-leaderboards-for-changed-results',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEventId)],
+};
+
+/** A decided game changes its event's boards, as any result does. */
+export const rebuildDecidedGameLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.GAME_DECIDED> = {
+  key: 'rebuild-leaderboards-for-decided-game',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.EVENT, event.sportEventId)],
+};
+
+/**
+ * A contest's board lists the entries that submitted and each week's submitted flag (#1435), so a
+ * week submitted or sent back to draft rebuilds that contest's boards (#1466). The rebuild's dedupe
+ * key holds one job per contest, so a burst of members submitting queues one rebuild, never one
+ * per pick (`rules/architecture-rules.md` §4). It is collected on every pick save, so it stays
+ * read-free.
+ */
+export const rebuildContestLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.CONTEST_ENTRY_EVENT_STATUS_CHANGED> = {
+  key: 'rebuild-contest-leaderboards',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.CONTEST, event.contestEntryEvent.contestId)],
+};
+
+/**
+ * A contest's status shows on its board, and a completed contest's board carries its final
+ * standings, so every move of a contest rebuilds its boards, written with the move
+ * (`ContestLifecycle`). Settlement completes a contest after its event standings are written, and
+ * some contests complete with none written (a cancelled event's), so the event's rebuild written
+ * with the standings can run before the move; this one cannot.
+ */
+export const rebuildMovedContestLeaderboardsHandler: DomainEventHandler<typeof DomainEventType.CONTEST_STATUS_CHANGED> = {
+  key: 'rebuild-moved-contest-leaderboards',
+  queues: [BackgroundJobType.REBUILD_LEADERBOARDS],
+  jobs: (event, { queue }) => [rebuildLeaderboardsJob(queue, LeaderboardRebuildSubject.CONTEST, event.contest.id)],
+};
+
+/** Queues a rebuild job per event or contest a write changed, each one waiting at most once. */
+export class JobLeaderboardRebuilds implements LeaderboardRebuilds {
+  constructor(private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>) {}
+
+  eventsChanged(sportEventIds: readonly string[]): Promise<void> {
+    return this.queue(LeaderboardRebuildSubject.EVENT, sportEventIds);
+  }
+
+  contestsChanged(contestIds: readonly string[]): Promise<void> {
+    return this.queue(LeaderboardRebuildSubject.CONTEST, contestIds);
+  }
+
+  private async queue(subject: LeaderboardRebuildSubject, ids: readonly string[]): Promise<void> {
+    await this.jobs.enqueueAll([...new Set(ids)].map((id) => rebuildLeaderboardsJob(this.jobs, subject, id)));
+  }
 }

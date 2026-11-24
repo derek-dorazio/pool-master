@@ -117,6 +117,9 @@ export const BACKGROUND_JOB_KINDS = {
   [BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST]: BackgroundJobKind.RELEASE,
   [BackgroundJobType.RELEASE_SPORT_EVENT]: BackgroundJobKind.RELEASE,
   [BackgroundJobType.REBUILD_LEADERBOARDS]: BackgroundJobKind.OTHER,
+  [BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS]: BackgroundJobKind.SYNC,
+  [BackgroundJobType.ACTIVATE_EVENT_CONTESTS]: BackgroundJobKind.OTHER,
+  [BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS]: BackgroundJobKind.OTHER,
 } as const satisfies Record<BackgroundJobType, BackgroundJobKind>;
 
 /** The job types of one Activity kind. */

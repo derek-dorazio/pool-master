@@ -1,5 +1,5 @@
 import { ContestEntryStatus } from '@poolmaster/shared/domain';
-import { CONTEST_ENTRY_STATUS_LABELS } from './contest-status';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 
 /**
  * Where an entry stands, in the one line under its name on a pick screen (#1769): "Not submitted ·
@@ -24,7 +24,7 @@ export function entryStatusLine({
     return 'Hidden until the event starts';
   }
   if (!isOpen) {
-    return CONTEST_ENTRY_STATUS_LABELS[status];
+    return enumLabel('ContestEntryStatus', status);
   }
   return status === ContestEntryStatus.SUBMITTED ? `Submitted · ${locks}` : `Not submitted · submit by ${closes}`;
 }

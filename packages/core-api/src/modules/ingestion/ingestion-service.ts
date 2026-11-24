@@ -481,6 +481,7 @@ export class IngestionService {
       runType: 'MANUAL_EVENT_SYNC',
       trigger: start.trigger,
       ...(linkedEvent && linkedEvent),
+      // poolmaster-allow-direct-job: a root admin's manual event sync starts the job
       job: (runs) => this.jobs.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
         syncRunIds: runs.map((run) => run.id),
         sport: normalizedScope.sport,

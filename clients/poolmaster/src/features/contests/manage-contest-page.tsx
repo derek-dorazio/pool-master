@@ -1,15 +1,16 @@
 import {
   ContestStatus,
-  PlanFeature,
-  SelectionType,
-  type SportNoun,
   countParticipants,
   coversOneEvent,
   formatContestRules,
   formatEntriesPerTeam,
   formatSelectionTypeName,
-  getSportDefinition,
+  PlanFeature,
+  SelectionType,
+  type SportNoun,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
@@ -17,7 +18,6 @@ import { useNavigate, useParams } from 'react-router';
 import type { EffectiveTierDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { ContestExpansionSection } from '@/features/billing/contest-expansion-section';
-import { CUP_WEIGHT_COPY } from '@/features/championships/cup-settings-view';
 import {
   buildLeagueAdminContestCupWeightPath,
   buildLeagueAdminContestEditPath,
@@ -168,7 +168,7 @@ export function ManageContestPage() {
   const rules = formatContestRules(
     configuration,
     tierCount,
-    getSportDefinition(event.sport).vocabulary.participant,
+    sportVocabulary(event.sport).participant,
     configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
     roundName,
   );
@@ -326,7 +326,7 @@ export function ManageContestPage() {
               )}
               name="Cup weight"
               testId="manage-contest-cup-weight"
-              value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
+              value={enumLabel('CupWeight', managedContest.cupWeight)}
             />
           </SectionRows>
         </SectionCard>
@@ -336,7 +336,7 @@ export function ManageContestPage() {
         <ContestTiersSection
           eventName={eventNamesById.get(managedEvent.sportEventId) ?? event.name}
           key={managedEvent.sportEventId}
-          noun={getSportDefinition(event.sport).vocabulary.participant}
+          noun={sportVocabulary(event.sport).participant}
           tiers={managedEvent.effectiveTiers}
           title={isMultiEvent ? `Tiers · ${eventNamesById.get(managedEvent.sportEventId) ?? event.name}` : 'Tiers'}
         />

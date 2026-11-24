@@ -65,11 +65,7 @@ export function ForgotPasswordPage() {
         help="Enter the email or username you sign in with. We'll email you a link to choose a new password."
         errorMessage={
           requestMutation.isError
-            ? extractErrorMessage(requestMutation.error, {
-                codeMessages: {
-                  PASSWORD_RESET_RATE_LIMITED: "Too many tries. Wait a minute and try again.",
-                },
-              })
+            ? extractErrorMessage(requestMutation.error)
             : null
         }
         isPending={requestMutation.isPending}

@@ -4,7 +4,7 @@ import { updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto } from '@/lib/api';
 import { Button, InlineError, Input, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { bracketErrorMessages, sideEntry } from './bracket-copy';
+import { bracketErrors, sideEntry } from './bracket-copy';
 import { type BracketContext, useMatchWrite } from './bracket-match-write';
 
 /** "Chiefs -3.5": the spread told from the home team's side, or "No spread" while it has none. */
@@ -98,7 +98,7 @@ export function SpreadCell({ match, released, context }: { match: SportEventMatc
       {save.isError ? (
         <InlineError testId={`root-admin-bracket-spread-error-${match.matchNumber}`}>
           {extractErrorMessage(save.error, {
-            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            ...bracketErrors(context.vocabulary, match, context.bracket),
             fallback: 'This spread could not be saved. Try again.',
           })}
         </InlineError>

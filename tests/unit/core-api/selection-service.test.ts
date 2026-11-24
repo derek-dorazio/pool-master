@@ -1399,7 +1399,7 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
     expect(recordDraw).not.toHaveBeenCalled();
   });
 
-  it.each([
+  it.each<[Error, string]>([
     [new ContestDrawAlreadyRunError(CONTEST_ID), 'CONTEST_DRAW_ALREADY_RUN'],
     [new ContestDrawEntriesChangedError(CONTEST_ID), 'CONTEST_DRAW_ENTRIES_CHANGED'],
   ])('answers 409 %s when the write finds the contest drawn or its entries changed meanwhile', async (error, code) => {

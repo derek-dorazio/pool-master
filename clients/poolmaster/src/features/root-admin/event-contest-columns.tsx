@@ -1,8 +1,9 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { ContestStatusOrder, type ContestStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { StatusBadge, Text } from '@/features/shared/ui';
 import type { SportEventContestDto } from '@/lib/api';
-import { CONTEST_STATUS_LABELS, CONTEST_STATUS_TONES } from '@/features/contests/contest-status';
+import { CONTEST_STATUS_TONES } from '@/features/contests/contest-status';
 
 const columnHelper = createColumnHelper<SportEventContestDto>();
 
@@ -33,9 +34,9 @@ export function eventContestColumns() {
       header: 'Status',
       meta: {
         info: 'Set up, Open (taking entries), Live or Final.',
-        type: { kind: 'enum', order: ContestStatusOrder, label: (status) => CONTEST_STATUS_LABELS[status as ContestStatus] },
+        type: { kind: 'enum', order: ContestStatusOrder, label: (status) => enumLabel('ContestStatus', status as ContestStatus) },
       },
-      cell: ({ getValue }) => <StatusBadge tone={CONTEST_STATUS_TONES[getValue()]}>{CONTEST_STATUS_LABELS[getValue()]}</StatusBadge>,
+      cell: ({ getValue }) => <StatusBadge tone={CONTEST_STATUS_TONES[getValue()]}>{enumLabel('ContestStatus', getValue())}</StatusBadge>,
     }),
     columnHelper.accessor('entryCount', {
       header: 'Entries',

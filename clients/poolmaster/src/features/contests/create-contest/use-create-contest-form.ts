@@ -5,15 +5,16 @@ import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router';
 import {
   type ContestScoringSettings,
-  PlanCap,
-  SUPPORTED_SPORTS,
-  SelectionType,
-  type Sport,
   contestTemplateEventTypeOf,
   eventSportDefinition,
   getSportDefinition,
+  PlanCap,
+  SelectionType,
+  type Sport,
   sportAllowsSelectionType,
+  sportVocabulary,
   suggestContestName,
+  SUPPORTED_SPORTS,
 } from '@poolmaster/shared/domain';
 import { listContestConfigTemplates, type ContestConfigTemplateDto, type LeagueDto, type SportEventDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
@@ -145,7 +146,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   // The chosen event's definition, its sport's until one is chosen: a stat pool event plays its
   // sport's composite with players (#936), not its bracket.
   const sportDefinition = selectedEvent ? eventSportDefinition(selectedEvent) : getSportDefinition(sport);
-  const { participant } = sportDefinition.vocabulary;
+  const { participant } = sportVocabulary(sportDefinition);
   const statPoolScoring = statPoolScoringLine(sportDefinition);
   // The events that can start a requested template, whatever format the page is on, in the
   // requested sport league when the link names one.

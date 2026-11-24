@@ -40,7 +40,7 @@ Two variables, each with one owner and one set of legal values (#184):
 | `POOLMASTER_ENVIRONMENT` | us | `development`, `test`, `ci`, `qa`, `staging`, `prod` | our code, only through `readAppEnv()` in `core/config.ts`, which returns the `AppEnvironment` enum |
 | `NODE_ENV` | Node and third-party libraries | `development`, `test`, `production` | libraries only |
 
-- Every environment-gated behaviour (secure cookies, mock-provider refusal, email defaults,
+- Every environment-gated behaviour (secure cookies, email defaults,
   the `env` field on log lines, `/version`) reads `readAppEnv()`. It throws when the
   variable is unset or names an unknown environment; there is no fallback.
 - `NODE_ENV` is not ours to repurpose. Terraform sets it to the literal `production` in
@@ -480,9 +480,10 @@ Rules:
   `API_ERROR_CODES` (`packages/shared/dto/api-error-codes.ts`), and typed as `ApiErrorCode`. Error classes'
   `code` fields and `sendError` take only listed codes, so a new code is added to the list in
   the same change, and a code that stops being sent is removed from it (a unit test fails while
-  a listed code appears nowhere in the server source). The web keys its error copy by
-  `ApiErrorCode` (`ErrorCodeMessages` in `clients/poolmaster/src/lib/errors.ts`), so copy for a
-  removed or misspelled code fails typecheck.
+  a listed code appears nowhere in the server source). The web shows a code's words from
+  the display strings (`error.<CODE>`, and a screen's own wording `error.<CODE>.<context>`;
+  `rules/ux-rules.md` §16 *Display Strings*), never the API's message, and the display-string
+  module is typed by `ApiErrorCode`, so words for a removed or misspelled code fail typecheck.
 - The global error handler sends only listed codes. A thrown error whose `code` is in
   `API_ERROR_CODES`, or is one of Fastify's own `FST_ERR_*` codes, reaches the client as it is;
   any other runtime code (a Prisma `P2002`, a Node `ECONNREFUSED`) becomes `INTERNAL_ERROR` on a

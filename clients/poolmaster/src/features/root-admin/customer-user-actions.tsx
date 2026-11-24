@@ -11,11 +11,10 @@ type ConfirmKind = 'reset-password' | 'lifecycle' | 'delete';
 
 const TEST_ID = 'root-admin-customer-user-dialog';
 
+/** A refusal as a root admin reads it: the API's code, for support, then its words. */
 function adminError(error: Error | null, fallback: string): string {
-  if (error instanceof ApiError && error.code !== undefined) {
-    return `${error.code}: ${error.message}`;
-  }
-  return extractErrorMessage(error, { fallback });
+  const message = extractErrorMessage(error, { fallback });
+  return error instanceof ApiError && error.code !== undefined ? `${error.code}: ${message}` : message;
 }
 
 /** The typed email unlocks Delete compared without case or surrounding spaces. */

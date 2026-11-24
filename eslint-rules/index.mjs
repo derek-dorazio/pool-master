@@ -11,6 +11,7 @@
  * `files`/`ignores` exactly as its scanner's exclusion list reads. You also get a real
  * rule name in the output, per-rule `eslint-disable`, and RuleTester unit tests.
  */
+import followUpsViaDomainEvents from './follow-ups-via-domain-events.mjs';
 import noAdHocMoreInfo from './no-ad-hoc-more-info.mjs';
 import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
@@ -40,6 +41,7 @@ import noUnawaitedSendError from './no-unawaited-send-error.mjs';
 export default {
   meta: { name: 'poolmaster-local', version: '1.0.0' },
   rules: {
+    'follow-ups-via-domain-events': followUpsViaDomainEvents,
     'no-ad-hoc-more-info': noAdHocMoreInfo,
     'no-bare-enum-literals': noBareEnumLiterals,
     'no-bare-ui-controls': noBareUiControls,

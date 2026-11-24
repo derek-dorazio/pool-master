@@ -95,6 +95,7 @@ export class LeagueEventsSync {
     if (sportLeague.eventSyncProviderId === null) {
       throw new SportEventError(`No provider syncs ${sportLeague.name}'s events.`, 'SPORT_LEAGUE_NOT_SYNCED', 422);
     }
+    // poolmaster-allow-direct-job: a root admin's Sync now starts the league's sync
     return this.options.jobs.enqueueRequestReturning(syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: sportLeague.id,
       eventYears: input.eventYear === undefined ? this.scheduledYears() : [input.eventYear],
@@ -109,6 +110,7 @@ export class LeagueEventsSync {
     // after the season leagues' jobs: a new season event is on the site before its rounds import.
     // One that still misses its season event is skipped as NO_PARENT_EVENT and made by a later sync.
     const clutchCardRunAt = new Date(this.now().getTime() + CLUTCH_CARD_SYNC_DELAY_MS);
+    // poolmaster-allow-direct-job: the sync schedule's timer starts each league's sync
     return this.options.jobs.enqueueAll(leagues.map((league) => syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: league.id,
       eventYears,

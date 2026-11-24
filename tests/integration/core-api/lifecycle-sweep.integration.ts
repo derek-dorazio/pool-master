@@ -8,11 +8,12 @@ import { randomUUID } from 'node:crypto';
 import { ContestStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import { PrismaSportEventParticipantStatLineRepository, PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
 import { PostgresJobLock } from '../../../packages/core-api/src/core/job-lock';
-import { createContestManagementService } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { createReleasedEditionContests } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { createEmailOutbox, EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
-import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
+import { createEventLifecycleService, createSportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
+import { DomainEvents } from '../../../packages/core-api/src/modules/domain-events';
 import {
   createContestEmailJobs,
   createContestNotices,
@@ -69,17 +70,22 @@ function lifecycleSweep(now: Date) {
     CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
     CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
   });
+  // What follows each change (#1946), as index.ts wires it.
+  const domainEvents = new DomainEvents({
+    queue: jobs.queue,
+    releasedEditionContests: createReleasedEditionContests(prisma, logger),
+    sportEventChanged: contestNotices,
+  });
+  const eventLifecycleService = createEventLifecycleService(prisma, {
+    domainEvents,
+    logger,
+    contestSettlement: createContestSettlementService(prisma, logger, { domainEvents }),
+  });
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
-    eventLifecycleService: createEventLifecycleService(prisma, {
-      logger,
-      jobs: jobs.queue,
-      sportEventChanged: contestNotices,
-      contestSettlement: createContestSettlementService(prisma, logger, { jobs: jobs.queue }),
-      releasedEditionContests: createContestManagementService(prisma, logger, planEntitlements),
-    }),
+    eventLifecycleService,
     jobLock,
     logger,
     now: () => now,
@@ -93,6 +99,7 @@ function lifecycleSweep(now: Date) {
       logger,
       planEntitlements,
       memberJoined: createMemberJoinedNotices(prisma, { email, readConfig, appBaseUrl, logger }),
+      releaseReadiness: createSportEventServices(prisma, logger, eventLifecycleService, domainEvents).sportEvents,
     }),
     { kind: DueNotificationKind.DRAW_RECEIPTS, notifications: createDrawReceipts(prisma, logger, { email, appBaseUrl, planEntitlements }) },
   ].map((due) => new DueNotificationsScheduler({ ...due, jobLock, logger, now: () => now }));

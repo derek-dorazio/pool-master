@@ -346,14 +346,14 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
   it('pool-master-r11 surfaces a round-schedule load error in the Rounds grid and the scores panel without blocking the tools', async () => {
     seed();
     listEventRoundsMock.mockResolvedValue({
-      error: { error: { code: 'INTERNAL', message: 'Round schedule offline' } },
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Round schedule offline' } },
       response: { status: 500 },
     });
     renderPage();
 
     // Both the Rounds grid and the scores panel read the schedule, and each says it failed.
     // findAllByText settles on the first panel to fail, so wait until both have.
-    await waitFor(() => expect(screen.getAllByText('Round schedule offline')).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByText('Something went wrong. Please try again.')).toHaveLength(2));
     // Rounds fall back to numbered options from tournament.rounds.
     expect(screen.getByRole('radio', { name: 'Round 1' })).toBeInTheDocument();
   });

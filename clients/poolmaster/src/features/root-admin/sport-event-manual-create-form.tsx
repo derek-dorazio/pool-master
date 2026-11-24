@@ -1,4 +1,4 @@
-import { sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -59,7 +59,7 @@ export function SportEventManualCreateForm({
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
   const { timeZone } = useDisplayPreferences();
-  const { event, participant, round } = definition.vocabulary;
+  const { event, participant, round } = sportVocabulary(definition);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId)?.noun ?? null);
 
   const form = useForm<ManualFormInput, unknown, ManualFormValues>({
@@ -191,9 +191,8 @@ export function SportEventManualCreateForm({
         {createMutation.isError ? (
           <InlineError>
             {extractErrorMessage(createMutation.error, {
-              codeMessages: {
-                EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNoun.one} already has a ${edition.eventYear} edition of this ${event.one}.`,
-              },
+              context: 'createEvent',
+              values: { sportLeague: sportLeagueNoun.one, year: edition.eventYear, event: event.one },
               fallback: `We could not create this ${event.one}.`,
             })}
           </InlineError>

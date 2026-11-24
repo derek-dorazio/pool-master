@@ -11,6 +11,8 @@ import {
   renderSystemEmailTemplate,
   type SystemEmailTemplateKey,
 } from '../../../packages/core-api/src/modules/email';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
+import { CupTrophy, DigestEventState } from '@poolmaster/shared/domain';
 import { EMAIL_TEMPLATE_FIXTURES } from '../../support/email-template-fixtures';
 
 const UTC = { timeZone: 'UTC' };
@@ -734,6 +736,16 @@ describe('the year in review', () => {
     expect(noCups.text).not.toContain('Cups:');
     expect(renderSystemEmailTemplate('YEAR_IN_REVIEW', { ...EMAIL_TEMPLATE_FIXTURES.YEAR_IN_REVIEW, squadName: 'Birdie Brigade' }, UTC).subject).toBe('Birdie Brigade\'s 2026 in Office League');
   });
+  it('names each trophy with its display string in the recipient\'s language, reading en-US for a language with no module of its own', () => {
+    const english = renderSystemEmailTemplate('YEAR_IN_REVIEW', EMAIL_TEMPLATE_FIXTURES.YEAR_IN_REVIEW, UTC);
+    const german = renderSystemEmailTemplate('YEAR_IN_REVIEW', EMAIL_TEMPLATE_FIXTURES.YEAR_IN_REVIEW, { ...UTC, language: 'de-DE' });
+
+    for (const trophy of [CupTrophy.CHAMPION, CupTrophy.RUNNER_UP]) {
+      expect(english.text).toContain(`points · ${enumLabel('CupTrophy', trophy)}`);
+      expect(german.text).toContain(`points · ${enumLabel('CupTrophy', trophy, { locale: 'de-DE' })}`);
+    }
+    expect(german.text).toBe(english.text);
+  });
 });
 
 describe('new member joined', () => {
@@ -1051,6 +1063,17 @@ describe('the event emails\' header and contest type tiles', () => {
 
     expect(message.html).toContain(`<a href="${digest.thisWeek[0].eventPageUrl}"`);
     expect(message.html.match(/\/play\//g)).toHaveLength(1);
+  });
+
+  it("heads the digest's weeks with the This week and Next week display strings and states each event with its DigestEventState display string", () => {
+    const message = renderSystemEmailTemplate('EVENT_WEEKLY_DIGEST', EMAIL_TEMPLATE_FIXTURES.EVENT_WEEKLY_DIGEST, UTC);
+
+    expect(message.text).toContain(`${displayString('word.thisWeek')}:`);
+    expect(message.text).toContain(`${displayString('word.nextWeek')}:`);
+    expect(message.text).toContain(`${enumLabel('DigestEventState', DigestEventState.READY)}. Create contest: `);
+    expect(message.text).toContain(enumLabel('DigestEventState', DigestEventState.CONTEST_SET_UP));
+    expect(message.text).toContain(enumLabel('DigestEventState', DigestEventState.NOT_READY));
+    expect(message.html).toContain(`${enumLabel('DigestEventState', DigestEventState.READY)}: <a href=`);
   });
 
   it('names every sport league the email mentions in the footer, saying we are affiliated with none of them', () => {

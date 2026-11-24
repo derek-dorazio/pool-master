@@ -4,6 +4,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type {
   ContestEntryEventStandingRepository,
   ContestEntryEventStandingResult,
@@ -13,6 +14,7 @@ import type {
   ContestEntryStandingWrite,
   ContestWinner,
 } from '@poolmaster/shared/db';
+import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 
 export class PrismaContestEntryStandingRepository implements ContestEntryStandingRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -103,20 +105,28 @@ export class PrismaContestEntryEventStandingRepository implements ContestEntryEv
     return new Set(rows.map((row) => row.contestId));
   }
 
-  async upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[]): Promise<void> {
+  async upsertMany(contestId: string, writes: readonly ContestEntryEventStandingWrite[], jobs: readonly BackgroundJobRequest[]): Promise<void> {
     assertOfContest(contestId, writes);
-    if (writes.length === 0) return;
+    // With no row to write, the jobs are the only write: one insert needs no transaction.
+    if (writes.length === 0) {
+      await insertBackgroundJobs(this.prisma, jobs);
+      return;
+    }
     const keyOf = (standing: { contestEntryId: string; sportEventId: string }) => `${standing.contestEntryId}:${standing.sportEventId}`;
     const stored = new Map((await this.prisma.contestEntryEventStanding.findMany({
       where: { contestId, sportEventId: { in: [...new Set(writes.map((write) => write.sportEventId))] } },
     })).map((row) => [keyOf(row), row]));
     const { creates, updates } = planStandingWrites(writes, (write) => stored.get(keyOf(write)));
-    if (creates.length === 0 && updates.length === 0) return;
+    if (creates.length === 0 && updates.length === 0) {
+      await insertBackgroundJobs(this.prisma, jobs);
+      return;
+    }
     await this.prisma.$transaction([
       ...updates.map(({ id, write: { contestEntryId: _entry, sportEventId: _event, ...standing } }) =>
         // poolmaster-allow-query-in-loop: only the changed rows, sent together in one transaction (#1172); a batch of different values per row needs raw SQL, which Derek ruled out
         this.prisma.contestEntryEventStanding.update({ where: { id }, data: standing })),
       ...(creates.length > 0 ? [this.prisma.contestEntryEventStanding.createMany({ data: creates, skipDuplicates: true })] : []),
+      ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
   }
 }

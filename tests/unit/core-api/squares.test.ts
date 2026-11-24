@@ -35,6 +35,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
 import { InMemorySquares } from '../../support/in-memory-squares';
+import { testDomainEvents } from '../../support/domain-events';
 
 const HOUR = 60 * 60 * 1000;
 const T0 = new Date('2027-01-20T00:00:00.000Z');
@@ -112,7 +113,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
   };
   const service = new SquaresService(serviceDeps);
   const deps = world.contestServiceDeps({ matches: games.matchRepo(), participants: games.participantRepo(), eventParticipants: games.fieldService() });
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: squares.repo(), championship: { recordContest: async () => 0 } });
+  const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: squares.repo(), championship: { recordContest: async () => 0 } });
 
   const actor = (name: string, isRootAdmin = false): SquaresActor => ({ userId: expectDefined(users.get(name)), isRootAdmin });
   const updateGame = (changes: Partial<SportEventMatch>) => {
@@ -728,7 +729,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     expect(standings).toEqual(expect.arrayContaining([[context.alice.id, '1', 2], [context.bob.id, '2', 1]]));
   });
 
-  it('reads the event\'s games once, gives the championship the final places read once, and writes the results email job with the move (#1355, #1387)', async () => {
+  it('reads the event\'s games once, gives the championship the final places read once, and writes the results email and board rebuild jobs with the move (#1355, #1387, #1973)', async () => {
     const context = setup({ status: ContestStatus.ACTIVE });
     context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
     context.squares.addBox(context.contest.id, context.bob.id, 3, 4);
@@ -752,7 +753,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       sportEvents: context.world.sportEventRepo(),
       squares: context.squares.repo(),
       championship: { recordContest },
-      jobs,
+      domainEvents: testDomainEvents({ queue: jobs }),
     });
     const completedAt = later(KICKOFF, 4);
 
@@ -771,6 +772,12 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       runAt: undefined,
       start: TEST_JOB_START,
       dedupeKey: `CONTEST_SETTLED_EMAILS:${context.contest.id}`,
+    }, {
+      type: BackgroundJobType.REBUILD_LEADERBOARDS,
+      payload: { subject: 'CONTEST', id: context.contest.id },
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: `REBUILD_LEADERBOARDS:CONTEST:${context.contest.id}`,
     }]);
     expect(queued).toHaveBeenCalledTimes(1);
   });
@@ -816,6 +823,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     const reads: string[] = [];
     const matches = context.games.matchRepo();
     const settlement = new ContestSettlementService({
+      domainEvents: testDomainEvents(),
       ...context.deps,
       matches: {
         findBySportEvent: async (sportEventId) => {

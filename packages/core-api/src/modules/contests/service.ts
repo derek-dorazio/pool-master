@@ -659,6 +659,7 @@ export class ContestService {
    */
   private async rebuildStaleStoredBoards(boards: readonly LiveBoard[]): Promise<void> {
     const stale = boards.flatMap((board) => (board.staleStored ? [board.contestId] : []));
+    // poolmaster-allow-direct-job: a read that found stale stored boards asks for them, no write behind it (#1788)
     if (stale.length > 0) await this.deps.leaderboardRebuilds.contestsChanged(stale);
   }
 

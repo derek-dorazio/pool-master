@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
-  SelectionType,
   contestFormatForSelectionType,
   eventSportDefinition,
+  SelectionType,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { createContest } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -14,7 +15,6 @@ import { QueryKeys } from '@/lib/query-keys';
 import { buildLeagueAdminContestPath, buildLeagueAdminContestsPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ErrorState, FormPage } from '@/features/shared/ui';
-import { CONTEST_RELEASE_CODE_MESSAGES } from '../contest-release-messages';
 import { parseContestRules } from '../contest-rules-form';
 import { scoringSettingsUiFor } from '../contest-scoring-settings';
 import { MemberPreview } from '../member-preview';
@@ -68,7 +68,7 @@ export function CreateContestPage() {
       if (!event) {
         throw new Error('Choose a contest-ready event for the contest.');
       }
-      const submittedParticipant = eventSportDefinition(event).vocabulary.participant;
+      const submittedParticipant = sportVocabulary(eventSportDefinition(event)).participant;
       const parsed = parseContestRules(submitted, submitted.selectionType, event.tierCount, submittedParticipant);
       if (parsed.error !== null) {
         throw new Error(parsed.error);
@@ -149,7 +149,7 @@ export function CreateContestPage() {
     ?? errors.sportEventId?.message
     ?? (createMutation.isError
       ? extractErrorMessage(createMutation.error, {
-        codeMessages: CONTEST_RELEASE_CODE_MESSAGES,
+        context: 'contestSetup',
         fallback: 'We could not create that contest. Please try again.',
       })
       : null);
@@ -167,7 +167,7 @@ export function CreateContestPage() {
           contestName={values.contestName}
           event={selectedEvent}
           leagueId={league.id}
-          participant={draft.sportDefinition.vocabulary.participant}
+          participant={sportVocabulary(draft.sportDefinition).participant}
           rulesError={draft.rulesError}
           selectionType={values.selectionType}
           tierCount={draft.tierCount}

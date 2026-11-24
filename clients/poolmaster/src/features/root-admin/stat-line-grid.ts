@@ -10,8 +10,8 @@ export interface StatLineGridRow {
   line: StatLine;
 }
 
-/** A row's unsaved inputs, by stat, as typed. */
-export type StatLineDraft = Partial<Record<SportStat, string>>;
+/** A row's unsaved inputs, by stat, as typed: what the admin typed, not words for the stat. */
+export type StatLineDraft = { [S in SportStat]?: string };
 
 /** The field's rows for one game, in field order. */
 export function statLineGridRows(field: readonly SportEventParticipantDto[], roundNumber: number): StatLineGridRow[] {

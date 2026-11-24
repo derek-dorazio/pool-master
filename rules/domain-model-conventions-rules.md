@@ -226,8 +226,8 @@ that the values are:
 
 A new enum in `packages/shared/domain/enums.ts` states its order beside it, as
 `<Name>Order`: `explicitOrder({...})` giving every value its place, or
-`alphabeticalOrder()` when the set has no natural order and its values sort A to Z
-by the words the screen shows for them. Every list, grid, picker and sort uses that
+`alphabeticalOrder('<Name>')` when the set has no natural order and its values sort A
+to Z by their display strings, in the reader's language. Every list, grid, picker and sort uses that
 order through `compareByEnumOrder` or `sortByEnumOrder`; no consumer keeps a
 `Record<Enum, number>` rank map of its own. A screen that genuinely needs another
 order (the Home page's current contests, Open before Live) gets a named order beside
@@ -240,6 +240,15 @@ on the column sorts by declaration order. Where that order cannot match (reorder
 a Postgres enum's values is a migration with a type swap), no read orders by the
 column in SQL: the read sorts in code with `compareByEnumOrder`, and the enum is
 listed with its reason in the test's `SORTED_IN_CODE`.
+
+### Every enum value has its words in the display-string module
+
+The words shown for an enum value are not kept beside the enum or on any screen: every value of
+every enum in `enums.ts` has an entry in `packages/shared/display-strings/en-US.ts`, read
+through `enumLabel('<Name>', code)` (`rules/ux-rules.md` §16 *Display Strings*). A new enum
+is added to `SharedEnums` in `display-strings-module.ts` and given its words in the same
+change; the type check fails on a missing value, and `rules:check:display-strings` fails on an
+enum left out of `SharedEnums`. No code declares a `Record<Enum, string>` of its own.
 
 ### A yes/no field is a Boolean
 
@@ -393,6 +402,24 @@ Test: can you describe what a column means without referencing any other
 column's value? If yes, it belongs. If no, the table is two tables in
 disguise.
 
+### No nullable either/or parents
+
+A row never has two or more nullable foreign keys of which exactly one is set ("this pick
+points at a team *or* a player", "this finding is about an event *or* a game"). The pair is a
+discriminated union in column syntax: the database cannot say "exactly one", a reader has to
+test which one is filled before it knows what the row is, and every new kind of parent adds a
+column and widens every reader.
+
+- **Smell:** `teamId?` beside `playerId?`, `eventId?` beside `gameId?`, a check constraint
+  `num_nonnulls(a, b) = 1`, or a comment saying "one of these is set".
+- **Instead:** point at the one parent the alternatives share. A team and a player in an
+  event are both field rows, so a pick points at one `SportEventParticipant`; a side of any
+  Match is one `…MatchSide`. Where no shared parent exists, the variants are separate tables
+  (*Discriminated unions are physical, not nullable-conditional*, above).
+- **One nullable parent is fine** when null has one meaning of its own, such as a Match side
+  whose field row is not known yet (an undecided bracket place). The rule is about choosing
+  *between* parents, not about a parent that may be missing.
+
 ---
 
 ## 10. Naming Disambiguation
@@ -417,6 +444,32 @@ where there's collision risk. Bare names that have only one referent in the
 domain (`Participant` is fine if no other "participant" concept exists) stay
 unprefixed.
 
+### Full-path names
+
+A table that belongs to another is named by its full owner path, so the name says where it sits
+without reading the schema: `SportLeagueSeasonPhaseSlot` is a slot of a phase of a Season of a
+sport league, and `SportEventRoundMatchGameSideResult` is a side's result in a game of a match
+of a round of a sport event. Two tables with the same last word (a slot definition and a
+Season's slot) never need context to tell apart.
+
+- **`SportEvent` is the event path's root.** It is not renamed `SportLeagueSeasonEvent`: it
+  points at its Season with a `seasonId` foreign key, and its own tables
+  (`SportEventRound`, `SportEventParticipant`, …) extend its name.
+- **A platform setting a league picks is a `Platform…Profile` table**, and the league's
+  column that picks one is `platform…ProfileId` (`PlatformTierProfile` and
+  `SportLeague.platformTierProfileId`). A profile is defined once, at platform level, and
+  shared; nothing sets it per sport.
+- **A row of settings that is copied into something when it is created is named
+  `…Template`** (`ContestConfigTemplate`); the copy belongs to its target, so a later change
+  to the template never rewrites what was copied. A copy kept on the target row (a Season
+  slot's series format, copied from its definition) is a column there.
+- **A link table is named by its owner plus the target's distinguishing last words**, not the
+  target's full path: `SportEventSlot` links an event to its Season slots, and
+  `ContestSeasonSlot` links a contest to its covered Season slots (which also keeps it apart
+  from `ContestEntryPick.slot`). The plan or ADR that adds a link table settles its name.
+- **A provider key's table ends in `…ProviderMapping`** (§17 *Provider keys live only in
+  ProviderMapping tables*).
+
 ---
 
 ## 11. Open-Ended Additive Substrate Design
@@ -427,15 +480,42 @@ table set for every variant.
 
 - **One model when the shape is the same.** Before adding a table, check
   whether an existing one already holds that shape: a playoff series is one
-  `SportEventMatch` scored by games won, an NFL week reuses the bracket's
+  match with a game row per game played, an NFL week reuses the bracket's
   matches, every family's settled total is the one
   `ContestEntryStanding.totalScore`. A per-sport or per-variant copy of an
   existing shape is the smell; consolidate instead.
-- **A new shape goes with its scoring family, not its sport.** A family owns
-  one set of result tables shared by every sport in it
-  (`architecture-rules.md` §4 *Service Topology*, the sport registry and
-  scoring families). Adding a sport to an existing family adds a registry
-  entry and data, not tables.
+- **Results have one shape for every sport.** The target model
+  (`domain-model-concepts.md` §5 *The Target Model*) records every result the same way:
+  - **A Match has two or more sides.** Two teams, two players, or a whole field: a golf
+    stroke-play round is one Match with every golfer as a side, and a race is one Match
+    with every driver as a side. A best-of series is one Match.
+  - **Head-to-head or field is a property of the Round** (`matchFormat` `HEAD_TO_HEAD` /
+    `FIELD`), read from the feed where it varies by round. A `HEAD_TO_HEAD` match has
+    exactly two sides; a `FIELD` match has one per competitor. Nothing branches on the
+    sport to tell them apart.
+  - **A side's number is its fixed place, not home or away.** The sync writes the away side
+    as 1 and the home side as 2; a neutral-site or `FIELD` match records `homeAway` `NONE`.
+    Code reads sides by number, never by assuming home or away.
+  - **A Game is one game played** in a Match, and each side's result in that Game is one
+    Game side result row (score, position, periods completed, status). A side's outcome in
+    the Match (WON / LOST / TIED / PENDING) is a rollup of its Games.
+  - **Period scores are per Game side result** (a period kind `REGULAR` / `OVERTIME` /
+    `SHOOTOUT`), and **player stats are per Game** (one row per Game, player and stat
+    code). Neither is stored per period of a player, or per team.
+  - **No sport or scoring family gets its own result tables.** A golf round, a race result and
+    a game score are all Game side results. A `FIELD` event's final result per competitor is
+    one standing row; a head-to-head result lives on its Match sides, and a season standing
+    belongs to the Season, so no standing row is written for them. A new sport adds data and,
+    at most, columns every row of the shape can carry, never a `…GolfRound` or `…RaceResult`
+    beside the shared shape.
+  - *Status:* today's schema still has the per-family tables (`SportEventMatch` with home
+    and away columns, `SportEventParticipantGolfRound`, `…RaceResult`). Code that touches
+    them extends nothing new onto them; the league model redesign replaces them (ADR 0012).
+- **A new shape goes with its scoring family, not its sport.** Where a family scores
+  differently (matches decided by games won, stroke play by strokes), the difference is one
+  function per family over the shared result shape, never a table set
+  (`architecture-rules.md` §4 *Service Topology*, the sport registry and scoring families).
+  Adding a sport to an existing family adds a registry entry and data, not tables.
 - **Adding a variant within an existing axis** is a new row or enum member.
   A new nullable column on an existing table that only one variant fills is
   the smell to avoid.
@@ -725,8 +805,13 @@ by where it sits in an array or by counting.
   list returned by another call, a `Record<number, …>` keyed by round number that one league
   fills in.
 - **Instead:** a key the model declares (`FINAL`, a slot key, a phase kind code) or a foreign
-  key. Order is a declared `orderIndex` column or enum order (§2 *Every enum declares its
-  order*), used to *sort*, never to *identify*.
+  key. Order comes from enum order (§2 *Every enum declares its order*) plus a checked
+  qualifier column where the enum repeats (a `WEEK` slot's `weekNumber`), or from a date
+  where the order itself changes each Season (a tour's tournaments by their start). It is
+  used to *sort*, never to *identify*. Nothing is identified or sequenced (which round
+  comes next, which slot is the final) by an `order` or `orderIndex` column kept by hand. A
+  display-only `displayOrder`, used only to list rows on screen (as on `Sport`,
+  `SportLeague` or a league's positions), is fine.
 - Positions shift the moment a provider adds a round, a league adds a play-in or a season is
   shorter; a key does not.
 
@@ -742,7 +827,8 @@ learn what it refers to.
   handles an id.
 - **Instead:** each part is its own column or foreign key, and the row says what it is
   (a season row, a phase row, a slot row, a provider mapping row). A provider's own
-  reference is stored as given in a `providerRef` column and only compared for equality.
+  reference is stored as given, in a `…ProviderMapping` row and nowhere else (*Provider keys
+  live only in ProviderMapping tables*, below), and is only compared for equality.
 - A slug made for a URL is a display key: it is looked up, never parsed.
 
 ### Never match on a name
@@ -758,9 +844,64 @@ Names are for people and change; ids and codes are for code.
   identifies something only by its name (a stage called "Third Place", a season type by
   word), the match lives in the adapter, as **data**: a mapping table or reference rows that
   pair the provider's string with our key, maintained by migration. The adapter looks the
-  string up; it does not branch on it. A string that matches no row is a sync finding
-  (`WARNING` when the run can continue, `ERROR` when it cannot), never a silent default. Past
-  the adapter, everything is keyed.
+  string up; it does not branch on it. The mapping is inclusion only, and a string that
+  matches no row is not synced and raises the one deduplicated finding described in
+  *Provider keys live only in ProviderMapping tables*, never a silent default. Past the
+  adapter, everything is keyed.
+
+### Provider keys live only in ProviderMapping tables
+
+Every id or code a data provider uses (its league code, season id, event id, game id,
+participant id, position code, round or tournament code) is stored in a table whose name ends
+in `…ProviderMapping`, one row per provider per thing, and in no other column. A row of ours
+never carries `externalId`, `providerRef`, `providerId` + `externalId` or a list of external
+ids; the mapping points at it.
+
+- **Why one place.** A provider key on the row ties the row to one provider, so a second
+  provider or a provider switch needs new columns, and the key gets read as if it meant
+  something (it is opaque, *Never build or parse an id string*). In a mapping table a switch
+  is new rows, and the same row of ours keeps its identity.
+- **Mappings are inclusion only.** A mapping row names each provider value we sync, and
+  anything else is not synced. A value the feed sends that matches no row creates nothing
+  and raises **one `INFO` finding per league and value**, deduplicated across runs and games,
+  so a new format or a renamed tournament is seen once and is never synced by default.
+  Resolving it is adding a mapping row; **waiving** it records that the value is known and
+  deliberately excluded, and silences it. Two mapping rows matching one value is an `ERROR`,
+  since the sync cannot choose between them.
+- **The provider's own words** (its status codes, its webhook event names) are parsed in its
+  adapter as data (*What stays in code*). An unknown word about a thing we do sync (a status
+  code on a synced Game) is not an inclusion question, since that thing cannot be set
+  correctly: it raises a `WARNING` when the run can continue and an `ERROR` when it cannot,
+  deduplicated per league and value the same way, and it cannot be waived.
+- **Smell:** a column named `externalId`, `…Ref`, `providerEventId` or `providerId` +
+  `externalId` on a table that is not a `…ProviderMapping`; an id prefix that says which
+  provider an id came from; a provider code in a constant or a `Record`; a sync that falls
+  back to a default when a provider value is unknown.
+- *Status:* today's schema still holds provider keys on rows (`SportEvent.externalId`,
+  `Participant.externalId`, `SportEventMatch.externalGameId`, `SportLeague.matchKeyword`
+  and others). A change that touches one adds no new reader of it; the league model
+  redesign moves them (ADR 0012).
+
+### Proper names are data, generic words are strings
+
+A proper name (a team's, a player's, a tournament's, a slot's own label such as Super Bowl
+or The Masters) is a fact about one real thing, so it is a `name` column on that thing's row,
+set by the feed or a migration, and it is never translated. A generic word (Week, Round,
+Semifinal, Final, Tie, Lives, a status label) is the same for every row of its kind, so it is
+a display string keyed by the code it labels, held in the web app's display strings and never
+stored on a row.
+
+- **A row stores a name only when it has its own.** A slot definition has an optional `name`
+  for a league's own label; a slot without one shows the word for its kind ("Week 14",
+  "Semifinal") from the display strings. Code never copies a generic word into a `name`
+  column to have something to show, and never builds a proper name from generic words.
+- **Generic words come from one place**, keyed by enum code, and a sport's own word for a
+  role is a display string keyed by sport code and role, not a column per sport. The display
+  strings' home in the web app is being built (#1956); until it lands, a code's words come
+  from the existing UI label maps, never from a stored column.
+- **Smell:** a `label`, `displayName` or `roundNames` column holding words every league
+  shares; an array of round labels per league; a `name` filled with "Week 1".."Week 18";
+  a proper name hard-coded in a constant or a component.
 
 ### Per-league facts are model rows, not code tables
 
@@ -777,7 +918,8 @@ phase or slot definitions (`rules/domain-model-concepts.md`). They are never a c
   copied per league with different literals.
 - **Instead:** add the property to the definition it describes and set it by migration
   (`rules/architecture-rules.md` §6 *Reference data goes in a migration*); the shared code
-  reads it. Labels for keys and codes are mapped on screen (§2 *Closed Sets Are Enums*).
+  reads it. The words for keys and codes live in the display-string module, keyed by the code
+  (`rules/ux-rules.md` §16 *Display Strings*); proper names are name columns on the model.
 - This is the data half of `rules/workflow-rules.md` §1 *One global solution, never one
   sport's*: a league's difference is data any league can carry, never a path one league takes.
   It extends the sport registry (`rules/architecture-rules.md` §4 *Sport extension*) to
@@ -797,14 +939,59 @@ shared function, and every consumer reads that.
   rule. Two copies of a rule disagree sooner or later, and the screen then offers what the
   server refuses (`rules/react-ui-rules.md` §3 *API Integration Rules*).
 - **A rule both sides must run lives in `packages/shared`** beside the type it describes
-  (status predicates beside the status enum, limits per selection type beside the selection
-  type), and both import it.
+  (status predicates beside the status enum), and both import it. It holds behaviour, not
+  domain values: a limit, range or default it would carry is model or config data
+  (*The web app holds no domain values*, below).
+- **The data provider is the source of truth.** A fact the feed supplies (scores, totals,
+  finishing positions and ties, a game's or competitor's status, the cut) is stored as the
+  feed gives it, by the sync, and never recomputed from other columns. We compute a fact
+  only when the feed does not supply it (composite scores, ratings, standings for a scoring
+  family the feed does not rank), and then in one function per fact. Deriving our own value
+  beside the feed's makes two answers that drift.
 - **Smell:** `new Date().getFullYear()` or a year worked out from today's date; a set of
   statuses spelt inline (`[FINAL, CANCELLED].includes(…)`); a function whose body matches
   another's under a different name; a web helper that restates a server check; a comment
-  saying "keep in sync with …".
+  saying "keep in sync with …"; a total, position, tie marker or score-to-par computed from
+  stored rows when the feed sent it.
 - This is `rules/architecture-rules.md` §4 *Service Topology* ("one code path per piece of
   business logic") applied to facts and across the backend/web boundary.
+
+### The web app holds no domain values
+
+`clients/poolmaster` contains no domain value of any kind (Derek, 2026-11-23: "Nothing should
+ever be hardcoded in the webapp code"). No option list, range, limit, default, threshold,
+penalty or scoring number is written in web code, nor imported into it from a shared
+constant: every such value is model or configuration data that the API returns, and the
+screen renders what it is sent.
+
+- **What the web app may own:** display strings, through the display-strings module
+  (`rules/ux-rules.md` §16 *Display Strings*), and pure layout constants (spacing,
+  breakpoints, column widths, animation timings) that mean nothing about the domain.
+- **Calibration.** Every value of a shared enum, read from the enum in its declared order
+  (a grid filter of every status), is the model, not a copy of it; a hand-written subset or
+  range of it is a finding. A display cap (how many rows before "and N more") is layout. A
+  shared schema's shape is fine for the web to use, but its numeric bounds come from the
+  API.
+- **Why it is absolute:** a value in the screen is a second copy of a rule the server holds
+  or should hold. It is invisible to the model, cannot differ by league or contest, and
+  drifts; the screen then offers what the server refuses or shows a number the scoring never
+  used.
+- **Smell:** an array of choices (`WINNING_SCORE_OPTIONS`, a +10 to -30 range), a numeric
+  literal that is a rule (`'80'` for an unplayed round, a maximum entries count, a default
+  roster size), a `min`/`max` on an input that the API did not send, a map from a code to a
+  number, a default picked in a form because the API sent none.
+- **Instead:** the value lives where it belongs in the model (a contest's scoring or setup
+  settings, a definition row, a platform profile) and the read that the screen already makes
+  returns it (`rules/react-ui-rules.md` §3 *API Integration Rules*). When no API field carries
+  it yet, adding that field is part of the slice; a web constant "for now" is not.
+- *Status:* existing values of this kind move to model or config data with the league model
+  redesign (#1917): the web's golf winning-score tiebreaker options and unplayed-round `'80'`,
+  the limit and default constants in `packages/shared/domain` and `packages/shared/dto`
+  (events per selection type, survivor lives, roster, squares and tier-profile maximums, the
+  game-picks tiebreaker, rounds par, auto-release days and stat value bounds) and the numeric
+  bounds in their Zod schemas. Some of these are imported by the web app today; those imports
+  are residue too. A change that touches one moves it to an API field, and no new import or
+  constant is added.
 
 ### What stays in code
 

@@ -3,10 +3,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { LEAGUE_PLANS } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { extendLeaguePlanRenewal, updateLeaguePlan, type CustomerLeagueDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { buildLeaguePath } from '@/features/leagues/league-routing';
-import { LEAGUE_PLAN_LABEL } from '@/features/plans/plan-labels';
 import { DateDisplay, DetailEditModal, FormField, LinkButton, Select, showToast } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { refreshAfterWrite, useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -88,7 +88,7 @@ export function CustomerLeagueDialog({ league, onClose }: { league: CustomerLeag
       errorFallback="We could not save this league."
       facts={[
         { id: 'code', label: 'Code', value: league.leagueCode, testId: `${testId}-code` },
-        { id: 'plan', label: 'Plan', value: LEAGUE_PLAN_LABEL[league.plan], testId: `${testId}-plan` },
+        { id: 'plan', label: 'Plan', value: enumLabel('LeaguePlan', league.plan), testId: `${testId}-plan` },
         {
           id: 'owner',
           label: 'Owner',
@@ -123,7 +123,7 @@ export function CustomerLeagueDialog({ league, onClose }: { league: CustomerLeag
       <div className="grid gap-4">
         <FormField label="Plan">
           <Select data-testid={`${testId}-plan-input`} {...form.register('plan')}>
-            {LEAGUE_PLANS.map((plan) => <option key={plan} value={plan}>{LEAGUE_PLAN_LABEL[plan]}</option>)}
+            {LEAGUE_PLANS.map((plan) => <option key={plan} value={plan}>{enumLabel('LeaguePlan', plan)}</option>)}
           </Select>
         </FormField>
         <FormField help="Moves the end of the free Premium preview to the months picked from today. An end already later stays as it is." label="Premium preview ends">

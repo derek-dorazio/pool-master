@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { testDomainEvents } from '../../support/domain-events';
 import { BackgroundJobType, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigurationRepository,
@@ -14,6 +15,7 @@ import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, se
 import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 // Two server tasks (prod runs two) can each try the same status change at once (#1159). Only
 // one write may win, and only the winner may run the side effects, settlement above all.
@@ -35,6 +37,7 @@ function lifecycleCountingSettlements() {
     settleFinishedSportEvent: async () => ({ contestsSettled: 0 }),
     settleFinishedGame: async () => 0,
   };
+  const { queue } = integrationBackgroundJobs();
   const service = new EventLifecycleService(
     {
       contests: new PrismaContestRepository(getAppPrisma()),
@@ -42,9 +45,9 @@ function lifecycleCountingSettlements() {
       matches: new PrismaSportEventMatchRepository(getAppPrisma()),
     },
     new PrismaSportEventRepository(getAppPrisma()),
+    testDomainEvents({ queue }),
+    { ...NO_SETTLE_JOBS, contestSettlement: settlement },
     fakeLogger(),
-    integrationBackgroundJobs().queue,
-    settlement,
   );
   const settleJobs = async () => (await getPrisma().backgroundJob.findMany({
     where: { type: BackgroundJobType.SETTLE_SPORT_EVENT_CONTESTS },

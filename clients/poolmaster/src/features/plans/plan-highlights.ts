@@ -1,6 +1,7 @@
 import { PLAN_FEATURE_GROUP, PlanCap, PlanFeature, PlanFeatureGroup, type LeaguePlan } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ComparedPlan } from './plan-comparison';
-import { EVERY_CONTEST_TYPE_LABEL, PLAN_FEATURE_LABEL, formatPlanCapHighlight, formatPlanFeatureGroupHighlight } from './plan-labels';
+import { EVERY_CONTEST_TYPE_LABEL, formatPlanCapHighlight, formatPlanFeatureGroupHighlight } from './plan-labels';
 
 /** A group with this many features to list on one card shows as one counted line instead. */
 const GROUP_COUNT_THRESHOLD = 3;
@@ -21,7 +22,7 @@ export function buildFeatureLines(features: readonly PlanFeature[], isAddition: 
     const inGroup = Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === group && features.includes(feature));
     return inGroup.length >= GROUP_COUNT_THRESHOLD
       ? [formatPlanFeatureGroupHighlight(group, inGroup.length, isAddition)]
-      : inGroup.map((feature) => PLAN_FEATURE_LABEL[feature]);
+      : inGroup.map((feature) => enumLabel('PlanFeature', feature));
   });
 }
 

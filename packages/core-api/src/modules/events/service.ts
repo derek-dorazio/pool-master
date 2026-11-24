@@ -30,23 +30,24 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   AutoReleaseCheckOutcome,
+  blocksManualRelease,
   eventPlaysMatches,
   eventSportDefinition,
   isProviderSyncedEvent,
   isWithinAutoReleaseWindow,
+  MANUAL_ADMIN_PROVIDER_ID,
   ReleaseAttemptOutcome,
   type ReleaseAttemptResult,
   ReleaseAttemptSkipReason,
-  blocksManualRelease,
   type ReleaseCheck,
   ReleaseCheckKey,
-  sportLeagueDefinitionOf,
-  MANUAL_ADMIN_PROVIDER_ID,
   type Sport,
+  type SportEvent,
   SportEventStatus,
   SportEventSyncScope,
-  type SportEvent,
   type SportLeague,
+  sportLeagueDefinitionOf,
+  sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
@@ -57,7 +58,7 @@ import type { SportEventBracketService } from './sport-event-bracket-service';
 import { dailyRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 import { NO_JOBS_FOR_WRITE, combineJobsForWrite } from '../background-jobs';
-import type { LeaderboardRebuilds } from '../contests/leaderboard-snapshots';
+import { DomainEventType, type DomainEvents } from '../domain-events';
 
 /**
  * What only a root admin reads of an event: its release readiness and whether it can be deleted.
@@ -186,14 +187,11 @@ export interface SportEventServiceDeps {
   lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduledJobs'>;
   /** A new start moves the event's contests' entry reminders (#1170). */
   contests: Pick<ContestRepository, 'recheckReminders'>;
-  /** An edit can move what the event's contests' boards show, so it carries their rebuild (#1466). */
-  leaderboards?: Pick<LeaderboardRebuilds, 'forEvent'>;
+  /** What follows each results, field or game change it writes (#1946): the app's one map. */
+  domainEvents: Pick<DomainEvents, 'collect'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
 }
-
-/** The statuses whose start moving is told to the leagues on the event (#845 C6). */
-const RESCHEDULE_TOLD: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED];
 
 /** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
 function isDateOnlyPlaceholder(start: Date): boolean {
@@ -532,14 +530,13 @@ export class SportEventService {
     }
     const startDate = updates.startDate ?? startedAt;
     const shiftMs = startDate.getTime() - startedAt.getTime();
-    // A moved start is told to the leagues on the event by jobs written with the new start
-    // (#1464), so an edit that fails tells nobody and one that lands always tells them. A draft's
-    // commissioners can't see it yet, and a started event's picks are closed.
-    const told = shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers
+    // A moved start's follow-ups are written with the new start (#1464, #1946), so an edit that
+    // fails tells nobody and one that lands always tells those its handlers tell.
+    const told = shiftMs !== 0 && options.tellMembers
       ? await this.deps.lifecycle.sportEventRescheduledJobs({ id: sportEventId, startDate, status }, startedAt)
       : NO_JOBS_FOR_WRITE;
     // The edit can change what the event's contests' boards show, so its rebuild rides with it (#1466).
-    const written = combineJobsForWrite(told, this.deps.leaderboards?.forEvent(sportEventId) ?? NO_JOBS_FOR_WRITE);
+    const written = combineJobsForWrite(told, await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId }));
     // The event and its jobs are one write; the rounds and reminders follow it, not in its
     // transaction: a failure after it leaves the rounds behind the event's new dates. The round
     // writes only reject a round the event lacks, and they read the event's rounds first, so in
@@ -731,7 +728,7 @@ export class SportEventService {
   }
 
   private describeFailed(event: SportEvent, failed: readonly ReleaseCheck[]): string[] {
-    const { participant } = eventSportDefinition(event).vocabulary;
+    const { participant } = sportVocabulary(eventSportDefinition(event));
     return failed.flatMap((check) => describeFailedReleaseCheck(check, participant));
   }
 

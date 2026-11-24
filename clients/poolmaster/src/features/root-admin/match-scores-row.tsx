@@ -7,8 +7,7 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { tieWord } from '@/features/contests/contest-sport';
-import { bracketErrorMessages, formsNoBracket, MATCH_ENDING_MARK, sideEntry } from './bracket-copy';
+import { bracketErrors, formsNoBracket, matchEndingMark, sideEntry } from './bracket-copy';
 import type { BracketContext } from './bracket-match-write';
 
 const logger = getLogger().child({ feature: 'root-admin-bracket' });
@@ -45,7 +44,7 @@ export function MatchScoresRow({
     : null;
   // A result entered with the winner buttons alone has a winner but no final score.
   const winnerOnly = match.status === MatchStatus.COMPLETED && final === null;
-  const endingMark = match.status === MatchStatus.COMPLETED ? MATCH_ENDING_MARK[match.ending] : null;
+  const endingMark = match.status === MatchStatus.COMPLETED ? matchEndingMark(match.ending) : null;
   const shootout: ShootoutScore | null = final && match.homeShootoutScore !== null && match.awayShootoutScore !== null
     ? { homeShootoutScore: match.homeShootoutScore, awayShootoutScore: match.awayShootoutScore }
     : null;
@@ -76,7 +75,7 @@ export function MatchScoresRow({
             empty={winnerOnly ? `Winner entered, no score${endingMark ? ` (${endingMark})` : ''}` : 'Not entered'}
             endingMark={endingMark}
             home={home}
-            label={`Final, ${context.vocabulary.overtime ?? 'overtime'} included`}
+            label={`Final, ${context.vocabulary.overtime} included`}
             match={match}
             moment="final"
             saved={final}
@@ -206,7 +205,7 @@ function ScoreMoment({
           </div>
           {shootout ? (
             <div className="flex flex-col gap-2">
-              <p className="text-xs text-muted-foreground">{`Level after extra time: enter the shoot-out (${shootout.label}).`}</p>
+              <p className="text-xs text-muted-foreground">{`Level after extra time: enter the shoot-out (${shootout}).`}</p>
               <div className="flex gap-2">
                 {([[away, awayShootoutValue, setAwayShootoutValue, 'away'], [home, homeShootoutValue, setHomeShootoutValue, 'home']] as const).map(([name, value, setValue, side]) => (
                   <label className="flex w-24 flex-col gap-1 text-xs text-muted-foreground" key={side}>
@@ -273,7 +272,7 @@ function ScoreMoment({
       {failed ? (
         <InlineError className="mt-2" testId={`${testId}-error`}>
           {extractErrorMessage(failed, {
-            codeMessages: bracketErrorMessages(context.vocabulary, match, context.bracket),
+            ...bracketErrors(context.vocabulary, match, context.bracket),
             fallback: 'This score could not be saved. Try again.',
           })}
         </InlineError>
@@ -290,12 +289,12 @@ function describeLevelFinal(
   context: BracketContext,
 ): string {
   if (shootout) return describeShootout(shootout, context);
-  return moment === 'final' && saved.awayScore === saved.homeScore ? ` (${tieWord(context.vocabulary).toLowerCase()})` : '';
+  return moment === 'final' && saved.awayScore === saved.homeScore ? ` (${context.vocabulary.tie.toLowerCase()})` : '';
 }
 
 /** A saved shoot-out after the final score, away side first: " (4-3 pens)"; empty for none. */
 function describeShootout(shootout: ShootoutScore | null, context: BracketContext): string {
   if (!shootout) return '';
-  const label = context.shootout?.label;
+  const label = context.shootout;
   return ` (${shootout.awayShootoutScore}-${shootout.homeShootoutScore}${label ? ` ${label}` : ''})`;
 }

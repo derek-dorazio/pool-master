@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { Trophy } from 'lucide-react';
 import { PlanFeature } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { Button, ErrorState, Eyebrow, Icon, LoadingState, MetricGrid, MetricTile, SectionCard, SectionNote, useDisplayPreferences } from '@/features/shared/ui';
@@ -10,7 +11,6 @@ import { joinNames } from './cup-view';
 import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
 import {
-  CHAMPIONSHIP_TILE_LABELS,
   buildPodium,
   describeChampionshipStanding,
   describeContestResultFilter,
@@ -83,7 +83,7 @@ export function ChampionshipPage() {
           <div data-testid={`championship-tile-${tile.tile}`} key={tile.tile}>
             <MetricTile
               helperText={tile.squads.length ? joinNames(tile.squads.map((squad) => squad.squadName)) : 'Nobody yet'}
-              label={CHAMPIONSHIP_TILE_LABELS[tile.tile]}
+              label={enumLabel('ChampionshipTile', tile.tile)}
               value={tile.count}
             />
           </div>

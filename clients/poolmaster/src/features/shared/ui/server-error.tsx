@@ -16,13 +16,14 @@ export type ServerErrorDisplayProps = ExtractErrorMessageOptions & {
 export function ServerErrorBar({
   action,
   className,
-  codeMessages,
+  context,
   error,
   fallback,
   onRetry,
   retryLabel = "Try again",
   testId,
   title = "Something went wrong",
+  values,
 }: ServerErrorDisplayProps) {
   const retryAction = onRetry ? (
     <Button onClick={onRetry} size="sm" type="button" variant="secondary">
@@ -38,7 +39,7 @@ export function ServerErrorBar({
       title={title}
       tone="danger"
     >
-      <p>{extractErrorMessage(error, { codeMessages, fallback })}</p>
+      <p>{extractErrorMessage(error, { context, fallback, values })}</p>
     </Notice>
   );
 }

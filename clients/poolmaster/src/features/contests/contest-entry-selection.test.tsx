@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { Sport, getSportDefinition } from "@poolmaster/shared/domain";
+import { Sport, sportVocabulary } from "@poolmaster/shared/domain";
 import { strokePlayUi } from "./scoring-family-ui/stroke-play";
 import {
   EditableSelectionGroup,
@@ -49,7 +49,7 @@ function buildGroup(
   };
 }
 
-const GOLFER = getSportDefinition(Sport.GOLF).vocabulary.participant;
+const GOLFER = sportVocabulary(Sport.GOLF).participant;
 
 describe("pool-master-dn4.7: contest entry selection components", () => {
   it("rule: renders editable tier summary chips and participant option cards", async () => {
@@ -96,7 +96,7 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
 
     render(
       <EditableSelectionGroup
-        noun={getSportDefinition(Sport.BASKETBALL).vocabulary.participant} sport="BASKETBALL"
+        noun={sportVocabulary(Sport.BASKETBALL).participant} sport="BASKETBALL"
         canSelect
         group={group}
         isBusy={false}

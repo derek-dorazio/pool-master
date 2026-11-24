@@ -1,7 +1,8 @@
-import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
+import { displayString } from '../../display-strings/display-strings';
+import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat, SportStat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
-import { SportStat, statValue, type SportComposite } from './sport-stats';
+import { statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of a soccer knockout are called, counted back from the final. */
 const ROUND_NAMES_FROM_FINAL = ['Final', 'Semi-finals', 'Quarter-finals', 'Round of 16', 'Round of 32'] as const;
@@ -49,27 +50,14 @@ export const soccerSportDefinition: SportDefinition = {
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // A pick'em pick may be a draw (#792); soccer has no spread to pick against.
   pickEm: { tiePicks: true, againstTheSpread: false },
-  shootout: { label: 'pens' },
+  shootout: true,
   composite: soccerComposite,
   matchPeriodLayout: MatchPeriodLayout.HALVES,
-  vocabulary: {
-    participant: { one: 'team', many: 'teams' },
-    event: { one: 'tournament', many: 'tournaments' },
-    sportLeague: { one: 'competition', many: 'competitions' },
-    round: { one: 'round', many: 'rounds' },
-    eliminated: 'Eliminated',
-    withdrawn: 'Withdrawn',
-    eventStart: 'first kickoff',
-    match: { one: 'match', many: 'matches' },
-    overtime: 'extra time',
-    tie: 'Draw',
-    scoreUnit: 'goals',
-  },
   // A four-round knockout reads Round of 16, Quarter-finals, Semi-finals, Final; a five-round one
   // starts at the Round of 32.
-  roundLabel: (roundNumber, roundCount) => {
+  roundLabel: (roundNumber, roundCount, locale) => {
     const fromFinal = roundCount - roundNumber;
     const name = fromFinal >= 0 ? ROUND_NAMES_FROM_FINAL.at(fromFinal) : undefined;
-    return name ?? `Round ${roundNumber}`;
+    return name ?? displayString('word.roundNumber', { n: roundNumber }, locale);
   },
 };

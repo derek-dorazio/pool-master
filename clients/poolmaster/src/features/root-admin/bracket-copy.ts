@@ -1,25 +1,15 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { isMatchUnplayed, MatchEnding, MatchSide, MatchStatus, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
-import { tieWord } from '@/features/contests/contest-sport';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import type { ErrorCodeMessages } from '@/lib/errors';
-
-/** What a bracket screen calls one match when the sport's vocabulary names none. */
-const MATCH: SportNoun = { one: 'match', many: 'matches' };
+import type { DisplayStringValues } from '@poolmaster/shared/display-strings';
+import type { ExtractErrorMessageOptions } from '@/lib/errors';
 
 /**
- * How a match that stopped early is marked beside its result (#704): "ret.", "w/o", "def.", as
- * tennis writes them. The marks belong to the ending, not the sport. A played match has none.
+ * How a match that stopped early is marked beside its result (#704): the ending's short display
+ * string, "ret.", "w/o", "def.". The marks belong to the ending, not the sport. A played match has none.
  */
-export const MATCH_ENDING_MARK: Readonly<Record<MatchEnding, string | null>> = {
-  [MatchEnding.PLAYED]: null,
-  [MatchEnding.RETIREMENT]: 'ret.',
-  [MatchEnding.WALKOVER]: 'w/o',
-  [MatchEnding.DEFAULT]: 'def.',
-};
-
-/** One match of the sport's bracket as its screens say it: "game" for basketball. */
-export function matchNoun(vocabulary: SportVocabulary): SportNoun {
-  return vocabulary.match ?? MATCH;
+export function matchEndingMark(ending: MatchEnding): string | null {
+  return ending === MatchEnding.PLAYED ? null : enumLabel('MatchEnding', ending, { form: 'short' });
 }
 
 /** A field row as the bracket names it: "(1) Duke", or just the name when it has no seed. */
@@ -64,65 +54,48 @@ export function feederOf(match: SportEventMatchDto, side: MatchSide, bracket: re
   return bracket.find((other) => other.advancesToMatchId === match.id && other.advancesToSide === side);
 }
 
-/**
- * The refusal of a replacement or play-in winner off the event's league roster (#830), in the
- * league's own word: a tour for the ATP, a league for the NCAA.
- */
-export function offLeagueRosterMessages(vocabulary: SportVocabulary, sportLeague: SportNoun): ErrorCodeMessages {
+/** A bracket screen's error wording: its contexts and the sport's words for their placeholders. */
+export type BracketErrorOptions = Required<Pick<ExtractErrorMessageOptions, 'context' | 'values'>>;
+
+/** The sport's words a bracket screen's error wording takes (#700). */
+function bracketErrorValues(vocabulary: SportVocabulary): DisplayStringValues {
   return {
-    PARTICIPANT_NOT_IN_SPORT_LEAGUE: `That ${vocabulary.participant.one} isn't on this ${sportLeague.one}'s roster, so they can't join this ${vocabulary.event.one}. Pick another.`,
+    match: vocabulary.match.one,
+    matches: vocabulary.match.many,
+    participant: vocabulary.participant.one,
+    participants: vocabulary.participant.many,
+    event: vocabulary.event.one,
+    tie: vocabulary.tie.toLowerCase(),
+    playIn: vocabulary.playInPlace,
   };
 }
 
 /**
- * The bracket's refusals in product copy, worded for the sport (#700). `match` is the match the
- * admin acted on, so a locked result can name the match to clear first.
+ * The bracket's refusals in the sport's words (#700). `match` is the match the admin acted on,
+ * so a locked result can name the match to clear first.
  */
-export function bracketErrorMessages(
+export function bracketErrors(
   vocabulary: SportVocabulary,
   match?: SportEventMatchDto,
   bracket: readonly SportEventMatchDto[] = [],
-): ErrorCodeMessages {
-  const noun = matchNoun(vocabulary);
-  const team = vocabulary.participant;
+): BracketErrorOptions {
   const next = match ? bracket.find((candidate) => candidate.id === match.advancesToMatchId) : undefined;
-  return {
-    SPORT_EVENT_MATCH_RESULT_LOCKED: next
-      ? `This ${noun.one}'s winner is already in ${noun.one} ${next.matchNumber}, which has a score. Clear ${noun.one} ${next.matchNumber}'s score first.`
-      : `This ${noun.one}'s winner is already in its next ${noun.one}, which has a score. Clear that score first.`,
-    MATCH_SIDES_NOT_SET: `Both ${team.many} in this ${noun.one} aren't known yet. Enter the results of the ${noun.many} before it first.`,
-    MATCH_RESULT_INVALID: `That result could not be saved. The winner's score is the higher, a ${tieWord(vocabulary).toLowerCase()} has level scores, and a final score is never below an earlier one.`,
-    MATCH_ALREADY_PLAYED: `This ${noun.one} has a result. Clear it before cancelling the ${noun.one}.`,
-    MATCH_ALREADY_STARTED: `This ${noun.one} has started, so it can't be postponed.`,
-    MATCH_IN_BRACKET: `This ${noun.one} is part of a bracket, which can't lose a ${noun.one}. Change its time instead.`,
-    SPORT_EVENT_NOT_RELEASED: `Release the ${vocabulary.event.one} before entering results.`,
-    SPORT_EVENT_BRACKET_LOCKED: `The ${vocabulary.event.one} has been released, so its pairings are locked.`,
-    BRACKET_INVALID: `That pairing could not be saved. Each ${team.one} plays one opening ${noun.one}, and two different ${team.many} meet in a ${noun.one}.`,
-    BRACKET_MATCH_NOT_FOUND: `That ${noun.one} is no longer in the bracket. Refresh the page.`,
-    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: `That place is not a ${vocabulary.playInPlace ?? 'play-in'} place, so its ${team.one} can't be replaced.`,
-    EVENT_PARTICIPANT_ALREADY_ON_FIELD: `That ${team.one} is already in the ${vocabulary.event.one}.`,
-    PLAY_IN_SLOT_ALREADY_PLAYED: `That place has already played a ${noun.one}, so its ${team.one} can't change.`,
-    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: `That is a ${vocabulary.playInPlace ?? 'play-in'} place. Name its ${team.one} there instead.`,
-    EVENT_PARTICIPANT_NOT_IN_BRACKET: `That ${team.one} no longer has a place in the bracket. Refresh the page.`,
-    BRACKET_PARTICIPANT_ALREADY_PLAYED: `That ${team.one}'s ${noun.one} has started, so enter the withdrawal as a walkover.`,
-    BRACKET_PLACE_NOT_FIRST_ROUND: `That ${team.one} skipped the first round, so enter the withdrawal as a walkover.`,
-    PARTICIPANT_NOT_FOUND: `That ${team.one} is no longer active. Pick another.`,
-    MATCH_SPREAD_LOCKED: `This ${noun.one} already has picks, so its spread can no longer change.`,
-    MATCH_PERIOD_SCORE_INVALID: 'A score can only go up as the game goes on. Check it against the other scores of this game.',
-    MATCH_PERIOD_INVALID: `This ${noun.one}'s score at that point can't be entered here.`,
-    MATCH_CANCELLED: `This ${noun.one} was cancelled, so it has no score.`,
-    MATCH_SPREAD_REQUIRED: `The ${vocabulary.event.one} has been released, so this ${noun.one}'s spread can be changed but not cleared.`,
-    BRACKET_NOT_RESEEDED: `This round's ${team.many} come from the ${noun.many} before it, so it isn't reseeded.`,
-    BRACKET_ROUND_NOT_FINISHED: `Every ${noun.one} of the round before needs a result before this round's ${noun.many} are set.`,
-    BRACKET_ROUND_ALREADY_PLAYED: `A ${noun.one} of this round has started, so its ${noun.many} can no longer change.`,
-  };
+  return next
+    ? { context: ['bracketAdminNextMatch', 'bracketAdmin'], values: { ...bracketErrorValues(vocabulary), nextMatchNumber: next.matchNumber } }
+    : { context: 'bracketAdmin', values: bracketErrorValues(vocabulary) };
 }
 
 /**
- * A reseeded round's refusals (#722, #785): the bracket's, with BRACKET_INVALID worded for what
- * was asked. A suggestion is refused when the teams left don't fit the round; a save when the
- * admin's matchups break the round's rules.
+ * A replacement or play-in winner's refusals: the bracket's, and the refusal of one off the
+ * event's league roster (#830) in the league's own word, a tour for the ATP, a league for the NCAA.
  */
+export function replacementErrors(vocabulary: SportVocabulary, sportLeague: SportNoun): BracketErrorOptions {
+  return {
+    context: ['replaceParticipant', 'bracketAdmin'],
+    values: { ...bracketErrorValues(vocabulary), sportLeague: sportLeague.one },
+  };
+}
+
 /** What the admin asked of a reseeded round: the server's suggestion, or saving its games. */
 export const ReseedAction = {
   SUGGEST: 'SUGGEST',
@@ -130,14 +103,15 @@ export const ReseedAction = {
 } as const;
 export type ReseedAction = (typeof ReseedAction)[keyof typeof ReseedAction];
 
-export function reseedErrorMessages(vocabulary: SportVocabulary, action: ReseedAction): ErrorCodeMessages {
-  const noun = matchNoun(vocabulary);
-  const team = vocabulary.participant;
+/**
+ * A reseeded round's refusals (#722, #785): the bracket's, with BRACKET_INVALID worded for what
+ * was asked. A suggestion is refused when the teams left don't fit the round; a save when the
+ * admin's matchups break the round's rules.
+ */
+export function reseedErrors(vocabulary: SportVocabulary, action: ReseedAction): BracketErrorOptions {
   return {
-    ...bracketErrorMessages(vocabulary),
-    BRACKET_INVALID: action === ReseedAction.SUGGEST
-      ? `The ${team.many} left don't fit this round's ${noun.many}. Check the results of the round before.`
-      : `These ${noun.many} could not be saved. Each ${team.one} left plays once, against a ${team.one} from its own side of the bracket, and a ${team.one} with a bye keeps its place.`,
+    context: [action === ReseedAction.SUGGEST ? 'reseedSuggest' : 'reseedSave', 'bracketAdmin'],
+    values: bracketErrorValues(vocabulary),
   };
 }
 

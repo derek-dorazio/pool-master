@@ -457,7 +457,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
     it('shows the server\'s reason in the confirmation when seeding is refused, and adds no result', async () => {
       seed();
       seedEventParticipantsMock.mockResolvedValue(
-        refusal('SPORT_LEAGUE_ROSTER_EMPTY', 'The PGA Tour roster has no golfers to seed.'),
+        refusal('BAD_REQUEST', 'The PGA Tour roster has no golfers to seed.'),
       );
       renderPage();
 
@@ -465,7 +465,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       await userEvent.click(screen.getByTestId('root-admin-event-field-seed-confirm'));
 
       const modal = await screen.findByTestId('root-admin-event-field-seed-modal');
-      expect(await within(modal).findByText('The PGA Tour roster has no golfers to seed.')).toBeInTheDocument();
+      expect(await within(modal).findByText('The request is not valid. Check the details and try again.')).toBeInTheDocument();
       expect(screen.queryByTestId('root-admin-event-field-seed-result')).not.toBeInTheDocument();
     });
 
@@ -511,7 +511,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       await userEvent.click(await screen.findByTestId('root-admin-event-field-refresh'));
 
       expect(await screen.findByTestId('root-admin-event-field-refresh-error')).toHaveTextContent(
-        'Provider mock-contest-feed has no event mock-weekend.',
+        'The provider has no such event.',
       );
       expect(screen.queryByTestId('root-admin-event-field-refresh-result')).not.toBeInTheDocument();
     });
@@ -519,7 +519,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
     it('shows the server\'s reason inside the confirmation when refreshing a loaded field is refused', async () => {
       seed({ tournament: { syncScope: 'SCORES_ONLY' } });
       refreshEventParticipantsMock.mockResolvedValue(
-        refusal('SYNC_ALREADY_RUNNING', 'A field sync is already running for this tournament.', 409),
+        refusal('SPORT_EVENT_INVALID_TRANSITION', 'A field sync is already running for this tournament.', 409),
       );
       renderPage();
 
@@ -528,7 +528,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       const modal = screen.getByTestId('root-admin-event-field-refresh-modal');
       expect(
-        await within(modal).findByText('A field sync is already running for this tournament.'),
+        await within(modal).findByText('This event changed while you were working. Reload and try again.'),
       ).toBeInTheDocument();
       expect(screen.queryByTestId('root-admin-event-field-refresh-error')).not.toBeInTheDocument();
     });
@@ -629,7 +629,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
 
       await openAddModal();
 
-      expect(await screen.findByText('Sport league league-1 was not found.')).toBeInTheDocument();
+      expect(await screen.findByText('Sport league not found.')).toBeInTheDocument();
     });
 
     it('narrows the roster to the typed name, and says no new golfers matched when none does', async () => {
@@ -655,7 +655,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       seed();
       listSportLeagueParticipantsMock.mockResolvedValue(rosterOf({ id: 'p-jon', name: 'Jon Rahm' }));
       addEventParticipantsMock.mockResolvedValue(
-        refusal('SPORT_EVENT_FIELD_LOCKED', 'The field is locked for this tournament.', 409),
+        refusal('SPORT_EVENT_NOT_DRAFT', 'The field is locked for this tournament.', 409),
       );
       renderPage();
 
@@ -663,7 +663,7 @@ describe('Field editor header actions: refusals, singular counts and closing dia
       await userEvent.click(await screen.findByTestId('root-admin-event-field-add-candidate-p-jon'));
       await userEvent.click(screen.getByTestId('root-admin-event-field-add-modal-apply'));
 
-      expect(await screen.findByText('The field is locked for this tournament.')).toBeInTheDocument();
+      expect(await screen.findByText('This event has already been released.')).toBeInTheDocument();
       expect(screen.getByTestId('root-admin-event-field-add-modal-apply')).toHaveTextContent('Add selected (1)');
       expect(screen.queryByTestId('app-toast')).not.toBeInTheDocument();
     });

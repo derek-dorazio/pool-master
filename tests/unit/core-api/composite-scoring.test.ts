@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import {
   ParticipantRoundStatus,
   ScoringFamily,
@@ -87,7 +88,7 @@ describe('composite — a stat pool player\'s score', () => {
     const prisma = {} as unknown as PrismaClient;
 
     const result = await writer.persist(
-      { prisma, providerId: 'balldontlie' },
+      { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents() },
       { id: 'event-1', rounds: 7, roundSeriesLengths: [] },
       { category: 'STAT_LINE', externalEventId: 'nba-2025-finals', games: [{ externalGameId: 'g1', gameNumber: 1, state: 'SCHEDULED', lines: [] }] },
     );

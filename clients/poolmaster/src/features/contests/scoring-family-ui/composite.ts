@@ -5,7 +5,7 @@
  * event (a CFP or Super Bowl pool) has no game columns, since one would only repeat the total.
  * With an entry's Stats switch on, a line under each player's name gives their stats in the
  * current game, or their latest. The scores are the server's (`composite` on the pick); the
- * stats are the field's own stat lines, named by `SPORT_STAT_LABELS`.
+ * stats are the field's own stat lines, named by `enumLabel('SportStat', …)`.
  */
 
 import {
@@ -13,10 +13,11 @@ import {
   ParticipantRoundStatus,
   type SportStat,
 } from '@poolmaster/shared/domain';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { upperFirst } from '@/lib/upper-first';
 import { resolveRoundNumbers } from '../contest-leaderboard-rounds';
-import { SPORT_STAT_LABELS } from './stat-labels';
+import { formatSportStatCount } from './stat-labels';
 import type { ScoringFamilyUi } from './types';
 
 const DID_NOT_PLAY = 'did not play';
@@ -30,10 +31,7 @@ const NOT_IN_YET = 'not in yet';
  */
 function statLineText(participant: SportEventParticipantDto, roundNumber: number, stats: readonly SportStat[]): string | null {
   const shown = shownStats(participant, roundNumber, stats);
-  return shown === null ? null : shown.map(({ stat, value }) => {
-    const { unit } = SPORT_STAT_LABELS[stat];
-    return `${String(value)} ${value === 1 ? unit.one : unit.many}`;
-  }).join(' · ');
+  return shown === null ? null : shown.map(({ stat, value }) => formatSportStatCount(stat, value)).join(' · ');
 }
 
 /** The stats a game's line shows, in the composite's order: those not at 0, or the first if all are. Null with no line. */
@@ -59,6 +57,11 @@ function liveGameNumber(participants: readonly SportEventParticipantDto[]): numb
   return live.length === 0 ? null : Math.max(...live);
 }
 
+/** A game of a series by its short name, from the display strings: G4. */
+function gameShortName(gameNumber: number): string {
+  return displayString('word.gameNumber', { n: gameNumber }, undefined, { form: 'short' });
+}
+
 export const compositeUi: ScoringFamilyUi = {
   // A composite total breaks no ties with a prediction: entries submit without one.
   entryTiebreaker: null,
@@ -74,7 +77,7 @@ export const compositeUi: ScoringFamilyUi = {
     return {
       detailColumns: columnGames.map((roundNumber) => ({
         key: `game-${roundNumber}`,
-        label: `G${roundNumber}`,
+        label: gameShortName(roundNumber),
         testId: `contest-leaderboard-round-header-${roundNumber}`,
         // A live game's head carries its marker under the label, so the track is no wider.
         width: 'minmax(40px,0.3fr)',
@@ -95,8 +98,8 @@ export const compositeUi: ScoringFamilyUi = {
               // A game still being played may not have reached the player yet; a finished one they had no line in, they missed.
               text: score === undefined ? (roundNumber === liveGame ? null : 'DNP') : definition.format(score),
               peek: score === undefined || line === null ? undefined : {
-                title: `G${String(roundNumber)} · ${playerName}`,
-                facts: line.map(({ stat, value }) => ({ label: SPORT_STAT_LABELS[stat].long, value: String(value) })),
+                title: `${gameShortName(roundNumber)} · ${playerName}`,
+                facts: line.map(({ stat, value }) => ({ label: enumLabel('SportStat', stat), value: String(value) })),
               },
             };
           }),
@@ -127,5 +130,5 @@ function statLineFor(
   const playedGames = gameNumbers.filter((roundNumber) => statLineText(participant, roundNumber, stats) !== null);
   const shownGame = liveGame ?? playedGames.at(-1) ?? latestGame;
   const text = statLineText(participant, shownGame, stats) ?? (shownGame === liveGame ? NOT_IN_YET : DID_NOT_PLAY);
-  return isSingleGame ? upperFirst(text) : `G${String(shownGame)}: ${text}`;
+  return isSingleGame ? upperFirst(text) : `${gameShortName(shownGame)}: ${text}`;
 }

@@ -83,10 +83,15 @@ import { TEST_BALLDONTLIE_WEBHOOK_SECRET } from '../support/balldontlie-webhooks
 import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { jobHandlers, testCurrentJobStart } from '../support/in-memory-background-jobs';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
+import type { EventLifecycleService } from '../../packages/core-api/src/modules/events/event-lifecycle-service';
+import type { SportEventServices } from '../../packages/core-api/src/modules/events/wiring';
+import type { SportDataProviderLookup } from '../../packages/core-api/src/modules/sport-catalog/sport-league-service';
+import { DomainEvents } from '../../packages/core-api/src/modules/domain-events';
+import { testDomainEvents } from '../support/domain-events';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
-import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-snapshots';
+import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService } from '../../packages/core-api/src/modules/contest-management/wiring';
+import { createContestManagementService, createReleasedEditionContests } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
@@ -113,6 +118,7 @@ import { ActivityService } from '../../packages/core-api/src/modules/activity/ac
 import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
 import { CustomerService } from '../../packages/core-api/src/modules/customers/customer-service';
 import { PrismaCustomerReader } from '../../packages/core-api/src/adapters/prisma-customer-reader';
+import { NO_SETTLE_JOBS } from '../support/event-settlement';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
@@ -200,6 +206,21 @@ export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma())
   };
 }
 
+/**
+ * An event lifecycle for a test about the event services themselves rather than what follows a
+ * change: its follow-ups go through the app's handler map onto the job table, with no template
+ * contests and nobody told (`testDomainEvents`). It runs no settle job: its settlement throws
+ * (`NO_SETTLE_JOBS`), so a settlement test builds a lifecycle with the settlement it watches.
+ */
+export function integrationEventLifecycle(prisma: PrismaClient = getAppPrisma()): EventLifecycleService {
+  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), ...NO_SETTLE_JOBS });
+}
+
+/** The event services over `integrationEventLifecycle`, for a test of the services themselves. */
+export function integrationSportEventServices(prisma: PrismaClient = getAppPrisma(), providers?: SportDataProviderLookup): SportEventServices {
+  return createSportEventServices(prisma, undefined, integrationEventLifecycle(prisma), testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), providers);
+}
+
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
   return app;
@@ -281,15 +302,14 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   // A write's boards are rebuilt by a job per event or contest, as in index.ts (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs.queue);
   const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
-  // A released edition joins its template contests by a job per contest (#1318).
-  const releasedEditionContests = createContestManagementService(prisma, testApp.log, planEntitlements);
+  // What follows each change (#1946), as in index.ts. A released edition joins its template
+  // contests by a job per contest (#1318), which contest management runs.
+  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, releasedEditionContests: createReleasedEditionContests(prisma, testApp.log), sportEventChanged: contestNotices });
+  const contestManagement = createContestManagementService(prisma, testApp.log, planEntitlements, { domainEvents });
   const eventLifecycleService = createEventLifecycleService(prisma, {
+    domainEvents,
     logger: testApp.log,
-    jobs: backgroundJobs.queue,
-    sportEventChanged: contestNotices,
-    contestSettlement: createContestSettlementService(prisma, testApp.log, { jobs: backgroundJobs.queue, leaderboards }),
-    releasedEditionContests,
-    leaderboards,
+    contestSettlement: createContestSettlementService(prisma, testApp.log, { domainEvents }),
   });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
@@ -314,7 +334,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
-    sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, leaderboards, providerRegistry).sportEvents,
+    sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providerRegistry).sportEvents,
     syncRuns: providerSyncRuns,
     jobs: backgroundJobs.queue,
   });
@@ -326,9 +346,11 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
     CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
+    ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
+    FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-    ADD_RELEASED_EDITION_TO_CONTEST: (payload) => releasedEditionContests.addReleasedEditionToContest(payload),
+    ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });
@@ -350,11 +372,12 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });
   testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email, memberJoined });
-  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements });
+  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements, domainEvents });
   testApp.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
     email,
     planEntitlements,
+    domainEvents,
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   // The trophy room's routes, for the query-scaling tests of its reads (#1242).
@@ -364,7 +387,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, {
-    prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, leaderboards, schedule: ingestionConfigService, webhookProviderIds: [],
+    prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, domainEvents, leaderboards, schedule: ingestionConfigService, webhookProviderIds: [],
   });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
@@ -373,8 +396,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const profiles = createProfileServices(prisma, testApp.log);
   testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
   testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
-  testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, leaderboards });
-  testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements });
+  testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, domainEvents });
+  testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements, domainEvents });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   const activity = new ActivityService({
     jobs: new PrismaBackgroundJobRepository(prisma),

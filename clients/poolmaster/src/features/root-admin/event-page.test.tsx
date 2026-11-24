@@ -324,7 +324,7 @@ describe('Event page header and tabs', () => {
     renderEventPage('/manage/sports/golf/events/tour-1/field');
     getEventMock.mockResolvedValue(refusal('SPORT_EVENT_NOT_FOUND', 'Sport event tour-1 was not found.', 404));
 
-    expect(await screen.findByText('Sport event tour-1 was not found.', {}, { timeout: 5_000 })).toBeInTheDocument();
+    expect(await screen.findByText('Event not found.', {}, { timeout: 5_000 })).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-event-settings')).not.toBeInTheDocument();
   });
 
@@ -688,7 +688,7 @@ describe('Event page ⚙ dialog', () => {
     const dialog = await openSettings();
     await userEvent.click(within(dialog).getByTestId('root-admin-sport-event-transition-IN_PROGRESS'));
     const modal = await screen.findByTestId('root-admin-sport-event-transition-modal');
-    expect(within(modal).getByTestId('root-admin-sport-event-transition-confirm')).toHaveTextContent('Move to In Progress');
+    expect(within(modal).getByTestId('root-admin-sport-event-transition-confirm')).toHaveTextContent('Move to In progress');
     await userEvent.click(within(modal).getByTestId('root-admin-sport-event-transition-confirm'));
 
     await waitFor(() => expect(transitionEventMock).toHaveBeenCalledWith(expect.objectContaining({
@@ -698,14 +698,14 @@ describe('Event page ⚙ dialog', () => {
   });
 
   it('shows the server\'s reason in the confirmation when a status move is refused', async () => {
-    transitionEventMock.mockResolvedValue(refusal('INVALID_STATUS_TRANSITION', 'Cannot move a scheduled tournament to In Progress before round 1.'));
+    transitionEventMock.mockResolvedValue(refusal('SPORT_EVENT_INVALID_TRANSITION', 'Cannot move a scheduled tournament to In Progress before round 1.'));
     renderEventPage('/manage/sports/golf/events/tour-1/field');
 
     const dialog = await openSettings();
     await userEvent.click(within(dialog).getByTestId('root-admin-sport-event-transition-IN_PROGRESS'));
     await userEvent.click(await screen.findByTestId('root-admin-sport-event-transition-confirm'));
 
-    expect(await screen.findByText('Cannot move a scheduled tournament to In Progress before round 1.')).toBeInTheDocument();
+    expect(await screen.findByText('This event changed while you were working. Reload and try again.')).toBeInTheDocument();
   });
 
   it('returns from the status move confirmation\'s close button to the details, without moving', async () => {
@@ -744,7 +744,7 @@ describe('Event page ⚙ dialog', () => {
   });
 
   it('offers to turn automatic lifecycle back on when it is off, and shows the server\'s reason when that is refused', async () => {
-    updateEventMock.mockResolvedValue(refusal('SPORT_EVENT_LOCKED', 'This tournament is locked.', 409));
+    updateEventMock.mockResolvedValue(refusal('SPORT_EVENT_NOT_DRAFT', 'This tournament is locked.', 409));
     renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ autoLifecycleEnabled: false }) });
 
     const dialog = await openSettings();
@@ -754,7 +754,7 @@ describe('Event page ⚙ dialog', () => {
     expect(confirm).toHaveTextContent('Turn on automatic lifecycle');
     await userEvent.click(confirm);
 
-    expect(await screen.findByText('This tournament is locked.')).toBeInTheDocument();
+    expect(await screen.findByText('This event has already been released.')).toBeInTheDocument();
     expect(updateEventMock).toHaveBeenCalledWith(expect.objectContaining({ body: { autoLifecycleEnabled: true } }));
   });
 
@@ -857,14 +857,14 @@ describe('Event page ⚙ dialog Edit', () => {
   });
 
   it('shows the server\'s reason when saving is refused, and stays on the form', async () => {
-    updateEventMock.mockResolvedValue(refusal('VALIDATION_ERROR', 'The end date must be after the start date.'));
+    updateEventMock.mockResolvedValue(refusal('BAD_REQUEST', 'The end date must be after the start date.'));
     renderEventPage('/manage/sports/golf/events/tour-1/field');
 
     const dialog = await openSettingsEdit();
     await userEvent.type(within(dialog).getByTestId('root-admin-sport-event-edit-location'), ' North');
     await userEvent.click(within(dialog).getByTestId('root-admin-event-settings-dialog-save'));
 
-    expect(await within(dialog).findByText('The end date must be after the start date.')).toBeInTheDocument();
+    expect(await within(dialog).findByText('The request is not valid. Check the details and try again.')).toBeInTheDocument();
     expect(within(dialog).getByTestId('root-admin-sport-event-edit-location')).toBeInTheDocument();
   });
 

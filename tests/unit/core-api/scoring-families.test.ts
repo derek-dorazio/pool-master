@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import {
   SPORT_DEFINITIONS,
   ScoringFamily,
@@ -71,7 +72,7 @@ describe('head to head', () => {
     const findMany = jest.fn().mockResolvedValue([]);
 
     const result = await writer.persist(
-      { prisma: { sportEventMatch: { findMany } } as unknown as PrismaClient, providerId: 'balldontlie' },
+      { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportEventMatch: { findMany } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
       { id: 'event-1', rounds: null, roundSeriesLengths: [] },
       { category: 'GAME', externalEventId: 'scope-1', games: [] },
     );

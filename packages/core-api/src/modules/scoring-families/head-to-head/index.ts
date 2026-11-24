@@ -41,7 +41,7 @@ export const headToHeadScoringFamily: ScoringFamilyModule = {
     category: 'GAME',
     persist(deps, event, result) {
       return writeGameScores(
-        createGameScoreWriterDeps(deps.prisma, deps.providerId, deps.logger, deps.leaderboards),
+        createGameScoreWriterDeps(deps.prisma, deps.providerId, deps.domainEvents, deps.contestActivation, deps.logger),
         event,
         result.games,
       );

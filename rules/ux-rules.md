@@ -756,6 +756,11 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    the site's wordmark is. Small uppercase labels are label blue on white and navy haze on a
    navy band, as the site's eyebrows are. Email keeps to Archivo and Inter with Arial behind
    them; the site's condensed number face is not used, since most mail clients would fall back.
+10. **Codes in, words out.** A notification puts codes and numbers in a template's data (a
+   trophy, a digest event's state), never finished words; the renderer reads the words with
+   `enumLabel` and `displayString` in the recipient's language (`EmailRenderContext.language`,
+   their account locale), per §16 *Display Strings*. Sentences of the email itself stay in
+   the renderer for now.
 
 ## 15. Showing More
 
@@ -795,3 +800,52 @@ extra text answers:
 
 The `poolmaster/no-ad-hoc-more-info` ESLint rule fails feature code that imports
 `InfoPopover` or sets a `title=` attribute on a DOM element.
+
+## 16. Display Strings
+
+Every word the app shows for a **code** comes from one display-string module per language,
+`packages/shared/display-strings/en-US.ts` first. The web app and the emails read it
+through the same two functions, so a word is written once and can be translated once. The API
+sends codes and numbers, never these words.
+
+1. **What goes in the module.** Every value of every shared enum (`enum.<Enum>.<CODE>`), one
+   message per API error code (`error.<CODE>`), generic words with numbers or plurals in them
+   (`word.<key>`: "Week {{n}}", `round_one` / `round_other`), and the words that differ by
+   sport, keyed by sport code and role (`sport.<SPORT>.<role>`: `sport.GOLF.participant_one` is
+   golfer). Keys are codes, never names; nothing is keyed by a league.
+2. **What never goes in it.** Proper names: teams, players, tournaments and named slots (Super
+   Bowl, The Masters). They are name columns on the model and are never translated. Page
+   sentences (How to Play, empty states, button text) stay in the page for now.
+3. **How to read it.** `enumLabel('ContestStatus', status, { locale })` for an enum value;
+   `sportWord(sport, role, { count, locale })` for a sport word; `displayString(key, values,
+   locale)` for anything else. A key's placeholder values are typed from its `en-US` words, so
+   a missing or misspelt value fails the type check. The language part of the
+   reader's locale picks the module and anything missing falls back to `en-US`. Placeholders
+   are `{{name}}`; plurals are `_one` / `_other` forms chosen by the language's rules
+   (i18next).
+4. **Error messages.** A screen shows an API error through `extractErrorMessage`, which reads
+   the code, never the API's own message (that is for logs). A screen that words some codes
+   its own way names its context: `extractErrorMessage(error, { context: 'pickEm', values })`
+   reads `error.<CODE>.pickEm` (the module's `errorContext` section) when it exists, else
+   `error.<CODE>`, and an error with no known code shows the screen's `fallback` or the generic
+   `error.INTERNAL_ERROR`. Several contexts are tried in order. The sport's words a context
+   sentence needs go in as `values`. A screen keeps no map of codes to sentences.
+5. **One entry per code, with an optional short form.** An entry is a string or
+   `{ name, short }`. A tight space (a grid column, a chip) asks for `form: 'short'`, which
+   falls back to the name. A screen never shortens or re-words a label itself.
+6. **No word maps anywhere else.** No `Record<SharedEnum | ApiErrorCode, string>` is declared
+   outside `display-strings/`. `rules:check:display-strings` enforces it, together with an
+   entry for every enum value and error code, no unused `word.` or `sport.` key or error context, and every
+   other language having exactly the `en-US` keys. Today's maps are on
+   `scripts/display-strings-allowlist.json`; the ticket that moves a map deletes its entry,
+   and the check fails an entry whose map is gone, so the list only shrinks.
+7. **Sport words are read by role.** The roles are one typed list, `SportWordRole`
+   (`sport-word-roles.ts`). A sport has an entry for every role it uses; a role it leaves out
+   reads the generic `word.<role>` (a sport that plays no bracket says "match"), and an
+   optional role with no generic word (`rider`, `topPlaces`, `shootout`) reads as absent, so
+   the screen leaves the thing out. A call site passes the sport (or a sport league definition,
+   whose `wordOverrides` reads a stat pool's players and games) and never builds a key.
+   `sportVocabulary(source, locale)` gives every role at once for a screen that reads many.
+   A new role goes in `SportWordRole` and, unless optional, in `word.` too.
+8. **Sorting follows the words.** An enum with `alphabeticalOrder` sorts by its display
+   strings in the reader's language (`compareByEnumOrder(order, undefined, locale)`).

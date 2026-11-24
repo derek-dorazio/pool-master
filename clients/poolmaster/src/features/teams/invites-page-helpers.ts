@@ -1,4 +1,5 @@
 import { EmailMessageStatus, EmailSkipReason, InvitationStatus } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { LeagueInvitationDto, SendLeagueInvitationsResponse } from '@/lib/api';
 import { buildInvitePath } from '@/features/leagues/league-routing';
 
@@ -56,18 +57,6 @@ export function describeInviteResult(result: SendLeagueInvitationsResponse): Inv
   return null;
 }
 
-/** What an email invite's row says about its latest email. */
-const EMAIL_STATUS_LABELS: Record<EmailMessageStatus, string> = {
-  [EmailMessageStatus.QUEUED]: 'Sending email',
-  [EmailMessageStatus.SENDING]: 'Sending email',
-  [EmailMessageStatus.SENT]: 'Email sent',
-  [EmailMessageStatus.DELIVERED]: 'Email delivered',
-  [EmailMessageStatus.BOUNCED]: 'Email bounced. Check the address, or copy the link to share it.',
-  [EmailMessageStatus.COMPLAINED]: 'Email marked as spam. Copy the link to share it.',
-  [EmailMessageStatus.FAILED]: 'Email could not be sent. Resend it, or copy the link to share it.',
-  [EmailMessageStatus.SKIPPED]: 'Email not sent. Copy the link to share it.',
-};
-
 /**
  * Not sent because the address is on the suppression list. That list is platform-wide, so the
  * line never says why: the bounce or complaint may have come from another league's email.
@@ -81,7 +70,7 @@ const EMAIL_PROBLEM_STATUSES: ReadonlySet<EmailMessageStatus> = new Set([
 ]);
 
 export function emailStatusLabel(invitation: LeagueInvitationDto, status: EmailMessageStatus): string {
-  return invitation.emailSkipReason === EmailSkipReason.SUPPRESSED ? SUPPRESSED_LABEL : EMAIL_STATUS_LABELS[status];
+  return invitation.emailSkipReason === EmailSkipReason.SUPPRESSED ? SUPPRESSED_LABEL : enumLabel('EmailMessageStatus', status);
 }
 
 export function isEmailProblem(invitation: LeagueInvitationDto, status: EmailMessageStatus): boolean {

@@ -9,7 +9,7 @@ const { enterContestMock } = vi.hoisted(() => ({ enterContestMock: vi.fn() }));
 
 bindApiMocks({ enterContest: enterContestMock });
 
-const REFUSAL = 'Your team already has the most entries allowed.';
+const REFUSAL = 'You already have the most entries this contest allows.';
 
 function renderButton() {
   enterContestMock.mockResolvedValue({ error: { error: { code: 'CONTEST_ENTRY_LIMIT_REACHED', message: REFUSAL } }, status: 409 });

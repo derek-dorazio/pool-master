@@ -88,13 +88,7 @@ export function UndoEmailChangePage() {
     >
       {undoMutation.isError ? (
         <Notice data-testid="undo-email-change-error" tone="danger">
-          {extractErrorMessage(undoMutation.error, {
-            codeMessages: {
-              EMAIL_CHANGE_UNDO_ADDRESS_TAKEN:
-                "Another account uses that email address now, so it can't be put back.",
-              EMAIL_CHANGE_UNDO_RATE_LIMITED: "Too many tries. Wait a minute and try again.",
-            },
-          })}
+          {extractErrorMessage(undoMutation.error)}
         </Notice>
       ) : null}
     </StatusPage>

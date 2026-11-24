@@ -34,6 +34,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Env-var fallbacks | `poolmaster/no-env-fallbacks` (ESLint) |
 | A gate sending its refusal without awaiting it | `poolmaster/no-unawaited-send-error` (ESLint) |
 | A repository or Prisma call per loop iteration or `.map` row in the backend | `poolmaster/no-query-in-loop` (ESLint) |
+| A follow-up job or board rebuild queued by the writer instead of a domain event handler | `poolmaster/follow-ups-via-domain-events` (ESLint) |
 | A screen keeping one row, a count or an id/status/year slice of a list query | `poolmaster/no-list-lookup` (ESLint) |
 | Direct `fetch`/`axios` in the webapp | `no-restricted-globals` / `no-restricted-imports` in `eslint.config.js` |
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
@@ -68,8 +69,9 @@ State the trigger and one line of context. If none apply, write `None.`
 - A **migration that cannot be rolled back** without data loss. Also requires the
   blast-radius disclosure in `workflow-rules.md` §6.
 - A **backfill or one-time data operation** against production-shaped data.
-- A change to the **provider registry** or anything touching `ALLOW_MOCK_PROVIDERS` — a
-  misconfiguration here can silently downgrade an environment to fabricated data.
+- A change to the **provider registry** or to how a provider is selected or configured — a
+  misconfiguration here can silently leave an environment syncing nothing, or from the wrong
+  feed.
 
 ### Performance
 
@@ -315,9 +317,12 @@ classes; this is what is specific to *this* codebase.
 
 ### Provider discipline
 
-- Per `architecture-rules.md` §3 *Provider and Adapter Registry Discipline*: are mock
-  providers gated by `ALLOW_MOCK_PROVIDERS`? A misconfiguration here silently downgrades a
-  real environment to fabricated data, which looks like working software.
+- Per `architecture-rules.md` §3 *Provider and Adapter Registry Discipline*: does the diff
+  add any mock, simulated or replayed provider to production source, or let configuration
+  select one? Feed replays belong in test code. Fabricated data in a real environment looks
+  like working software.
+- Per `architecture-rules.md` §3 *Provider calls are rate limited and resilient*: does every
+  new provider call go through the governed client, with no retry loop or sleep of its own?
 
 ---
 
@@ -389,8 +394,9 @@ Read every added or changed line for these, and report each one found:
 
 1. **Name matching** — a comparison, `includes`, `startsWith`, regex or keyword list applied
    to a `name`, `title`, `label` or display string; two records joined because their names
-   agree. Only a provider adapter may match a provider's string, and only through a mapping
-   table with a `WARNING`/`ERROR` finding for a miss.
+   agree. Only a provider adapter may match a provider's string, and only through an
+   inclusion-only mapping table whose miss raises the one deduplicated finding `domain-model-conventions-rules.md` §17 *Provider
+   keys live only in ProviderMapping tables* describes.
 2. **Id strings built or parsed** — a template literal or `join` producing an id or scope
    key; `split`, `match`, `replace`, `startsWith` or a regex on an id, slug or provider ref; a
    regex that chooses an adapter, reader or handler.
@@ -408,6 +414,28 @@ Read every added or changed line for these, and report each one found:
    return; a function that matches another under a different name; a "keep in sync with"
    comment. Search for the existing computation before accepting a new one, and name it in
    the finding.
+6. **A provider key outside a mapping table** — a new or newly read column holding a
+   provider's id or code (`externalId`, `…Ref`, `providerEventId`, a provider id prefix) on
+   a table whose name does not end in `…ProviderMapping`; a provider code in a constant; a
+   sync that falls back to a default for an unknown provider value instead of raising the
+   finding (`domain-model-conventions-rules.md` §17 *Provider keys live only in
+   ProviderMapping tables*).
+7. **An either/or parent pair** — two or more nullable foreign keys on one row of which
+   exactly one is meant to be set, or a check constraint saying so
+   (`domain-model-conventions-rules.md` §9 *No nullable either/or parents*). Name the shared parent they should point at instead.
+8. **A generic word stored as data** — a `label`, `displayName`, `…Names` or `name` column
+   (or migration rows) holding words every league shares ("Week 3", "Semifinal", "Final"),
+   or a proper name hard-coded in code (`domain-model-conventions-rules.md` §17 *Proper
+   names are data, generic words are strings*).
+9. **Recomputing a fact the feed supplies** — a total, position, tie marker, score to par,
+   status or cut worked out from stored rows when the provider sends it, or kept beside the
+   feed's value (`domain-model-conventions-rules.md` §17 *One computation per fact*: the
+   provider is the source of truth).
+10. **A domain value in the web app** — an option list, range, limit, default, threshold,
+    penalty or scoring number in `clients/poolmaster/src`, written there or imported from a
+    shared constant, rather than read from the API. Blocking whenever the diff adds one; the
+    web app owns only display strings and pure layout constants
+    (`domain-model-conventions-rules.md` §17 *The web app holds no domain values*).
 
 For each finding, state **the model home it belongs in** (a column on a definition, a
 reference row, a mapping table, a field the API returns, one shared predicate) — "hard-coded"
@@ -415,9 +443,11 @@ alone is not actionable. A finding the slice can fix by touching code it already
 fixed before merge; one that needs a model change becomes a linked follow-up ticket, and the
 slice must not add a further copy of it (`domain-model-conventions-rules.md` §15 *Residue*).
 
-**Calibration.** A literal is not automatically a finding: a scoring family's arithmetic, a
-provider's wire format parsed inside its adapter, a UI label map from a code to its words, and
-test fixtures are all fine. The finding is a fact about a *particular* sport, league, season
-or event, or a fact derived a second time. When in doubt, report it with the question; a
-wrong-but-asked finding costs a reply, a missed one costs a redesign later.
+**Calibration.** A literal is not automatically a finding: a scoring family's arithmetic on
+the server, a provider's wire format parsed inside its adapter, a UI label map from a code to
+its words, and test fixtures are all fine. In the web app, every value of a shared enum in its
+declared order (a filter of every status) and a display cap (rows shown before "and N more")
+are fine; a hand-written subset or range is not. The finding is a fact about a *particular*
+sport, league, season or event, or a fact derived a second time. When in doubt, report it with
+the question; a wrong-but-asked finding costs a reply, a missed one costs a redesign later.
 

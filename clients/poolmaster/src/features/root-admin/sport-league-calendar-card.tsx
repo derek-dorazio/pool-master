@@ -1,4 +1,4 @@
-import { sportLeagueNounOf } from '@poolmaster/shared/domain';
+import { sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { Notice, FormField, LinkButton, SectionCard, Select } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -20,7 +20,7 @@ import { upperFirst } from '@/lib/upper-first';
  */
 export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { sport, definition } = useManagedSport();
-  const { event: eventNoun } = definition.vocabulary;
+  const { event: eventNoun } = sportVocabulary(definition);
   const yearsQuery = useSportLeagueEventYearsQuery(sportLeague.id);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
 

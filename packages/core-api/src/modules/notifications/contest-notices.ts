@@ -69,7 +69,7 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   email: Pick<EmailService, 'sendMany'>;
   /** Where an event change queues each contest's email job (#1458); `sportEventChangedJobs` throws without it. */
-  jobs?: Pick<BackgroundJobQueue, 'request' | 'enqueueAll'>;
+  jobs?: Pick<BackgroundJobQueue, 'request'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
   /** The clock that says whether an event's picks are still open; the real one by default. */
@@ -112,8 +112,6 @@ export interface SportEventChangedNotice {
     change: SportEventChange,
     context?: SportEventChangeContext,
   ): Promise<BackgroundJobRequest[]>;
-  /** Queues those jobs now: a cancellation, which its settle job tells before settling. */
-  sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void>;
 }
 
 /** Only an open or live contest hears about its events: a finished one is done, and a draft one's commissioners aren't told. */
@@ -293,11 +291,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
     return contests.map((contest) => contestEventChangedEmailsJob(jobs, contest.id, sportEvent, change));
   }
 
-  async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
-    await this.requireJobs().enqueueAll(await this.sportEventChangedJobs(sportEvent, change));
-  }
-
-  private requireJobs(): Pick<BackgroundJobQueue, 'request' | 'enqueueAll'> {
+  private requireJobs(): Pick<BackgroundJobQueue, 'request'> {
     const { jobs } = this.deps;
     if (!jobs) throw new Error('A background job queue is required to tell contests their event changed');
     return jobs;

@@ -1,7 +1,8 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { ProviderHealthStatusOrder, type ProviderHealthStatus } from '@poolmaster/shared/domain';
 import type { ProviderSummaryDto } from '@/lib/api';
-import { errorRatePercent, PROVIDER_STATUS_LABELS, requestsPerMinuteText } from './provider-facts';
+import { errorRatePercent, requestsPerMinuteText } from './provider-facts';
 import { ProviderStatusChip } from './provider-status-chip';
 
 const columnHelper = createColumnHelper<ProviderSummaryDto>();
@@ -16,7 +17,7 @@ export const providerColumns = [
     header: 'Status',
     meta: {
       info: 'Up, Slow or Down, from a live check made as the page loads and the last hour of calls.',
-      type: { kind: 'enum', order: ProviderHealthStatusOrder, label: (status) => PROVIDER_STATUS_LABELS[status as ProviderHealthStatus] },
+      type: { kind: 'enum', order: ProviderHealthStatusOrder, label: (status) => enumLabel('ProviderHealthStatus', status as ProviderHealthStatus) },
     },
     cell: ({ getValue }) => <ProviderStatusChip status={getValue()} />,
   }),

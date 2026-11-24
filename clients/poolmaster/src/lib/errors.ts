@@ -1,10 +1,20 @@
+import {
+  displayString,
+  hasDisplayString,
+  type DisplayStringKey,
+  type DisplayStringValues,
+  type ErrorContext,
+} from '@poolmaster/shared/display-strings';
 import { ErrorEnvelopeSchema, isApiErrorCode, type ApiErrorCode, type ErrorEnvelope } from '@poolmaster/shared/dto';
 
 /**
- * Shared user-facing error-message extraction for SDK / mutation responses.
+ * Shared user-facing error-message extraction for SDK / mutation responses. The words for an API
+ * error code come from the display strings (`rules/ux-rules.md` §16 *Display Strings*); the
+ * backend's own message is for logs and never shown.
  */
 
-const DEFAULT_FALLBACK = 'Something went wrong. Please try again.';
+/** The generic sentence: the display string of `INTERNAL_ERROR`. */
+const DEFAULT_FALLBACK = displayString('error.INTERNAL_ERROR');
 
 /**
  * The one runtime check that a value is the backend's standard error envelope
@@ -27,29 +37,49 @@ export function hasErrorCode(error: unknown, code: ApiErrorCode): boolean {
   return isErrorEnvelope(error) && error.error.code === code;
 }
 
-/** Product copy for some of the API's error codes. */
-export type ErrorCodeMessages = Partial<Record<ApiErrorCode, string>>;
-
 export type ExtractErrorMessageOptions = {
-  /** Message to show when the error has no usable text. */
+  /** Message to show when the error carries no API error code. */
   fallback?: string;
   /**
-   * User-facing copy for particular backend error codes (per-feature special cases). Keyed by
-   * the API's own code list, so a code the API no longer sends, or a misspelled one, fails
-   * typecheck instead of silently never matching.
+   * The screen's own wording of some codes (`errorContext` in the display strings), tried in
+   * order before the code's own message: `'pickEm'`, or `['contestEvents', 'contestSetup']`.
    */
-  codeMessages?: ErrorCodeMessages;
+  context?: ErrorContext | readonly ErrorContext[];
+  /** The words a context's placeholders take, such as the sport's `{{match}}`. */
+  values?: DisplayStringValues;
 };
+
+/**
+ * The words for an API error code: the first of the screen's contexts with wording for it
+ * (`error.<CODE>.<context>`), else the code's own message (`error.<CODE>`).
+ */
+export function errorCodeMessage(
+  code: ApiErrorCode,
+  options?: Pick<ExtractErrorMessageOptions, 'context' | 'values'>,
+): string {
+  const contexts: readonly ErrorContext[] = options?.context === undefined
+    ? []
+    : typeof options.context === 'string' ? [options.context] : options.context;
+  const contextKey = contexts
+    .map((context) => `error.${code}.${context}`)
+    .find((key) => hasDisplayString(key));
+  // The key is chosen at run time, so its placeholders cannot be checked here; each screen's
+  // values are typed where it builds them.
+  const lookUp = displayString as (key: DisplayStringKey, values?: DisplayStringValues) => string;
+  return lookUp((contextKey ?? `error.${code}`) as DisplayStringKey, options?.values);
+}
 
 /**
  * Pulls a user-facing message off an SDK / mutation error.
  *
- * - `ApiError`: the `codeMessages` entry for its `code`, else the backend's
- *   own message, else `fallback`. Its `.message` is not used when the
- *   backend sent none (see `hasOwnMessage`): that text is the throw site's
- *   diagnostic and must not shadow this call's `fallback`.
- * - Any other `Error`: its `message`, or `fallback` when empty.
+ * - `ApiError` with a code the API lists: `errorCodeMessage` — the screen's context wording,
+ *   else the code's display string. The backend's message is never shown.
+ * - `ApiError` with no code, or one this build does not know: `fallback`.
+ * - Any other `Error` (a network failure, a client-side check): its `message`, or `fallback`
+ *   when empty.
  * - `null` / `undefined`: `fallback`.
+ *
+ * `fallback` defaults to the generic "Something went wrong" sentence.
  */
 export function extractErrorMessage(
   error: Error | null | undefined,
@@ -58,12 +88,7 @@ export function extractErrorMessage(
   const fallback = options?.fallback ?? DEFAULT_FALLBACK;
 
   if (error instanceof ApiError) {
-    const codeMessages = options?.codeMessages;
-    const codeMessage = error.code !== undefined && isApiErrorCode(error.code) ? codeMessages?.[error.code] : undefined;
-    if (codeMessage !== undefined) {
-      return codeMessage;
-    }
-    return error.hasOwnMessage ? error.message : fallback;
+    return error.code !== undefined && isApiErrorCode(error.code) ? errorCodeMessage(error.code, options) : fallback;
   }
 
   return error?.message || fallback;
@@ -73,24 +98,17 @@ export function extractErrorMessage(
  * Wraps an SDK error payload as a real `Error` so `throw`ing it gives normal
  * `instanceof Error` and Promise-rejection semantics. A payload that is the
  * backend error envelope contributes its code, message and details; anything
- * else (a proxy's HTML page, an empty body) leaves them unset.
+ * else (a proxy's HTML page, an empty body) leaves them unset. The message is
+ * for logs: screens show `extractErrorMessage`, which reads the code.
  */
 export class ApiError extends Error {
   readonly code?: string;
   readonly details?: unknown;
-  /**
-   * True when the backend envelope carried the message. False means
-   * `message` is synthesized from the throw site's `fallback` (or the
-   * generic default) -- callers extracting a display message should treat
-   * that as absent, not as real backend text. See `extractErrorMessage`.
-   */
-  readonly hasOwnMessage: boolean;
 
   constructor(payload: unknown, fallback?: string) {
     const envelope = isErrorEnvelope(payload) ? payload.error : undefined;
     super(envelope?.message ?? fallback ?? DEFAULT_FALLBACK);
     this.name = 'ApiError';
-    this.hasOwnMessage = envelope !== undefined;
     this.code = envelope?.code;
     this.details = envelope?.details;
   }

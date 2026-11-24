@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import {
   BackgroundJobKindOrder,
@@ -14,12 +15,7 @@ import { StatusBadge } from '@/features/shared/ui';
 import { ActivityStartedBy } from './activity-started-by';
 import type { ActivityJobDto } from '@/lib/api';
 import {
-  JOB_ERROR_TYPE_LABELS,
-  JOB_KIND_LABELS,
-  JOB_STATUS_LABELS,
   JOB_STATUS_TONES,
-  JOB_TRIGGER_LABELS,
-  JOB_TYPE_LABELS,
 } from './activity-labels';
 import { ACTIVITY_STARTED_COLUMN } from './use-activity';
 
@@ -43,18 +39,18 @@ export function activityColumns({ showSportLeague, showEvent }: { showSportLeagu
       header: 'Kind',
       meta: {
         info: 'What the job is about: a provider sync, emails to a league, settling contests, an event\'s release, or something else.',
-        type: { kind: 'enum', order: BackgroundJobKindOrder, label: (kind) => JOB_KIND_LABELS[kind as BackgroundJobKind] },
+        type: { kind: 'enum', order: BackgroundJobKindOrder, label: (kind) => enumLabel('BackgroundJobKind', kind as BackgroundJobKind) },
       },
-      cell: ({ getValue }) => JOB_KIND_LABELS[getValue()],
+      cell: ({ getValue }) => enumLabel('BackgroundJobKind', getValue()),
     }),
     columnHelper.accessor('type', {
       id: 'what',
       header: 'What',
       meta: {
         info: 'What the job does.',
-        type: { kind: 'enum', order: BackgroundJobTypeOrder, label: (type) => JOB_TYPE_LABELS[type as BackgroundJobType] },
+        type: { kind: 'enum', order: BackgroundJobTypeOrder, label: (type) => enumLabel('BackgroundJobType', type as BackgroundJobType) },
       },
-      cell: ({ getValue }) => JOB_TYPE_LABELS[getValue()],
+      cell: ({ getValue }) => enumLabel('BackgroundJobType', getValue()),
     }),
     ...(showSportLeague
       ? [columnHelper.accessor((job) => job.sportLeague?.name ?? null, {
@@ -75,7 +71,7 @@ export function activityColumns({ showSportLeague, showEvent }: { showSportLeagu
       header: 'Started by',
       meta: {
         info: 'What started the job: its schedule, a provider webhook, a root admin, a league commissioner, or the system. Hover Admin or Commissioner for their name.',
-        type: { kind: 'enum', order: JobTriggerOrder, label: (trigger) => JOB_TRIGGER_LABELS[trigger as JobTrigger] },
+        type: { kind: 'enum', order: JobTriggerOrder, label: (trigger) => enumLabel('JobTrigger', trigger as JobTrigger) },
       },
       cell: ({ row }) => <ActivityStartedBy job={row.original} />,
     }),
@@ -83,9 +79,9 @@ export function activityColumns({ showSportLeague, showEvent }: { showSportLeagu
       header: 'Status',
       meta: {
         info: 'Queued waits for its run time, Running is under way, Done finished, Failed will not run again.',
-        type: { kind: 'enum', order: BackgroundJobStatusOrder, label: (status) => JOB_STATUS_LABELS[status as ActivityJobDto['status']] },
+        type: { kind: 'enum', order: BackgroundJobStatusOrder, label: (status) => enumLabel('BackgroundJobStatus', status as ActivityJobDto['status']) },
       },
-      cell: ({ getValue }) => <StatusBadge tone={JOB_STATUS_TONES[getValue()]}>{JOB_STATUS_LABELS[getValue()]}</StatusBadge>,
+      cell: ({ getValue }) => <StatusBadge tone={JOB_STATUS_TONES[getValue()]}>{enumLabel('BackgroundJobStatus', getValue())}</StatusBadge>,
     }),
     columnHelper.accessor('changedCount', {
       header: 'Changed',
@@ -95,11 +91,11 @@ export function activityColumns({ showSportLeague, showEvent }: { showSportLeagu
       header: 'Error',
       meta: {
         info: 'Why the job did not do its work, on a failed try or a held release. The message is in the job\'s dialog.',
-        type: { kind: 'enum', order: JobErrorTypeOrder, label: (errorType) => JOB_ERROR_TYPE_LABELS[errorType as JobErrorType] },
+        type: { kind: 'enum', order: JobErrorTypeOrder, label: (errorType) => enumLabel('JobErrorType', errorType as JobErrorType) },
       },
       cell: ({ getValue }) => {
         const errorType = getValue();
-        return errorType === null ? null : JOB_ERROR_TYPE_LABELS[errorType];
+        return errorType === null ? null : enumLabel('JobErrorType', errorType);
       },
     }),
     columnHelper.accessor('attempts', {

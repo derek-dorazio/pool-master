@@ -129,25 +129,47 @@ Related anti-patterns that are banned:
 
 ### Provider and Adapter Registry Discipline
 
-Provider, adapter, and integration factories are production architecture, even
-when one of the available providers is a mock or local-development provider.
+Provider, adapter, and integration factories are production architecture.
 
 Rules:
 
-- Production and staging provider registries must be driven by explicit runtime
-  configuration, not by a hardcoded single provider id.
-- QA and local development may use mock providers when configured for that
-  environment. The provider must still be selected through the same registry
-  and configuration path that real providers use.
-- Production and staging must reject mock providers unless an explicit
-  emergency override is configured, and that override must log loudly at
-  startup with environment, provider id, and reason.
-- Adding a new provider means updating the registry, configuration schema,
-  validation, startup logging, and tests together.
-- A factory that silently falls back to a mock provider because configuration is
-  missing is a production defect. Missing provider configuration should surface
-  as disabled ingestion or a typed startup/configuration error, not fabricated
-  data.
+- **A provider is a real feed.** Production source holds no mock or simulated provider in
+  any environment: no mock adapter wired into the registry, no branch that reads a mock
+  provider's state, and no admin tool that simulates a live feed (Derek, 2026-11-23). QA and
+  local development sync from the same real providers production does.
+- **Replays of a feed live in test code.** Recorded provider payloads, fake provider servers
+  and fixture catalogs are test infrastructure under `tests/` (`rules/testing-rules.md` §1B
+  *Forbidden Application-Code Patterns*), injected by the test, never selected through
+  production configuration.
+- The provider registry is driven by explicit runtime configuration, not by a hardcoded
+  single provider id.
+- Adding a new provider means updating the registry, configuration, validation, startup
+  logging, and tests together.
+- Missing provider configuration surfaces as disabled ingestion or a typed
+  startup/configuration error, never as a fallback to another provider or to fabricated data.
+- *Status:* `packages/mock-contest-feed-provider` and its QA service task predate this rule.
+  The QA task is disabled; the wiring, mock-state branches and the root admin live simulation
+  tool leave production source with the provider table (#1917), and the module itself is
+  removed by #1981. Add nothing new that uses it.
+
+### Provider calls are rate limited and resilient
+
+Every call to a provider goes through one governed client per provider, so no sync path can
+spend the provider's rate on its own or hammer it when it pushes back.
+
+- **Each sync process limits itself locally.** Its share of the rate is the provider's
+  `requestsPerMinute` divided by the job pool's maximum task count, held in configuration
+  and process memory. No database call is made per request to check a shared budget.
+- **One resilience library governs retries** (cockatiel). A 429, a 5xx response and a
+  timeout are retried; on a 429 or 503 the client waits for the provider's `Retry-After` when
+  it is sent, and otherwise backs off exponentially with jitter up to a cap. Any other 4xx is
+  not retried. Code never writes its own retry loop or sleep around a provider call.
+- **A circuit breaker per provider** opens during a storm of 429s or failures and pauses every call to
+  that provider for a short time, so the sync stops spending rate it cannot use; the jobs
+  waiting on it retry once it closes.
+- The rate, the cap and the breaker's thresholds are settings on the provider, never
+  constants per sport or league (`rules/domain-model-conventions-rules.md` §17 *Rules Live
+  In The Model, Not In Code*).
 
 ---
 
@@ -168,7 +190,8 @@ All backend services are TypeScript services with explicit module boundaries.
 - Route handlers do not return raw Prisma models.
 - Database access stays behind service/repository boundaries.
 - Cross-module communication is a typed service call, wired in the calling module's
-  `wiring.ts`. There is no event bus — see *No event bus — modules call each other* below.
+  `wiring.ts`. Work that follows a change goes through the domain event handler map — see
+  *Follow-up work is a domain event handler* below.
 - League isolation must remain explicit in request context and persistence boundaries.
 - **Dependency direction is one-way: `packages/shared` must never import from
   `packages/core-api`.** Shared is the contract layer that both the service and the clients
@@ -196,21 +219,43 @@ All backend services are TypeScript services with explicit module boundaries.
   one place `SportEvent.status` is ever written, called identically by
   provider-driven ingestion, admin-triggered transitions, and the automatic
   lifecycle scheduler — each caller supplies a different `actor`, not a
-  different implementation.
+  different implementation. `ContestLifecycle` is the same for
+  `Contest.status`: the event lifecycle, settlement and contest management
+  each move a contest through it, never through the repository's
+  `transitionStatus` directly.
 
-### No event bus — modules call each other
+### Follow-up work is a domain event handler
 
-There is no in-process event bus. One existed in `packages/shared/events/` with typed event
-contracts and two publishers, and #261 deleted it: in six months nothing ever subscribed, so
-every publish iterated an empty handler list. A module that needs another module's effect calls
-that module's service directly, wired in its `wiring.ts`; the event lifecycle service calling
-settlement is the model. The persisted rows are the outcome, and tests assert those rather than
-an event.
+A write that sets off work beyond itself describes what changed as a typed `DomainEvent` and
+takes its follow-up jobs from the one handler map, `DOMAIN_EVENT_HANDLERS` in
+`modules/domain-events` (#1946). The map is exhaustive over `DomainEventType`, so every change
+says what follows it, even if that is nothing. A handler only collects background jobs: it may
+read, but it never writes, sends email or calls another module's write. The writer collects
+before its write (`DomainEvents.collect`, or `collectEach` for a guarded batch write that learns
+inside its transaction which rows moved), writes the jobs in its own transaction and calls
+`queued()` once it has committed, so a change that commits always has its follow-ups and one
+that fails or loses a guarded race has none. A job handler that changes state describes its own
+change the same way, so a chain of follow-ups reads in the map, not in handlers. Each handler
+lives beside its job's builder in the module that owns the job; the map only imports them, and
+`DomainEvents` is built once in `index.ts` and passed as a required dependency.
 
-If pub/sub is wanted later, reintroduce it against a real subscriber, so a concrete consumer
-decides its shape, and write its rules then. The rules that stood here (typed events, emission
-after commit, at-least-once idempotent subscribers, `allSettled` failure policy) were written
-for subscribers that never existed; they are in git history if that day comes.
+A module that needs another module's result now (a read, a validation, a write in the same unit
+of work) still calls that module's service directly, wired in its `wiring.ts`. A handler is for
+work that can happen after the write.
+
+`poolmaster/follow-ups-via-domain-events` (ESLint, #1951) refuses a job request, an enqueue or a
+board rebuild outside the job builders and their handlers (`*-job-requests.ts`, `*-job.ts`) and
+the queue itself; a job's runner lives in a file of its own, so it is linted. An entry point that starts work rather than reacting to a change (a provider's
+webhook, an admin's sync or rebuild route, a sweep on a timer, a read asking for a stale board)
+says so at the call with `// poolmaster-allow-direct-job: <what starts the work>`.
+
+The map is static and typed. There is no runtime subscription, no string topic and no handler
+that a reader of the map cannot see. A domain event type names a model entity and its change,
+never a sport or league, and a handler filters only on the event's model fields
+(`domain-model-conventions-rules.md` §17 *Rules Live In The Model, Not In Code*). The delivery
+is the `background_jobs` table, the transactional outbox; moving it out of process changes the
+delivery, not the map (`docs/BACKGROUND-JOBS.md` *Scaling out*). The bus #261 deleted had
+publishers and no subscriber; this map exists because its handlers do.
 
 ### Background jobs run on one server task
 
@@ -219,8 +264,9 @@ provider loops, the email sender), and prod runs more than one task. So that a j
 
 - **A recurring job holds a job lock** (`core/job-lock.ts`, a Postgres session advisory lock on
   a connection of its own). The task that takes a job's lock keeps it from tick to tick and the
-  others skip that job, until the holder stops and its connection closes. A new provider loop
-  passes a lock key; a loop that only changes this process's own state needs none.
+  others skip that job, until the holder stops and its connection closes. The sync scheduler
+  tick holds one (*Scheduled provider sync is jobs*, below); a loop that only changes this
+  process's own state needs none.
 - **One recurring job per lock.** Work that sweeps every league (an email kind, a cleanup) gets a
   timer and lock of its own rather than a step inside another sweep, so a slow one never holds
   up the rest. Each runs on a `LockedSweep` (`core/locked-sweep.ts`): the lifecycle sweep, and
@@ -236,7 +282,19 @@ provider loops, the email sender), and prod runs more than one task. So that a j
   #1439), not `outsideRequest` around a `setImmediate`. The job is written in the transaction of
   the change that caused it, so a deploy or a crashed task never loses it; any task's runner
   claims it, and a throw is retried. Its handler is idempotent, because a lapsed lease runs it
-  again. A recurring job stays a timer under a job lock: the table is for one-off work.
+  again. A recurring job stays a timer under a job lock: the table is for one-off work. A
+  follow-up to a change is queued by its domain event handler, not by the writer (*Follow-up
+  work is a domain event handler*).
+- **Scheduled provider sync is jobs, never in-memory timers.** One scheduler tick, under its
+  job lock, is the only timer: it decides what is due and queues one background job per unit
+  of work, each with a dedupe key built from ids (a league, a Season, an event, a Game), never
+  from a provider id string. The live sweep queues work for the Games that are due to start
+  or in progress, not for whole leagues on a clock. How often each kind of sync runs comes
+  from global settings per sync kind and season state (in season, off season), never from a
+  per-sport or per-league schedule, a per-provider loop with its own `setInterval`, or a
+  constant. So a deploy or a crashed task loses no sync work, every run is visible as a job,
+  and the rate limit sees one queue. Today's per-provider loops predate this and are replaced
+  by #1917.
 - **A member's own action never queues a job of its own** (#1861). Work a member's write or read
   sets off that spans a contest or an event (rebuilding its boards, its emails) is queued once
   per contest or event, keyed so a waiting job absorbs the next ask (`dedupeKey`), never one
@@ -263,6 +321,11 @@ their participants and keeps them current, and an event's status follows its dat
 authoring and admin result entry are the fallback for leagues no provider covers and for
 correcting a feed. The decision and its alternatives are
 [ADR-0011](../docs/adr/0011-provider-sync-creates-events.md), which supersedes ADR-0009.
+
+[ADR-0012](../docs/adr/0012-season-phase-slot-model-contests-cover-slots.md) amends it: events
+sit in a Season and cover slots, their status bubbles up from the feed's Games, and a league
+with no feed stays off. This section describes today's code, and is rewritten by the slices
+of #1917 as they land.
 
 What the code does **today**, while the follow-up tickets of #1723 land:
 
@@ -339,13 +402,22 @@ fall back on.
 
 ### Sport extension
 
+> This section describes today's code. ADR 0012 and `domain-model-conventions-rules.md` §11
+> *Open-Ended Additive Substrate Design* replace it: Clutch Cards become a contest type on the
+> parent league (no round leagues), and every scoring family reads one shared result shape
+> rather than its own tables. It is rewritten by the slices of #1917 as they land.
+
 What differs between sports lives in exactly two places, so a new sport is added by
 filling them in rather than by finding guards scattered through the code:
 
 - **The sport registry** (`packages/shared/domain/sports/`) holds what is data: participant
   type, scoring family, default tournament format, default round count,
-  allowed selection types, scoring definitions, vocabulary and round labels (never a league's choice such as its tier
-  layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
+  allowed selection types, scoring definitions and round labels (never a league's choice such as its tier
+  layout: `rules/domain-model-concepts.md` §2, "Platform definitions, league picks"). It holds
+  codes, never words: what a sport's audience calls things (golfer, tournament, "Cut") is a
+  display string, `sport.<SPORT>.<role>`, read through `sportWord` or `sportVocabulary`
+  (`rules/ux-rules.md` §16 *Display Strings*). A definition only names the roles it reads
+  from another (`wordOverrides`: a stat pool's players and games). `SPORT_DEFINITIONS` is a `Record<Sport, …>`, so a
   sport added to the enum fails the build until it has a definition. A sport is supported
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).

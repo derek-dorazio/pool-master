@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { testDomainEvents } from '../../support/domain-events';
 import { ScoringFamily, Sport, type SportEvent } from '@poolmaster/shared/domain';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
@@ -7,6 +8,7 @@ import { SportEventRoundService } from '../../../packages/core-api/src/modules/e
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
+import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 
 // #1820: every Clutch Card event created names its season event (the World Series round of the
 // MLB Postseason) and the rounds of it the league covers; no other event names one. The service
@@ -43,15 +45,17 @@ function setup() {
   const lifecycle = new EventLifecycleService(
     { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
     sportEvents,
+    testDomainEvents(),
+    NO_SETTLE_JOBS,
   );
-  const service = new SportEventService({
+  const service = new SportEventService({ domainEvents: testDomainEvents(),
     sportEvents,
     eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), tierProfiles: store.tierProfileRepo(), pricingProfiles: store.pricingProfileRepo() }),
-    bracket: new SportEventBracketService({
+    bracket: new SportEventBracketService({ domainEvents: testDomainEvents(),
       sportEvents,
       sportLeagues: store.sportLeagueRepo(),
       rounds: store.roundRepo(),

@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { z } from 'zod';
 import {
   type LeaguePlan,
@@ -7,7 +8,6 @@ import {
   type PlanFeatureGroup,
 } from '@poolmaster/shared/domain';
 import type { PlanConfig } from '@/lib/api';
-import { PLAN_CAP_LABEL, PLAN_FEATURE_LABEL } from '@/features/plans/plan-labels';
 import {
   PlanSettingsDraftSchema,
   toPlanConfig,
@@ -31,13 +31,13 @@ export type PlanFeatureGridRow = {
 };
 
 export function planCapRows(config: PlanConfig): PlanCapGridRow[] {
-  return Object.values(PlanCap).map((cap) => ({ cap, name: PLAN_CAP_LABEL[cap], limits: config.caps[cap] }));
+  return Object.values(PlanCap).map((cap) => ({ cap, name: enumLabel('PlanCap', cap), limits: config.caps[cap] }));
 }
 
 export function planFeatureRows(config: PlanConfig): PlanFeatureGridRow[] {
   return Object.values(PlanFeature).map((feature) => ({
     feature,
-    name: PLAN_FEATURE_LABEL[feature],
+    name: enumLabel('PlanFeature', feature),
     group: PLAN_FEATURE_GROUP[feature],
     startsAt: config.features[feature],
   }));

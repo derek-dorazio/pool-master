@@ -1,3 +1,4 @@
+import { sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -34,7 +35,7 @@ export function RootAdminParticipantCreatePage() {
   });
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
-  const { participant, sportLeague } = definition.vocabulary;
+  const { participant, sportLeague } = sportVocabulary(definition);
   const leaguesQuery = useSportLeaguesQuery(sport);
   const [searchParams] = useSearchParams();
   const startLeagueId = searchParams.get('sportLeague');

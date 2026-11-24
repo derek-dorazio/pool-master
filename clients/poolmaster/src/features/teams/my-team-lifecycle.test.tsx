@@ -127,7 +127,7 @@ describe('Team lifecycle dialogs', () => {
     fireEvent.click(screen.getByTestId('open-inactivate'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-inactivate'));
 
-    expect(await screen.findByText(/Appoint another active commissioner/)).toBeInTheDocument();
+    expect(await screen.findByText('Appoint another commissioner before the last commissioner leaves or steps down.')).toBeInTheDocument();
     expect(screen.getByTestId('my-team-inactivate-dialog')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -156,7 +156,7 @@ describe('Team lifecycle dialogs', () => {
     fireEvent.click(screen.getByTestId('open-delete'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-delete'));
 
-    expect(await screen.findByText('Team must already be inactive before it can be permanently deleted.')).toBeInTheDocument();
+    expect(await screen.findByText('This team must be inactive before it can be deleted.')).toBeInTheDocument();
     expect(screen.queryByTestId('league-route-destination')).not.toBeInTheDocument();
   });
 
@@ -168,12 +168,12 @@ describe('Team lifecycle dialogs', () => {
 
     fireEvent.click(screen.getByTestId('open-delete'));
     fireEvent.click(await screen.findByTestId('my-team-confirm-delete'));
-    await screen.findByText('Team must already be inactive before it can be permanently deleted.');
+    await screen.findByText('This team must be inactive before it can be deleted.');
 
     fireEvent.keyDown(screen.getByTestId('my-team-delete-dialog'), { key: 'Escape' });
 
     await waitFor(() => expect(screen.queryByTestId('my-team-delete-dialog')).not.toBeInTheDocument());
-    expect(screen.queryByText('Team must already be inactive before it can be permanently deleted.')).not.toBeInTheDocument();
+    expect(screen.queryByText('This team must be inactive before it can be deleted.')).not.toBeInTheDocument();
   });
 
   it('closes the inactivate dialog on Escape without inactivating', async () => {

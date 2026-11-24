@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
 import { ParticipantRoundStatus, ProviderGameState, ScoringFamily, Sport, type SportStat } from '@poolmaster/shared/domain';
 import type { StatLineGameUpdate } from '@poolmaster/shared/dto';
@@ -82,7 +83,7 @@ function boxScore(gameNumber: number, state: ProviderGameState, lines: Record<st
 function publish(externalEventId: string, games: StatLineGameUpdate[]) {
   return publishLiveScoreUpdate(
     { category: 'STAT_LINE', externalEventId, games },
-    { prisma: getAppPrisma(), providerId: PROVIDER, scoringFamilyForEvent },
+    { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent },
   );
 }
 
@@ -161,7 +162,9 @@ describe('box scores from a provider', () => {
     // stars' mappings, the stat line service's reads of the event, its games and its field, then
     // one read of the stored lines and one bulk insert each of rounds and lines. A new statement
     // here is a new cost on every sync of a live Clutch Card.
+    // With them, one insert of the event's boards' rebuild job (#1466).
     expect(statementCounts(statements)).toEqual([
+      ['INSERT background_jobs', 1],
       ['INSERT sport_event_participant_rounds', 1],
       ['INSERT sport_event_participant_stat_lines', 1],
       ['SELECT event_series', 2],
@@ -194,8 +197,10 @@ describe('box scores from a provider', () => {
     // Pinned: the same reads as a first sync and the stored lines with their rounds, then one
     // delete of the changed lines, one update per status the rewritten rounds take (completed,
     // still live) and one insert of their lines. A live Clutch Card runs this every few minutes.
+    // With them, one insert of the event's boards' rebuild job (#1466).
     expect(statementCounts(statements)).toEqual([
       ['DELETE sport_event_participant_stat_lines', 1],
+      ['INSERT background_jobs', 1],
       ['INSERT sport_event_participant_stat_lines', 1],
       ['SELECT event_series', 2],
       ['SELECT participant_provider_mappings', 1],
