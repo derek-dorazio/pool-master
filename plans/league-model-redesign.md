@@ -308,7 +308,7 @@ The current model was built one sport at a time and leans on code to look right:
 - **…GamePlayerScore**: the composite value per Game, Participant and composite (unique on
   all three), written by one writer when a Game's stat rows change: the league's composite
   plus any composite an open contest still names. It is keyed by Participant, not field
-  row, so a card spanning two events scores cleanly. A contest records which composite it
+  row, so a card over several slots of one event scores cleanly. A contest records which composite it
   uses.
 - **Player rating**:
   - the average GamePlayerScore over his team's last 4 games (a game he didn't play counts
@@ -441,8 +441,7 @@ loses the slots already under way. The event-level "event started" readiness rea
 
 ## 8. Clutch Cards: a contest type on the parent league
 
-- **What it is.** A Clutch Card contest covers any set of the parent league's slots in one
-  Season, through the same ContestSeasonSlot.
+- **What it is.** A Clutch Card contest covers listed slots of one parent league event, through the same ContestSeasonSlot.
 - **Pick list.** The player field rows of the event's teams that are not eliminated and
   have a place in a covered slot, judged at cutoff, so bye teams are included. The API
   computes it. A Super Bowl card has 2 teams; a Semifinal card has 4.
@@ -696,8 +695,8 @@ Contest:
   offered). One default per (sport league, selection type). Coverage mode (Derek
   2026-11-24), `ContestConfigTemplate.coverageMode`: ONE_SLOT (the list is where it may run;
   the commissioner picks one slot: tiered, budget, quick pick, squares, a single-round Clutch
-  Card), ALL_LISTED (covers every listed slot of one event: brackets, a whole-tournament tiered
-  pool, a whole-playoffs Clutch Card) or FROM_SLOT (the commissioner picks a starting slot and the contest covers it
+  Card), ALL_LISTED (covers every listed slot of one event: brackets, a tiered, budget or
+  quick pick pool over several POSTSEASON slots of one event, a whole-playoffs Clutch Card) or FROM_SLOT (the commissioner picks a starting slot and the contest covers it
   and every later listed slot: season-long pick'em and survivor). A contest copies only the
   slots its mode and the commissioner's choice give into `ContestSeasonSlot`. No template versions: a contest
   copies its slots into `ContestSeasonSlot` at creation, so a template edit (by migration
@@ -708,7 +707,9 @@ Contest:
 - Cups (Derek 2026-11-24, slices 20c and 20f): a cup adds up the counted contests that cover a single
   slot and rank every entry by its own choices (today tiered, budget and the Clutch Card;
   both tiered and budget count). Contests covering several slots (pick'em, survivor,
-  bracket, a whole-tournament pool) crown their own winner and never count; squares and quick pick
+  bracket, a tiered, budget or quick pick pool over several POSTSEASON slots of one event)
+  crown their own winner and never count; a contest on one TOURNAMENT slot (one major) is
+  ONE_SLOT and counts; squares and quick pick
   never count. One global rule, no sport branches. Which cups exist is sport league data,
   `SportLeagueCupDefinition` (sport league, name, `coverage` ALL_SLOTS | PHASE |
   LISTED_SLOTS, `phase` only with PHASE by database check) with
@@ -805,7 +806,9 @@ Contest:
 - No multi-tournament field pools (Derek 2026-11-24, slices 11 and 15: "not practical; the
   Majors cup serves that purpose"): tiered, budget and quick pick contests never span events.
   The PGA and LPGA majors pools and the ATP and WTA Grand Slam tiered pools are deleted by
-  migration with their code (missed-event 80s, best-N across events). A league runs one
+  migration in slice 11 (#2010), with their code: `scoreMissedLineup` and the multi-event
+  `ContestSportEvent.sequence` reading (slice 15). The unplayed-round 80 inside one event
+  stays (an API field in 10b). A league runs one
   contest per major, and the Majors Cup (golf) or Grand Slam Cup (tennis) adds them up.
   Only pick'em and survivor (FROM_SLOT over WEEK events) span events; ALL_LISTED covers one
   event's slots. The events sync loads each Season's whole schedule ahead, so coverage is
@@ -1036,8 +1039,9 @@ and Actions; later slices add actions by kind. Sync kinds come from `ProviderSyn
   Match and Event refresh rows.
 
 **Contests (15, 15b, 15c, 16, 17, 18, 18b, 19).**
-- 15 states covered slots = the template's slot definitions ∩ the chosen event's Season
-  slots, per coverage mode. `templateId` is NOT NULL. Its *Web consumers* list
+- 15 states covered slots per coverage mode: ONE_SLOT and ALL_LISTED take the template's
+  slot definitions ∩ the chosen event's Season slots; FROM_SLOT takes them ∩ the chosen
+  Season's slots from the starting slot on. `templateId` is NOT NULL. Its *Web consumers* list
   `firstContestEvent`/`lastContestEvent`/`currentContestEvent`, replaced by
   `currentSlotId` and the cutoff. `ContestDraw.receiptsPendingSportEventId` becomes a
   ContestSeasonSlot FK. The bracket start-round picker, `?startRound=` and its helpers go.
