@@ -195,6 +195,21 @@ describe('RootAdminSportsPage', () => {
     expect(within(screen.getByTestId('root-admin-sports-row-nba')).getByText('ERROR')).toBeInTheDocument();
   });
 
+  it('sorts the Issues column by how many items each league has in all, not by its first chip, leagues with none last', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: [
+      overview({ id: 'mlb', name: 'MLB', issues: [{ type: 'SYNC', count: 4, items: [] }] }),
+      overview({ id: 'nhl', sport: 'HOCKEY', name: 'NHL', issues: [] }),
+      overview({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', issues: [{ type: 'OVERDUE', count: 1, items: [] }] }),
+    ] } });
+    renderPage();
+    await screen.findByTestId('root-admin-sports-row-mlb');
+
+    await userEvent.click(screen.getByTestId('data-grid-sort-issues'));
+    expect(rowNames()).toEqual(['NBA', 'MLB', 'NHL']);
+    await userEvent.click(screen.getByTestId('data-grid-sort-issues'));
+    expect(rowNames()).toEqual(['MLB', 'NBA', 'NHL']);
+  });
+
   it('lists a held release behind its chip with the failed checks, linking to its event', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     renderPage();
