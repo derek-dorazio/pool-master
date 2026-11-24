@@ -10,7 +10,7 @@ export type EventMatchRow = {
   roundLabel: string;
   matchNumber: number;
   /** "Duke vs UNC" on a neutral site, else "Away @ Home"; a side not decided yet is "TBD". */
-  pairing: string;
+  pairingLabel: string;
   scheduledDate: string | null;
   status: SportEventMatchDto['status'];
   /** "Home–Away", with the shoot-out after it; null until either side has a score. */
@@ -50,7 +50,7 @@ export function eventMatchRows(
       roundNumber: match.roundNumber,
       roundLabel: roundLabel(match.roundNumber, roundCount),
       matchNumber: match.matchNumber,
-      pairing: match.isNeutralSite ? `${home} vs ${away}` : `${away} @ ${home}`,
+      pairingLabel: match.isNeutralSite ? `${home} vs ${away}` : `${away} @ ${home}`,
       scheduledDate: match.scheduledDate,
       status: match.status,
       score: scoreOf(match),

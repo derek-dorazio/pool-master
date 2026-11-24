@@ -87,6 +87,9 @@ CREATE INDEX "sport_league_phase_slot_provider_mappings_provider_mapping_idx" ON
 -- CreateIndex
 CREATE UNIQUE INDEX "sport_league_phase_slot_provider_mappings_value_key" ON "sport_league_phase_slot_provider_mappings"("sport_league_provider_mapping_id", "match_type", "provider_value");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "sport_league_phase_slot_provider_mappings_slot_provider_key" ON "sport_league_phase_slot_provider_mappings"("sport_league_phase_slot_id", "sport_league_provider_mapping_id");
+
 -- AddForeignKey
 ALTER TABLE "sport_league_phases" ADD CONSTRAINT "sport_league_phases_sport_league_id_fkey" FOREIGN KEY ("sport_league_id") REFERENCES "sport_leagues"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

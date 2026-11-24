@@ -1,4 +1,5 @@
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
+import { readCsrfToken } from './browser-writes';
 import type { AdminCredentials } from './admin-session';
 
 /**
@@ -63,4 +64,23 @@ export async function sportLeagueProfileIds(
     throw new Error(`the "${tierProfileName}" tier profile or the Standard pricing profile is missing`);
   }
   return { tierProfileId, pricingProfileId };
+}
+
+/**
+ * Creates a sport league for a journey through the API, signed as the browser's root admin. A
+ * league is added by migration (the `add-sport` skill), so the web app has no page that makes
+ * one; the create route stays only for these journeys until they run on seeded leagues.
+ */
+export async function createJourneySportLeague(
+  page: Page,
+  league: { sport: string; name: string; tierProfileName: string },
+): Promise<string> {
+  const headers = { 'x-csrf-token': await readCsrfToken(page) };
+  const profiles = await sportLeagueProfileIds(page.request, headers, league.tierProfileName);
+  const response = await expectOk(
+    page.request.post('/api/v1/sport-leagues/', { headers, data: { sport: league.sport, name: league.name, ...profiles } }),
+    `create sport league ${league.name}`,
+  );
+  const { sportLeague } = (await response.json()) as { sportLeague: { id: string } };
+  return sportLeague.id;
 }

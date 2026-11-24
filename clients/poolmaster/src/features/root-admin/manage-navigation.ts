@@ -42,11 +42,6 @@ export function buildSportLeaguePath(sport: Sport, sportLeagueId: string) {
   return `${buildSportPath(sport)}/leagues/${sportLeagueId}`;
 }
 
-/** Where a new sport league is made. */
-export function buildSportLeagueCreatePath(sport: Sport) {
-  return `${buildSportPath(sport)}/leagues/new`;
-}
-
 /** The platform's tier and pricing profiles (#1849), the Sports page's second tab. */
 export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 

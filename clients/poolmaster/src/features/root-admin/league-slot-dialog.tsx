@@ -1,6 +1,6 @@
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
 import { DetailEditModal, type Fact } from '@/features/shared/ui';
-import { mappingText, seriesText, slotLabel, type SlotDefinitionRow } from './league-structure-rows';
+import { mappingText, seriesText, type SlotDefinitionRow } from './league-structure-rows';
 
 /**
  * A slot definition on the Structure tab (⤢, #2002): all of it to read, with its provider

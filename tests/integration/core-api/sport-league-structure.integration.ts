@@ -11,6 +11,7 @@ import { SportLeagueStructureResponseSchema } from '@poolmaster/shared/dto';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { leagueProfiles } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { fixtureTourId } from '../../support/event-edition';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -84,6 +85,15 @@ describe('the seeded phase and slot definitions', () => {
   });
 });
 
+describe('the test fixture tour', () => {
+  it('has a regular season of one tournament, as a seeded league has its definitions, however many first uses race', async () => {
+    const [tourId] = await Promise.all([fixtureTourId(getPrisma()), fixtureTourId(getPrisma()), fixtureTourId(getPrisma())]);
+
+    const phases = await getPrisma().sportLeaguePhase.findMany({ where: { sportLeagueId: tourId }, select: { phase: true, isSynced: true, slots: { select: { slotKind: true } } } });
+    expect(phases).toEqual([{ phase: LeaguePhase.REGULAR, isSynced: true, slots: [{ slotKind: SlotKind.TOURNAMENT }] }]);
+  });
+});
+
 describe('the database checks on slot definitions', () => {
   async function phaseOf(sportLeagueId: string) {
     return getPrisma().sportLeaguePhase.create({ data: { sportLeagueId, phase: LeaguePhase.REGULAR, isSynced: true } });
@@ -142,6 +152,20 @@ describe('the database checks on slot definitions', () => {
     await expect(prisma.sportLeaguePhaseSlotProviderMapping.create({ data: {
       sportLeagueId: league.id, sportLeaguePhaseSlotId: slot.id, sportLeagueProviderMappingId: mappingId, matchType: SlotProviderMatchType.PROVIDER_CODE,
     } })).rejects.toThrow(/sport_league_phase_slot_provider_mappings_value/);
+  });
+
+  it('refuse a second way for one provider to match a slot, a second calendar week row too', async () => {
+    const league = await testLeague();
+    const phase = await phaseOf(league.id);
+    const prisma = getPrisma();
+    const slot = await prisma.sportLeaguePhaseSlot.create({ data: { ...SLOT_DEFAULTS, sportLeagueId: league.id, sportLeaguePhaseId: phase.id, key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1 } });
+    const mapping = { sportLeagueId: league.id, sportLeaguePhaseSlotId: slot.id, sportLeagueProviderMappingId: await syncLeagueTo(prisma, league.id, 'nba') };
+    await prisma.sportLeaguePhaseSlotProviderMapping.create({ data: { ...mapping, matchType: SlotProviderMatchType.CALENDAR_WEEK } });
+
+    await expect(prisma.sportLeaguePhaseSlotProviderMapping.create({ data: { ...mapping, matchType: SlotProviderMatchType.CALENDAR_WEEK } }))
+      .rejects.toThrow(Prisma.PrismaClientKnownRequestError);
+    await expect(prisma.sportLeaguePhaseSlotProviderMapping.create({ data: { ...mapping, matchType: SlotProviderMatchType.PROVIDER_CODE, providerValue: 'REG:1' } }))
+      .rejects.toThrow(Prisma.PrismaClientKnownRequestError);
   });
 });
 

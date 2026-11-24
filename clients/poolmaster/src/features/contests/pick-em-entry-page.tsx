@@ -214,7 +214,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       entry={entrySummary}
       leagueCode={leagueCode}
-      phase={enumLabel('ContestStatus', contest.status)}
+      phaseLabel={enumLabel('ContestStatus', contest.status)}
       rules={[
         ...(gamePicks.mode ? [formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })] : []),
         ...(isSurvivor ? [formatSelectionTypeName(gamePicks.selectionType)] : []),

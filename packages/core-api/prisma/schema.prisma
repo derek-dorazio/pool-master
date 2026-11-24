@@ -2614,6 +2614,8 @@ model SportLeaguePhaseSlotProviderMapping {
 
   /// A provider value names at most one slot of the league.
   @@unique([sportLeagueProviderMappingId, matchType, providerValue], map: "sport_league_phase_slot_provider_mappings_value_key")
+  /// A slot has one row per provider (plan §1): one way each feed's games are matched to it.
+  @@unique([sportLeaguePhaseSlotId, sportLeagueProviderMappingId], map: "sport_league_phase_slot_provider_mappings_slot_provider_key")
   @@index([sportLeagueId, sportLeaguePhaseSlotId], map: "sport_league_phase_slot_provider_mappings_slot_idx")
   @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_phase_slot_provider_mappings_provider_mapping_idx")
   @@map("sport_league_phase_slot_provider_mappings")

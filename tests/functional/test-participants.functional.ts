@@ -7,7 +7,7 @@ import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-go
 import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { CONTESTS_PER_SPORT_LEAGUE, loadTestParticipants, type TestPlayer } from '../../packages/core-api/scripts/seed-golf/test-participants';
 import { refuseUnlessTestTarget, testLeagueCode } from '../../packages/core-api/scripts/seed-golf/test-participants-data';
-import { buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { addRunSportLeague, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, createAuthenticatedClient, createFunctionalEmail, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
@@ -89,11 +89,12 @@ describe('SDK Functional: test participants', () => {
     const file = taggedSeed();
     const players = testPlayers();
     const getClient = () => Promise.resolve(a);
+    created.sportLeagueIds.add(await addRunSportLeague(a, Sport.HORSE_RACING, file.sportLeagues[0].name));
     await loadSportData(file, { getClient, now: new Date(), mode: LoadMode.APPLY });
     const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.HORSE_RACING } })).data).sportLeagues
       .find((league) => league.name === file.sportLeagues[0].name));
     created.sportLeagueIds.add(sportLeague.id);
-    // A sport league the loader creates has no contest setups until a migration adds them (#1825).
+    // A sport league a test adds has no contest setups until a migration adds them (#1825).
     await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'US Thoroughbred', toSportLeagueId: sportLeague.id });
 
     const options = { getClient, signIn, players, password: PASSWORD };

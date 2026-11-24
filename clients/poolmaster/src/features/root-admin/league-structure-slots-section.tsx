@@ -1,10 +1,10 @@
 import { createColumnHelper } from '@tanstack/react-table';
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
 import { LeaguePhaseOrder, SlotKindOrder, SlotPairingOrder, type LeaguePhase, type SlotKind, type SlotPairing } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { DataGrid, SectionCard, Text } from '@/features/shared/ui';
 import { LeagueSlotDialog } from './league-slot-dialog';
-import { mappingText, seriesText, slotLabel, type SlotDefinitionRow } from './league-structure-rows';
+import { mappingText, seriesText, type SlotDefinitionRow } from './league-structure-rows';
 
 const columnHelper = createColumnHelper<SlotDefinitionRow>();
 

@@ -120,7 +120,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
       contest={contest}
       entry={entrySummary}
       leagueCode={leagueCode}
-      phase={isOpen ? `Open until ${closesAt}` : enumLabel('ContestStatus', contest.status)}
+      phaseLabel={isOpen ? `Open until ${closesAt}` : enumLabel('ContestStatus', contest.status)}
       status={status}
       statusLine={entryStatusLine({ closes: closesAt, isOpen: canPick, status })}
       testId="bracket-entry-page"

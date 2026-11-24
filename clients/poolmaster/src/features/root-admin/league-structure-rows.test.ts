@@ -1,16 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { SportLeaguePhaseDefinitionDto } from '@/lib/api';
-import { mappingText, seriesText, slotLabel, slotRowsOf } from './league-structure-rows';
+import { mappingText, seriesText, slotRowsOf } from './league-structure-rows';
 
 // The Structure tab's words for a slot (#2002): its name, series and provider mappings.
 
 describe('league structure rows', () => {
-  it('names a slot by its proper name, a nameless week by its number, and any other nameless slot by the word for its kind', () => {
-    expect(slotLabel({ name: 'Super Bowl', slotKind: 'FINAL', weekNumber: null })).toBe('Super Bowl');
-    expect(slotLabel({ name: null, slotKind: 'WEEK', weekNumber: 14 })).toBe('Week 14');
-    expect(slotLabel({ name: null, slotKind: 'QUARTERFINAL', weekNumber: null })).toBe('Quarterfinal');
-  });
-
   it('says a single game alone, and a series or legs with their games', () => {
     expect(seriesText({ seriesFormat: 'SINGLE_GAME', seriesGames: 1 })).toBe('Single game');
     expect(seriesText({ seriesFormat: 'AGGREGATE', seriesGames: 2 })).toBe('Aggregate · 2 games');

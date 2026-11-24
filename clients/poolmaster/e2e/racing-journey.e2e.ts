@@ -7,6 +7,7 @@ import {
 } from './helpers/admin-session';
 import { correctFieldParticipant } from './helpers/event-field';
 import { submitAndRead } from './helpers/browser-writes';
+import { createJourneySportLeague } from './helpers/admin-api';
 import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { registerFreshUser } from './helpers/user-session';
@@ -155,21 +156,12 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   });
 
   const circuitId = await test.step('create a racing circuit', async () => {
-    await page.goto('/manage/sports/horse-racing/leagues/new');
-    await page.getByTestId('root-admin-sport-league-list-new-name').fill(run.tourName);
-    // The sport's tier layout and the Standard prices, as its leagues name today (#1844).
-    await page.getByTestId('root-admin-sport-league-list-new-tier-profile').selectOption({ label: '3 tiers of 3' });
-    await page.getByTestId('root-admin-sport-league-list-new-pricing-profile').selectOption({ label: 'Standard' });
-    const created = await submitAndRead<{ sportLeague: { id: string } }>(
-      page,
-      'root-admin-sport-league-list-new-save',
-      'POST',
-      '/api/v1/sport-leagues',
-    );
-    // Creating returns to the Sports page, whose one grid lists every sport league.
-    await expect(page).toHaveURL(/\/manage\/sports(\?.*)?$/);
-    await expect(page.getByTestId(`root-admin-sports-row-${created.sportLeague.id}`)).toBeVisible();
-    return created.sportLeague.id;
+    // A league is added by migration, so a journey makes its own through the API.
+    const id = await createJourneySportLeague(page, { sport: 'HORSE_RACING', name: run.tourName, tierProfileName: '3 tiers of 3' });
+    // The Sports page's one grid lists every sport league, the new one too.
+    await page.goto('/manage/sports');
+    await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
+    return id;
   });
 
   const horseIds = await test.step(`create ${HORSE_COUNT} horses`, async () => {
