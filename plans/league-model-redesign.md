@@ -958,6 +958,13 @@ helper), never a free key string.
 - 11: rewrite the `add-event-page` skill; `ux-rules.md` §13 items 1–3 and §12 item 12.
 - 14: status bubbling and the handler map in `architecture-rules.md` §4.
 - Every sync slice: its part of `docs/LIVE-SPORTS-DATA-SYNC.md`, fully rewritten by 29.
+- 20: `docs/DOMAIN-OPERATIONS.md` championship section and rows 914–924;
+  `docs/EMAIL-DELIVERY.md` (year in review opens when the year closes).
+- 20b: the LeagueYearFinish row in `domain-model-concepts.md`.
+- 20c, 20e, 20f: `docs/DOMAIN-OPERATIONS.md` cup section; the Cup row in
+  `domain-model-concepts.md`.
+- 20d: `plans/season-cups.md` and `plans/league-history-research.md` deleted or marked
+  superseded.
 - 30: the full `domain-model-concepts.md` overhaul.
 
 ## Open questions
