@@ -402,10 +402,10 @@ SportEvent (in one Season) ─→ SportEventSlot ─→ SportLeagueSeasonPhaseSl
        └─→ SportEventRoundMatch          (any meeting of 2 or more sides; a best-of series is one Match)
              ├─→ SportEventRoundMatchSide (a field row, or empty until known)
              └─→ SportEventRoundMatchGame (one game played)
-                   ├─→ …GameSide ─→ …GameSidePeriodScore
+                   ├─→ …GameSideResult ─→ …GameSideResultPeriodScore
                    ├─→ …GamePlayerStat   (raw box score)
                    └─→ …GamePlayerScore  (computed composite)
-SportEventParticipantStanding  (the event result per field row)
+SportEventParticipantStanding  (the event result per field row; FIELD events only)
 
 Contests
 Contest ─→ ContestSeasonSlot ─→ SportLeagueSeasonPhaseSlot   (the only record of what it covers)
@@ -425,12 +425,12 @@ scoring). Every provider id lives in a `…ProviderMapping` table; `Provider` an
 | Event | A real-world event in one Season, covering one or more of its slots (a week of games, a tournament, a whole postseason) | A Slot: an event can span several |
 | Round | A scoring unit of an event, on one of its slots, played head to head or as a field | A slot (a tournament's four rounds are all on one slot) |
 | Match | Any meeting of two or more sides in a round: two teams, two players or a whole field. A best-of series is one Match | A Game |
-| Match side | One side of a Match: its field row (empty until known), side number, home/away, seed, spread, and its rolled-up outcome. Pick'em and bracket picks point here | A Game side |
+| Match side | One side of a Match: its field row (empty until known), side number (its fixed place: away 1, home 2; `homeAway` NONE at a neutral site or in a FIELD match), seed, spread, and its rolled-up outcome. Pick'em and bracket picks point here | A Game side result |
 | Game | One game played in a Match, with its date, status and each side's result | A Match, which may hold several Games |
-| Game side | A side's result in one Game: score, position, periods completed, status | The event result, which is the Standing |
+| Game side result | A side's result in one Game: score, position, periods completed, status | The event result, which is the Standing (FIELD events only; a head-to-head result is its Match sides) |
 | Roster row | A player's team, position and rating in one Season | The event field row, which is the player in one event |
 | Conference, division | A league's grouping of its teams, defined once per league by migration; each Season places every team in a conference and, where the league has them, a division. Each has its own provider mapping | A Phase or a bracket region |
-| Covered slots | The Season slots a contest is played on, copied from its template when the contest is made | The contest's events, which are read through each slot's event |
+| Covered slots | The Season slots a contest is played on: its template lists slot definitions (`ContestConfigTemplateSlot`, never a whole phase), and the contest copies them, resolved to its Season, when it is made | The contest's events, which are read through each slot's event |
 
 ### Verbs
 
@@ -446,7 +446,7 @@ scoring). Every provider id lives in a `…ProviderMapping` table; `Provider` an
 
 Shapes agreed so that later work uses them, but not built now:
 
-- **Team-cup lineups** (`…GameSidePlayer`): which players played for a side in one Game, such
+- **Team-cup lineups** (`…GameSideLineupPlayer`): which players played for a side in one Game, such
   as a team match-play pairing. Built when match play is synced.
 - **Injuries** (#1934): a player's availability. Until then injured and reserve players stay
   pickable.
