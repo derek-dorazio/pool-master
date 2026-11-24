@@ -423,9 +423,8 @@ phase:
   - change notices, contest progress, and email links to event pages.
 - **Event pages** point at a slot definition, and each offer carries only the page and the
   template (the template holds the coverage). `/play/clutch-card` resolves the same way.
-- **History.** Trophies and last-year winners key by contest type plus the sorted set of
-  covered slot definitions, not by a built id string. `Contest.seasonYear`, `Cup.seasonYear`
-  and LeagueYearFinish become FKs to the Season. Week detection reads the slot.
+- **History.** See §9c: championship year, finishes and medals, cups, perpetual trophies
+  and points profiles. Week detection reads the slot.
 
 ## 8. Clutch Cards: a contest type on the parent league
 
@@ -737,6 +736,41 @@ Contest:
   CUSTOM list stays on League (`cupCustomPoints`, used when set). Crowned cups freeze the
   profile's points they used. Kept in code as fixed rules: last place needs 3+ teams, medal
   by place, the championship grid's 10 places, one platform time zone for history years.
+- History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
+  folder). Fixes that follow from decisions already made:
+  - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
+    differ. `Cup` keeps `sportLeagueId` with composite FKs to its Season and definition; the
+    definition gets a stable `key`. Cup routes and the squad cup-points route take a cup id,
+    since one sport league can have several cups in a Season.
+  - Cup is re-keyed once, in 20c; slice 15 only adds `sportLeagueSeasonId`. The 20c
+    migration deletes cups that match no definition (an NFL pick'em cup) and finishes from
+    squares; the 20b migration refills or deletes old finish and year-review rows.
+  - The cup counting rule has a model home: `ContestConfigTemplate.countsInCups`, seeded by
+    migration (tiered, budget, Clutch Card), copied to the contest; no selection-type set in
+    code. Cup contest lists show only counted contests. Cup and points-profile names that
+    are generic words ("Season Cup", "Standard") are display strings keyed by code; a name
+    column holds only proper names ("Majors Cup").
+  - Points: a cup reads the league's current points until crowned and freezes them at
+    crowning; the Championship uses the same rule, not a per-finish snapshot.
+  - Completion time is `Contest.endsAt` only; the finish row doesn't copy it. History lists
+    a contest under its `championshipYear` everywhere (the drill-down's calendar-year window
+    goes), so an NFL 2025 contest settling in February stays in 2025.
+  - The clock never decides a year: the ~20 `championshipYear(now)` call sites and the
+    web's `isCupSeasonOver`, `CUP_SHOWN_FROM_COUNTED`, points preview and trophy names read
+    API fields (open and closed years, `isOver`, `isShown`). The shared function is renamed
+    so it can't be confused with the column. "Last year" reads the previous Season row,
+    never `year - 1`, including the Ready for contests email's last-year winners.
+  - `SportLeagueSeason.name` ("2025-26"), set by migration with the Season.
+  - The plan limit "sports leagues a year" counts by `Contest.championshipYear`.
+  - Squares drops out of trophies, history winners, the record book and the Hall of Lame
+    with its finish rows; medals are counted in one function (three today).
+  - With NOT_COUNTED gone (Derek 2026-11-24) commissioners no longer exclude a contest; the
+    opt-out screen and its golden-journey E2E step go.
+  - Team-sport leagues have no cup until they run Clutch Cards (Derek 2026-11-24); the
+    Trophy case's empty state says so.
+  - Interim readers: slices 11 and 15 keep perpetual trophies, repeat winners, cups by
+    year and last-year winners working on the new keys until 20–20d land; `moveToSeason`
+    is deleted in 15.
 - Squares (Derek 2026-11-23, slice 18c): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
