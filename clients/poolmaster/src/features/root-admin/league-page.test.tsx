@@ -464,6 +464,15 @@ describe('League page', () => {
     expect(screen.getByTestId('root-admin-league-structure-phases-table')).toBeInTheDocument();
   });
 
+  it('says the phases and slots could not load while the league\'s positions still show', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: POSITIONS } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    expect(await screen.findByTestId('root-admin-league-structure-state-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-league-structure-position-QB')).toBeInTheDocument();
+  });
+
   it('saves a contest template\'s Default alone', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [template()] } });
     updateContestConfigTemplateMock.mockResolvedValue({ data: { template: template({ isDefault: true }) } });
