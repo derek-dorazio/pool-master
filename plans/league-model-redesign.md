@@ -796,6 +796,11 @@ Contest:
   league's commissioners.
 - F1 (from "F1 only car racing at launch" and sync-only): BALLDONTLIE covers F1, so slice
   10d adds the F1 adapter on FIELD Matches (races as Games, drivers as sides).
+- Provider switch (Derek 2026-11-24, slice 10): the migration that adds a league's new
+  provider supplies its team mappings. Games match by the two teams and the date; players
+  by team plus the new provider's roster. Each unmatched player raises a finding with a
+  "map to" action, and the switch stays blocked while any ERROR finding is open. Names are
+  never matched.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
