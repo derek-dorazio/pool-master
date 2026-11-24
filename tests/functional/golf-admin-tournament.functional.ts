@@ -522,7 +522,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const unsynced = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), sport: 'GOLF', name: `Unsynced Tour ${RUN}` } });
     created.sportLeagueIds.add(expectDefined(unsynced.data).sportLeague.id);
     expectFunctionalError(
-      await importEventYearFromProvider({ client: c, body: { sportLeagueId: expectDefined(unsynced.data).sportLeague.id, eventYear: 2027, providerId: 'mock-contest-feed' } }),
+      await importEventYearFromProvider({ client: c, body: { sportLeagueId: expectDefined(unsynced.data).sportLeague.id, eventYear: 2027, providerId: 'balldontlie' } }),
       { status: 422, code: 'SPORT_LEAGUE_NOT_SYNCED' },
     );
   }, 60_000);

@@ -8,7 +8,7 @@ import {
   ParticipantStatus,
   ParticipantType,
 } from '../domain/enums';
-import { DateTimeSchema } from './common.dto';
+import { DateTimeSchema, StringRecordSchema } from './common.dto';
 
 /** An admin-managed roster state: RETIRED and SUSPENDED are set by hand on the player page. */
 const ParticipantStatusDtoSchema = z.enum(ParticipantStatus);
@@ -42,6 +42,7 @@ export const ParticipantDtoSchema = z.object({
   participantType: z
     .enum([ParticipantType.INDIVIDUAL, ParticipantType.TEAM])
     .describe('Whether the participant is an individual or team.'),
+  externalId: z.string().optional().describe('Deprecated (#2040): never sent. A participant\'s feed ids are its provider mappings.'),
   firstName: z.string().optional().describe('First name when the participant is a person.'),
   lastName: z.string().optional().describe('Last name when the participant is a person.'),
   shortName: z.string().optional().describe('Short-form display name for compact UI surfaces.'),
@@ -52,6 +53,8 @@ export const ParticipantDtoSchema = z.object({
   injuryStatus: ParticipantInjuryStatusDtoSchema,
   photoUrl: z.string().nullable().optional().describe('Optional participant image URL.'),
   photoLastUpdated: DateTimeSchema.optional().describe('When the participant image metadata was last refreshed.'),
+  // Kept so a stored leaderboard keeps its shape across a deploy (rules/service-rules.md *Response Rules*).
+  externalIds: StringRecordSchema.describe('Deprecated (#2040): always empty. A participant\'s feed ids are its provider mappings.'),
   createdAt: DateTimeSchema.describe('When the participant record was created.'),
   updatedAt: DateTimeSchema.describe('When the participant record was last updated.'),
 }).describe('Participant summary returned by participant-search and detail APIs.');

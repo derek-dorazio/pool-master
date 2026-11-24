@@ -7211,6 +7211,10 @@ export type ParticipantDto = {
      */
     participantType: 'INDIVIDUAL' | 'TEAM';
     /**
+     * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
+     */
+    externalId?: string;
+    /**
      * First name when the participant is a person.
      */
     firstName?: string;
@@ -7272,6 +7276,12 @@ export type ParticipantDto = {
      */
     photoLastUpdated?: string;
     /**
+     * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
+     */
+    externalIds: {
+        [key: string]: string;
+    };
+    /**
      * When the participant record was created.
      */
     createdAt: string;
@@ -7328,6 +7338,10 @@ export type ParticipantListResponse = {
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
+         * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
+         */
+        externalId?: string;
+        /**
          * First name when the participant is a person.
          */
         firstName?: string;
@@ -7388,6 +7402,12 @@ export type ParticipantListResponse = {
          * When the participant image metadata was last refreshed.
          */
         photoLastUpdated?: string;
+        /**
+         * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
+         */
+        externalIds: {
+            [key: string]: string;
+        };
         /**
          * When the participant record was created.
          */
@@ -7428,6 +7448,10 @@ export type ParticipantResponse = {
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
+         * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
+         */
+        externalId?: string;
+        /**
          * First name when the participant is a person.
          */
         firstName?: string;
@@ -7488,6 +7512,12 @@ export type ParticipantResponse = {
          * When the participant image metadata was last refreshed.
          */
         photoLastUpdated?: string;
+        /**
+         * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
+         */
+        externalIds: {
+            [key: string]: string;
+        };
         /**
          * When the participant record was created.
          */
@@ -11593,6 +11623,10 @@ export type SportEventParticipantDto = {
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
+         * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
+         */
+        externalId?: string;
+        /**
          * First name when the participant is a person.
          */
         firstName?: string;
@@ -11653,6 +11687,12 @@ export type SportEventParticipantDto = {
          * When the participant image metadata was last refreshed.
          */
         photoLastUpdated?: string;
+        /**
+         * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
+         */
+        externalIds: {
+            [key: string]: string;
+        };
         /**
          * When the participant record was created.
          */
@@ -11836,6 +11876,10 @@ export type SportEventParticipantListResponse = {
              */
             participantType: 'INDIVIDUAL' | 'TEAM';
             /**
+             * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
+             */
+            externalId?: string;
+            /**
              * First name when the participant is a person.
              */
             firstName?: string;
@@ -11896,6 +11940,12 @@ export type SportEventParticipantListResponse = {
              * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
+            /**
+             * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
+             */
+            externalIds: {
+                [key: string]: string;
+            };
             /**
              * When the participant record was created.
              */
@@ -12148,6 +12198,10 @@ export type SportEventParticipantResponse = {
              */
             participantType: 'INDIVIDUAL' | 'TEAM';
             /**
+             * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
+             */
+            externalId?: string;
+            /**
              * First name when the participant is a person.
              */
             firstName?: string;
@@ -12208,6 +12262,12 @@ export type SportEventParticipantResponse = {
              * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
+            /**
+             * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
+             */
+            externalIds: {
+                [key: string]: string;
+            };
             /**
              * When the participant record was created.
              */
@@ -13588,6 +13648,10 @@ export type ContestLeaderboardResponse = {
              */
             participantType: 'INDIVIDUAL' | 'TEAM';
             /**
+             * Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.
+             */
+            externalId?: string;
+            /**
              * First name when the participant is a person.
              */
             firstName?: string;
@@ -13648,6 +13712,12 @@ export type ContestLeaderboardResponse = {
              * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
+            /**
+             * Deprecated (#2040): always empty. A participant's feed ids are its provider mappings.
+             */
+            externalIds: {
+                [key: string]: string;
+            };
             /**
              * When the participant record was created.
              */

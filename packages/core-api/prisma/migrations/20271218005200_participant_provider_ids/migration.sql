@@ -33,6 +33,27 @@ FROM "participants" p
 WHERE p."id" = m."participant_id";
 -- Team ids were prefixed by league (`nfl-team-12`); the league is on the row now, so the id is
 -- the provider's own (`12`). A player's id was never prefixed.
+-- A prefixed id whose raw id the same participant kind in the same league already holds (for
+-- the same provider) would break the unique index below: the raw mapping is the sync's, so the
+-- prefixed duplicate goes first.
+DELETE FROM "participant_provider_mappings" m
+USING "participant_provider_mappings" raw
+WHERE m."external_id" ~ '^[a-z]+(-[a-z]+)*-team-[0-9]+$'
+  AND raw."id" <> m."id"
+  AND raw."provider_id" = m."provider_id"
+  AND raw."sport_league_id" = m."sport_league_id"
+  AND raw."participant_type" = m."participant_type"
+  AND raw."external_id" = regexp_replace(m."external_id", '^[a-z]+(-[a-z]+)*-team-([0-9]+)$', '\2');
+-- Two prefixed ids that strip to one raw id in a league (two prefixes): keep the oldest.
+DELETE FROM "participant_provider_mappings" m
+USING "participant_provider_mappings" other
+WHERE m."external_id" ~ '^[a-z]+(-[a-z]+)*-team-[0-9]+$'
+  AND other."external_id" ~ '^[a-z]+(-[a-z]+)*-team-[0-9]+$'
+  AND other."provider_id" = m."provider_id"
+  AND other."sport_league_id" = m."sport_league_id"
+  AND other."participant_type" = m."participant_type"
+  AND regexp_replace(other."external_id", '^[a-z]+(-[a-z]+)*-team-([0-9]+)$', '\2') = regexp_replace(m."external_id", '^[a-z]+(-[a-z]+)*-team-([0-9]+)$', '\2')
+  AND (other."mapped_at", other."id") < (m."mapped_at", m."id");
 UPDATE "participant_provider_mappings"
 SET "external_id" = regexp_replace("external_id", '^[a-z]+(-[a-z]+)*-team-([0-9]+)$', '\2')
 WHERE "external_id" ~ '^[a-z]+(-[a-z]+)*-team-[0-9]+$';
@@ -88,8 +109,20 @@ CREATE INDEX "background_jobs_provider_id_idx" ON "background_jobs"("provider_id
 ALTER TABLE "background_jobs" ADD CONSTRAINT "background_jobs_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "providers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- ValuationSource: AUTO_NAME goes (a field is never tiered or priced by name, rules/
--- domain-model-conventions-rules.md §17). A tier or price made that way is kept as it stands,
--- as a manual one, so no contest's tiers move under it.
+-- domain-model-conventions-rules.md §17). On a draft event a tier or price made that way is
+-- cleared, not frozen as a manual one: the next field sync tiers and prices the field by its odds,
+-- seed or rank, or reports it has no order. A released event's tiers and prices are locked, so
+-- there the label alone changes and nothing moves under a contest.
+UPDATE "sport_event_participant_valuations" v
+SET "sport_event_tier_id" = NULL, "tier_order_index" = NULL, "tier_assigned_source" = NULL
+FROM "sport_event_participants" sep
+JOIN "sport_events" e ON e."id" = sep."sport_event_id"
+WHERE sep."id" = v."sport_event_participant_id" AND e."status" = 'DRAFT' AND v."tier_assigned_source" = 'AUTO_NAME';
+UPDATE "sport_event_participant_valuations" v
+SET "price" = NULL, "price_assigned_source" = NULL
+FROM "sport_event_participants" sep
+JOIN "sport_events" e ON e."id" = sep."sport_event_id"
+WHERE sep."id" = v."sport_event_participant_id" AND e."status" = 'DRAFT' AND v."price_assigned_source" = 'AUTO_NAME';
 UPDATE "sport_event_participant_valuations" SET "tier_assigned_source" = 'MANUAL' WHERE "tier_assigned_source" = 'AUTO_NAME';
 UPDATE "sport_event_participant_valuations" SET "price_assigned_source" = 'MANUAL' WHERE "price_assigned_source" = 'AUTO_NAME';
 CREATE TYPE "ValuationSource_new" AS ENUM ('AUTO_ODDS', 'AUTO_RANKING', 'MANUAL', 'AUTO_SEED');

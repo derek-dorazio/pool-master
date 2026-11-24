@@ -32,6 +32,8 @@ export function mapParticipantToDto(participant: Participant) {
     },
     photoUrl: participant.photoUrl,
     photoLastUpdated: toIso(participant.photoLastUpdated),
+    // Deprecated and always empty (#2040): kept so the response keeps its shape.
+    externalIds: {},
     createdAt: participant.createdAt.toISOString(),
     updatedAt: participant.updatedAt.toISOString(),
   };

@@ -39,7 +39,9 @@ import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { golfRoundsOf } from '../../support/live-score-rounds';
 
-const providerId = 'mock-contest-feed';
+const providerId = 'balldontlie';
+/** The mock feed's golf events: the fake answers as BALLDONTLIE, and its event ids start `golf-`. */
+const MOCK_FEED_EVENTS = { providerId, externalId: { startsWith: 'golf-' } };
 const eventExternalId = 'golf-masters-2026';
 const syncVerificationNow = new Date('2026-05-30T12:00:00.000Z');
 const syncVerificationConfig: IngestionScheduleConfig = {
@@ -79,22 +81,18 @@ async function cleanupMockProviderImportData(): Promise<void> {
   }
 
   const prisma = getPrisma();
-  const providerMappings = await prisma.participantProviderMapping.findMany({
-    where: {
-      providerId,
-    },
-    select: {
-      participantId: true,
-    },
+  // The fake answers as BALLDONTLIE (#2040), so this suite's rows are the mock feed's golf events
+  // and the participants on their fields, not every BALLDONTLIE row.
+  const fieldRows = await prisma.sportEventParticipant.findMany({
+    where: { sportEvent: MOCK_FEED_EVENTS },
+    select: { participantId: true },
   });
-  const participantIds = providerMappings.map((mapping) => mapping.participantId);
+  const participantIds = [...new Set(fieldRows.map((row) => row.participantId))];
 
   await prisma.sportEventParticipantValuation.deleteMany({
     where: {
       sportEventParticipant: {
-        sportEvent: {
-          providerId,
-        },
+        sportEvent: MOCK_FEED_EVENTS,
       },
     },
   });
@@ -102,9 +100,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
     where: {
       participantRound: {
         sportEventParticipant: {
-          sportEvent: {
-            providerId,
-          },
+          sportEvent: MOCK_FEED_EVENTS,
         },
       },
     },
@@ -112,9 +108,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
   await prisma.sportEventParticipantRound.deleteMany({
     where: {
       sportEventParticipant: {
-        sportEvent: {
-          providerId,
-        },
+        sportEvent: MOCK_FEED_EVENTS,
       },
     },
   });
@@ -122,9 +116,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
     where: {
       standing: {
         sportEventParticipant: {
-          sportEvent: {
-            providerId,
-          },
+          sportEvent: MOCK_FEED_EVENTS,
         },
       },
     },
@@ -132,35 +124,21 @@ async function cleanupMockProviderImportData(): Promise<void> {
   await prisma.sportEventParticipantStanding.deleteMany({
     where: {
       sportEventParticipant: {
-        sportEvent: {
-          providerId,
-        },
+        sportEvent: MOCK_FEED_EVENTS,
       },
     },
   });
   await prisma.sportEventParticipant.deleteMany({
     where: {
-      sportEvent: {
-        providerId,
-      },
+      sportEvent: MOCK_FEED_EVENTS,
     },
   });
-  await prisma.sportEvent.deleteMany({
-    where: {
-      providerId,
-    },
-  });
-  await prisma.participantProviderMapping.deleteMany({
-    where: {
-      providerId,
-    },
-  });
+  await prisma.providerSyncRun.deleteMany({ where: { sportEvent: MOCK_FEED_EVENTS } });
+  await prisma.sportEvent.deleteMany({ where: MOCK_FEED_EVENTS });
   if (participantIds.length > 0) {
-    await prisma.participant.deleteMany({
-      where: {
-        id: { in: participantIds },
-      },
-    });
+    await prisma.participantProviderMapping.deleteMany({ where: { participantId: { in: participantIds } } });
+    // One still on another suite's field stays.
+    await prisma.participant.deleteMany({ where: { id: { in: participantIds }, sportEventParticipants: { none: {} } } });
   }
   importedParticipantExternalIds = [];
 }
@@ -656,7 +634,7 @@ describe('mock contest feed provider event-first verification', () => {
 
     const participantMappings = await prisma.participantProviderMapping.findMany({
       where: {
-        providerId,
+        providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         externalId: {
           in: importedParticipantExternalIds,
         },
@@ -731,7 +709,8 @@ describe('mock contest feed provider event-first verification', () => {
     const registry = new ProviderRegistry();
     registry.register(Sport.GOLF, provider, 'PRIMARY');
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
+    // A run's event is the SportEvent it links (#2040), found as the app finds it.
+    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
     const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const configReader = {
       getConfig: async () => syncVerificationConfig,
@@ -776,13 +755,13 @@ describe('mock contest feed provider event-first verification', () => {
       now: syncVerificationNow,
     });
     expect(eligibleEvents).toEqual([
-      { providerId: 'mock-contest-feed', externalId: 'golf-genesis-scottish-open-2026' },
+      { providerId: 'balldontlie', externalId: 'golf-genesis-scottish-open-2026' },
     ]);
 
     const manualField = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
       },
@@ -805,7 +784,7 @@ describe('mock contest feed provider event-first verification', () => {
     const manualFieldRefresh = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
       },
@@ -826,7 +805,7 @@ describe('mock contest feed provider event-first verification', () => {
     scheduler.start();
     let scheduledRuns: Awaited<ReturnType<typeof waitForScheduledProviderSyncRuns>>;
     try {
-      scheduledRuns = await waitForScheduledProviderSyncRuns(providerId, 1);
+      scheduledRuns = await waitForScheduledProviderSyncRuns(BALLDONTLIE_TEST_PROVIDER_ID, 1);
     } finally {
       scheduler.stop();
     }
@@ -888,7 +867,8 @@ describe('mock contest feed provider event-first verification', () => {
       contestSettlement: settlement,
     });
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
+    // A run's event is the SportEvent it links (#2040), found as the app finds it.
+    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
     const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
@@ -927,7 +907,7 @@ describe('mock contest feed provider event-first verification', () => {
     const field = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
       },
@@ -992,7 +972,7 @@ describe('mock contest feed provider event-first verification', () => {
     const r2Complete = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
       },
@@ -1024,7 +1004,7 @@ describe('mock contest feed provider event-first verification', () => {
     const corrected = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
       },
@@ -1044,7 +1024,7 @@ describe('mock contest feed provider event-first verification', () => {
     const finalLive = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         eventId: eventExternalId,
         feeds: ['EVENTLIVESCORES'],
       },
@@ -1118,7 +1098,7 @@ describe('mock contest feed provider event-first verification', () => {
     const rerunCompletedDetail = await providerService.syncEventData(
       {
         sport: Sport.GOLF,
-        providerId: 'mock-contest-feed',
+        providerId: 'balldontlie',
         eventId: eventExternalId,
         feeds: ['EVENTPARTICIPANTS'],
       },
@@ -1173,7 +1153,7 @@ describe('mock contest feed provider event-first verification', () => {
     // event's field is loaded on demand.
     const [fieldJob] = await scheduler.runEventSync({
       sport: Sport.GOLF,
-      providerId: 'mock-contest-feed',
+      providerId: 'balldontlie',
       eventId: eventExternalId,
       feeds: ['EVENTPARTICIPANTS'],
     });

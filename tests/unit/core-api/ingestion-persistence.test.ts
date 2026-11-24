@@ -683,8 +683,8 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
       participant: {
         // What the site holds; a sync that matched by name would read it.
         findMany: jest.fn().mockResolvedValue(siteParticipants),
-        // Numbered in the order given, as Postgres returns them.
-        createManyAndReturn: jest.fn(({ data }: { data: unknown[] }) => Promise.resolve(data.map((_row, index) => ({ id: `created-${index + 1}` })))),
+        // The sync chooses each new participant's id itself (#2040), so nothing is read back.
+        createMany: jest.fn(({ data }: { data: unknown[] }) => Promise.resolve({ count: data.length })),
       },
       provider: { findMany: jest.fn().mockResolvedValue([{ id: BALLDONTLIE_TEST_PROVIDER_ID, code: ProviderCode.BALLDONTLIE }]) },
       participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]), createMany: jest.fn().mockResolvedValue({ count: 0 }), updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
@@ -706,7 +706,8 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
   }
 
   const createdRows = (prisma: ReturnType<typeof unmappedPrisma>) =>
-    prisma.participant.createManyAndReturn.mock.calls.flatMap(([{ data }]) => data as unknown as Array<{ name: string; sportLeagueId: string; participantType: string }>);
+    prisma.participant.createMany.mock.calls.flatMap(([{ data }]) => data as unknown as Array<{ id: string; name: string; sportLeagueId: string; participantType: string }>);
+  const createdIds = (prisma: ReturnType<typeof unmappedPrisma>) => createdRows(prisma).map((row) => row.id);
   const createdNames = (prisma: ReturnType<typeof unmappedPrisma>) => createdRows(prisma).map((row) => row.name);
 
   it('creates a golfer whose feed id no participant of the league is mapped to, mapped in the league to the BALLDONTLIE Provider row, though the league has an unmapped golfer of the same name', async () => {
@@ -715,7 +716,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     const { mappings, logger } = await sync(prisma, [golfer('bdl-1', 'Scottie Scheffler')]);
 
     expect(createdNames(prisma)).toEqual(['Scottie Scheffler']);
-    expect(mappings).toEqual([{ participantId: 'created-1', sportLeagueId: EVENT_LEAGUE.id, participantType: 'INDIVIDUAL', providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'bdl-1', lastSeenAt: expect.any(Date) }]);
+    expect(mappings).toEqual([{ participantId: createdIds(prisma)[0], sportLeagueId: EVENT_LEAGUE.id, participantType: 'INDIVIDUAL', providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'bdl-1', lastSeenAt: expect.any(Date) }]);
     expect(prisma.provider.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { code: { in: [ProviderCode.BALLDONTLIE] } } }));
     expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ created: 1 }), 'Persisted participants from ingestion');
   });
@@ -745,7 +746,9 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     const { mappings } = await sync(prisma, [collegeTeam('ncaab-team-150', 'Duke Blue Devils', 'NCAAM'), collegeTeam('ncaab-team-999', 'Duke Blue Devils', 'NCAAM')]);
 
     expect(createdNames(prisma)).toEqual(['Duke Blue Devils', 'Duke Blue Devils']);
-    expect(mappings.map((mapping) => [mapping.participantId, mapping.externalId])).toEqual([['created-1', 'ncaab-team-150'], ['created-2', 'ncaab-team-999']]);
+    const [first, second] = createdIds(prisma);
+    expect(new Set([first, second]).size).toBe(2);
+    expect(mappings.map((mapping) => [mapping.participantId, mapping.externalId])).toEqual([[first, 'ncaab-team-150'], [second, 'ncaab-team-999']]);
   });
 
   it('creates no participant for a feed event no event is linked to, there being no sport league for them to belong to', async () => {
@@ -755,7 +758,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
       .persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [golfer('bdl-1', 'Scottie Scheffler')] });
 
     expect(result.value.participantsPersisted).toBe(0);
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
+    expect(prisma.participant.createMany).not.toHaveBeenCalled();
     expect(prisma.participantProviderMapping.findMany).not.toHaveBeenCalled();
   });
 
@@ -767,7 +770,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
 
     expect(createdNames(prisma)).toEqual(['Tom Kim', 'Tom Kim']);
     expect(mappings).toEqual(participants.map((participant, index) => ({
-      participantId: `created-${index + 1}`,
+      participantId: createdIds(prisma)[index],
       sportLeagueId: EVENT_LEAGUE.id,
       participantType: 'INDIVIDUAL',
       providerId: BALLDONTLIE_TEST_PROVIDER_ID,
@@ -782,6 +785,6 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
     await expect(new IngestionPersistence(asPrismaClient(prisma), testDomainEvents(), fakeLogger())
       .persistEventDetailWithDiagnostics({ ...buildInProgressEvent(), participants: [golfer('mock-1', 'Rory McIlroy', 'mock-contest-feed')] }))
       .rejects.toThrow('mock-contest-feed has no Provider row');
-    expect(prisma.participant.createManyAndReturn).not.toHaveBeenCalled();
+    expect(prisma.participant.createMany).not.toHaveBeenCalled();
   });
 });

@@ -492,7 +492,8 @@ class Loader {
     const codes = new Set(league.players.flatMap((player) => Object.keys(player.feedIds ?? {}) as ProviderCode[]));
     if (codes.size === 0) return new Map();
     const { providers } = await must(listProviders({ client }), 'List providers');
-    const ids = new Map(providers.flatMap(({ settings }) => (settings === null ? [] : [[settings.code, settings.id] as const])));
+    // Only the providers the players name, so the feed id read below asks no other.
+    const ids = new Map(providers.flatMap(({ settings }) => (settings === null || !codes.has(settings.code) ? [] : [[settings.code, settings.id] as const])));
     for (const code of codes) found(ids.get(code), `${league.name}: provider ${code}'s Provider row`);
     return ids;
   }

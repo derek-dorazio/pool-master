@@ -55,7 +55,12 @@ export type MockFeedEventState = MockEventStateKind;
  * with `pinEventState`, which the mock feed answers through its own `mockEventState` query.
  */
 export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloadDiagnostics {
-  readonly providerId = 'mock-contest-feed';
+  /**
+   * The BALLDONTLIE feed's source id (#2040): sync runs and participant mappings name a Provider
+   * row, and BALLDONTLIE's is the one the test database seeds, so the fake writes through it. The
+   * production model has no test provider.
+   */
+  readonly providerId = 'balldontlie';
   readonly providerName = 'Mock Contest Feed Provider';
   readonly sportsCovered: Sport[] = [Sport.GOLF];
   private readonly payloads = new ProviderPayloadRecorder('mock-contest-feed.request');

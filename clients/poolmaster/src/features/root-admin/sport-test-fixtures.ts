@@ -111,6 +111,7 @@ export function participantFixture(overrides: Partial<ParticipantDto> = {}): Par
     participantType: 'INDIVIDUAL',
     status: 'ACTIVE',
     injuryStatus: { status: 'HEALTHY' },
+    externalIds: {},
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,

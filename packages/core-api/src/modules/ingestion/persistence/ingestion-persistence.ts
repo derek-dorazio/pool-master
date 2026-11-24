@@ -5,6 +5,7 @@
  * and event fields received from data providers.
  */
 
+import { randomUUID } from 'node:crypto';
 import { type Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
@@ -203,28 +204,31 @@ export class IngestionPersistence {
           where: { code: { in: [...new Set(unmapped.map((participant) => requireProviderCodeOfSourceId(participant.providerId)))] } },
           select: { id: true, code: true },
         })).map((provider) => [provider.code, provider.id]));
-        const rows = await tx.participant.createManyAndReturn({
-          data: unmapped.map((participant) => ({
+        // Each participant's id is chosen here, so its mapping names it without leaning on the
+        // order the insert returns rows in (rules/domain-model-conventions-rules.md §17).
+        const withIds = unmapped.map((participant) => ({ participant, participantId: randomUUID() }));
+        await tx.participant.createMany({
+          data: withIds.map(({ participant, participantId }) => ({
+            id: participantId,
             sportLeagueId: league.id,
             participantType: league.participantType,
             ...participantValues(participant),
           })),
-          select: { id: true },
         });
-        // createManyAndReturn returns the rows in the order given.
-        const createdMappings = unmapped.map((participant, index) => ({
-          participantId: rows[index].id,
-          sportLeagueId: league.id,
-          participantType: league.participantType,
-          providerId: requireProviderId(providerIds, participant.providerId),
-          externalId: participant.externalId,
-          lastSeenAt: seenAt,
-        }));
-        await tx.participantProviderMapping.createMany({ data: createdMappings });
-        return unmapped.map((participant, index) => ({
+        await tx.participantProviderMapping.createMany({
+          data: withIds.map(({ participant, participantId }) => ({
+            participantId,
+            sportLeagueId: league.id,
+            participantType: league.participantType,
+            providerId: requireProviderId(providerIds, participant.providerId),
+            externalId: participant.externalId,
+            lastSeenAt: seenAt,
+          })),
+        });
+        return withIds.map(({ participant, participantId }) => ({
           providerId: participant.providerId,
           externalId: participant.externalId,
-          participantId: (createdMappings[index] as { participantId: string }).participantId,
+          participantId,
         }));
       });
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);

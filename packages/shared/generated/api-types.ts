@@ -9269,6 +9269,8 @@ export interface components {
              * @enum {string}
              */
             participantType: "INDIVIDUAL" | "TEAM";
+            /** @description Deprecated (#2040): never sent. A participant's feed ids are its provider mappings. */
+            externalId?: string;
             /** @description First name when the participant is a person. */
             firstName?: string;
             /** @description Last name when the participant is a person. */
@@ -9315,6 +9317,10 @@ export interface components {
              * @description When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
+            /** @description Deprecated (#2040): always empty. A participant's feed ids are its provider mappings. */
+            externalIds: {
+                [key: string]: string;
+            };
             /**
              * Format: date-time
              * @description When the participant record was created.
@@ -9361,6 +9367,8 @@ export interface components {
                  * @enum {string}
                  */
                 participantType: "INDIVIDUAL" | "TEAM";
+                /** @description Deprecated (#2040): never sent. A participant's feed ids are its provider mappings. */
+                externalId?: string;
                 /** @description First name when the participant is a person. */
                 firstName?: string;
                 /** @description Last name when the participant is a person. */
@@ -9407,6 +9415,10 @@ export interface components {
                  * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
+                /** @description Deprecated (#2040): always empty. A participant's feed ids are its provider mappings. */
+                externalIds: {
+                    [key: string]: string;
+                };
                 /**
                  * Format: date-time
                  * @description When the participant record was created.
@@ -9439,6 +9451,8 @@ export interface components {
                  * @enum {string}
                  */
                 participantType: "INDIVIDUAL" | "TEAM";
+                /** @description Deprecated (#2040): never sent. A participant's feed ids are its provider mappings. */
+                externalId?: string;
                 /** @description First name when the participant is a person. */
                 firstName?: string;
                 /** @description Last name when the participant is a person. */
@@ -9485,6 +9499,10 @@ export interface components {
                  * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
+                /** @description Deprecated (#2040): always empty. A participant's feed ids are its provider mappings. */
+                externalIds: {
+                    [key: string]: string;
+                };
                 /**
                  * Format: date-time
                  * @description When the participant record was created.
@@ -12782,6 +12800,8 @@ export interface components {
                  * @enum {string}
                  */
                 participantType: "INDIVIDUAL" | "TEAM";
+                /** @description Deprecated (#2040): never sent. A participant's feed ids are its provider mappings. */
+                externalId?: string;
                 /** @description First name when the participant is a person. */
                 firstName?: string;
                 /** @description Last name when the participant is a person. */
@@ -12828,6 +12848,10 @@ export interface components {
                  * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
+                /** @description Deprecated (#2040): always empty. A participant's feed ids are its provider mappings. */
+                externalIds: {
+                    [key: string]: string;
+                };
                 /**
                  * Format: date-time
                  * @description When the participant record was created.
@@ -12981,6 +13005,8 @@ export interface components {
                      * @enum {string}
                      */
                     participantType: "INDIVIDUAL" | "TEAM";
+                    /** @description Deprecated (#2040): never sent. A participant's feed ids are its provider mappings. */
+                    externalId?: string;
                     /** @description First name when the participant is a person. */
                     firstName?: string;
                     /** @description Last name when the participant is a person. */
@@ -13027,6 +13053,10 @@ export interface components {
                      * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
+                    /** @description Deprecated (#2040): always empty. A participant's feed ids are its provider mappings. */
+                    externalIds: {
+                        [key: string]: string;
+                    };
                     /**
                      * Format: date-time
                      * @description When the participant record was created.
@@ -13223,6 +13253,8 @@ export interface components {
                      * @enum {string}
                      */
                     participantType: "INDIVIDUAL" | "TEAM";
+                    /** @description Deprecated (#2040): never sent. A participant's feed ids are its provider mappings. */
+                    externalId?: string;
                     /** @description First name when the participant is a person. */
                     firstName?: string;
                     /** @description Last name when the participant is a person. */
@@ -13269,6 +13301,10 @@ export interface components {
                      * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
+                    /** @description Deprecated (#2040): always empty. A participant's feed ids are its provider mappings. */
+                    externalIds: {
+                        [key: string]: string;
+                    };
                     /**
                      * Format: date-time
                      * @description When the participant record was created.
@@ -14287,6 +14323,8 @@ export interface components {
                      * @enum {string}
                      */
                     participantType: "INDIVIDUAL" | "TEAM";
+                    /** @description Deprecated (#2040): never sent. A participant's feed ids are its provider mappings. */
+                    externalId?: string;
                     /** @description First name when the participant is a person. */
                     firstName?: string;
                     /** @description Last name when the participant is a person. */
@@ -14333,6 +14371,10 @@ export interface components {
                      * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
+                    /** @description Deprecated (#2040): always empty. A participant's feed ids are its provider mappings. */
+                    externalIds: {
+                        [key: string]: string;
+                    };
                     /**
                      * Format: date-time
                      * @description When the participant record was created.

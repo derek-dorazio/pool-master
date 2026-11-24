@@ -17232,6 +17232,10 @@
             ],
             "description": "Whether the participant is an individual or team."
           },
+          "externalId": {
+            "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
+            "type": "string"
+          },
           "firstName": {
             "description": "First name when the participant is a person.",
             "type": "string"
@@ -17325,6 +17329,13 @@
             "type": "string",
             "format": "date-time"
           },
+          "externalIds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -17344,6 +17355,7 @@
           "participantType",
           "status",
           "injuryStatus",
+          "externalIds",
           "createdAt",
           "updatedAt"
         ],
@@ -17413,6 +17425,10 @@
                     "TEAM"
                   ],
                   "description": "Whether the participant is an individual or team."
+                },
+                "externalId": {
+                  "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
+                  "type": "string"
                 },
                 "firstName": {
                   "description": "First name when the participant is a person.",
@@ -17507,6 +17523,13 @@
                   "type": "string",
                   "format": "date-time"
                 },
+                "externalIds": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
+                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -17526,6 +17549,7 @@
                 "participantType",
                 "status",
                 "injuryStatus",
+                "externalIds",
                 "createdAt",
                 "updatedAt"
               ],
@@ -17576,6 +17600,10 @@
                   "TEAM"
                 ],
                 "description": "Whether the participant is an individual or team."
+              },
+              "externalId": {
+                "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
+                "type": "string"
               },
               "firstName": {
                 "description": "First name when the participant is a person.",
@@ -17670,6 +17698,13 @@
                 "type": "string",
                 "format": "date-time"
               },
+              "externalIds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -17689,6 +17724,7 @@
               "participantType",
               "status",
               "injuryStatus",
+              "externalIds",
               "createdAt",
               "updatedAt"
             ],
@@ -26946,6 +26982,10 @@
                 ],
                 "description": "Whether the participant is an individual or team."
               },
+              "externalId": {
+                "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
+                "type": "string"
+              },
               "firstName": {
                 "description": "First name when the participant is a person.",
                 "type": "string"
@@ -27039,6 +27079,13 @@
                 "type": "string",
                 "format": "date-time"
               },
+              "externalIds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -27058,6 +27105,7 @@
               "participantType",
               "status",
               "injuryStatus",
+              "externalIds",
               "createdAt",
               "updatedAt"
             ],
@@ -27510,6 +27558,10 @@
                       ],
                       "description": "Whether the participant is an individual or team."
                     },
+                    "externalId": {
+                      "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
+                      "type": "string"
+                    },
                     "firstName": {
                       "description": "First name when the participant is a person.",
                       "type": "string"
@@ -27603,6 +27655,13 @@
                       "type": "string",
                       "format": "date-time"
                     },
+                    "externalIds": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
+                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -27622,6 +27681,7 @@
                     "participantType",
                     "status",
                     "injuryStatus",
+                    "externalIds",
                     "createdAt",
                     "updatedAt"
                   ],
@@ -28249,6 +28309,10 @@
                     ],
                     "description": "Whether the participant is an individual or team."
                   },
+                  "externalId": {
+                    "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
+                    "type": "string"
+                  },
                   "firstName": {
                     "description": "First name when the participant is a person.",
                     "type": "string"
@@ -28342,6 +28406,13 @@
                     "type": "string",
                     "format": "date-time"
                   },
+                  "externalIds": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
+                  },
                   "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -28361,6 +28432,7 @@
                   "participantType",
                   "status",
                   "injuryStatus",
+                  "externalIds",
                   "createdAt",
                   "updatedAt"
                 ],
@@ -31912,6 +31984,10 @@
                       ],
                       "description": "Whether the participant is an individual or team."
                     },
+                    "externalId": {
+                      "description": "Deprecated (#2040): never sent. A participant's feed ids are its provider mappings.",
+                      "type": "string"
+                    },
                     "firstName": {
                       "description": "First name when the participant is a person.",
                       "type": "string"
@@ -32005,6 +32081,13 @@
                       "type": "string",
                       "format": "date-time"
                     },
+                    "externalIds": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Deprecated (#2040): always empty. A participant's feed ids are its provider mappings."
+                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -32024,6 +32107,7 @@
                     "participantType",
                     "status",
                     "injuryStatus",
+                    "externalIds",
                     "createdAt",
                     "updatedAt"
                   ],
