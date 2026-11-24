@@ -45,6 +45,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | A route running more than 25 queries per request | the functional suite's query budget check (`rules/testing-rules.md` §6 *Backend Functional API Tests*) |
 | A new use of a name a plan retired (the registry's round labels, `eventSeries`, `IngestionFeedType`…) | `rules:check:retired-names` (`scripts/retired-names.json`) |
 | A new field or export in the frozen sport registry | `rules:check:sport-registry-frozen` |
+| A year worked out from a date (`getFullYear`, `getUTCFullYear`), or a `Record`/`Map` keyed by sport, league or Season holding facts | `poolmaster/no-clock-year-or-league-tables` (ESLint, shrink-only baseline) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
@@ -411,8 +412,9 @@ Read every added or changed line for these, and report each one found:
    file, or a function copied per league with different literals. Ask: would the next league
    need this file edited? (`workflow-rules.md` §1 *One global solution, never one sport's*
    rejects the path; this item rejects the data.)
-5. **A second computation of a fact** — the current year or season from today's date; a
-   status set spelt inline; a web helper restating a server rule or a value the API could
+5. **A second computation of a fact** — the current year or season from today's date (the
+   `getFullYear` form is linted, §1; read for the other forms, such as a year sliced from an
+   ISO string); a status set spelt inline; a web helper restating a server rule or a value the API could
    return; a function that matches another under a different name; a "keep in sync with"
    comment. Search for the existing computation before accepting a new one, and name it in
    the finding.

@@ -21,6 +21,7 @@ export function recentlyFinalYears(now: Date): number[] {
  */
 export function recentlyFinalSince(now: Date): string {
   const opens = new Date(now.getTime() - RECENTLY_FINAL_DAYS * DAY_MS);
+  // poolmaster-allow-clock-year: the start of a UTC day, not a season
   return new Date(Date.UTC(opens.getUTCFullYear(), opens.getUTCMonth(), opens.getUTCDate())).toISOString();
 }
 
