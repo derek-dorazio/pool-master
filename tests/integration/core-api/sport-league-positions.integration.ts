@@ -159,7 +159,7 @@ describe('POST /api/v1/sport-leagues', () => {
       method: 'POST',
       url: '/api/v1/sport-leagues',
       headers: rootAdmin.headers,
-      payload: { sport: Sport.TENNIS, name: `Team Tennis ${randomUUID().slice(0, 8)}`, participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD, ...profiles },
+      payload: { sport: Sport.TENNIS, name: `Team Tennis ${randomUUID().slice(0, 8)}`, participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD, timeZone: 'UTC', ...profiles },
     });
 
     expect(response.statusCode).toBe(201);

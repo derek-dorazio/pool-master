@@ -322,6 +322,8 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     const league = `${tour} known`;
     // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
     const sportLeague = await db.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(db)), ...sportPlay(Sport.GOLF), sportId: golfSportId, name: league } });
+    // A migration adds a league with its Seasons; the file's 2026 one stands in, made current.
+    await inCurrentSeason(sportLeague.id, 2026);
     const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL' } });
     await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: await providerRowId(), participantType: 'INDIVIDUAL', externalId: feedId('golfer-2') } });
 
@@ -411,7 +413,8 @@ describe('Filling an event from a test slate through the admin API', () => {
   let eventId = '';
 
   beforeAll(async () => {
-    await addSportLeague(tour);
+    // The loader writes into the league's current Season, so the schedule's 2027 one is made current.
+    await inCurrentSeason(await addRunSportLeague(admin.client, Sport.GOLF, tour), 2027);
     // A test seed held back as a draft puts the event on the site with a field of golfers 1 to 3.
     const schedule: SportDataFile = {
       schemaVersion: 1,

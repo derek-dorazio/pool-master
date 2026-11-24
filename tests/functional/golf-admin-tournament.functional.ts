@@ -150,8 +150,12 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
-    // A league no migration gave a Season has none until one is added.
-    expect(expectDefined(league.data).sportLeague.currentSeasonId).toBeNull();
+    // A league made through the API starts with this calendar year's Season as its current one (#2003).
+    expect(expectDefined(league.data).sportLeague.currentSeasonId).toBe(
+      (await getFunctionalPrisma().sportLeagueSeason.findUniqueOrThrow({
+        where: { sportLeagueId_championshipYear: { sportLeagueId, championshipYear: new Date().getUTCFullYear() } },
+      })).id,
+    );
 
     // --- 20 participants of the tour + a ranking upload (incl. a tied ranking pair) ------
     const players: Array<{ id: string; rank: number }> = [];

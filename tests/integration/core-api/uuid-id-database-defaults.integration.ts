@@ -78,7 +78,7 @@ describe('#340 database-generated uuid ids', () => {
     // reference-data migrations had to supply gen_random_uuid() themselves.
     const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "time_zone", "updated_at") VALUES ($1::uuid, $2, $3::uuid, $4::uuid, 'UTC', NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "participant_type", "scoring_family", "time_zone", "updated_at") VALUES ($1::uuid, $2, $3::uuid, $4::uuid, 'INDIVIDUAL', 'STROKE_PLAY', 'UTC', NOW())`,
       sportId,
       name,
       platformTierProfileId,
@@ -122,8 +122,8 @@ describe('#340 database-generated uuid ids', () => {
 
     const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "time_zone", "updated_at")
-       VALUES ($1::uuid, $2, $4::uuid, $5::uuid, 'UTC', NOW()), ($1::uuid, $3, $4::uuid, $5::uuid, 'UTC', NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "participant_type", "scoring_family", "time_zone", "updated_at")
+       VALUES ($1::uuid, $2, $4::uuid, $5::uuid, 'INDIVIDUAL', 'STROKE_PLAY', 'UTC', NOW()), ($1::uuid, $3, $4::uuid, $5::uuid, 'INDIVIDUAL', 'STROKE_PLAY', 'UTC', NOW())`,
       sportId,
       first,
       second,
