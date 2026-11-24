@@ -221,6 +221,7 @@ export const enUS = {
       WAIVED: 'Waived',
     },
     ProviderSyncFindingKind: {
+      PROVIDER_RATE_LIMITED: 'Provider rate limiting',
       UNMAPPED_PARTICIPANT: 'Unmapped participant',
       WEBHOOK_SECRET_MISSING: 'Webhook secret not set',
     },
