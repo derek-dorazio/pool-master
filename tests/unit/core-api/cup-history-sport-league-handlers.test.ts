@@ -243,6 +243,7 @@ describe('sport league handlers', () => {
         eventCounts: new Map([['sl1', 2]]),
         eventYearSpans: [],
         nextEventStarts: new Map(),
+        openFindings: [],
         overdueCandidates: [],
       }),
     },

@@ -4,6 +4,7 @@
  * every league's facts in a fixed number of grouped reads; everything here is computed from them.
  */
 import type {
+  ProviderSyncFindingOpenCount,
   SportLeagueOverdueCandidate,
   SportLeagueEventYearSpan,
   SportLeagueLatestSyncRun,
@@ -13,6 +14,7 @@ import type {
 import {
   compareByEnumOrder,
   overdueExpectedEnd,
+  ProviderSyncFindingSeverityOrder,
   ProviderSyncKindOrder,
   ProviderSyncRunStatus,
   SportLeagueIssueTargetType,
@@ -21,6 +23,7 @@ import {
   SportOrder,
   type OverdueEventFacts,
   type SeasonSpan,
+  type SportLeagueFindingsIssueItem,
   type SportLeagueIssue,
   type SportLeagueOverdueIssueItem,
   type SportLeagueOverview,
@@ -42,6 +45,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
   const heldByLeague = groupBy(facts.heldEvents, (event) => event.sportLeagueId);
   const spansByLeague = groupBy(facts.eventYearSpans, (span) => span.sportLeagueId);
   const overdueByLeague = groupBy<SportLeagueOverdueCandidate>(facts.overdueCandidates, (event) => event.sportLeagueId);
+  const findingsByLeague = groupBy(facts.openFindings, (count) => count.sportLeagueId);
 
   const overviews = facts.leagues.map((league): SportLeagueOverview => {
     const providerId = league.syncProviderId;
@@ -54,7 +58,10 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
       providerId,
       isActive: league.isActive,
       syncHealth: syncHealthOf({ isActive: league.isActive, providerId, runCount: runs.length, failedRunCount: failedRuns.length }),
-      issues: issuesOf(failedRuns, heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
+      issues: [
+        ...findingsIssuesOf(findingsByLeague.get(league.id) ?? []),
+        ...issuesOf(failedRuns, heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
+      ],
       season: seasonOf((spansByLeague.get(league.id) ?? []).map(yearSpan), now),
       nextEventStartsAt: facts.nextEventStarts.get(league.id) ?? null,
       eventCount: facts.eventCounts.get(league.id) ?? 0,
@@ -73,6 +80,19 @@ export function syncHealthOf(input: { isActive: boolean; providerId: string | nu
   if (input.failedRunCount > 0) return SportLeagueSyncHealth.ERROR;
   if (input.runCount === 0) return SportLeagueSyncHealth.NOT_RUN_YET;
   return SportLeagueSyncHealth.OK;
+}
+
+/**
+ * The league's FINDINGS issue (#1999): its OPEN sync findings counted by severity, most serious
+ * first. None when it has none. Only the Sports page has it; an event's issues never do.
+ */
+export function findingsIssuesOf(counts: readonly Pick<ProviderSyncFindingOpenCount, 'severity' | 'count'>[]): SportLeagueIssue[] {
+  const items = counts
+    .filter((entry) => entry.count > 0)
+    .map((entry): SportLeagueFindingsIssueItem => ({ severity: entry.severity, count: entry.count }))
+    .sort((left, right) => compareByEnumOrder(ProviderSyncFindingSeverityOrder)(left.severity, right.severity));
+  if (items.length === 0) return [];
+  return [{ type: SportLeagueIssueType.FINDINGS, count: items.reduce((total, entry) => total + entry.count, 0), items }];
 }
 
 /**

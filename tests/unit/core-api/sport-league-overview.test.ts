@@ -5,6 +5,7 @@
 import { expect } from '@jest/globals';
 import {
   OVERDUE_AFTER_MS,
+  ProviderSyncFindingSeverity,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
@@ -19,6 +20,7 @@ import { SportLeagueOverviewDtoSchema } from '@poolmaster/shared/dto/sport-catal
 import { mapSportLeagueOverviewToDto } from '../../../packages/core-api/src/mappers';
 import {
   buildSportLeagueOverviews,
+  findingsIssuesOf,
   seasonOf,
   SportLeagueOverviewService,
   syncHealthOf,
@@ -43,6 +45,7 @@ function facts(overrides: Partial<SportLeagueOverviewFacts> = {}): SportLeagueOv
     eventYearSpans: [],
     nextEventStarts: new Map(),
     overdueCandidates: [],
+    openFindings: [],
     ...overrides,
   };
 }
@@ -137,10 +140,36 @@ describe('sport league issues', () => {
     }));
 
     expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([[SportLeagueIssueType.RELEASE, 1], [SportLeagueIssueType.OVERDUE, 2]]);
-    expect(row.issues[1]?.items.map((item) => [item.target.id, item.occurredAt])).toEqual([
+    const overdueIssue = row.issues[1];
+    if (overdueIssue.type !== SportLeagueIssueType.OVERDUE) throw new Error('expected the OVERDUE issue second');
+    expect(overdueIssue.items.map((item) => [item.target.id, item.occurredAt])).toEqual([
       ['later', endedAgo(2 * OVERDUE_AFTER_MS)],
       ['late', endedAgo(OVERDUE_AFTER_MS + 60_000)],
     ]);
+  });
+});
+
+describe('sport league findings issue', () => {
+  it('counts the league\'s OPEN sync findings by severity, most serious first, and leads the issues with them', () => {
+    const row = only(facts({
+      heldEvents: [{ id: 'held', sportLeagueId: 'mlb', name: 'Game 1', checkedAt: NOW, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }],
+      openFindings: [
+        { sportLeagueId: 'mlb', severity: ProviderSyncFindingSeverity.WARNING, count: 3 },
+        { sportLeagueId: 'mlb', severity: ProviderSyncFindingSeverity.ERROR, count: 1 },
+        { sportLeagueId: 'other', severity: ProviderSyncFindingSeverity.ERROR, count: 9 },
+      ],
+    }));
+
+    expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([[SportLeagueIssueType.FINDINGS, 4], [SportLeagueIssueType.RELEASE, 1]]);
+    expect(row.issues[0]?.items).toEqual([
+      { severity: ProviderSyncFindingSeverity.ERROR, count: 1 },
+      { severity: ProviderSyncFindingSeverity.WARNING, count: 3 },
+    ]);
+  });
+
+  it('has no findings issue when the league has no OPEN finding, or only zero counts', () => {
+    expect(findingsIssuesOf([])).toEqual([]);
+    expect(findingsIssuesOf([{ severity: ProviderSyncFindingSeverity.INFO, count: 0 }])).toEqual([]);
   });
 });
 
@@ -225,6 +254,7 @@ describe('mapSportLeagueOverviewToDto', () => {
       heldEvents: [{ id: '5f0c8a8e-5a0e-4c1e-9d43-2f6f8e3e4b10', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }],
       eventYearSpans: [{ sportLeagueId: 'mlb', eventYear: 2027, firstStart: at('2027-03-25T00:00:00.000Z'), lastStart: at('2027-10-20T00:00:00.000Z'), lastEnd: null }],
       nextEventStarts: new Map([['mlb', at('2027-04-16T00:00:00.000Z')]]),
+      openFindings: [{ sportLeagueId: 'mlb', severity: ProviderSyncFindingSeverity.ERROR, count: 2 }],
     }));
     const withIds = { ...row, id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d32', issues: row.issues.map((issue) => (issue.type === SportLeagueIssueType.SYNC
       ? { ...issue, items: issue.items.map((item) => ({ ...item, target: { ...item.target, id: '8c3fbd1b-8d3b-4f4b-8a76-5c9b1b6b7e43' } })) }
@@ -237,6 +267,7 @@ describe('mapSportLeagueOverviewToDto', () => {
       season: { start: '2027-03-25T00:00:00.000Z', end: '2027-10-20T00:00:00.000Z' },
       nextEventStartsAt: '2027-04-16T00:00:00.000Z',
       issues: [
+        { type: 'FINDINGS', count: 2, items: [{ severity: 'ERROR', count: 2 }] },
         { type: 'SYNC', count: 1, items: [{ label: 'Failed live scores sync.', occurredAt: '2027-04-15T10:00:00.000Z', syncKind: 'SCORES' }] },
         { type: 'RELEASE', count: 1, items: [{ label: 'World Series', failedChecks: ['TIERS_ASSIGNED'] }] },
       ],

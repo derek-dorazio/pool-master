@@ -8,7 +8,6 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type {
   ProviderCatalogEventListQuery,
-  UnmappedProviderParticipantListQuery,
   ProviderSyncRunListQuery,
   UpdateProviderLeagueRequest,
   UpdateProviderRequest,
@@ -34,7 +33,6 @@ import {
   toProviderListResponse,
   toProviderSyncRunDetailDto,
   toProviderSyncRunDto,
-  toUnmappedProviderParticipantDto,
 } from '../../mappers';
 
 export function createIngestionHandlers(
@@ -49,7 +47,6 @@ export function createIngestionHandlers(
     listSyncRuns,
     getSyncRun,
     submitEventSync,
-    listUnmappedParticipants,
     listProviderCatalogEvents,
   };
 
@@ -174,17 +171,6 @@ export function createIngestionHandlers(
       }
       throw err;
     }
-  }
-
-  async function listUnmappedParticipants(
-    request: FastifyRequest<{ Querystring: UnmappedProviderParticipantListQuery }>,
-    reply: FastifyReply,
-  ) {
-    const logger = request.contextLogger ?? request.log;
-    logger.debug({ filters: request.query }, 'Listing unmapped provider participants');
-    const unmapped = await ingestionService.getUnmappedParticipants(request.query);
-    logger.info({ count: unmapped.length }, 'Listed unmapped provider participants');
-    return reply.send({ participants: unmapped.map(toUnmappedProviderParticipantDto) });
   }
 
   // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---

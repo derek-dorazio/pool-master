@@ -11,7 +11,7 @@ import type {
   SportLeagueOverviewFacts,
   SportLeagueOverviewReader,
 } from '@poolmaster/shared/db';
-import { AutoReleaseCheckOutcome, SportEventStatus } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, ProviderSyncFindingStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
@@ -20,7 +20,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
 
   async readFacts(now: Date): Promise<SportLeagueOverviewFacts> {
     const notCancelled = { not: SportEventStatus.CANCELLED };
-    const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, overdueCandidates] = await Promise.all([
+    const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, overdueCandidates, findingGroups] = await Promise.all([
       this.prisma.sportLeague.findMany({
         select: { id: true, name: true, ...SYNC_PROVIDER_SELECT, isActive: true, sport: { select: { sport: true } } },
       }),
@@ -42,6 +42,12 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         _min: { startDate: true },
       }),
       readOverdueCandidates(this.prisma, now),
+      // Each league's OPEN sync findings by severity (#1999), on the (league, status, severity) index.
+      this.prisma.providerSyncFinding.groupBy({
+        by: ['sportLeagueId', 'severity'],
+        where: { status: ProviderSyncFindingStatus.OPEN },
+        _count: { _all: true },
+      }),
     ]);
     // Read after the events, so every series an event read named is already there: a series is
     // written before its events.
@@ -59,6 +65,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
       eventYearSpans: eventYearSpans(yearGroups, leagueOfSeries),
       nextEventStarts: earliestByLeague(nextGroups, leagueOfSeries),
       overdueCandidates: overdueCandidates.map(({ eventSeriesId, ...event }) => ({ ...event, sportLeagueId: leagueOfSeries(eventSeriesId) })),
+      openFindings: findingGroups.map((group) => ({ sportLeagueId: group.sportLeagueId, severity: group.severity, count: group._count._all })),
     };
   }
 

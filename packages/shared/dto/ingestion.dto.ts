@@ -341,28 +341,6 @@ export const ProviderManualSyncSubmissionResponseSchema = z.object({
 }).describe('A manual sync submission. The runs execute asynchronously after the request is accepted.');
 export type ProviderManualSyncSubmissionResponse = z.infer<typeof ProviderManualSyncSubmissionResponseSchema>;
 
-// --- Unmapped provider participants ---
-
-export const UnmappedProviderParticipantDtoSchema = z.object({
-  providerId: z.uuid().describe('The Provider that reports the competitor: what binding it to a participant names.'),
-  providerName: z.string(),
-  externalId: z.string().describe('The provider\'s identifier for the competitor.'),
-  externalName: z.string().describe('The competitor\'s name as the provider reports it.'),
-  sport: SportDtoSchema,
-}).describe('A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is.');
-export type UnmappedProviderParticipantDto = z.infer<typeof UnmappedProviderParticipantDtoSchema>;
-
-export const UnmappedProviderParticipantListQuerySchema = z.object({
-  providerId: z.uuid().optional().describe('Only this Provider\'s competitors; the other providers are not asked.'),
-  externalId: z.string().optional().describe('Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.'),
-}).describe('Filters for the unmapped-competitor list. With neither, every provider\'s unmapped competitors.');
-export type UnmappedProviderParticipantListQuery = z.infer<typeof UnmappedProviderParticipantListQuerySchema>;
-
-export const UnmappedProviderParticipantListResponseSchema = z.object({
-  participants: z.array(UnmappedProviderParticipantDtoSchema),
-}).describe('The unmapped competitors matching the filters, across the scheduled sports of each provider asked.');
-export type UnmappedProviderParticipantListResponse = z.infer<typeof UnmappedProviderParticipantListResponseSchema>;
-
 // --- Provider catalog browse (plans/124 §3.4/§4.4/§5.1) ---
 //
 // Lives in ingestion rather than golf because it is about a provider's catalog, not golf
@@ -416,9 +394,6 @@ registerSchema('ProviderSyncRunListQuery', ProviderSyncRunListQuerySchema);
 registerSchema('ProviderSyncRunListResponse', ProviderSyncRunListResponseSchema);
 registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmissionResponseSchema);
 registerSchema('LeagueEventsSyncRequest', LeagueEventsSyncRequestSchema);
-registerSchema('UnmappedProviderParticipantDto', UnmappedProviderParticipantDtoSchema);
-registerSchema('UnmappedProviderParticipantListQuery', UnmappedProviderParticipantListQuerySchema);
-registerSchema('UnmappedProviderParticipantListResponse', UnmappedProviderParticipantListResponseSchema);
 registerSchema('ProviderEventDto', ProviderEventDtoSchema);
 registerSchema('ProviderCatalogEventListQuery', ProviderCatalogEventListQuerySchema);
 registerSchema('ProviderCatalogEventListResponse', ProviderCatalogEventListResponseSchema);

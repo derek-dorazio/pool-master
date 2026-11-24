@@ -212,3 +212,8 @@ export type {
   PaymentPayer,
 } from './billing-ports';
 export type { ProviderSettingsRepository } from './provider-ports';
+export type {
+  ProviderSyncFindingOpenCount,
+  ProviderSyncFindingRepository,
+  ProviderSyncFindingResolveFilter,
+} from './provider-sync-finding-ports';

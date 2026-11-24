@@ -23,6 +23,7 @@ import {
   SportEventReleaseAtKind,
   SportEventReleaseMode,
   SportEventStatus,
+  ProviderSyncFindingSeverity,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueNoun,
@@ -186,6 +187,15 @@ const issueItemFields = {
   target: SportLeagueIssueTargetDtoSchema,
 };
 
+export const SportLeagueFindingsIssueDtoSchema = z.object({
+  type: z.literal(SportLeagueIssueType.FINDINGS),
+  count: z.number().int().min(1).describe('How many OPEN sync findings the league has.'),
+  items: z.array(z.object({
+    severity: z.enum(ProviderSyncFindingSeverity).describe('ERROR, WARNING or INFO.'),
+    count: z.number().int().min(1).describe('How many OPEN findings of that severity.'),
+  }).describe('The league\'s OPEN findings of one severity; the Findings list (listProviderSyncFindings) has each.')).describe('Most serious first; only severities it has.'),
+}).describe('The league\'s OPEN sync findings, counted by severity (#1999).');
+
 export const SportLeagueSyncIssueDtoSchema = z.object({
   type: z.literal(SportLeagueIssueType.SYNC),
   count: z.number().int().min(1).describe('How many of its syncs\' latest runs failed.'),
@@ -213,6 +223,7 @@ export const SportLeagueOverdueIssueDtoSchema = z.object({
 }).describe('Events whose results are still missing well after they should have ended.');
 
 export const SportLeagueIssueDtoSchema = z.discriminatedUnion('type', [
+  SportLeagueFindingsIssueDtoSchema,
   SportLeagueSyncIssueDtoSchema,
   SportLeagueReleaseIssueDtoSchema,
   SportLeagueOverdueIssueDtoSchema,
@@ -226,7 +237,7 @@ export const SportLeagueOverviewDtoSchema = z.object({
   providerId: z.string().nullable().describe('The provider that syncs its events. Null when none does.'),
   isActive: z.boolean().describe('On: offered to customers and synced. Off: hidden and not synced.'),
   syncHealth: z.enum(SportLeagueSyncHealth).describe('From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.'),
-  issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention.'),
   season: z.object({
     start: DateTimeSchema.describe('The start of its first event.'),
     end: DateTimeSchema.describe('The end of its last event, or its start when it has no end.'),

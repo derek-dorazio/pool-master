@@ -190,7 +190,10 @@ leaves no row.
 | `sport_event_participants` | The field row: active, ranking, seed, odds. A released bracket's seeds are kept. |
 
 A participant the site holds by name with no mapping stays beside the new one: merge them, or
-bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`). The
+bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`).
+A feed id the live scores name that no participant of the league is mapped to raises an
+`UNMAPPED_PARTICIPANT` sync finding (see *Sync findings* below); its Map participant action binds
+it and resolves the finding. The
 field's ranked rows with no mapping are listed in a `RANKED_PARTICIPANTS_UNLINKED` warning on the
 run. Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
 The mapping's sport league and participant type keep a team and a player with the same raw id
@@ -294,6 +297,27 @@ While the webhook secret is set, polling is only the safety net:
 - **Quiet alert.** When an event in play hears nothing for longer than its league's
   `quietAfterMinutes` (or 6 hours for a golf round), the sweep logs
   `ingestion.providerNotifications.quiet`, which a CloudWatch alarm forwards.
+
+### Sync findings
+
+`provider_sync_findings` (#1999) is the one list of problems the sync found, shown in root admin at
+Manage › Providers › Findings and counted per league, by severity, in the Sports page's Issues
+column. Each finding names its sport league; its event, Provider row and the feed's raw value
+(`provider_value`) are there when its kind has them.
+
+- **One row per kind and subject.** A NULLS NOT DISTINCT unique index on (kind, league, event,
+  Provider, value) dedupes: a finding seen again counts the sighting and takes the new severity.
+- **Status.** `OPEN`, `RESOLVED` or `WAIVED` (a waive needs a note, a CHECK constraint). A resolved
+  finding the sync sees again opens again; a waived one stays waived.
+- **Kinds.** `UNMAPPED_PARTICIPANT` (WARNING, raised by the live scores writer; its action is the
+  Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR, raised per synced league when a worker
+  task starts with the Provider's webhooks on and no signing secret; resolved once it is set).
+- **Alert.** An ERROR that opens logs `ingestion.syncFinding.errorOpened`; a CloudWatch metric
+  filter and alarm (`infrastructure/terraform/monitoring.tf`) send it to the alerts topic.
+- **Retention.** The nightly cleanup deletes RESOLVED findings 90 days after they were resolved,
+  never an OPEN or WAIVED one: deleting a waiver would let the finding open again.
+
+The actions a finding offers come from the API (`actions` on each finding); the web app draws them.
 
 ## 5. Scores sync
 
