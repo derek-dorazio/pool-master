@@ -1787,7 +1787,7 @@
       "IngestionScheduleConfigPatch": {
         "type": "object",
         "properties": {
-          "healthCheck": {
+          "EVENTS": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1816,7 +1816,7 @@
             "additionalProperties": false,
             "description": "Partial feed-scheduling update payload."
           },
-          "eventList": {
+          "FIELD": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1845,36 +1845,7 @@
             "additionalProperties": false,
             "description": "Partial feed-scheduling update payload."
           },
-          "eventParticipants": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling update payload."
-          },
-          "eventLiveScores": {
+          "SCORES": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1905,12 +1876,12 @@
           }
         },
         "additionalProperties": false,
-        "description": "Partial ingestion schedule update: only the policies and properties it names change."
+        "description": "Partial ingestion schedule update: only the sync kinds and properties it names change."
       },
       "IngestionScheduleConfig": {
         "type": "object",
         "properties": {
-          "healthCheck": {
+          "EVENTS": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1940,9 +1911,9 @@
               "enabled"
             ],
             "additionalProperties": false,
-            "description": "Scheduling policy for provider health checks."
+            "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
           },
-          "eventList": {
+          "FIELD": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1972,9 +1943,9 @@
               "enabled"
             ],
             "additionalProperties": false,
-            "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+            "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
           },
-          "eventParticipants": {
+          "SCORES": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -2004,49 +1975,16 @@
               "enabled"
             ],
             "additionalProperties": false,
-            "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-          },
-          "eventLiveScores": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for live score polling."
+            "description": "The SCORES sync: live score polling."
           }
         },
         "required": [
-          "healthCheck",
-          "eventList",
-          "eventParticipants",
-          "eventLiveScores"
+          "EVENTS",
+          "FIELD",
+          "SCORES"
         ],
         "additionalProperties": false,
-        "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league."
+        "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind."
       },
       "PlanCapsDto": {
         "type": "object",
@@ -17937,14 +17875,6 @@
             ],
             "description": "The sport."
           },
-          "participantType": {
-            "type": "string",
-            "enum": [
-              "INDIVIDUAL",
-              "TEAM"
-            ],
-            "description": "Whether the sport's competitors are individuals or teams."
-          },
           "tournamentFormat": {
             "type": "string",
             "enum": [
@@ -17968,7 +17898,6 @@
         "required": [
           "id",
           "sport",
-          "participantType",
           "tournamentFormat",
           "createdAt",
           "updatedAt"
@@ -18006,14 +17935,6 @@
                   ],
                   "description": "The sport."
                 },
-                "participantType": {
-                  "type": "string",
-                  "enum": [
-                    "INDIVIDUAL",
-                    "TEAM"
-                  ],
-                  "description": "Whether the sport's competitors are individuals or teams."
-                },
                 "tournamentFormat": {
                   "type": "string",
                   "enum": [
@@ -18037,7 +17958,6 @@
               "required": [
                 "id",
                 "sport",
-                "participantType",
                 "tournamentFormat",
                 "createdAt",
                 "updatedAt"
@@ -18277,29 +18197,21 @@
             ]
           },
           "participantType": {
-            "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed."
           },
           "scoringFamily": {
-            "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the sport league's events are scored. Set when the league is created, never changed."
           },
           "displayOrder": {
             "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.",
@@ -18568,29 +18480,21 @@
                   ]
                 },
                 "participantType": {
-                  "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed."
                 },
                 "scoringFamily": {
-                  "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the sport league's events are scored. Set when the league is created, never changed."
                 },
                 "displayOrder": {
                   "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.",
@@ -18838,29 +18742,21 @@
                 ]
               },
               "participantType": {
-                "description": "Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "INDIVIDUAL",
-                  "TEAM",
-                  null
-                ]
+                  "TEAM"
+                ],
+                "description": "Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed."
               },
               "scoringFamily": {
-                "description": "How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "STROKE_PLAY",
                   "FINISH_POSITION",
-                  "HEAD_TO_HEAD",
-                  null
-                ]
+                  "HEAD_TO_HEAD"
+                ],
+                "description": "How the sport league's events are scored. Set when the league is created, never changed."
               },
               "displayOrder": {
                 "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.",
@@ -18954,6 +18850,23 @@
             "minLength": 1,
             "description": "Unique within the sport."
           },
+          "participantType": {
+            "type": "string",
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM"
+            ],
+            "description": "Who competes in its events: teams or individuals. Fixed once set."
+          },
+          "scoringFamily": {
+            "type": "string",
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How its events are scored. Fixed once set."
+          },
           "bracketAdvancement": {
             "description": "FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.",
             "type": "string",
@@ -18976,6 +18889,8 @@
         "required": [
           "sport",
           "name",
+          "participantType",
+          "scoringFamily",
           "platformTierProfileId",
           "platformPricingProfileId"
         ],
@@ -19065,6 +18980,13 @@
           },
           "providerId": {
             "description": "The provider that syncs its events. Null when none does.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "providerName": {
+            "description": "That provider's name, so no reader looks it up by id (#1999). Null when none syncs it.",
             "type": [
               "string",
               "null"
@@ -19439,6 +19361,7 @@
           "sport",
           "name",
           "providerId",
+          "providerName",
           "isActive",
           "syncHealth",
           "issues",
@@ -19482,6 +19405,13 @@
                 },
                 "providerId": {
                   "description": "The provider that syncs its events. Null when none does.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "providerName": {
+                  "description": "That provider's name, so no reader looks it up by id (#1999). Null when none syncs it.",
                   "type": [
                     "string",
                     "null"
@@ -19856,6 +19786,7 @@
                 "sport",
                 "name",
                 "providerId",
+                "providerName",
                 "isActive",
                 "syncHealth",
                 "issues",
@@ -22341,6 +22272,188 @@
         "additionalProperties": false,
         "description": "A sport league's participants."
       },
+      "SportLeaguePositionProviderCodeDto": {
+        "type": "object",
+        "properties": {
+          "providerCode": {
+            "type": "string",
+            "description": "The provider's own code for the position, exactly as its feed sends it."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "BALLDONTLIE"
+            ],
+            "description": "The provider whose code it is."
+          },
+          "providerLeagueCode": {
+            "type": "string",
+            "description": "The provider's own code for the league the code is from."
+          },
+          "providerLeagueName": {
+            "type": "string",
+            "description": "The provider's own name for that league."
+          }
+        },
+        "required": [
+          "providerCode",
+          "provider",
+          "providerLeagueCode",
+          "providerLeagueName"
+        ],
+        "additionalProperties": false,
+        "description": "One provider's code for a sport league position."
+      },
+      "SportLeaguePositionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "The position's key within its league (QB). Screens read its words by this code."
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Where it sits when the league's positions are listed. Display only."
+          },
+          "isFieldEligible": {
+            "type": "boolean",
+            "description": "Whether its players can be picked into an event's field. The roster sync keeps only these players."
+          },
+          "providerCodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the position, exactly as its feed sends it."
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "BALLDONTLIE"
+                  ],
+                  "description": "The provider whose code it is."
+                },
+                "providerLeagueCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the league the code is from."
+                },
+                "providerLeagueName": {
+                  "type": "string",
+                  "description": "The provider's own name for that league."
+                }
+              },
+              "required": [
+                "providerCode",
+                "provider",
+                "providerLeagueCode",
+                "providerLeagueName"
+              ],
+              "additionalProperties": false,
+              "description": "One provider's code for a sport league position."
+            },
+            "description": "Each provider's codes for the position, by provider league then code. A feed code with no row is not one of the league's positions."
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "displayOrder",
+          "isFieldEligible",
+          "providerCodes"
+        ],
+        "additionalProperties": false,
+        "description": "One of a sport league's playing positions. Set by migration; never edited through the API."
+      },
+      "SportLeaguePositionListResponse": {
+        "type": "object",
+        "properties": {
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The position's key within its league (QB). Screens read its words by this code."
+                },
+                "displayOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Where it sits when the league's positions are listed. Display only."
+                },
+                "isFieldEligible": {
+                  "type": "boolean",
+                  "description": "Whether its players can be picked into an event's field. The roster sync keeps only these players."
+                },
+                "providerCodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "providerCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the position, exactly as its feed sends it."
+                      },
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "BALLDONTLIE"
+                        ],
+                        "description": "The provider whose code it is."
+                      },
+                      "providerLeagueCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the league the code is from."
+                      },
+                      "providerLeagueName": {
+                        "type": "string",
+                        "description": "The provider's own name for that league."
+                      }
+                    },
+                    "required": [
+                      "providerCode",
+                      "provider",
+                      "providerLeagueCode",
+                      "providerLeagueName"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One provider's code for a sport league position."
+                  },
+                  "description": "Each provider's codes for the position, by provider league then code. A feed code with no row is not one of the league's positions."
+                }
+              },
+              "required": [
+                "id",
+                "code",
+                "displayOrder",
+                "isFieldEligible",
+                "providerCodes"
+              ],
+              "additionalProperties": false,
+              "description": "One of a sport league's playing positions. Set by migration; never edited through the API."
+            },
+            "description": "Every position of the sport league, by display order, never paged. Empty for a league with none."
+          }
+        },
+        "required": [
+          "positions"
+        ],
+        "additionalProperties": false,
+        "description": "A sport league's positions."
+      },
       "SlotProviderMappingDto": {
         "type": "object",
         "properties": {
@@ -23448,6 +23561,13 @@
             "type": "string",
             "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
           },
+          "providerName": {
+            "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "sport": {
             "type": "string",
             "enum": [
@@ -23747,29 +23867,21 @@
             "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
           },
           "participantType": {
-            "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes: teams or individuals. Read through the series' sport league."
           },
           "scoringFamily": {
-            "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the event is scored. Read through the series' sport league."
           },
           "syncScope": {
             "type": "string",
@@ -24141,6 +24253,7 @@
           "id",
           "externalId",
           "providerId",
+          "providerName",
           "sport",
           "name",
           "venue",
@@ -24252,6 +24365,13 @@
                 "providerId": {
                   "type": "string",
                   "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+                },
+                "providerName": {
+                  "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "sport": {
                   "type": "string",
@@ -24552,29 +24672,21 @@
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes: teams or individuals. Read through the series' sport league."
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the event is scored. Read through the series' sport league."
                 },
                 "syncScope": {
                   "type": "string",
@@ -24946,6 +25058,7 @@
                 "id",
                 "externalId",
                 "providerId",
+                "providerName",
                 "sport",
                 "name",
                 "venue",
@@ -25044,6 +25157,13 @@
               "providerId": {
                 "type": "string",
                 "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+              },
+              "providerName": {
+                "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "sport": {
                 "type": "string",
@@ -25344,29 +25464,21 @@
                 "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
               },
               "participantType": {
-                "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "INDIVIDUAL",
-                  "TEAM",
-                  null
-                ]
+                  "TEAM"
+                ],
+                "description": "Who competes: teams or individuals. Read through the series' sport league."
               },
               "scoringFamily": {
-                "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-                "type": [
-                  "string",
-                  "null"
-                ],
+                "type": "string",
                 "enum": [
                   "STROKE_PLAY",
                   "FINISH_POSITION",
-                  "HEAD_TO_HEAD",
-                  null
-                ]
+                  "HEAD_TO_HEAD"
+                ],
+                "description": "How the event is scored. Read through the series' sport league."
               },
               "syncScope": {
                 "type": "string",
@@ -25738,6 +25850,7 @@
               "id",
               "externalId",
               "providerId",
+              "providerName",
               "sport",
               "name",
               "venue",
@@ -25958,6 +26071,13 @@
                 "providerId": {
                   "type": "string",
                   "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+                },
+                "providerName": {
+                  "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "sport": {
                   "type": "string",
@@ -26258,29 +26378,21 @@
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes: teams or individuals. Read through the series' sport league."
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the event is scored. Read through the series' sport league."
                 },
                 "syncScope": {
                   "type": "string",
@@ -26652,6 +26764,7 @@
                 "id",
                 "externalId",
                 "providerId",
+                "providerName",
                 "sport",
                 "name",
                 "venue",
@@ -28973,47 +29086,6 @@
         ],
         "additionalProperties": false,
         "description": "What adding participants did."
-      },
-      "SeedSportEventParticipantsResponse": {
-        "type": "object",
-        "properties": {
-          "added": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "skipped": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Already on the field."
-          },
-          "total": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Active affiliations considered."
-          },
-          "seedNumbersDerived": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "oddsDerived": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          }
-        },
-        "required": [
-          "added",
-          "skipped",
-          "total",
-          "seedNumbersDerived",
-          "oddsDerived"
-        ],
-        "additionalProperties": false,
-        "description": "What seeding the field from the event's sport league did."
       },
       "UpdateSportEventParticipantsRequest": {
         "type": "object",
@@ -31517,29 +31589,21 @@
             "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
           },
           "participantType": {
-            "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
           },
           "scoringFamily": {
-            "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
           }
         },
         "required": [
@@ -31766,29 +31830,21 @@
                   "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                 },
                 "participantType": {
-                  "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "INDIVIDUAL",
-                    "TEAM",
-                    null
-                  ]
+                    "TEAM"
+                  ],
+                  "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
                 },
                 "scoringFamily": {
-                  "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
+                  "type": "string",
                   "enum": [
                     "STROKE_PLAY",
                     "FINISH_POSITION",
-                    "HEAD_TO_HEAD",
-                    null
-                  ]
+                    "HEAD_TO_HEAD"
+                  ],
+                  "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
                 }
               },
               "required": [
@@ -32700,29 +32756,21 @@
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
           },
           "participantType": {
-            "description": "Who competes in the shown event, when its sport league overrides its sport. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "INDIVIDUAL",
-              "TEAM",
-              null
-            ]
+              "TEAM"
+            ],
+            "description": "Who competes in the shown event, from its sport league. A client reads the event's definition from the sport and these two."
           },
           "scoringFamily": {
-            "description": "How the shown event is scored, when its sport league overrides its sport. Null scores as the sport does.",
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "enum": [
               "STROKE_PLAY",
               "FINISH_POSITION",
-              "HEAD_TO_HEAD",
-              null
-            ]
+              "HEAD_TO_HEAD"
+            ],
+            "description": "How the shown event is scored, from its sport league."
           },
           "scoringDefinitionId": {
             "type": "string",
@@ -33737,29 +33785,21 @@
                       "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                     },
                     "participantType": {
-                      "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": "string",
                       "enum": [
                         "INDIVIDUAL",
-                        "TEAM",
-                        null
-                      ]
+                        "TEAM"
+                      ],
+                      "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
                     },
                     "scoringFamily": {
-                      "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-                      "type": [
-                        "string",
-                        "null"
-                      ],
+                      "type": "string",
                       "enum": [
                         "STROKE_PLAY",
                         "FINISH_POSITION",
-                        "HEAD_TO_HEAD",
-                        null
-                      ]
+                        "HEAD_TO_HEAD"
+                      ],
+                      "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
                     }
                   },
                   "required": [
@@ -34007,29 +34047,21 @@
                         "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                       },
                       "participantType": {
-                        "description": "Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.",
-                        "type": [
-                          "string",
-                          "null"
-                        ],
+                        "type": "string",
                         "enum": [
                           "INDIVIDUAL",
-                          "TEAM",
-                          null
-                        ]
+                          "TEAM"
+                        ],
+                        "description": "Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league."
                       },
                       "scoringFamily": {
-                        "description": "How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.",
-                        "type": [
-                          "string",
-                          "null"
-                        ],
+                        "type": "string",
                         "enum": [
                           "STROKE_PLAY",
                           "FINISH_POSITION",
-                          "HEAD_TO_HEAD",
-                          null
-                        ]
+                          "HEAD_TO_HEAD"
+                        ],
+                        "description": "How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league."
                       }
                     },
                     "required": [
@@ -38599,7 +38631,7 @@
               "value": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38629,9 +38661,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38661,9 +38693,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38693,46 +38725,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The value in use."
@@ -38740,7 +38739,7 @@
               "defaults": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38770,9 +38769,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38802,9 +38801,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38834,46 +38833,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -40713,7 +40679,7 @@
                     "value": {
                       "type": "object",
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40743,9 +40709,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40775,9 +40741,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40807,46 +40773,13 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false,
                       "description": "The value in use."
@@ -40854,7 +40787,7 @@
                     "defaults": {
                       "type": "object",
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40884,9 +40817,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40916,9 +40849,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40948,46 +40881,13 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false,
                       "description": "The value a reset would store."
@@ -42784,7 +42684,7 @@
               "value": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -42814,9 +42714,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -42846,9 +42746,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -42878,46 +42778,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The whole new value."
@@ -43839,7 +43706,7 @@
                   "null"
                 ],
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -43869,9 +43736,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -43901,9 +43768,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -43933,53 +43800,20 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false
               },
               "newValue": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44009,9 +43843,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44041,9 +43875,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44073,46 +43907,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The value the save stored."
@@ -45897,7 +45698,7 @@
                         "null"
                       ],
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -45927,9 +45728,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -45959,9 +45760,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -45991,53 +45792,20 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false
                     },
                     "newValue": {
                       "type": "object",
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46067,9 +45835,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46099,9 +45867,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46131,46 +45899,13 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
@@ -68001,7 +67736,7 @@
             "description": "Provider display name."
           },
           "status": {
-            "description": "Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).",
+            "description": "Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.",
             "type": [
               "string",
               "null"
@@ -68014,21 +67749,14 @@
             ]
           },
           "errorRate": {
-            "description": "Provider-reported error rate over the last hour; null when the provider is not running.",
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "latencyMs": {
-            "description": "Provider-reported p95 latency; null when the provider is not running.",
+            "description": "The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished.",
             "type": [
               "number",
               "null"
             ]
           },
           "lastEventAt": {
-            "description": "When one of the provider's events last changed, else its last successful poll; null when neither is known.",
+            "description": "When one of the provider's events last changed; null when none is known.",
             "type": [
               "string",
               "null"
@@ -68274,7 +68002,6 @@
           "providerName",
           "status",
           "errorRate",
-          "latencyMs",
           "lastEventAt",
           "sportsCovered",
           "primaryForSports",
@@ -68286,7 +68013,7 @@
           "settings"
         ],
         "additionalProperties": false,
-        "description": "A sports-data provider with its live health and settings."
+        "description": "A sports-data provider with its health from its sync runs, and its settings."
       },
       "UpdateProviderRequest": {
         "type": "object",
@@ -68724,7 +68451,7 @@
                   "description": "Provider display name."
                 },
                 "status": {
-                  "description": "Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).",
+                  "description": "Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.",
                   "type": [
                     "string",
                     "null"
@@ -68737,21 +68464,14 @@
                   ]
                 },
                 "errorRate": {
-                  "description": "Provider-reported error rate over the last hour; null when the provider is not running.",
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "latencyMs": {
-                  "description": "Provider-reported p95 latency; null when the provider is not running.",
+                  "description": "The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished.",
                   "type": [
                     "number",
                     "null"
                   ]
                 },
                 "lastEventAt": {
-                  "description": "When one of the provider's events last changed, else its last successful poll; null when neither is known.",
+                  "description": "When one of the provider's events last changed; null when none is known.",
                   "type": [
                     "string",
                     "null"
@@ -68997,7 +68717,6 @@
                 "providerName",
                 "status",
                 "errorRate",
-                "latencyMs",
                 "lastEventAt",
                 "sportsCovered",
                 "primaryForSports",
@@ -69009,7 +68728,7 @@
                 "settings"
               ],
               "additionalProperties": false,
-              "description": "A sports-data provider with its live health and settings."
+              "description": "A sports-data provider with its health from its sync runs, and its settings."
             }
           },
           "settingRanges": {
@@ -72018,10 +71737,11 @@
           "kind": {
             "type": "string",
             "enum": [
+              "PROVIDER_RATE_LIMITED",
               "UNMAPPED_PARTICIPANT",
               "WEBHOOK_SECRET_MISSING"
             ],
-            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
+            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
           },
           "severity": {
             "type": "string",
@@ -72233,10 +71953,11 @@
                 "kind": {
                   "type": "string",
                   "enum": [
+                    "PROVIDER_RATE_LIMITED",
                     "UNMAPPED_PARTICIPANT",
                     "WEBHOOK_SECRET_MISSING"
                   ],
-                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
+                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
                 },
                 "severity": {
                   "type": "string",
@@ -72454,10 +72175,11 @@
               "kind": {
                 "type": "string",
                 "enum": [
+                  "PROVIDER_RATE_LIMITED",
                   "UNMAPPED_PARTICIPANT",
                   "WEBHOOK_SECRET_MISSING"
                 ],
-                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
+                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
               },
               "severity": {
                 "type": "string",
@@ -83376,89 +83098,6 @@
         }
       }
     },
-    "/api/v1/events/{eventId}/participants/seed": {
-      "post": {
-        "operationId": "seedEventParticipants",
-        "summary": "Seed a sport event's field from its sport league",
-        "tags": [
-          "Events"
-        ],
-        "description": "Adds the sport league's active participants with derived seeds and odds; ones already on the field are skipped. Root admin only.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "eventId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "What seeding the field from the event's sport league did.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeedSportEventParticipantsResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/events/{eventId}/leaderboards/rebuild": {
       "post": {
         "operationId": "rebuildEventLeaderboards",
@@ -86165,7 +85804,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Adding a tour is one call, not a migration. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
+        "description": "A new sport league, with who competes in its events and how they are scored (#2001), both fixed once set. The platform's own leagues are added by migration (the add-sport skill). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -86475,6 +86114,69 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportLeagueSyncListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sport-leagues/{sportLeagueId}/positions": {
+      "get": {
+        "operationId": "listSportLeaguePositions",
+        "summary": "List a sport league's positions with their provider codes",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "The League page's Structure tab (#2001): every playing position of the sport league, by display order, never paged, with whether its players can be picked into a field and each provider's codes for it. Set by migration; read-only. Read in a fixed number of queries. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A sport league's positions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeaguePositionListResponse"
                 }
               }
             }
@@ -88646,7 +88348,7 @@
         "description": "Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.",
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league.",
+            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
             "content": {
               "application/json": {
                 "schema": {
@@ -88696,7 +88398,7 @@
         },
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league.",
+            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
             "content": {
               "application/json": {
                 "schema": {
@@ -88738,7 +88440,7 @@
         "description": "Resets ingestion scheduling back to the platform defaults.",
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league.",
+            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
             "content": {
               "application/json": {
                 "schema": {

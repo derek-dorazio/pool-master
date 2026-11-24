@@ -1,6 +1,5 @@
 import { displayString } from '../../display-strings/display-strings';
-import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import { ScoringFamily } from './scoring-family';
+import { MatchPeriodLayout, SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /** What the rounds of a soccer knockout are called, counted back from the final. */
@@ -22,8 +21,6 @@ const ROUND_NAMES_FROM_FINAL = ['Final', 'Semi-finals', 'Quarter-finals', 'Round
 export const soccerSportDefinition: SportDefinition = {
   sport: Sport.SOCCER,
   name: 'Soccer',
-  participantType: ParticipantType.TEAM,
-  scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   selectionTypes: [

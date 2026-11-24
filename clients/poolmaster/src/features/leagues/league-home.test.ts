@@ -22,7 +22,7 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
 function onEvent(id: string, startDate: string, overrides: Partial<ContestDto> = {}): ContestDto {
   return contestFixture({
     id,
-    sportEvents: [{ sportEventId: `event-${id}`, sequence: 1, name: `Event ${id}`, startDate, endDate: null, status: 'SCHEDULED', participantType: null, scoringFamily: null }],
+    sportEvents: [{ sportEventId: `event-${id}`, sequence: 1, name: `Event ${id}`, startDate, endDate: null, status: 'SCHEDULED', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY' }],
     ...overrides,
   });
 }
@@ -50,8 +50,8 @@ function leaderboardFixture(entries: LeaderboardEntry[]): ContestLeaderboardResp
     contestId: 'contest-1',
     sportEventId: 'event-1',
     sport: 'GOLF',
-    participantType: null,
-    scoringFamily: null,
+    participantType: 'INDIVIDUAL',
+    scoringFamily: 'STROKE_PLAY',
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     upsetBonus: false,

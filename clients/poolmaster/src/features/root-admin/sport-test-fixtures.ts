@@ -1,3 +1,4 @@
+import { sportPlay } from '@/test/sport-play';
 import type {
   ParticipantDto,
   PlatformPricingProfileDto,
@@ -28,6 +29,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     id: 'event-1',
     externalId: 'manual-event-1',
     providerId: 'manual-admin',
+    providerName: null,
     sport: 'GOLF',
     name: 'Rolling Weekend Invitational',
     venue: 'Mock Golf Club',
@@ -53,8 +55,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     eventSeriesId: 'event-series-1',
     eventYear: 2026,
     sportLeagueId: 'league-1',
-    participantType: null,
-    scoringFamily: null,
+    ...sportPlay(overrides.sport ?? 'GOLF'),
     syncScope: 'NONE',
     providerSynced: false,
     autoLifecycleEnabled: true,
@@ -217,7 +218,6 @@ export function providerSummaryFixture(overrides: Partial<ProviderSummaryDto> = 
     providerName: 'BALLDONTLIE',
     status: 'HEALTHY',
     errorRate: 0.004,
-    latencyMs: 420,
     lastEventAt: null,
     sportsCovered: ['BASEBALL', 'BASKETBALL', 'GOLF'],
     primaryForSports: ['BASEBALL', 'BASKETBALL', 'GOLF'],
@@ -261,8 +261,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     squaresFromRound: null,
     noun: null,
     displayName: null,
-    participantType: null,
-    scoringFamily: null,
+    ...sportPlay(overrides.sport ?? 'GOLF'),
     displayOrder: null,
     currentEventYear: null,
     isActive: true,
@@ -278,7 +277,6 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
 export const GOLF_SPORT_FIXTURE: SportDto = {
   id: 'sport-golf',
   sport: 'GOLF',
-  participantType: 'INDIVIDUAL',
   tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',

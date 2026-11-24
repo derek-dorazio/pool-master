@@ -1,6 +1,5 @@
 import { displayString } from '../../display-strings/display-strings';
-import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import { ScoringFamily } from './scoring-family';
+import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -14,8 +13,6 @@ import type { SportDefinition } from './sport-definition';
 export const autoRacingSportDefinition: SportDefinition = {
   sport: Sport.AUTO_RACING,
   name: 'Auto racing',
-  participantType: ParticipantType.INDIVIDUAL,
-  scoringFamily: ScoringFamily.FINISH_POSITION,
   tournamentFormat: TournamentFormat.RACE,
   defaultRounds: 1,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],

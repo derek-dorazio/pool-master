@@ -56,7 +56,7 @@ function createLedgerStore() {
       if (update.details) details.set(id, update.details);
     }),
     findAll: jest.fn(),
-    findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), findByBackgroundJobIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(),
+    findById: jest.fn(), createWithJob: jest.fn(), findManyByIds: jest.fn(), findByBackgroundJobIds: jest.fn(), clearDetailsBatchSubmittedBefore: jest.fn(), deleteBatchSubmittedBefore: jest.fn(), countFinishedByProvider: jest.fn(),
   };
 
   return {

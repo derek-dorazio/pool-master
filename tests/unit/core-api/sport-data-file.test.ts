@@ -8,7 +8,7 @@ import { isTestSlate, parseSportDataFile, SportDataFileError } from '../../../pa
 function golfTestSeed(): Record<string, unknown> {
   return {
     schemaVersion: 1,
-    scope: { sport: 'GOLF', season: 2027, sportLeagues: ['PGA TOUR'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] },
+    scope: { sport: 'GOLF', season: 2027, sportLeagues: ['PGA TOUR'], participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] },
     testData: true,
     provenance: { gatheredAt: '2026-10-13', gatheredBy: 'test data', sources: [{ name: 'PGA TOUR schedule', url: 'https://www.pgatour.com/schedule' }] },
     sportLeagues: [{
@@ -38,7 +38,7 @@ interface HorseRacingFile {
 function horseRacingFile(): HorseRacingFile {
   const file = {
     schemaVersion: 1,
-    scope: { sport: 'HORSE_RACING', season: 2027, sportLeagues: ['US Thoroughbred'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] },
+    scope: { sport: 'HORSE_RACING', season: 2027, sportLeagues: ['US Thoroughbred'], participantType: 'INDIVIDUAL', scoringFamily: 'FINISH_POSITION', contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'RESULTS'] },
     testData: true,
     provenance: { gatheredAt: '2026-10-14', gatheredBy: 'test data', sources: [{ name: 'Pegasus World Cup', url: 'https://www.pegasusworldcup.com/' }] },
     sportLeagues: [{
@@ -269,7 +269,7 @@ describe('sport data bracket', () => {
     const team = (key: string, name: string) => ({ key, name, countryCode: 'US', ranking: 1 });
     const file = {
       schemaVersion: 1,
-      scope: { sport: 'BASKETBALL', season: 2027, sportLeagues: ['NCAA Men'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET', 'RESULTS'] },
+      scope: { sport: 'BASKETBALL', season: 2027, sportLeagues: ['NCAA Men'], participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'BRACKET', 'RESULTS'] },
       testData: true,
       provenance: { gatheredAt: '2027-03-14', gatheredBy: 'test data', sources: [{ name: 'NCAA bracket', url: 'https://www.ncaa.com/brackets' }] },
       sportLeagues: [{
@@ -557,7 +557,7 @@ describe('sport data test slate', () => {
   function slate(): Record<string, unknown> {
     return {
       schemaVersion: 1,
-      scope: { sport: 'AUTO_RACING', season: 2025, sportLeagues: ['Formula 1'], contents: ['PLAYERS', 'FIELDS'] },
+      scope: { sport: 'AUTO_RACING', season: 2025, sportLeagues: ['Formula 1'], participantType: 'INDIVIDUAL', scoringFamily: 'FINISH_POSITION', contents: ['PLAYERS', 'FIELDS'] },
       testData: true,
       provenance: { gatheredAt: '2026-10-14', gatheredBy: 'test', sources: [{ name: 'F1 2025', url: 'https://example.com/f1' }] },
       sportLeagues: [{ name: 'Formula 1', players: [{ key: 'f1-a', name: 'Driver A', countryCode: 'GB', ranking: 1 }], events: [] }],

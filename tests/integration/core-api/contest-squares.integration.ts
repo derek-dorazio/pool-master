@@ -54,12 +54,12 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   })));
   const sport = await prisma.sport.upsert({
     where: { sport: 'AMERICAN_FOOTBALL' },
-    create: { sport: 'AMERICAN_FOOTBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: 'AMERICAN_FOOTBALL', tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
       externalId: `squares-${suffix}`,
       providerId: 'integration-test',
       sport: Sport.AMERICAN_FOOTBALL,

@@ -6,6 +6,8 @@
     "sportLeagues": [
       "UCI WorldTour"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "PLAYERS",
       "FIELDS"

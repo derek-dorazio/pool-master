@@ -1,3 +1,4 @@
+import { ProviderSyncKind } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -32,7 +33,7 @@ export function SyncScheduleDialog({
 }) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const testId = 'root-admin-sync-schedule-dialog';
-  const isField = row.key === 'eventParticipants';
+  const isField = row.key === ProviderSyncKind.FIELD;
   const form = useForm<SyncScheduleFormValues>({
     resolver: zodResolver(syncScheduleFormSchema),
     defaultValues: syncScheduleFormValues(row),

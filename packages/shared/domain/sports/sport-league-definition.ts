@@ -4,41 +4,32 @@ import type { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
 
 /**
- * What a sport league plays differently from its sport (#934), as `SportLeague` stores it: null
- * keeps the sport's.
+ * What only a sport league says about its play, as `SportLeague` stores it (#2001): who competes
+ * in its events and how they are scored. Every league sets both; the sport registry carries
+ * neither, so the league row is the one place each fact lives.
  */
-export interface SportLeagueOverrides {
-  participantType: ParticipantType | null;
-  scoringFamily: ScoringFamily | null;
+export interface SportLeaguePlay {
+  participantType: ParticipantType;
+  scoringFamily: ScoringFamily;
 }
+
+/** A sport league's definition: its sport's, with who competes and how it is scored. */
+export type SportLeagueDefinition = SportDefinition & SportLeaguePlay;
 
 /**
- * A sport league's definition: its sport's, with what the league overrides (#934). Every reader
- * of an event's selection types, scoring definitions, tiers or rounds reads it through here.
- *
- * A league keeps its sport's definition, with its participant type if it sets one. A family
- * override that is not its sport's family is a broken reference row and throws.
+ * A sport league's definition (#934, #2001). Every reader of an event's selection types, scoring
+ * definitions, tiers or rounds reads it through here.
  */
-export function sportLeagueDefinitionOf(sport: Sport, overrides: SportLeagueOverrides): SportDefinition {
-  const definition = getSportDefinition(sport);
-  const family = overrides.scoringFamily ?? definition.scoringFamily;
-  if (family !== definition.scoringFamily) {
-    throw new Error(`A ${sport} sport league cannot be scored by ${family}`);
-  }
-  return overrides.participantType === null ? definition : { ...definition, participantType: overrides.participantType };
+export function sportLeagueDefinitionOf(sport: Sport, play: SportLeaguePlay): SportLeagueDefinition {
+  return { ...getSportDefinition(sport), participantType: play.participantType, scoringFamily: play.scoringFamily };
 }
 
-/** An event as its sport league's definition is read off it: its sport, and the overrides it carries (`SportEvent`). */
-export interface SportLeagueEvent {
+/** An event as its sport league's definition is read off it: its sport, and its league's play (`SportEvent`). */
+export interface SportLeagueEvent extends SportLeaguePlay {
   sport: Sport;
-  participantType?: ParticipantType | null;
-  scoringFamily?: ScoringFamily | null;
 }
 
-/** An event's definition: its sport league's, from the overrides it carries. */
-export function eventSportDefinition(event: SportLeagueEvent): SportDefinition {
-  return sportLeagueDefinitionOf(event.sport, {
-    participantType: event.participantType ?? null,
-    scoringFamily: event.scoringFamily ?? null,
-  });
+/** An event's definition: its sport league's, from the play it carries. */
+export function eventSportDefinition(event: SportLeagueEvent): SportLeagueDefinition {
+  return sportLeagueDefinitionOf(event.sport, event);
 }

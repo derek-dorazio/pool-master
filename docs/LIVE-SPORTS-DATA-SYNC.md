@@ -85,16 +85,20 @@ so the job is deferred rather than syncing a partial list (*Rate limit and retri
 **The schedule** is the `INGESTION_SCHEDULE_CONFIG` settings group
 (`platform/ingestion-config-service.ts`), edited on the root admin's Providers page. One schedule
 serves every sport league; there are no per-sport or per-league overrides, and every sport a
-registered provider covers is scheduled.
+registered provider covers is scheduled. Its keys are the sync kinds, `ProviderSyncKind` (#1999).
 
 | Policy | Default | Runs |
 |---|---|---|
-| `healthCheck.intervalMinutes` | 5 min | provider health check |
-| `eventList.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
-| `eventParticipants.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3) |
-| `eventLiveScores.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
+| `EVENTS.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
+| `FIELD.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3) |
+| `SCORES.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
 
 Each loop re-reads its interval after every run, so a saved change applies without a restart.
+
+There is no health check loop and no route calls a provider live (#1999). A provider's health on
+the Providers page comes from its own sync runs of the last hour: HEALTHY when none failed, DOWN
+when all did, DEGRADED when some did, and unknown when none finished
+(`providerHealthOfRuns`).
 
 ### Rate limit and retries
 
@@ -105,13 +109,22 @@ final); the policy is the only layer that retries.
 
 | What | Rule |
 |---|---|
-| Pacing | Each task starts a request at most every `60 s × BACKGROUND_JOB_MAX_TASKS / requestsPerMinute`: an even share of the plan's limit for each task that can run background work. Read from config once; no request waits on a database read. Set `BACKGROUND_JOB_MAX_TASKS` to the most such tasks a deploy or scale-out runs together (unset is 1, right for QA's one task). |
+| Pacing | Each task starts a request at most every `60 s × BACKGROUND_JOB_MAX_TASKS / requestsPerMinute`: an even share of the plan's limit for each task that can run background work. The limit is read for each request from the Provider row in memory, so a Providers page edit takes effect without a restart and no request waits on a database read. Set `BACKGROUND_JOB_MAX_TASKS` to the most such tasks a deploy or scale-out runs together (unset is 1, right for QA's one task). |
 | Retries | A 429, a 5xx or no answer is tried up to 3 more times. A 429's Retry-After (whole seconds) is honoured up to 30 s; otherwise the wait doubles from 1 s with half jitter, capped at 30 s. Any other status, or a body that breaks the contract, is not retried. |
 | Breaker | Five 429s in a row open the provider's circuit for 60 s; calls meanwhile are refused without reaching the provider. 5xx failures do not count toward it. |
 | RATE_LIMITED | A call the open circuit refuses, a 429 asking for more than 30 s, or a 429 still there after every retry throws `ProviderRateLimitedError`. The sync that made the call throws it on, and the job runner queues the job again for when the provider will answer (the circuit's reopening, or the Retry-After) without counting the try toward its attempts (`docs/BACKGROUND-JOBS.md`). A manual sync's feed it turned away is marked FAILED and the feeds still waiting run on the next try. A scheduled sweep stops at it and the next tick carries on. |
 
 A transient failure still there after the retries stays a provider error, and the job is
 retried on the usual 1, 5 and 30 minutes.
+
+**The rate-limit finding.** The policy tells `ProviderRateLimitWatch`
+(`ingestion/findings/provider-rate-limit-watch.ts`) of each call that ended RATE_LIMITED and each
+the provider answered. Once every call has been turned away for 15 minutes, each league the
+Provider syncs gets one `PROVIDER_RATE_LIMITED` WARNING; once the streak lasts a league's
+`quietAfterMinutes` it becomes an ERROR (logged for the alarm, *Sync findings* below). The
+Provider's next answer resolves them. The streak is held in memory per task, so a restart begins
+a new one; its first answer resolves what an earlier task left open. The leagues are read only
+when a refusal comes past a threshold not yet reached, so a short burst of 429s reads nothing.
 
 **The Providers page** also counts each provider's rate-limited jobs of the last 24 hours (jobs
 whose latest try hit the client's 429). Jobs carry no provider: a job belongs to the provider
@@ -309,9 +322,12 @@ column. Each finding names its sport league; its event, Provider row and the fee
   Provider, value) dedupes: a finding seen again counts the sighting and takes the new severity.
 - **Status.** `OPEN`, `RESOLVED` or `WAIVED` (a waive needs a note, a CHECK constraint). A resolved
   finding the sync sees again opens again; a waived one stays waived.
-- **Kinds.** `UNMAPPED_PARTICIPANT` (WARNING, raised by the live scores writer; its action is the
-  Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR, raised per synced league when a worker
-  task starts with the Provider's webhooks on and no signing secret; resolved once it is set).
+- **Kinds.** `PROVIDER_RATE_LIMITED` (WARNING after 15 minutes of every call rate limited, ERROR
+  at the league's quiet threshold, raised per synced league; resolved by the Provider's next
+  answer, *Rate limit and retries* above), `UNMAPPED_PARTICIPANT` (WARNING, raised by the live
+  scores writer; its action is the Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR,
+  raised per synced league when a worker task starts with the Provider's webhooks on and no
+  signing secret; resolved once it is set).
 - **Alert.** An ERROR that opens logs `ingestion.syncFinding.errorOpened`; a CloudWatch metric
   filter and alarm (`infrastructure/terraform/monitoring.tf`) send it to the alerts topic.
 - **Retention.** The nightly cleanup deletes RESOLVED findings 90 days after they were resolved,
@@ -336,7 +352,7 @@ sequenceDiagram
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
 
-The family is the sport's own (`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
+The family is the event's sport league's (`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
 
 | Category | Writer | Writes |
 |---|---|---|

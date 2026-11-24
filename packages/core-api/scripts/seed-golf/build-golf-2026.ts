@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Sport } from '@poolmaster/shared/domain';
+import { ParticipantType, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import { SPORT_DATA_SCHEMA_VERSION, SportDataContent, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague, type SportDataPlayer } from './sport-data-file';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -249,6 +249,8 @@ const seed: SportDataFile = {
     sport: Sport.GOLF,
     season: 2026,
     sportLeagues: sportLeagues.map((league) => league.name),
+    participantType: ParticipantType.INDIVIDUAL,
+    scoringFamily: ScoringFamily.STROKE_PLAY,
     contents: Object.values(SportDataContent),
   },
   // Every field, odds and score but the public winners is made up: a test seed, for QA and local only.

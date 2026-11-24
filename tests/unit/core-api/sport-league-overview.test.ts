@@ -31,7 +31,7 @@ const at = (iso: string) => new Date(iso);
 
 function league(overrides: Partial<SportLeagueOverviewLeague> = {}): SportLeagueOverviewLeague {
   return {
-    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', syncProviderId: 'balldontlie', isActive: true,
+    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true,
     ...overrides,
   };
 }
@@ -59,6 +59,13 @@ function only(input: SportLeagueOverviewFacts) {
   if (row === undefined) throw new Error('no overview row');
   return row;
 }
+
+describe('buildSportLeagueOverviews: provider', () => {
+  it('names the league\'s sync provider by name, so no reader looks it up by id, and none for a league no provider syncs', () => {
+    expect(only(facts())).toMatchObject({ providerId: 'balldontlie', providerName: 'BALLDONTLIE' });
+    expect(only(facts({ leagues: [league({ syncProviderId: null, syncProviderName: null })] }))).toMatchObject({ providerId: null, providerName: null });
+  });
+});
 
 describe('sport league sync health', () => {
   it('is OFF for a league that is off, even with a provider and failing runs', () => {

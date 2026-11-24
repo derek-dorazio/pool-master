@@ -16,6 +16,8 @@ import type {
 } from '@poolmaster/shared/domain/types';
 import {
   BracketAdvancement,
+  ParticipantType,
+  ScoringFamily,
   CupPointsScale,
   LeaguePlan,
   CupWeight,
@@ -91,8 +93,8 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     matchPeriodLayout: null,
     squaresFromRound: null,
     noun: null,
-    participantType: null,
-    scoringFamily: null,
+    participantType: ParticipantType.INDIVIDUAL,
+    scoringFamily: ScoringFamily.STROKE_PLAY,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

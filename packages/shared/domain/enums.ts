@@ -68,17 +68,17 @@ export const ParticipantStatusOrder = explicitOrder<ParticipantStatus>({
   [ParticipantStatus.RETIRED]: 3,
 });
 
-/** What a live check of a sports data provider found (#1873). */
+/** A sports data provider's health, from its sync runs of the last hour (#1873, #1999). */
 export const ProviderHealthStatus = {
-  /** It answered, quickly and without errors: Up. */
+  /** None of its runs failed: Up. */
   HEALTHY: 'HEALTHY',
-  /** It answered, but slowly or with some errors: Slow. */
+  /** Some of its runs failed: Partly failing. */
   DEGRADED: 'DEGRADED',
-  /** It did not answer: Down. */
+  /** All of its runs failed: Down. */
   DOWN: 'DOWN',
 } as const;
 export type ProviderHealthStatus = (typeof ProviderHealthStatus)[keyof typeof ProviderHealthStatus];
-/** Up first, then Slow, then Down. */
+/** Up first, then Partly failing, then Down. */
 export const ProviderHealthStatusOrder = explicitOrder<ProviderHealthStatus>({
   [ProviderHealthStatus.HEALTHY]: 0,
   [ProviderHealthStatus.DEGRADED]: 1,
@@ -847,6 +847,13 @@ export const ProviderSyncFindingStatusOrder = explicitOrder<ProviderSyncFindingS
  * slices add their kinds here, with their actions.
  */
 export const ProviderSyncFindingKind = {
+  /**
+   * A Provider has rate limited every call for a while (league model 1c), so its syncs keep
+   * being put off: a WARNING after a quarter of an hour, an ERROR once it has lasted the
+   * league's quiet threshold (`ProviderLeague.quietAfterMinutes`). Resolved by the Provider's
+   * next answer. Subject: each league it syncs, and the Provider.
+   */
+  PROVIDER_RATE_LIMITED: 'PROVIDER_RATE_LIMITED',
   /**
    * The feed sent a participant id no participant of the league is mapped to, so its results
    * had nowhere to land. Subject: league, Provider and the provider's participant id.

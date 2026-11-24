@@ -5,7 +5,8 @@ export type EventFieldEntry = SportEventParticipantDto;
 export type EventFieldInactiveReason = NonNullable<EventFieldEntry['inactiveReason']>;
 export type EventFieldPatch = UpdateSportEventParticipantsRequest['participants'][number];
 
-export type EventFieldNumericKey = 'ranking' | 'oddsToWin' | 'seedNumber' | 'price';
+/** The values the field participant dialog edits. Odds are never edited: they come only from the feed. */
+export type EventFieldNumericKey = 'ranking' | 'seedNumber' | 'price';
 
 export const EVENT_FIELD_INACTIVE_REASONS: readonly EventFieldInactiveReason[] = [
   'WITHDRAWN',
@@ -23,17 +24,11 @@ function isNonNegativeInt(raw: string): boolean {
   return /^\d+$/.test(raw.trim());
 }
 
-function isPositiveNumber(raw: string): boolean {
-  const value = Number(raw.trim());
-  return raw.trim() !== '' && Number.isFinite(value) && value > 0;
-}
-
 /** Whether a typed value can be stored in that column. Blank is checked by the caller: it clears. */
 export const EVENT_FIELD_NUMERIC_VALIDATORS: Record<EventFieldNumericKey, (raw: string) => boolean> = {
   ranking: isPositiveInt,
   seedNumber: isPositiveInt,
   price: isNonNegativeInt,
-  oddsToWin: isPositiveNumber,
 };
 
 /** The stored value of one numeric column; price is the valuation's. */

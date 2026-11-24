@@ -1,13 +1,10 @@
 import { displayString } from '../../display-strings/display-strings';
-import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import { ScoringFamily } from './scoring-family';
+import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 export const golfSportDefinition: SportDefinition = {
   sport: Sport.GOLF,
   name: 'Golf',
-  participantType: ParticipantType.INDIVIDUAL,
-  scoringFamily: ScoringFamily.STROKE_PLAY,
   tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],

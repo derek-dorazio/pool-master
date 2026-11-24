@@ -7,7 +7,7 @@
  * Kept apart from the family modules for the same reason as golf-round-scores.ts: the race result
  * service reads it, and the event wiring that builds that service is imported by a family module.
  */
-import { ScoringFamily, eventSportDefinition } from '@poolmaster/shared/domain';
+import { ScoringFamily } from '@poolmaster/shared/domain';
 import type { ScoringFamilyEvent } from './scoring-family-module';
 
 const STORES_RACE_RESULTS: Readonly<Record<ScoringFamily, boolean>> = {
@@ -18,5 +18,5 @@ const STORES_RACE_RESULTS: Readonly<Record<ScoringFamily, boolean>> = {
 
 /** Whether the event stores race results, by its sport league's scoring family. */
 export function eventStoresRaceResults(event: ScoringFamilyEvent): boolean {
-  return STORES_RACE_RESULTS[eventSportDefinition(event).scoringFamily];
+  return STORES_RACE_RESULTS[event.scoringFamily];
 }

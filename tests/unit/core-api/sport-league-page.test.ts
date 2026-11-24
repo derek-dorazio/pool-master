@@ -337,5 +337,6 @@ function makeReader(participants: SportLeaguePageParticipant[] | null): SportLea
     readParticipants: () => Promise.resolve(participants),
     readStructure: () => Promise.resolve(exists ? [] : null),
     readEventPageFacts: () => Promise.resolve(exists ? eventPageFacts() : null),
+    readPositions: () => Promise.resolve(exists ? [] : null),
   };
 }

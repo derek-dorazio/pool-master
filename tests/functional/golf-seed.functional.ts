@@ -24,6 +24,7 @@ import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { leagueProfiles } from '../support/league-profiles';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportPlay } from '../support/sport-play';
 
 // Loading a test data file through the real admin API: a test seed a commissioner can build
 // contests on, its players bound to their feed ids, a test slate, and a second run that changes nothing.
@@ -90,10 +91,10 @@ let admin: RegisteredUserContext;
 beforeAll(async () => {
   // The migrations' reference rows, restored in case an earlier suite cleared the sports table.
   const db = getFunctionalPrisma();
-  await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
-  await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' }, update: {} });
-  await db.sport.upsert({ where: { sport: Sport.BASKETBALL }, create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' }, update: {} });
-  await db.sport.upsert({ where: { sport: Sport.AMERICAN_FOOTBALL }, create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, tournamentFormat: 'RACE' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.BASKETBALL }, create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.AMERICAN_FOOTBALL }, create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' }, update: {} });
   admin = await buildRegisteredUser({ displayName: 'Load Admin' });
   await promoteToRootAdmin(admin);
 });
@@ -129,7 +130,7 @@ describe('Loading a golf test seed through the admin API', () => {
   });
   const seed: SportDataFile = {
     schemaVersion: 1,
-    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], contents: [...TEST_SEED_CONTENTS] },
+    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], ...sportPlay(Sport.GOLF), contents: [...TEST_SEED_CONTENTS] },
     testData: true,
     provenance: provenance(),
     sportLeagues: [{
@@ -282,7 +283,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
   /** A tour of two golfers, the feed ids given each; `key` keeps each test's tour and golfers its own. */
   const seed = (key: string, feedIds: Array<Record<string, string> | undefined>): SportDataFile => ({
     schemaVersion: 1,
-    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [`${tour} ${key}`], contents: [...TEST_SEED_CONTENTS] },
+    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [`${tour} ${key}`], ...sportPlay(Sport.GOLF), contents: [...TEST_SEED_CONTENTS] },
     testData: true,
     provenance: provenance(),
     sportLeagues: [{
@@ -321,7 +322,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
     const golfSportId = (await db.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id;
     const league = `${tour} known`;
     // As the sync leaves a golfer it fielded first in the league: its own spelling and no test data key.
-    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), sportId: golfSportId, name: league } });
+    const sportLeague = await db.sportLeague.create({ data: { ...(await leagueProfiles(db)), ...sportPlay(Sport.GOLF), sportId: golfSportId, name: league } });
     const synced = await db.participant.create({ data: { sportLeagueId: sportLeague.id, name: `${prefix} Synced Spelling`, participantType: 'INDIVIDUAL' } });
     await db.participantProviderMapping.create({ data: { participantId: synced.id, sportLeagueId: sportLeague.id, providerId: await providerRowId(), participantType: 'INDIVIDUAL', externalId: feedId('golfer-2') } });
 
@@ -402,7 +403,7 @@ describe('Filling an event from a test slate through the admin API', () => {
   const roster = players(prefix, 6);
   const slate = (keys: readonly number[]): SportDataFile => ({
     schemaVersion: 1,
-    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], contents: [SportDataContent.PLAYERS, SportDataContent.FIELDS] },
+    scope: { sport: Sport.GOLF, season: 2026, sportLeagues: [tour], ...sportPlay(Sport.GOLF), contents: [SportDataContent.PLAYERS, SportDataContent.FIELDS] },
     testData: true,
     provenance: provenance(),
     sportLeagues: [{ name: tour, players: keys.map((key) => roster[key - 1]), events: [] }],
@@ -415,7 +416,7 @@ describe('Filling an event from a test slate through the admin API', () => {
     // A test seed held back as a draft puts the event on the site with a field of golfers 1 to 3.
     const schedule: SportDataFile = {
       schemaVersion: 1,
-      scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], contents: [...TEST_SEED_CONTENTS] },
+      scope: { sport: Sport.GOLF, season: 2027, sportLeagues: [tour], ...sportPlay(Sport.GOLF), contents: [...TEST_SEED_CONTENTS] },
       testData: true,
       provenance: provenance(),
       sportLeagues: [{

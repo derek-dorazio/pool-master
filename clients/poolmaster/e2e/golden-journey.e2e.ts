@@ -76,8 +76,8 @@ type JourneyState = {
 };
 
 /**
- * #93 — the budget contest's prices. Auto-pricing spreads the field along the curve by the odds
- * act 1 sets, favourite first: the
+ * #93 — the budget contest's prices. Auto-pricing spreads the field along the curve by the seeds
+ * act 1 sets, top seed first: the
  * dearest two come to $20,500 ($12,000 + $8,500), which with $30,000 is over the $50,000 cap.
  * Act 1 sets by hand the four golfers act 3 picks: three of them cost more than the cap
  * ($30,000 + $20,000 + $6,000), and swapping the $20,000 golfer for the other $6,000 golfer fits
@@ -196,7 +196,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     const tourId = await test.step('create a golf tour', async () => {
       // A league is added by migration, so a journey makes its own through the API.
-      const id = await createJourneySportLeague(page, { sport: 'GOLF', name: run.tourName, platformTierProfileCode: 'TIERS_6_OF_10' });
+      const id = await createJourneySportLeague(page, { sport: 'GOLF', name: run.tourName, participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', platformTierProfileCode: 'TIERS_6_OF_10' });
       // The Sports page's one grid lists every sport league, the new one too.
       await page.goto('/manage/sports');
       await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
@@ -258,7 +258,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
     });
 
-    journey.fieldEntryIds = await test.step('place one player in each default tier, with odds to price by, one participant dialog at a time', async () => {
+    journey.fieldEntryIds = await test.step('place one player in each default tier, with a seed to price by, one participant dialog at a time', async () => {
       await page.goto(`/manage/sports/golf/events/${eventId}/field`);
       // The grid's rows are keyed by field entry, not player, so the act needs that mapping.
       // It reads it straight from the API rather than by sniffing the page's own response.
@@ -290,8 +290,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       for (const [index, entryId] of entryIds.entries()) {
         // A freshly added golfer starts untiered; its dialog's Edit moves it into a tier.
         await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toBeVisible();
-        // Odds give the field an order to price by: a field with no odds, seed or rank is refused.
-        await correctFieldParticipant(page, eventId, entryId, { tierKey: `tier-${index + 1}`, oddsToWin: (index + 1) * 5 });
+        // Seeds give the field an order to price by: a field with no odds, seed or rank is refused.
+        await correctFieldParticipant(page, eventId, entryId, { tierKey: `tier-${index + 1}`, seedNumber: index + 1 });
         await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${index + 1}`);
       }
       return entryIds;
@@ -1410,7 +1410,7 @@ async function buildReleasedTournament(
 
   await page.goto(`/manage/sports/golf/events/${eventId}/field`);
   for (const [index, entryId] of fieldEntryIds.entries()) {
-    await correctFieldParticipant(page, eventId, entryId, { tierKey: `tier-${index + 1}`, oddsToWin: (index + 1) * 5 });
+    await correctFieldParticipant(page, eventId, entryId, { tierKey: `tier-${index + 1}`, seedNumber: index + 1 });
   }
   await page.getByTestId('root-admin-tier-auto-prices').click();
   await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();

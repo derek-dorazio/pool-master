@@ -8,6 +8,8 @@
       "NASCAR Cup Series",
       "IndyCar"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

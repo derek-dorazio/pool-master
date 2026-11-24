@@ -7,6 +7,8 @@
       "UCI WorldTour",
       "UCI Women's WorldTour"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

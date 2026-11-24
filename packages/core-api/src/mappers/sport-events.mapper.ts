@@ -12,6 +12,7 @@ import {
   SportEventStatus,
   type SportEventContest,
   type SportEventTier,
+  eventProviderNameOf,
 } from '@poolmaster/shared/domain';
 import type {
   ImportSportEventYearFromProviderResponse,
@@ -57,6 +58,7 @@ export function mapSportEventToDto({
     id: event.id,
     externalId: event.externalId,
     providerId: event.providerId,
+    providerName: eventProviderNameOf(event),
     sport: event.sport,
     name: event.name,
     venue: event.venue ?? null,
@@ -78,8 +80,8 @@ export function mapSportEventToDto({
     eventSeriesId: event.eventSeriesId,
     eventYear: event.eventYear,
     sportLeagueId: event.sportLeagueId,
-    participantType: event.participantType ?? null,
-    scoringFamily: event.scoringFamily ?? null,
+    participantType: event.participantType,
+    scoringFamily: event.scoringFamily,
     syncScope: event.syncScope,
     providerSynced: isProviderSyncedEvent(event),
     autoLifecycleEnabled: event.autoLifecycleEnabled,

@@ -273,7 +273,7 @@ describe('contest scoring of a missed lineup', () => {
       participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
       config: { pointsTable: [10, 6, 3], didNotFinishPoints: 1 },
     };
-    const race = { sport: 'HORSE_RACING', status: 'COMPLETED', rounds: null, roundsPar: null } as unknown as Parameters<typeof toParticipantScores>[1];
+    const race = { sport: 'HORSE_RACING', scoringFamily: 'FINISH_POSITION', status: 'COMPLETED', rounds: null, roundsPar: null } as unknown as Parameters<typeof toParticipantScores>[1];
 
     expect(scoreMissedLineup(field(), race, raceScoring, 2)).toBe(2);
   });
@@ -304,5 +304,5 @@ function field(...golfers: ReturnType<typeof golfer>[]) {
 }
 
 function scoringEvent(event: { rounds: number | null; roundsPar: number | null; status?: string }) {
-  return { sport: 'GOLF', status: 'IN_PROGRESS', ...event } as unknown as Parameters<typeof toParticipantScores>[1];
+  return { sport: 'GOLF', scoringFamily: 'STROKE_PLAY', status: 'IN_PROGRESS', ...event } as unknown as Parameters<typeof toParticipantScores>[1];
 }

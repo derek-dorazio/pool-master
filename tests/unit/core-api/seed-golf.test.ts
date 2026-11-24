@@ -1,3 +1,4 @@
+import { sportPlay } from '../../support/sport-play';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Sport } from '@poolmaster/shared/domain';
@@ -106,7 +107,7 @@ describe('golf-2026.json', () => {
   );
 
   it('is a 2026 golf test seed whose envelope names both tours and a test seed\'s contents', () => {
-    expect(seed.scope).toEqual({ sport: Sport.GOLF, season: 2026, sportLeagues: ['PGA TOUR', 'LPGA Tour'], contents: [...TEST_SEED_CONTENTS] });
+    expect(seed.scope).toEqual({ sport: Sport.GOLF, season: 2026, sportLeagues: ['PGA TOUR', 'LPGA Tour'], ...sportPlay(Sport.GOLF), contents: [...TEST_SEED_CONTENTS] });
     expect(seed.testData).toBe(true);
   });
 
@@ -153,6 +154,7 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
       sport: Sport.AMERICAN_FOOTBALL,
       season: 2026,
       sportLeagues: ['NFL'],
+      ...sportPlay(Sport.AMERICAN_FOOTBALL),
       contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
     });
     expect(nfl.bracketAdvancement).toBe('RESEED_BY_SEED');
@@ -195,6 +197,7 @@ describe('basketball-2025-nba-playoffs-test.json', () => {
       sport: Sport.BASKETBALL,
       season: 2025,
       sportLeagues: ['NBA'],
+      ...sportPlay(Sport.BASKETBALL),
       contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
     });
     expect(nba.bracketAdvancement).toBeUndefined();
@@ -564,7 +567,7 @@ describe('american-football-2025-nfl-weeks-test.json', () => {
   const [nfl] = file.sportLeagues;
 
   it('is a test seed of the 2025 NFL season\'s first three weeks, each one round of sixteen played games that link nowhere', () => {
-    expect(file.scope).toEqual({ sport: Sport.AMERICAN_FOOTBALL, season: 2025, sportLeagues: ['NFL'], contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS] });
+    expect(file.scope).toEqual({ sport: Sport.AMERICAN_FOOTBALL, season: 2025, sportLeagues: ['NFL'], ...sportPlay(Sport.AMERICAN_FOOTBALL), contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS] });
     expect(eventRows(file)).toEqual([
       ['NFL Week 1', '2025-09-04', '2025-09-08', 1, null],
       ['NFL Week 2', '2025-09-11', '2025-09-15', 1, null],

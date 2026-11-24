@@ -60,7 +60,6 @@ import {
   ProviderLeagueRefusedError,
   type DateRange,
   type ProviderEventListOptions,
-  type ProviderHealthStatus,
   type ProviderParticipant,
   type ProviderPayloadCapture,
   type ProviderPayloadCaptureSession,
@@ -88,6 +87,7 @@ import { CFP_LEAGUE, parseCfpScope } from './ncaaf-mapping';
 import { NcaafReader } from './ncaaf-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, BalldontlieRequestError, type BalldontlieConnection, type BalldontlieQuery } from './balldontlie-client';
 import { jobDeferredUntilOf } from '../../../background-jobs/job-error-type';
+import type { ProviderRateLimitObserver } from '../../core/provider-call-policy';
 import {
   PgaCompetitorType,
   pgaPlayerListSchema,
@@ -122,6 +122,8 @@ export interface BalldontlieAdapterOptions {
   /** For tests: the client's clock and wait. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  /** Told how each call ends, for the Provider's rate-limit finding (league model 1c). */
+  rateLimits?: ProviderRateLimitObserver;
   /**
    * Where a read the adapter can do without logs that it was refused or failed: a series
    * playoffs' standings, or one league of a sport's list (#1797).
@@ -465,29 +467,6 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       pgaTournamentResultListSchema,
     );
     return { category: 'GOLF', externalEventId: eventId, rounds: toGolfRoundUpdates(tournament, results) };
-  }
-
-  /** One small free-tier read: it proves the key, the plan and the network path together. */
-  async healthCheck(): Promise<ProviderHealthStatus> {
-    const startedAt = Date.now();
-    try {
-      await this.readTournamentPage({ per_page: 1 });
-      return {
-        providerId: this.providerId,
-        status: 'HEALTHY',
-        errorRateLastHour: 0,
-        latencyMsP95: Date.now() - startedAt,
-        lastSuccessfulPoll: new Date(),
-      };
-    } catch (error) {
-      return {
-        providerId: this.providerId,
-        status: 'DOWN',
-        errorRateLastHour: 1,
-        latencyMsP95: Date.now() - startedAt,
-        message: errorMessage(error),
-      };
-    }
   }
 
   /** One page of tournaments. Every tournament read goes through here or `listTournaments`. */

@@ -34,6 +34,7 @@ import {
   FieldOrderBasis,
   orderField,
   placeInTiers,
+  priceFieldOnBudgetCurve,
   SportEventStatus,
   ValuationSource,
   type EventPricingConfig,
@@ -47,7 +48,6 @@ import {
   type PlatformTierProfile,
   type TierSpread,
 } from '@poolmaster/shared/domain';
-import { deriveGolfPrices } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
 
 /** One field row's place in a tier. */
@@ -610,8 +610,8 @@ function pricePlacements(
   source: ValuationSource,
   pricingConfig: EventPricingConfig,
 ): Array<{ sportEventParticipantId: string; price: number; source: ValuationSource }> {
-  return deriveGolfPrices(ordered.map((entry) => ({ participantId: entry.id })), pricingConfig)
-    .map((entry) => ({ sportEventParticipantId: entry.participantId, price: entry.price, source }));
+  return priceFieldOnBudgetCurve(pricingConfig, ordered.map((entry) => entry.id))
+    .map(({ id, price }) => ({ sportEventParticipantId: id, price, source }));
 }
 
 /** The tiers with the field rows placed in each, in tier order; a valuation in no tier given is left out. */

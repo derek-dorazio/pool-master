@@ -436,19 +436,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.updateEventParticipants,
   });
 
-  fastify.post('/:eventId/participants/seed', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Seed a sport event\'s field from its sport league',
-      description: 'Adds the sport league\'s active participants with derived seeds and odds; ones already on the field are skipped. Root admin only.',
-      operationId: 'seedEventParticipants',
-      params: EVENT_PARAMS,
-      response: { 200: schemaRef('SeedSportEventParticipantsResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.seedEventParticipants,
-  });
-
   fastify.post('/:eventId/leaderboards/rebuild', {
     ...write,
     schema: {

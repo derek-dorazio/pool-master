@@ -2,7 +2,6 @@ import { ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult, GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type {
   DateRange,
-  ProviderHealthStatus,
   ProviderParticipant,
   ProviderPayloadCapture,
   ProviderPayloadCaptureSession,
@@ -17,7 +16,6 @@ import type {
   GetMockContestFeedScenarioEventDetailResponse,
   GetMockContestFeedScoresSnapshotResponse,
 } from '@poolmaster/mock-contest-feed-provider/generated/hey-api/types';
-import { errorMessage } from '../../packages/core-api/src/core/error-message';
 import { ProviderPayloadRecorder } from '../../packages/core-api/src/modules/ingestion/adapters/provider-payload-recorder';
 import type { FastifyInstance } from 'fastify';
 import { mockEventStateKinds, type MockEventStateKind } from '../../packages/mock-contest-feed-provider/src/contracts';
@@ -181,29 +179,6 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
       });
 
     return { category: 'GOLF', externalEventId: eventId, rounds };
-  }
-
-  async healthCheck(): Promise<ProviderHealthStatus> {
-    const startedAt = Date.now();
-
-    try {
-      await this.fetchJson<unknown>('/health');
-      return {
-        providerId: this.providerId,
-        status: 'HEALTHY',
-        errorRateLastHour: 0,
-        latencyMsP95: Date.now() - startedAt,
-        lastSuccessfulPoll: new Date(),
-      };
-    } catch (error) {
-      return {
-        providerId: this.providerId,
-        status: 'DOWN',
-        errorRateLastHour: 1,
-        latencyMsP95: Date.now() - startedAt,
-        message: errorMessage(error),
-      };
-    }
   }
 
   /**
