@@ -99,7 +99,7 @@ export function createIngestionHandlers(
       to: to ? new Date(to) : undefined,
     });
     logger.info({ count: syncRuns.length }, 'Listed provider sync runs');
-    return reply.send({ syncRuns: syncRuns.map((run) => toProviderSyncRunDto(run, logger)) });
+    return reply.send({ syncRuns: syncRuns.map(toProviderSyncRunDto) });
   }
 
   async function getSyncRun(
@@ -112,7 +112,7 @@ export function createIngestionHandlers(
     try {
       const run = await ingestionService.getSyncRun(syncRunId);
       logger.info({ syncRunId, hasDetails: run.details !== null }, 'Read provider sync run');
-      return reply.send(toProviderSyncRunDetailDto(run, logger));
+      return reply.send(toProviderSyncRunDetailDto(run));
     } catch (err) {
       if (err instanceof ProviderSyncRunNotFoundError) {
         logger.warn({ syncRunId }, 'Provider sync run not found');

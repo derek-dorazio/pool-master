@@ -154,23 +154,6 @@ export const ProviderSyncRunStatusSchema = z.enum(ProviderSyncRunStatus);
 export const ProviderSyncKindSchema = z.enum(ProviderSyncKind).describe('What a sync run syncs: a sport league\'s EVENTS, an event\'s FIELD, or an event\'s SCORES.');
 export const JobTriggerSchema = z.enum(JobTrigger).describe('What started a job or sync run: a SCHEDULE, the provider\'s WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league\'s COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board\'s rebuild). A person\'s trigger is the role the route requires, not their highest role. A sync run has its job\'s.');
 
-export const ProviderSyncOutcomeSeveritySchema = z.enum(['SUCCESS', 'WARNING', 'ERROR']);
-export type ProviderSyncOutcomeSeverity = z.infer<typeof ProviderSyncOutcomeSeveritySchema>;
-
-export const ProviderSyncWarningDtoSchema = z.object({
-  code: z.string().describe('Stable warning code emitted by the ingestion/sync layer.'),
-  message: z.string().describe('Human-readable warning detail for root-admin investigation.'),
-}).describe('Warning emitted for a provider sync run that completed but needs operator attention.');
-export type ProviderSyncWarningDto = z.infer<typeof ProviderSyncWarningDtoSchema>;
-
-export const ProviderSyncOutcomeDtoSchema = z.object({
-  severity: ProviderSyncOutcomeSeveritySchema.describe('Admin-facing severity derived from run status, errors, and warnings.'),
-  summary: z.string().describe('Human-readable root-admin summary of the sync outcome.'),
-  warnings: z.array(ProviderSyncWarningDtoSchema).describe('Warnings that did not fail the run but should be visible to an operator.'),
-  errors: z.number().int().min(0).describe('Count of errors captured for the run.'),
-}).describe('Admin-facing outcome summary for a provider sync run.');
-export type ProviderSyncOutcomeDto = z.infer<typeof ProviderSyncOutcomeDtoSchema>;
-
 export const ProviderSyncProviderPayloadDtoSchema = z.object({
   operation: IngestionFeedTypeSchema.describe('Provider feed operation represented by this payload.'),
   rawCaptured: z.boolean().describe('Whether raw provider response JSON was captured for this run.'),
@@ -237,41 +220,6 @@ export type ProviderSyncWriteDiagnosticsDto = z.infer<typeof ProviderSyncWriteDi
 export const SyncRequestSourceSchema = z.enum(['SCHEDULED', 'MANUAL', 'WEBHOOK']).describe('Who asked for the sync: the scheduler, a root admin, or a provider\'s webhook saying something happened in the event (#1498).');
 export type SyncRequestSource = z.infer<typeof SyncRequestSourceSchema>;
 
-export const SyncRequestActorDtoSchema = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('SYSTEM'),
-    name: z.enum(['scheduler', 'webhook']).describe('`scheduler` for a SCHEDULED sync, `webhook` for a WEBHOOK sync.'),
-  }).describe('The system: the scheduler, or the provider webhook receiver.'),
-  z.object({
-    type: z.literal('ROOT_ADMIN'),
-    userId: z.string().describe('The root admin who asked for the sync.'),
-    email: z.string().describe('Their email at the time, for the audit trail.'),
-  }).describe('A root admin, for a MANUAL sync.'),
-]).describe('Who asked for a sync.');
-export type SyncRequestActorDto = z.infer<typeof SyncRequestActorDtoSchema>;
-
-export const ProviderSyncRequestPayloadDtoSchema = z.object({
-  sport: SportDtoSchema,
-  eventId: z.string().describe('Provider event identifier the sync was asked for.'),
-  source: SyncRequestSourceSchema,
-  actor: SyncRequestActorDtoSchema,
-  normalizedAt: DateTimeSchema.describe('When the request was validated and normalized.'),
-}).describe('The request that submitted a sync run: what was asked for, by whom, and when.');
-export type ProviderSyncRequestPayloadDto = z.infer<typeof ProviderSyncRequestPayloadDtoSchema>;
-
-export const ProviderSyncRunPayloadDtoSchema = z.object({
-  runType: z.string().optional().describe('Sync run source: a manual, scheduled or webhook-triggered event sync.'),
-  requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
-  requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
-  requestPayload: ProviderSyncRequestPayloadDtoSchema.optional().describe('The request that submitted the sync run.'),
-  outcome: ProviderSyncOutcomeDtoSchema.optional().describe('Admin-facing outcome and warning summary for the sync run.'),
-  stats: z.record(z.string(), z.number()).optional().describe('Canonical numeric sync stats used by admin diagnostics.'),
-  recordsProcessed: z.number().optional().describe('Legacy top-level processed-record count retained for summary compatibility.'),
-  errors: z.number().optional().describe('Legacy top-level error count retained for summary compatibility.'),
-  detail: z.string().optional().describe('Legacy human-readable detail retained for summary compatibility.'),
-}).loose().describe('Provider sync run summary: the request, feed, outcome and stats. The detailed diagnostics are read one run at a time with getProviderSyncRun.');
-export type ProviderSyncRunPayloadDto = z.infer<typeof ProviderSyncRunPayloadDtoSchema>;
-
 export const ProviderSyncFailurePayloadDtoSchema = z.object({
   error: z.object({
     name: z.string().optional().describe('The error\'s class name, when it was an Error.'),
@@ -303,8 +251,11 @@ export const ProviderSyncRunDtoSchema = z.object({
   startedAt: DateTimeSchema.nullable(),
   completedAt: DateTimeSchema.nullable(),
   createdAt: DateTimeSchema.describe('When the run was submitted.'),
-  payload: ProviderSyncRunPayloadDtoSchema.describe('Provider sync run summary with canonical stats and outcome.'),
-}).describe('One feed\'s sync against a provider, with its diagnostics.');
+  summary: z.string().describe('One line for the sync history: what the run did, or why it failed.'),
+  stats: z.record(z.string(), z.number()).describe('The run\'s numeric counts by name, for diagnostics; empty until it reports any.'),
+  changedCount: z.number().int().min(0).nullable().describe('The rows the run created, updated or deleted; null until it completes, and for a failed run.'),
+  errorCount: z.number().int().min(0).describe('The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run.'),
+}).describe('One sync against a provider: its kind, status and outcome.');
 export type ProviderSyncRunDto = z.infer<typeof ProviderSyncRunDtoSchema>;
 
 export const ProviderSyncRunDetailDtoSchema = ProviderSyncRunDtoSchema.extend({

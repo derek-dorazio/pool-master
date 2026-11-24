@@ -32,6 +32,7 @@ import {
   type BackgroundJob,
   type BackgroundJobOutcome,
   type ProviderSyncRun,
+  type ProviderSyncRunOutcome,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
@@ -43,9 +44,6 @@ import { SportEventError } from './errors';
 import { syncLeagueEventsJob, type SyncLeagueEventsJobPayload } from './league-events-sync-job';
 import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
 import type { ProviderSeasonImport, SportEventService } from './service';
-
-/** The run's payload `runType`, beside the feed runs' MANUAL, SCHEDULED and WEBHOOK event syncs. */
-export const LEAGUE_EVENTS_SYNC_RUN_TYPE = 'LEAGUE_EVENTS_SYNC';
 
 /**
  * The provider's refusals a retry cannot fix: the league is unknown, is not synced from the provider, or is
@@ -140,7 +138,6 @@ export class LeagueEventsSync {
     // A try whose job another task has claimed stops before it records a run of its own.
     if (!await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
     const startedAt = this.now();
-    const basePayload = { runType: LEAGUE_EVENTS_SYNC_RUN_TYPE, seasons: seasons.map((season) => season.name) };
     const providerId = selected.providerId;
     const run = await this.options.syncRuns.create({
       providerCode: selected.providerCode,
@@ -153,7 +150,7 @@ export class LeagueEventsSync {
       status: ProviderSyncRunStatus.IN_PROGRESS,
       startedAt,
       completedAt: null,
-      payload: { ...basePayload, ...progressPayload(sportLeague, [], seasons.length) },
+      ...progressOutcome(sportLeague, [], seasons.length),
       createdAt: startedAt,
     });
 
@@ -167,11 +164,11 @@ export class LeagueEventsSync {
         // poolmaster-allow-query-in-loop: the run's progress after each Season
         await this.options.syncRuns.update(run.id, {
           status: ProviderSyncRunStatus.IN_PROGRESS,
-          payload: { ...basePayload, ...progressPayload(sportLeague, synced, seasons.length) },
+          ...progressOutcome(sportLeague, synced, seasons.length),
         });
       }
     } catch (error) {
-      await this.failRun(run, startedAt, basePayload, synced, error);
+      await this.failRun(run, startedAt, synced, error);
       this.options.logger?.error({
         action: 'events.leagueSync.failed',
         data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, error: errorMessage(error) },
@@ -188,12 +185,10 @@ export class LeagueEventsSync {
       status: ProviderSyncRunStatus.COMPLETED,
       startedAt,
       completedAt: this.now(),
-      payload: {
-        ...basePayload,
-        detail: `Synced ${sportLeague.name}'s events for ${read}: ${String(counts.created)} created, ${String(counts.updated)} updated.`,
-        outcome: { severity: 'SUCCESS', summary: `${String(counts.created)} created, ${String(counts.updated)} updated, ${String(counts.skipped)} skipped.`, warnings: [], errors: 0 },
-        stats: counts,
-      },
+      summary: `Synced ${sportLeague.name}'s events for ${read}: ${String(counts.created)} created, ${String(counts.updated)} updated, ${String(counts.skipped)} skipped.`,
+      stats: counts,
+      changedCount: counts.created + counts.updated,
+      errorCount: 0,
       details: { seasons: synced.map(seasonDetails) },
     });
     this.options.logger?.info({
@@ -259,11 +254,10 @@ export class LeagueEventsSync {
       await this.options.syncRuns.update(run.id, {
         status: ProviderSyncRunStatus.FAILED,
         completedAt: this.now(),
-        payload: {
-          ...run.payload,
-          detail: 'Interrupted: an earlier try of this sync stopped before it finished.',
-          outcome: { severity: 'ERROR', summary: 'Interrupted before it finished.', warnings: [], errors: 1 },
-        },
+        summary: 'Interrupted: an earlier try of this sync stopped before it finished.',
+        stats: run.stats,
+        changedCount: null,
+        errorCount: 1,
       });
     }
   }
@@ -271,7 +265,6 @@ export class LeagueEventsSync {
   private async failRun(
     run: ProviderSyncRun,
     startedAt: Date,
-    basePayload: Record<string, unknown>,
     seasons: readonly SeasonSync[],
     error: unknown,
   ): Promise<void> {
@@ -280,12 +273,10 @@ export class LeagueEventsSync {
       status: ProviderSyncRunStatus.FAILED,
       startedAt,
       completedAt: this.now(),
-      payload: {
-        ...basePayload,
-        detail: `Failed: ${message}`,
-        outcome: { severity: 'ERROR', summary: `Failed: ${message}`, warnings: [], errors: 1 },
-        stats: countsOf(seasons),
-      },
+      summary: `Failed: ${message}`,
+      stats: countsOf(seasons),
+      changedCount: null,
+      errorCount: 1,
       details: {
         seasons: seasons.map(seasonDetails),
         failurePayload: {
@@ -310,15 +301,13 @@ function countsOf(seasons: readonly SeasonSync[]): { created: number; updated: n
   };
 }
 
-/** A running sync's payload: how far it has got. */
-function progressPayload(sportLeague: SportLeague, seasons: readonly SeasonSync[], seasonCount: number): Record<string, unknown> {
-  const counts = countsOf(seasons);
-  const summary = `Syncing ${sportLeague.name}'s events: ${String(seasons.length)} of ${String(seasonCount)} Seasons done.`;
+/** A running sync's outcome so far: how far it has got. */
+function progressOutcome(sportLeague: SportLeague, seasons: readonly SeasonSync[], seasonCount: number): ProviderSyncRunOutcome {
   return {
-    detail: summary,
-    outcome: { severity: 'SUCCESS', summary, warnings: [], errors: 0 },
-    stats: counts,
-    progress: { seasonsDone: seasons.length, seasonCount },
+    summary: `Syncing ${sportLeague.name}'s events: ${String(seasons.length)} of ${String(seasonCount)} Seasons done.`,
+    stats: { ...countsOf(seasons), seasonsDone: seasons.length, seasonCount },
+    changedCount: null,
+    errorCount: 0,
   };
 }
 

@@ -43,101 +43,9 @@ export const FEED_LABELS = {
   EVENTLIVESCORES: 'Live scores',
 } as const;
 
-export type ProviderSyncRunPayload = ProviderSyncRun['payload'];
-
-export function getPayloadOutcome(payload: ProviderSyncRunPayload) {
-  return payload.outcome ?? null;
-}
-
-export function getRequestedFeed(payload: ProviderSyncRunPayload) {
-  return payload.requestedFeed ?? null;
-}
-
-export function formatRequestedFeed(payload: ProviderSyncRunPayload) {
-  const requestedFeed = getRequestedFeed(payload);
-  return requestedFeed ? FEED_LABELS[requestedFeed] : 'Unknown feed';
-}
-
-export function getPayloadWarnings(payload: ProviderSyncRunPayload) {
-  return getPayloadOutcome(payload)?.warnings ?? [];
-}
-
-export function buildPayloadSummary(payload: ProviderSyncRunPayload) {
-  const outcome = getPayloadOutcome(payload);
-  if (outcome?.summary) {
-    return outcome.summary;
-  }
-
-  const primaryTextFields = ['detail', 'message', 'summary', 'runType'] as const;
-  for (const key of primaryTextFields) {
-    const value = payload[key];
-    if (typeof value === 'string' && value.trim().length > 0) {
-      return value;
-    }
-  }
-
-  const metricPairs: Array<[string, string]> = [
-    ['recordsProcessed', 'processed'],
-    ['eventCount', 'events'],
-    ['participantCount', 'participants'],
-    ['errorCount', 'errors'],
-    ['errors', 'errors'],
-  ];
-
-  const metrics = metricPairs.flatMap(([key, label]) => {
-    const value = payload[key];
-    if (typeof value === 'number') {
-      return [`${value} ${label}`];
-    }
-
-    if (typeof value === 'string' && value.trim().length > 0) {
-      return [`${label}: ${value}`];
-    }
-
-    return [];
-  });
-
-  if (metrics.length > 0) {
-    return metrics.slice(0, 3).join(' · ');
-  }
-
-  const fallbackEntries = Object.entries(payload).flatMap(([key, value]) => {
-    if (
-      value === null
-      || value === undefined
-      || typeof value === 'object'
-      || key.endsWith('At')
-      || key === 'providerId'
-      || key === 'eventId'
-      || key === 'status'
-    ) {
-      return [];
-    }
-
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return [`${key}: ${String(value)}`];
-    }
-
-    return [];
-  });
-
-  return fallbackEntries[0] ?? 'Payload captured for operational review.';
-}
-
-export function buildCompactStatsSummary(payload: ProviderSyncRunPayload) {
-  const stats = buildStatsSummary(payload);
-  if (stats.length === 0) {
-    return 'No stats';
-  }
-
-  return stats
-    .slice(0, 3)
-    .map((stat) => `${stat.label}: ${stat.value}`)
-    .join(' · ');
-}
-
-export function buildStatsSummary(payload: ProviderSyncRunPayload) {
-  return Object.entries(payload.stats ?? {}).map(([key, value]) => ({
+/** A run's counts as labelled facts: `liveScoreUpdatesReturned` reads "Live Score Updates Returned". */
+export function buildStatsSummary(run: Pick<ProviderSyncRun, 'stats'>) {
+  return Object.entries(run.stats).map(([key, value]) => ({
     key,
     label: key
       .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -147,13 +55,6 @@ export function buildStatsSummary(payload: ProviderSyncRunPayload) {
 }
 
 export type ProviderSyncRunDetails = NonNullable<ProviderSyncRunDetail['details']>;
-
-export function getPayloadSection<K extends 'requestPayload'>(
-  payload: ProviderSyncRunPayload,
-  key: K,
-): NonNullable<ProviderSyncRunPayload[K]> | null {
-  return payload[key] ?? null;
-}
 
 export function getDetailsSection<K extends 'providerPayload' | 'jobPayload'>(
   details: ProviderSyncRunDetails | null | undefined,

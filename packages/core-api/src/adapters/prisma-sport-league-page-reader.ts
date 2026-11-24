@@ -17,10 +17,9 @@ import type {
 import type { SportLeaguePhaseDefinition, SportLeaguePosition, SportLeagueSeasonDetail, SportLeagueSeasonSlot, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
 import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
-import { outcomeSummary } from './prisma-sport-league-overview-reader';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
-const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, payloadJson: true } as const;
+const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, summary: true, changedCount: true } as const;
 const SLOT_SELECT = {
   id: true, sportLeaguePhaseId: true, key: true, slotKind: true, weekNumber: true, name: true, awardsTrophy: true, squaresEligible: true,
   seriesFormat: true, seriesGames: true, pairing: true, matchFormat: true, canEndTied: true, periodUnit: true, periodCount: true,
@@ -334,8 +333,8 @@ function toRun(row: RunRow): SportLeaguePageRun {
     status: row.status,
     createdAt: row.createdAt,
     startedAt: row.startedAt,
-    summary: outcomeSummary(row.payloadJson),
-    changedCount: row.status === ProviderSyncRunStatus.COMPLETED ? changedCount(row.payloadJson) : null,
+    summary: row.summary === '' ? null : row.summary,
+    changedCount: row.status === ProviderSyncRunStatus.COMPLETED ? row.changedCount : null,
   };
 }
 
@@ -346,13 +345,3 @@ function oneRunPerKind(runs: readonly SportLeaguePageRun[]): SportLeaguePageRun[
   return [...byKind.values()];
 }
 
-/** The rows a finished run created or updated, from its `stats`; null when it counted none. */
-function changedCount(payload: Prisma.JsonValue): number | null {
-  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) return null;
-  const stats = payload['stats'];
-  if (typeof stats !== 'object' || stats === null || Array.isArray(stats)) return null;
-  const created = stats['writeCreated'];
-  const updated = stats['writeUpdated'];
-  if (typeof created !== 'number' || typeof updated !== 'number') return null;
-  return created + updated;
-}

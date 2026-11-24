@@ -303,7 +303,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   const registry = new ProviderRegistry();
   if (provider) registry.register('GOLF', provider, 'PRIMARY');
   const scheduler = new IngestionScheduler(registry, {
-    onEventDetail: async () => ({ writeDiagnostics: emptySyncWriteDiagnostics(), unlinkedRankedParticipants: [] }),
+    onEventDetail: async () => ({ writeDiagnostics: emptySyncWriteDiagnostics() }),
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
   }, undefined, {
     now: () => new Date('2026-04-05T12:00:00.000Z'),
@@ -373,11 +373,11 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
 
 async function waitForProviderSyncRun(
   syncRunId: string,
-): Promise<{ status: string; payloadJson: unknown; detailsJson: unknown }> {
+): Promise<{ status: string; summary: string; stats: unknown; errorCount: number; detailsJson: unknown }> {
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const row = await getPrisma().providerSyncRun.findUnique({
       where: { id: syncRunId },
-      select: { status: true, payloadJson: true, detailsJson: true },
+      select: { status: true, summary: true, stats: true, errorCount: true, detailsJson: true },
     });
     if (row && row.status !== 'SUBMITTED' && row.status !== 'IN_PROGRESS') {
       return row;
@@ -408,7 +408,7 @@ describe('Contract verification (root admin)', () => {
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         sport: 'GOLF',
         status: 'COMPLETED',
-        payloadJson: { requestedFeed: 'EVENTPARTICIPANTS' },
+        summary: 'Completed event participants sync.',
         detailsJson: { providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: true, rawTruncated: false, raw: [] } },
       },
     });
@@ -508,11 +508,9 @@ describe('Contract verification (root admin)', () => {
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
           completedAt: new Date('2026-04-09T10:01:00.000Z'),
           createdAt: new Date(submittedAt - 60_000),
-          payloadJson: {
-            runType: 'EVENT_SYNC',
-            recordsProcessed: 42,
-            detail: 'Initial event and field import',
-          },
+          summary: 'Initial event and field import',
+          stats: { recordsProcessed: 42 },
+          changedCount: 1,
           detailsJson: {
             jobPayload: {
               jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: 'GOLF',
@@ -534,11 +532,8 @@ describe('Contract verification (root admin)', () => {
           startedAt: new Date('2026-04-10T10:00:00.000Z'),
           completedAt: new Date('2026-04-10T10:00:30.000Z'),
           createdAt: new Date(submittedAt - 120_000),
-          payloadJson: {
-            runType: 'SCHEDULED_EVENT_SYNC',
-            errorCount: 1,
-            detail: 'Transient provider timeout',
-          },
+          summary: 'Transient provider timeout',
+          errorCount: 1,
         },
       ],
     });
@@ -607,7 +602,7 @@ describe('Contract verification (root admin)', () => {
     // #205 — both rows were submitted just now, inside the default 6-hour window.
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns).toHaveLength(2);
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0]).toMatchObject({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, providerName: 'BALLDONTLIE' });
-    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0].payload.runType).toBeDefined();
+    expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns[0]).toMatchObject({ summary: 'Initial event and field import', stats: { recordsProcessed: 42 }, changedCount: 1, errorCount: 0 });
     expect(syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns.map((run) => run.id)).toEqual([
       '11111111-1111-1111-1111-111111111111',
       '22222222-2222-2222-2222-222222222222',
@@ -626,7 +621,7 @@ describe('Contract verification (root admin)', () => {
     expect(ProviderSyncRunDetailDtoSchema.safeParse(syncRunRes.json()).success).toBe(true);
     expect(syncRunRes.json<ProviderSyncRunDetailDto>()).toMatchObject({
       id: '11111111-1111-1111-1111-111111111111',
-      payload: { runType: 'EVENT_SYNC', recordsProcessed: 42 },
+      summary: 'Initial event and field import',
       details: {
         jobPayload: { recordsProcessed: 42 },
         writeDiagnostics: { summary: { total: 42, created: 1 }, rows: [{ id: 'row-1', disposition: 'CREATED' }] },
@@ -853,11 +848,8 @@ describe('Contract verification (root admin)', () => {
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
-        payloadJson: {
-          runType: 'MANUAL_SYNC',
-          recordsProcessed: 12,
-          detail: 'Imported event and participant field.',
-        },
+        summary: 'Imported event and participant field.',
+        stats: { recordsProcessed: 12 },
       },
       update: {
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
@@ -866,11 +858,8 @@ describe('Contract verification (root admin)', () => {
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
-        payloadJson: {
-          runType: 'MANUAL_SYNC',
-          recordsProcessed: 12,
-          detail: 'Imported event and participant field.',
-        },
+        summary: 'Imported event and participant field.',
+        stats: { recordsProcessed: 12 },
       },
     });
     await getPrisma().providerSyncRun.deleteMany({
@@ -914,7 +903,7 @@ describe('Contract verification (root admin)', () => {
         syncRunsRes.json<ProviderSyncRunListResponse>().syncRuns.some(
           (item) =>
             item.eventId === 'event-1'
-            && item.payload.detail === 'Imported event and participant field.',
+            && item.summary === 'Imported event and participant field.',
         ),
       ).toBe(true);
 
@@ -976,7 +965,7 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
-  it('pool-master-ueu.1: manual zero-data syncs expose warning diagnostics and raw provider payload', async () => {
+  it('records a manual zero-data sync COMPLETED with its counts and the raw provider payload', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Sync Diagnostics Contract User',
       isRootAdmin: true,
@@ -1020,23 +1009,13 @@ describe('Contract verification (root admin)', () => {
           writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] },
         }),
       );
-      expect(completedRun.payloadJson).toEqual(
-        expect.objectContaining({
-          outcome: expect.objectContaining({
-            severity: 'WARNING',
-            warnings: [
-              expect.objectContaining({
-                code: 'NO_PROVIDER_LIVE_SCORES',
-              }),
-            ],
-          }),
-          stats: expect.objectContaining({
-            providerRecordsReturned: 0,
-            liveScoreUpdatesReturned: 0,
-          }),
+      expect(completedRun).toMatchObject({
+        errorCount: 0,
+        stats: expect.objectContaining({
+          providerRecordsReturned: 0,
+          liveScoreUpdatesReturned: 0,
         }),
-      );
-      expect(completedRun.payloadJson).not.toHaveProperty('responsePayload');
+      });
     } finally {
       await app.close();
     }

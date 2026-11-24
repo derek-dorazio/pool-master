@@ -1,20 +1,19 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProviderSyncRun } from '@/lib/api';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { ReadOnlyDetailModal } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { PRODUCT_NAME, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import {
   formatJsonPayload,
-  formatRequestedFeed,
   getDetailsSection,
-  getPayloadSection,
   type ProviderSyncRun,
   type ProviderSyncRunDetail,
 } from './root-admin-sync-utils';
 import { SyncRunDetail } from './sync-run-detail';
-import { buildRunEvidenceRows, formatEventValue, getRunStatusLabel } from './sync-run-status';
+import { buildRunEvidenceRows, formatEventValue } from './sync-run-status';
 
 /** A sync run opened from Recent runs: its facts, then what it did, changed and captured. */
 export function SyncRunDialog({
@@ -39,7 +38,6 @@ export function SyncRunDialog({
   const runDetails = runDetailQuery.data?.details;
 
   const evidenceRows = useMemo(() => buildRunEvidenceRows(runDetails), [runDetails]);
-  const requestPayload = getPayloadSection(run.payload, 'requestPayload');
   const providerPayload = getDetailsSection(runDetails, 'providerPayload');
   const jobPayload = getDetailsSection(runDetails, 'jobPayload');
   const evidenceEmptyMessage = runDetails === null
@@ -53,7 +51,7 @@ export function SyncRunDialog({
 
   return (
     <ReadOnlyDetailModal
-      copyText={formatJsonPayload({ payload: run.payload, details: runDetails ?? null })}
+      copyText={formatJsonPayload({ run, details: runDetails ?? null })}
       description="What the run did, what it changed, and the payloads it captured."
       detailContent={(
         <SyncRunDetail
@@ -61,7 +59,6 @@ export function SyncRunDialog({
           evidenceEmptyMessage={evidenceEmptyMessage}
           evidenceRows={evidenceRows}
           payloads={[
-            { key: 'request', label: 'Request payload', payload: requestPayload },
             { key: 'job', label: 'Job payload', payload: jobPayload },
             { key: 'provider', label: 'Provider payload', payload: providerPayload },
           ]}
@@ -69,8 +66,10 @@ export function SyncRunDialog({
         />
       )}
       details={[
-        { id: 'status', label: 'Status', value: getRunStatusLabel(run) },
-        { id: 'feed', label: 'Feed', value: formatRequestedFeed(run.payload) },
+        { id: 'status', label: 'Status', value: enumLabel('ProviderSyncRunStatus', run.status) },
+        { id: 'kind', label: 'Sync', value: enumLabel('ProviderSyncKind', run.kind) },
+        { id: 'trigger', label: 'Trigger', value: enumLabel('JobTrigger', run.trigger) },
+        { id: 'errors', label: 'Errors', value: String(run.errorCount) },
         { id: 'sport', label: 'Sport', value: run.sport },
         { id: 'event', label: 'Event', value: formatEventValue(run.eventId) },
         { id: 'provider', label: 'Provider', value: run.providerName },

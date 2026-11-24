@@ -6,7 +6,6 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import type { Prisma } from '@prisma/client';
 import { AutoReleaseCheckOutcome, JobTrigger, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository, PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueOverviewReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-overview-reader';
@@ -71,18 +70,19 @@ describe('PrismaSportLeagueOverviewReader', () => {
     await event(tour.id, { championshipYear: 2027, startDate: days(5), status: 'CANCELLED' });
     const held = await event(tour.id, { championshipYear: 2027, startDate: days(30), status: 'DRAFT' });
     await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] });
-    const run = (kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date, payloadJson: Prisma.InputJsonValue = {}) => ({
-      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, status, createdAt, payloadJson,
+    const run = (kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date, summary = '') => ({
+      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, status, createdAt, summary,
     });
     await prisma.providerSyncRun.createMany({
       data: [
         run('EVENTS', 'COMPLETED', days(-2)),
-        run('EVENTS', 'FAILED', days(-1), { outcome: { summary: 'Interrupted before it finished.' } }),
+        run('EVENTS', 'FAILED', days(-1), 'Interrupted before it finished.'),
         run('FIELD', 'FAILED', days(-3)),
-        run('FIELD', 'COMPLETED', days(-1), { outcome: { summary: '' } }),
-        // Two runs in the same instant, neither with an outcome object: one is the latest, with no summary.
-        run('SCORES', 'COMPLETED', days(-1), 'not an object'),
-        run('SCORES', 'COMPLETED', days(-1), { outcome: 'not an object' }),
+        // An empty summary reads as none.
+        run('FIELD', 'COMPLETED', days(-1)),
+        // Two runs in the same instant, neither with a summary: one is the latest.
+        run('SCORES', 'COMPLETED', days(-1)),
+        run('SCORES', 'COMPLETED', days(-1)),
       ],
     });
 
@@ -163,7 +163,7 @@ describe('ProviderSyncRunLedger with the event repository', () => {
       scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: linked.externalId, feeds: ['EVENTLIVESCORES'] },
     });
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, runType: 'SCHEDULED_EVENT_SYNC', trigger: JobTrigger.SCHEDULE });
+    const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ kind: ProviderSyncKind.SCORES, sportEventId: linked.id, sportLeagueId: tour.id });
   });

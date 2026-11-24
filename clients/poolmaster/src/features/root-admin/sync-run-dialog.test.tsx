@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { bindApiMocks } from '@/test/msw-api';
 import type { ProviderSyncRun } from './root-admin-sync-utils';
 import { SyncRunDialog } from './sync-run-dialog';
@@ -20,13 +21,21 @@ function syncRun(overrides: Partial<ProviderSyncRun> = {}): ProviderSyncRun {
     providerName: 'Mock contest feed',
     sport: 'GOLF',
     eventId: 'masters-2026',
+    kind: 'FIELD',
+    trigger: 'ADMIN',
+    sportLeagueId: null,
+    sportEventId: null,
+    backgroundJobId: null,
     status: 'COMPLETED',
     startedAt: '2026-05-25T12:00:00.000Z',
     completedAt: '2026-05-25T12:01:00.000Z',
     createdAt: '2026-05-25T11:59:00.000Z',
-    payload: {},
+    summary: 'Completed event participants sync for masters-2026 (2 records).',
+    stats: {},
+    changedCount: 2,
+    errorCount: 0,
     ...overrides,
-  } as ProviderSyncRun;
+  };
 }
 
 /** getProviderSyncRun's answer; the dialog reads only the run's details from it. */
@@ -45,14 +54,6 @@ function renderDialog(run: ProviderSyncRun, onClose = vi.fn()) {
   );
 }
 
-const REQUEST_PAYLOAD = {
-  sport: 'GOLF',
-  eventId: 'masters-2026',
-  source: 'MANUAL',
-  actor: { type: 'ROOT_ADMIN', userId: 'root-admin-1', email: 'root@example.test' },
-  normalizedAt: '2026-04-09T10:00:00.000Z',
-};
-
 describe('SyncRunDialog', () => {
   beforeEach(() => {
     getProviderSyncRunMock.mockReset();
@@ -68,7 +69,7 @@ describe('SyncRunDialog', () => {
     expect(getProviderSyncRunMock).toHaveBeenCalledWith(expect.objectContaining({ path: { syncRunId: 'sync-run-1' } }));
   });
 
-  it('shows the run\'s warnings and stats, and opens the raw provider payload in place', async () => {
+  it('shows the run\'s summary, sync kind, trigger and stats, and opens the raw provider payload in place', async () => {
     const user = userEvent.setup();
     getProviderSyncRunMock.mockResolvedValue(detailResponse({
       providerPayload: {
@@ -80,23 +81,17 @@ describe('SyncRunDialog', () => {
       jobPayload: { jobType: 'EVENT_LIVE_SCORES_SYNC', status: 'COMPLETED', recordsProcessed: 0 },
     }));
     renderDialog(syncRun({
-      payload: {
-        runType: 'MANUAL_EVENT_SYNC',
-        requestedFeed: 'EVENTLIVESCORES',
-        outcome: {
-          severity: 'WARNING',
-          summary: 'Completed event live scores sync for masters-2026 (0 records).',
-          warnings: [{ code: 'NO_PROVIDER_LIVE_SCORES', message: 'Provider returned no live-score updates for the requested event.' }],
-          errors: 0,
-        },
-        stats: { providerRecordsReturned: 0, liveScoreUpdatesReturned: 0 },
-        requestPayload: REQUEST_PAYLOAD,
-      },
-    } as Partial<ProviderSyncRun>));
+      kind: 'SCORES',
+      summary: 'Completed event live scores sync for masters-2026 (0 records).',
+      stats: { providerRecordsReturned: 0, liveScoreUpdatesReturned: 0 },
+      changedCount: 0,
+    }));
 
     expect(await screen.findByText('Provider Records Returned')).toBeInTheDocument();
     expect(screen.getByText('Live Score Updates Returned')).toBeInTheDocument();
-    expect(screen.getByText('Provider returned no live-score updates for the requested event.')).toBeInTheDocument();
+    expect(screen.getByText('Completed event live scores sync for masters-2026 (0 records).')).toBeInTheDocument();
+    expect(screen.getByText(enumLabel('ProviderSyncKind', 'SCORES'))).toBeInTheDocument();
+    expect(screen.getByText(enumLabel('JobTrigger', 'ADMIN'))).toBeInTheDocument();
 
     await user.click(await screen.findByTestId('root-admin-sync-payload-provider-toggle'));
 
@@ -120,7 +115,7 @@ describe('SyncRunDialog', () => {
     ).toBeInTheDocument();
   });
 
-  it('lists each written row and opens its before-after JSON and the request payload in place', async () => {
+  it('lists each written row and opens its before-after JSON in place', async () => {
     const user = userEvent.setup();
     getProviderSyncRunMock.mockResolvedValue(detailResponse({
       writeDiagnostics: {
@@ -152,9 +147,7 @@ describe('SyncRunDialog', () => {
         ],
       },
     }));
-    renderDialog(syncRun({
-      payload: { runType: 'MANUAL_EVENT_SYNC', requestedFeed: 'EVENTPARTICIPANTS', requestPayload: REQUEST_PAYLOAD },
-    } as Partial<ProviderSyncRun>));
+    renderDialog(syncRun());
 
     expect(await screen.findByTestId('root-admin-sync-detail-rows')).toBeInTheDocument();
     expect(screen.getByText('Jordan Example')).toBeInTheDocument();
@@ -164,17 +157,11 @@ describe('SyncRunDialog', () => {
 
     expect(screen.getByText(/"oddsToWin": 18/)).toBeInTheDocument();
     expect(screen.getByText(/"oddsToWin": 12/)).toBeInTheDocument();
-
-    await user.click(screen.getByTestId('root-admin-sync-payload-request-toggle'));
-
-    expect(
-      within(screen.getByTestId('root-admin-sync-payload-request-details')).getByText(/"eventId": "masters-2026"/),
-    ).toBeInTheDocument();
   });
 
   it('says a run that has not started has no details yet, and offers no provider or job payload', async () => {
     getProviderSyncRunMock.mockResolvedValue(detailResponse(null));
-    renderDialog(syncRun({ status: 'SUBMITTED', startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' } }));
+    renderDialog(syncRun({ status: 'SUBMITTED', startedAt: null, completedAt: null, changedCount: null }));
 
     expect(await screen.findByText('This run hasn\'t started yet, so it has no details.')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sync-payload-provider')).not.toBeInTheDocument();

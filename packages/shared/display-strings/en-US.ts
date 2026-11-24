@@ -274,6 +274,9 @@ export const enUS = {
       UNMAPPED_PARTICIPANT: 'Unmapped participant',
       WEBHOOK_SECRET_MISSING: 'Webhook secret not set',
       SEASON_MISSING: 'No Season to sync',
+      NO_PROVIDER_PARTICIPANTS: 'No field from the provider',
+      NO_PROVIDER_LIVE_SCORES: 'No live scores from the provider',
+      GAMES_NOT_SYNCED: 'Games not synced',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

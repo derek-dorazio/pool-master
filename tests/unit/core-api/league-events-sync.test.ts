@@ -1,4 +1,5 @@
 import { expect } from '@jest/globals';
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { randomUUID } from 'node:crypto';
 import type { SyncableSportLeagueSeason } from '@poolmaster/shared/db';
 import {
@@ -367,7 +368,10 @@ describe('LeagueEventsSync', () => {
         backgroundJobId: job.id,
         status: ProviderSyncRunStatus.COMPLETED,
         completedAt: NOW,
-        payload: expect.objectContaining({ runType: 'LEAGUE_EVENTS_SYNC', seasons: ['2026', '2027'], stats: { created: 2, updated: 1, skipped: 2, alreadyStarted: 0 } }),
+        summary: 'Synced PGA TOUR\'s events for 2026 and 2027: 2 created, 1 updated, 2 skipped.',
+        stats: { created: 2, updated: 1, skipped: 2, alreadyStarted: 0 },
+        changedCount: 3,
+        errorCount: 0,
       });
       const details = syncRuns.update.mock.calls.at(-1)?.[1].details as { seasons: Array<{ sportLeagueSeasonId: string; season: string; created: unknown[]; updated: unknown[] }> };
       expect(details.seasons.map((season) => [season.sportLeagueSeasonId, season.season, season.created.length, season.updated])).toEqual([
@@ -397,7 +401,7 @@ describe('LeagueEventsSync', () => {
       const result = await sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
       expect(result).toMatchObject({ changedCount: 0, result: { skipped: 2, alreadyStarted: 1 } });
-      expect(syncRuns.rows[0]?.payload).toMatchObject({ stats: { skipped: 2, alreadyStarted: 1 } });
+      expect(syncRuns.rows[0]?.stats).toMatchObject({ skipped: 2, alreadyStarted: 1 });
     });
 
     it('shows its progress on the run after each Season while it runs', async () => {
@@ -409,7 +413,7 @@ describe('LeagueEventsSync', () => {
       await runner.drain();
 
       const inProgress = syncRuns.update.mock.calls.filter(([, update]) => update.status === ProviderSyncRunStatus.IN_PROGRESS);
-      expect(inProgress.map(([, update]) => update.payload['progress'])).toEqual([{ seasonsDone: 1, seasonCount: 2 }, { seasonsDone: 2, seasonCount: 2 }]);
+      expect(inProgress.map(([, update]) => [update.stats['seasonsDone'], update.stats['seasonCount'], update.changedCount])).toEqual([[1, 2, null], [2, 2, null]]);
     });
 
     it('fails the job at once, with no retry, when the provider\'s plan refuses the league, and marks its run FAILED with the code', async () => {
@@ -443,7 +447,7 @@ describe('LeagueEventsSync', () => {
       await runner.drain();
 
       expect(jobs.rows[0]).toMatchObject({ status: BackgroundJobStatus.QUEUED, attempts: 1, lastError: 'vendor unavailable' });
-      expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, payload: expect.objectContaining({ stats: { created: 1, updated: 0, skipped: 1, alreadyStarted: 0 } }) });
+      expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, summary: 'Failed: vendor unavailable', stats: { created: 1, updated: 0, skipped: 1, alreadyStarted: 0 }, changedCount: null, errorCount: 1 });
     });
 
     it('marks the run an earlier try left IN_PROGRESS as interrupted, then records its own', async () => {
@@ -454,13 +458,13 @@ describe('LeagueEventsSync', () => {
       const stale = await syncRuns.create({
         providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.SCHEDULE,
         sportLeagueId: pga.id, sportEventId: null, backgroundJobId: jobId, status: ProviderSyncRunStatus.IN_PROGRESS,
-        startedAt: NOW, completedAt: null, payload: {},
+        startedAt: NOW, completedAt: null, ...syncRunOutcome(),
       });
 
       await sync.run({ sportLeagueId: pga.id }, { jobId, attempt: 2, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
 
       expect(syncRuns.rows.map((run) => [run.id === stale.id, run.status])).toEqual([[true, ProviderSyncRunStatus.FAILED], [false, ProviderSyncRunStatus.COMPLETED]]);
-      expect(syncRuns.rows[0]?.payload).toMatchObject({ detail: expect.stringContaining('Interrupted') });
+      expect(syncRuns.rows[0]).toMatchObject({ summary: expect.stringContaining('Interrupted'), errorCount: 1 });
     });
 
     it('stops before importing or recording a run when another task has claimed the job', async () => {

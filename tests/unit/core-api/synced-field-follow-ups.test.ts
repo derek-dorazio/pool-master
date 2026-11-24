@@ -1,4 +1,4 @@
-import { FieldOrderBasis } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, type SportEvent } from '@poolmaster/shared/domain';
 import { DISCARD_BACKGROUND_JOB } from '../../../packages/core-api/src/modules/background-jobs/background-job-outcome';
 import type { SyncEventGamesAndTiersJobPayload } from '../../../packages/core-api/src/modules/events/synced-field-follow-up-job';
 import { SyncedFieldFollowUps } from '../../../packages/core-api/src/modules/events/synced-field-follow-ups';
@@ -31,7 +31,9 @@ function followUps(options: {
   const steps: string[] = [];
   const providerGames = { afterFieldLoad: mockFn<ProviderGameSlateService['afterFieldLoad']>(async () => { steps.push('games'); return options.slate ?? null; }) };
   const valuation = { afterFieldLoad: mockFn<SyncedFieldValuationService['afterFieldLoad']>(async () => { steps.push('tiers'); return options.valuation ?? UNCHANGED_VALUATION; }) };
-  return { steps, providerGames, valuation, service: new SyncedFieldFollowUps({ providerGames, valuation }) };
+  const sportEvents = { findById: jest.fn(async (id: string) => (id === 'sport-event-1' ? { id, sportLeagueId: 'nfl' } as SportEvent : null)) };
+  const findings = { checkEventOfSource: jest.fn(async (_check: unknown) => undefined) };
+  return { steps, providerGames, valuation, findings, service: new SyncedFieldFollowUps({ providerGames, valuation, sportEvents, findings }) };
 }
 
 describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
@@ -87,18 +89,38 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
     });
   });
 
-  it('keeps a run whose listed games failed to sync, with a warning, rather than reading as if none were listed', async () => {
+  it('raises a GAMES_NOT_SYNCED finding on the event when its listed games failed to sync, and keeps the run, rather than reading as if none were listed', async () => {
     // The slate logs a failure and answers null, as it does when no games were listed.
-    const { service } = followUps({ slate: null });
+    const { service, findings } = followUps({ slate: null });
 
     expect(await service.run(PAYLOAD)).toEqual({
       changedCount: 0,
       result: {
         games: { outcome: 'FAILED' },
         stats: { tiersUnchanged: 4, pricesUnchanged: 32 },
-        warnings: [{ code: 'GAMES_NOT_SYNCED', message: 'The provider\'s games were not synced to the event; the next field sync tries again.' }],
+        warnings: [],
       },
     });
+    expect(findings.checkEventOfSource).toHaveBeenCalledWith({
+      kind: 'GAMES_NOT_SYNCED', sportLeagueId: 'nfl', sportEventId: 'sport-event-1', providerSourceId: 'balldontlie', found: true,
+    });
+  });
+
+  it('resolves the event\'s GAMES_NOT_SYNCED finding once its listed games sync', async () => {
+    const { service, findings } = followUps({ slate: { outcome: 'UNCHANGED', sportEventId: 'sport-event-1' } });
+
+    await service.run(PAYLOAD);
+
+    expect(findings.checkEventOfSource).toHaveBeenCalledWith(expect.objectContaining({ kind: 'GAMES_NOT_SYNCED', found: false }));
+  });
+
+  it('checks no games finding when the provider listed none, or the event is gone', async () => {
+    const { service, findings } = followUps();
+
+    await service.run({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'week-2' });
+    await service.run({ ...PAYLOAD, sportEventId: 'deleted-event' });
+
+    expect(findings.checkEventOfSource).not.toHaveBeenCalled();
   });
 
   it('leaves no Activity row when the provider listed no games and the tiers and prices are unchanged', async () => {

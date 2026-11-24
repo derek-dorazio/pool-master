@@ -918,6 +918,21 @@ export const ProviderSyncFindingKind = {
    * migration, so nothing of the next Season syncs until one lands. Subject: league and Provider.
    */
   SEASON_MISSING: 'SEASON_MISSING',
+  /**
+   * A field sync's provider sent the event with no participants. Subject: league, event, Provider
+   * and the FIELD sync; the next field sync with participants resolves it.
+   */
+  NO_PROVIDER_PARTICIPANTS: 'NO_PROVIDER_PARTICIPANTS',
+  /**
+   * A scores sync's provider sent no live-score updates for the event. Subject: league, event,
+   * Provider and the SCORES sync; the next scores sync with updates resolves it.
+   */
+  NO_PROVIDER_LIVE_SCORES: 'NO_PROVIDER_LIVE_SCORES',
+  /**
+   * The provider listed games with the event's field, but they were not written to the event.
+   * Subject: league, event and Provider; the next field follow-up that writes them resolves it.
+   */
+  GAMES_NOT_SYNCED: 'GAMES_NOT_SYNCED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
