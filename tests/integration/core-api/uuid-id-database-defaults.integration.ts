@@ -74,13 +74,13 @@ describe('#340 database-generated uuid ids', () => {
 
     // No "id" column. Before #340 this failed on the NOT NULL constraint, which is why
     // reference-data migrations had to supply gen_random_uuid() themselves.
-    const { tierProfileId, pricingProfileId } = await leagueProfiles(prisma);
+    const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "tier_profile_id", "pricing_profile_id", "updated_at") VALUES ($1::uuid, $2, $3::uuid, $4::uuid, NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at") VALUES ($1::uuid, $2, $3::uuid, $4::uuid, NOW())`,
       sportId,
       name,
-      tierProfileId,
-      pricingProfileId,
+      platformTierProfileId,
+      platformPricingProfileId,
     );
 
     const inserted = await prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } } });
@@ -118,15 +118,15 @@ describe('#340 database-generated uuid ids', () => {
     const first = uniqueName();
     const second = uniqueName();
 
-    const { tierProfileId, pricingProfileId } = await leagueProfiles(prisma);
+    const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "tier_profile_id", "pricing_profile_id", "updated_at")
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at")
        VALUES ($1::uuid, $2, $4::uuid, $5::uuid, NOW()), ($1::uuid, $3, $4::uuid, $5::uuid, NOW())`,
       sportId,
       first,
       second,
-      tierProfileId,
-      pricingProfileId,
+      platformTierProfileId,
+      platformPricingProfileId,
     );
 
     const rows = await prisma.sportLeague.findMany({

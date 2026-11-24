@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getSportDefinition, MatchEnding, Sport, type SportMatchPeriods, sportVocabulary } from '@poolmaster/shared/domain';
-import type { SportEventMatchDto } from '@/lib/api';
+import type { SportEventRoundMatchDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import type { BracketContext } from './bracket-match-write';
 import { MatchScoresRow } from './match-scores-row';
@@ -47,7 +47,7 @@ const HALVES: SportMatchPeriods = { count: 2, label: { one: 'half', many: 'halve
 const arsenal = fieldEntryFixture({ id: 'sep-1', participantId: 'p-1', seedNumber: 1, participant: participantFixture({ id: 'p-1', name: 'Arsenal' }) });
 const porto = fieldEntryFixture({ id: 'sep-2', participantId: 'p-2', seedNumber: 2, participant: participantFixture({ id: 'p-2', name: 'Porto' }) });
 
-function knockoutMatch(overrides: Partial<SportEventMatchDto> = {}): SportEventMatchDto {
+function knockoutMatch(overrides: Partial<SportEventRoundMatchDto> = {}): SportEventRoundMatchDto {
   return {
     id: 'm-1',
     sportEventId: 'evt-1',
@@ -77,7 +77,7 @@ function knockoutMatch(overrides: Partial<SportEventMatchDto> = {}): SportEventM
 
 const soccer = getSportDefinition(Sport.SOCCER);
 
-function renderRow(match: SportEventMatchDto, shootout: BracketContext['shootout'] = sportVocabulary(soccer).shootout ?? null) {
+function renderRow(match: SportEventRoundMatchDto, shootout: BracketContext['shootout'] = sportVocabulary(soccer).shootout ?? null) {
   const context: BracketContext = {
     eventId: 'evt-1',
     vocabulary: sportVocabulary(soccer),

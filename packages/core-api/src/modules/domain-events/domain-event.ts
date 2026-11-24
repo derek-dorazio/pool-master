@@ -71,8 +71,8 @@ export interface SportEventResultsChanged {
 export interface GameDecided {
   type: typeof DomainEventType.GAME_DECIDED;
   sportEventId: string;
-  /** The game, a `SportEventMatch`. */
-  sportEventMatchId: string;
+  /** The game, a `SportEventRoundMatch`. */
+  sportEventRoundMatchId: string;
   /** When it was decided: the moment its contests settle at. */
   decidedAt: Date;
 }

@@ -166,7 +166,7 @@ async function seedReseededRound(matchups: number) {
     // The better seeds host and win: game N is seed N + 1 against seed 2 x games - N.
     const [home, away] = await Promise.all([team(game + 1), team(firstRoundGames * 2 - game)]);
     matchNumber += 1;
-    await prisma.sportEventMatch.create({
+    await prisma.sportEventRoundMatch.create({
       data: {
         sportEventId: event.id, sportEventRoundId: wildCard.id, matchNumber, isNeutralSite: false,
         homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
@@ -176,9 +176,9 @@ async function seedReseededRound(matchups: number) {
   }
   for (let game = 0; game < matchups; game += 1) {
     matchNumber += 1;
-    await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: divisional.id, matchNumber, isNeutralSite: false } });
+    await prisma.sportEventRoundMatch.create({ data: { sportEventId: event.id, sportEventRoundId: divisional.id, matchNumber, isNeutralSite: false } });
   }
-  await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: final.id, matchNumber: matchNumber + 1, isNeutralSite: true } });
+  await prisma.sportEventRoundMatch.create({ data: { sportEventId: event.id, sportEventRoundId: final.id, matchNumber: matchNumber + 1, isNeutralSite: true } });
   return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 

@@ -26,7 +26,7 @@ import {
   MatchStatus,
   PickOutcome,
   type KnockoutRoundPointsSettings,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { proposeRoundMatchups, reseededRounds } from '../../events/bracket-reseed';
 import { gameTotalPoints } from './game-picks';
@@ -34,7 +34,7 @@ import { upsetBonusFor } from './score-team';
 
 /** One bracket pick: the team an entry says wins one game. */
 export interface BracketPick {
-  sportEventMatchId: string;
+  sportEventRoundMatchId: string;
   sportEventParticipantId: string;
 }
 
@@ -61,18 +61,18 @@ const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
  * whose teams the results have already decided, so everything below reads that round as its first
  * and its sides as the real teams.
  */
-export function contestBracketGames<Match extends Pick<SportEventMatch, 'status' | 'roundNumber'>>(
+export function contestBracketGames<Match extends Pick<SportEventRoundMatch, 'status' | 'roundNumber'>>(
   matches: readonly Match[],
   startsAtRound: number,
 ): Match[] {
   return matches.filter((match) => match.status !== MatchStatus.CANCELLED && match.roundNumber >= startsAtRound);
 }
 
-function storedSide(match: SportEventMatch, side: MatchSide): string | null {
+function storedSide(match: SportEventRoundMatch, side: MatchSide): string | null {
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
 }
 
-function withSides(match: SportEventMatch, sides: PredictedSides): SportEventMatch {
+function withSides(match: SportEventRoundMatch, sides: PredictedSides): SportEventRoundMatch {
   return { ...match, homeSportEventParticipantId: sides.home, awaySportEventParticipantId: sides.away };
 }
 
@@ -82,7 +82,7 @@ function withSides(match: SportEventMatch, sides: PredictedSides): SportEventMat
  * `withdrawn` the rows withdrawn after the draw (`withdrawnRowIds` in score-team), whose first-round picks stand.
  */
 export function resolveBracketPicks<Pick extends BracketPick>(
-  bracket: readonly SportEventMatch[],
+  bracket: readonly SportEventRoundMatch[],
   picks: readonly Pick[],
   seedOf: ReadonlyMap<string, number | null>,
   withdrawn: ReadonlySet<string> = new Set(),
@@ -90,7 +90,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
   const firstRound = rounds.at(0);
   const reseeded = reseededRounds(bracket);
-  const pickByMatchId = new Map(picks.map((pick) => [pick.sportEventMatchId, pick]));
+  const pickByMatchId = new Map(picks.map((pick) => [pick.sportEventRoundMatchId, pick]));
   const feederOf = new Map(bracket.flatMap((match) =>
     match.advancesToMatchId !== null && match.advancesToSide !== null
       ? [[`${match.advancesToMatchId}/${match.advancesToSide}`, match] as const]
@@ -100,7 +100,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
   const kept: Pick[] = [];
   const stranded: Pick[] = [];
   // The bracket as the entry's picks play it: each game it picked is decided for its team.
-  const predicted: SportEventMatch[] = [];
+  const predicted: SportEventRoundMatch[] = [];
   const keptTeamByMatchId = new Map<string, string>();
   const teamsBefore = new Set<string>();
 
@@ -174,7 +174,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
  * by filling the bracket in with each game's home team.
  */
 export function findBracketProblem(
-  bracket: readonly SportEventMatch[],
+  bracket: readonly SportEventRoundMatch[],
   seedOf: ReadonlyMap<string, number | null>,
   startsAtRound = 1,
 ): string | null {
@@ -194,7 +194,7 @@ export function findBracketProblem(
       if (!placed?.home || !placed.away) {
         return `game ${match.matchNumber} of round ${roundNumber} has a team that no pick can decide`;
       }
-      picks.push({ sportEventMatchId: match.id, sportEventParticipantId: placed.home });
+      picks.push({ sportEventRoundMatchId: match.id, sportEventParticipantId: placed.home });
     }
   }
   return null;
@@ -222,7 +222,7 @@ export interface BracketScore {
  * the event, with each completed game's winner; a team in `withdrawn` lost in its first round.
  */
 export function scoreBracketPicks(
-  bracket: readonly SportEventMatch[],
+  bracket: readonly SportEventRoundMatch[],
   picks: readonly BracketPick[],
   seedOf: ReadonlyMap<string, number | null>,
   settings: KnockoutRoundPointsSettings,
@@ -250,7 +250,7 @@ export function scoreBracketPicks(
   let pendingPoints = 0;
   let correctPickCount = 0;
   for (const pick of picks) {
-    const roundNumber = roundByMatchId.get(pick.sportEventMatchId);
+    const roundNumber = roundByMatchId.get(pick.sportEventRoundMatchId);
     if (roundNumber === undefined) continue;
     const roundValue = settings.roundValues.at(roundNumber - 1) ?? 0;
     const beaten = wins.get(pick.sportEventParticipantId);
@@ -261,13 +261,13 @@ export function scoreBracketPicks(
         seedOf.get(pick.sportEventParticipantId) ?? null,
         seedOf.get(beaten.get(roundNumber) ?? '') ?? null,
       );
-      scored.set(pick.sportEventMatchId, { outcome: PickOutcome.CORRECT, points: earned });
+      scored.set(pick.sportEventRoundMatchId, { outcome: PickOutcome.CORRECT, points: earned });
       points += earned;
       correctPickCount += 1;
     } else if (lostRound !== undefined && lostRound <= roundNumber) {
-      scored.set(pick.sportEventMatchId, { outcome: PickOutcome.BUSTED, points: 0 });
+      scored.set(pick.sportEventRoundMatchId, { outcome: PickOutcome.BUSTED, points: 0 });
     } else {
-      scored.set(pick.sportEventMatchId, { outcome: PickOutcome.PENDING, points: null });
+      scored.set(pick.sportEventRoundMatchId, { outcome: PickOutcome.PENDING, points: null });
       pendingPoints += roundValue;
     }
   }
@@ -281,14 +281,14 @@ export function scoreBracketPicks(
 }
 
 /** The bracket's final, its one game of the last round; null while that round has not one game. */
-export function bracketFinal(bracket: readonly SportEventMatch[]): SportEventMatch | null {
+export function bracketFinal(bracket: readonly SportEventRoundMatch[]): SportEventRoundMatch | null {
   const lastRound = Math.max(...bracket.map((match) => match.roundNumber));
   const finals = bracket.filter((match) => match.roundNumber === lastRound);
   return finals.length === 1 ? finals[0] : null;
 }
 
 /** The final's combined score, both teams together, once it is played: what the tiebreaker guesses. */
-export function finalTotalPoints(bracket: readonly SportEventMatch[]): number | null {
+export function finalTotalPoints(bracket: readonly SportEventRoundMatch[]): number | null {
   return gameTotalPoints(bracketFinal(bracket));
 }
 

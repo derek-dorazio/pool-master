@@ -1,6 +1,6 @@
 import type {
   ParticipantDto,
-  PricingProfileDto,
+  PlatformPricingProfileDto,
   ReleaseCheckDto,
   SettingsGroup,
   SportDto,
@@ -16,7 +16,7 @@ import type {
 } from '@/lib/api';
 
 /** The Standard pricing profile's id, which `sportLeagueFixture` names. */
-export const STANDARD_PRICING_PROFILE_ID = '00000000-0000-4000-8000-0000000000b2';
+export const STANDARD_PLATFORM_PRICING_PROFILE_ID = '00000000-0000-4000-8000-0000000000b2';
 
 /**
  * #236 — fixtures for the golf admin tests, typed by the generated DTOs the screens read.
@@ -253,8 +253,8 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     name: 'PGA Tour',
     selectedProviderMapping: null,
     autoReleaseDaysBeforeStart: 7,
-    tierProfileId: '00000000-0000-4000-8000-0000000000a1',
-    pricingProfileId: STANDARD_PRICING_PROFILE_ID,
+    platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
+    platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
     bracketAdvancement: 'FIXED',
     roundNames: [],
     matchPeriodLayout: null,
@@ -285,11 +285,11 @@ export const GOLF_SPORT_FIXTURE: SportDto = {
 };
 
 /** The platform's two pricing profiles as the migration made them (#1844), by name. */
-export function pricingProfilesFixture(): PricingProfileDto[] {
+export function platformPricingProfilesFixture(): PlatformPricingProfileDto[] {
   const stamps = { sportLeagueCount: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' };
   return [
-    { id: '00000000-0000-4000-8000-0000000000b1', name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps, sportLeagueCount: 0 },
-    { id: STANDARD_PRICING_PROFILE_ID, name: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps },
+    { id: '00000000-0000-4000-8000-0000000000b1', code: 'SMALL', name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps, sportLeagueCount: 0 },
+    { id: STANDARD_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4, ...stamps },
   ];
 }
 

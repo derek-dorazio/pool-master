@@ -34,9 +34,9 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto> = {})
 }
 
 describe('leaguePageTabs', () => {
-  it('shows Events, Participants, Activity and Contest templates on a synced league, and adds Tools only on a league no provider syncs', () => {
-    expect(leaguePageTabs(true).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates']);
-    expect(leaguePageTabs(false).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Tools']);
+  it('shows Events, Participants, Activity, Contest templates and Structure on a synced league, and adds Tools only on a league no provider syncs', () => {
+    expect(leaguePageTabs(true).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure']);
+    expect(leaguePageTabs(false).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure', 'Tools']);
   });
 });
 

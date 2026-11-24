@@ -6,7 +6,7 @@
 
 import type {
   ContestConfigurationRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
   SportLeagueRepository,
 } from '@poolmaster/shared/db';
@@ -21,7 +21,7 @@ import {
   type RoundName,
   SelectionType,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SportLeague,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
@@ -34,7 +34,7 @@ export interface ContestSummaryDeps {
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
   /** The first event's sport league: its name, and a bracket's round names for a second-chance bracket's starting round. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>;
 }
 
@@ -109,7 +109,7 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
  * bracket's starting round or a squares game's kickoff. Never before the event starts.
  */
 export async function contestClosesAt(
-  deps: { matches: Pick<SportEventMatchRepository, 'findBySportEvent'> },
+  deps: { matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'> },
   contest: Contest,
   rules: ContestSelectionConfig,
   first: SportEvent,
@@ -127,7 +127,7 @@ export function contestClosesAtGiven(
   contest: Contest,
   rules: ContestSelectionConfig,
   first: SportEvent,
-  games: readonly SportEventMatch[],
+  games: readonly SportEventRoundMatch[],
 ): Date {
   const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
   return (cutoff.kind === ContestCutoffKind.EVENT_START ? first : cutoffTiming(cutoff, first, games)).startDate;
@@ -142,7 +142,7 @@ function roundNameOf(sportLeague: SportLeague | null, sportEvent: SportEvent): R
 
 /** How the event plays, as E1 lists it: "16 games" or "4 rounds"; null when neither is known. */
 export async function describeEventFormat(
-  deps: { matches: Pick<SportEventMatchRepository, 'findBySportEvent'> },
+  deps: { matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'> },
   sportEvent: SportEvent,
 ): Promise<string | null> {
   const games = await deps.matches.findBySportEvent(sportEvent.id);

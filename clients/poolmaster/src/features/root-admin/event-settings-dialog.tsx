@@ -34,7 +34,7 @@ import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-
 import { useDetailEditDialog } from './use-detail-edit-dialog';
 import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
 import { settingsRequestBody, settingsSchema, TIER_ORDER_LABELS, valuesOf, type SettingsValues } from './event-settings-form';
-import { usePricingProfilesQuery, useTierProfilesQuery } from './use-profiles';
+import { usePlatformPricingProfilesQuery, usePlatformTierProfilesQuery } from './use-profiles';
 
 const logger = getLogger().child({ feature: 'root-admin-event-settings' });
 
@@ -57,8 +57,8 @@ export function EventSettingsDialog({
   const preferences = useDisplayPreferences();
   const { timeZone } = preferences;
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(event);
-  const tierProfilesQuery = useTierProfilesQuery();
-  const pricingProfilesQuery = usePricingProfilesQuery();
+  const platformTierProfilesQuery = usePlatformTierProfilesQuery();
+  const platformPricingProfilesQuery = usePlatformPricingProfilesQuery();
   const [transitionTarget, setTransitionTarget] = useState<SportEventDtoStatus | null>(null);
   const [autoToggleOpen, setAutoToggleOpen] = useState(false);
   const [tiersOpen, setTiersOpen] = useState(false);
@@ -110,9 +110,9 @@ export function EventSettingsDialog({
   });
 
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const tierProfileName = tierProfilesQuery.data?.find((profile) => profile.id === sportLeague?.tierProfileId)?.name ?? '…';
+  const platformTierProfileName = platformTierProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformTierProfileId)?.name ?? '…';
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const pricingProfileName = pricingProfilesQuery.data?.find((profile) => profile.id === sportLeague?.pricingProfileId)?.name ?? '…';
+  const platformPricingProfileName = platformPricingProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformPricingProfileId)?.name ?? '…';
   const tierOrder = overview === undefined ? '…' : overview.tierOrderBasis === null ? 'No active field' : TIER_ORDER_LABELS[overview.tierOrderBasis];
   const testId = 'root-admin-event-settings-dialog';
 
@@ -128,14 +128,14 @@ export function EventSettingsDialog({
       ? [{ id: 'par', label: 'Par per round', value: event.roundsPar ?? 'From scores', testId: `${testId}-par` }]
       : []),
     { id: 'feedId', label: 'Feed id', value: event.providerSynced ? event.externalId : 'None', testId: `${testId}-feed-id` },
-    { id: 'tierProfile', label: 'Tier profile', value: tierProfileName, testId: `${testId}-tier-profile` },
+    { id: 'platformTierProfile', label: 'Tier profile', value: platformTierProfileName, testId: `${testId}-tier-profile` },
     {
       id: 'tiers',
       label: 'Tiers',
       value: tiersQuery.data === undefined ? '…' : tiersQuery.data.length === 0 ? 'None' : [...tiersQuery.data].sort((a, b) => a.tierNumber - b.tierNumber).map((tier) => tier.label).join(' · '),
       testId: `${testId}-tiers`,
     },
-    { id: 'pricingProfile', label: 'Pricing profile', value: pricingProfileName, testId: `${testId}-pricing-profile` },
+    { id: 'platformPricingProfile', label: 'Pricing profile', value: platformPricingProfileName, testId: `${testId}-pricing-profile` },
     {
       id: 'pricedWith',
       label: 'Priced with',

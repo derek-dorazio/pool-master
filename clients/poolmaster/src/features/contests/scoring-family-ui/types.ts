@@ -10,7 +10,7 @@ import type { SportDefinition } from '@poolmaster/shared/domain';
 import type {
   ContestLeaderboardResponse,
   ScoredContestEntryPickDto,
-  SportEventMatchDto,
+  SportEventRoundMatchDto,
   SportEventParticipantDto,
 } from '@/lib/api';
 
@@ -102,7 +102,7 @@ export interface EntryTiebreakerUi {
  */
 export interface LeaderboardContext {
   /** The shown event's games (its bracket's matches), in match order. */
-  games: readonly SportEventMatchDto[];
+  games: readonly SportEventRoundMatchDto[];
   /** A round as the event's bracket screens name it: "Sweet 16". */
   roundName: (roundNumber: number) => string;
   /** A game's start as the viewer reads it. */

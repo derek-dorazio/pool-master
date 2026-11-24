@@ -18,7 +18,7 @@ import { EventRoundsTab } from './event-rounds-tab';
 import { EventToolsTab } from './event-tools-tab';
 import {
   passingReleaseChecks,
-  pricingProfilesFixture,
+  platformPricingProfilesFixture,
   sportEventFixture,
   sportEventRoundFixture,
   providerMappingFixture,
@@ -37,10 +37,10 @@ const {
   listEventParticipantsMock,
   listEventRoundsMock,
   listEventTiersMock,
-  listPricingProfilesMock,
+  listPlatformPricingProfilesMock,
   listSportLeagueOverviewsMock,
   listSportLeaguesMock,
-  listTierProfilesMock,
+  listPlatformTierProfilesMock,
   mockLogger,
   rebuildEventLeaderboardsMock,
   refreshEventParticipantsMock,
@@ -60,10 +60,10 @@ const {
     listEventParticipantsMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
     listEventTiersMock: vi.fn(),
-    listPricingProfilesMock: vi.fn(),
+    listPlatformPricingProfilesMock: vi.fn(),
     listSportLeagueOverviewsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
-    listTierProfilesMock: vi.fn(),
+    listPlatformTierProfilesMock: vi.fn(),
     mockLogger: logger,
     rebuildEventLeaderboardsMock: vi.fn(),
     refreshEventParticipantsMock: vi.fn(),
@@ -83,10 +83,10 @@ bindApiMocks({
   listEventParticipants: listEventParticipantsMock,
   listEventRounds: listEventRoundsMock,
   listEventTiers: listEventTiersMock,
-  listPricingProfiles: listPricingProfilesMock,
+  listPlatformPricingProfiles: listPlatformPricingProfilesMock,
   listSportLeagueOverviews: listSportLeagueOverviewsMock,
   listSportLeagues: listSportLeaguesMock,
-  listTierProfiles: listTierProfilesMock,
+  listPlatformTierProfiles: listPlatformTierProfilesMock,
   rebuildEventLeaderboards: rebuildEventLeaderboardsMock,
   refreshEventParticipants: refreshEventParticipantsMock,
   releaseEvent: releaseEventMock,
@@ -222,8 +222,8 @@ function renderEventPage(path: string, {
   getEventOverviewMock.mockResolvedValue({ data: { overview } });
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [synced ? { ...PGA, selectedProviderMapping: providerMappingFixture() } : PGA] } });
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: [leagueOverview(synced ? { providerId: 'balldontlie' } : {})] } });
-  listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: PGA.tierProfileId, name: 'Six tiers', tiers: [], sportLeagueCount: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
-  listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+  listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PGA.platformTierProfileId, name: 'Six tiers', tiers: [], sportLeagueCount: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
+  listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
   listActivityMock.mockResolvedValue({ data: { jobs: [] } });
   listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
   listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });

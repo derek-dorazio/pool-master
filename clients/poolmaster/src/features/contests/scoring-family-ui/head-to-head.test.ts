@@ -4,7 +4,7 @@ import type {
   ContestEntryStandingDto,
   ContestLeaderboardResponse,
   ScoredContestEntryPickDto,
-  SportEventMatchDto,
+  SportEventRoundMatchDto,
   SportEventParticipantDto,
 } from '@/lib/api';
 import { getScoringFamilyUi } from './registry';
@@ -94,7 +94,7 @@ function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderbo
   };
 }
 
-function game(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto, 'matchNumber' | 'roundNumber'>): SportEventMatchDto {
+function game(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoundMatchDto, 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
   return {
     id: `match-${String(overrides.matchNumber)}`,
     sportEventId: 'event-1',
@@ -122,7 +122,7 @@ function game(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto, 
 
 const ROUND_NAMES = ['First Round', 'Round of 32', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
 
-function context(games: SportEventMatchDto[]): LeaderboardContext {
+function context(games: SportEventRoundMatchDto[]): LeaderboardContext {
   return {
     games,
     roundName: (roundNumber) => ROUND_NAMES[roundNumber - 1] ?? `Round ${String(roundNumber)}`,

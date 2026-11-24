@@ -88,9 +88,9 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
-    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventMatch: { sportEventId: { in: eventIds } } } });
+    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -165,13 +165,13 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const released = await releaseEvent({ client: a, path: { eventId } });
   expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
   // The later rounds are called off, so they are not among the week's games.
-  await getFunctionalPrisma().sportEventMatch.updateMany({ where: { sportEventId: eventId, matchNumber: { gt: 4 } }, data: { status: MatchStatus.CANCELLED } });
+  await getFunctionalPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: eventId, matchNumber: { gt: 4 } }, data: { status: MatchStatus.CANCELLED } });
 
   const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
   const game = (matchNumber: number) => expectDefined(bracket.find((match) => match.matchNumber === matchNumber), `game ${matchNumber}`);
   /** A confidence pick of game `matchNumber`'s home or away team. */
   const pick = (matchNumber: number, side: Side, confidence: number) => ({
-    sportEventMatchId: game(matchNumber).id,
+    sportEventRoundMatchId: game(matchNumber).id,
     predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
     confidence,
@@ -394,7 +394,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     // records a draw in a knockout), so neither pick on it scores; Purdue wins game 3; Colgate
     // wins game 4, 60 to 50, a total of 110.
     await week2.result(1, 'home');
-    await db.sportEventMatch.update({
+    await db.sportEventRoundMatch.update({
       where: { id: week2.gameId(2) },
       data: { status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 75, awayScore: 75 },
     });
@@ -417,7 +417,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
       [entries.bob]: [[2, [team('Purdue'), team('Colgate')]], [2, [team('Texas'), team('Akron')]]],
       [entries.cara]: [[3, [team('Vermont')]], [null, []]],
     });
-    expect(Object.fromEntries(liveBoard.entries.map((entry) => [entry.entryId, entry.currentWeekPicks.map((pick) => [pick.sportEventMatchId, pick.outcome])]))).toEqual({
+    expect(Object.fromEntries(liveBoard.entries.map((entry) => [entry.entryId, entry.currentWeekPicks.map((pick) => [pick.sportEventRoundMatchId, pick.outcome])]))).toEqual({
       [entries.alice]: [[week2.gameId(1), 'CORRECT'], [week2.gameId(2), 'BUSTED'], [week2.gameId(3), 'CORRECT'], [week2.gameId(4), 'BUSTED']],
       [entries.bob]: [[week2.gameId(1), 'CORRECT'], [week2.gameId(2), 'BUSTED'], [week2.gameId(3), 'BUSTED'], [week2.gameId(4), 'CORRECT']],
       // Cara's week is still a draft, which counts for nothing, so none of its picks show.

@@ -29,7 +29,7 @@ export const bracketPredictionEngine: PredictionEngine = {
     // A bracket pick names a team: a tie pick never stands. Each team pick is resolved under a
     // copy that keeps the pick it came from.
     const teamPicks = predictions.filter(isTeamChoice)
-      .map((source) => ({ sportEventMatchId: source.sportEventMatchId, sportEventParticipantId: source.sportEventParticipantId, source }));
+      .map((source) => ({ sportEventRoundMatchId: source.sportEventRoundMatchId, sportEventParticipantId: source.sportEventParticipantId, source }));
     const resolved = resolveBracketPicks(games, teamPicks, seedOf, withdrawn);
     return {
       sides: resolved.sides,
@@ -48,7 +48,7 @@ export const bracketPredictionEngine: PredictionEngine = {
   findWeekIssues({ gameMatchIds, predictions, tiebreakerValue }) {
     const issues: PredictionIssue[] = [];
     const games = new Set(gameMatchIds);
-    const pickedCount = predictions.filter((prediction) => games.has(prediction.sportEventMatchId)).length;
+    const pickedCount = predictions.filter((prediction) => games.has(prediction.sportEventRoundMatchId)).length;
     if (pickedCount < games.size) {
       issues.push({ kind: PredictionIssueKind.WEEK_INCOMPLETE, pickedCount, gameCount: games.size });
     }

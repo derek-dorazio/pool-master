@@ -357,7 +357,7 @@ describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (
     status,
     scheduledDate: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
   });
-  const SUPER_BOWL = { kind: ContestCutoffKind.MATCH_START, sportEventMatchId: 'super-bowl' } as const;
+  const SUPER_BOWL = { kind: ContestCutoffKind.MATCH_START, sportEventRoundMatchId: 'super-bowl' } as const;
 
   it('closes a squares contest at its game\'s kickoff, and every other contest as before', () => {
     expect(contestCutoff({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 'super-bowl')).toEqual(SUPER_BOWL);

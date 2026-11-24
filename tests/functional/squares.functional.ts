@@ -51,8 +51,8 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
-    await db.contestSquaresGame.deleteMany({ where: { sportEventMatch: { sportEventId: { in: eventIds } } } });
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.contestSquaresGame.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -125,7 +125,7 @@ describe('SDK Functional: Super Bowl squares', () => {
       body: {
         name: `Super Bowl Squares ${RUN}`,
         sportEventIds: [event.id],
-        sportEventMatchId: superBowl.id,
+        sportEventRoundMatchId: superBowl.id,
         contestFormat: ContestFormat.SQUARES,
         selectionType: SelectionType.SQUARES,
         templateId: preset.id,
@@ -141,7 +141,7 @@ describe('SDK Functional: Super Bowl squares', () => {
       body: {
         name: `Configured Squares ${RUN}`,
         sportEventIds: [event.id],
-        sportEventMatchId: superBowl.id,
+        sportEventRoundMatchId: superBowl.id,
         contestFormat: ContestFormat.SQUARES,
         selectionType: SelectionType.SQUARES,
         configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 7, maxEntriesPerSquad: 1 },
@@ -274,7 +274,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
         body: {
           name: `College Squares ${tag}`,
           sportEventIds: [loaded.id],
-          sportEventMatchId: final.id,
+          sportEventRoundMatchId: final.id,
           contestFormat: ContestFormat.SQUARES,
           selectionType: SelectionType.SQUARES,
           templateId: preset.id,

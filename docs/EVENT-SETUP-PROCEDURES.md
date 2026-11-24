@@ -209,7 +209,7 @@ A basketball tournament or a playoff is a knockout bracket, resulted by hand on 
 field and games usually come from a sport data file ([`SPORT-DATA-LOADING.md`](SPORT-DATA-LOADING.md)
 *Loading sport data*, *Brackets*);
 otherwise the field is built on the Field tab and the games are loaded through
-`loadEventBracket` ([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventMatch*). Then
+`loadEventBracket` ([`DOMAIN-OPERATIONS.md`](DOMAIN-OPERATIONS.md), *SportEventRoundMatch*). Then
 on the Bracket tab:
 
 - **Before release**, *Edit pairing* changes a game's two teams. Only teams no other game holds

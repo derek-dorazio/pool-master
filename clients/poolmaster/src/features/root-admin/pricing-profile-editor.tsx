@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
-import { PricingProfileWriteRequestSchema } from '@poolmaster/shared/dto';
-import { createPricingProfile, updatePricingProfile, type PricingProfileDto, type PricingProfileWriteRequest } from '@/lib/api';
+import { PlatformPricingProfileWriteRequestSchema } from '@poolmaster/shared/dto';
+import { createPlatformPricingProfile, updatePlatformPricingProfile, type PlatformPricingProfileDto, type PlatformPricingProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, useMutationActionWorkflow } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { numberFieldErrors } from '@/lib/number-field-errors';
@@ -11,7 +11,7 @@ import { clearsSaveError } from './clears-save-error';
 import type { ProfileEditorProps } from './profile-dialog';
 import { ProfileFormModal } from './profile-form-modal';
 
-const { shape } = PricingProfileWriteRequestSchema;
+const { shape } = PlatformPricingProfileWriteRequestSchema;
 const dollarsRange = (min: number, max: number) => `From ${formatDollars(min)} to ${formatDollars(max)}.`;
 const shareRange = (min: number, max: number) => `From ${min}% to ${max}% of the cap.`;
 
@@ -24,7 +24,7 @@ const pricingErrors = numberFieldErrors({
 });
 
 /** The server's own checks: values that agree with each other. */
-const PricingProfileFormSchema = PricingProfileWriteRequestSchema.superRefine((values, context) => {
+const PlatformPricingProfileFormSchema = PlatformPricingProfileWriteRequestSchema.superRefine((values, context) => {
   const problem = findBudgetPricingProblem(values);
   if (problem) context.addIssue({ code: 'custom', path: ['floorSharePercent'], message: problem });
 });
@@ -37,11 +37,12 @@ const NUMBER_FIELDS = [
   { key: 'steepness', label: 'Steepness', step: 'any' },
 ] as const;
 
-const NEW_PROFILE: PricingProfileWriteRequest = { name: '', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+const NEW_PROFILE: PlatformPricingProfileWriteRequest = { code: '', name: '', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
-function formValuesOf(profile: PricingProfileDto | null): PricingProfileWriteRequest {
+function formValuesOf(profile: PlatformPricingProfileDto | null): PlatformPricingProfileWriteRequest {
   return profile
     ? {
+      code: profile.code,
       name: profile.name,
       salaryCap: profile.salaryCap,
       unit: profile.unit,
@@ -54,26 +55,26 @@ function formValuesOf(profile: PricingProfileDto | null): PricingProfileWriteReq
 
 /**
  * A pricing profile's dialog (#1849): its view, then its form on Edit, or a new one's form. Save
- * writes the whole profile and hands back what the server saved; a refusal (a taken name, values
+ * writes the whole profile and hands back what the server saved; a refusal (a taken code or name, values
  * that disagree) stays in the dialog.
  */
-export function PricingProfileEditor(dialog: ProfileEditorProps<PricingProfileDto>) {
+export function PlatformPricingProfileEditor(dialog: ProfileEditorProps<PlatformPricingProfileDto>) {
   const { onSaved, profile } = dialog;
-  const form = useForm<PricingProfileWriteRequest>({
-    resolver: zodResolver(PricingProfileFormSchema, { error: pricingErrors }),
+  const form = useForm<PlatformPricingProfileWriteRequest>({
+    resolver: zodResolver(PlatformPricingProfileFormSchema, { error: pricingErrors }),
     defaultValues: formValuesOf(profile),
   });
   const save = useMutationActionWorkflow({
-    action: async (body: PricingProfileWriteRequest) => {
+    action: async (body: PlatformPricingProfileWriteRequest) => {
       const response = profile
-        ? await updatePricingProfile({ path: { profileId: profile.id }, body })
-        : await createPricingProfile({ body });
-      if (!response.data?.pricingProfile) {
+        ? await updatePlatformPricingProfile({ path: { profileId: profile.id }, body })
+        : await createPlatformPricingProfile({ body });
+      if (!response.data?.platformPricingProfile) {
         throwApiError(response.error, 'Pricing profile response is missing data.');
       }
-      return response.data.pricingProfile;
+      return response.data.platformPricingProfile;
     },
-    invalidateQueries: [QueryKeys.rootAdmin.pricingProfiles],
+    invalidateQueries: [QueryKeys.rootAdmin.platformPricingProfiles],
     onSuccess: onSaved,
     successToast: { title: 'Pricing profile saved', tone: 'success' },
   });
@@ -92,6 +93,9 @@ export function PricingProfileEditor(dialog: ProfileEditorProps<PricingProfileDt
       newTitle="New pricing profile"
     >
       <div className="space-y-4">
+        <FormField error={errors.code?.message} id="pricing-profile-code" label="Code">
+          <Input data-testid="root-admin-pricing-profile-editor-code" id="pricing-profile-code" {...form.register('code', { onChange: clearError })} />
+        </FormField>
         <FormField error={errors.name?.message} id="pricing-profile-name" label="Name">
           <Input data-testid="root-admin-pricing-profile-editor-name" id="pricing-profile-name" {...form.register('name', { onChange: clearError })} />
         </FormField>

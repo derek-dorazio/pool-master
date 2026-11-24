@@ -81,7 +81,7 @@ export function tournamentGames({
         : winner ? (winner.sportEventParticipantId === picked.sportEventParticipantId ? 'CORRECT' : 'BUSTED')
           : realOut.has(picked.sportEventParticipantId) ? 'BUSTED' : 'PENDING';
       games.push({
-        sportEventMatchId: `match-${matchNumber}`,
+        sportEventRoundMatchId: `match-${matchNumber}`,
         matchNumber,
         roundNumber,
         kickoff: '2026-03-20T16:00:00.000Z',

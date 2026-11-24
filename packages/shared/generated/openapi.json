@@ -18211,15 +18211,15 @@
             "minimum": 1,
             "maximum": 30
           },
-          "tierProfileId": {
+          "platformTierProfileId": {
             "type": "string",
             "format": "uuid",
-            "description": "The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
+            "description": "The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
           },
-          "pricingProfileId": {
+          "platformPricingProfileId": {
             "type": "string",
             "format": "uuid",
-            "description": "The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values."
+            "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
           },
           "bracketAdvancement": {
             "type": "string",
@@ -18342,8 +18342,8 @@
           "isActive",
           "selectedProviderMapping",
           "autoReleaseDaysBeforeStart",
-          "tierProfileId",
-          "pricingProfileId",
+          "platformTierProfileId",
+          "platformPricingProfileId",
           "bracketAdvancement",
           "roundNames",
           "matchPeriodLayout",
@@ -18502,15 +18502,15 @@
                   "minimum": 1,
                   "maximum": 30
                 },
-                "tierProfileId": {
+                "platformTierProfileId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
+                  "description": "The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
                 },
-                "pricingProfileId": {
+                "platformPricingProfileId": {
                   "type": "string",
                   "format": "uuid",
-                  "description": "The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values."
+                  "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
                 },
                 "bracketAdvancement": {
                   "type": "string",
@@ -18633,8 +18633,8 @@
                 "isActive",
                 "selectedProviderMapping",
                 "autoReleaseDaysBeforeStart",
-                "tierProfileId",
-                "pricingProfileId",
+                "platformTierProfileId",
+                "platformPricingProfileId",
                 "bracketAdvancement",
                 "roundNames",
                 "matchPeriodLayout",
@@ -18772,15 +18772,15 @@
                 "minimum": 1,
                 "maximum": 30
               },
-              "tierProfileId": {
+              "platformTierProfileId": {
                 "type": "string",
                 "format": "uuid",
-                "description": "The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
+                "description": "The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it."
               },
-              "pricingProfileId": {
+              "platformPricingProfileId": {
                 "type": "string",
                 "format": "uuid",
-                "description": "The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values."
+                "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
               },
               "bracketAdvancement": {
                 "type": "string",
@@ -18903,8 +18903,8 @@
               "isActive",
               "selectedProviderMapping",
               "autoReleaseDaysBeforeStart",
-              "tierProfileId",
-              "pricingProfileId",
+              "platformTierProfileId",
+              "platformPricingProfileId",
               "bracketAdvancement",
               "roundNames",
               "matchPeriodLayout",
@@ -18962,22 +18962,22 @@
               "RESEED_BY_SEED"
             ]
           },
-          "tierProfileId": {
+          "platformTierProfileId": {
             "type": "string",
             "format": "uuid",
-            "description": "The tier profile the sport league names. 404 TIER_PROFILE_NOT_FOUND for one that does not exist."
+            "description": "The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist."
           },
-          "pricingProfileId": {
+          "platformPricingProfileId": {
             "type": "string",
             "format": "uuid",
-            "description": "The pricing profile the sport league names. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist."
+            "description": "The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist."
           }
         },
         "required": [
           "sport",
           "name",
-          "tierProfileId",
-          "pricingProfileId"
+          "platformTierProfileId",
+          "platformPricingProfileId"
         ],
         "additionalProperties": false,
         "description": "A new sport league."
@@ -19015,13 +19015,13 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
-          "tierProfileId": {
-            "description": "Names another tier profile. 404 TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.",
+          "platformTierProfileId": {
+            "description": "Names another tier profile. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.",
             "type": "string",
             "format": "uuid"
           },
-          "pricingProfileId": {
-            "description": "Names another pricing profile. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.",
+          "platformPricingProfileId": {
+            "description": "Names another pricing profile. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.",
             "type": "string",
             "format": "uuid"
           },
@@ -22340,6 +22340,563 @@
         ],
         "additionalProperties": false,
         "description": "A sport league's participants."
+      },
+      "SlotProviderMappingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerName": {
+            "type": "string"
+          },
+          "providerLeagueCode": {
+            "type": "string",
+            "description": "The provider's own code for the league the mapping reads, such as nfl."
+          },
+          "providerLeagueName": {
+            "type": "string"
+          },
+          "matchType": {
+            "type": "string",
+            "enum": [
+              "PROVIDER_CODE",
+              "NAME_PATTERN",
+              "DATE_WINDOW",
+              "CALENDAR_WEEK"
+            ],
+            "description": "How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW."
+          },
+          "providerValue": {
+            "description": "The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "providerId",
+          "providerName",
+          "providerLeagueCode",
+          "providerLeagueName",
+          "matchType",
+          "providerValue"
+        ],
+        "additionalProperties": false,
+        "description": "How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced."
+      },
+      "SportLeagueSlotDefinitionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "description": "A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS."
+          },
+          "slotKind": {
+            "type": "string",
+            "enum": [
+              "WEEK",
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "ROUND_OF_16",
+              "QUARTERFINAL",
+              "SEMIFINAL",
+              "THIRD_PLACE",
+              "FINAL",
+              "TOURNAMENT"
+            ]
+          },
+          "weekNumber": {
+            "description": "The week's number in its phase; set only on a WEEK slot.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "description": "The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "awardsTrophy": {
+            "type": "boolean"
+          },
+          "squaresEligible": {
+            "type": "boolean",
+            "description": "Whether a squares pool can be played on its games."
+          },
+          "seriesFormat": {
+            "type": "string",
+            "enum": [
+              "SINGLE_GAME",
+              "BEST_OF",
+              "AGGREGATE"
+            ]
+          },
+          "seriesGames": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE."
+          },
+          "pairing": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "RESEEDED"
+            ]
+          },
+          "providerMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "providerId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "providerName": {
+                  "type": "string"
+                },
+                "providerLeagueCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the league the mapping reads, such as nfl."
+                },
+                "providerLeagueName": {
+                  "type": "string"
+                },
+                "matchType": {
+                  "type": "string",
+                  "enum": [
+                    "PROVIDER_CODE",
+                    "NAME_PATTERN",
+                    "DATE_WINDOW",
+                    "CALENDAR_WEEK"
+                  ],
+                  "description": "How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW."
+                },
+                "providerValue": {
+                  "description": "The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "providerId",
+                "providerName",
+                "providerLeagueCode",
+                "providerLeagueName",
+                "matchType",
+                "providerValue"
+              ],
+              "additionalProperties": false,
+              "description": "How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced."
+            },
+            "description": "By provider, then in the order the sync tries them."
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "slotKind",
+          "weekNumber",
+          "name",
+          "awardsTrophy",
+          "squaresEligible",
+          "seriesFormat",
+          "seriesGames",
+          "pairing",
+          "providerMappings"
+        ],
+        "additionalProperties": false,
+        "description": "One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it."
+      },
+      "SportLeaguePhaseDefinitionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "PRESEASON",
+              "REGULAR",
+              "POSTSEASON"
+            ]
+          },
+          "isSynced": {
+            "type": "boolean",
+            "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "key": {
+                  "type": "string",
+                  "description": "A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS."
+                },
+                "slotKind": {
+                  "type": "string",
+                  "enum": [
+                    "WEEK",
+                    "PLAY_IN",
+                    "ROUND_OF_64",
+                    "ROUND_OF_32",
+                    "ROUND_OF_16",
+                    "QUARTERFINAL",
+                    "SEMIFINAL",
+                    "THIRD_PLACE",
+                    "FINAL",
+                    "TOURNAMENT"
+                  ]
+                },
+                "weekNumber": {
+                  "description": "The week's number in its phase; set only on a WEEK slot.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "description": "The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "awardsTrophy": {
+                  "type": "boolean"
+                },
+                "squaresEligible": {
+                  "type": "boolean",
+                  "description": "Whether a squares pool can be played on its games."
+                },
+                "seriesFormat": {
+                  "type": "string",
+                  "enum": [
+                    "SINGLE_GAME",
+                    "BEST_OF",
+                    "AGGREGATE"
+                  ]
+                },
+                "seriesGames": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE."
+                },
+                "pairing": {
+                  "type": "string",
+                  "enum": [
+                    "FIXED",
+                    "RESEEDED"
+                  ]
+                },
+                "providerMappings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "providerId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "providerName": {
+                        "type": "string"
+                      },
+                      "providerLeagueCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the league the mapping reads, such as nfl."
+                      },
+                      "providerLeagueName": {
+                        "type": "string"
+                      },
+                      "matchType": {
+                        "type": "string",
+                        "enum": [
+                          "PROVIDER_CODE",
+                          "NAME_PATTERN",
+                          "DATE_WINDOW",
+                          "CALENDAR_WEEK"
+                        ],
+                        "description": "How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW."
+                      },
+                      "providerValue": {
+                        "description": "The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "providerId",
+                      "providerName",
+                      "providerLeagueCode",
+                      "providerLeagueName",
+                      "matchType",
+                      "providerValue"
+                    ],
+                    "additionalProperties": false,
+                    "description": "How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced."
+                  },
+                  "description": "By provider, then in the order the sync tries them."
+                }
+              },
+              "required": [
+                "id",
+                "key",
+                "slotKind",
+                "weekNumber",
+                "name",
+                "awardsTrophy",
+                "squaresEligible",
+                "seriesFormat",
+                "seriesGames",
+                "pairing",
+                "providerMappings"
+              ],
+              "additionalProperties": false,
+              "description": "One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it."
+            },
+            "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them."
+          }
+        },
+        "required": [
+          "id",
+          "phase",
+          "isSynced",
+          "slots"
+        ],
+        "additionalProperties": false,
+        "description": "One phase definition of a sport league."
+      },
+      "SportLeagueStructureResponse": {
+        "type": "object",
+        "properties": {
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "PRESEASON",
+                    "REGULAR",
+                    "POSTSEASON"
+                  ]
+                },
+                "isSynced": {
+                  "type": "boolean",
+                  "description": "Whether the league's sync reads the phase. An unsynced phase has no slots."
+                },
+                "slots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS."
+                      },
+                      "slotKind": {
+                        "type": "string",
+                        "enum": [
+                          "WEEK",
+                          "PLAY_IN",
+                          "ROUND_OF_64",
+                          "ROUND_OF_32",
+                          "ROUND_OF_16",
+                          "QUARTERFINAL",
+                          "SEMIFINAL",
+                          "THIRD_PLACE",
+                          "FINAL",
+                          "TOURNAMENT"
+                        ]
+                      },
+                      "weekNumber": {
+                        "description": "The week's number in its phase; set only on a WEEK slot.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "name": {
+                        "description": "The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "awardsTrophy": {
+                        "type": "boolean"
+                      },
+                      "squaresEligible": {
+                        "type": "boolean",
+                        "description": "Whether a squares pool can be played on its games."
+                      },
+                      "seriesFormat": {
+                        "type": "string",
+                        "enum": [
+                          "SINGLE_GAME",
+                          "BEST_OF",
+                          "AGGREGATE"
+                        ]
+                      },
+                      "seriesGames": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE."
+                      },
+                      "pairing": {
+                        "type": "string",
+                        "enum": [
+                          "FIXED",
+                          "RESEEDED"
+                        ]
+                      },
+                      "providerMappings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "providerId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "providerName": {
+                              "type": "string"
+                            },
+                            "providerLeagueCode": {
+                              "type": "string",
+                              "description": "The provider's own code for the league the mapping reads, such as nfl."
+                            },
+                            "providerLeagueName": {
+                              "type": "string"
+                            },
+                            "matchType": {
+                              "type": "string",
+                              "enum": [
+                                "PROVIDER_CODE",
+                                "NAME_PATTERN",
+                                "DATE_WINDOW",
+                                "CALENDAR_WEEK"
+                              ],
+                              "description": "How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW."
+                            },
+                            "providerValue": {
+                              "description": "The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.",
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "providerId",
+                            "providerName",
+                            "providerLeagueCode",
+                            "providerLeagueName",
+                            "matchType",
+                            "providerValue"
+                          ],
+                          "additionalProperties": false,
+                          "description": "How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced."
+                        },
+                        "description": "By provider, then in the order the sync tries them."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "key",
+                      "slotKind",
+                      "weekNumber",
+                      "name",
+                      "awardsTrophy",
+                      "squaresEligible",
+                      "seriesFormat",
+                      "seriesGames",
+                      "pairing",
+                      "providerMappings"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it."
+                  },
+                  "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them."
+                }
+              },
+              "required": [
+                "id",
+                "phase",
+                "isSynced",
+                "slots"
+              ],
+              "additionalProperties": false,
+              "description": "One phase definition of a sport league."
+            },
+            "description": "In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON."
+          }
+        },
+        "required": [
+          "phases"
+        ],
+        "additionalProperties": false,
+        "description": "A sport league's phase and slot definitions, set by migration."
       },
       "SportLeagueParticipantRankingsRequest": {
         "type": "object",
@@ -30857,7 +31414,7 @@
               }
             ]
           },
-          "sportEventMatchId": {
+          "sportEventRoundMatchId": {
             "description": "A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.",
             "type": "string",
             "format": "uuid"
@@ -35073,7 +35630,7 @@
             "items": {
               "type": "object",
               "properties": {
-                "sportEventMatchId": {
+                "sportEventRoundMatchId": {
                   "type": "string",
                   "format": "uuid",
                   "description": "The game picked: one of the event's games."
@@ -35105,7 +35662,7 @@
                 }
               },
               "required": [
-                "sportEventMatchId",
+                "sportEventRoundMatchId",
                 "predictedResult",
                 "sportEventParticipantId"
               ],
@@ -35691,7 +36248,7 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "sportEventMatchId": {
+                      "sportEventRoundMatchId": {
                         "type": "string",
                         "format": "uuid"
                       },
@@ -35715,7 +36272,7 @@
                       }
                     },
                     "required": [
-                      "sportEventMatchId",
+                      "sportEventRoundMatchId",
                       "sportEventParticipantId",
                       "outcome"
                     ],
@@ -36117,7 +36674,7 @@
             "items": {
               "type": "object",
               "properties": {
-                "sportEventMatchId": {
+                "sportEventRoundMatchId": {
                   "type": "string",
                   "format": "uuid"
                 },
@@ -36391,7 +36948,7 @@
                 }
               },
               "required": [
-                "sportEventMatchId",
+                "sportEventRoundMatchId",
                 "matchNumber",
                 "roundNumber",
                 "kickoff",
@@ -36856,7 +37413,7 @@
             "items": {
               "type": "object",
               "properties": {
-                "sportEventMatchId": {
+                "sportEventRoundMatchId": {
                   "type": "string",
                   "format": "uuid",
                   "description": "The game picked: one of the event's games."
@@ -36888,7 +37445,7 @@
                 }
               },
               "required": [
-                "sportEventMatchId",
+                "sportEventRoundMatchId",
                 "predictedResult",
                 "sportEventParticipantId"
               ],
@@ -36965,7 +37522,7 @@
             "items": {
               "type": "object",
               "properties": {
-                "sportEventMatchId": {
+                "sportEventRoundMatchId": {
                   "type": "string",
                   "format": "uuid"
                 },
@@ -37205,7 +37762,7 @@
                 }
               },
               "required": [
-                "sportEventMatchId",
+                "sportEventRoundMatchId",
                 "matchNumber",
                 "roundNumber",
                 "kickoff",
@@ -48144,7 +48701,7 @@
         "additionalProperties": false,
         "description": "Both sides' score at the end of one period of a game (#772)."
       },
-      "SportEventMatchDto": {
+      "SportEventRoundMatchDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -48630,7 +49187,7 @@
         "additionalProperties": false,
         "description": "An event's bracket."
       },
-      "SportEventMatchResponse": {
+      "SportEventRoundMatchResponse": {
         "type": "object",
         "properties": {
           "match": {
@@ -48982,7 +49539,7 @@
         "additionalProperties": false,
         "description": "The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side."
       },
-      "UpdateSportEventMatchRequest": {
+      "UpdateSportEventRoundMatchRequest": {
         "type": "object",
         "properties": {
           "homeSportEventParticipantId": {
@@ -49056,7 +49613,7 @@
         "additionalProperties": false,
         "description": "A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row's bracket place, unseeded, last in the event's last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss."
       },
-      "RecordSportEventMatchResultRequest": {
+      "RecordSportEventRoundMatchResultRequest": {
         "type": "object",
         "properties": {
           "winnerSide": {
@@ -72570,7 +73127,7 @@
         "additionalProperties": false,
         "description": "Every user on the platform, for the Customers › Users grid."
       },
-      "TierProfileWriteRequest": {
+      "PlatformTierProfileWriteRequest": {
         "type": "object",
         "properties": {
           "tierCount": {
@@ -72601,6 +73158,16 @@
             ],
             "minimum": 1,
             "maximum": 500
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+            "x-transform": [
+              "trim"
+            ]
           },
           "name": {
             "type": "string",
@@ -72617,12 +73184,13 @@
           "tierSize",
           "lastTier",
           "lastTierMax",
+          "code",
           "name"
         ],
         "additionalProperties": false,
-        "description": "A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise."
+        "description": "A tier profile's code, name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 PLATFORM_TIER_PROFILE_INVALID otherwise."
       },
-      "TierProfileDto": {
+      "PlatformTierProfileDto": {
         "type": "object",
         "properties": {
           "tierCount": {
@@ -72653,6 +73221,16 @@
             ],
             "minimum": 1,
             "maximum": 500
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+            "x-transform": [
+              "trim"
+            ]
           },
           "name": {
             "type": "string",
@@ -72689,6 +73267,7 @@
           "tierSize",
           "lastTier",
           "lastTierMax",
+          "code",
           "name",
           "id",
           "sportLeagueCount",
@@ -72698,10 +73277,10 @@
         "additionalProperties": false,
         "description": "A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers."
       },
-      "TierProfileListResponse": {
+      "PlatformTierProfileListResponse": {
         "type": "object",
         "properties": {
-          "tierProfiles": {
+          "platformTierProfiles": {
             "type": "array",
             "items": {
               "type": "object",
@@ -72734,6 +73313,16 @@
                   ],
                   "minimum": 1,
                   "maximum": 500
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "pattern": "^[A-Z][A-Z0-9_]*$",
+                  "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                  "x-transform": [
+                    "trim"
+                  ]
                 },
                 "name": {
                   "type": "string",
@@ -72770,6 +73359,7 @@
                 "tierSize",
                 "lastTier",
                 "lastTierMax",
+                "code",
                 "name",
                 "id",
                 "sportLeagueCount",
@@ -72783,15 +73373,15 @@
           }
         },
         "required": [
-          "tierProfiles"
+          "platformTierProfiles"
         ],
         "additionalProperties": false,
         "description": "Every tier profile."
       },
-      "TierProfileResponse": {
+      "PlatformTierProfileResponse": {
         "type": "object",
         "properties": {
-          "tierProfile": {
+          "platformTierProfile": {
             "type": "object",
             "properties": {
               "tierCount": {
@@ -72822,6 +73412,16 @@
                 ],
                 "minimum": 1,
                 "maximum": 500
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "pattern": "^[A-Z][A-Z0-9_]*$",
+                "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                "x-transform": [
+                  "trim"
+                ]
               },
               "name": {
                 "type": "string",
@@ -72858,6 +73458,7 @@
               "tierSize",
               "lastTier",
               "lastTierMax",
+              "code",
               "name",
               "id",
               "sportLeagueCount",
@@ -72869,12 +73470,12 @@
           }
         },
         "required": [
-          "tierProfile"
+          "platformTierProfile"
         ],
         "additionalProperties": false,
         "description": "One tier profile."
       },
-      "PricingProfileWriteRequest": {
+      "PlatformPricingProfileWriteRequest": {
         "type": "object",
         "properties": {
           "salaryCap": {
@@ -72915,6 +73516,16 @@
             "x-transform": [
               "trim"
             ]
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+            "x-transform": [
+              "trim"
+            ]
           }
         },
         "required": [
@@ -72923,12 +73534,13 @@
           "topSharePercent",
           "floorSharePercent",
           "steepness",
-          "name"
+          "name",
+          "code"
         ],
         "additionalProperties": false,
-        "description": "A pricing profile's name and values, the whole of it. 422 PRICING_PROFILE_INVALID when the values contradict each other."
+        "description": "A pricing profile's code, name and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other."
       },
-      "PricingProfileDto": {
+      "PlatformPricingProfileDto": {
         "type": "object",
         "properties": {
           "salaryCap": {
@@ -72966,6 +73578,16 @@
             "minLength": 1,
             "maxLength": 50,
             "description": "The profile's name, unique among its kind: \"6 tiers of 10\", \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Z][A-Z0-9_]*$",
+            "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
             "x-transform": [
               "trim"
             ]
@@ -72998,6 +73620,7 @@
           "floorSharePercent",
           "steepness",
           "name",
+          "code",
           "id",
           "sportLeagueCount",
           "createdAt",
@@ -73006,10 +73629,10 @@
         "additionalProperties": false,
         "description": "A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them."
       },
-      "PricingProfileListResponse": {
+      "PlatformPricingProfileListResponse": {
         "type": "object",
         "properties": {
-          "pricingProfiles": {
+          "platformPricingProfiles": {
             "type": "array",
             "items": {
               "type": "object",
@@ -73053,6 +73676,16 @@
                     "trim"
                   ]
                 },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "pattern": "^[A-Z][A-Z0-9_]*$",
+                  "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                  "x-transform": [
+                    "trim"
+                  ]
+                },
                 "id": {
                   "type": "string",
                   "format": "uuid"
@@ -73081,6 +73714,7 @@
                 "floorSharePercent",
                 "steepness",
                 "name",
+                "code",
                 "id",
                 "sportLeagueCount",
                 "createdAt",
@@ -73093,15 +73727,15 @@
           }
         },
         "required": [
-          "pricingProfiles"
+          "platformPricingProfiles"
         ],
         "additionalProperties": false,
         "description": "Every pricing profile."
       },
-      "PricingProfileResponse": {
+      "PlatformPricingProfileResponse": {
         "type": "object",
         "properties": {
-          "pricingProfile": {
+          "platformPricingProfile": {
             "type": "object",
             "properties": {
               "salaryCap": {
@@ -73143,6 +73777,16 @@
                   "trim"
                 ]
               },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50,
+                "pattern": "^[A-Z][A-Z0-9_]*$",
+                "description": "The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.",
+                "x-transform": [
+                  "trim"
+                ]
+              },
               "id": {
                 "type": "string",
                 "format": "uuid"
@@ -73171,6 +73815,7 @@
               "floorSharePercent",
               "steepness",
               "name",
+              "code",
               "id",
               "sportLeagueCount",
               "createdAt",
@@ -73181,7 +73826,7 @@
           }
         },
         "required": [
-          "pricingProfile"
+          "platformPricingProfile"
         ],
         "additionalProperties": false,
         "description": "One pricing profile."
@@ -84308,7 +84953,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateSportEventMatchRequest"
+                "$ref": "#/components/schemas/UpdateSportEventRoundMatchRequest"
               }
             }
           }
@@ -84339,7 +84984,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SportEventMatchResponse"
+                  "$ref": "#/components/schemas/SportEventRoundMatchResponse"
                 }
               }
             }
@@ -84414,13 +85059,13 @@
         "tags": [
           "Events"
         ],
-        "description": "Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "description": "Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RecordSportEventMatchResultRequest"
+                "$ref": "#/components/schemas/RecordSportEventRoundMatchResultRequest"
               }
             }
           }
@@ -84524,7 +85169,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
+        "description": "The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -85870,6 +86515,69 @@
         }
       }
     },
+    "/api/v1/sport-leagues/{sportLeagueId}/structure": {
+      "get": {
+        "operationId": "getSportLeagueStructure",
+        "summary": "Get a sport league's phase and slot definitions with their provider mappings",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "The League page's Structure tab (#2002): the sport league's timeless phases, in the order a Season plays them, each with its slot definitions in play order and each slot's provider mappings. Set by migration, so there is no write. Read from a fixed number of queries, however many slots. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A sport league's phase and slot definitions, set by migration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeagueStructureResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sport-leagues/{sportLeagueId}/events/overview": {
       "get": {
         "operationId": "listSportLeagueEventOverviews",
@@ -86240,7 +86948,7 @@
     },
     "/api/v1/tier-profiles/": {
       "get": {
-        "operationId": "listTierProfiles",
+        "operationId": "listPlatformTierProfiles",
         "summary": "List tier profiles",
         "tags": [
           "Tier profiles"
@@ -86252,7 +86960,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TierProfileListResponse"
+                  "$ref": "#/components/schemas/PlatformTierProfileListResponse"
                 }
               }
             }
@@ -86290,18 +86998,18 @@
         }
       },
       "post": {
-        "operationId": "createTierProfile",
+        "operationId": "createPlatformTierProfile",
         "summary": "Create a tier profile",
         "tags": [
           "Tier profiles"
         ],
-        "description": "409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "409 PLATFORM_TIER_PROFILE_CODE_TAKEN or PLATFORM_TIER_PROFILE_NAME_TAKEN when another tier profile has the code or the name; 422 PLATFORM_TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TierProfileWriteRequest"
+                "$ref": "#/components/schemas/PlatformTierProfileWriteRequest"
               }
             }
           }
@@ -86312,7 +87020,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TierProfileResponse"
+                  "$ref": "#/components/schemas/PlatformTierProfileResponse"
                 }
               }
             }
@@ -86382,12 +87090,12 @@
     },
     "/api/v1/tier-profiles/{profileId}": {
       "get": {
-        "operationId": "getTierProfile",
+        "operationId": "getPlatformTierProfile",
         "summary": "Get a tier profile",
         "tags": [
           "Tier profiles"
         ],
-        "description": "404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "404 PLATFORM_TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -86405,7 +87113,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TierProfileResponse"
+                  "$ref": "#/components/schemas/PlatformTierProfileResponse"
                 }
               }
             }
@@ -86453,18 +87161,18 @@
         }
       },
       "put": {
-        "operationId": "updateTierProfile",
+        "operationId": "updatePlatformTierProfile",
         "summary": "Update a tier profile",
         "tags": [
           "Tier profiles"
         ],
-        "description": "Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TierProfileWriteRequest"
+                "$ref": "#/components/schemas/PlatformTierProfileWriteRequest"
               }
             }
           }
@@ -86486,7 +87194,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TierProfileResponse"
+                  "$ref": "#/components/schemas/PlatformTierProfileResponse"
                 }
               }
             }
@@ -86564,12 +87272,12 @@
         }
       },
       "delete": {
-        "operationId": "deleteTierProfile",
+        "operationId": "deletePlatformTierProfile",
         "summary": "Delete a tier profile",
         "tags": [
           "Tier profiles"
         ],
-        "description": "409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "409 PLATFORM_TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -86640,7 +87348,7 @@
     },
     "/api/v1/pricing-profiles/": {
       "get": {
-        "operationId": "listPricingProfiles",
+        "operationId": "listPlatformPricingProfiles",
         "summary": "List pricing profiles",
         "tags": [
           "Pricing profiles"
@@ -86652,7 +87360,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PricingProfileListResponse"
+                  "$ref": "#/components/schemas/PlatformPricingProfileListResponse"
                 }
               }
             }
@@ -86690,18 +87398,18 @@
         }
       },
       "post": {
-        "operationId": "createPricingProfile",
+        "operationId": "createPlatformPricingProfile",
         "summary": "Create a pricing profile",
         "tags": [
           "Pricing profiles"
         ],
-        "description": "409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "409 PLATFORM_PRICING_PROFILE_CODE_TAKEN or PLATFORM_PRICING_PROFILE_NAME_TAKEN when another pricing profile has the code or the name; 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PricingProfileWriteRequest"
+                "$ref": "#/components/schemas/PlatformPricingProfileWriteRequest"
               }
             }
           }
@@ -86712,7 +87420,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PricingProfileResponse"
+                  "$ref": "#/components/schemas/PlatformPricingProfileResponse"
                 }
               }
             }
@@ -86782,12 +87490,12 @@
     },
     "/api/v1/pricing-profiles/{profileId}": {
       "get": {
-        "operationId": "getPricingProfile",
+        "operationId": "getPlatformPricingProfile",
         "summary": "Get a pricing profile",
         "tags": [
           "Pricing profiles"
         ],
-        "description": "404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "404 PLATFORM_PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -86805,7 +87513,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PricingProfileResponse"
+                  "$ref": "#/components/schemas/PlatformPricingProfileResponse"
                 }
               }
             }
@@ -86853,18 +87561,18 @@
         }
       },
       "put": {
-        "operationId": "updatePricingProfile",
+        "operationId": "updatePlatformPricingProfile",
         "summary": "Update a pricing profile",
         "tags": [
           "Pricing profiles"
         ],
-        "description": "Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PricingProfileWriteRequest"
+                "$ref": "#/components/schemas/PlatformPricingProfileWriteRequest"
               }
             }
           }
@@ -86886,7 +87594,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PricingProfileResponse"
+                  "$ref": "#/components/schemas/PlatformPricingProfileResponse"
                 }
               }
             }
@@ -86964,12 +87672,12 @@
         }
       },
       "delete": {
-        "operationId": "deletePricingProfile",
+        "operationId": "deletePlatformPricingProfile",
         "summary": "Delete a pricing profile",
         "tags": [
           "Pricing profiles"
         ],
-        "description": "409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
+        "description": "409 PLATFORM_PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -90524,7 +91232,7 @@
         }
       }
     },
-    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventMatchId}": {
+    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventRoundMatchId}": {
       "delete": {
         "operationId": "clearGamePick",
         "summary": "Clear a game pick",
@@ -90566,7 +91274,7 @@
               "format": "uuid"
             },
             "in": "path",
-            "name": "sportEventMatchId",
+            "name": "sportEventRoundMatchId",
             "required": true
           }
         ],

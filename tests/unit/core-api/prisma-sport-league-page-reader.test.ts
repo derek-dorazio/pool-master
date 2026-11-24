@@ -6,6 +6,11 @@
 import { expect } from '@jest/globals';
 import {
   AutoReleaseCheckOutcome,
+  LeaguePhase,
+  SeriesFormat,
+  SlotKind,
+  SlotPairing,
+  SlotProviderMatchType,
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
@@ -35,11 +40,13 @@ function prismaDouble(options: { league?: unknown } = {}) {
     eventSeries: { findMany: jest.fn().mockResolvedValue([{ id: 'series-1' }]) },
     sportEvent: { findMany: jest.fn().mockResolvedValue([]) },
     sportEventRound: { findMany: jest.fn().mockResolvedValue([]) },
-    sportEventMatch: { groupBy: jest.fn().mockResolvedValue([]) },
+    sportEventRoundMatch: { groupBy: jest.fn().mockResolvedValue([]) },
     sportEventParticipant: { groupBy: jest.fn().mockResolvedValue([]) },
     participant: { findMany: jest.fn().mockResolvedValue([]) },
     participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]) },
     providerLeague: { findMany: jest.fn().mockResolvedValue([]) },
+    sportLeaguePhase: { findMany: jest.fn().mockResolvedValue([]) },
+    sportLeaguePhaseSlot: { findMany: jest.fn().mockResolvedValue([]) },
   };
 }
 
@@ -170,6 +177,48 @@ describe('PrismaSportLeaguePageReader.readParticipants', () => {
   });
 });
 
+describe('PrismaSportLeaguePageReader.readStructure', () => {
+  it('answers null for a league that does not exist', async () => {
+    const prisma = prismaDouble({ league: null });
+
+    await expect(new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readStructure('missing')).resolves.toBeNull();
+  });
+
+  it('puts each slot under its own phase with its provider mappings named by provider and provider league, and a phase with no slots none', async () => {
+    const prisma = prismaDouble();
+    prisma.sportLeaguePhase.findMany.mockResolvedValue([
+      { id: 'regular', phase: LeaguePhase.REGULAR, isSynced: true },
+      { id: 'preseason', phase: LeaguePhase.PRESEASON, isSynced: false },
+    ]);
+    const slot = {
+      id: 'week-1', sportLeaguePhaseId: 'regular', key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1, name: null, awardsTrophy: false, squaresEligible: true,
+      seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+      providerMappings: [{
+        id: 'm1', matchType: SlotProviderMatchType.PROVIDER_CODE, providerValue: 'REG:1',
+        sportLeagueProviderMapping: { providerLeague: { code: 'nfl', name: 'NFL', provider: { id: 'bdl', name: 'BALLDONTLIE' } } },
+      }],
+    };
+    prisma.sportLeaguePhaseSlot.findMany.mockResolvedValue([slot]);
+
+    const phases = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readStructure('tour');
+
+    expect(phases).toEqual([
+      {
+        id: 'regular', phase: LeaguePhase.REGULAR, isSynced: true,
+        slots: [{
+          id: 'week-1', key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1, name: null, awardsTrophy: false, squaresEligible: true,
+          seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+          providerMappings: [{
+            id: 'm1', matchType: SlotProviderMatchType.PROVIDER_CODE, providerValue: 'REG:1',
+            providerId: 'bdl', providerName: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL',
+          }],
+        }],
+      },
+      { id: 'preseason', phase: LeaguePhase.PRESEASON, isSynced: false, slots: [] },
+    ]);
+  });
+});
+
 describe('readOverdueCandidates', () => {
   it('never reads a never-released draft, nor a completed or cancelled event, as a candidate', async () => {
     const prisma = prismaDouble();
@@ -199,7 +248,7 @@ describe('readOverdueCandidates', () => {
     ]);
     const round = (roundNumber: number) => ({ id: `r${String(roundNumber)}`, sportEventId: 'parent', roundNumber, scheduledDate: at(`2027-04-1${String(roundNumber)}T00:00:00.000Z`), scheduledEndAt: null });
     prisma.sportEventRound.findMany.mockResolvedValue([round(1), round(2)]);
-    prisma.sportEventMatch.groupBy.mockResolvedValue([{ sportEventRoundId: 'r2', _max: { scheduledDate: at('2027-04-12T18:00:00.000Z') } }]);
+    prisma.sportEventRoundMatch.groupBy.mockResolvedValue([{ sportEventRoundId: 'r2', _max: { scheduledDate: at('2027-04-12T18:00:00.000Z') } }]);
     prisma.eventSeries.findMany.mockResolvedValue([{ id: 'series-1', sportLeagueId: 'tour' }]);
     prisma.providerLeague.findMany.mockResolvedValue([{ typicalGameMinutes: 300, sportLeagues: [{ sportLeagueId: 'tour' }] }]);
 

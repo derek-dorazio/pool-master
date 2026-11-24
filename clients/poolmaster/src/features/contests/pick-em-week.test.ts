@@ -32,7 +32,7 @@ describe('pick\'em week helpers', () => {
   });
 
   it('finds the tiebreaker game the server names, and none when it names none', () => {
-    expect(tiebreakerGame(pickEmWeekFixture())?.sportEventMatchId).toBe('match-1');
+    expect(tiebreakerGame(pickEmWeekFixture())?.sportEventRoundMatchId).toBe('match-1');
     expect(tiebreakerGame(pickEmWeekFixture({ tiebreakerMatchId: null }))).toBeNull();
   });
 
@@ -53,8 +53,8 @@ describe('pick\'em week helpers', () => {
       2: { pick: weekPick(NFL_TEAMS.chiefs, { confidence: null }) },
     });
     expect(confidencePicks(games, games[1], 3)).toEqual([
-      { sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.chiefs), confidence: 3 },
-      { sportEventMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.packers), confidence: null },
+      { sportEventRoundMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.chiefs), confidence: 3 },
+      { sportEventRoundMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.packers), confidence: null },
     ]);
   });
 
@@ -64,7 +64,7 @@ describe('pick\'em week helpers', () => {
       3: { pick: weekPick(NFL_TEAMS.eagles, { confidence: 1 }) },
     });
     expect(confidencePicks(games, games[2], 2)).toEqual([
-      { sportEventMatchId: 'match-3', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.eagles), confidence: 2 },
+      { sportEventRoundMatchId: 'match-3', predictedResult: 'TEAM', sportEventParticipantId: id(NFL_TEAMS.eagles), confidence: 2 },
     ]);
     expect(confidencePicks(games, games[0], 1)).toEqual([]);
   });
@@ -145,7 +145,7 @@ describe('playoff survivor helpers', () => {
 
   it('shows one round as its own week, counting its picks and marking teams picked in other rounds as used in that round\'s week', () => {
     const round2 = roundWeek(playoffSurvivorFixture(), 2);
-    expect(round2.games.map((game) => game.sportEventMatchId)).toEqual(['match-2', 'match-3']);
+    expect(round2.games.map((game) => game.sportEventRoundMatchId)).toEqual(['match-2', 'match-3']);
     expect(round2.gameCount).toBe(2);
     expect(round2.pickedCount).toBe(0);
     expect(isTeamUsed(round2, NFL_TEAMS.bills)).toBe(true);

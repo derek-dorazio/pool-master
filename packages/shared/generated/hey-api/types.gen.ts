@@ -7811,13 +7811,13 @@ export type SportLeagueDto = {
      */
     autoReleaseDaysBeforeStart: number | null;
     /**
-     * The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+     * The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
      */
-    tierProfileId: string;
+    platformTierProfileId: string;
     /**
-     * The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+     * The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
      */
-    pricingProfileId: string;
+    platformPricingProfileId: string;
     /**
      * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
      */
@@ -7956,13 +7956,13 @@ export type SportLeagueListResponse = {
          */
         autoReleaseDaysBeforeStart: number | null;
         /**
-         * The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+         * The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
          */
-        tierProfileId: string;
+        platformTierProfileId: string;
         /**
-         * The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+         * The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
          */
-        pricingProfileId: string;
+        platformPricingProfileId: string;
         /**
          * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
          */
@@ -8088,13 +8088,13 @@ export type SportLeagueResponse = {
          */
         autoReleaseDaysBeforeStart: number | null;
         /**
-         * The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+         * The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
          */
-        tierProfileId: string;
+        platformTierProfileId: string;
         /**
-         * The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+         * The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
          */
-        pricingProfileId: string;
+        platformPricingProfileId: string;
         /**
          * How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
          */
@@ -8167,13 +8167,13 @@ export type CreateSportLeagueRequest = {
      */
     bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
     /**
-     * The tier profile the sport league names. 404 TIER_PROFILE_NOT_FOUND for one that does not exist.
+     * The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.
      */
-    tierProfileId: string;
+    platformTierProfileId: string;
     /**
-     * The pricing profile the sport league names. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist.
+     * The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.
      */
-    pricingProfileId: string;
+    platformPricingProfileId: string;
 };
 
 /**
@@ -8195,13 +8195,13 @@ export type UpdateSportLeagueRequest = {
      */
     currentEventYear?: number;
     /**
-     * Names another tier profile. 404 TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.
+     * Names another tier profile. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.
      */
-    tierProfileId?: string;
+    platformTierProfileId?: string;
     /**
-     * Names another pricing profile. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.
+     * Names another pricing profile. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.
      */
-    pricingProfileId?: string;
+    platformPricingProfileId?: string;
     /**
      * RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.
      */
@@ -9546,6 +9546,211 @@ export type SportLeagueParticipantOverviewListResponse = {
          * ISO 8601 datetime string.
          */
         createdAt: string;
+    }>;
+};
+
+/**
+ * How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced.
+ */
+export type SlotProviderMappingDto = {
+    id: string;
+    providerId: string;
+    providerName: string;
+    /**
+     * The provider's own code for the league the mapping reads, such as nfl.
+     */
+    providerLeagueCode: string;
+    providerLeagueName: string;
+    /**
+     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+     */
+    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+    /**
+     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+     */
+    providerValue: string | null;
+};
+
+/**
+ * One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it.
+ */
+export type SportLeagueSlotDefinitionDto = {
+    id: string;
+    /**
+     * A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.
+     */
+    key: string;
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * The week's number in its phase; set only on a WEEK slot.
+     */
+    weekNumber: number | null;
+    /**
+     * The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.
+     */
+    name: string | null;
+    awardsTrophy: boolean;
+    /**
+     * Whether a squares pool can be played on its games.
+     */
+    squaresEligible: boolean;
+    seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+    /**
+     * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
+     */
+    seriesGames: number;
+    pairing: 'FIXED' | 'RESEEDED';
+    /**
+     * By provider, then in the order the sync tries them.
+     */
+    providerMappings: Array<{
+        id: string;
+        providerId: string;
+        providerName: string;
+        /**
+         * The provider's own code for the league the mapping reads, such as nfl.
+         */
+        providerLeagueCode: string;
+        providerLeagueName: string;
+        /**
+         * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+         */
+        matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+        /**
+         * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+         */
+        providerValue: string | null;
+    }>;
+};
+
+/**
+ * One phase definition of a sport league.
+ */
+export type SportLeaguePhaseDefinitionDto = {
+    id: string;
+    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+    /**
+     * Whether the league's sync reads the phase. An unsynced phase has no slots.
+     */
+    isSynced: boolean;
+    /**
+     * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
+     */
+    slots: Array<{
+        id: string;
+        /**
+         * A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * The week's number in its phase; set only on a WEEK slot.
+         */
+        weekNumber: number | null;
+        /**
+         * The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.
+         */
+        name: string | null;
+        awardsTrophy: boolean;
+        /**
+         * Whether a squares pool can be played on its games.
+         */
+        squaresEligible: boolean;
+        seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+        /**
+         * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
+         */
+        seriesGames: number;
+        pairing: 'FIXED' | 'RESEEDED';
+        /**
+         * By provider, then in the order the sync tries them.
+         */
+        providerMappings: Array<{
+            id: string;
+            providerId: string;
+            providerName: string;
+            /**
+             * The provider's own code for the league the mapping reads, such as nfl.
+             */
+            providerLeagueCode: string;
+            providerLeagueName: string;
+            /**
+             * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+             */
+            matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+            /**
+             * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+             */
+            providerValue: string | null;
+        }>;
+    }>;
+};
+
+/**
+ * A sport league's phase and slot definitions, set by migration.
+ */
+export type SportLeagueStructureResponse = {
+    /**
+     * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.
+     */
+    phases: Array<{
+        id: string;
+        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+        /**
+         * Whether the league's sync reads the phase. An unsynced phase has no slots.
+         */
+        isSynced: boolean;
+        /**
+         * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
+         */
+        slots: Array<{
+            id: string;
+            /**
+             * A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.
+             */
+            key: string;
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * The week's number in its phase; set only on a WEEK slot.
+             */
+            weekNumber: number | null;
+            /**
+             * The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.
+             */
+            name: string | null;
+            awardsTrophy: boolean;
+            /**
+             * Whether a squares pool can be played on its games.
+             */
+            squaresEligible: boolean;
+            seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+            /**
+             * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
+             */
+            seriesGames: number;
+            pairing: 'FIXED' | 'RESEEDED';
+            /**
+             * By provider, then in the order the sync tries them.
+             */
+            providerMappings: Array<{
+                id: string;
+                providerId: string;
+                providerName: string;
+                /**
+                 * The provider's own code for the league the mapping reads, such as nfl.
+                 */
+                providerLeagueCode: string;
+                providerLeagueName: string;
+                /**
+                 * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                 */
+                matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+                /**
+                 * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+                 */
+                providerValue: string | null;
+            }>;
+        }>;
     }>;
 };
 
@@ -13078,7 +13283,7 @@ export type CreateContestRequest = {
     /**
      * A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.
      */
-    sportEventMatchId?: string;
+    sportEventRoundMatchId?: string;
 };
 
 /**
@@ -14930,7 +15135,7 @@ export type SaveGamePicksRequest = {
         /**
          * The game picked: one of the event's games.
          */
-        sportEventMatchId: string;
+        sportEventRoundMatchId: string;
         /**
          * What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.
          */
@@ -15203,7 +15408,7 @@ export type PickEmLeaderboardResponse = {
          * The entry's picks on the current week's games, in game order: only games that have kicked off, so no entry sees a pick it could still copy.
          */
         currentWeekPicks: Array<{
-            sportEventMatchId: string;
+            sportEventRoundMatchId: string;
             /**
              * The field row of the team picked; null for a tie pick.
              */
@@ -15376,7 +15581,7 @@ export type GamePicksResponse = {
      * The event's games in game-number order. Cancelled games are left out: they are not picked.
      */
     games: Array<{
-        sportEventMatchId: string;
+        sportEventRoundMatchId: string;
         matchNumber: number;
         roundNumber: number;
         /**
@@ -15667,7 +15872,7 @@ export type GamePickPreviewRequest = {
         /**
          * The game picked: one of the event's games.
          */
-        sportEventMatchId: string;
+        sportEventRoundMatchId: string;
         /**
          * What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.
          */
@@ -15714,7 +15919,7 @@ export type GamePickPreviewResponse = {
      * The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round.
      */
     games: Array<{
-        sportEventMatchId: string;
+        sportEventRoundMatchId: string;
         matchNumber: number;
         roundNumber: number;
         /**
@@ -21072,7 +21277,7 @@ export type SportEventMatchPeriodScoreDto = {
 /**
  * One game or match of an event, which in a bracket is also a slot naming where its winner goes.
  */
-export type SportEventMatchDto = {
+export type SportEventRoundMatchDto = {
     id: string;
     sportEventId: string;
     /**
@@ -21279,7 +21484,7 @@ export type SportEventBracketResponse = {
 /**
  * One match of an event's bracket.
  */
-export type SportEventMatchResponse = {
+export type SportEventRoundMatchResponse = {
     /**
      * One game or match of an event, which in a bracket is also a slot naming where its winner goes.
      */
@@ -21428,7 +21633,7 @@ export type LoadSportEventBracketRequest = {
 /**
  * One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.
  */
-export type UpdateSportEventMatchRequest = {
+export type UpdateSportEventRoundMatchRequest = {
     /**
      * Omitted keeps it; null empties the side. Only until the event is released.
      */
@@ -21471,7 +21676,7 @@ export type ReplaceWithdrawnParticipantRequest = {
 /**
  * A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.
  */
-export type RecordSportEventMatchResultRequest = {
+export type RecordSportEventRoundMatchResultRequest = {
     /**
      * The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.
      */
@@ -29761,9 +29966,9 @@ export type CustomerUserListResponse = {
 };
 
 /**
- * A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise.
+ * A tier profile's code, name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 PLATFORM_TIER_PROFILE_INVALID otherwise.
  */
-export type TierProfileWriteRequest = {
+export type PlatformTierProfileWriteRequest = {
     /**
      * How many tiers a new event starts with.
      */
@@ -29780,6 +29985,10 @@ export type TierProfileWriteRequest = {
      * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
      */
     lastTierMax: number | null;
+    /**
+     * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+     */
+    code: string;
     /**
      * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
      */
@@ -29789,7 +29998,7 @@ export type TierProfileWriteRequest = {
 /**
  * A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers.
  */
-export type TierProfileDto = {
+export type PlatformTierProfileDto = {
     /**
      * How many tiers a new event starts with.
      */
@@ -29806,6 +30015,10 @@ export type TierProfileDto = {
      * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
      */
     lastTierMax: number | null;
+    /**
+     * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+     */
+    code: string;
     /**
      * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
      */
@@ -29828,11 +30041,11 @@ export type TierProfileDto = {
 /**
  * Every tier profile.
  */
-export type TierProfileListResponse = {
+export type PlatformTierProfileListResponse = {
     /**
      * Every tier profile, by name.
      */
-    tierProfiles: Array<{
+    platformTierProfiles: Array<{
         /**
          * How many tiers a new event starts with.
          */
@@ -29849,6 +30062,10 @@ export type TierProfileListResponse = {
          * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
          */
         lastTierMax: number | null;
+        /**
+         * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+         */
+        code: string;
         /**
          * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
          */
@@ -29872,11 +30089,11 @@ export type TierProfileListResponse = {
 /**
  * One tier profile.
  */
-export type TierProfileResponse = {
+export type PlatformTierProfileResponse = {
     /**
      * A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers.
      */
-    tierProfile: {
+    platformTierProfile: {
         /**
          * How many tiers a new event starts with.
          */
@@ -29893,6 +30110,10 @@ export type TierProfileResponse = {
          * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
          */
         lastTierMax: number | null;
+        /**
+         * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+         */
+        code: string;
         /**
          * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
          */
@@ -29914,9 +30135,9 @@ export type TierProfileResponse = {
 };
 
 /**
- * A pricing profile's name and values, the whole of it. 422 PRICING_PROFILE_INVALID when the values contradict each other.
+ * A pricing profile's code, name and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other.
  */
-export type PricingProfileWriteRequest = {
+export type PlatformPricingProfileWriteRequest = {
     /**
      * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
      */
@@ -29941,12 +30162,16 @@ export type PricingProfileWriteRequest = {
      * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
      */
     name: string;
+    /**
+     * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+     */
+    code: string;
 };
 
 /**
  * A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them.
  */
-export type PricingProfileDto = {
+export type PlatformPricingProfileDto = {
     /**
      * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
      */
@@ -29971,6 +30196,10 @@ export type PricingProfileDto = {
      * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
      */
     name: string;
+    /**
+     * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+     */
+    code: string;
     id: string;
     /**
      * How many sport leagues name the profile. One any league names can't be deleted.
@@ -29989,11 +30218,11 @@ export type PricingProfileDto = {
 /**
  * Every pricing profile.
  */
-export type PricingProfileListResponse = {
+export type PlatformPricingProfileListResponse = {
     /**
      * Every pricing profile, by name.
      */
-    pricingProfiles: Array<{
+    platformPricingProfiles: Array<{
         /**
          * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
          */
@@ -30018,6 +30247,10 @@ export type PricingProfileListResponse = {
          * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
          */
         name: string;
+        /**
+         * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+         */
+        code: string;
         id: string;
         /**
          * How many sport leagues name the profile. One any league names can't be deleted.
@@ -30037,11 +30270,11 @@ export type PricingProfileListResponse = {
 /**
  * One pricing profile.
  */
-export type PricingProfileResponse = {
+export type PlatformPricingProfileResponse = {
     /**
      * A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them.
      */
-    pricingProfile: {
+    platformPricingProfile: {
         /**
          * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
          */
@@ -30066,6 +30299,10 @@ export type PricingProfileResponse = {
          * The profile's name, unique among its kind: "6 tiers of 10", "Standard".
          */
         name: string;
+        /**
+         * The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name.
+         */
+        code: string;
         id: string;
         /**
          * How many sport leagues name the profile. One any league names can't be deleted.
@@ -35761,7 +35998,7 @@ export type LoadEventBracketResponses = {
 export type LoadEventBracketResponse = LoadEventBracketResponses[keyof LoadEventBracketResponses];
 
 export type UpdateEventBracketMatchData = {
-    body: UpdateSportEventMatchRequest;
+    body: UpdateSportEventRoundMatchRequest;
     path: {
         eventId: string;
         matchNumber: number;
@@ -35803,7 +36040,7 @@ export type UpdateEventBracketMatchResponses = {
     /**
      * One match of an event's bracket.
      */
-    200: SportEventMatchResponse;
+    200: SportEventRoundMatchResponse;
 };
 
 export type UpdateEventBracketMatchResponse = UpdateEventBracketMatchResponses[keyof UpdateEventBracketMatchResponses];
@@ -35853,7 +36090,7 @@ export type ClearEventMatchResultResponses = {
 export type ClearEventMatchResultResponse = ClearEventMatchResultResponses[keyof ClearEventMatchResultResponses];
 
 export type RecordEventMatchResultData = {
-    body: RecordSportEventMatchResultRequest;
+    body: RecordSportEventRoundMatchResultRequest;
     path: {
         eventId: string;
         matchNumber: number;
@@ -36518,6 +36755,41 @@ export type ListSportLeagueSyncsResponses = {
 
 export type ListSportLeagueSyncsResponse = ListSportLeagueSyncsResponses[keyof ListSportLeagueSyncsResponses];
 
+export type GetSportLeagueStructureData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/structure';
+};
+
+export type GetSportLeagueStructureErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetSportLeagueStructureError = GetSportLeagueStructureErrors[keyof GetSportLeagueStructureErrors];
+
+export type GetSportLeagueStructureResponses = {
+    /**
+     * A sport league's phase and slot definitions, set by migration.
+     */
+    200: SportLeagueStructureResponse;
+};
+
+export type GetSportLeagueStructureResponse = GetSportLeagueStructureResponses[keyof GetSportLeagueStructureResponses];
+
 export type ListSportLeagueEventOverviewsData = {
     body?: never;
     path: {
@@ -36712,14 +36984,14 @@ export type ApplySportLeagueRankingUploadResponses = {
 
 export type ApplySportLeagueRankingUploadResponse = ApplySportLeagueRankingUploadResponses[keyof ApplySportLeagueRankingUploadResponses];
 
-export type ListTierProfilesData = {
+export type ListPlatformTierProfilesData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/tier-profiles/';
 };
 
-export type ListTierProfilesErrors = {
+export type ListPlatformTierProfilesErrors = {
     /**
      * Standard API error envelope.
      */
@@ -36734,25 +37006,25 @@ export type ListTierProfilesErrors = {
     429: ErrorEnvelope;
 };
 
-export type ListTierProfilesError = ListTierProfilesErrors[keyof ListTierProfilesErrors];
+export type ListPlatformTierProfilesError = ListPlatformTierProfilesErrors[keyof ListPlatformTierProfilesErrors];
 
-export type ListTierProfilesResponses = {
+export type ListPlatformTierProfilesResponses = {
     /**
      * Every tier profile.
      */
-    200: TierProfileListResponse;
+    200: PlatformTierProfileListResponse;
 };
 
-export type ListTierProfilesResponse = ListTierProfilesResponses[keyof ListTierProfilesResponses];
+export type ListPlatformTierProfilesResponse = ListPlatformTierProfilesResponses[keyof ListPlatformTierProfilesResponses];
 
-export type CreateTierProfileData = {
-    body: TierProfileWriteRequest;
+export type CreatePlatformTierProfileData = {
+    body: PlatformTierProfileWriteRequest;
     path?: never;
     query?: never;
     url: '/api/v1/tier-profiles/';
 };
 
-export type CreateTierProfileErrors = {
+export type CreatePlatformTierProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -36779,18 +37051,18 @@ export type CreateTierProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type CreateTierProfileError = CreateTierProfileErrors[keyof CreateTierProfileErrors];
+export type CreatePlatformTierProfileError = CreatePlatformTierProfileErrors[keyof CreatePlatformTierProfileErrors];
 
-export type CreateTierProfileResponses = {
+export type CreatePlatformTierProfileResponses = {
     /**
      * One tier profile.
      */
-    201: TierProfileResponse;
+    201: PlatformTierProfileResponse;
 };
 
-export type CreateTierProfileResponse = CreateTierProfileResponses[keyof CreateTierProfileResponses];
+export type CreatePlatformTierProfileResponse = CreatePlatformTierProfileResponses[keyof CreatePlatformTierProfileResponses];
 
-export type DeleteTierProfileData = {
+export type DeletePlatformTierProfileData = {
     body?: never;
     path: {
         profileId: string;
@@ -36799,7 +37071,7 @@ export type DeleteTierProfileData = {
     url: '/api/v1/tier-profiles/{profileId}';
 };
 
-export type DeleteTierProfileErrors = {
+export type DeletePlatformTierProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -36822,18 +37094,18 @@ export type DeleteTierProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type DeleteTierProfileError = DeleteTierProfileErrors[keyof DeleteTierProfileErrors];
+export type DeletePlatformTierProfileError = DeletePlatformTierProfileErrors[keyof DeletePlatformTierProfileErrors];
 
-export type DeleteTierProfileResponses = {
+export type DeletePlatformTierProfileResponses = {
     /**
      * Default Response
      */
     204: void;
 };
 
-export type DeleteTierProfileResponse = DeleteTierProfileResponses[keyof DeleteTierProfileResponses];
+export type DeletePlatformTierProfileResponse = DeletePlatformTierProfileResponses[keyof DeletePlatformTierProfileResponses];
 
-export type GetTierProfileData = {
+export type GetPlatformTierProfileData = {
     body?: never;
     path: {
         profileId: string;
@@ -36842,7 +37114,7 @@ export type GetTierProfileData = {
     url: '/api/v1/tier-profiles/{profileId}';
 };
 
-export type GetTierProfileErrors = {
+export type GetPlatformTierProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -36861,19 +37133,19 @@ export type GetTierProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type GetTierProfileError = GetTierProfileErrors[keyof GetTierProfileErrors];
+export type GetPlatformTierProfileError = GetPlatformTierProfileErrors[keyof GetPlatformTierProfileErrors];
 
-export type GetTierProfileResponses = {
+export type GetPlatformTierProfileResponses = {
     /**
      * One tier profile.
      */
-    200: TierProfileResponse;
+    200: PlatformTierProfileResponse;
 };
 
-export type GetTierProfileResponse = GetTierProfileResponses[keyof GetTierProfileResponses];
+export type GetPlatformTierProfileResponse = GetPlatformTierProfileResponses[keyof GetPlatformTierProfileResponses];
 
-export type UpdateTierProfileData = {
-    body: TierProfileWriteRequest;
+export type UpdatePlatformTierProfileData = {
+    body: PlatformTierProfileWriteRequest;
     path: {
         profileId: string;
     };
@@ -36881,7 +37153,7 @@ export type UpdateTierProfileData = {
     url: '/api/v1/tier-profiles/{profileId}';
 };
 
-export type UpdateTierProfileErrors = {
+export type UpdatePlatformTierProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -36912,25 +37184,25 @@ export type UpdateTierProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type UpdateTierProfileError = UpdateTierProfileErrors[keyof UpdateTierProfileErrors];
+export type UpdatePlatformTierProfileError = UpdatePlatformTierProfileErrors[keyof UpdatePlatformTierProfileErrors];
 
-export type UpdateTierProfileResponses = {
+export type UpdatePlatformTierProfileResponses = {
     /**
      * One tier profile.
      */
-    200: TierProfileResponse;
+    200: PlatformTierProfileResponse;
 };
 
-export type UpdateTierProfileResponse = UpdateTierProfileResponses[keyof UpdateTierProfileResponses];
+export type UpdatePlatformTierProfileResponse = UpdatePlatformTierProfileResponses[keyof UpdatePlatformTierProfileResponses];
 
-export type ListPricingProfilesData = {
+export type ListPlatformPricingProfilesData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/v1/pricing-profiles/';
 };
 
-export type ListPricingProfilesErrors = {
+export type ListPlatformPricingProfilesErrors = {
     /**
      * Standard API error envelope.
      */
@@ -36945,25 +37217,25 @@ export type ListPricingProfilesErrors = {
     429: ErrorEnvelope;
 };
 
-export type ListPricingProfilesError = ListPricingProfilesErrors[keyof ListPricingProfilesErrors];
+export type ListPlatformPricingProfilesError = ListPlatformPricingProfilesErrors[keyof ListPlatformPricingProfilesErrors];
 
-export type ListPricingProfilesResponses = {
+export type ListPlatformPricingProfilesResponses = {
     /**
      * Every pricing profile.
      */
-    200: PricingProfileListResponse;
+    200: PlatformPricingProfileListResponse;
 };
 
-export type ListPricingProfilesResponse = ListPricingProfilesResponses[keyof ListPricingProfilesResponses];
+export type ListPlatformPricingProfilesResponse = ListPlatformPricingProfilesResponses[keyof ListPlatformPricingProfilesResponses];
 
-export type CreatePricingProfileData = {
-    body: PricingProfileWriteRequest;
+export type CreatePlatformPricingProfileData = {
+    body: PlatformPricingProfileWriteRequest;
     path?: never;
     query?: never;
     url: '/api/v1/pricing-profiles/';
 };
 
-export type CreatePricingProfileErrors = {
+export type CreatePlatformPricingProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -36990,18 +37262,18 @@ export type CreatePricingProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type CreatePricingProfileError = CreatePricingProfileErrors[keyof CreatePricingProfileErrors];
+export type CreatePlatformPricingProfileError = CreatePlatformPricingProfileErrors[keyof CreatePlatformPricingProfileErrors];
 
-export type CreatePricingProfileResponses = {
+export type CreatePlatformPricingProfileResponses = {
     /**
      * One pricing profile.
      */
-    201: PricingProfileResponse;
+    201: PlatformPricingProfileResponse;
 };
 
-export type CreatePricingProfileResponse = CreatePricingProfileResponses[keyof CreatePricingProfileResponses];
+export type CreatePlatformPricingProfileResponse = CreatePlatformPricingProfileResponses[keyof CreatePlatformPricingProfileResponses];
 
-export type DeletePricingProfileData = {
+export type DeletePlatformPricingProfileData = {
     body?: never;
     path: {
         profileId: string;
@@ -37010,7 +37282,7 @@ export type DeletePricingProfileData = {
     url: '/api/v1/pricing-profiles/{profileId}';
 };
 
-export type DeletePricingProfileErrors = {
+export type DeletePlatformPricingProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -37033,18 +37305,18 @@ export type DeletePricingProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type DeletePricingProfileError = DeletePricingProfileErrors[keyof DeletePricingProfileErrors];
+export type DeletePlatformPricingProfileError = DeletePlatformPricingProfileErrors[keyof DeletePlatformPricingProfileErrors];
 
-export type DeletePricingProfileResponses = {
+export type DeletePlatformPricingProfileResponses = {
     /**
      * Default Response
      */
     204: void;
 };
 
-export type DeletePricingProfileResponse = DeletePricingProfileResponses[keyof DeletePricingProfileResponses];
+export type DeletePlatformPricingProfileResponse = DeletePlatformPricingProfileResponses[keyof DeletePlatformPricingProfileResponses];
 
-export type GetPricingProfileData = {
+export type GetPlatformPricingProfileData = {
     body?: never;
     path: {
         profileId: string;
@@ -37053,7 +37325,7 @@ export type GetPricingProfileData = {
     url: '/api/v1/pricing-profiles/{profileId}';
 };
 
-export type GetPricingProfileErrors = {
+export type GetPlatformPricingProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -37072,19 +37344,19 @@ export type GetPricingProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type GetPricingProfileError = GetPricingProfileErrors[keyof GetPricingProfileErrors];
+export type GetPlatformPricingProfileError = GetPlatformPricingProfileErrors[keyof GetPlatformPricingProfileErrors];
 
-export type GetPricingProfileResponses = {
+export type GetPlatformPricingProfileResponses = {
     /**
      * One pricing profile.
      */
-    200: PricingProfileResponse;
+    200: PlatformPricingProfileResponse;
 };
 
-export type GetPricingProfileResponse = GetPricingProfileResponses[keyof GetPricingProfileResponses];
+export type GetPlatformPricingProfileResponse = GetPlatformPricingProfileResponses[keyof GetPlatformPricingProfileResponses];
 
-export type UpdatePricingProfileData = {
-    body: PricingProfileWriteRequest;
+export type UpdatePlatformPricingProfileData = {
+    body: PlatformPricingProfileWriteRequest;
     path: {
         profileId: string;
     };
@@ -37092,7 +37364,7 @@ export type UpdatePricingProfileData = {
     url: '/api/v1/pricing-profiles/{profileId}';
 };
 
-export type UpdatePricingProfileErrors = {
+export type UpdatePlatformPricingProfileErrors = {
     /**
      * Standard API error envelope.
      */
@@ -37123,16 +37395,16 @@ export type UpdatePricingProfileErrors = {
     429: ErrorEnvelope;
 };
 
-export type UpdatePricingProfileError = UpdatePricingProfileErrors[keyof UpdatePricingProfileErrors];
+export type UpdatePlatformPricingProfileError = UpdatePlatformPricingProfileErrors[keyof UpdatePlatformPricingProfileErrors];
 
-export type UpdatePricingProfileResponses = {
+export type UpdatePlatformPricingProfileResponses = {
     /**
      * One pricing profile.
      */
-    200: PricingProfileResponse;
+    200: PlatformPricingProfileResponse;
 };
 
-export type UpdatePricingProfileResponse = UpdatePricingProfileResponses[keyof UpdatePricingProfileResponses];
+export type UpdatePlatformPricingProfileResponse = UpdatePlatformPricingProfileResponses[keyof UpdatePlatformPricingProfileResponses];
 
 export type ListEventPagesData = {
     body?: never;
@@ -38926,10 +39198,10 @@ export type ClearGamePickData = {
         contestId: string;
         entryId: string;
         sportEventId: string;
-        sportEventMatchId: string;
+        sportEventRoundMatchId: string;
     };
     query?: never;
-    url: '/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventMatchId}';
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventRoundMatchId}';
 };
 
 export type ClearGamePickErrors = {

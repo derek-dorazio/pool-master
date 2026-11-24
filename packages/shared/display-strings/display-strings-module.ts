@@ -26,6 +26,11 @@ export type SharedEnums = {
   ProviderHealthStatus: Enums.ProviderHealthStatus;
   ProviderCode: Enums.ProviderCode;
   ProviderWebhookEventSet: Enums.ProviderWebhookEventSet;
+  LeaguePhase: Enums.LeaguePhase;
+  SlotKind: Enums.SlotKind;
+  SeriesFormat: Enums.SeriesFormat;
+  SlotPairing: Enums.SlotPairing;
+  SlotProviderMatchType: Enums.SlotProviderMatchType;
   InjuryStatusCode: Enums.InjuryStatusCode;
   FormTrend: Enums.FormTrend;
   PoolType: Enums.PoolType;
@@ -125,7 +130,7 @@ export type SharedEnums = {
   RecordType: Enums.RecordType;
   TrophyKind: Enums.TrophyKind;
   YearReviewStatus: Enums.YearReviewStatus;
-  TierProfileLastTier: Enums.TierProfileLastTier;
+  PlatformTierProfileLastTier: Enums.PlatformTierProfileLastTier;
   ChampionshipTile: Enums.ChampionshipTile;
 };
 

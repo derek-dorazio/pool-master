@@ -26,7 +26,7 @@ import type {
   ContestSquaresRepository,
   LeagueMembershipRepository,
   ParticipantRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventRepository,
   SquadMembershipRepository,
@@ -47,7 +47,7 @@ import {
   type ContestSquaresDraw,
   type MatchPeriodLayout,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SquaresWinner,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
@@ -78,7 +78,7 @@ export interface SquaresServiceDeps {
   memberships: Pick<LeagueMembershipRepository, 'findByLeagueAndUser'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   sportEvents: Pick<SportEventRepository, 'findById'>;
-  matches: Pick<SportEventMatchRepository, 'findById'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findById'>;
   field: Pick<SportEventParticipantRepository, 'findByIds'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
   squares: ContestSquaresRepository;
@@ -124,7 +124,7 @@ export interface SquaresBoard {
   maxSquaresPerEntry: number;
   /** The periods the game is played in (#786): its scoring moments are each period's end. */
   periodLayout: MatchPeriodLayout;
-  game: SportEventMatch;
+  game: SportEventRoundMatch;
   homeTeamName: string | null;
   awayTeamName: string | null;
   claimsOpen: boolean;
@@ -140,7 +140,7 @@ interface SquaresContext {
   contest: Contest;
   maxSquaresPerEntry: number;
   sportEvent: SportEvent;
-  game: SportEventMatch;
+  game: SportEventRoundMatch;
   periodLayout: MatchPeriodLayout;
   periodCount: number;
   entries: ContestEntryWithSquad[];
@@ -401,7 +401,7 @@ export class SquaresService {
   }
 
   /** The game's two teams' names, from their two field rows alone (#1201). */
-  private async findTeamNames(game: SportEventMatch): Promise<{ home: string | null; away: string | null }> {
+  private async findTeamNames(game: SportEventRoundMatch): Promise<{ home: string | null; away: string | null }> {
     const field = await this.deps.field.findByIds(
       [game.homeSportEventParticipantId, game.awaySportEventParticipantId].filter((id): id is string => id !== null),
     );

@@ -164,7 +164,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await contest('Majors', { events: 2 });
     await contest('Live', { status: 'ACTIVE' });
     const round = (eventId: string, roundNumber: number) => prisma.sportEventRound.create({ data: { sportEventId: eventId, roundNumber, scheduledDate: new Date('2026-04-09T12:00:00.000Z') } });
-    const game = (eventId: string, matchNumber: number, roundId: string, advancesToMatchId: string | null = null) => prisma.sportEventMatch.create({
+    const game = (eventId: string, matchNumber: number, roundId: string, advancesToMatchId: string | null = null) => prisma.sportEventRoundMatch.create({
       data: { sportEventId: eventId, sportEventRoundId: roundId, matchNumber, isNeutralSite: true, advancesToMatchId, advancesToSide: advancesToMatchId === null ? null : 'HOME' },
     });
     const finalEventId = expectDefined(final.sportEvents[0]).sportEventId;

@@ -269,41 +269,41 @@ export const selectionErrors = {
     ),
 
   /** A pick names one of the event's games (#716). */
-  gameNotFound: (sportEventMatchId: string, sportEventId: string) =>
+  gameNotFound: (sportEventRoundMatchId: string, sportEventId: string) =>
     new SelectionError(
-      `Game ${sportEventMatchId} is not one of event ${sportEventId}'s games`,
+      `Game ${sportEventRoundMatchId} is not one of event ${sportEventId}'s games`,
       'PREDICTION_GAME_NOT_FOUND',
       404,
     ),
 
   /** A pick names one of the two teams playing the game, so a game with a side still to be decided takes none. */
-  teamNotInGame: (sportEventParticipantId: string, sportEventMatchId: string) =>
+  teamNotInGame: (sportEventParticipantId: string, sportEventRoundMatchId: string) =>
     new SelectionError(
-      `SportEventParticipant ${sportEventParticipantId} is not playing in game ${sportEventMatchId}`,
+      `SportEventParticipant ${sportEventParticipantId} is not playing in game ${sportEventRoundMatchId}`,
       'PREDICTION_TEAM_NOT_IN_GAME',
       400,
     ),
 
   /** A tie pick only in a pick'em pool whose sport offers one (#792): a draw in soccer. */
-  tieNotOffered: (sportEventMatchId: string) =>
+  tieNotOffered: (sportEventRoundMatchId: string) =>
     new SelectionError(
-      `This pool takes no tie pick on game ${sportEventMatchId}: pick a team to win`,
+      `This pool takes no tie pick on game ${sportEventRoundMatchId}: pick a team to win`,
       'PREDICTION_TIE_NOT_OFFERED',
       422,
     ),
 
   /** A TEAM pick names its team and a TIE pick names none (#792). */
-  pickInvalid: (sportEventMatchId: string) =>
+  pickInvalid: (sportEventRoundMatchId: string) =>
     new SelectionError(
-      `The pick on game ${sportEventMatchId} must name a team with TEAM and no team with TIE`,
+      `The pick on game ${sportEventRoundMatchId} must name a team with TEAM and no team with TIE`,
       'PREDICTION_PICK_INVALID',
       400,
     ),
 
   /** Each game's pick locks at its kickoff (#716). */
-  gameStarted: (sportEventMatchId: string) =>
+  gameStarted: (sportEventRoundMatchId: string) =>
     new SelectionError(
-      `Game ${sportEventMatchId} has started; its pick can no longer be changed`,
+      `Game ${sportEventRoundMatchId} has started; its pick can no longer be changed`,
       'PREDICTION_GAME_STARTED',
       409,
     ),
@@ -377,9 +377,9 @@ export const selectionErrors = {
     ),
 
   /** After the first kickoff a submitted week stays submitted: a pick can be swapped, not cleared (#716). */
-  clearAfterFirstKickoff: (sportEventMatchId: string) =>
+  clearAfterFirstKickoff: (sportEventRoundMatchId: string) =>
     new SelectionError(
-      `The week's first game has started; the pick on game ${sportEventMatchId} can be changed to the other team but not cleared`,
+      `The week's first game has started; the pick on game ${sportEventRoundMatchId} can be changed to the other team but not cleared`,
       'PREDICTION_CLEAR_AFTER_FIRST_KICKOFF',
       409,
     ),

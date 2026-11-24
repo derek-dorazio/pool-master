@@ -33,14 +33,14 @@ export const survivorPredictionEngine: PredictionEngine = {
     const roundOf = new Map(games.map((game) => [game.id, game.roundNumber]));
     // A survivor pick names a team: a tie pick never stands.
     const valid = (prediction: (typeof predictions)[number]) => {
-      const game = sides.get(prediction.sportEventMatchId);
+      const game = sides.get(prediction.sportEventRoundMatchId);
       return game !== undefined && isTeamChoice(prediction)
         && (prediction.sportEventParticipantId === game.home || prediction.sportEventParticipantId === game.away);
     };
     // Each round holds one pick: the latest valid one stands, and any other is cleared.
     const latestByRound = new Map<number, (typeof predictions)[number]>();
     for (const prediction of predictions.filter(valid)) {
-      latestByRound.set(roundOf.get(prediction.sportEventMatchId) ?? 0, prediction);
+      latestByRound.set(roundOf.get(prediction.sportEventRoundMatchId) ?? 0, prediction);
     }
     const kept = predictions.filter((prediction) => [...latestByRound.values()].includes(prediction));
     return { sides, kept, stranded: predictions.filter((prediction) => !kept.includes(prediction)) };
@@ -62,11 +62,11 @@ export const survivorPredictionEngine: PredictionEngine = {
       issues.push({ kind: PredictionIssueKind.ENTRY_ELIMINATED });
     }
     const games = new Set(gameMatchIds);
-    const picked = predictions.filter((prediction) => games.has(prediction.sportEventMatchId));
+    const picked = predictions.filter((prediction) => games.has(prediction.sportEventRoundMatchId));
     // The event's first round needs its one pick to submit; a later round holds at most one.
     const byRound = new Map<number, number>();
     for (const pick of picked) {
-      const round = season?.roundOf.get(pick.sportEventMatchId) ?? 1;
+      const round = season?.roundOf.get(pick.sportEventRoundMatchId) ?? 1;
       byRound.set(round, (byRound.get(round) ?? 0) + 1);
     }
     const firstRoundCount = byRound.get(season?.firstRoundNumber ?? 1) ?? 0;

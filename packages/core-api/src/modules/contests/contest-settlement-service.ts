@@ -303,19 +303,19 @@ export class ContestSettlementService {
    * weeks (the Super Bowl is the last game of the NFL playoffs). It runs in the SETTLE_GAME_CONTESTS
    * job, which reads the game as it stands then. Answers how many it completed.
    */
-  async settleFinishedGame(sportEventId: string, sportEventMatchId: string, input?: { completedAt?: Date }): Promise<number> {
+  async settleFinishedGame(sportEventId: string, sportEventRoundMatchId: string, input?: { completedAt?: Date }): Promise<number> {
     const sportEvent = await this.deps.sportEvents.findById(sportEventId);
     if (!sportEvent) return 0;
     const reads = this.sharedReads(sportEvent);
     // The job runs after the write that decided the game, and the result may have been cleared
     // since: a game no longer decided settles nothing, and its next result queues a job of its own.
-    const game = (await reads.matches.findBySportEvent(sportEventId)).find((candidate) => candidate.id === sportEventMatchId);
+    const game = (await reads.matches.findBySportEvent(sportEventId)).find((candidate) => candidate.id === sportEventRoundMatchId);
     if (game?.status !== MatchStatus.COMPLETED && game?.status !== MatchStatus.CANCELLED) {
-      this.logger.info({ sportEventId, sportEventMatchId, status: game?.status ?? null }, 'Skipped settling a game\'s squares contests because the game is no longer decided');
+      this.logger.info({ sportEventId, sportEventRoundMatchId, status: game?.status ?? null }, 'Skipped settling a game\'s squares contests because the game is no longer decided');
       return 0;
     }
     const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
-      .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
+      .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventRoundMatchId);
     let completed = 0;
     for (const contest of contests) {
       const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
@@ -352,7 +352,7 @@ export class ContestSettlementService {
         this.logger.info({
           contestId: contest.id,
           sportEventId: sportEvent.id,
-          sportEventMatchId: contest.squaresGameMatchId,
+          sportEventRoundMatchId: contest.squaresGameMatchId,
           scoredPeriods: moments.map((moment) => moment.periodNumber),
         }, 'Squares contest waits for every quarter score before settling');
         return { standingsUpserted: 0, completed: false };
@@ -390,7 +390,7 @@ export class ContestSettlementService {
     this.logger.info({
       contestId: contest.id,
       sportEventId: sportEvent.id,
-      sportEventMatchId: contest.squaresGameMatchId,
+      sportEventRoundMatchId: contest.squaresGameMatchId,
       gameStatus: game?.status,
       drawn: draw !== null,
       standingsUpserted,

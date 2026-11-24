@@ -1,10 +1,10 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { BackgroundJobType, JobTrigger, MatchEnding, MatchResultSource, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
-import type { SportEventMatchWrite } from '@poolmaster/shared/db';
+import type { SportEventRoundMatchWrite } from '@poolmaster/shared/db';
 import { expectDefined } from '../../support/expect-defined';
 import {
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
@@ -23,7 +23,7 @@ import { leagueProfiles } from '../../support/league-profiles';
 
 // An event's bracket against real Postgres (#698): the match port's one read and its writes, what
 // removing a field row or the event does to it, the play-in fill, and every database check the
-// migration adds to sport_event_matches. No mocks.
+// migration adds to sport_event_round_matches. No mocks.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -40,7 +40,7 @@ function repos() {
     events: new PrismaSportEventRepository(getAppPrisma()),
     rounds: new PrismaSportEventRoundRepository(getAppPrisma()),
     field: new PrismaSportEventParticipantRepository(getAppPrisma()),
-    matches: new PrismaSportEventMatchRepository(getAppPrisma()),
+    matches: new PrismaSportEventRoundMatchRepository(getAppPrisma()),
   };
 }
 
@@ -87,7 +87,7 @@ async function createBracketEvent() {
 }
 
 /** Two semifinals feeding a final, with ids chosen up front so the links can name them. */
-function fourTeamBracket(entryOf: (name: string) => { id: string }): SportEventMatchWrite[] {
+function fourTeamBracket(entryOf: (name: string) => { id: string }): SportEventRoundMatchWrite[] {
   const finalId = randomUUID();
   return [
     { id: randomUUID(), roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Vermont').id, isNeutralSite: true, scheduledDate: new Date('2027-03-18T19:10:00.000Z'), advancesToMatchId: finalId, advancesToSide: MatchSide.HOME, regionLabel: null },
@@ -96,7 +96,7 @@ function fourTeamBracket(entryOf: (name: string) => { id: string }): SportEventM
   ];
 }
 
-describe('PrismaSportEventMatchRepository', () => {
+describe('PrismaSportEventRoundMatchRepository', () => {
   it('loads a bracket in one write and reads it back in match order with each match\'s round number and where its winner goes', async () => {
     const { event, entryOf } = await createBracketEvent();
     const bracket = fourTeamBracket(entryOf);
@@ -215,7 +215,7 @@ describe('PrismaSportEventMatchRepository', () => {
     expect((await repos().matches.findBySportEvent(event.id))[0]?.periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 3 }]);
 
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
-    await expect(getPrisma().sportEventMatchPeriodScore.count({ where: { sportEventMatchId: first.id } })).resolves.toBe(0);
+    await expect(getPrisma().sportEventMatchPeriodScore.count({ where: { sportEventRoundMatchId: first.id } })).resolves.toBe(0);
   });
 
   it('refuses a period before the first and a negative period score in the database', async () => {
@@ -269,14 +269,14 @@ describe('PrismaSportEventMatchRepository', () => {
 
     await repos().events.delete(event.id);
 
-    await expect(getPrisma().sportEventMatch.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
+    await expect(getPrisma().sportEventRoundMatch.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
   });
 });
 
 /** When a test's results were recorded. */
 const RECORDED_AT = new Date('2027-03-19T05:00:00.000Z');
 
-describe('PrismaSportEventMatchRepository.applyResult', () => {
+describe('PrismaSportEventRoundMatchRepository.applyResult', () => {
   it('completes the match, fills the next match\'s side and writes every standing in one transaction, then rewrites them', async () => {
     const { event, entryOf } = await createBracketEvent();
     await repos().matches.replaceBracket(event.id, fourTeamBracket(entryOf));
@@ -476,7 +476,7 @@ const loadedBracket = async (context: Awaited<ReturnType<typeof createBracketEve
   await repos().matches.replaceBracket(context.event.id, fourTeamBracket(context.entryOf));
   return repos().matches.findBySportEvent(context.event.id);
 };
-const matchRows = (sportEventId: string) => getPrisma().sportEventMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' } });
+const matchRows = (sportEventId: string) => getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' } });
 const fieldRows = (sportEventId: string) => getPrisma().sportEventParticipant.findMany({ where: { sportEventId }, orderBy: { id: 'asc' } });
 
 const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
@@ -500,7 +500,7 @@ const JOB_CARRYING_WRITES: ReadonlyArray<[string, JobCarryingWrite]> = [
     await repos().matches.savePeriodScore(expectDefined(first).id, { periodNumber: 1, homeScore: 10, awayScore: 8 });
     return {
       write: (jobs) => repos().matches.deletePeriodScore(expectDefined(first).id, 1, jobs),
-      state: () => getPrisma().sportEventMatchPeriodScore.findMany({ where: { sportEventMatchId: expectDefined(first).id } }),
+      state: () => getPrisma().sportEventMatchPeriodScore.findMany({ where: { sportEventRoundMatchId: expectDefined(first).id } }),
     };
   }],
   ['teams added to the field', async (context) => {
@@ -565,11 +565,11 @@ describe('Bracket and field writes carry the event\'s leaderboard rebuild (#1466
   });
 });
 
-describe('sport_event_matches database checks', () => {
+describe('sport_event_round_matches database checks', () => {
   /** Inserts one match of the event directly, as only a defect in the service could. */
   async function insertMatch(event: { id: string }, values: Record<string, unknown> = {}) {
     const round = await getPrisma().sportEventRound.findFirstOrThrow({ where: { sportEventId: event.id, roundNumber: 1 } });
-    return getPrisma().sportEventMatch.create({
+    return getPrisma().sportEventRoundMatch.create({
       data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true, ...values },
     });
   }
@@ -578,30 +578,30 @@ describe('sport_event_matches database checks', () => {
     const { event, entryOf } = await createBracketEvent();
 
     await expect(insertMatch(event, { homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Duke').id }))
-      .rejects.toThrow(/sport_event_matches_sides_differ/);
+      .rejects.toThrow(/sport_event_round_matches_sides_differ/);
   });
 
   it('refuses a side to advance to without the match, and a match to advance to without the side', async () => {
     const { event } = await createBracketEvent();
     const next = await insertMatch(event, { matchNumber: 2 });
 
-    await expect(insertMatch(event, { advancesToSide: MatchSide.HOME })).rejects.toThrow(/sport_event_matches_advances_to_side_with_match/);
-    await expect(insertMatch(event, { advancesToMatchId: next.id })).rejects.toThrow(/sport_event_matches_advances_to_side_with_match/);
+    await expect(insertMatch(event, { advancesToSide: MatchSide.HOME })).rejects.toThrow(/sport_event_round_matches_advances_to_side_with_match/);
+    await expect(insertMatch(event, { advancesToMatchId: next.id })).rejects.toThrow(/sport_event_round_matches_advances_to_side_with_match/);
   });
 
   it('refuses a match that advances into itself', async () => {
     const { event } = await createBracketEvent();
     const match = await insertMatch(event);
 
-    await expect(getPrisma().sportEventMatch.update({ where: { id: match.id }, data: { advancesToMatchId: match.id, advancesToSide: MatchSide.HOME } }))
-      .rejects.toThrow(/sport_event_matches_advances_elsewhere/);
+    await expect(getPrisma().sportEventRoundMatch.update({ where: { id: match.id }, data: { advancesToMatchId: match.id, advancesToSide: MatchSide.HOME } }))
+      .rejects.toThrow(/sport_event_round_matches_advances_elsewhere/);
   });
 
   it('refuses a winner on a match that is not COMPLETED, and takes one on a COMPLETED match', async () => {
     const { event } = await createBracketEvent();
 
     await expect(insertMatch(event, { winnerSide: MatchSide.HOME, status: MatchStatus.IN_PROGRESS }))
-      .rejects.toThrow(/sport_event_matches_winner_only_when_completed/);
+      .rejects.toThrow(/sport_event_round_matches_winner_only_when_completed/);
     await expect(insertMatch(event, { winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 4, awayScore: 2 }))
       .resolves.toMatchObject({ winnerSide: MatchSide.HOME });
   });
@@ -609,24 +609,24 @@ describe('sport_event_matches database checks', () => {
   it('refuses a negative score and a match number below 1', async () => {
     const { event } = await createBracketEvent();
 
-    await expect(insertMatch(event, { homeScore: -1 })).rejects.toThrow(/sport_event_matches_scores_not_negative/);
-    await expect(insertMatch(event, { matchNumber: 0 })).rejects.toThrow(/sport_event_matches_match_number_positive/);
+    await expect(insertMatch(event, { homeScore: -1 })).rejects.toThrow(/sport_event_round_matches_scores_not_negative/);
+    await expect(insertMatch(event, { matchNumber: 0 })).rejects.toThrow(/sport_event_round_matches_match_number_positive/);
   });
 
   it('refuses one shoot-out score without the other and a negative one, and takes both (#791)', async () => {
     const { event } = await createBracketEvent();
 
-    await expect(insertMatch(event, { homeShootoutScore: 4 })).rejects.toThrow(/sport_event_matches_shootout_scores_check/);
-    await expect(insertMatch(event, { homeShootoutScore: -1, awayShootoutScore: 3 })).rejects.toThrow(/sport_event_matches_shootout_scores_check/);
+    await expect(insertMatch(event, { homeShootoutScore: 4 })).rejects.toThrow(/sport_event_round_matches_shootout_scores_check/);
+    await expect(insertMatch(event, { homeShootoutScore: -1, awayShootoutScore: 3 })).rejects.toThrow(/sport_event_round_matches_shootout_scores_check/);
     await expect(insertMatch(event, { homeShootoutScore: 4, awayShootoutScore: 3 })).resolves.toMatchObject({ homeShootoutScore: 4 });
   });
 
   it('refuses an early ending on a match without a winner and a walkover with a score, and takes a retirement whose winner trailed (#704)', async () => {
     const { event } = await createBracketEvent();
 
-    await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT })).rejects.toThrow(/sport_event_matches_ending_check/);
+    await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT })).rejects.toThrow(/sport_event_round_matches_ending_check/);
     await expect(insertMatch(event, { ending: MatchEnding.WALKOVER, winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 1, awayScore: 0 }))
-      .rejects.toThrow(/sport_event_matches_ending_check/);
+      .rejects.toThrow(/sport_event_round_matches_ending_check/);
     await expect(insertMatch(event, { ending: MatchEnding.RETIREMENT, winnerSide: MatchSide.HOME, status: MatchStatus.COMPLETED, homeScore: 0, awayScore: 1 }))
       .resolves.toMatchObject({ ending: MatchEnding.RETIREMENT });
   });
@@ -634,7 +634,7 @@ describe('sport_event_matches database checks', () => {
   it('refuses a spread that is not in half points, and takes one that is (#720)', async () => {
     const { event } = await createBracketEvent();
 
-    await expect(insertMatch(event, { homeSpread: 3.2 })).rejects.toThrow(/sport_event_matches_home_spread_half_points_check/);
+    await expect(insertMatch(event, { homeSpread: 3.2 })).rejects.toThrow(/sport_event_round_matches_home_spread_half_points_check/);
     await expect(insertMatch(event, { homeSpread: -6.5 })).resolves.toMatchObject({ matchNumber: 1 });
   });
 

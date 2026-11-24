@@ -19,7 +19,7 @@ import {
   type SportDataFieldEntry,
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
+import { addRunSportLeague, buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, type RegisteredUserContext } from './builders';
 import { disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { leagueProfiles } from '../support/league-profiles';
@@ -67,7 +67,7 @@ async function cleanup(): Promise<void> {
   const leagueIds = (await db.sportLeague.findMany({ where: { name: { contains: RUN } }, select: { id: true } })).map((league) => league.id);
   const eventIds = (await db.sportEvent.findMany({ where: { name: { contains: RUN } }, select: { id: true } })).map((event) => event.id);
   const fieldIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { id: true } })).map((row) => row.id);
-  await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+  await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: fieldIds } } } });
   await db.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
   await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: fieldIds } } } });
@@ -106,6 +106,10 @@ afterAll(async () => {
 async function leagueNamed(name: string, sport: Sport = Sport.GOLF): Promise<{ id: string; bracketAdvancement: BracketAdvancement } | undefined> {
   const { sportLeagues } = expectDefined((await listSportLeagues({ client: admin.client, query: { sport } })).data);
   return sportLeagues.find((league) => league.name === name);
+}
+
+async function addSportLeague(name: string, sport: Sport = Sport.GOLF): Promise<void> {
+  await addRunSportLeague(admin.client, sport, name);
 }
 
 async function eventsOf(sportLeagueId: string, eventYear: number) {
@@ -166,10 +170,20 @@ describe('Loading a golf test seed through the admin API', () => {
   };
   const getClient = () => Promise.resolve(admin.client);
 
+  beforeAll(() => addSportLeague(tour));
+
+  it('refuses a file naming a sport league the site does not have, in a dry run too, since only a migration adds a league', async () => {
+    const missing = `Missing Tour ${prefix}`;
+    const file: SportDataFile = { ...seed, scope: { ...seed.scope, sportLeagues: [missing] }, sportLeagues: [{ ...seed.sportLeagues[0], name: missing }] };
+
+    await expect(loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.DRY_RUN })).rejects.toThrow(`No GOLF sport league named ${missing}`);
+    expect(await leagueNamed(missing)).toBeUndefined();
+  });
+
   it('reports every addition in a dry run without writing, then releases each tournament at least a week after today with its field, tiers and stored final scores', async () => {
     const dryRun = await loadSportData(parsed(seed), { getClient, now: NOW, mode: LoadMode.DRY_RUN });
-    expect(counts(dryRun)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 12, 'EVENT ADD': 2, 'FIELD ADD': 2 });
-    expect(await leagueNamed(tour)).toBeUndefined();
+    expect(counts(dryRun)).toEqual({ 'SPORT_LEAGUE SKIP': 1, 'PLAYER ADD': 12, 'EVENT ADD': 2, 'FIELD ADD': 2 });
+    expect(await eventsOf(expectDefined(await leagueNamed(tour)).id, 2026)).toEqual([]);
 
     const applied = await loadSportData(parsed(seed), { getClient, now: NOW, mode: LoadMode.APPLY });
     expect(counts(applied)).toEqual(counts(dryRun));
@@ -287,6 +301,7 @@ describe('Binding a test player\'s feed ids as the test seed loads', () => {
   });
 
   it('reports a feed id to bind in a dry run without binding it, then binds it to the player it creates, and skips it on a second run', async () => {
+    await addSportLeague(`${tour} new`);
     const file = seed('new', [{ [provider]: feedId('golfer-1') }, undefined]);
 
     const dryRun = await loadSportData(parsed(file), { getClient, now: NOW, mode: LoadMode.DRY_RUN, release: false });
@@ -346,8 +361,10 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
   }
 
   it('releases the playoffs with reseeded Divisional and conference rounds and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
+    await addSportLeague(league, Sport.AMERICAN_FOOTBALL);
     const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
-    expect(counts(applied)).toEqual({ 'SPORT_LEAGUE ADD': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
+    // The league starts on the default bracket rule, and the file's reseeding is set on it.
+    expect(counts(applied)).toEqual({ 'SPORT_LEAGUE UPDATE': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
 
     const stored = expectDefined(await leagueNamed(league, Sport.AMERICAN_FOOTBALL));
     expect(stored.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
@@ -394,6 +411,7 @@ describe('Filling an event from a test slate through the admin API', () => {
   let eventId = '';
 
   beforeAll(async () => {
+    await addSportLeague(tour);
     // A test seed held back as a draft puts the event on the site with a field of golfers 1 to 3.
     const schedule: SportDataFile = {
       schemaVersion: 1,

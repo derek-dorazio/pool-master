@@ -170,7 +170,7 @@ function PickEmGameCard({
   const pickedId = game.pick?.sportEventParticipantId ?? null;
   // A pick is only marked against the result once its game is under way.
   const outcome = game.pick && (game.locked || game.revealed) ? pickOutcome(gamePicks, game.pick) : null;
-  const isTiebreakerGame = game.sportEventMatchId === gamePicks.tiebreakerMatchId;
+  const isTiebreakerGame = game.sportEventRoundMatchId === gamePicks.tiebreakerMatchId;
   const tiebreakerShown = gamePicks.tiebreakerValue !== null;
   return (
     <GameCard
@@ -290,7 +290,7 @@ export function PickEmGames({
           game={game}
           gamePicks={gamePicks}
           isBusy={isBusy}
-          key={game.sportEventMatchId}
+          key={game.sportEventRoundMatchId}
           weekName={weekName}
           onConfidence={onConfidence}
           onPick={onPick}

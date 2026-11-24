@@ -91,7 +91,7 @@ const typesOf = (jobs: readonly BackgroundJobRequest[]) => jobs.map((job) => job
 const DECIDED_AT = new Date('2026-05-02T23:30:00.000Z');
 
 const resultsChanged: SportEventResultsChanged = { type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId: 'sport-event-1' };
-const gameDecided: GameDecided = { type: DomainEventType.GAME_DECIDED, sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', decidedAt: DECIDED_AT };
+const gameDecided: GameDecided = { type: DomainEventType.GAME_DECIDED, sportEventId: 'sport-event-1', sportEventRoundMatchId: 'game-1', decidedAt: DECIDED_AT };
 
 const EVENT_REBUILD = {
   type: BackgroundJobType.REBUILD_LEADERBOARDS,
@@ -403,7 +403,7 @@ describe('GAME_DECIDED handlers', () => {
     expect((await events.collect(gameDecided)).jobs).toEqual([
       {
         type: BackgroundJobType.SETTLE_GAME_CONTESTS,
-        payload: { sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', completedAt: DECIDED_AT.toISOString() },
+        payload: { sportEventId: 'sport-event-1', sportEventRoundMatchId: 'game-1', completedAt: DECIDED_AT.toISOString() },
         sportEventId: 'sport-event-1',
         runAt: undefined,
         start: TEST_JOB_START,

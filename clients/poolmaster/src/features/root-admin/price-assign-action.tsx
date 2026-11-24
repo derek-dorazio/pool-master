@@ -21,7 +21,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { sportLeagueQueryOptions } from '@/features/contests/use-bracket-round-label';
-import { usePricingProfilesQuery } from './use-profiles';
+import { usePlatformPricingProfilesQuery } from './use-profiles';
 import type { EventFieldEntry } from './event-field-patch';
 import { describeFieldOrder } from './field-order-copy';
 
@@ -88,7 +88,7 @@ export function PriceAssignAction({
 }) {
   const activeParticipantCount = field.filter((entry) => entry.isActive).length;
   const logger = getLogger().child({ feature: 'root-admin-event-field' });
-  const pricingQuery = usePricingProfilesQuery();
+  const pricingQuery = usePlatformPricingProfilesQuery();
   const profiles = pricingQuery.data ?? [];
   const sportLeagueQuery = useQuery(sportLeagueQueryOptions(sportLeagueId));
   const [open, setOpen] = useState(false);
@@ -123,7 +123,7 @@ export function PriceAssignAction({
       setDraft(toDraft(current));
     } else {
       // poolmaster-allow-list-lookup: the dialog's profile picker shows this whole list
-      const defaultProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.pricingProfileId);
+      const defaultProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.platformPricingProfileId);
       setProfileName(defaultProfile?.name ?? '');
       setDraft(defaultProfile ? toDraft(defaultProfile) : null);
     }

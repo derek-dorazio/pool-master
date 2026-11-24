@@ -25,7 +25,7 @@ import {
   SportEventBracketResponseSchema,
   SurvivorLeaderboardResponseSchema,
   type GamePicksResponse,
-  type SportEventMatchDto,
+  type SportEventRoundMatchDto,
 } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
@@ -112,9 +112,9 @@ async function cleanup(): Promise<void> {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
     const field = { sportEventParticipant: { sportEventId: { in: eventIds } } };
-    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventMatch: { sportEventId: { in: eventIds } } } });
+    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: field });
     await db.sportEventParticipantValuation.deleteMany({ where: field });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -152,7 +152,7 @@ async function loadCopy(row: PlayoffLeague, tag: string, season: number, without
   return { eventId, field };
 }
 
-async function bracketOf(eventId: string): Promise<SportEventMatchDto[]> {
+async function bracketOf(eventId: string): Promise<SportEventRoundMatchDto[]> {
   return expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: admin.client, path: { eventId } })).data).matches;
 }
 
@@ -231,7 +231,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
             const picks = games.map((game) => {
               const sides = [game.predictedHome, game.predictedAway].filter((team): team is Team => team !== null);
               expect(sides).toHaveLength(2);
-              return { sportEventMatchId: game.sportEventMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: choose(roundNumber, sides).sportEventParticipantId, confidence: null };
+              return { sportEventRoundMatchId: game.sportEventRoundMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: choose(roundNumber, sides).sportEventParticipantId, confidence: null };
             });
             const saved = await saveGamePicks({ client: entrant.client, path: path(entrant.entryId), body: { picks, ...(roundNumber === played.rounds ? { tiebreakerValue } : {}) } });
             expect(saved.error).toBeUndefined();
@@ -271,7 +271,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
         const teams = games.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId]).filter((id): id is string => id !== null);
         const team = choose(teams);
         const game = expectDefined(games.find((match) => match.homeSportEventParticipantId === team || match.awaySportEventParticipantId === team));
-        const saved = await saveGamePicks({ client: entrant.client, path: path(entrant.entryId), body: { picks: [{ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team }] } });
+        const saved = await saveGamePicks({ client: entrant.client, path: path(entrant.entryId), body: { picks: [{ sportEventRoundMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team }] } });
         expect(saved.error).toBeUndefined();
         used.add(team);
       };
@@ -348,7 +348,7 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
       const path = { contestId, entryId, sportEventId: eventId };
       const games = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client, path })).data).games;
       expect(games).toHaveLength(matches.length);
-      const picks = games.map((game) => ({ sportEventMatchId: game.sportEventMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: choose(game), confidence: null }));
+      const picks = games.map((game) => ({ sportEventRoundMatchId: game.sportEventRoundMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: choose(game), confidence: null }));
       expect((await saveGamePicks({ client, path, body: { picks, tiebreakerValue } })).error).toBeUndefined();
       expect((await submitGamePicks({ client, path })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
       return entryId;
@@ -428,7 +428,7 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
         const path = { contestId, entryId, sportEventId: eventId };
         const games = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client, path })).data).games;
         expect(games).toHaveLength(matches.length);
-        const picks = games.map((game) => ({ sportEventMatchId: game.sportEventMatchId, ...choose(game), confidence: null }));
+        const picks = games.map((game) => ({ sportEventRoundMatchId: game.sportEventRoundMatchId, ...choose(game), confidence: null }));
         expect((await saveGamePicks({ client, path, body: { picks, tiebreakerValue: 0 } })).error).toBeUndefined();
         expect((await submitGamePicks({ client, path })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
         return entryId;
@@ -481,7 +481,7 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
     const pick = async (client: RegisteredUserContext['client'], gameId: string, team: string) => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       const path = { contestId, entryId, sportEventId: eventId };
-      expect((await saveGamePicks({ client, path, body: { picks: [{ sportEventMatchId: gameId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team }] } })).error).toBeUndefined();
+      expect((await saveGamePicks({ client, path, body: { picks: [{ sportEventRoundMatchId: gameId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team }] } })).error).toBeUndefined();
       expect((await submitGamePicks({ client, path })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
       return entryId;
     };

@@ -38,6 +38,7 @@ import {
   SportLeagueParticipantOverviewListResponseSchema,
   SportLeagueSyncListResponseSchema,
   SystemEmailListResponseSchema,
+  SportLeagueStructureResponseSchema,
 } from '@poolmaster/shared/dto';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type {
@@ -445,7 +446,7 @@ async function seedLeagueEventOverviews(events: number) {
       },
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: startDate } });
-    await prisma.sportEventMatch.create({ data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false, scheduledDate: startDate } });
+    await prisma.sportEventRoundMatch.create({ data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false, scheduledDate: startDate } });
     const golfer = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `League Page Golfer ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL' } });
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });
     await prisma.providerSyncRun.create({
@@ -466,6 +467,28 @@ async function seedLeagueParticipantOverviews(participants: number) {
     if (index % 2 === 0) {
       await prisma.participantProviderMapping.create({ data: { participantId: golfer.id, sportLeagueId: sportLeague.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: `golfer-${suffix}-${String(index)}`, lastSeenAt: new Date() } });
     }
+  }
+  return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
+/**
+ * A basketball league of its own with a regular phase of `slots` weeks, each matched to its
+ * provider by calendar week (#2002).
+ */
+async function seedLeagueStructure(slots: number) {
+  const prisma = getPrisma();
+  const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL }, select: { id: true } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Structure ${randomUUID().slice(0, 8)}` } });
+  const mappingId = await syncLeagueTo(prisma, sportLeague.id, 'nba');
+  const phase = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: sportLeague.id, phase: 'REGULAR', isSynced: true } });
+  for (let week = 1; week <= slots; week += 1) {
+    await prisma.sportLeaguePhaseSlot.create({
+      data: {
+        sportLeagueId: sportLeague.id, sportLeaguePhaseId: phase.id, key: `WEEK_${String(week)}`, slotKind: 'WEEK', weekNumber: week,
+        awardsTrophy: false, squaresEligible: true, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+        providerMappings: { create: { sportLeagueProviderMappingId: mappingId, matchType: 'CALENDAR_WEEK' } },
+      },
+    });
   }
   return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
@@ -573,6 +596,17 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       seed: seedLeagueParticipantOverviews,
       call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/participants/overview`, rootAdmin),
       rowsShown: (response) => okBody(response, SportLeagueParticipantOverviewListResponseSchema).participants.length,
+    });
+  });
+
+  it('GET a sport league\'s structure with each slot\'s provider mappings: the same statements for 2 slots as for 20 (#2002)', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/structure',
+      seed: seedLeagueStructure,
+      call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/structure`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportLeagueStructureResponseSchema).phases
+        .flatMap((phase) => phase.slots)
+        .filter((slot) => slot.providerMappings.length === 1).length,
     });
   });
 

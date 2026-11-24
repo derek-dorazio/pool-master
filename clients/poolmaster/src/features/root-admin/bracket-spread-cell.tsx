@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { MatchSide, MatchStatus, formatSpread } from '@poolmaster/shared/domain';
 import { updateEventBracketMatch } from '@/lib/api';
-import type { SportEventMatchDto } from '@/lib/api';
+import type { SportEventRoundMatchDto } from '@/lib/api';
 import { Button, InlineError, Input, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrors, sideEntry } from './bracket-copy';
 import { type BracketContext, useMatchWrite } from './bracket-match-write';
 
 /** "Chiefs -3.5": the spread told from the home team's side, or "No spread" while it has none. */
-function describeSpread(match: SportEventMatchDto, context: BracketContext): string {
+function describeSpread(match: SportEventRoundMatchDto, context: BracketContext): string {
   if (match.homeSpread === null) {
     return 'No spread';
   }
@@ -22,7 +22,7 @@ function describeSpread(match: SportEventMatchDto, context: BracketContext): str
  * admin sets it before release, and after release while no entry has picked the game, which the
  * server checks, though never back to none; a cancelled game keeps its spread.
  */
-export function SpreadCell({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
+export function SpreadCell({ match, released, context }: { match: SportEventRoundMatchDto; released: boolean; context: BracketContext }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(match.homeSpread === null ? '' : String(match.homeSpread));
   const home = sideEntry(match, MatchSide.HOME, context.fieldById);

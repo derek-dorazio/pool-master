@@ -257,6 +257,7 @@ describe('sport league handlers', () => {
     reader: {
       readSyncFacts: (sportLeagueId) => known(sportLeagueId, { league: pageLeague, latestRuns: [] }),
       readEventPageFacts: () => Promise.resolve(null),
+      readStructure: () => Promise.resolve(null),
       readEventFacts: (sportLeagueId) => known(sportLeagueId, {
         league: pageLeague,
         events: [{

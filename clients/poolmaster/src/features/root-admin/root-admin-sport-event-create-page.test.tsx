@@ -85,15 +85,13 @@ describe('pool-master-3dg RootAdminSportEventCreatePage', () => {
     listProvidersMock.mockReset();
   });
 
-  it('blocks creation with a link to make a new tour when no active golf tour exists', async () => {
+  it('blocks creation, with no link to make a tour, when no active golf tour exists', async () => {
     renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1', isActive: false })]);
 
     expect(
-      await screen.findByText('Create a tour before creating a tournament'),
+      await screen.findByText('No active tour for a tournament'),
     ).toBeInTheDocument();
-    expect(
-      screen.getByTestId('root-admin-sport-event-create-tours-link'),
-    ).toHaveAttribute('href', '/manage/sports/golf/leagues/new');
+    expect(screen.queryByTestId('root-admin-sport-event-create-tours-link')).not.toBeInTheDocument();
   });
 
   it('plans/147: defaults the only active tour and its current year when the URL names neither', async () => {

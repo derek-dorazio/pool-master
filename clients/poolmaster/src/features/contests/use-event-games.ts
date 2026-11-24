@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContestStatus } from '@poolmaster/shared/domain';
-import { getEventBracket, listEventParticipants, type SportEventMatchDto, type SportEventParticipantDto } from '@/lib/api';
+import { getEventBracket, listEventParticipants, type SportEventRoundMatchDto, type SportEventParticipantDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-status';
@@ -9,7 +9,7 @@ import { CONTEST_POLL_INTERVAL_MS, shouldPollContestEntries } from './contest-st
 export function eventGamesQueryOptions(eventId: string) {
   return {
     queryKey: QueryKeys.sportEvents.games(eventId),
-    queryFn: async (): Promise<SportEventMatchDto[]> => {
+    queryFn: async (): Promise<SportEventRoundMatchDto[]> => {
       const response = await getEventBracket({ path: { eventId } });
       if (!response.data?.matches) {
         throwApiError(response.error, 'Event games response is missing data.');

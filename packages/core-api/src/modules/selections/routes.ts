@@ -42,12 +42,12 @@ function selectionErrorResponses(...statuses: number[]): Record<number, unknown>
 
 const gamePickParams = {
   type: 'object',
-  required: ['contestId', 'entryId', 'sportEventId', 'sportEventMatchId'],
+  required: ['contestId', 'entryId', 'sportEventId', 'sportEventRoundMatchId'],
   properties: {
     contestId: { type: 'string', format: 'uuid' },
     entryId: { type: 'string', format: 'uuid' },
     sportEventId: { type: 'string', format: 'uuid' },
-    sportEventMatchId: { type: 'string', format: 'uuid' },
+    sportEventRoundMatchId: { type: 'string', format: 'uuid' },
   },
 } as const;
 
@@ -213,7 +213,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
     handler: handlers.saveGamePicks,
   });
 
-  fastify.delete('/:contestId/entries/:entryId/events/:sportEventId/game-picks/:sportEventMatchId', {
+  fastify.delete('/:contestId/entries/:entryId/events/:sportEventId/game-picks/:sportEventRoundMatchId', {
     schema: {
       tags: ['Selections'],
       summary: 'Clear a game pick',

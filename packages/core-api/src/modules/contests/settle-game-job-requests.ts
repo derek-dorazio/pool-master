@@ -14,7 +14,7 @@ import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 
 export const SettleGameContestsJobPayloadSchema = z.object({
   sportEventId: z.string().min(1),
-  sportEventMatchId: z.string().min(1),
+  sportEventRoundMatchId: z.string().min(1),
   /** When the contests settle: the moment the game was decided. */
   completedAt: z.iso.datetime(),
 });
@@ -29,11 +29,11 @@ export type SettleGameContestsJobPayload = z.infer<typeof SettleGameContestsJobP
 export function settleGameContestsJob(
   jobs: Pick<BackgroundJobQueue, 'request'>,
   sportEventId: string,
-  sportEventMatchId: string,
+  sportEventRoundMatchId: string,
   completedAt: Date,
 ): BackgroundJobRequest {
-  return jobs.request(BackgroundJobType.SETTLE_GAME_CONTESTS, { sportEventId, sportEventMatchId, completedAt: completedAt.toISOString() }, {
-    dedupeKey: `${BackgroundJobType.SETTLE_GAME_CONTESTS}:${sportEventMatchId}`,
+  return jobs.request(BackgroundJobType.SETTLE_GAME_CONTESTS, { sportEventId, sportEventRoundMatchId, completedAt: completedAt.toISOString() }, {
+    dedupeKey: `${BackgroundJobType.SETTLE_GAME_CONTESTS}:${sportEventRoundMatchId}`,
   });
 }
 
@@ -45,5 +45,5 @@ export function settleGameContestsJob(
 export const settleDecidedGameContestsHandler: DomainEventHandler<typeof DomainEventType.GAME_DECIDED> = {
   key: 'settle-decided-game-contests',
   queues: [BackgroundJobType.SETTLE_GAME_CONTESTS],
-  jobs: (event, { queue }) => [settleGameContestsJob(queue, event.sportEventId, event.sportEventMatchId, event.decidedAt)],
+  jobs: (event, { queue }) => [settleGameContestsJob(queue, event.sportEventId, event.sportEventRoundMatchId, event.decidedAt)],
 };

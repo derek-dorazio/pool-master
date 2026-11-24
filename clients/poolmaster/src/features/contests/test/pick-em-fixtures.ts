@@ -3,7 +3,7 @@ import type {
   ContestEntryDetailResponse,
   GamePicksResponse,
   PickEmLeaderboardResponse,
-  SportEventMatchDto,
+  SportEventRoundMatchDto,
   SportEventParticipantDto,
   SurvivorLeaderboardResponse,
 } from '@/lib/api';
@@ -36,7 +36,7 @@ export const WEEK_2_START = '2099-09-20T17:00:00.000Z';
 
 function game(matchNumber: number, kickoff: string, away: Team, home: Team, overrides: Partial<Game> = {}): Game {
   return {
-    sportEventMatchId: `match-${matchNumber}`,
+    sportEventRoundMatchId: `match-${matchNumber}`,
     matchNumber,
     roundNumber: 1,
     kickoff,
@@ -201,8 +201,8 @@ export function pickEmLeaderboardFixture(overrides: Partial<PickEmLeaderboardRes
         ],
         // Week 2's two Sunday games have kicked off, so their picks show: the Chiefs won, the Cowboys lost.
         currentWeekPicks: [
-          { sportEventMatchId: 'week2-game-1', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId, outcome: 'CORRECT' },
-          { sportEventMatchId: 'week2-game-2', sportEventParticipantId: NFL_TEAMS.cowboys.sportEventParticipantId, outcome: 'BUSTED' },
+          { sportEventRoundMatchId: 'week2-game-1', sportEventParticipantId: NFL_TEAMS.chiefs.sportEventParticipantId, outcome: 'CORRECT' },
+          { sportEventRoundMatchId: 'week2-game-2', sportEventParticipantId: NFL_TEAMS.cowboys.sportEventParticipantId, outcome: 'BUSTED' },
         ],
       },
       {
@@ -277,7 +277,7 @@ export function survivorLeaderboardFixture(overrides: Partial<SurvivorLeaderboar
 export function playoffSurvivorFixture(overrides: Partial<GamePicksResponse> = {}): GamePicksResponse {
   const [, billsAtChiefs] = week1Games();
   const games: Game[] = [
-    { ...billsAtChiefs, matchNumber: 1, sportEventMatchId: 'match-1', status: 'COMPLETED', locked: true, revealed: true, pick: weekPick(NFL_TEAMS.bills, { outcome: 'CORRECT' }) },
+    { ...billsAtChiefs, matchNumber: 1, sportEventRoundMatchId: 'match-1', status: 'COMPLETED', locked: true, revealed: true, pick: weekPick(NFL_TEAMS.bills, { outcome: 'CORRECT' }) },
     game(2, WEEK_2_START, NFL_TEAMS.bills, NFL_TEAMS.eagles, { roundNumber: 2 }),
     game(3, WEEK_2_START, NFL_TEAMS.bears, NFL_TEAMS.packers, { roundNumber: 2 }),
   ];
@@ -378,8 +378,8 @@ export function pickEmEventFieldFixture(sportEventId: string): SportEventPartici
  * Chiefs and the Cowboys at the Eagles on Sunday, the Bears at the Packers on Monday night.
  * `overrides` are applied by game number.
  */
-export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Partial<SportEventMatchDto>>> = {}): SportEventMatchDto[] {
-  const eventGame = (matchNumber: 1 | 2 | 3, kickoff: string, away: Team, home: Team): SportEventMatchDto => ({
+export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Partial<SportEventRoundMatchDto>>> = {}): SportEventRoundMatchDto[] {
+  const eventGame = (matchNumber: 1 | 2 | 3, kickoff: string, away: Team, home: Team): SportEventRoundMatchDto => ({
     id: `week2-game-${String(matchNumber)}`,
     sportEventId: 'week-2',
     roundNumber: 1,

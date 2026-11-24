@@ -297,7 +297,7 @@ describe('SportEventRepository — series and event year', () => {
     const played = await edition(playoffs.id, 2025, 'nfl-2025');
     await edition((await seriesNamed(series, cfp.id, 'College Football Playoff')).id, 2026, 'cfp-2026');
     const round = await getPrisma().sportEventRound.create({ data: { sportEventId: played.id, roundNumber: 1, scheduledDate: new Date('2026-01-10T18:00:00.000Z') } });
-    await getPrisma().sportEventMatch.create({ data: { sportEventId: played.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false } });
+    await getPrisma().sportEventRoundMatch.create({ data: { sportEventId: played.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: false } });
     const events = new PrismaSportEventRepository(getAppPrisma());
 
     await expect(events.sportLeagueHasLoadedBracket(nfl.id)).resolves.toBe(true);

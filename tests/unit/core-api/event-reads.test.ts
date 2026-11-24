@@ -2,7 +2,7 @@
  * One fan-out's shared reads (#1199): an event's data read once for all of its contests, a read
  * that fails read again by the next contest, and each answer the contest's own to change.
  */
-import type { SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
+import type { SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   readEventMatchesOnce,
   readEventsOnce,
@@ -13,8 +13,8 @@ function event(id: string): SportEvent {
   return { id, name: `Event ${id}` } as SportEvent;
 }
 
-function match(sportEventId: string, matchNumber: number): SportEventMatch {
-  return { id: `${sportEventId}-game-${String(matchNumber)}`, sportEventId, matchNumber } as SportEventMatch;
+function match(sportEventId: string, matchNumber: number): SportEventRoundMatch {
+  return { id: `${sportEventId}-game-${String(matchNumber)}`, sportEventId, matchNumber } as SportEventRoundMatch;
 }
 
 describe('fan-out event reads', () => {
@@ -89,7 +89,7 @@ describe('fan-out event reads', () => {
     });
 
     it('answers an event with no matches with none, without reading it again', async () => {
-      const findBySportEvents = jest.fn(async () => [] as SportEventMatch[]);
+      const findBySportEvents = jest.fn(async () => [] as SportEventRoundMatch[]);
       const matches = readEventMatchesOnce({ findBySportEvents });
 
       await expect(matches.findBySportEvent('golf-major')).resolves.toEqual([]);

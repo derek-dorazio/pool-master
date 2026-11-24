@@ -240,6 +240,8 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'overview'] as const,
       // The League page's Syncs card (#1866), under `leagues` so a league's change refreshes it.
       leagueSyncs: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'syncs', sportLeagueId] as const,
+      // The League page's Structure tab (#2002), under `leagues`: its phase and slot definitions.
+      leagueStructure: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'structure', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       sportEvents: (sport: QueryKeyId, eventYear: number) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'sport', sport, eventYear] as const,
@@ -301,8 +303,8 @@ export const QueryKeys = {
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
     // The platform's tier and pricing profiles (#1844), which sport leagues name.
-    tierProfiles: ['poolmaster', 'root-admin', 'tier-profiles'] as const,
-    pricingProfiles: ['poolmaster', 'root-admin', 'pricing-profiles'] as const,
+    platformTierProfiles: ['poolmaster', 'root-admin', 'tier-profiles'] as const,
+    platformPricingProfiles: ['poolmaster', 'root-admin', 'pricing-profiles'] as const,
     // The prefix every settings group's reads sit under (#450), so any save refreshes them all.
     settings: ['poolmaster', 'root-admin', 'settings'] as const,
     // One group, for a screen that edits or reads only it; under `settings`, so any save refreshes it.

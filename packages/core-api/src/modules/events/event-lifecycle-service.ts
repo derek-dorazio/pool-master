@@ -18,10 +18,10 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestConfigurationRepository,
   ContestRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import type { BackgroundJobOutcome, Contest, SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
+import type { BackgroundJobOutcome, Contest, SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
   SelectionType,
@@ -50,7 +50,7 @@ export interface FinishedSportEventSettlement {
    */
   settleFinishedGame(
     sportEventId: string,
-    sportEventMatchId: string,
+    sportEventRoundMatchId: string,
     input?: { completedAt?: Date },
   ): Promise<number>;
 }
@@ -109,7 +109,7 @@ export interface EventLifecycleContestDeps {
   contests: ContestRepository;
   /** A second-chance bracket's rules and games: it goes live at its starting round, not the event's start (#721). */
   configurations: Pick<ContestConfigurationRepository, 'findByContests'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
 }
 
 /** A contest starts from OPEN; any other status is left where it is. */
@@ -262,7 +262,7 @@ export class EventLifecycleService {
    * failure part way settles only the rest.
    */
   async settleFinishedGameContests(payload: SettleGameContestsJobPayload): Promise<BackgroundJobOutcome> {
-    const completed = await this.settlement.contestSettlement.settleFinishedGame(payload.sportEventId, payload.sportEventMatchId, {
+    const completed = await this.settlement.contestSettlement.settleFinishedGame(payload.sportEventId, payload.sportEventRoundMatchId, {
       completedAt: new Date(payload.completedAt),
     });
     return { changedCount: completed };
@@ -437,10 +437,10 @@ export class EventLifecycleService {
   async activateContestsPastCutoff(
     sportEvent: SportEvent,
     now: Date = new Date(),
-    knownGames?: readonly SportEventMatch[],
+    knownGames?: readonly SportEventRoundMatch[],
   ): Promise<number> {
     const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
-    let games: readonly SportEventMatch[] | undefined = knownGames;
+    let games: readonly SportEventRoundMatch[] | undefined = knownGames;
     // A bracket's or squares contest's cutoff is in its configuration: all of them read at once (#1183).
     const cutoffConfigured = candidates.filter((contest) => contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES);
     const configJsonByContest = new Map(

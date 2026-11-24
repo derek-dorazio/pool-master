@@ -14,7 +14,7 @@ import {
 } from '@poolmaster/shared/domain';
 import {
   PrismaParticipantRepository,
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
   PrismaSportEventParticipantRaceResultRepository,
@@ -326,7 +326,7 @@ describe('Entering a bracket match\'s result (#1252)', () => {
     const counts = await queriesFor(async (size, measure) => {
       const { event, round, field } = await eventWithField(size);
       const [home, away] = field;
-      const match = await getPrisma().sportEventMatch.create({
+      const match = await getPrisma().sportEventRoundMatch.create({
         data: {
           sportEventId: event.id,
           sportEventRoundId: round.id,
@@ -340,7 +340,7 @@ describe('Entering a bracket match\'s result (#1252)', () => {
         data: { sportEventParticipantId: expectDefined(home).id, position: 4, status: ParticipantStandingStatus.ACTIVE },
       });
 
-      await measure(() => new PrismaSportEventMatchRepository(getAppPrisma()).applyResult({
+      await measure(() => new PrismaSportEventRoundMatchRepository(getAppPrisma()).applyResult({
         result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.ADMIN, completedAt: AS_OF },
         sideFill: null,
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, currentRound: 1, asOf: AS_OF })),
@@ -350,7 +350,7 @@ describe('Entering a bracket match\'s result (#1252)', () => {
       const byId = new Map(standings.map((row) => [row.sportEventParticipantId, row]));
       expect(field.map((row) => byId.get(row.id)?.position)).toEqual(field.map((_, index) => index + 1));
       expect(byId.get(expectDefined(home).id)).toMatchObject({ id: earlier.id, createdAt: earlier.createdAt, asOf: AS_OF });
-      expect((await getPrisma().sportEventMatch.findUniqueOrThrow({ where: { id: match.id } })).winnerSide).toBe(MatchSide.HOME);
+      expect((await getPrisma().sportEventRoundMatch.findUniqueOrThrow({ where: { id: match.id } })).winnerSide).toBe(MatchSide.HOME);
     });
 
     expect(counts[1]).toEqual(counts[0]);

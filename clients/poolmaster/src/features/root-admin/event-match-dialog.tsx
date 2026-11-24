@@ -74,7 +74,7 @@ export function EventMatchDialog({
         onOpenChange={(open) => (open ? undefined : onClose())}
         open={!settleAgain.confirmOpen}
         testId={testId}
-        title={row.pairing}
+        title={row.pairingLabel}
       />
       {settleAgain.confirmDialog}
     </>

@@ -16,7 +16,7 @@ import {
   type Fact,
 } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { usePricingProfilesQuery, useTierProfilesQuery } from './use-profiles';
+import { usePlatformPricingProfilesQuery, usePlatformTierProfilesQuery } from './use-profiles';
 import { useProvidersQuery } from './use-providers-query';
 import { useSportLeagueQuery } from './use-sport-league-overviews';
 import { useUpdateSportLeague } from './use-update-sport-league';
@@ -30,8 +30,8 @@ const settingsSchema = z.object({
     (value) => value === '' || (/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= AUTO_RELEASE_DAYS_MAX),
     `Enter 1 to ${String(AUTO_RELEASE_DAYS_MAX)} days, or leave it empty for no automatic release`,
   ),
-  tierProfileId: z.string().min(1),
-  pricingProfileId: z.string().min(1),
+  platformTierProfileId: z.string().min(1),
+  platformPricingProfileId: z.string().min(1),
 });
 
 type SettingsValues = z.infer<typeof settingsSchema>;
@@ -41,8 +41,8 @@ function valuesOf(sportLeague: SportLeagueDto): SettingsValues {
     isActive: sportLeague.isActive ? 'on' : 'off',
     syncProviderLeagueId: sportLeague.selectedProviderMapping?.providerLeagueId ?? '',
     autoReleaseDays: sportLeague.autoReleaseDaysBeforeStart === null ? '' : String(sportLeague.autoReleaseDaysBeforeStart),
-    tierProfileId: sportLeague.tierProfileId,
-    pricingProfileId: sportLeague.pricingProfileId,
+    platformTierProfileId: sportLeague.platformTierProfileId,
+    platformPricingProfileId: sportLeague.platformPricingProfileId,
   };
 }
 
@@ -86,8 +86,8 @@ export function SportLeagueSettingsDialog({ onClose, sportLeagueId }: { onClose:
 function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; sportLeague: SportLeagueDto }) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const providersQuery = useProvidersQuery();
-  const tierProfilesQuery = useTierProfilesQuery();
-  const pricingProfilesQuery = usePricingProfilesQuery();
+  const platformTierProfilesQuery = usePlatformTierProfilesQuery();
+  const platformPricingProfilesQuery = usePlatformPricingProfilesQuery();
   const current = valuesOf(sportLeague);
 
   const form = useForm<SettingsValues>({
@@ -114,8 +114,8 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
       ...(values.autoReleaseDays !== current.autoReleaseDays && {
         autoReleaseDaysBeforeStart: values.autoReleaseDays === '' ? null : Number(values.autoReleaseDays),
       }),
-      ...(values.tierProfileId !== current.tierProfileId && { tierProfileId: values.tierProfileId }),
-      ...(values.pricingProfileId !== current.pricingProfileId && { pricingProfileId: values.pricingProfileId }),
+      ...(values.platformTierProfileId !== current.platformTierProfileId && { platformTierProfileId: values.platformTierProfileId }),
+      ...(values.platformPricingProfileId !== current.platformPricingProfileId && { platformPricingProfileId: values.platformPricingProfileId }),
     }),
   });
 
@@ -126,16 +126,16 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
   const selected = sportLeague.selectedProviderMapping;
   const selectedLabel = selected === null ? 'No provider' : `${selected.providerName} · ${selected.providerLeagueName}`;
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const tierProfileName = tierProfilesQuery.data?.find((profile) => profile.id === sportLeague.tierProfileId)?.name ?? '…';
+  const platformTierProfileName = platformTierProfilesQuery.data?.find((profile) => profile.id === sportLeague.platformTierProfileId)?.name ?? '…';
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
-  const pricingProfileName = pricingProfilesQuery.data?.find((profile) => profile.id === sportLeague.pricingProfileId)?.name ?? '…';
+  const platformPricingProfileName = platformPricingProfilesQuery.data?.find((profile) => profile.id === sportLeague.platformPricingProfileId)?.name ?? '…';
 
   const facts: Fact[] = [
     { id: 'status', label: 'Status', value: sportLeague.isActive ? 'On' : 'Off', testId: 'root-admin-sport-league-settings-status' },
     { id: 'provider', label: 'Provider', value: selectedLabel, testId: 'root-admin-sport-league-settings-provider' },
     { id: 'autoRelease', label: 'Auto release', value: autoReleaseText(sportLeague.autoReleaseDaysBeforeStart), testId: 'root-admin-sport-league-settings-auto-release' },
-    { id: 'tierProfile', label: 'Tier profile', value: tierProfileName, testId: 'root-admin-sport-league-settings-tier-profile' },
-    { id: 'pricingProfile', label: 'Pricing profile', value: pricingProfileName, testId: 'root-admin-sport-league-settings-pricing-profile' },
+    { id: 'platformTierProfile', label: 'Tier profile', value: platformTierProfileName, testId: 'root-admin-sport-league-settings-tier-profile' },
+    { id: 'platformPricingProfile', label: 'Pricing profile', value: platformPricingProfileName, testId: 'root-admin-sport-league-settings-pricing-profile' },
   ];
 
   const cancelEdit = () => {
@@ -190,21 +190,21 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
           />
         </FormField>
         <FormField label="Tier profile">
-          <Select data-testid="root-admin-sport-league-settings-tier-profile-input" {...form.register('tierProfileId')}>
-            {(tierProfilesQuery.data ?? []).length === 0
-              ? <option value={current.tierProfileId}>{tierProfileName}</option>
+          <Select data-testid="root-admin-sport-league-settings-tier-profile-input" {...form.register('platformTierProfileId')}>
+            {(platformTierProfilesQuery.data ?? []).length === 0
+              ? <option value={current.platformTierProfileId}>{platformTierProfileName}</option>
               : null}
-            {(tierProfilesQuery.data ?? []).map((profile) => (
+            {(platformTierProfilesQuery.data ?? []).map((profile) => (
               <option key={profile.id} value={profile.id}>{profile.name}</option>
             ))}
           </Select>
         </FormField>
         <FormField label="Pricing profile">
-          <Select data-testid="root-admin-sport-league-settings-pricing-profile-input" {...form.register('pricingProfileId')}>
-            {(pricingProfilesQuery.data ?? []).length === 0
-              ? <option value={current.pricingProfileId}>{pricingProfileName}</option>
+          <Select data-testid="root-admin-sport-league-settings-pricing-profile-input" {...form.register('platformPricingProfileId')}>
+            {(platformPricingProfilesQuery.data ?? []).length === 0
+              ? <option value={current.platformPricingProfileId}>{platformPricingProfileName}</option>
               : null}
-            {(pricingProfilesQuery.data ?? []).map((profile) => (
+            {(platformPricingProfilesQuery.data ?? []).map((profile) => (
               <option key={profile.id} value={profile.id}>{profile.name}</option>
             ))}
           </Select>

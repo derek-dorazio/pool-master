@@ -23,7 +23,7 @@ import {
   PrismaContestRepository,
   PrismaParticipantContestScoringRuleRepository,
   PrismaParticipantRepository,
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
   PrismaSquadMembershipRepository,
@@ -72,7 +72,7 @@ function predictionService(before: () => Promise<void> = async () => {}) {
     entries: new PrismaContestEntryRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
-    matches: new PrismaSportEventMatchRepository(prisma),
+    matches: new PrismaSportEventRoundMatchRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     predictions,
@@ -127,7 +127,7 @@ async function seedPickedWeek() {
   await prisma.contestEntryMatchPrediction.createMany({
     data: games.map((game) => ({
       contestEntryId: entry.id,
-      sportEventMatchId: game.id,
+      sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
       pickedAt: new Date(),
@@ -153,7 +153,7 @@ describe('a week of game picks judged under the entry\'s lock (#1268)', () => {
 
     const [submit, clear] = await Promise.allSettled([
       second.submitGamePicks(week),
-      first.clearGamePick({ ...week, sportEventMatchId: expectDefined(games[0]).id }).finally(firstDone),
+      first.clearGamePick({ ...week, sportEventRoundMatchId: expectDefined(games[0]).id }).finally(firstDone),
     ]);
 
     expect(clear.status).toBe('fulfilled');
@@ -166,7 +166,7 @@ describe('a week of game picks judged under the entry\'s lock (#1268)', () => {
     const { first, second, firstDone } = race();
 
     const [clear, submit] = await Promise.allSettled([
-      second.clearGamePick({ ...week, sportEventMatchId: expectDefined(games[0]).id }),
+      second.clearGamePick({ ...week, sportEventRoundMatchId: expectDefined(games[0]).id }),
       first.submitGamePicks(week).finally(firstDone),
     ]);
 

@@ -38,7 +38,7 @@ export const BRACKET_START = '2099-03-19T16:00:00.000Z';
 export function bracketGame(overrides: Partial<Game> & Pick<Game, 'matchNumber' | 'roundNumber'>): Game {
   const { matchNumber } = overrides;
   return {
-    sportEventMatchId: `match-${matchNumber}`,
+    sportEventRoundMatchId: `match-${matchNumber}`,
     kickoff: BRACKET_START,
     status: 'SCHEDULED',
     isNeutralSite: true,

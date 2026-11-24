@@ -36,7 +36,7 @@ test('the residue sweep removes a run left behind, league first and users last, 
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, admin, '/api/v1/sport-leagues/', {
       sport: 'GOLF',
       name: tourName,
-      ...(await sportLeagueProfileIds(api, admin, '6 tiers of 10')),
+      ...(await sportLeagueProfileIds(api, admin, 'TIERS_6_OF_10')),
     });
     const { event } = await postJson<{ event: { id: string } }>(api, admin, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,

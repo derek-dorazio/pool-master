@@ -28,9 +28,9 @@ import type {
   ParticipantRepository,
   ReplacementValuation,
   SportLeagueRepository,
-  SportEventMatchPatch,
-  SportEventMatchRepository,
-  SportEventMatchWrite,
+  SportEventRoundMatchPatch,
+  SportEventRoundMatchRepository,
+  SportEventRoundMatchWrite,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventRepository,
@@ -48,7 +48,7 @@ import {
   type Participant,
   ParticipantStatus,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   SportEventStatus,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
@@ -78,7 +78,7 @@ export interface BracketMatchInput {
 }
 
 /** One match edit; a value left out keeps what is stored. */
-export type BracketMatchEdit = SportEventMatchPatch;
+export type BracketMatchEdit = SportEventRoundMatchPatch;
 
 const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
 
@@ -186,7 +186,7 @@ export interface SportEventBracketServiceDeps {
   rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
   field: SportEventParticipantRepository;
   participants: Pick<ParticipantRepository, 'findById'>;
-  matches: SportEventMatchRepository;
+  matches: SportEventRoundMatchRepository;
   /** The event's tiers and valuations, which a replacement joins at the bottom of. */
   tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
   valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;
@@ -205,7 +205,7 @@ export class SportEventBracketService {
   constructor(private readonly deps: SportEventBracketServiceDeps) {}
 
   /** The bracket in match-number order; empty until it is loaded. */
-  async listBracket(sportEventId: string): Promise<SportEventMatch[]> {
+  async listBracket(sportEventId: string): Promise<SportEventRoundMatch[]> {
     await this.requireBracketEvent(sportEventId);
     return this.deps.matches.findBySportEvent(sportEventId);
   }
@@ -214,7 +214,7 @@ export class SportEventBracketService {
    * Replaces the event's bracket with `matches`, all or none. 409 SPORT_EVENT_BRACKET_LOCKED once
    * the event is released; 422 BRACKET_INVALID with every problem found when its shape is wrong.
    */
-  async loadBracket(sportEventId: string, matches: readonly BracketMatchInput[]): Promise<SportEventMatch[]> {
+  async loadBracket(sportEventId: string, matches: readonly BracketMatchInput[]): Promise<SportEventRoundMatch[]> {
     const event = await this.requireBracketEvent(sportEventId);
     this.assertPairingsEditable(event);
     const [rounds, field] = await Promise.all([
@@ -233,7 +233,7 @@ export class SportEventBracketService {
 
     const newId = this.deps.newId ?? randomUUID;
     const idByNumber = new Map(matches.map((match) => [match.matchNumber, newId()]));
-    const writes: SportEventMatchWrite[] = matches.map(({ advancesTo, regionLabel, ...match }) => ({
+    const writes: SportEventRoundMatchWrite[] = matches.map(({ advancesTo, regionLabel, ...match }) => ({
       ...match,
       regionLabel: regionLabel ?? null,
       id: idByNumber.get(match.matchNumber) as string,
@@ -254,7 +254,7 @@ export class SportEventBracketService {
    * Its spread (#720) can change until release, and after it only while no entry has picked the
    * game (409 MATCH_SPREAD_LOCKED), and never back to none (422 MATCH_SPREAD_REQUIRED).
    */
-  async updateMatch(sportEventId: string, matchNumber: number, edit: BracketMatchEdit): Promise<SportEventMatch> {
+  async updateMatch(sportEventId: string, matchNumber: number, edit: BracketMatchEdit): Promise<SportEventRoundMatch> {
     const event = await this.requireBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = bracket.find((candidate) => candidate.matchNumber === matchNumber);
@@ -285,7 +285,7 @@ export class SportEventBracketService {
     }
     this.deps.logger?.info({ sportEventId, matchNumber, changesSides, changesSpread }, 'Updated bracket match');
     const updated = (await this.deps.matches.findBySportEvent(sportEventId)).find((candidate) => candidate.id === match.id);
-    return updated as SportEventMatch;
+    return updated as SportEventRoundMatch;
   }
 
   /**
@@ -375,7 +375,7 @@ export class SportEventBracketService {
    * team holding its place (a bye, a link's winner) is moved. It can be set again until the round
    * starts. Returns the bracket.
    */
-  async setRoundMatchups(sportEventId: string, roundNumber: number, matchups: readonly RoundMatchup[]): Promise<SportEventMatch[]> {
+  async setRoundMatchups(sportEventId: string, roundNumber: number, matchups: readonly RoundMatchup[]): Promise<SportEventRoundMatch[]> {
     const { bracket, seedOf } = await this.requireReseededRound(sportEventId, roundNumber);
     const problems = findRoundMatchupProblems(bracket, roundNumber, matchups, seedOf);
     if (problems.length > 0) {
@@ -395,7 +395,7 @@ export class SportEventBracketService {
   }
 
   /** The bracket and its seeds, for a released event's reseeded round that can be placed now. */
-  private async requireReseededRound(sportEventId: string, roundNumber: number): Promise<{ bracket: SportEventMatch[]; seedOf: Map<string, number | null> }> {
+  private async requireReseededRound(sportEventId: string, roundNumber: number): Promise<{ bracket: SportEventRoundMatch[]; seedOf: Map<string, number | null> }> {
     const event = await this.requireBracketEvent(sportEventId);
     if (!(await this.reseeds(event))) {
       throw new SportEventError(`Sport event ${sportEventId}'s bracket does not reseed: each winner's next match is fixed by its link.`, 'BRACKET_NOT_RESEEDED', 422);
@@ -620,8 +620,8 @@ export class SportEventBracketService {
   }
 
   private async findSideEditProblems(
-    match: SportEventMatch,
-    bracket: readonly SportEventMatch[],
+    match: SportEventRoundMatch,
+    bracket: readonly SportEventRoundMatch[],
     edit: BracketMatchEdit,
   ): Promise<string[]> {
     const field = new Set((await this.deps.field.findBySportEvent(match.sportEventId)).map((entry) => entry.id));
@@ -657,7 +657,7 @@ export class SportEventBracketService {
    * spread when it took the week and never checks again, so a cleared spread would score every
    * pick on the game as a push. 422 MATCH_SPREAD_REQUIRED.
    */
-  private assertSpreadKept(event: SportEvent, match: SportEventMatch, homeSpread: number | null | undefined): void {
+  private assertSpreadKept(event: SportEvent, match: SportEventRoundMatch, homeSpread: number | null | undefined): void {
     if (homeSpread === null) {
       this.deps.logger?.warn({ sportEventId: event.id, matchNumber: match.matchNumber }, 'Refused clearing a released game\'s spread');
       throw new SportEventError(
@@ -672,7 +672,7 @@ export class SportEventBracketService {
    * A released game's spread is corrected only while nobody has picked the game (#720, design
    * Q5.9): a correction then changes no pick already made. 409 MATCH_SPREAD_LOCKED after that.
    */
-  private async assertSpreadUnpicked(event: SportEvent, match: SportEventMatch): Promise<void> {
+  private async assertSpreadUnpicked(event: SportEvent, match: SportEventRoundMatch): Promise<void> {
     if (await this.deps.predictions.hasAnyOnMatch(match.id)) {
       this.deps.logger?.warn({ sportEventId: event.id, matchNumber: match.matchNumber }, 'Refused a spread change on a game that has picks');
       throw new SportEventError(

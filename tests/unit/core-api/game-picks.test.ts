@@ -3,7 +3,7 @@
  * week's tiebreaker game, and the ranking that breaks level points with the tiebreaker.
  */
 import { expect } from '@jest/globals';
-import { MatchEnding, MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import { rankPredictionStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/bracket-picks';
 import {
   gameTotalPoints,
@@ -16,7 +16,7 @@ const T0 = new Date('2026-09-01T00:00:00.000Z');
 const SUNDAY = new Date('2026-09-13T17:00:00.000Z');
 const MONDAY = new Date('2026-09-15T00:15:00.000Z');
 
-function game(matchNumber: number, overrides: Partial<SportEventMatch> = {}): SportEventMatch {
+function game(matchNumber: number, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
   return {
     id: `game-${matchNumber}`,
     sportEventId: 'week-1',
@@ -50,7 +50,7 @@ const played = (matchNumber: number, winnerSide: MatchSide | null, homeScore: nu
   game(matchNumber, { status: MatchStatus.COMPLETED, winnerSide, homeScore, awayScore });
 
 const pick = (matchNumber: number, side: 'home' | 'away', confidence: number | null = null): GamePick => ({
-  sportEventMatchId: `game-${matchNumber}`,
+  sportEventRoundMatchId: `game-${matchNumber}`,
   predictedResult: PredictedResult.TEAM,
   sportEventParticipantId: `${side}-${matchNumber}`,
   confidence,
@@ -79,7 +79,7 @@ describe('scoreGamePicks — a straight-up week', () => {
 });
 
 const tiePick = (matchNumber: number, confidence: number | null = null): GamePick => ({
-  sportEventMatchId: `game-${matchNumber}`,
+  sportEventRoundMatchId: `game-${matchNumber}`,
   predictedResult: PredictedResult.TIE,
   sportEventParticipantId: null,
   confidence,

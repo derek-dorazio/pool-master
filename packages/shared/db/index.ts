@@ -101,9 +101,9 @@ export type {
   MatchLiveScoreWrite,
   MatchResultWrite,
   MatchSideFill,
-  SportEventMatchPatch,
-  SportEventMatchRepository,
-  SportEventMatchWrite,
+  SportEventRoundMatchPatch,
+  SportEventRoundMatchRepository,
+  SportEventRoundMatchWrite,
 } from './match-ports';
 export type {
   EventSeriesRepository,
@@ -112,9 +112,10 @@ export type {
   ParticipantRoundView,
   ParticipantStandingView,
   PriceAssignment,
-  PricingProfileRepository,
-  PricingProfileWrite,
+  PlatformPricingProfileRepository,
+  PlatformPricingProfileWrite,
   ProfileRepository,
+  ProfileTaken,
   ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
@@ -163,8 +164,8 @@ export type {
   SportLeagueUses,
   SportRepository,
   TierAssignment,
-  TierProfileRepository,
-  TierProfileWrite,
+  PlatformTierProfileRepository,
+  PlatformTierProfileWrite,
 } from './sport-catalog-ports';
 export type {
   CustomerLeagueCommissioner,

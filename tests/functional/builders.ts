@@ -1,7 +1,7 @@
-import { createLeague, listPricingProfiles, listTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createLeague, createSportLeague, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import { SPORT_TIER_PROFILE_NAME } from '../support/league-profiles';
+import { SPORT_PLATFORM_TIER_PROFILE_CODE, STANDARD_PLATFORM_PRICING_PROFILE_CODE } from '../support/league-profiles';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
@@ -273,14 +273,27 @@ export async function attachContestEvent(contestId: string, sportEventId: string
 
 /**
  * The profile ids a functional test's new sport league names (#1844), read through the API as an
- * admin would: its sport's tier layout (`SPORT_TIER_PROFILE_NAME`) and Standard pricing.
+ * admin would: its sport's tier layout (`SPORT_PLATFORM_TIER_PROFILE_CODE`) and Standard pricing.
  */
-export async function sportLeagueProfiles(client: Client, sport: Sport): Promise<{ tierProfileId: string; pricingProfileId: string }> {
-  const [tiers, prices] = await Promise.all([listTierProfiles({ client }), listPricingProfiles({ client })]);
-  const tierProfile = tiers.data?.tierProfiles.find((profile) => profile.name === SPORT_TIER_PROFILE_NAME[sport]);
-  const pricingProfile = prices.data?.pricingProfiles.find((profile) => profile.name === 'Standard');
-  if (!tierProfile || !pricingProfile) {
-    throw new Error(`The ${SPORT_TIER_PROFILE_NAME[sport]} tier profile or the Standard pricing profile is missing.`);
+export async function sportLeagueProfiles(client: Client, sport: Sport): Promise<{ platformTierProfileId: string; platformPricingProfileId: string }> {
+  const [tiers, prices] = await Promise.all([listPlatformTierProfiles({ client }), listPlatformPricingProfiles({ client })]);
+  const platformTierProfile = tiers.data?.platformTierProfiles.find((profile) => profile.code === SPORT_PLATFORM_TIER_PROFILE_CODE[sport]);
+  const platformPricingProfile = prices.data?.platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE);
+  if (!platformTierProfile || !platformPricingProfile) {
+    throw new Error(`The ${SPORT_PLATFORM_TIER_PROFILE_CODE[sport]} tier profile or the Standard pricing profile is missing.`);
   }
-  return { tierProfileId: tierProfile.id, pricingProfileId: pricingProfile.id };
+  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id };
+}
+
+/**
+ * A run's own sport league, standing in for one a migration adds: a test data file loads into a
+ * league the site has and never creates one, so a suite that loads a file under a tagged league
+ * name adds that league first. Returns its id.
+ */
+export async function addRunSportLeague(client: Client, sport: Sport, name: string): Promise<string> {
+  const created = await createSportLeague({ client, body: { ...(await sportLeagueProfiles(client, sport)), sport, name } });
+  if (!created.data) {
+    throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
+  }
+  return created.data.sportLeague.id;
 }
