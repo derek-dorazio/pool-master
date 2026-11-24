@@ -204,6 +204,8 @@ The current model was built one sport at a time and leans on code to look right:
     result writer (a series' 4–2). FIELD matches leave it empty.
   - Advancement is the next match plus a side number, unique per target side.
   - Pick'em picks and bracket picks point at a Match side.
+  - `sideNumber` is the side's fixed place, not home or away: sync writes the away side as 1
+    and the home side as 2; a neutral-site or FIELD match uses `homeAway` NONE (Derek 2026-11-24).
   - Constraints: unique (match, side number) and (match, field row); a HEAD_TO_HEAD match has
     exactly sides 1 and 2, written in one transaction by the one writer; composite FKs keep
     every side in its Match's event.
