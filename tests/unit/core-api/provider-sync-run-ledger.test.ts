@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from 'fastify';
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { BackgroundJobType, JobTrigger, ProviderCode, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
@@ -417,6 +418,17 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
     await ledger.executeFeedRun(createSyncRun(), async () => createJob());
 
     expect(findings.checkEvent).not.toHaveBeenCalled();
+  });
+
+  it('returns the completed job and logs the failure when the findings check throws after the run is recorded', async () => {
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => { throw new Error('connection reset'); }) };
+    const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), logger as unknown as FastifyBaseLogger, undefined, findings);
+    const job = createJob();
+
+    await expect(ledger.executeFeedRun(createSyncRun(linked), async () => job)).resolves.toBe(job);
+
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.checkFailed' }), expect.any(String));
   });
 });
 

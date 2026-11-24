@@ -154,13 +154,22 @@ export class ProviderSyncRunLedger {
   private async checkEvent(syncRun: ProviderSyncRun, job: IngestionJobRecord): Promise<void> {
     const kind = EVENT_CHECK_OF_SYNC_KIND[syncRun.kind];
     if (this.findings === undefined || kind === undefined || syncRun.sportLeagueId === null || syncRun.sportEventId === null) return;
-    await this.findings.checkEvent({
-      kind,
-      sportLeagueId: syncRun.sportLeagueId,
-      sportEventId: syncRun.sportEventId,
-      providerId: syncRun.providerId,
-      found: (job.warnings ?? []).some((warning) => warning.code === kind),
-    });
+    // The run's outcome is already recorded: a findings write that fails is logged, never thrown,
+    // so it cannot fail a run that succeeded (as the score publisher's, #2068).
+    try {
+      await this.findings.checkEvent({
+        kind,
+        sportLeagueId: syncRun.sportLeagueId,
+        sportEventId: syncRun.sportEventId,
+        providerId: syncRun.providerId,
+        found: (job.warnings ?? []).some((warning) => warning.code === kind),
+      });
+    } catch (error) {
+      this.logger?.error(
+        { action: 'ingestion.syncFinding.checkFailed', data: { syncRunId: syncRun.id, kind, sportEventId: syncRun.sportEventId }, err: error },
+        'Could not check the sync run\'s event for findings',
+      );
+    }
   }
 
   async failSubmittedRun(

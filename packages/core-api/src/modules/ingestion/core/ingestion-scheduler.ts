@@ -76,7 +76,8 @@ export interface IngestionJobRecord {
 
 /** A problem a feed run found; one whose code is a finding kind is raised as that finding by the ledger. */
 export interface IngestionJobWarning {
-  code: string;
+  /** The finding kind the warning raises (#1999), typed so a renamed kind fails typecheck. */
+  code: ProviderSyncFindingKind;
   message: string;
 }
 
