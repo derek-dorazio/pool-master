@@ -53,3 +53,8 @@ export function seasonMappingText(mapping: SportLeagueSeasonProviderMappingDto):
 export function positionCodeText(code: SportLeaguePositionProviderCodeDto): string {
   return `${enumLabel('ProviderCode', code.provider)} ${code.providerLeagueCode} · ${code.providerCode}`;
 }
+
+/** What a slot's game is played in, with how many ("Quarters · 4"); "No periods" for a game kept by none. */
+export function periodsText(slot: Pick<SportLeagueSlotDefinitionDto, 'periodUnit' | 'periodCount'>): string {
+  return slot.periodUnit === null || slot.periodCount === null ? 'No periods' : `${enumLabel('PeriodUnit', slot.periodUnit)} · ${String(slot.periodCount)}`;
+}

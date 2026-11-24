@@ -32,6 +32,8 @@ export type SharedEnums = {
   SlotPairing: Enums.SlotPairing;
   SeasonSlotStatus: Enums.SeasonSlotStatus;
   SlotProviderMatchType: Enums.SlotProviderMatchType;
+  MatchFormat: Enums.MatchFormat;
+  PeriodUnit: Enums.PeriodUnit;
   InjuryStatusCode: Enums.InjuryStatusCode;
   FormTrend: Enums.FormTrend;
   PoolType: Enums.PoolType;

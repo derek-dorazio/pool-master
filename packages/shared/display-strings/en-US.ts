@@ -85,6 +85,17 @@ export const enUS = {
       DATE_WINDOW: 'Date window',
       CALENDAR_WEEK: 'Calendar week',
     },
+    MatchFormat: {
+      HEAD_TO_HEAD: 'Head to head',
+      FIELD: 'Field',
+    },
+    PeriodUnit: {
+      QUARTER: 'Quarters',
+      HALF: 'Halves',
+      PERIOD: 'Periods',
+      INNING: 'Innings',
+      HOLE: 'Holes',
+    },
     InjuryStatusCode: {
       HEALTHY: 'Healthy',
       QUESTIONABLE: 'Questionable',

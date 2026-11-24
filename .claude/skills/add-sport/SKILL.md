@@ -102,9 +102,13 @@ In order:
    and gets no slots. Each `SportLeaguePhaseSlot` has a key nothing parses (`WEEK_14`,
    `FINAL`, `MASTERS`), a `slotKind` counted back from the final (a 12-team bracket's opening
    round is `ROUND_OF_16`), a proper `name` only where the league has one (Super Bowl, Sweet
-   16), `awardsTrophy`, `squaresEligible` (single games with period scores only), and its
-   series format, games and pairing. Weeks go to the longest season the league plays. An
-   open phase (golf, tennis, racing) has one `TOURNAMENT` slot per recurring tournament. A
+   16), `awardsTrophy`, `squaresEligible` (single games with period scores only), its
+   series format, games and pairing, its `matchFormat` (`HEAD_TO_HEAD` when two sides meet,
+   `FIELD` when a whole field is ranked), `canEndTied` (a real game can finish level, so
+   scoring handles a tie: a soccer regular season, a leg of a two-legged tie, the NFL's regular
+   season; never a tie pick, since a pick names a winner), and its `periodUnit` with `periodCount` (four
+   quarters, nine innings, eighteen holes; both null for a race). Weeks go to the longest
+   season the league plays. An open phase (golf, tennis, racing) has one `TOURNAMENT` slot per recurring tournament. A
    synced league gives each slot it syncs a `SportLeaguePhaseSlotProviderMapping` on its
    `SportLeagueProviderMapping`: `PROVIDER_CODE` with the code its adapter reduces a game to
    (`REG:<week>`, `POST:<the round's place in the postseason, first round 1>`),

@@ -11419,6 +11419,20 @@ export interface components {
             seriesGames: number;
             /** @enum {string} */
             pairing: "FIXED" | "RESEEDED";
+            /**
+             * @description How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+             * @enum {string}
+             */
+            matchFormat: "HEAD_TO_HEAD" | "FIELD";
+            /** @description Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out. */
+            canEndTied: boolean;
+            /**
+             * @description What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+             * @enum {string|null}
+             */
+            periodUnit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE" | null;
+            /** @description How many periods a game has, overtime aside; null exactly when periodUnit is. */
+            periodCount: number | null;
             /** @description By provider, then in the order the sync tries them. */
             providerMappings: {
                 /** Format: uuid */
@@ -11467,6 +11481,20 @@ export interface components {
                 seriesGames: number;
                 /** @enum {string} */
                 pairing: "FIXED" | "RESEEDED";
+                /**
+                 * @description How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+                 * @enum {string}
+                 */
+                matchFormat: "HEAD_TO_HEAD" | "FIELD";
+                /** @description Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out. */
+                canEndTied: boolean;
+                /**
+                 * @description What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+                 * @enum {string|null}
+                 */
+                periodUnit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE" | null;
+                /** @description How many periods a game has, overtime aside; null exactly when periodUnit is. */
+                periodCount: number | null;
                 /** @description By provider, then in the order the sync tries them. */
                 providerMappings: {
                     /** Format: uuid */
@@ -11518,6 +11546,20 @@ export interface components {
                     seriesGames: number;
                     /** @enum {string} */
                     pairing: "FIXED" | "RESEEDED";
+                    /**
+                     * @description How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked.
+                     * @enum {string}
+                     */
+                    matchFormat: "HEAD_TO_HEAD" | "FIELD";
+                    /** @description Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out. */
+                    canEndTied: boolean;
+                    /**
+                     * @description What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).
+                     * @enum {string|null}
+                     */
+                    periodUnit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE" | null;
+                    /** @description How many periods a game has, overtime aside; null exactly when periodUnit is. */
+                    periodCount: number | null;
                     /** @description By provider, then in the order the sync tries them. */
                     providerMappings: {
                         /** Format: uuid */

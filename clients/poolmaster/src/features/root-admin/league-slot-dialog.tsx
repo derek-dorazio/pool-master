@@ -1,6 +1,6 @@
 import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
 import { DetailEditModal, type Fact } from '@/features/shared/ui';
-import { mappingText, seriesText, type SlotDefinitionRow } from './league-structure-rows';
+import { mappingText, periodsText, seriesText, type SlotDefinitionRow } from './league-structure-rows';
 
 /**
  * A slot definition on the Structure tab (⤢, #2002): all of it to read, with its provider
@@ -12,6 +12,9 @@ export function LeagueSlotDialog({ onClose, slot }: { onClose: () => void; slot:
     { id: 'phase', label: 'Phase', value: enumLabel('LeaguePhase', slot.phase) },
     { id: 'kind', label: 'Kind', value: enumLabel('SlotKind', slot.slotKind) },
     { id: 'key', label: 'Key', value: slot.key },
+    { id: 'format', label: 'Format', value: enumLabel('MatchFormat', slot.matchFormat) },
+    { id: 'can-tie', label: 'Can tie', value: slot.canEndTied ? 'Yes' : 'No' },
+    { id: 'periods', label: 'Periods', value: periodsText(slot) },
     { id: 'series', label: 'Series', value: seriesText(slot) },
     { id: 'pairing', label: 'Pairing', value: enumLabel('SlotPairing', slot.pairing) },
     { id: 'trophy', label: 'Trophy', value: slot.awardsTrophy ? 'Yes' : 'No' },

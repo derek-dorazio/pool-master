@@ -135,6 +135,12 @@ export async function fixtureTourId(prisma: Db, sportCode: Sport = Sport.GOLF): 
 
 const FIXTURE_TOUR_SLOT_KEY = 'FIXTURE_TOURNAMENT';
 
+/** How the fixture tour's slot is played: as its league is scored, with no periods (test data only). */
+async function fixtureSlotPlay(prisma: Db, sportLeagueId: string) {
+  const { scoringFamily } = await prisma.sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId }, select: { scoringFamily: true } });
+  return { matchFormat: scoringFamily === 'HEAD_TO_HEAD' ? 'HEAD_TO_HEAD' as const : 'FIELD' as const, canEndTied: false };
+}
+
 /** The fixture tour's one phase and slot; `skipDuplicates` lets two first uses race safely. */
 async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<void> {
   await prisma.sportLeaguePhase.createMany({ data: [{ sportLeagueId, phase: 'REGULAR', isSynced: true }], skipDuplicates: true });
@@ -143,6 +149,7 @@ async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<
     data: [{
       sportLeagueId, sportLeaguePhaseId: phase.id, key: FIXTURE_TOUR_SLOT_KEY, slotKind: 'TOURNAMENT',
       awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+      ...(await fixtureSlotPlay(prisma, sportLeagueId)),
     }],
     skipDuplicates: true,
   });

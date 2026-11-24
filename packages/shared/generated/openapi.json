@@ -22588,6 +22588,42 @@
               "RESEEDED"
             ]
           },
+          "matchFormat": {
+            "type": "string",
+            "enum": [
+              "HEAD_TO_HEAD",
+              "FIELD"
+            ],
+            "description": "How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked."
+          },
+          "canEndTied": {
+            "type": "boolean",
+            "description": "Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out."
+          },
+          "periodUnit": {
+            "description": "What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).",
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "QUARTER",
+              "HALF",
+              "PERIOD",
+              "INNING",
+              "HOLE",
+              null
+            ]
+          },
+          "periodCount": {
+            "description": "How many periods a game has, overtime aside; null exactly when periodUnit is.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
           "providerMappings": {
             "type": "array",
             "items": {
@@ -22655,6 +22691,10 @@
           "seriesFormat",
           "seriesGames",
           "pairing",
+          "matchFormat",
+          "canEndTied",
+          "periodUnit",
+          "periodCount",
           "providerMappings"
         ],
         "additionalProperties": false,
@@ -22751,6 +22791,42 @@
                     "RESEEDED"
                   ]
                 },
+                "matchFormat": {
+                  "type": "string",
+                  "enum": [
+                    "HEAD_TO_HEAD",
+                    "FIELD"
+                  ],
+                  "description": "How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked."
+                },
+                "canEndTied": {
+                  "type": "boolean",
+                  "description": "Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out."
+                },
+                "periodUnit": {
+                  "description": "What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "QUARTER",
+                    "HALF",
+                    "PERIOD",
+                    "INNING",
+                    "HOLE",
+                    null
+                  ]
+                },
+                "periodCount": {
+                  "description": "How many periods a game has, overtime aside; null exactly when periodUnit is.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
                 "providerMappings": {
                   "type": "array",
                   "items": {
@@ -22818,6 +22894,10 @@
                 "seriesFormat",
                 "seriesGames",
                 "pairing",
+                "matchFormat",
+                "canEndTied",
+                "periodUnit",
+                "periodCount",
                 "providerMappings"
               ],
               "additionalProperties": false,
@@ -22931,6 +23011,42 @@
                           "RESEEDED"
                         ]
                       },
+                      "matchFormat": {
+                        "type": "string",
+                        "enum": [
+                          "HEAD_TO_HEAD",
+                          "FIELD"
+                        ],
+                        "description": "How the slot's games are contested: HEAD_TO_HEAD, two sides meet; FIELD, a whole field is ranked."
+                      },
+                      "canEndTied": {
+                        "type": "boolean",
+                        "description": "Whether a game of the slot can finish level. A slot whose games cannot is decided by overtime or a shoot-out."
+                      },
+                      "periodUnit": {
+                        "description": "What a game is played in; null, with periodCount, for a game kept by no period (a race, a tennis match).",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "QUARTER",
+                          "HALF",
+                          "PERIOD",
+                          "INNING",
+                          "HOLE",
+                          null
+                        ]
+                      },
+                      "periodCount": {
+                        "description": "How many periods a game has, overtime aside; null exactly when periodUnit is.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
                       "providerMappings": {
                         "type": "array",
                         "items": {
@@ -22998,6 +23114,10 @@
                       "seriesFormat",
                       "seriesGames",
                       "pairing",
+                      "matchFormat",
+                      "canEndTied",
+                      "periodUnit",
+                      "periodCount",
                       "providerMappings"
                     ],
                     "additionalProperties": false,

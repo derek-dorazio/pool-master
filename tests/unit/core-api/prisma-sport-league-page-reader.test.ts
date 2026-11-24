@@ -10,6 +10,8 @@ import {
   SeriesFormat,
   SlotKind,
   SlotPairing,
+  MatchFormat,
+  PeriodUnit,
   SlotProviderMatchType,
   ProviderSyncKind,
   ProviderSyncRunStatus,
@@ -193,6 +195,7 @@ describe('PrismaSportLeaguePageReader.readStructure', () => {
     const slot = {
       id: 'week-1', sportLeaguePhaseId: 'regular', key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1, name: null, awardsTrophy: false, squaresEligible: true,
       seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+      matchFormat: MatchFormat.HEAD_TO_HEAD, canEndTied: true, periodUnit: PeriodUnit.HALF, periodCount: 2,
       providerMappings: [{
         id: 'm1', matchType: SlotProviderMatchType.PROVIDER_CODE, providerValue: 'REG:1',
         sportLeagueProviderMapping: { providerLeague: { code: 'nfl', name: 'NFL', provider: { id: 'bdl', name: 'BALLDONTLIE' } } },
@@ -208,6 +211,7 @@ describe('PrismaSportLeaguePageReader.readStructure', () => {
         slots: [{
           id: 'week-1', key: 'WEEK_1', slotKind: SlotKind.WEEK, weekNumber: 1, name: null, awardsTrophy: false, squaresEligible: true,
           seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+          matchFormat: MatchFormat.HEAD_TO_HEAD, canEndTied: true, periodUnit: PeriodUnit.HALF, periodCount: 2,
           providerMappings: [{
             id: 'm1', matchType: SlotProviderMatchType.PROVIDER_CODE, providerValue: 'REG:1',
             providerId: 'bdl', providerName: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL',
