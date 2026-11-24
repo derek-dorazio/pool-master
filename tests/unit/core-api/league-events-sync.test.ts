@@ -45,8 +45,10 @@ function build(options: {
   keepProviderEventsCurrent?: jest.Mock;
   /** False leaves queued jobs waiting until the test drains the runner. */
   wakes?: boolean;
+  now?: Date;
 }) {
-  const jobs = inMemoryBackgroundJobs(() => NOW);
+  const now = options.now ?? NOW;
+  const jobs = inMemoryBackgroundJobs(() => now);
   const syncRuns = inMemorySyncRuns(jobs);
   const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const scoreSource = {
@@ -74,7 +76,7 @@ function build(options: {
     syncRuns,
     jobs: queue,
     logger,
-    now: () => NOW,
+    now: () => now,
   });
   const runner = new BackgroundJobRunner({
     jobs,
@@ -107,6 +109,16 @@ describe('LeagueEventsSync', () => {
         [BackgroundJobType.SYNC_LEAGUE_EVENTS, pga.id, undefined, { sportLeagueId: pga.id, eventYears: [2026, 2027] }, JobTrigger.SCHEDULE],
         [BackgroundJobType.SYNC_LEAGUE_EVENTS, lpga.id, undefined, { sportLeagueId: lpga.id, eventYears: [2026, 2027] }, JobTrigger.SCHEDULE],
       ]);
+    });
+
+    it('in January the schedule still syncs the season being played, which began the autumn before, rather than reading two calendar years ahead', async () => {
+      const nfl = syncedLeague({ name: 'NFL' });
+      const { sync, jobs } = build({ leagues: [nfl], wakes: false, now: new Date('2027-01-15T12:00:00Z') });
+
+      await sync.queueScheduled();
+
+      // The 2026 NFL season's playoffs are under way in January 2027: the league's current season.
+      expect(jobs.rows.map((job) => job.payload)).toEqual([{ sportLeagueId: nfl.id, eventYears: [2026, 2027] }]);
     });
 
     it('makes every league\'s scheduled job due now, with no league held back behind another', async () => {
