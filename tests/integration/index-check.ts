@@ -30,7 +30,7 @@ import { TABLE_SCAN_ALLOWANCES, type TableScanAllowance } from './table-scan-all
 export const REFERENCE_TABLES = new Set([
   '_prisma_migrations', 'sports', 'sport_leagues', 'event_series', 'contest_config_templates',
   'event_pages', 'event_page_offers', 'platform_runtime_configs', 'platform_runtime_config_history',
-  'tier_profiles', 'pricing_profiles',
+  'tier_profiles', 'pricing_profiles', 'providers', 'provider_leagues', 'sport_league_provider_mappings',
 ]);
 
 /** An app statement as the check keeps it: its SQL and the first test that sent it. */

@@ -76,11 +76,30 @@ async function checkSpec(league: League): Promise<boolean> {
   return false;
 }
 
+/**
+ * The leagues the live check reads: every league the seeded BALLDONTLIE Provider rows list. The
+ * check runs without a database, so it names them here; a league the migration adds is added too.
+ */
+const BALLDONTLIE_CONTRACT_CHECK_LEAGUES = [
+  { code: 'pga', sport: Sport.GOLF },
+  { code: 'nfl', sport: Sport.AMERICAN_FOOTBALL },
+  { code: 'ncaaf', sport: Sport.AMERICAN_FOOTBALL },
+  { code: 'nba', sport: Sport.BASKETBALL },
+  { code: 'ncaab', sport: Sport.BASKETBALL },
+  { code: 'ncaaw', sport: Sport.BASKETBALL },
+  { code: 'wnba', sport: Sport.BASKETBALL },
+  { code: 'nhl', sport: Sport.HOCKEY },
+  { code: 'mlb', sport: Sport.BASEBALL },
+  { code: 'epl', sport: Sport.SOCCER },
+  { code: 'worldcup', sport: Sport.SOCCER },
+] as const;
+
 async function checkLiveApi(apiKey: string): Promise<boolean> {
   const adapter = new BalldontlieAdapter({
-    baseUrl: 'https://api.balldontlie.io',
+    connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: Number(values['requests-per-minute']) }),
     apiKey,
-    requestsPerMinute: Number(values['requests-per-minute']),
+    // Every league the adapter reads, as the seeded Provider rows list them.
+    leagues: BALLDONTLIE_CONTRACT_CHECK_LEAGUES,
   });
   const checks: Array<[string, () => Promise<string>]> = [
     ['health', async () => {

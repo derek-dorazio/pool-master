@@ -2225,46 +2225,46 @@ describe('Contract verification (root admin)', () => {
     await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [{ ...finisher('Arrow', 0) }] }), 400);
     await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [finisher('Arrow', 1)] }, member.headers), 403);
   });
-});
 
-// #1997: the Providers page's saves, against the shared app and the BALLDONTLIE row the migration seeds.
-describe('provider settings contract (#1997)', () => {
-  it('updateProviderSettings saves a provider\'s settings and answers its row; updateProviderLeague saves a league\'s; each is refused as documented', async () => {
-    const rootAdmin = await createTestUser({ displayName: 'Root Admin Provider Settings Contract User', isRootAdmin: true });
-    const member = await createTestUser({ displayName: 'Member Provider Settings Contract User' });
-    const prisma = getPrisma();
-    const before = await prisma.provider.findUniqueOrThrow({ where: { code: 'BALLDONTLIE' }, include: { leagues: { where: { code: 'mlb' } } } });
-    const [mlb] = before.leagues;
-    const patch = (url: string, payload: Record<string, unknown>, headers = rootAdmin.headers) => getApp().inject({ method: 'PATCH', url, headers, payload });
+  // #1997: the Providers page's saves, against the shared app and the BALLDONTLIE row the migration seeds.
+  describe('provider settings contract (#1997)', () => {
+    it('updateProviderSettings saves a provider\'s settings and answers its row; updateProviderLeague saves a league\'s; each is refused as documented', async () => {
+      const rootAdmin = await createTestUser({ displayName: 'Root Admin Provider Settings Contract User', isRootAdmin: true });
+      const member = await createTestUser({ displayName: 'Member Provider Settings Contract User' });
+      const prisma = getPrisma();
+      const before = await prisma.provider.findUniqueOrThrow({ where: { code: 'BALLDONTLIE' }, include: { leagues: { where: { code: 'mlb' } } } });
+      const [mlb] = before.leagues;
+      const patch = (url: string, payload: Record<string, unknown>, headers = rootAdmin.headers) => getApp().inject({ method: 'PATCH', url, headers, payload });
 
-    try {
-      const listRes = await getApp().inject({ method: 'GET', url: '/api/v1/ingestion/providers', headers: rootAdmin.headers });
-      expect(listRes.statusCode).toBe(200);
-      const listed = ProviderListResponseSchema.parse(listRes.json()).providers.find((summary) => summary.settings?.code === 'BALLDONTLIE');
-      expect(listed?.settings).toMatchObject({ id: before.id, name: 'BALLDONTLIE', webhookSecretSet: true });
-      expect(listed?.settings?.leagues.map((league) => league.code)).toContain('mlb');
+      try {
+        const listRes = await getApp().inject({ method: 'GET', url: '/api/v1/ingestion/providers', headers: rootAdmin.headers });
+        expect(listRes.statusCode).toBe(200);
+        const listed = ProviderListResponseSchema.parse(listRes.json()).providers.find((summary) => summary.settings?.code === 'BALLDONTLIE');
+        expect(listed?.settings).toMatchObject({ id: before.id, name: 'BALLDONTLIE', webhookSecretSet: true });
+        expect(listed?.settings?.leagues.map((league) => league.code)).toContain('mlb');
 
-      const savedRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 600, webhookPollMinutes: 20 });
-      expect(savedRes.statusCode).toBe(200);
-      expect(ProviderSettingsResponseSchema.parse(savedRes.json()).provider).toMatchObject({ code: 'BALLDONTLIE', requestsPerMinute: 600, webhookPollMinutes: 20, webhookSecretSet: true });
+        const savedRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 600, webhookPollMinutes: 20 });
+        expect(savedRes.statusCode).toBe(200);
+        expect(ProviderSettingsResponseSchema.parse(savedRes.json()).provider).toMatchObject({ code: 'BALLDONTLIE', requestsPerMinute: 600, webhookPollMinutes: 20, webhookSecretSet: true });
 
-      const leagueRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: 200, quietAfterMinutes: 120 });
-      expect(leagueRes.statusCode).toBe(200);
-      expect(ProviderLeagueResponseSchema.parse(leagueRes.json()).league).toMatchObject({ id: mlb.id, code: 'mlb', typicalGameMinutes: 200, quietAfterMinutes: 120 });
+        const leagueRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: 200, quietAfterMinutes: 120 });
+        expect(leagueRes.statusCode).toBe(200);
+        expect(ProviderLeagueResponseSchema.parse(leagueRes.json()).league).toMatchObject({ id: mlb.id, code: 'mlb', typicalGameMinutes: 200, quietAfterMinutes: 120 });
 
-      const refusals = await Promise.all([
-        patch(`/api/v1/ingestion/provider-settings/${randomUUID()}`, { requestsPerMinute: 10 }),
-        patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${randomUUID()}`, { typicalGameMinutes: 10 }),
-        patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 0 }),
-        patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 10 }, member.headers),
-      ]);
-      expect(refusals.map((res) => res.statusCode)).toEqual([404, 404, 400, 403]);
-      for (const res of refusals) expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
-      expect(refusals.slice(0, 2).map((res) => ErrorEnvelopeSchema.parse(res.json()).error.code)).toEqual(['PROVIDER_NOT_FOUND', 'PROVIDER_LEAGUE_NOT_FOUND']);
-    } finally {
-      // Put the seeded row back as it was, for every test after this one.
-      await patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: before.requestsPerMinute, webhookPollMinutes: before.webhookPollMinutes });
-      await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: mlb.typicalGameMinutes, quietAfterMinutes: mlb.quietAfterMinutes });
-    }
+        const refusals = await Promise.all([
+          patch(`/api/v1/ingestion/provider-settings/${randomUUID()}`, { requestsPerMinute: 10 }),
+          patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${randomUUID()}`, { typicalGameMinutes: 10 }),
+          patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 0 }),
+          patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 10 }, member.headers),
+        ]);
+        expect(refusals.map((res) => res.statusCode)).toEqual([404, 404, 400, 403]);
+        for (const res of refusals) expect(ErrorEnvelopeSchema.safeParse(res.json()).success).toBe(true);
+        expect(refusals.slice(0, 2).map((res) => ErrorEnvelopeSchema.parse(res.json()).error.code)).toEqual(['PROVIDER_NOT_FOUND', 'PROVIDER_LEAGUE_NOT_FOUND']);
+      } finally {
+        // Put the seeded row back as it was, for every test after this one.
+        await patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: before.requestsPerMinute, webhookPollMinutes: before.webhookPollMinutes });
+        await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: mlb.typicalGameMinutes, quietAfterMinutes: mlb.quietAfterMinutes });
+      }
+    });
   });
 });

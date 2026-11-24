@@ -18,6 +18,7 @@ import {
   showToast,
   type Fact,
 } from '@/features/shared/ui';
+import { OnOffField } from './on-off-field';
 import type { ProviderSettingsDto, ProviderSummaryDto } from '@/lib/api';
 import { errorRateText, latencyText, requestsPerMinuteText, webhooksText } from './provider-facts';
 import { ProviderStatusChip } from './provider-status-chip';
@@ -165,24 +166,14 @@ export function ProviderDialog({
       )}
     >
       <div className="grid gap-4">
-        <FormField label="Status">
-          <Select data-testid={`${testId}-enabled-input`} {...form.register('isEnabled')}>
-            <option value="on">On</option>
-            <option value="off">Off</option>
-          </Select>
-        </FormField>
+        <OnOffField label="Status" registration={form.register('isEnabled')} testId={`${testId}-enabled-input`} />
         <FormField error={form.formState.errors.baseUrl?.message} label="Base URL">
           <Input data-testid={`${testId}-base-url-input`} {...form.register('baseUrl')} />
         </FormField>
         <FormField error={form.formState.errors.requestsPerMinute?.message} label="Requests a minute">
           <Input data-testid={`${testId}-rate-input`} inputMode="numeric" {...form.register('requestsPerMinute')} />
         </FormField>
-        <FormField label="Webhooks">
-          <Select data-testid={`${testId}-webhooks-input`} {...form.register('webhooksEnabled')}>
-            <option value="on">On</option>
-            <option value="off">Off</option>
-          </Select>
-        </FormField>
+        <OnOffField label="Webhooks" registration={form.register('webhooksEnabled')} testId={`${testId}-webhooks-input`} />
         <FormField error={form.formState.errors.webhookPollMinutes?.message} label="Webhook safety-net poll, minutes">
           <Input data-testid={`${testId}-poll-input`} inputMode="numeric" {...form.register('webhookPollMinutes')} />
         </FormField>

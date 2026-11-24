@@ -125,7 +125,7 @@ Polls configured sports data providers, upserts normalized event data, and store
 
 | Adapter | Sport(s) | API Key |
 |---------|----------|---------|
-| BALLDONTLIE (`balldontlie`) | Golf: PGA TOUR. Game scores: NFL weeks and playoffs, the College Football Playoff, the NCAA men's and women's basketball tournaments, the NBA playoffs, Premier League matchweeks, the World Cup's knockout bracket | `BALLDONTLIE_API_KEY`, from Secrets Manager; the binding sets `baseUrl` and the plan's `requestsPerMinute` |
+| BALLDONTLIE (`balldontlie`) | Golf: PGA TOUR. Game scores: NFL weeks and playoffs, the College Football Playoff, the NCAA men's and women's basketball tournaments, the NBA playoffs, Premier League matchweeks, the World Cup's knockout bracket | `BALLDONTLIE_API_KEY`, from Secrets Manager; its `Provider` row (#1997) sets `baseUrl`, the plan's `requestsPerMinute` and which leagues are read |
 | Mock contest feed | Golf and QA scenarios | Local/QA only |
 
 The BALLDONTLIE adapter was built from the vendor's published OpenAPI document before any account
@@ -138,21 +138,21 @@ API so any drift shows up as the field that broke.
 on their own, so together they can go over the plan's limit; the client then waits out the vendor's
 429 and retries.
 
-Every bound provider is registered: the default as each of its sports' primary, the others as
-secondaries. An event syncs from the provider it is linked to, so the mock and BALLDONTLIE can
+Every enabled Provider row with its key is registered, by its `priority`, and the mock where its
+binding is set (QA only, until #2039). An event syncs from the provider it is linked to, so the mock and BALLDONTLIE can
 both serve golf on QA, and a root admin picks the provider wherever more than one serves a sport.
 
 **Webhooks (#1498):** BALLDONTLIE posts a signed notification to
 `POST /api/v1/provider-webhooks/balldontlie` when something happens in a game or tournament. The
 route checks the HMAC signature with `BALLDONTLIE_WEBHOOK_SECRET` (from Secrets Manager; unset, it
-refuses every delivery) and, for a game or tournament linked to an in-progress event, queues one
+refuses every delivery) while the BALLDONTLIE Provider row's webhook switch is on and, for a game or tournament linked to an in-progress event, queues one
 `PROVIDER_EVENT_SYNC` job, due a minute out under the event's dedupe key, so a burst shares one
 sync. The job runs the same live-score sync the scheduler runs, reading current state over REST,
 and the sync history shows it as a `WEBHOOK` run. A game no match is linked to yet syncs every
 in-progress event of its league. Notifications for anything else are acknowledged and dropped.
 
-The endpoint subscribes to `BALLDONTLIE_WEBHOOK_EVENT_TYPES` in `balldontlie-webhooks.ts`: each
-read league's game start, period end (a soccer match's halftime) and game end, and golf's
+The endpoint subscribes to `balldontlieWebhookEventTypes` in `balldontlie-webhooks.ts`: each
+enabled league row's game start, period end (a soccer match's halftime) and game end, and golf's
 tournament start, round start, player round completed and tournament end (never each hole). To set
 it up, in the vendor dashboard's Webhooks tab (or its webhook API, which needs All-Access), create
 one endpoint at `https://<environment host>/api/v1/provider-webhooks/balldontlie` with those event

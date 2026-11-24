@@ -574,7 +574,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET a sport league\'s syncs: one row per sync kind, from the league with its sport and the latest run of each kind in four statements, however many runs (#1865)', async () => {
+  it('GET a sport league\'s syncs: one row per sync kind, from the league with its sport and its sync provider (its selected mapping, provider league and provider, one read each, #1997) and the latest run of each kind in seven statements, however many runs (#1865)', async () => {
     const prisma = getPrisma();
     const sport = await golf();
     const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League Page Syncs ${randomUUID().slice(0, 8)}` } });
@@ -596,7 +596,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         expect(syncs.map((sync) => [sync.kind, sync.health])).toEqual([['EVENTS', 'OK'], ['FIELD', 'OK'], ['SCORES', 'OK']]);
         return syncs.length;
       },
-      statements: 4,
+      statements: 7,
     });
   });
 
@@ -719,7 +719,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     });
   });
 
-  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, their synced sport leagues and the Clutch Cards under them read in one more, and their rate-limited jobs counted in one grouped query, with their events read once for all of them, without the rest of each row', async () => {
+  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, their synced sport leagues and the Clutch Cards under them read in one more with the provider each syncs from (its selected mapping, provider league and provider, one read each, #1997), and their rate-limited jobs counted in one grouped query, with their events read once for all of them, without the rest of each row', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
     await seedRateLimitedJobs();
     await expectFixedQueries({
@@ -731,7 +731,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
         expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 3], [tennisProvider.providerId, 1]]);
         return providers.length;
       },
-      statements: 6,
+      statements: 9,
     });
   });
 });

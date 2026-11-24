@@ -891,7 +891,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     });
   }
 
-  it('finds the drafts of synced leagues with automatic release on that start by the horizon, with each league\'s window, in a fixed three indexed statements', async () => {
+  it('finds the drafts of synced leagues with automatic release on that start by the horizon, with each league\'s window and sync provider, in a fixed six indexed statements', async () => {
     const synced = await syncedLeague(true, 5);
     const unsynced = await syncedLeague(false);
     const off = await syncedLeague(true, null);
@@ -909,8 +909,9 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
       { id: soon.id, startDate: soon.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
       { id: later.id, startDate: later.startDate, providerId: 'balldontlie', syncScope: 'SCORES_ONLY', syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 5 },
     ]);
-    // The events, then their series and leagues in one read each, however many events there are.
-    expect(statements).toHaveLength(3);
+    // The events, then their series, leagues, selected mappings, provider leagues and providers in
+    // one read each, however many events there are.
+    expect(statements).toHaveLength(6);
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAutoReleaseCandidates' })))).resolves.toEqual([]);
   });
 

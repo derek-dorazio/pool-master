@@ -4,7 +4,8 @@ import { PROVIDER_LEAGUE_MINUTES_RANGE } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { DetailEditModal, FormField, Input, Select, showToast, type Fact } from '@/features/shared/ui';
+import { DetailEditModal, FormField, Input, showToast, type Fact } from '@/features/shared/ui';
+import { OnOffField } from './on-off-field';
 import type { ProviderLeagueRow } from './provider-league-columns';
 import { useUpdateProviderLeague } from './use-update-provider';
 import { wholeNumberIn } from './whole-number-field';
@@ -80,12 +81,7 @@ export function ProviderLeagueDialog({ league, onClose }: { league: ProviderLeag
       title={mode === 'view' ? league.name : `${league.name} · Edit`}
     >
       <div className="grid gap-4">
-        <FormField label="Status">
-          <Select data-testid={`${testId}-enabled-input`} {...form.register('isEnabled')}>
-            <option value="on">On</option>
-            <option value="off">Off</option>
-          </Select>
-        </FormField>
+        <OnOffField label="Status" registration={form.register('isEnabled')} testId={`${testId}-enabled-input`} />
         <FormField error={form.formState.errors.typicalGameMinutes?.message} label="Typical game, minutes">
           <Input data-testid={`${testId}-typical-input`} inputMode="numeric" {...form.register('typicalGameMinutes')} />
         </FormField>
