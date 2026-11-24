@@ -59,11 +59,11 @@ describe('Manage menu and breadcrumbs per sport', () => {
     expect(getManageBreadcrumbLabel(['pricing'], 0)).toBe('Pricing');
   });
 
-  it('lights Providers on Run event sync and Unmapped participants, and Activity on the Activity page', () => {
+  it('lights Providers on Run event sync, Findings and a finding\'s map page, and Activity on the Activity page', () => {
     const lit = (pathname: string) => buildManageTabs(pathname).filter((tab) => tab.isActive).map((tab) => tab.label);
 
     expect(lit('/manage/providers/run-event-sync')).toEqual(['Providers']);
-    expect(lit('/manage/providers/unmapped-participants/map')).toEqual(['Providers']);
+    expect(lit('/manage/providers/findings/f-1/map-participant')).toEqual(['Providers']);
     expect(lit('/manage/activity')).toEqual(['Activity']);
     expect(lit('/manage/notifications')).toEqual(['Notifications']);
     expect(lit('/manage/customers/users')).toEqual(['Customers']);

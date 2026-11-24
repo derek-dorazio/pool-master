@@ -130,7 +130,7 @@ export function LegacyEditLeagueRedirect() {
 /**
  * The sync run history page at /manage/sync became Activity, and its Run event sync and Unmapped
  * participants pages moved under Providers (#1887): an old link opens where its page went,
- * keeping its query, such as the competitor a map link names.
+ * keeping its query. Unmapped participants then became Findings (#1999), which its old path opens.
  */
 export function LegacyManageSyncRedirect() {
   const { pathname, search } = useLocation();

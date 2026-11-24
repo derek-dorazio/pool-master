@@ -58,8 +58,8 @@ import { EventToolsTab } from '@/features/root-admin/event-tools-tab';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
 import { RootAdminSportsPage } from '@/features/root-admin/root-admin-sports-page';
 import { RootAdminProvidersPage } from '@/features/root-admin/root-admin-providers-page';
-import { RootAdminMapCompetitorPage } from '@/features/root-admin/root-admin-map-competitor-page';
-import { CUSTOMER_LEAGUES_PATH, CUSTOMER_USERS_PATH, PRICING_PATH, PROVIDERS_PATH, SPORTS_PATH } from '@/features/root-admin/manage-navigation';
+import { RootAdminMapFindingParticipantPage } from '@/features/root-admin/root-admin-map-finding-participant-page';
+import { CUSTOMER_LEAGUES_PATH, CUSTOMER_USERS_PATH, PRICING_PATH, PROVIDERS_PATH, SPORTS_PATH, SYNC_FINDINGS_PATH } from '@/features/root-admin/manage-navigation';
 import { ManageLandingRedirect, RootAdminManageLayout } from '@/features/root-admin/root-admin-manage-layout';
 import { RootAdminCustomerLeaguesPage } from '@/features/root-admin/root-admin-customer-leagues-page';
 import { RootAdminCustomerUsersPage } from '@/features/root-admin/root-admin-customer-users-page';
@@ -69,7 +69,7 @@ import { RootAdminNotificationsPage } from '@/features/root-admin/root-admin-not
 import { RootAdminPricingPage } from '@/features/root-admin/root-admin-pricing-page';
 import { RootAdminPlansPage } from '@/features/root-admin/root-admin-plans-page';
 import { RootAdminActivityPage } from '@/features/root-admin/root-admin-activity-page';
-import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
+import { RootAdminSyncFindingsPage } from '@/features/root-admin/root-admin-sync-findings-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
 import { MyTeamEditPage } from '@/features/teams/my-team-edit-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
@@ -508,12 +508,17 @@ export const router = createBrowserRouter([
                     element: <RootAdminRunEventSyncPage />,
                   },
                   {
-                    path: 'providers/unmapped-participants',
-                    element: <RootAdminUnmappedParticipantsPage />,
+                    path: 'providers/findings',
+                    element: <RootAdminSyncFindingsPage />,
                   },
                   {
-                    path: 'providers/unmapped-participants/map',
-                    element: <RootAdminMapCompetitorPage />,
+                    path: 'providers/findings/:findingId/map-participant',
+                    element: <RootAdminMapFindingParticipantPage />,
+                  },
+                  {
+                    // The old Unmapped participants list and its map links became findings (#1999).
+                    path: 'providers/unmapped-participants/*',
+                    element: <Navigate replace to={SYNC_FINDINGS_PATH} />,
                   },
                   {
                     path: 'pricing',

@@ -6,7 +6,7 @@ import {
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import { Sport } from '../../../packages/shared/domain';
-import { fakeParticipantProviderMappingRepo, fakeSportEventRepo } from '../../support/repo-fakes';
+import { fakeSportEventRepo } from '../../support/repo-fakes';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
@@ -16,13 +16,12 @@ import { stubInstance } from '../../support/stub-instance';
 import { ProviderRateLimitedError } from '../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 
-type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns' | 'jobs' | 'sportLeagues' | 'providerSettings' | 'webhooks' | 'jobHistory'>;
+type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'syncRuns' | 'jobs' | 'sportLeagues' | 'providerSettings' | 'webhooks' | 'jobHistory'>;
 
 function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns?: InMemorySyncRuns } = {}): IngestionPorts {
   const syncRuns = overrides.syncRuns ?? inMemorySyncRuns();
   return {
     sportEvents: fakeSportEventRepo(),
-    participantMappings: fakeParticipantProviderMappingRepo(),
     jobs: new BackgroundJobQueue({ jobs: syncRuns.jobs, currentStart: testCurrentJobStart }),
     sportLeagues: { findEventSynced: () => Promise.resolve([]) },
     providerSettings: { all: () => [] },

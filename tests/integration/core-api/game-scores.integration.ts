@@ -13,7 +13,7 @@ import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/i
 import { headToHeadScoringFamily } from '../../../packages/core-api/src/modules/scoring-families/head-to-head';
 import { expectDefined } from '../../support/expect-defined';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
-import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { recordStatements, statementCounts } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
@@ -134,6 +134,7 @@ function publish(externalEventId: string, games: GameScoreUpdate[]) {
       domainEvents,
       contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents, ...NO_SETTLE_JOBS }),
       scoringFamilyForEvent: () => headToHeadScoringFamily,
+      findings: integrationSyncFindings(),
     },
   );
 }

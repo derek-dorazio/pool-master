@@ -16,6 +16,7 @@ export type NightlyCleanupStepName =
   | 'emailMessages'
   | 'syncRunDetails'
   | 'syncRuns'
+  | 'syncFindings'
   | 'abandonedDraftContests'
   | 'backgroundJobs';
 

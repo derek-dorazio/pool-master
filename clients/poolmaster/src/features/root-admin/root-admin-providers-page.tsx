@@ -1,5 +1,5 @@
 import { LinkButton, PageHeader } from '@/features/shared/ui';
-import { RUN_EVENT_SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
+import { RUN_EVENT_SYNC_PATH, SYNC_FINDINGS_PATH } from './manage-navigation';
 import { providersCountLine } from './provider-facts';
 import { ProviderLeaguesSection } from './provider-leagues-section';
 import { ProvidersSection } from './providers-section';
@@ -8,8 +8,8 @@ import { useProvidersQuery } from './use-providers-query';
 
 /**
  * /manage/providers (#1873): the sports data providers with their live check and their settings,
- * their own leagues (#1997), and the one sync schedule every sport league follows, with Run event sync and Unmapped competitors in the header
- * (#1887). Root admin, desktop only.
+ * their own leagues (#1997), and the one sync schedule every sport league follows, with Run event sync and Findings in the header
+ * (#1887, #1999). Root admin, desktop only.
  */
 export function RootAdminProvidersPage() {
   const providersQuery = useProvidersQuery();
@@ -18,8 +18,8 @@ export function RootAdminProvidersPage() {
       <PageHeader
         actions={(
           <>
-            <LinkButton data-testid="root-admin-open-unmapped-participants-page" to={UNMAPPED_COMPETITORS_PATH} variant="subtle">
-              Unmapped competitors
+            <LinkButton data-testid="root-admin-open-sync-findings-page" to={SYNC_FINDINGS_PATH} variant="subtle">
+              Findings
             </LinkButton>
             <LinkButton data-testid="root-admin-open-run-event-sync-page" to={RUN_EVENT_SYNC_PATH} variant="primary">
               Run event sync

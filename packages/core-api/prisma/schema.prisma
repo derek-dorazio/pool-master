@@ -575,6 +575,26 @@ enum PrismaProviderSyncRunStatus {
 }
 
 /// What a provider sync run syncs (#1819): a sport league's events, one event's field, or one event's scores.
+/// How serious a sync finding is (#1999).
+enum PrismaProviderSyncFindingSeverity {
+  ERROR
+  WARNING
+  INFO
+}
+
+/// Where a sync finding stands (#1999).
+enum PrismaProviderSyncFindingStatus {
+  OPEN
+  RESOLVED
+  WAIVED
+}
+
+/// What a sync finding is about (#1999).
+enum PrismaProviderSyncFindingKind {
+  UNMAPPED_PARTICIPANT
+  WEBHOOK_SECRET_MISSING
+}
+
 enum PrismaProviderSyncKind {
   EVENTS
   FIELD
@@ -678,6 +698,7 @@ model User {
   leaguePlanRenewalChanges LeaguePlanRenewalChange[] @relation("LeaguePlanRenewalChangedBy")
   leaguePayments           LeaguePayment[]           @relation("LeaguePaymentPayer")
   startedBackgroundJobs    BackgroundJob[]           @relation("BackgroundJobStartedBy")
+  syncFindingStatusChanges ProviderSyncFinding[]     @relation("SyncFindingStatusChangedBy")
 
   @@index([isRootAdmin, isActive])
   /// Trigram indexes serve the root admin user search, a substring match on each column (#1180).
@@ -1179,6 +1200,7 @@ model SportLeague {
   cups                        Cup[]
   eventPageOffers             EventPageOffer[]
   sportLeagueProviderMappings SportLeagueProviderMapping[] @relation("SportLeagueProviderMappings")
+  syncFindings                ProviderSyncFinding[]
   /// The composite key keeps the selected mapping one of the league's own.
   selectedProviderMapping     SportLeagueProviderMapping?  @relation("SelectedSportLeagueProviderMapping", fields: [id, selectedProviderMappingId], references: [sportLeagueId, id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -2068,6 +2090,7 @@ model SportEvent {
   tiers                      SportEventTier[]
   roundSchedule              SportEventRound[]
   matches                    SportEventMatch[]
+  syncFindings               ProviderSyncFinding[]
   eventSeries                EventSeries                 @relation(fields: [eventSeriesId], references: [id])
 
   @@unique([providerId, externalId])
@@ -2417,7 +2440,8 @@ model Provider {
   createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime           @updatedAt @map("updated_at") @db.Timestamptz
 
-  leagues ProviderLeague[]
+  leagues      ProviderLeague[]
+  syncFindings ProviderSyncFinding[]
 
   @@map("providers")
 }
@@ -2508,6 +2532,54 @@ model ProviderSyncRun {
   @@index([sportLeagueId, kind, createdAt(sort: Desc)])
   @@index([sportEventId, kind, createdAt(sort: Desc)])
   @@map("provider_sync_runs")
+}
+
+/// A problem a sync found (#1999), one row per kind and subject: the sync raising it again
+/// updates the row's last-seen time instead of adding one. The subject is the sport league
+/// always, then the event, the Provider and the provider's own value where the kind has them;
+/// one partial NULLS NOT DISTINCT unique index in the migration keeps it to one row, which
+/// Prisma cannot declare. `providerValue` is the stated exception to "provider keys live only in
+/// ProviderMapping tables": it is what the feed sent that nothing maps.
+model ProviderSyncFinding {
+  id                    String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind                  PrismaProviderSyncFindingKind
+  severity              PrismaProviderSyncFindingSeverity
+  status                PrismaProviderSyncFindingStatus   @default(OPEN)
+  sportLeagueId         String                            @map("sport_league_id") @db.Uuid
+  sportEventId          String?                           @map("sport_event_id") @db.Uuid
+  providerId            String?                           @map("provider_id") @db.Uuid
+  /// What the feed sent that nothing maps (a participant id). Part of the subject.
+  providerValue         String?                           @map("provider_value") @db.VarChar(255)
+  /// The feed's own name for that value, when it sent one. Not part of the subject.
+  providerValueName     String?                           @map("provider_value_name") @db.VarChar(255)
+  /// Why an admin waived it; required while WAIVED (a check in the migration).
+  waiveNote             String?                           @map("waive_note")
+  firstSeenAt           DateTime                          @map("first_seen_at") @db.Timestamptz
+  lastSeenAt            DateTime                          @map("last_seen_at") @db.Timestamptz
+  /// How many sync passes have raised it.
+  seenCount             Int                               @default(1) @map("seen_count")
+  statusChangedAt       DateTime                          @map("status_changed_at") @db.Timestamptz
+  /// The root admin who last set its status; null when the sync did.
+  statusChangedByUserId String?                           @map("status_changed_by_user_id") @db.Uuid
+  createdAt             DateTime                          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime                          @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeague     SportLeague @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  sportEvent      SportEvent? @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
+  provider        Provider?   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  statusChangedBy User?       @relation("SyncFindingStatusChangedBy", fields: [statusChangedByUserId], references: [id], onDelete: SetNull)
+
+  /// One row per kind and subject. The migration builds it NULLS NOT DISTINCT, so a subject
+  /// with no event or value still has one row; Prisma cannot say so here.
+  @@unique([kind, sportLeagueId, sportEventId, providerId, providerValue], map: "provider_sync_findings_subject_key")
+  /// The Sports page's open counts per league, and a league's findings.
+  @@index([sportLeagueId, status, severity])
+  @@index([sportEventId])
+  @@index([providerId])
+  @@index([statusChangedByUserId])
+  /// The retention cleanup's resolved rows, oldest first.
+  @@index([status, statusChangedAt])
+  @@map("provider_sync_findings")
 }
 
 // =============================================================================

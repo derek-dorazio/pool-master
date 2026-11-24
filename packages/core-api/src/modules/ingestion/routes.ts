@@ -1,12 +1,11 @@
 /**
  * Ingestion module — the operations over sports-data ingestion: providers, sync submissions
- * and their history, competitors a provider could not match, and the provider catalog
- * browse. Mounted at /api/v1/ingestion.
+ * and their history, and the provider catalog browse. Mounted at /api/v1/ingestion. A
+ * competitor the feed could not match is a sync finding (#1999), on its own routes under
+ * /api/v1/ingestion/sync-findings.
  *
  * Every operation is root-admin (#205): `admin` is the permission, `ingestion` is what these
- * operations administer. Binding an unmatched competitor to a participant is an operation on
- * the participant's provider mappings, so it lives beside their read in the participants
- * module rather than here.
+ * operations administer.
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -175,19 +174,6 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
       const [presented] = await opts.activity.present([job]);
       return reply.code(202).send({ job: toActivityJobDto(presented) });
     },
-  });
-
-  fastify.get('/unmapped-participants', {
-    schema: {
-      tags: ['Ingestion'],
-      summary: 'List competitors a provider could not match',
-      description: 'Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. '
-        + '`providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor\'s page reads one row (#1251).',
-      operationId: 'listUnmappedProviderParticipants',
-      querystring: schemaRef('UnmappedProviderParticipantListQuery'),
-      response: { 200: schemaRef('UnmappedProviderParticipantListResponse'), ...errors() },
-    },
-    handler: handler.listUnmappedParticipants,
   });
 
   fastify.get('/providers/:providerId/catalog-events', {

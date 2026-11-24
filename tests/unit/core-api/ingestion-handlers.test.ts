@@ -39,7 +39,6 @@ function service(overrides: Record<string, unknown> = {}) {
     listSyncRuns: jest.fn((..._args: unknown[]) => Promise.resolve([run])),
     getSyncRun: jest.fn((..._args: unknown[]) => Promise.resolve({ ...run, details: null })),
     syncEventData: jest.fn((..._args: unknown[]) => Promise.resolve({ sport: Sport.GOLF, eventId: 'e1', requestedFeeds: ['SCORES'], submittedAt: AT, syncRuns: [run] })),
-    getUnmappedParticipants: jest.fn((..._args: unknown[]) => Promise.resolve([{ providerId: 'feed', providerName: 'Feed', externalId: 'x1', externalName: 'One', sport: Sport.GOLF }])),
     ...overrides,
   };
 }
@@ -142,15 +141,6 @@ describe('ingestion provider and run handlers', () => {
     const handlers = handlersOver(service({ getSyncRun: () => Promise.reject(boom) }));
 
     await expect(callHandler(handlers.getSyncRun, stubRequest({ params: { syncRunId: 'run-1' } }))).rejects.toBe(boom);
-  });
-
-  it('lists the unmapped provider participants the query filters to', async () => {
-    const fake = service();
-
-    const reply = await callHandler(handlersOver(fake).listUnmappedParticipants, stubRequest({ query: { providerId: 'feed' }, contextLogger: false }));
-
-    expect(fake.getUnmappedParticipants).toHaveBeenCalledWith({ providerId: 'feed' });
-    expect(reply.body).toMatchObject({ participants: [{ externalId: 'x1' }] });
   });
 });
 

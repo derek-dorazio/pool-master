@@ -3656,26 +3656,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/ingestion/unmapped-participants": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List competitors a provider could not match
-         * @description Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).
-         */
-        get: operations["listUnmappedProviderParticipants"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/ingestion/providers/{providerId}/catalog-events": {
         parameters: {
             query?: never;
@@ -3690,6 +3670,86 @@ export interface paths {
         get: operations["listProviderCatalogEvents"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-findings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List sync findings
+         * @description Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept.
+         */
+        get: operations["listProviderSyncFindings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-findings/{findingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a sync finding
+         * @description One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND.
+         */
+        get: operations["getProviderSyncFinding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-findings/{findingId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve, waive or reopen a sync finding
+         * @description Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note.
+         */
+        post: operations["changeProviderSyncFindingStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ingestion/sync-findings/{findingId}/participant-mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Map an unmapped participant finding to a participant
+         * @description An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league.
+         */
+        post: operations["mapProviderSyncFindingParticipant"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10112,8 +10172,23 @@ export interface components {
              * @enum {string}
              */
             syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
-            /** @description Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
+            /** @description Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
             issues: ({
+                /** @enum {string} */
+                type: "FINDINGS";
+                /** @description How many OPEN sync findings the league has. */
+                count: number;
+                /** @description Most serious first; only severities it has. */
+                items: {
+                    /**
+                     * @description ERROR, WARNING or INFO.
+                     * @enum {string}
+                     */
+                    severity: "ERROR" | "WARNING" | "INFO";
+                    /** @description How many OPEN findings of that severity. */
+                    count: number;
+                }[];
+            } | {
                 /** @enum {string} */
                 type: "SYNC";
                 /** @description How many of its syncs' latest runs failed. */
@@ -10244,8 +10319,23 @@ export interface components {
                  * @enum {string}
                  */
                 syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
-                /** @description Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
+                /** @description Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
                 issues: ({
+                    /** @enum {string} */
+                    type: "FINDINGS";
+                    /** @description How many OPEN sync findings the league has. */
+                    count: number;
+                    /** @description Most serious first; only severities it has. */
+                    items: {
+                        /**
+                         * @description ERROR, WARNING or INFO.
+                         * @enum {string}
+                         */
+                        severity: "ERROR" | "WARNING" | "INFO";
+                        /** @description How many OPEN findings of that severity. */
+                        count: number;
+                    }[];
+                } | {
                     /** @enum {string} */
                     type: "SYNC";
                     /** @description How many of its syncs' latest runs failed. */
@@ -10496,6 +10586,21 @@ export interface components {
             /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none. */
             issues: ({
                 /** @enum {string} */
+                type: "FINDINGS";
+                /** @description How many OPEN sync findings the league has. */
+                count: number;
+                /** @description Most serious first; only severities it has. */
+                items: {
+                    /**
+                     * @description ERROR, WARNING or INFO.
+                     * @enum {string}
+                     */
+                    severity: "ERROR" | "WARNING" | "INFO";
+                    /** @description How many OPEN findings of that severity. */
+                    count: number;
+                }[];
+            } | {
+                /** @enum {string} */
                 type: "SYNC";
                 /** @description How many of its syncs' latest runs failed. */
                 count: number;
@@ -10643,6 +10748,21 @@ export interface components {
                 fieldSize: number | null;
                 /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none. */
                 issues: ({
+                    /** @enum {string} */
+                    type: "FINDINGS";
+                    /** @description How many OPEN sync findings the league has. */
+                    count: number;
+                    /** @description Most serious first; only severities it has. */
+                    items: {
+                        /**
+                         * @description ERROR, WARNING or INFO.
+                         * @enum {string}
+                         */
+                        severity: "ERROR" | "WARNING" | "INFO";
+                        /** @description How many OPEN findings of that severity. */
+                        count: number;
+                    }[];
+                } | {
                     /** @enum {string} */
                     type: "SYNC";
                     /** @description How many of its syncs' latest runs failed. */
@@ -10807,6 +10927,21 @@ export interface components {
             }[];
             /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
             issues: ({
+                /** @enum {string} */
+                type: "FINDINGS";
+                /** @description How many OPEN sync findings the league has. */
+                count: number;
+                /** @description Most serious first; only severities it has. */
+                items: {
+                    /**
+                     * @description ERROR, WARNING or INFO.
+                     * @enum {string}
+                     */
+                    severity: "ERROR" | "WARNING" | "INFO";
+                    /** @description How many OPEN findings of that severity. */
+                    count: number;
+                }[];
+            } | {
                 /** @enum {string} */
                 type: "SYNC";
                 /** @description How many of its syncs' latest runs failed. */
@@ -10991,6 +11126,21 @@ export interface components {
                 }[];
                 /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
                 issues: ({
+                    /** @enum {string} */
+                    type: "FINDINGS";
+                    /** @description How many OPEN sync findings the league has. */
+                    count: number;
+                    /** @description Most serious first; only severities it has. */
+                    items: {
+                        /**
+                         * @description ERROR, WARNING or INFO.
+                         * @enum {string}
+                         */
+                        severity: "ERROR" | "WARNING" | "INFO";
+                        /** @description How many OPEN findings of that severity. */
+                        count: number;
+                    }[];
+                } | {
                     /** @enum {string} */
                     type: "SYNC";
                     /** @description How many of its syncs' latest runs failed. */
@@ -25184,37 +25334,6 @@ export interface components {
             /** @description The one event year to sync; omitted, this calendar year and the next, as the schedule syncs. */
             eventYear?: number;
         };
-        /** @description A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is. */
-        UnmappedProviderParticipantDto: {
-            providerId: string;
-            providerName: string;
-            /** @description The provider's identifier for the competitor. */
-            externalId: string;
-            /** @description The competitor's name as the provider reports it. */
-            externalName: string;
-            /** @enum {string} */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-        };
-        /** @description Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors. */
-        UnmappedProviderParticipantListQuery: {
-            /** @description Only this provider's competitors; the other providers are not asked. */
-            providerId?: string;
-            /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
-            externalId?: string;
-        };
-        /** @description The unmapped competitors matching the filters, across the scheduled sports of each provider asked. */
-        UnmappedProviderParticipantListResponse: {
-            participants: {
-                providerId: string;
-                providerName: string;
-                /** @description The provider's identifier for the competitor. */
-                externalId: string;
-                /** @description The competitor's name as the provider reports it. */
-                externalName: string;
-                /** @enum {string} */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            }[];
-        };
         /** @description An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it. */
         ProviderEventDto: {
             /** @description The provider's identifier for the event. */
@@ -25604,6 +25723,245 @@ export interface components {
                 /** @description The provider sync runs the job ran, oldest first; read each with getProviderSyncRun. Empty for a job that is not a sync, or before a sync starts. */
                 syncRunIds: string[];
             };
+        };
+        /** @description One sync finding: a problem the sync found, one per kind and subject. */
+        ProviderSyncFindingDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here.
+             * @enum {string}
+             */
+            kind: "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
+            /**
+             * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
+             * @enum {string}
+             */
+            severity: "ERROR" | "WARNING" | "INFO";
+            /**
+             * @description OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+             * @enum {string}
+             */
+            status: "OPEN" | "RESOLVED" | "WAIVED";
+            /** @description The sport league it is about: every finding has one. */
+            sportLeague: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                /** @enum {string} */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            };
+            /** @description The event it is about; null when its kind names none. */
+            sportEvent: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            } | null;
+            /** @description The Provider it is about; null when its kind names none. */
+            provider: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            } | null;
+            /** @description What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none. */
+            providerValue: string | null;
+            /** @description The feed's own name for that value, when it sent one. */
+            providerValueName: string | null;
+            /** @description Why it was waived; set only while WAIVED. */
+            waiveNote: string | null;
+            /**
+             * Format: date-time
+             * @description When the sync first raised it.
+             */
+            firstSeenAt: string;
+            /**
+             * Format: date-time
+             * @description When the sync last raised it.
+             */
+            lastSeenAt: string;
+            /** @description How many sync passes have raised it. */
+            seenCount: number;
+            /**
+             * Format: date-time
+             * @description When its status was last set.
+             */
+            statusChangedAt: string;
+            /** @description The root admin who last set its status; null when the sync did, or that account was deleted. */
+            statusChangedBy: {
+                /** Format: uuid */
+                id: string;
+                /** @description Their name, for display. */
+                displayName: string;
+            } | null;
+            /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
+            actions: ("MAP_PARTICIPANT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
+        };
+        /** @description Every finding kept, most recently seen first. Nothing pages it: a resolved finding is deleted 90 days after it was resolved, and open and waived ones are kept. */
+        ProviderSyncFindingListResponse: {
+            findings: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here.
+                 * @enum {string}
+                 */
+                kind: "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
+                /**
+                 * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
+                 * @enum {string}
+                 */
+                severity: "ERROR" | "WARNING" | "INFO";
+                /**
+                 * @description OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+                 * @enum {string}
+                 */
+                status: "OPEN" | "RESOLVED" | "WAIVED";
+                /** @description The sport league it is about: every finding has one. */
+                sportLeague: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                };
+                /** @description The event it is about; null when its kind names none. */
+                sportEvent: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                } | null;
+                /** @description The Provider it is about; null when its kind names none. */
+                provider: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                } | null;
+                /** @description What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none. */
+                providerValue: string | null;
+                /** @description The feed's own name for that value, when it sent one. */
+                providerValueName: string | null;
+                /** @description Why it was waived; set only while WAIVED. */
+                waiveNote: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the sync first raised it.
+                 */
+                firstSeenAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the sync last raised it.
+                 */
+                lastSeenAt: string;
+                /** @description How many sync passes have raised it. */
+                seenCount: number;
+                /**
+                 * Format: date-time
+                 * @description When its status was last set.
+                 */
+                statusChangedAt: string;
+                /** @description The root admin who last set its status; null when the sync did, or that account was deleted. */
+                statusChangedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
+                actions: ("MAP_PARTICIPANT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
+            }[];
+        };
+        /** @description One sync finding. */
+        ProviderSyncFindingResponse: {
+            /** @description One sync finding: a problem the sync found, one per kind and subject. */
+            finding: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here.
+                 * @enum {string}
+                 */
+                kind: "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING";
+                /**
+                 * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
+                 * @enum {string}
+                 */
+                severity: "ERROR" | "WARNING" | "INFO";
+                /**
+                 * @description OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+                 * @enum {string}
+                 */
+                status: "OPEN" | "RESOLVED" | "WAIVED";
+                /** @description The sport league it is about: every finding has one. */
+                sportLeague: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    /** @enum {string} */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                };
+                /** @description The event it is about; null when its kind names none. */
+                sportEvent: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                } | null;
+                /** @description The Provider it is about; null when its kind names none. */
+                provider: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                } | null;
+                /** @description What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none. */
+                providerValue: string | null;
+                /** @description The feed's own name for that value, when it sent one. */
+                providerValueName: string | null;
+                /** @description Why it was waived; set only while WAIVED. */
+                waiveNote: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the sync first raised it.
+                 */
+                firstSeenAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the sync last raised it.
+                 */
+                lastSeenAt: string;
+                /** @description How many sync passes have raised it. */
+                seenCount: number;
+                /**
+                 * Format: date-time
+                 * @description When its status was last set.
+                 */
+                statusChangedAt: string;
+                /** @description The root admin who last set its status; null when the sync did, or that account was deleted. */
+                statusChangedBy: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    displayName: string;
+                } | null;
+                /** @description What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN. */
+                actions: ("MAP_PARTICIPANT" | "RESOLVE" | "WAIVE" | "REOPEN")[];
+            };
+        };
+        /** @description A root admin resolving, waiving or reopening a finding. */
+        ChangeProviderSyncFindingStatusRequest: {
+            /**
+             * @description One of the finding's offered actions: RESOLVE, WAIVE or REOPEN.
+             * @enum {string}
+             */
+            action: "RESOLVE" | "WAIVE" | "REOPEN";
+            /** @description Why it is waived: required, and not blank, for WAIVE; ignored otherwise. */
+            waiveNote?: string;
+        };
+        /** @description Maps an UNMAPPED_PARTICIPANT finding's feed id to a participant, which resolves it. */
+        MapProviderSyncFindingParticipantRequest: {
+            /**
+             * Format: uuid
+             * @description A participant of the finding's sport league.
+             */
+            participantId: string;
         };
         /** @description The league's longest-serving active commissioner: the one who created it, unless they stepped down. */
         CustomerLeagueOwnerDto: {
@@ -37903,49 +38261,6 @@ export interface operations {
             };
         };
     };
-    listUnmappedProviderParticipants: {
-        parameters: {
-            query?: {
-                /** @description Only this provider's competitors; the other providers are not asked. */
-                providerId?: string;
-                /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
-                externalId?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The unmapped competitors matching the filters, across the scheduled sports of each provider asked. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UnmappedProviderParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     listProviderCatalogEvents: {
         parameters: {
             query: {
@@ -37995,6 +38310,256 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listProviderSyncFindings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every finding kept, most recently seen first. Nothing pages it: a resolved finding is deleted 90 days after it was resolved, and open and waived ones are kept. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncFindingListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getProviderSyncFinding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The finding (ProviderSyncFindingDto.id). */
+                findingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One sync finding. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncFindingResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    changeProviderSyncFindingStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The finding (ProviderSyncFindingDto.id). */
+                findingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeProviderSyncFindingStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description One sync finding. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncFindingResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mapProviderSyncFindingParticipant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The finding (ProviderSyncFindingDto.id). */
+                findingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MapProviderSyncFindingParticipantRequest"];
+            };
+        };
+        responses: {
+            /** @description One sync finding. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSyncFindingResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

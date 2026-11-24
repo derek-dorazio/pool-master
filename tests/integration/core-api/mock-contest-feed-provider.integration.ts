@@ -23,12 +23,12 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
+  integrationSyncFindings,
 } from '../helpers';
 import { startMockContestFeedProvider } from '../mock-contest-feed-provider-helper';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { readStoredSyncRunDetails, readStoredSyncRunPayload } from '../../support/sync-run-payload';
 import {
-  PrismaParticipantProviderMappingRepository,
   PrismaBackgroundJobRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
@@ -766,7 +766,6 @@ describe('mock contest feed provider event-first verification', () => {
     const providerService = new IngestionService({
       registry,
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
-      participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
@@ -906,7 +905,7 @@ describe('mock contest feed provider event-first verification', () => {
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async (result, providerIdForResult) =>
-        publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: providerIdForResult, domainEvents: testDomainEvents(), scoringFamilyForEvent }),
+        publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: providerIdForResult, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() }),
     }, undefined, {
       eventReader,
       syncRunLedger,
@@ -918,7 +917,6 @@ describe('mock contest feed provider event-first verification', () => {
     const providerService = new IngestionService({
       registry,
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
-      participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
       scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),

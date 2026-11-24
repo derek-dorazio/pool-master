@@ -55,4 +55,10 @@ export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
     reason: "The root admin's Customers › Users grid (#1882) loads every user and filters on the client: no paging or server search in root admin "
       + '(Derek, 2026-11-18). Only that page reads it, and an index cannot narrow a read of every row.',
   },
+  {
+    table: 'provider_sync_findings',
+    sqlIncludes: 'FROM "public"."provider_sync_findings" WHERE 1=1 ORDER BY "public"."provider_sync_findings"."last_seen_at" DESC',
+    reason: "The root admin's Findings grid (#1999) loads every finding and filters on the client: no paging or server search in root admin "
+      + '(Derek, 2026-11-18). Resolved findings are deleted after 90 days, so the table stays small; an index cannot narrow a read of every row.',
+  },
 ];

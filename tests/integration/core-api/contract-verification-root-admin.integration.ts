@@ -19,7 +19,6 @@ import {
   ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
   ParticipantProviderMappingResponseSchema,
-  UnmappedProviderParticipantListResponseSchema,
   SuccessResponseSchema,
   UserResponseSchema,
   ParticipantListResponseSchema,
@@ -64,7 +63,6 @@ import type {
   SportLeagueListResponse,
   SportLeagueResponse,
   SuccessResponse,
-  UnmappedProviderParticipantListResponse,
   UserResetPasswordResponse,
   UserResponse,
 } from '@poolmaster/shared/dto';
@@ -78,7 +76,6 @@ import { globalErrorHandler } from '../../../packages/core-api/src/core/error-ha
 import { authGuard } from '../../../packages/core-api/src/plugins/auth-guard';
 import {
   PrismaBackgroundJobRepository,
-  PrismaParticipantProviderMappingRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
@@ -349,7 +346,6 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   const ingestionService = new IngestionService({
     registry,
     sportEvents: new PrismaSportEventRepository(getAppPrisma()),
-    participantMappings: new PrismaParticipantProviderMappingRepository(getAppPrisma()),
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
     scheduler,
     sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
@@ -1185,9 +1181,9 @@ describe('Contract verification (root admin)', () => {
     }
   });
 
-  it('#205: a competitor the provider could not match is listed, and binding them to a participant clears them', async () => {
+  it('binding a participant to a provider competitor answers the mapping, and an unknown provider is PROVIDER_NOT_FOUND', async () => {
     const rootAdmin = await createTestUser({
-      displayName: 'Root Admin Unmapped Competitor User',
+      displayName: 'Root Admin Competitor Binding User',
       isRootAdmin: true,
     });
     const prisma = getPrisma();
@@ -1216,34 +1212,6 @@ describe('Contract verification (root admin)', () => {
     const app = await buildIngestionApp(new OperationalContractProvider());
 
     try {
-      const beforeRes = await app.inject({
-        method: 'GET',
-        url: '/api/v1/ingestion/unmapped-participants',
-        headers: rootAdmin.headers,
-      });
-      expect(beforeRes.statusCode).toBe(200);
-      expect(UnmappedProviderParticipantListResponseSchema.safeParse(beforeRes.json()).success).toBe(true);
-      expect(beforeRes.json<UnmappedProviderParticipantListResponse>().participants).toContainEqual({
-        providerId: 'contract-provider',
-        providerName: 'Contract Provider',
-        externalId: 'golfer-1',
-        externalName: 'Avery Hart',
-        sport: 'GOLF',
-      });
-
-      // Filtered to one competitor, the page reads that row alone (#1251).
-      const oneUrl = '/api/v1/ingestion/unmapped-participants?providerId=contract-provider&externalId=golfer-1';
-      const oneRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
-      expect(oneRes.statusCode).toBe(200);
-      expect(UnmappedProviderParticipantListResponseSchema.safeParse(oneRes.json()).success).toBe(true);
-      expect(oneRes.json<UnmappedProviderParticipantListResponse>().participants).toEqual([{
-        providerId: 'contract-provider',
-        providerName: 'Contract Provider',
-        externalId: 'golfer-1',
-        externalName: 'Avery Hart',
-        sport: 'GOLF',
-      }]);
-
       const bindRes = await app.inject({
         method: 'POST',
         url: `/api/v1/participants/${participant.id}/provider-mappings`,
@@ -1258,21 +1226,6 @@ describe('Contract verification (root admin)', () => {
         externalId: 'golfer-1',
         confidence: 'MANUAL',
       });
-
-      const afterRes = await app.inject({
-        method: 'GET',
-        url: '/api/v1/ingestion/unmapped-participants',
-        headers: rootAdmin.headers,
-      });
-      expect(afterRes.statusCode).toBe(200);
-      expect(
-        afterRes.json<UnmappedProviderParticipantListResponse>().participants.some(
-          (row) =>
-            row.providerId === 'contract-provider' && row.externalId === 'golfer-1',
-        ),
-      ).toBe(false);
-      const oneAfterRes = await app.inject({ method: 'GET', url: oneUrl, headers: rootAdmin.headers });
-      expect(oneAfterRes.json<UnmappedProviderParticipantListResponse>().participants).toEqual([]);
 
       const unknownProviderRes = await app.inject({
         method: 'POST',

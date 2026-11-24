@@ -28,6 +28,7 @@ import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import type { DomainEvents } from '../../domain-events';
 import type { LiveScoreTargetEvent, LiveScoreWriteDeps, LiveScoreWriter, ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
+import type { ProviderSyncFindingService } from '../findings/provider-sync-finding-service';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
 
@@ -53,6 +54,8 @@ export interface LiveScorePublisherDeps {
   fieldCache?: Pick<EventFieldCache, 'forget'>;
   /** The app's event lifecycle, which a result passing a contest's cutoff puts it live through (#1954). */
   contestActivation: Pick<EventLifecycleService, 'activateContestsPastCutoff'>;
+  /** Where a feed participant no participant is mapped to is raised as a finding (#1999). */
+  findings: Pick<ProviderSyncFindingService, 'raiseUnmappedParticipants'>;
 }
 
 export interface LiveScorePersistenceResult {
@@ -60,6 +63,11 @@ export interface LiveScorePersistenceResult {
   updatesPersisted: number;
   updatesSkipped: number;
   writeDiagnostics: SyncWriteDiagnostics;
+  /**
+   * The feed's participant ids the write skipped because no participant is mapped to them
+   * (#1999). The publisher raises an UNMAPPED_PARTICIPANT finding for each.
+   */
+  unmappedExternalIds?: readonly string[];
 }
 
 /**
@@ -90,7 +98,7 @@ export async function publishLiveScoreUpdate(
   // to one event, then dispatch to the per-category persistence path.
   const sportEvent = await deps.prisma.sportEvent.findUnique({
     where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
-    select: { id: true, sport: true, rounds: true, status: true, eventSeries: { select: { sportLeague: { select: { scoringFamily: true, roundSeriesLengths: true } } } } },
+    select: { id: true, sport: true, rounds: true, status: true, eventSeries: { select: { sportLeague: { select: { id: true, scoringFamily: true, roundSeriesLengths: true } } } } },
   });
   if (!sportEvent) {
     deps.logger?.warn(
@@ -163,7 +171,13 @@ export async function publishLiveScoreUpdate(
     };
   }
   try {
-    return await write();
+    const written = await write();
+    await deps.findings.raiseUnmappedParticipants({
+      sportLeagueId: sportEvent.eventSeries.sportLeague.id,
+      providerSourceId: deps.providerId,
+      participants: (written.unmappedExternalIds ?? []).map((externalId) => ({ externalId, name: null })),
+    });
+    return written;
   } finally {
     deps.fieldCache?.forget(sportEvent.id);
   }
