@@ -20,7 +20,7 @@ import {
   SelectionType,
   SportEventStatus,
   type ContestEntry,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { loadPickEmWeekStandings } from '../../../packages/core-api/src/modules/contests/pick-em-standings';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
@@ -70,7 +70,7 @@ function setup() {
   const viewer = world.addUser({ email: 'viewer@example.com' });
   world.addMember(league.id, viewer.id);
 
-  const enter = (name: string, weeks: Array<{ sportEventId: string; picks: Array<[SportEventMatch, Side]>; tiebreakerValue?: number; submitted: boolean }>) => {
+  const enter = (name: string, weeks: Array<{ sportEventId: string; picks: Array<[SportEventRoundMatch, Side]>; tiebreakerValue?: number; submitted: boolean }>) => {
     const squad = world.addSquad(league.id, `${name}'s Pickers`);
     const entry: ContestEntry = {
       id: `entry-${name.toLowerCase()}`, contestId: contest.id, squadId: squad.id, entryNumber: 1, name,
@@ -85,7 +85,7 @@ function setup() {
     for (const week of weeks) {
       for (const [game, side] of week.picks) {
         games.predictions.set(`${entry.id}:${game.id}`, {
-          id: `prediction-${entry.id}-${game.id}`, contestEntryId: entry.id, sportEventMatchId: game.id,
+          id: `prediction-${entry.id}-${game.id}`, contestEntryId: entry.id, sportEventRoundMatchId: game.id,
           predictedResult: PredictedResult.TEAM,
           sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
           confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
@@ -120,7 +120,7 @@ function setup() {
   const contestService = new ContestService(deps);
   const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
 
-  const play = (game: SportEventMatch, winner: MatchSide | null, homeScore: number, awayScore: number) => {
+  const play = (game: SportEventRoundMatch, winner: MatchSide | null, homeScore: number, awayScore: number) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore, awayScore }]);
   };
   const setEventStatus = (sportEventId: string, status: SportEventStatus) => {
@@ -388,7 +388,7 @@ describe('ContestService.getPickEmLeaderboard', () => {
     const leaderboard = await context.leaderboard();
     const alice = expectDefined(leaderboard.entries.find((entry) => entry.entryName === 'Alice'));
     expect(alice.weeks[0]?.missedPicks).toEqual([{ teamName: null }]);
-    expect(alice.currentWeekPicks.find((pick) => pick.sportEventMatchId === g2.id)).toEqual({ sportEventMatchId: g2.id, sportEventParticipantId: null, outcome: 'BUSTED' });
+    expect(alice.currentWeekPicks.find((pick) => pick.sportEventRoundMatchId === g2.id)).toEqual({ sportEventRoundMatchId: g2.id, sportEventParticipantId: null, outcome: 'BUSTED' });
   });
 
   it('carries only the picks on games that have kicked off, never one still to be played', async () => {
@@ -400,9 +400,9 @@ describe('ContestService.getPickEmLeaderboard', () => {
     const leaderboard = await context.leaderboard();
     expect(leaderboard.currentWeekId).toBe(context.week1.id);
     expect(leaderboard.entries.map((entry) => [entry.entryName, entry.currentWeekPicks])).toEqual([
-      ['Alice', [{ sportEventMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
-      ['Bob', [{ sportEventMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
-      ['Cara', [{ sportEventMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.awaySportEventParticipantId, outcome: 'BUSTED' }]],
+      ['Alice', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
+      ['Bob', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
+      ['Cara', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.awaySportEventParticipantId, outcome: 'BUSTED' }]],
     ]);
   });
 
@@ -526,7 +526,7 @@ describe('ContestService.listMyLeagueEntries — a live contest\'s places', () =
     };
     world.entries.set(second.id, second);
     games.predictions.set(`${second.id}:${g1.id}`, {
-      id: `prediction-${second.id}-${g1.id}`, contestEntryId: second.id, sportEventMatchId: g1.id,
+      id: `prediction-${second.id}-${g1.id}`, contestEntryId: second.id, sportEventRoundMatchId: g1.id,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(g1.awaySportEventParticipantId),
       confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,

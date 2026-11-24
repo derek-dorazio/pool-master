@@ -83,7 +83,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const pick = (game: BracketGame, team: BracketTeam) => {
     saveMutation.reset();
     saveMutation.mutate({
-      picks: [{ sportEventMatchId: game.sportEventMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team.sportEventParticipantId }],
+      picks: [{ sportEventRoundMatchId: game.sportEventRoundMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team.sportEventParticipantId }],
     });
   };
   const errorMessage = (error: Error | null, fallback: string) => (error

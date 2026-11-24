@@ -1,12 +1,13 @@
 /**
  * Tier and pricing profile mapper (#1844): a profile, with how many sport leagues name it.
  */
-import type { PricingProfileDto, TierProfileDto } from '@poolmaster/shared/dto';
-import type { PricingProfile, TierProfile } from '@poolmaster/shared/domain';
+import type { PlatformPricingProfileDto, PlatformTierProfileDto } from '@poolmaster/shared/dto';
+import type { PlatformPricingProfile, PlatformTierProfile } from '@poolmaster/shared/domain';
 
-export function toTierProfileDto(profile: TierProfile, sportLeagueCount: number): TierProfileDto {
+export function toPlatformTierProfileDto(profile: PlatformTierProfile, sportLeagueCount: number): PlatformTierProfileDto {
   return {
     id: profile.id,
+    code: profile.code,
     name: profile.name,
     tierCount: profile.tierCount,
     tierSize: profile.tierSize,
@@ -18,9 +19,10 @@ export function toTierProfileDto(profile: TierProfile, sportLeagueCount: number)
   };
 }
 
-export function toPricingProfileDto(profile: PricingProfile, sportLeagueCount: number): PricingProfileDto {
+export function toPlatformPricingProfileDto(profile: PlatformPricingProfile, sportLeagueCount: number): PlatformPricingProfileDto {
   return {
     id: profile.id,
+    code: profile.code,
     name: profile.name,
     salaryCap: profile.salaryCap,
     unit: profile.unit,

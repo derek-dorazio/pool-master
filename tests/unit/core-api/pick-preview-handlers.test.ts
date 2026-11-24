@@ -3,7 +3,7 @@
  * services as they are, and each preview answers its published shape.
  */
 import { expect } from '@jest/globals';
-import { MatchStatus, PickEmMode, PredictedResult, SelectionType, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchStatus, PickEmMode, PredictedResult, SelectionType, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import { GamePickPreviewResponseSchema, RosterPickPreviewResponseSchema } from '@poolmaster/shared/dto';
 import { createPickPreviewHandlers } from '../../../packages/core-api/src/modules/selections/preview-handler';
 import type { GamesPreview, PredictionService } from '../../../packages/core-api/src/modules/selections/prediction-service';
@@ -49,14 +49,14 @@ function gamesPreview(withPick: boolean): GamesPreview {
     gameCount: 1,
     tiebreakerMatchId: GAME,
     games: [{
-      match: { id: GAME, matchNumber: 1, roundNumber: 1, status: MatchStatus.SCHEDULED, isNeutralSite: false, regionLabel: null, homeSpread: null } as SportEventMatch,
+      match: { id: GAME, matchNumber: 1, roundNumber: 1, status: MatchStatus.SCHEDULED, isNeutralSite: false, regionLabel: null, homeSpread: null } as SportEventRoundMatch,
       kickoff: KICKOFF,
       home: team(HOME),
       away: team(AWAY),
       predictedHome: team(HOME),
       predictedAway: team(AWAY),
       locked: false,
-      pick: withPick ? { sportEventMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: AWAY, confidence: null } : null,
+      pick: withPick ? { sportEventRoundMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: AWAY, confidence: null } : null,
     }],
   };
 }
@@ -88,13 +88,13 @@ describe('pick preview handlers', () => {
 
     const reply = await callHandler(handlers.previewGamePicks, stubRequest({
       params: { id: 'league-1' },
-      body: { sportEventId: EVENT, rules, picks: [{ sportEventMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: AWAY }] },
+      body: { sportEventId: EVENT, rules, picks: [{ sportEventRoundMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: AWAY }] },
     }));
 
     expect(predictions.previewGames.mock.calls).toEqual([[{
       sportEventId: EVENT,
       rules,
-      picks: [{ sportEventMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: AWAY, confidence: null }],
+      picks: [{ sportEventRoundMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: AWAY, confidence: null }],
     }]]);
     const body = GamePickPreviewResponseSchema.parse(reply.body);
     expect(body.games[0]).toMatchObject({ kickoff: KICKOFF.toISOString(), locked: false, pick: { sportEventParticipantId: AWAY, confidence: null } });

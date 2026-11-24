@@ -9,8 +9,8 @@
  * have without the wrapper. Each answer is a fresh array, so no contest can change another's.
  */
 
-import type { SportEventMatchRepository, SportEventRepository } from '@poolmaster/shared/db';
-import type { SportEvent, SportEventMatch } from '@poolmaster/shared/domain';
+import type { SportEventRoundMatchRepository, SportEventRepository } from '@poolmaster/shared/db';
+import type { SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
 
 /** `load`, read once per key: later calls for the key share the first call's answer. */
 export function readOncePerKey<T>(load: (key: string) => Promise<T>): (key: string) => Promise<T> {
@@ -45,10 +45,10 @@ export function readEventsOnce(
  * together. Answers as the repository does, by event and then in match-number order.
  */
 export function readEventMatchesOnce(
-  source: Pick<SportEventMatchRepository, 'findBySportEvents'>,
-): Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'> {
-  const answers = new Map<string, Promise<SportEventMatch[]>>();
-  const findBySportEvents = async (ids: readonly string[]): Promise<SportEventMatch[]> => {
+  source: Pick<SportEventRoundMatchRepository, 'findBySportEvents'>,
+): Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'findBySportEvents'> {
+  const answers = new Map<string, Promise<SportEventRoundMatch[]>>();
+  const findBySportEvents = async (ids: readonly string[]): Promise<SportEventRoundMatch[]> => {
     const sportEventIds = [...new Set(ids)].sort();
     const answered = readTogether(answers, sportEventIds, async (missing) => {
       const matches = await source.findBySportEvents(missing);

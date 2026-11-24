@@ -13,7 +13,7 @@ import {
   PredictedResult,
   type EmailMessage,
   type SportConfig,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
 import { toAuthResponse, toTokenRefreshResponse } from '../../../packages/core-api/src/mappers/auth.mapper';
@@ -33,7 +33,7 @@ import {
   mapSportLeagueToDto,
   mapSportToDto,
 } from '../../../packages/core-api/src/mappers/sport-catalog.mapper';
-import { mapSportEventMatchToDto } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
+import { mapSportEventRoundMatchToDto } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
 import { toSquaresBoardResponse } from '../../../packages/core-api/src/mappers/squares.mapper';
 import { toSurvivorLeaderboardResponse, toSurvivorLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/survivor-leaderboard.mapper';
 import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/golf/golf-score-service';
@@ -47,7 +47,7 @@ import type { SportLeagueSummary } from '../../../packages/core-api/src/modules/
 const AT = new Date('2026-03-01T12:00:00.000Z');
 const ISO = AT.toISOString();
 
-function match(overrides: Partial<SportEventMatch> = {}): SportEventMatch {
+function match(overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
   return {
     id: 'm1',
     sportEventId: 'e1',
@@ -70,13 +70,13 @@ function match(overrides: Partial<SportEventMatch> = {}): SportEventMatch {
     homeSpread: null,
     periodScores: [],
     ...overrides,
-  } as unknown as SportEventMatch;
+  } as unknown as SportEventRoundMatch;
 }
 
-describe('mapSportEventMatchToDto', () => {
+describe('mapSportEventRoundMatchToDto', () => {
   it('sends the scheduled date as ISO and each period score as its number and two scores only', () => {
-    const dto = mapSportEventMatchToDto(match({
-      periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 3, id: 'p1' }] as unknown as SportEventMatch['periodScores'],
+    const dto = mapSportEventRoundMatchToDto(match({
+      periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 3, id: 'p1' }] as unknown as SportEventRoundMatch['periodScores'],
     }));
 
     expect(dto.scheduledDate).toBe(ISO);
@@ -84,12 +84,12 @@ describe('mapSportEventMatchToDto', () => {
   });
 
   it('sends an unscheduled game\'s date as null', () => {
-    expect(mapSportEventMatchToDto(match({ scheduledDate: null })).scheduledDate).toBeNull();
+    expect(mapSportEventRoundMatchToDto(match({ scheduledDate: null })).scheduledDate).toBeNull();
   });
 
   it('sends a completed game\'s result time as ISO, and a game without a result\'s as null (#1889)', () => {
-    expect(mapSportEventMatchToDto(match({ status: 'COMPLETED', completedAt: AT })).completedAt).toBe(ISO);
-    expect(mapSportEventMatchToDto(match({ completedAt: null })).completedAt).toBeNull();
+    expect(mapSportEventRoundMatchToDto(match({ status: 'COMPLETED', completedAt: AT })).completedAt).toBe(ISO);
+    expect(mapSportEventRoundMatchToDto(match({ completedAt: null })).completedAt).toBeNull();
   });
 });
 
@@ -410,7 +410,7 @@ describe('toGamePicksResponse', () => {
     const dto = toGamePicksResponse(view([game({})], null));
 
     expect(dto.submittedAt).toBeNull();
-    expect(dto.games[0]).toEqual(expect.objectContaining({ sportEventMatchId: 'm1', matchNumber: 3, kickoff: ISO, pick: null }));
+    expect(dto.games[0]).toEqual(expect.objectContaining({ sportEventRoundMatchId: 'm1', matchNumber: 3, kickoff: ISO, pick: null }));
   });
 
   it('sends an unscored pick\'s outcome and points as null', () => {

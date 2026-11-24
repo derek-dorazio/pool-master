@@ -12,7 +12,7 @@
  *   bracket (#768) ranks no team: a team is COMPLETE once its game is played or cancelled.
  *
  * A result can be changed, or cleared, until the match its winner advanced to has a result of its
- * own (409 SPORT_EVENT_MATCH_RESULT_LOCKED): changing an early winner then would leave the later
+ * own (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED): changing an early winner then would leave the later
  * match between the wrong teams, so the admin clears the later result first. Fixing only the
  * scores never moves a team and is always allowed.
  *
@@ -32,7 +32,7 @@ import type {
   BracketStandingWrite,
   MatchResultWrite,
   MatchSideFill,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -49,7 +49,7 @@ import {
   eventPlaysMatches,
   type BackgroundJobRequest,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SportMatchPeriods,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from '../../events/errors';
@@ -85,7 +85,7 @@ export interface PeriodScoreInput {
 
 export interface MatchResultServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'applyResult' | 'savePeriodScore' | 'deletePeriodScore'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'applyResult' | 'savePeriodScore' | 'deletePeriodScore'>;
   /**
    * Starts the event's contests whose cutoff a result shows has passed (#721): a result in a
    * second-chance bracket's starting round puts it live even where the scheduler leaves the event
@@ -99,18 +99,18 @@ export interface MatchResultServiceDeps {
   logger?: FastifyBaseLogger;
 }
 
-function sideRowId(match: Pick<SportEventMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>, side: MatchSide): string | null {
+function sideRowId(match: Pick<SportEventRoundMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>, side: MatchSide): string | null {
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
 }
 
 /** Whether a loaded game sends its winner on to a later match. */
-const linksOn = (match: SportEventMatch): boolean => match.advancesToMatchId !== null;
+const linksOn = (match: SportEventRoundMatch): boolean => match.advancesToMatchId !== null;
 
 /**
  * Every team's standing in a week of games that forms no bracket: no place, since a week has no
  * winner of its own, and COMPLETE once the team's game is played or cancelled, ACTIVE until then.
  */
-export function gameStandings(matches: readonly SportEventMatch[], asOf: Date): BracketStandingWrite[] {
+export function gameStandings(matches: readonly SportEventRoundMatch[], asOf: Date): BracketStandingWrite[] {
   return matches.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId]
     .filter((rowId): rowId is string => rowId !== null)
     .map((sportEventParticipantId) => ({
@@ -131,7 +131,7 @@ export function gameStandings(matches: readonly SportEventMatch[], asOf: Date): 
  * still alive just ahead of those out in the round it has reached. Teams out in the same round,
  * and teams alive in the same round, share a place.
  */
-export function bracketStandings(matches: readonly SportEventMatch[], asOf: Date): BracketStandingWrite[] {
+export function bracketStandings(matches: readonly SportEventRoundMatch[], asOf: Date): BracketStandingWrite[] {
   const finalRound = Math.max(0, ...matches.map((match) => match.roundNumber));
   const progress = new Map<string, { roundReached: number; lostInRound: number | null; champion: boolean }>();
   for (const match of matches) {
@@ -181,10 +181,10 @@ export class MatchResultService {
    * forms no bracket (a knockout always has a winner). 404 BRACKET_MATCH_NOT_FOUND; 422
    * MATCH_SIDES_NOT_SET while a side still waits for its team; 422 MATCH_RESULT_INVALID for one
    * score without the other, scores the winner did not win by, a tie that does not fit, a
-   * shoot-out that does not fit, or an early ending that does not (`describeScoreProblem`); 409 SPORT_EVENT_MATCH_RESULT_LOCKED for
+   * shoot-out that does not fit, or an early ending that does not (`describeScoreProblem`); 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED for
    * a new winner once the next match has a result. `source` records who set it (#1531).
    */
-  async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput, source: MatchResultSource): Promise<SportEventMatch[]> {
+  async recordResult(sportEventId: string, matchNumber: number, input: MatchResultInput, source: MatchResultSource): Promise<SportEventRoundMatch[]> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
@@ -233,10 +233,10 @@ export class MatchResultService {
 
   /**
    * Clears one match's result: the match is scheduled again and the side its winner filled is empty.
-   * 404 BRACKET_MATCH_NOT_FOUND; 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the next match has a result.
+   * 404 BRACKET_MATCH_NOT_FOUND; 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the next match has a result.
    * Clearing a match with no result changes nothing.
    */
-  async clearResult(sportEventId: string, matchNumber: number): Promise<SportEventMatch[]> {
+  async clearResult(sportEventId: string, matchNumber: number): Promise<SportEventRoundMatch[]> {
     await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
@@ -260,7 +260,7 @@ export class MatchResultService {
    * result; 422 MATCH_IN_BRACKET for a game of a bracket (it sends its winner on, takes a team from
    * an earlier game, or sits among games of several rounds), since a bracket cannot lose a game.
    */
-  async cancelMatch(sportEventId: string, matchNumber: number): Promise<SportEventMatch[]> {
+  async cancelMatch(sportEventId: string, matchNumber: number): Promise<SportEventRoundMatch[]> {
     await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
@@ -302,7 +302,7 @@ export class MatchResultService {
    * MATCH_ALREADY_PLAYED for a game with a result; 409 MATCH_CANCELLED for a cancelled game; 409
    * MATCH_ALREADY_STARTED for a game under way or with a period score, whose picks have locked.
    */
-  async postponeMatch(sportEventId: string, matchNumber: number): Promise<SportEventMatch[]> {
+  async postponeMatch(sportEventId: string, matchNumber: number): Promise<SportEventRoundMatch[]> {
     await this.requireReleasedBracketEvent(sportEventId);
     const bracket = await this.deps.matches.findBySportEvent(sportEventId);
     const match = this.requireMatch(sportEventId, bracket, matchNumber);
@@ -332,7 +332,7 @@ export class MatchResultService {
    * side waits for its team; 409 MATCH_CANCELLED for a cancelled game; 422 MATCH_PERIOD_SCORE_INVALID
    * for a score below an earlier period's or above a later one's or the final score.
    */
-  async recordPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number, input: PeriodScoreInput): Promise<SportEventMatch[]> {
+  async recordPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number, input: PeriodScoreInput): Promise<SportEventRoundMatch[]> {
     const { sportEvent, match, periods } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
     if (match.homeSportEventParticipantId === null || match.awaySportEventParticipantId === null) {
       this.deps.logger?.warn({ sportEventId, matchNumber, periodNumber }, 'Refused a period score for a game whose teams are not both known');
@@ -369,7 +369,7 @@ export class MatchResultService {
    * Clears the score at the end of one period of a game. Clearing one that is not entered changes
    * nothing. The refusals of `recordPeriodScore` for the event, the period and the match.
    */
-  async clearPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number): Promise<SportEventMatch[]> {
+  async clearPeriodScore(sportEventId: string, matchNumber: number, periodNumber: number): Promise<SportEventRoundMatch[]> {
     const { match } = await this.requirePeriod(sportEventId, matchNumber, periodNumber);
     if (!match.periodScores.some((score) => score.periodNumber === periodNumber)) {
       return this.deps.matches.findBySportEvent(sportEventId);
@@ -386,7 +386,7 @@ export class MatchResultService {
     sportEventId: string,
     matchNumber: number,
     periodNumber: number,
-  ): Promise<{ sportEvent: SportEvent; match: SportEventMatch; periods: SportMatchPeriods }> {
+  ): Promise<{ sportEvent: SportEvent; match: SportEventRoundMatch; periods: SportMatchPeriods }> {
     const sportEvent = await this.requireReleasedBracketEvent(sportEventId);
     const periods = matchPeriodsOf(sportEvent.sport, sportEvent.matchPeriodLayout ?? null);
     if (!periods) {
@@ -417,7 +417,7 @@ export class MatchResultService {
    * The side of the next match the result puts `rowId` on, or empties; null for the final, and for
    * a match before a reseed whose winner is not placed yet.
    */
-  private advance(bracket: readonly SportEventMatch[], match: SportEventMatch, rowId: string | null): MatchSideFill | null {
+  private advance(bracket: readonly SportEventRoundMatch[], match: SportEventRoundMatch, rowId: string | null): MatchSideFill | null {
     if (match.advancesToMatchId !== null && match.advancesToSide !== null) {
       return { id: match.advancesToMatchId, side: match.advancesToSide, sportEventParticipantId: rowId };
     }
@@ -427,11 +427,11 @@ export class MatchResultService {
 
   private async write(
     sportEventId: string,
-    bracket: readonly SportEventMatch[],
+    bracket: readonly SportEventRoundMatch[],
     result: MatchResultWrite,
     sideFill: MatchSideFill | null,
     jobs: readonly BackgroundJobRequest[] = [],
-  ): Promise<SportEventMatch[]> {
+  ): Promise<SportEventRoundMatch[]> {
     // The standings are read off the bracket as it will stand after this write, which is answered.
     const after = bracket.map((candidate) => {
       if (candidate.id === result.id) return { ...candidate, ...result };
@@ -450,8 +450,8 @@ export class MatchResultService {
   }
 
   /** What follows a game's being decided (#711, #1946), for the write deciding it to carry. */
-  private decided(sportEventId: string, sportEventMatchId: string, decidedAt: Date): Promise<JobsForWrite> {
-    return this.deps.domainEvents.collect({ type: DomainEventType.GAME_DECIDED, sportEventId, sportEventMatchId, decidedAt });
+  private decided(sportEventId: string, sportEventRoundMatchId: string, decidedAt: Date): Promise<JobsForWrite> {
+    return this.deps.domainEvents.collect({ type: DomainEventType.GAME_DECIDED, sportEventId, sportEventRoundMatchId, decidedAt });
   }
 
   /** What follows a change to a game that decides nothing: the boards' rebuild (#1466). */
@@ -459,7 +459,7 @@ export class MatchResultService {
     return this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
   }
 
-  private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventMatch[], match: SportEventMatch): void {
+  private assertNextMatchOpen(sportEventId: string, bracket: readonly SportEventRoundMatch[], match: SportEventRoundMatch): void {
     const next = bracket.find((candidate) => candidate.id === match.advancesToMatchId) ?? placementOf(bracket, match)?.match;
     // A quarter score belongs to the two teams playing (#772), so a next match with one is locked
     // as one with a result is: changing who plays it would leave the score on another pairing.
@@ -469,13 +469,13 @@ export class MatchResultService {
         next.status === MatchStatus.COMPLETED
           ? `Match ${match.matchNumber}'s winner already played match ${next.matchNumber}, which has a result: clear match ${next.matchNumber}'s result first.`
           : `Match ${match.matchNumber}'s winner is playing match ${next.matchNumber}, which has scores entered: clear them first.`,
-        'SPORT_EVENT_MATCH_RESULT_LOCKED',
+        'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED',
         409,
       );
     }
   }
 
-  private requireMatch(sportEventId: string, bracket: readonly SportEventMatch[], matchNumber: number): SportEventMatch {
+  private requireMatch(sportEventId: string, bracket: readonly SportEventRoundMatch[], matchNumber: number): SportEventRoundMatch {
     const match = bracket.find((candidate) => candidate.matchNumber === matchNumber);
     if (!match) {
       throw new SportEventError(`Sport event ${sportEventId} has no match ${matchNumber}.`, 'BRACKET_MATCH_NOT_FOUND', 404);
@@ -516,7 +516,7 @@ export class MatchResultService {
  * Where a reseed placed the winner of a match that links nowhere: the next round's match naming it, and
  * the side. Undefined for a match without a result, or a winner not placed yet.
  */
-function placementOf(bracket: readonly SportEventMatch[], match: SportEventMatch): { match: SportEventMatch; side: MatchSide } | undefined {
+function placementOf(bracket: readonly SportEventRoundMatch[], match: SportEventRoundMatch): { match: SportEventRoundMatch; side: MatchSide } | undefined {
   if (match.advancesToMatchId !== null || match.status !== MatchStatus.COMPLETED || match.winnerSide === null) return undefined;
   const winnerId = sideRowId(match, match.winnerSide);
   for (const later of bracket) {
@@ -545,7 +545,7 @@ export interface ScoreRules {
  */
 export function describeScoreProblem(
   { winnerSide, homeScore, awayScore, ending = MatchEnding.PLAYED }: Pick<MatchResultInput, 'winnerSide' | 'homeScore' | 'awayScore' | 'ending'>,
-  { homeShootoutScore, awayShootoutScore }: Pick<SportEventMatch, 'homeShootoutScore' | 'awayShootoutScore'>,
+  { homeShootoutScore, awayShootoutScore }: Pick<SportEventRoundMatch, 'homeShootoutScore' | 'awayShootoutScore'>,
   rules: ScoreRules,
 ): string | null {
   const hasShootout = homeShootoutScore !== null || awayShootoutScore !== null;
@@ -585,7 +585,7 @@ export function describeScoreProblem(
  * has no score at all.
  */
 export function describePeriodScoreProblem(
-  match: Pick<SportEventMatch, 'periodScores' | 'status' | 'homeScore' | 'awayScore' | 'ending'>,
+  match: Pick<SportEventRoundMatch, 'periodScores' | 'status' | 'homeScore' | 'awayScore' | 'ending'>,
   periodNumber: number,
   score: PeriodScoreInput,
   periods: SportMatchPeriods,
@@ -608,13 +608,13 @@ export function describePeriodScoreProblem(
 }
 
 /** A walkover was never played, so a match with a score at the end of a period was not one (#704). */
-function describeWalkoverPeriods(match: Pick<SportEventMatch, 'periodScores'>, ending: MatchEnding): string | null {
+function describeWalkoverPeriods(match: Pick<SportEventRoundMatch, 'periodScores'>, ending: MatchEnding): string | null {
   return ending === MatchEnding.WALKOVER && match.periodScores.length > 0 ? 'a walkover has no score, so clear its period scores first' : null;
 }
 
 /** A final score below a side's score at the end of an entered period, or null when it fits them all. */
 function describeFinalBelowPeriods(
-  match: Pick<SportEventMatch, 'periodScores'>,
+  match: Pick<SportEventRoundMatch, 'periodScores'>,
   { homeScore, awayScore }: MatchResultInput,
   periods: SportMatchPeriods | undefined,
 ): string | null {
@@ -624,7 +624,7 @@ function describeFinalBelowPeriods(
 }
 
 /** Why a game cannot be postponed: it has a result, was called off, or is under way. Undefined when it can. */
-function postponeRefusal(match: SportEventMatch): { code: 'MATCH_ALREADY_PLAYED' | 'MATCH_CANCELLED' | 'MATCH_ALREADY_STARTED'; reason: string } | undefined {
+function postponeRefusal(match: SportEventRoundMatch): { code: 'MATCH_ALREADY_PLAYED' | 'MATCH_CANCELLED' | 'MATCH_ALREADY_STARTED'; reason: string } | undefined {
   if (match.status === MatchStatus.COMPLETED) return { code: 'MATCH_ALREADY_PLAYED', reason: 'has a result' };
   if (match.status === MatchStatus.CANCELLED) return { code: 'MATCH_CANCELLED', reason: 'was cancelled' };
   if (match.status === MatchStatus.IN_PROGRESS || match.periodScores.length > 0) return { code: 'MATCH_ALREADY_STARTED', reason: 'has started' };

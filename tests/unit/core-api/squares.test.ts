@@ -21,7 +21,7 @@ import {
   squaresScoringMoments,
   squaresWinners,
   type ContestEntry,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
@@ -116,7 +116,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
   const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: squares.repo(), championship: { recordContest: async () => 0 } });
 
   const actor = (name: string, isRootAdmin = false): SquaresActor => ({ userId: expectDefined(users.get(name)), isRootAdmin });
-  const updateGame = (changes: Partial<SportEventMatch>) => {
+  const updateGame = (changes: Partial<SportEventRoundMatch>) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), ...changes }]);
   };
   /** Draws digits in order, as if the shuffle had left them unmoved, so a score's last digits name its box. */
@@ -137,7 +137,7 @@ async function expectRefused(promise: Promise<unknown>, code: string, statusCode
   expect(error).toMatchObject({ code, statusCode });
 }
 
-function scoredGame(overrides: Partial<SportEventMatch>): Pick<SportEventMatch, 'status' | 'homeScore' | 'awayScore' | 'periodScores'> {
+function scoredGame(overrides: Partial<SportEventRoundMatch>): Pick<SportEventRoundMatch, 'status' | 'homeScore' | 'awayScore' | 'periodScores'> {
   return { status: MatchStatus.IN_PROGRESS, homeScore: null, awayScore: null, periodScores: [], ...overrides };
 }
 

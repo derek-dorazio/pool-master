@@ -8,7 +8,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { displayString, type DisplayForm } from '@poolmaster/shared/display-strings';
 import type {
-  SportEventMatchDto,
+  SportEventRoundMatchDto,
   SportEventParticipantDto,
   SquaresBoardResponse,
   SquaresBoxDto,
@@ -104,7 +104,7 @@ function sideName(participantId: string | null, namesById: ReadonlyMap<string, s
 }
 
 /** "Chiefs @ Eagles", or "vs" at a neutral site: how a game is named in the picker. */
-export function formatSquaresGameTeams(game: SportEventMatchDto, namesById: ReadonlyMap<string, string>) {
+export function formatSquaresGameTeams(game: SportEventRoundMatchDto, namesById: ReadonlyMap<string, string>) {
   const away = sideName(game.awaySportEventParticipantId, namesById);
   const home = sideName(game.homeSportEventParticipantId, namesById);
   return `${away} ${game.isNeutralSite ? 'vs' : '@'} ${home}`;
@@ -120,8 +120,8 @@ export function teamNamesById(field: readonly SportEventParticipantDto[]): Reado
  * period score in, and in a round of single games (from the sport league's `squaresFromRound`), the
  * final first, then by kickoff. The server checks the same at create.
  */
-export function squaresGameChoices(games: readonly SportEventMatchDto[], now: Date, squaresFromRound: number | null = null): SportEventMatchDto[] {
-  const kickoff = (game: SportEventMatchDto) => (game.scheduledDate === null ? Number.POSITIVE_INFINITY : Date.parse(game.scheduledDate));
+export function squaresGameChoices(games: readonly SportEventRoundMatchDto[], now: Date, squaresFromRound: number | null = null): SportEventRoundMatchDto[] {
+  const kickoff = (game: SportEventRoundMatchDto) => (game.scheduledDate === null ? Number.POSITIVE_INFINITY : Date.parse(game.scheduledDate));
   return games
     .filter((game) => isMatchUnplayed(game.status)
       && game.periodScores.length === 0
@@ -151,7 +151,7 @@ export type SquaresScoreByPeriod = {
 };
 
 /** The period being played: the one after the last whose score is in, while the game is live. */
-function livePeriodNumber(game: SportEventMatchDto, layout: MatchPeriodLayout) {
+function livePeriodNumber(game: SportEventRoundMatchDto, layout: MatchPeriodLayout) {
   return game.status === MatchStatus.IN_PROGRESS
     ? Math.min(game.periodScores.length + 1, MATCH_PERIOD_LAYOUTS[layout].count)
     : null;
@@ -163,7 +163,7 @@ function livePeriodNumber(game: SportEventMatchDto, layout: MatchPeriodLayout) {
  * from the score now, and the last period runs to the final score, overtime included. Before
  * kickoff every period and total is null.
  */
-export function squaresScoreByPeriod(game: SportEventMatchDto, layout: MatchPeriodLayout): SquaresScoreByPeriod {
+export function squaresScoreByPeriod(game: SportEventRoundMatchDto, layout: MatchPeriodLayout): SquaresScoreByPeriod {
   const count = MATCH_PERIOD_LAYOUTS[layout].count;
   const live = livePeriodNumber(game, layout);
   const endScores = new Map(game.periodScores.map((score) => [score.periodNumber, score]));

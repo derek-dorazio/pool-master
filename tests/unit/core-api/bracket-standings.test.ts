@@ -103,7 +103,7 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
     world.entries.set(entry.id, entry);
     for (const [matchNumber, team] of picks) {
       games.predictions.set(`${entry.id}:m${matchNumber}`, {
-        id: `prediction-${entry.id}-m${matchNumber}`, contestEntryId: entry.id, sportEventMatchId: `m${matchNumber}`,
+        id: `prediction-${entry.id}-m${matchNumber}`, contestEntryId: entry.id, sportEventRoundMatchId: `m${matchNumber}`,
         predictedResult: PredictedResult.TEAM,
         sportEventParticipantId: team, confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
       });

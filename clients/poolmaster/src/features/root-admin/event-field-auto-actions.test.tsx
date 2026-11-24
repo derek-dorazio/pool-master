@@ -9,7 +9,7 @@ import { EventTabOutlet } from './test/event-tab-outlet';
 import {
   fieldEntryFixture,
   participantFixture,
-  pricingProfilesFixture,
+  platformPricingProfilesFixture,
   sportLeagueFixture,
   sportEventFixture,
   tierFixture,
@@ -25,7 +25,7 @@ const {
   autoAssignEventTiersMock,
   autoAssignEventPricesMock,
   updateEventParticipantsMock,
-  listPricingProfilesMock,
+  listPlatformPricingProfilesMock,
   getSportLeagueMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -45,7 +45,7 @@ const {
     autoAssignEventTiersMock: vi.fn(),
     autoAssignEventPricesMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
-    listPricingProfilesMock: vi.fn(),
+    listPlatformPricingProfilesMock: vi.fn(),
     getSportLeagueMock: vi.fn(),
     mockLogger: logger,
   };
@@ -58,7 +58,7 @@ bindApiMocks({
   autoAssignEventTiers: autoAssignEventTiersMock,
   autoAssignEventPrices: autoAssignEventPricesMock,
   updateEventParticipants: updateEventParticipantsMock,
-  listPricingProfiles: listPricingProfilesMock,
+  listPlatformPricingProfiles: listPlatformPricingProfilesMock,
   getSportLeague: getSportLeagueMock,
 });
 
@@ -132,7 +132,7 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
   listEventTiersMock.mockResolvedValue({
     data: { tiers: [tier(1), tier(2), tier(3)] },
   });
-  listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+  listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
   getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture() } });
 }
 
@@ -209,8 +209,8 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
   it('starts the price dialog on the sport league\'s pricing profile, not the first profile by name', async () => {
     seed({ tournament: { pricing: null } });
-    const [small] = pricingProfilesFixture();
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ pricingProfileId: small.id }) } });
+    const [small] = platformPricingProfilesFixture();
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ platformPricingProfileId: small.id }) } });
     renderPage();
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());

@@ -10,7 +10,7 @@ const EVENT = '00000000-0000-4000-8000-000000000001';
 const ROW = '00000000-0000-4000-8000-000000000002';
 const OTHER_ROW = '00000000-0000-4000-8000-000000000003';
 const TIERED = { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 };
-const pick = (team: string) => ({ sportEventMatchId: ROW, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team });
+const pick = (team: string) => ({ sportEventRoundMatchId: ROW, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team });
 
 describe('RosterPickPreviewRequestSchema', () => {
   it('takes distinct golfers and refuses the same golfer twice', () => {

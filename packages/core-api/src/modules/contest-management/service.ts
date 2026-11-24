@@ -148,7 +148,7 @@ export interface ContestCreateSportEventReader {
   /** Why the event's games from `startsAtRound` on cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string, startsAtRound: number): Promise<string | null>;
   /** The status and round of one of the event's games, or null when the game is not the event's (#711). */
-  findGame(sportEventId: string, sportEventMatchId: string): Promise<{ status: MatchStatus; roundNumber: number } | null>;
+  findGame(sportEventId: string, sportEventRoundMatchId: string): Promise<{ status: MatchStatus; roundNumber: number } | null>;
   /** When a contest with this cutoff closes on the event (#721): at its start, or at its starting round's first game. */
   findCutoffTiming(sportEvent: ContestCreateSportEventState, cutoff: ContestCutoff): Promise<EventTiming>;
 }
@@ -252,7 +252,7 @@ export class ContestManagementService {
     );
     const sportEvents = await this.assertSportEventsContestEligible(
       input.sportEventIds,
-      contestCutoff(resolvedConfiguration.configuration, input.sportEventMatchId),
+      contestCutoff(resolvedConfiguration.configuration, input.sportEventRoundMatchId),
     );
     await this.assertSquaresGame(input, sportEvents);
     const sportEvent = this.assertOneSportLeague(sportEvents);
@@ -313,7 +313,7 @@ export class ContestManagementService {
       status: ContestStatus.DRAFT,
       contestFormat: input.contestFormat,
       selectionType,
-      squaresGameMatchId: input.sportEventMatchId,
+      squaresGameMatchId: input.sportEventRoundMatchId,
     }, limits);
     if (created.status === 'sportsLeagueLimitReached') {
       this.logger.warn({ leagueId: context.leagueId, seasonYear, sportLeagueId: sportEvent.sportLeagueId, used: created.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management create contest refused past the plan\'s sports leagues a year');
@@ -803,10 +803,10 @@ export class ContestManagementService {
    * event. Only a squares contest names a game.
    */
   private async assertSquaresGame(input: CreateContestRequest, sportEvents: readonly ContestCreateSportEventState[]): Promise<void> {
-    const gameId = input.sportEventMatchId;
+    const gameId = input.sportEventRoundMatchId;
     if (input.selectionType !== SelectionType.SQUARES) {
       if (gameId !== undefined) {
-        this.logger.warn({ selectionType: input.selectionType, sportEventMatchId: gameId }, 'contest management create refused a game for a contest that is not squares');
+        this.logger.warn({ selectionType: input.selectionType, sportEventRoundMatchId: gameId }, 'contest management create refused a game for a contest that is not squares');
         throw new ContestManagementError('Only a squares contest is played on one game.', CONTEST_SQUARES_GAME_INVALID);
       }
       return;
@@ -821,14 +821,14 @@ export class ContestManagementService {
     }));
     const game = games.find((each) => each !== null) ?? null;
     if (game === null || game.status === MatchStatus.CANCELLED) {
-      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventMatchId: gameId, status: game?.status ?? null }, 'contest management create refused a squares game that is not the event\'s or is cancelled');
+      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventRoundMatchId: gameId, status: game?.status ?? null }, 'contest management create refused a squares game that is not the event\'s or is cancelled');
       throw new ContestManagementError(
         game === null ? 'That game is not one of the event\'s games.' : 'That game was cancelled, so a squares contest can\'t be played on it.',
         CONTEST_SQUARES_GAME_INVALID,
       );
     }
     if (!isSquaresRound(game.squaresFromRound, game.roundNumber)) {
-      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventMatchId: gameId, roundNumber: game.roundNumber, squaresFromRound: game.squaresFromRound }, 'contest management create refused a squares game before the sport league\'s first round of single games');
+      this.logger.warn({ sportEventIds: input.sportEventIds, sportEventRoundMatchId: gameId, roundNumber: game.roundNumber, squaresFromRound: game.squaresFromRound }, 'contest management create refused a squares game before the sport league\'s first round of single games');
       throw new ContestManagementError(
         'A squares contest can\'t be played on that game: this sport league\'s squares contests start at a later round.',
         CONTEST_SQUARES_GAME_INVALID,

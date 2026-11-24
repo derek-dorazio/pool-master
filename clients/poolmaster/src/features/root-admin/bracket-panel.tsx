@@ -1,5 +1,5 @@
 import { getSportDefinition, MatchResultSource, MatchStatus, SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
-import type { SportEventDto, SportEventMatchDto } from '@/lib/api';
+import type { SportEventDto, SportEventRoundMatchDto } from '@/lib/api';
 import { Notice, Heading, SectionCard, SimpleTable, TableBody, TableHead, TableHeaderCell } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { formsNoBracket } from './bracket-copy';
@@ -14,7 +14,7 @@ import { useProvidersQuery } from './use-providers-query';
 import { upperFirst } from '@/lib/upper-first';
 
 /** Whether a match shows a score from the data feed: a synced result, or a live game's score. */
-function showsFeedScore(match: SportEventMatchDto): boolean {
+function showsFeedScore(match: SportEventRoundMatchDto): boolean {
   return match.resultSource === MatchResultSource.PROVIDER || match.status === MatchStatus.IN_PROGRESS;
 }
 

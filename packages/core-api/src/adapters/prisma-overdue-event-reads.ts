@@ -47,7 +47,7 @@ export async function readOverdueCandidates(
       where: { sportEventId: { in: roundEventIds } },
       select: { id: true, sportEventId: true, scheduledDate: true, scheduledEndAt: true },
     }),
-    prisma.sportEventMatch.groupBy({
+    prisma.sportEventRoundMatch.groupBy({
       by: ['sportEventRoundId'],
       where: { sportEventId: { in: roundEventIds }, scheduledDate: { not: null } },
       _max: { scheduledDate: true },

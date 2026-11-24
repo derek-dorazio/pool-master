@@ -363,7 +363,7 @@ async function seedPredictionContest(selectionType: PredictionType, { entries, w
         contestEntryId: entry.id,
         sportEventId: week.event.id,
         saves: picked.map((game) => ({
-          sportEventMatchId: game.id,
+          sportEventRoundMatchId: game.id,
           predictedResult: PredictedResult.TEAM,
           sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
           confidence: null,
@@ -402,14 +402,14 @@ async function seedBracketContest(entries: number) {
     where: { id: expectDefined(game.homeSportEventParticipantId) }, data: { seedNumber: index + 1 },
   })));
   const finalRound = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 2, scheduledDate: new Date(Date.now() + DAY) } });
-  const final = await prisma.sportEventMatch.create({
+  const final = await prisma.sportEventRoundMatch.create({
     data: {
       sportEventId: event.id, sportEventRoundId: finalRound.id, matchNumber: 3, isNeutralSite: true,
       homeSportEventParticipantId: first.homeSportEventParticipantId, awaySportEventParticipantId: second.homeSportEventParticipantId,
     },
   });
-  await prisma.sportEventMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSide: 'HOME' } });
-  await prisma.sportEventMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSide: 'AWAY' } });
+  await prisma.sportEventRoundMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSide: 'HOME' } });
+  await prisma.sportEventRoundMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSide: 'AWAY' } });
   await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 2 } });
   const contest = await prisma.contest.create({
     data: {
@@ -441,7 +441,7 @@ async function seedBracketContest(entries: number) {
       contestEntryId: entry.id,
       sportEventId: event.id,
       saves: [first, second, final].map((game) => ({
-        sportEventMatchId: game.id,
+        sportEventRoundMatchId: game.id,
         predictedResult: PredictedResult.TEAM,
         sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
         confidence: null,
@@ -464,7 +464,7 @@ async function seedSquaresContest(entries: number) {
       leagueId: seeded.league.id,
       seasonYear: event.startDate.getUTCFullYear(),
       sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
-      squaresGame: { create: { sportEventMatchId: expectDefined(game).id } },
+      squaresGame: { create: { sportEventRoundMatchId: expectDefined(game).id } },
       name: `Squares ${seeded.suffix}`,
       status: ContestStatus.OPEN,
       contestFormat: 'SQUARES',
@@ -764,7 +764,7 @@ describe('A poll of a stored prediction leaderboard (#1435)', () => {
     const { result, statements } = await recordStatements(() => get(url, commissioner));
 
     expect(result.statusCode).toBe(200);
-    for (const table of ['contest_entries', 'contest_entry_match_predictions', 'sport_event_matches', 'contest_configurations']) {
+    for (const table of ['contest_entries', 'contest_entry_match_predictions', 'sport_event_round_matches', 'contest_configurations']) {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);

@@ -1,10 +1,10 @@
 import { expect } from '@jest/globals';
 import type { ProfileRepository } from '@poolmaster/shared/db';
-import { TierProfileLastTier, type PricingProfile, type TierProfile } from '@poolmaster/shared/domain';
+import { PlatformTierProfileLastTier, type PlatformPricingProfile, type PlatformTierProfile } from '@poolmaster/shared/domain';
 import {
-  PRICING_PROFILE_KIND,
+  PLATFORM_PRICING_PROFILE_KIND,
   ProfileService,
-  TIER_PROFILE_KIND,
+  PLATFORM_TIER_PROFILE_KIND,
 } from '../../../packages/core-api/src/modules/profiles/profile-service';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -14,14 +14,14 @@ import { fakeLogger } from '../../support/fake-logger';
 
 const T0 = new Date('2026-01-01T00:00:00.000Z');
 
-type TierWrite = Omit<TierProfile, 'id' | 'createdAt' | 'updatedAt'>;
-type PricingWrite = Omit<PricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
+type TierWrite = Omit<PlatformTierProfile, 'id' | 'createdAt' | 'updatedAt'>;
+type PricingWrite = Omit<PlatformPricingProfile, 'id' | 'createdAt' | 'updatedAt'>;
 
-const SIX_OF_TEN: TierWrite = { name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null };
-const STANDARD: PricingWrite = { name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+const SIX_OF_TEN: TierWrite = { code: 'TIERS_6_OF_10', name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
+const STANDARD: PricingWrite = { code: 'STANDARD', name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 /** Profiles in a list, each league naming one by id in `uses`. */
-function memoryProfiles<TProfile extends { id: string; name: string }, TWrite extends { name: string }>(
+function memoryProfiles<TProfile extends { id: string; code: string; name: string }, TWrite extends { code: string; name: string }>(
   build: (id: string, write: TWrite) => TProfile,
 ) {
   const rows: TProfile[] = [];
@@ -33,14 +33,16 @@ function memoryProfiles<TProfile extends { id: string; name: string }, TWrite ex
     findBySportLeague: async () => null,
     countSportLeagues: async () => new Map(uses),
     countSportLeaguesNaming: async (id) => uses.get(id) ?? 0,
-    // The unique index on name, as the adapter answers it.
+    // The unique indexes on code and name, as the adapter answers them.
     create: async (write) => {
+      if (rows.some((row) => row.code === write.code)) return 'codeTaken';
       if (rows.some((row) => row.name === write.name)) return 'nameTaken';
       const row = build(`profile-${++sequence}`, write);
       rows.push(row);
       return row;
     },
     update: async (id, write) => {
+      if (rows.some((row) => row.code === write.code && row.id !== id)) return 'codeTaken';
       if (rows.some((row) => row.name === write.name && row.id !== id)) return 'nameTaken';
       const index = rows.findIndex((row) => row.id === id);
       rows[index] = build(id, write);
@@ -58,21 +60,21 @@ function memoryProfiles<TProfile extends { id: string; name: string }, TWrite ex
 }
 
 function tierService() {
-  const store = memoryProfiles<TierProfile, TierWrite>((id, write) => ({ id, ...write, createdAt: T0, updatedAt: T0 }));
+  const store = memoryProfiles<PlatformTierProfile, TierWrite>((id, write) => ({ id, ...write, createdAt: T0, updatedAt: T0 }));
   const logger = fakeLogger();
-  return { ...store, logger, service: new ProfileService({ profiles: store.repo, kind: TIER_PROFILE_KIND, logger }) };
+  return { ...store, logger, service: new ProfileService({ profiles: store.repo, kind: PLATFORM_TIER_PROFILE_KIND, logger }) };
 }
 
 function pricingService() {
-  const store = memoryProfiles<PricingProfile, PricingWrite>((id, write) => ({ id, ...write, createdAt: T0, updatedAt: T0 }));
-  return { ...store, service: new ProfileService({ profiles: store.repo, kind: PRICING_PROFILE_KIND }) };
+  const store = memoryProfiles<PlatformPricingProfile, PricingWrite>((id, write) => ({ id, ...write, createdAt: T0, updatedAt: T0 }));
+  return { ...store, service: new ProfileService({ profiles: store.repo, kind: PLATFORM_PRICING_PROFILE_KIND }) };
 }
 
 describe('ProfileService — tier profiles', () => {
   it('creates a profile with no sport league naming it yet, and lists every profile by name with how many leagues name each', async () => {
     const { service, uses } = tierService();
     const created = await service.create(SIX_OF_TEN);
-    await service.create({ ...SIX_OF_TEN, name: '4 tiers of 16', tierCount: 4, tierSize: 16 });
+    await service.create({ ...SIX_OF_TEN, code: 'TIERS_4_OF_16', name: '4 tiers of 16', tierCount: 4, tierSize: 16 });
     uses.set(created.profile.id, 3);
 
     expect(created.sportLeagueCount).toBe(0);
@@ -82,31 +84,41 @@ describe('ProfileService — tier profiles', () => {
     ]);
   });
 
-  it('reads one profile with its league count, and answers an unknown one with 404 TIER_PROFILE_NOT_FOUND', async () => {
+  it('reads one profile with its league count, and answers an unknown one with 404 PLATFORM_TIER_PROFILE_NOT_FOUND', async () => {
     const { service, uses } = tierService();
     const { profile } = await service.create(SIX_OF_TEN);
     uses.set(profile.id, 2);
 
     await expect(service.get(profile.id)).resolves.toMatchObject({ profile: { name: '6 tiers of 10' }, sportLeagueCount: 2 });
-    await expect(service.get('profile-gone')).rejects.toMatchObject({ code: 'TIER_PROFILE_NOT_FOUND', statusCode: 404 });
+    await expect(service.get('profile-gone')).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NOT_FOUND', statusCode: 404 });
   });
 
-  it('refuses a capped last tier with no maximum, or a maximum on one that takes everyone left, with 422 TIER_PROFILE_INVALID, creating nothing', async () => {
+  it('refuses a capped last tier with no maximum, or a maximum on one that takes everyone left, with 422 PLATFORM_TIER_PROFILE_INVALID, creating nothing', async () => {
     const { service, rows } = tierService();
 
-    await expect(service.create({ ...SIX_OF_TEN, lastTier: TierProfileLastTier.CAPPED }))
-      .rejects.toMatchObject({ code: 'TIER_PROFILE_INVALID', statusCode: 422 });
+    await expect(service.create({ ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED }))
+      .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_INVALID', statusCode: 422 });
     await expect(service.create({ ...SIX_OF_TEN, lastTierMax: 12 }))
-      .rejects.toMatchObject({ code: 'TIER_PROFILE_INVALID', statusCode: 422 });
+      .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_INVALID', statusCode: 422 });
     expect(rows).toEqual([]);
   });
 
-  it('refuses a second profile with a name already taken with 409 TIER_PROFILE_NAME_TAKEN', async () => {
+  it('refuses a second profile with a name already taken with 409 PLATFORM_TIER_PROFILE_NAME_TAKEN', async () => {
     const { service, rows } = tierService();
     await service.create(SIX_OF_TEN);
 
-    await expect(service.create({ ...SIX_OF_TEN, tierSize: 8 })).rejects.toMatchObject({ code: 'TIER_PROFILE_NAME_TAKEN', statusCode: 409 });
+    await expect(service.create({ ...SIX_OF_TEN, code: 'TIERS_6_OF_8', tierSize: 8 })).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NAME_TAKEN', statusCode: 409 });
     expect(rows).toHaveLength(1);
+  });
+
+  it('refuses a second profile with a code already taken with 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, and an update onto another profile\'s code the same way', async () => {
+    const { service, rows } = tierService();
+    const { profile } = await service.create(SIX_OF_TEN);
+    const other = await service.create({ ...SIX_OF_TEN, code: 'TIERS_6_OF_8', name: '6 tiers of 8', tierSize: 8 });
+
+    await expect(service.create({ ...SIX_OF_TEN, name: 'Another name' })).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_CODE_TAKEN', statusCode: 409 });
+    await expect(service.update(other.profile.id, { ...other.profile, code: profile.code })).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_CODE_TAKEN', statusCode: 409 });
+    expect(rows.map((row) => row.code)).toEqual(['TIERS_6_OF_10', 'TIERS_6_OF_8']);
   });
 
   it('replaces a profile\'s name and layout, keeping its own name free to reuse, and answers it with its league count', async () => {
@@ -114,7 +126,7 @@ describe('ProfileService — tier profiles', () => {
     const { profile } = await service.create(SIX_OF_TEN);
     uses.set(profile.id, 5);
 
-    const updated = await service.update(profile.id, { ...SIX_OF_TEN, lastTier: TierProfileLastTier.CAPPED, lastTierMax: 15 });
+    const updated = await service.update(profile.id, { ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 });
 
     expect(updated).toMatchObject({ profile: { id: profile.id, name: '6 tiers of 10', lastTier: 'CAPPED', lastTierMax: 15 }, sportLeagueCount: 5 });
   });
@@ -122,11 +134,11 @@ describe('ProfileService — tier profiles', () => {
   it('refuses an update to an unknown profile (404), to bad values (422), or to another profile\'s name (409), changing nothing', async () => {
     const { service, rows } = tierService();
     const { profile } = await service.create(SIX_OF_TEN);
-    await service.create({ ...SIX_OF_TEN, name: 'Other' });
+    await service.create({ ...SIX_OF_TEN, code: 'OTHER', name: 'Other' });
 
-    await expect(service.update('profile-gone', SIX_OF_TEN)).rejects.toMatchObject({ code: 'TIER_PROFILE_NOT_FOUND', statusCode: 404 });
-    await expect(service.update(profile.id, { ...SIX_OF_TEN, lastTier: TierProfileLastTier.CAPPED })).rejects.toMatchObject({ code: 'TIER_PROFILE_INVALID', statusCode: 422 });
-    await expect(service.update(profile.id, { ...SIX_OF_TEN, name: 'Other' })).rejects.toMatchObject({ code: 'TIER_PROFILE_NAME_TAKEN', statusCode: 409 });
+    await expect(service.update('profile-gone', SIX_OF_TEN)).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NOT_FOUND', statusCode: 404 });
+    await expect(service.update(profile.id, { ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED })).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_INVALID', statusCode: 422 });
+    await expect(service.update(profile.id, { ...SIX_OF_TEN, name: 'Other' })).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NAME_TAKEN', statusCode: 409 });
     expect(rows.find((row) => row.id === profile.id)).toMatchObject(SIX_OF_TEN);
   });
 
@@ -140,43 +152,44 @@ describe('ProfileService — tier profiles', () => {
     expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ profileId: profile.id }), 'Deleted profile');
   });
 
-  it('refuses to delete a profile any sport league names with 409 TIER_PROFILE_IN_USE, saying how many, and keeps it', async () => {
+  it('refuses to delete a profile any sport league names with 409 PLATFORM_TIER_PROFILE_IN_USE, saying how many, and keeps it', async () => {
     const { service, rows, uses } = tierService();
     const { profile } = await service.create(SIX_OF_TEN);
     uses.set(profile.id, 2);
 
     await expect(service.delete(profile.id)).rejects.toMatchObject({
-      code: 'TIER_PROFILE_IN_USE', statusCode: 409, message: expect.stringContaining('named by 2 sport leagues'),
+      code: 'PLATFORM_TIER_PROFILE_IN_USE', statusCode: 409, message: expect.stringContaining('named by 2 sport leagues'),
     });
     uses.set(profile.id, 1);
     await expect(service.delete(profile.id)).rejects.toMatchObject({ message: expect.stringContaining('named by 1 sport league,') });
     expect(rows).toHaveLength(1);
   });
 
-  it('answers a delete of an unknown profile with 404 TIER_PROFILE_NOT_FOUND', async () => {
+  it('answers a delete of an unknown profile with 404 PLATFORM_TIER_PROFILE_NOT_FOUND', async () => {
     const { service } = tierService();
 
-    await expect(service.delete('profile-gone')).rejects.toMatchObject({ code: 'TIER_PROFILE_NOT_FOUND', statusCode: 404 });
+    await expect(service.delete('profile-gone')).rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NOT_FOUND', statusCode: 404 });
   });
 });
 
 describe('ProfileService — pricing profiles', () => {
-  it('creates a pricing profile and refuses one whose floor share is above its top share with 422 PRICING_PROFILE_INVALID', async () => {
+  it('creates a pricing profile and refuses one whose floor share is above its top share with 422 PLATFORM_PRICING_PROFILE_INVALID', async () => {
     const { service, rows } = pricingService();
 
     await expect(service.create(STANDARD)).resolves.toMatchObject({ profile: STANDARD, sportLeagueCount: 0 });
     await expect(service.create({ ...STANDARD, name: 'Upside down', floorSharePercent: 30 }))
-      .rejects.toMatchObject({ code: 'PRICING_PROFILE_INVALID', statusCode: 422 });
+      .rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_INVALID', statusCode: 422 });
     expect(rows).toHaveLength(1);
   });
 
-  it('answers pricing profiles\' own codes: 409 PRICING_PROFILE_NAME_TAKEN, 404 PRICING_PROFILE_NOT_FOUND and 409 PRICING_PROFILE_IN_USE', async () => {
+  it('answers pricing profiles\' own codes: 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 404 PLATFORM_PRICING_PROFILE_NOT_FOUND and 409 PLATFORM_PRICING_PROFILE_IN_USE', async () => {
     const { service, uses } = pricingService();
     const { profile } = await service.create(STANDARD);
     uses.set(profile.id, 1);
 
-    await expect(service.create(STANDARD)).rejects.toMatchObject({ code: 'PRICING_PROFILE_NAME_TAKEN', statusCode: 409 });
-    await expect(service.get('profile-gone')).rejects.toMatchObject({ code: 'PRICING_PROFILE_NOT_FOUND', statusCode: 404 });
-    await expect(service.delete(profile.id)).rejects.toMatchObject({ code: 'PRICING_PROFILE_IN_USE', statusCode: 409 });
+    await expect(service.create({ ...STANDARD, code: 'STANDARD_2' })).rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_NAME_TAKEN', statusCode: 409 });
+    await expect(service.create({ ...STANDARD, name: 'Standard 2' })).rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_CODE_TAKEN', statusCode: 409 });
+    await expect(service.get('profile-gone')).rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_NOT_FOUND', statusCode: 404 });
+    await expect(service.delete(profile.id)).rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_IN_USE', statusCode: 409 });
   });
 });

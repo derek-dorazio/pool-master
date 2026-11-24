@@ -16,7 +16,7 @@ import {
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryRepository,
   PrismaContestRepository,
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
@@ -91,7 +91,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
   await field.createMany(event.id, teams.map((team) => ({ participantId: team.id })));
   const rows = await field.findBySportEvent(event.id);
   const rowOf = (index: number) => expectDefined(rows.find((row) => row.participantId === teams[index]?.id));
-  const matchRepo = new PrismaSportEventMatchRepository(getAppPrisma());
+  const matchRepo = new PrismaSportEventRoundMatchRepository(getAppPrisma());
   await matchRepo.replaceBracket(event.id, [1, 2, 3].map((matchNumber) => ({
     id: randomUUID(),
     roundNumber: 1,
@@ -110,7 +110,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
 
 /** Every game of the week played, home winning each 20-17, so the last game totals 37 points. */
 async function playWeek(games: readonly { id: string }[]) {
-  await getPrisma().sportEventMatch.updateMany({
+  await getPrisma().sportEventRoundMatch.updateMany({
     where: { id: { in: games.map((game) => game.id) } },
     data: { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17 },
   });
@@ -153,7 +153,7 @@ async function submitHomePicks(entryId: string, sportEventId: string, games: rea
     contestEntryId: entryId,
     sportEventId,
     saves: games.map((game) => ({
-      sportEventMatchId: game.id,
+      sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
       confidence: null,
@@ -193,7 +193,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     const reads = (table: string) => statementsOn(statements, StatementVerb.SELECT, table).length;
     // One statement for every week's games; the live week is scored from those, not read again. The
     // other is the season picks' read (#1751) loading which week each pick belongs to.
-    expect(reads('sport_event_matches')).toBe(2);
+    expect(reads('sport_event_round_matches')).toBe(2);
     // The contest's entries once for the board, once for the live week's submitted entries.
     expect(reads('contest_entries')).toBe(2);
     // Every started week's picks in one read (#1751), which the live week's standings score from too.
@@ -239,7 +239,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     const { result: leaderboard, statements } = await recordStatements(() => service.getPickEmLeaderboard(contest.id, viewerId).then((read) => read.board));
 
     expect(leaderboard.weeks.map((week) => [week.settled, week.gameCount, week.tiebreakerTotalPoints])).toEqual([[true, 0, null]]);
-    expect(statementsOn(statements, StatementVerb.SELECT, 'sport_event_matches')).toHaveLength(1);
+    expect(statementsOn(statements, StatementVerb.SELECT, 'sport_event_round_matches')).toHaveLength(1);
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_entry_match_predictions')).toHaveLength(0);
   });
 });
@@ -260,7 +260,7 @@ describe('Pick\'em leaderboard week cells and the current week\'s picks (#1751)'
     const season = await midSeason();
     const [firstGame] = season.liveWeek.games;
     // The live week's first game goes to the away team instead, busting the entry's home pick.
-    await getPrisma().sportEventMatch.update({ where: { id: expectDefined(firstGame).id }, data: { winnerSide: MatchSide.AWAY, homeScore: 10, awayScore: 24 } });
+    await getPrisma().sportEventRoundMatch.update({ where: { id: expectDefined(firstGame).id }, data: { winnerSide: MatchSide.AWAY, homeScore: 10, awayScore: 24 } });
     const homeTeam = await getPrisma().sportEventParticipant.findUniqueOrThrow({
       where: { id: expectDefined(expectDefined(firstGame).homeSportEventParticipantId) },
       include: { participant: true },
@@ -285,7 +285,7 @@ describe('Pick\'em leaderboard week cells and the current week\'s picks (#1751)'
     expect(leaderboard.currentWeekId).toBe(season.liveWeek.event.id);
     const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
     expect(row.currentWeekPicks).toEqual(season.liveWeek.games.map((game, index) => ({
-      sportEventMatchId: game.id,
+      sportEventRoundMatchId: game.id,
       sportEventParticipantId: game.homeSportEventParticipantId,
       // The first two games are played and picked right; the third has kicked off but is not finished.
       outcome: index < 2 ? 'CORRECT' : 'PENDING',
@@ -298,7 +298,7 @@ describe('Pick\'em leaderboard week cells and the current week\'s picks (#1751)'
     const leaderboard = (await serviceOn().getPickEmLeaderboard(contest.id, viewerId)).board;
 
     const row = expectDefined(leaderboard.entries.find((candidate) => candidate.entryId === entry.id));
-    expect(row.currentWeekPicks.map((pick) => pick.sportEventMatchId)).toEqual([expectDefined(week.games[0]).id]);
+    expect(row.currentWeekPicks.map((pick) => pick.sportEventRoundMatchId)).toEqual([expectDefined(week.games[0]).id]);
   });
 
   it('opens on the first week, with no picks shown, before any week has started', async () => {
@@ -324,7 +324,7 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
     const { result, statements } = await recordStatements(() => serviceOn().getPickEmLeaderboard(season.contest.id, season.viewerId));
 
     expect(result).toEqual(first);
-    for (const table of ['contest_entries', 'contest_entry_match_predictions', 'sport_event_matches', 'contest_configurations']) {
+    for (const table of ['contest_entries', 'contest_entry_match_predictions', 'sport_event_round_matches', 'contest_configurations']) {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);

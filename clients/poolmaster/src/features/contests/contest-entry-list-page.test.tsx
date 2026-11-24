@@ -588,8 +588,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     getEventBracketMock.mockResolvedValue({ data: { matches: week2EventGamesFixture() } });
     getGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({
       games: week1Games({
-        1: { sportEventMatchId: 'week2-game-3', pick: weekPick(NFL_TEAMS.packers) },
-        2: { sportEventMatchId: 'week2-game-1', pick: weekPick(NFL_TEAMS.chiefs) },
+        1: { sportEventRoundMatchId: 'week2-game-3', pick: weekPick(NFL_TEAMS.packers) },
+        2: { sportEventRoundMatchId: 'week2-game-1', pick: weekPick(NFL_TEAMS.chiefs) },
       }),
     }) });
 
@@ -610,7 +610,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     listEventParticipantsMock.mockResolvedValue({ data: { participants: pickEmEventFieldFixture('event-1') } });
     getEventBracketMock.mockResolvedValue({ data: { matches: week2EventGamesFixture() } });
     getGamePicksMock.mockResolvedValue({ data: pickEmWeekFixture({
-      games: week1Games({ 2: { sportEventMatchId: 'week2-game-1', pick: weekPick(NFL_TEAMS.chiefs) } }),
+      games: week1Games({ 2: { sportEventRoundMatchId: 'week2-game-1', pick: weekPick(NFL_TEAMS.chiefs) } }),
     }) });
 
     renderContestBoard();

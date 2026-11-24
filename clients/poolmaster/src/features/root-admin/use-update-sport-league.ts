@@ -14,8 +14,8 @@ const logger = getLogger().child({ feature: 'root-admin-sport-league' });
 export const SPORT_LEAGUE_WRITE_INVALIDATES = [
   QueryKeys.rootAdmin.manageSport.leagues,
   QueryKeys.sportLeagues.list(),
-  QueryKeys.rootAdmin.tierProfiles,
-  QueryKeys.rootAdmin.pricingProfiles,
+  QueryKeys.rootAdmin.platformTierProfiles,
+  QueryKeys.rootAdmin.platformPricingProfiles,
 ] as const;
 
 /**

@@ -1,10 +1,10 @@
 import { MatchEnding, Sport, SportLeagueNoun, sportLeagueNounOf, sportVocabulary } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
-import type { SportEventMatchDto } from '@/lib/api';
+import type { SportEventRoundMatchDto } from '@/lib/api';
 import { errorCodeMessage } from '@/lib/errors';
 import { bracketErrors, replacementErrors, ReseedAction, reseededRounds, reseedErrors, roundStarted, unfinishedBefore } from './bracket-copy';
 
-function match(overrides: Partial<SportEventMatchDto> & Pick<SportEventMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventMatchDto {
+function match(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoundMatchDto, 'id' | 'matchNumber' | 'roundNumber'>): SportEventRoundMatchDto {
   return {
     sportEventId: 'evt-1',
     homeSportEventParticipantId: null,
@@ -94,9 +94,9 @@ describe('bracketErrors', () => {
 
   it('names the next match to clear when the admin\'s match feeds one, and says "its next match" when it feeds none known', () => {
     const divisional = match({ id: 'm-3', matchNumber: 3, roundNumber: 2, advancesToMatchId: 'm-5' });
-    expect(errorCodeMessage('SPORT_EVENT_MATCH_RESULT_LOCKED', bracketErrors(tennis, divisional, nfl)))
+    expect(errorCodeMessage('SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', bracketErrors(tennis, divisional, nfl)))
       .toBe('This match\'s winner is already in match 5, which has a score. Clear match 5\'s score first.');
-    expect(errorCodeMessage('SPORT_EVENT_MATCH_RESULT_LOCKED', bracketErrors(tennis)))
+    expect(errorCodeMessage('SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', bracketErrors(tennis)))
       .toBe('This match\'s winner is already in its next match, which has a score. Clear that score first.');
   });
 

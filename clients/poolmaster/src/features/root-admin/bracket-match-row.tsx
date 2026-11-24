@@ -2,7 +2,7 @@ import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useState } from 'react';
 import { isMatchUnplayed, MatchResultSource, MatchSide, MatchStatus } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, postponeEventMatch, recordEventMatchResult } from '@/lib/api';
-import type { SportEventMatchDto } from '@/lib/api';
+import type { SportEventRoundMatchDto } from '@/lib/api';
 import { Button, ConfirmDialog, formatDateTimeDisplay, InlineError, StatusBadge, TableCell, TableRow, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrors, feederOf, formsNoBracket, matchEndingMark, sideEntry } from './bracket-copy';
@@ -22,7 +22,7 @@ import { MATCH_STATUS_TONE } from './match-status';
  * not yet under way can be postponed (#1791), and keeps its picks open until its new time. A match that
  * stopped early, in any sport (#704), is entered under "Ended early".
  */
-export function BracketMatchRow({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
+export function BracketMatchRow({ match, released, context }: { match: SportEventRoundMatchDto; released: boolean; context: BracketContext }) {
   const displayPreferences = useDisplayPreferences();
   const [editing, setEditing] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);

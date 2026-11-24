@@ -51,7 +51,7 @@ import {
   type Sport,
   type SportDefinition,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SportEventParticipant,
   survivorLivesOf,
   type SurvivorContestRules,
@@ -67,7 +67,7 @@ import type {
   LockedPredictionWeek,
   ParticipantContestScoringRuleRepository,
   ParticipantRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventRepository,
   SquadMembershipRepository,
@@ -99,7 +99,7 @@ export interface PredictionServiceDeps {
   entries: Pick<ContestEntryRepository, 'findByIdWithSquad'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent' | 'countDistinctParticipants'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
   predictions: ContestEntryMatchPredictionRepository;
@@ -130,7 +130,7 @@ export interface SaveGamePicksInput extends GamePicksInput {
 }
 
 export interface ClearGamePickInput extends GamePicksInput {
-  sportEventMatchId: string;
+  sportEventRoundMatchId: string;
 }
 
 export interface GamePickTeam {
@@ -142,7 +142,7 @@ export interface GamePickTeam {
 }
 
 export interface GamePickGame {
-  match: SportEventMatch;
+  match: SportEventRoundMatch;
   /** The game's scheduled time, else its event's start. */
   kickoff: Date;
   home: GamePickTeam | null;
@@ -266,9 +266,9 @@ interface WeekSetup {
   /** The field rows withdrawn after the draw (#704): a pick of one made before stands, and loses. */
   withdrawn: Set<string>;
   /** The games the entry picks, in game-number order: cancelled games are not picked, and a bracket's start at its starting round. */
-  games: SportEventMatch[];
+  games: SportEventRoundMatch[];
   /** The game whose total points the tiebreaker guesses, among `games`. */
-  tiebreakerGame: SportEventMatch | null;
+  tiebreakerGame: SportEventRoundMatch | null;
 }
 
 interface WeekContext extends WeekSetup {
@@ -291,7 +291,7 @@ function gameRow(
   setup: Pick<WeekSetup, 'engine' | 'openingRound' | 'sportEvent' | 'window'>,
   contest: Pick<Contest, 'status' | 'drawnAt'>,
   team: (fieldId: string | null) => GamePickTeam | null,
-  match: SportEventMatch,
+  match: SportEventRoundMatch,
   sides: PredictedSides | undefined,
   now: Date,
 ): Omit<GamePreview, 'pick'> {
@@ -335,20 +335,20 @@ export class PredictionService {
     if (context.engine.onePickPerRound) {
       const perRound = new Map<number, number>();
       for (const pick of input.picks) {
-        const round = gamesById.get(pick.sportEventMatchId)?.roundNumber ?? 0;
+        const round = gamesById.get(pick.sportEventRoundMatchId)?.roundNumber ?? 0;
         perRound.set(round, (perRound.get(round) ?? 0) + 1);
       }
       const crowded = [...perRound.values()].find((count) => count > 1);
       if (crowded !== undefined) throw selectionErrors.onePickRequired(context.entry.id, crowded);
     }
     for (const pick of input.picks) {
-      const game = gamesById.get(pick.sportEventMatchId);
-      if (!game) throw selectionErrors.gameNotFound(pick.sportEventMatchId, context.sportEvent.id);
+      const game = gamesById.get(pick.sportEventRoundMatchId);
+      if (!game) throw selectionErrors.gameNotFound(pick.sportEventRoundMatchId, context.sportEvent.id);
       this.assertGameOpen(context, game);
       this.assertNotEliminated(context, game.roundNumber);
       if (pick.predictedResult === PredictedResult.TIE && !context.tiePicksOffered) {
         this.deps.logger?.warn(
-          { action: 'prediction.tieRefused', data: { entryId: context.entry.id, sportEventMatchId: game.id, selectionType: context.selectionType } },
+          { action: 'prediction.tieRefused', data: { entryId: context.entry.id, sportEventRoundMatchId: game.id, selectionType: context.selectionType } },
           'Refused a tie pick in a pool that takes none',
         );
         throw selectionErrors.tieNotOffered(game.id);
@@ -363,19 +363,19 @@ export class PredictionService {
     // name a team its game offers the entry, its earlier picks included; a pick already saved
     // that no longer does (a bracket pick that followed from a changed one) is cleared. The team
     // is checked before the pick's confidence value, as it always was (#716).
-    const saved = new Map(input.picks.map((pick) => [pick.sportEventMatchId, pick]));
+    const saved = new Map(input.picks.map((pick) => [pick.sportEventRoundMatchId, pick]));
     const { after, written } = await this.writeWeek(context, (current) => {
       const resolved = this.resolvePicks(current, [
-        ...current.predictions.filter((prediction) => !saved.has(prediction.sportEventMatchId)),
+        ...current.predictions.filter((prediction) => !saved.has(prediction.sportEventRoundMatchId)),
         ...input.picks,
       ]);
       // Every tie pick being saved is one the pool takes, so a refused pick names a team.
-      const refused = resolved.stranded.filter(isTeamChoice).find((pick) => saved.has(pick.sportEventMatchId));
-      if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
+      const refused = resolved.stranded.filter(isTeamChoice).find((pick) => saved.has(pick.sportEventRoundMatchId));
+      if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventRoundMatchId);
       for (const pick of input.picks) this.assertTeamUnused(current, pick, resolved.kept);
       // A pick a new one replaces (survivor's one pick a week) is cleared only while its game is open.
       for (const pick of resolved.stranded) {
-        const game = gamesById.get(pick.sportEventMatchId);
+        const game = gamesById.get(pick.sportEventRoundMatchId);
         if (game && !saved.has(game.id)) this.assertGameOpen(current, game);
       }
       for (const pick of input.picks) {
@@ -392,7 +392,7 @@ export class PredictionService {
       return {
         after: resolved.kept,
         saves: input.picks,
-        clearedMatchIds: resolved.stranded.map((pick) => pick.sportEventMatchId),
+        clearedMatchIds: resolved.stranded.map((pick) => pick.sportEventRoundMatchId),
         tiebreakerValue: input.tiebreakerValue,
       };
     });
@@ -408,28 +408,28 @@ export class PredictionService {
     const context = await this.loadWeek(input);
     this.assertCanChange(context, input.actorUserId);
 
-    const game = context.games.find((candidate) => candidate.id === input.sportEventMatchId);
-    if (!game) throw selectionErrors.gameNotFound(input.sportEventMatchId, context.sportEvent.id);
+    const game = context.games.find((candidate) => candidate.id === input.sportEventRoundMatchId);
+    if (!game) throw selectionErrors.gameNotFound(input.sportEventRoundMatchId, context.sportEvent.id);
     this.assertGameOpen(context, game);
     this.assertNotEliminated(context, game.roundNumber);
 
     // Judged against the picks as they stand under the entry's lock (#1268): a game with no pick
     // there has nothing to clear.
     const { after, written } = await this.writeWeek(context, (current) => {
-      if (!current.predictions.some((prediction) => prediction.sportEventMatchId === game.id)) return null;
+      if (!current.predictions.some((prediction) => prediction.sportEventRoundMatchId === game.id)) return null;
       if (hasSportEventStarted(current.window, current.now)) {
         throw selectionErrors.clearAfterFirstKickoff(game.id);
       }
-      const resolved = this.resolvePicks(current, current.predictions.filter((prediction) => prediction.sportEventMatchId !== game.id));
+      const resolved = this.resolvePicks(current, current.predictions.filter((prediction) => prediction.sportEventRoundMatchId !== game.id));
       return {
         after: resolved.kept,
         saves: [],
-        clearedMatchIds: [game.id, ...resolved.stranded.map((pick) => pick.sportEventMatchId)],
+        clearedMatchIds: [game.id, ...resolved.stranded.map((pick) => pick.sportEventRoundMatchId)],
       };
     });
     if (written) {
       this.deps.logger?.info(
-        { action: 'prediction.clear', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventMatchId: game.id, clearedCount: written.clearedMatchIds.length } },
+        { action: 'prediction.clear', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventRoundMatchId: game.id, clearedCount: written.clearedMatchIds.length } },
         'Cleared a game pick of a contest entry',
       );
     }
@@ -595,7 +595,7 @@ export class PredictionService {
     if (context.season === null || !isTeamChoice(pick)) return;
     const { sportEventParticipantId } = pick;
     const participantId = context.season.participantIdOf.get(sportEventParticipantId);
-    const usedInAnotherRound = standing.some((other) => other.sportEventMatchId !== pick.sportEventMatchId
+    const usedInAnotherRound = standing.some((other) => other.sportEventRoundMatchId !== pick.sportEventRoundMatchId
       && other.sportEventParticipantId === sportEventParticipantId);
     if (usedInAnotherRound || (participantId !== undefined && context.season.usedTeamWeeks.has(participantId))) {
       throw selectionErrors.teamAlreadyUsed(context.entry.id, sportEventParticipantId);
@@ -655,10 +655,10 @@ export class PredictionService {
     if (season.eliminatedInWeek < weekNumber) throw selectionErrors.entryEliminated(context.entry.id, season.eliminatedInWeek);
   }
 
-  private assertGameOpen(context: WeekContext, game: SportEventMatch): void {
+  private assertGameOpen(context: WeekContext, game: SportEventRoundMatch): void {
     if (!areMatchPicksOpen(context.engine.pickWindow, context.contest, context.window, game, context.openingRound, context.now)) {
       this.deps.logger?.warn(
-        { action: 'prediction.gameStarted', data: { entryId: context.entry.id, sportEventMatchId: game.id } },
+        { action: 'prediction.gameStarted', data: { entryId: context.entry.id, sportEventRoundMatchId: game.id } },
         'Refused a pick change on a game that has started',
       );
       throw selectionErrors.gameStarted(game.id);
@@ -727,7 +727,7 @@ export class PredictionService {
   private weekSetup(
     rules: GameRules,
     sportEvent: SportEvent,
-    matches: SportEventMatch[],
+    matches: SportEventRoundMatch[],
     field: SportEventParticipant[],
   ): WeekSetup {
     const games = rules.selectionType === SelectionType.BRACKET
@@ -766,7 +766,7 @@ export class PredictionService {
   private async loadSeason(
     contest: Contest,
     entry: ContestEntry,
-    week: { sportEvent: SportEvent; matches: readonly SportEventMatch[] },
+    week: { sportEvent: SportEvent; matches: readonly SportEventRoundMatch[] },
     field: readonly SportEventParticipant[],
     { reuseTeamsOnceAllUsed, lives }: { reuseTeamsOnceAllUsed: boolean; lives: number },
     now: Date,
@@ -801,7 +801,7 @@ export class PredictionService {
   private async buildView(context: WeekContext): Promise<GamePicksView> {
     const { contest, engine, sportEvent, window, openingRound, entry, games, now, ownEntry, field } = context;
     const team = await this.teamLookup(field);
-    const predictionByMatchId = new Map(context.predictions.map((prediction) => [prediction.sportEventMatchId, prediction]));
+    const predictionByMatchId = new Map(context.predictions.map((prediction) => [prediction.sportEventRoundMatchId, prediction]));
     const resolved = this.resolvePicks(context, context.predictions);
     const score = await this.scorePicks(context, resolved.kept);
 
@@ -876,8 +876,8 @@ export class PredictionService {
     const setup = this.weekSetup(rules, sportEvent, matches, field);
     const { engine, games } = setup;
     const gameIds = new Set(games.map((game) => game.id));
-    const unknown = input.picks.find((pick) => !gameIds.has(pick.sportEventMatchId));
-    if (unknown) throw selectionErrors.gameNotFound(unknown.sportEventMatchId, sportEvent.id);
+    const unknown = input.picks.find((pick) => !gameIds.has(pick.sportEventRoundMatchId));
+    if (unknown) throw selectionErrors.gameNotFound(unknown.sportEventRoundMatchId, sportEvent.id);
 
     // A saved pick with a confidence value the pool does not take is refused; a trial one is
     // dropped, as a tie pick the sport does not offer is, so the screen shows what would stand.
@@ -893,7 +893,7 @@ export class PredictionService {
       withdrawn: setup.withdrawn,
     });
     const kept = resolved.kept.filter((pick) => setup.tiePicksOffered || isTeamChoice(pick));
-    const pickByMatchId = new Map(kept.map((pick) => [pick.sportEventMatchId, pick]));
+    const pickByMatchId = new Map(kept.map((pick) => [pick.sportEventRoundMatchId, pick]));
     const now = this.now();
 
     return {

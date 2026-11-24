@@ -208,7 +208,7 @@ describe('Bracket contest entry page', () => {
     await waitFor(() => expect(saveGamePicksMock).toHaveBeenCalledTimes(1));
     expect(saveGamePicksMock.mock.calls[0]?.[0]).toMatchObject({
       path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' },
-      body: { picks: [{ sportEventMatchId: 'match-1', sportEventParticipantId: TEAMS.vermont.sportEventParticipantId }] },
+      body: { picks: [{ sportEventRoundMatchId: 'match-1', sportEventParticipantId: TEAMS.vermont.sportEventParticipantId }] },
     });
     await waitFor(() => expect(team(1, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'true'));
     expect(team(5, TEAMS.vermont.sportEventParticipantId)).toHaveAttribute('aria-pressed', 'false');

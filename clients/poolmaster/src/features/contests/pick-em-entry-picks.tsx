@@ -30,7 +30,7 @@ export function PickEmEntryPicks({
     return null;
   }
   const teamName = teamNameIn(names, reportMissingTeam(sportEventId));
-  const picks = new Map(picksQuery.data.games.flatMap((game) => (game.pick ? [[game.sportEventMatchId, game.pick] as const] : [])));
+  const picks = new Map(picksQuery.data.games.flatMap((game) => (game.pick ? [[game.sportEventRoundMatchId, game.pick] as const] : [])));
   const games = pickEmBoardGames(gamesQuery.data, teamName, (startsAt) => formatDateTimeDisplay(startsAt, displayPreferences));
   return (
     <div className="divide-y divide-border" data-testid={`contest-entry-picks-${entryId}`}>

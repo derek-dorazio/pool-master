@@ -5,11 +5,11 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportLeagueCreatePage } from './root-admin-sport-league-create-page';
-import { pricingProfilesFixture, STANDARD_PRICING_PROFILE_ID } from './sport-test-fixtures';
+import { platformPricingProfilesFixture, STANDARD_PLATFORM_PRICING_PROFILE_ID } from './sport-test-fixtures';
 
 // /manage/sports/golf/leagues/new, the New tour page; a new tour then shows on the Sports page.
 
-const { createSportLeagueMock, listTierProfilesMock, listPricingProfilesMock, mockLogger } = vi.hoisted(
+const { createSportLeagueMock, listPlatformTierProfilesMock, listPlatformPricingProfilesMock, mockLogger } = vi.hoisted(
   () => {
     const logger = {
       debug: vi.fn(),
@@ -22,8 +22,8 @@ const { createSportLeagueMock, listTierProfilesMock, listPricingProfilesMock, mo
     logger.child.mockReturnValue(logger);
     return {
       createSportLeagueMock: vi.fn(),
-      listTierProfilesMock: vi.fn(),
-      listPricingProfilesMock: vi.fn(),
+      listPlatformTierProfilesMock: vi.fn(),
+      listPlatformPricingProfilesMock: vi.fn(),
       mockLogger: logger,
     };
   },
@@ -31,23 +31,23 @@ const { createSportLeagueMock, listTierProfilesMock, listPricingProfilesMock, mo
 
 bindApiMocks({
   createSportLeague: createSportLeagueMock,
-  listTierProfiles: listTierProfilesMock,
-  listPricingProfiles: listPricingProfilesMock,
+  listPlatformTierProfiles: listPlatformTierProfilesMock,
+  listPlatformPricingProfiles: listPlatformPricingProfilesMock,
 });
 
-const GOLF_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
+const GOLF_PLATFORM_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
 
 /** The platform's profiles the New tour page offers. */
 function seedProfiles() {
-  listTierProfilesMock.mockResolvedValue({
+  listPlatformTierProfilesMock.mockResolvedValue({
     data: {
-      tierProfiles: [{
-        id: GOLF_TIER_PROFILE_ID, name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
+      platformTierProfiles: [{
+        id: GOLF_PLATFORM_TIER_PROFILE_ID, name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
         sportLeagueCount: 2, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
       }],
     },
   });
-  listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+  listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
 }
 
 /** Picks the golf layout and Standard pricing, which the page asks for before it creates. */
@@ -110,8 +110,8 @@ describe('RootAdminSportLeagueCreatePage', () => {
           body: {
             sport: 'GOLF',
             name: 'DP World Tour',
-            tierProfileId: GOLF_TIER_PROFILE_ID,
-            pricingProfileId: STANDARD_PRICING_PROFILE_ID,
+            platformTierProfileId: GOLF_PLATFORM_TIER_PROFILE_ID,
+            platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
           },
         }),
       ),

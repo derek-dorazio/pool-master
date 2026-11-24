@@ -83,7 +83,7 @@ function fourTeamBracket(ids: { duke: string; vermont: string; houston: string; 
 
 /** The picks side for an event whose named games have picks (#720). */
 function picksOn(...pickedMatchIds: string[]): typeof NO_PICKS_ON_EVENT {
-  return { predictions: { hasAnyOnMatch: async (sportEventMatchId) => pickedMatchIds.includes(sportEventMatchId) } };
+  return { predictions: { hasAnyOnMatch: async (sportEventRoundMatchId) => pickedMatchIds.includes(sportEventRoundMatchId) } };
 }
 
 function bracketOf(context: ReturnType<typeof setup>): BracketMatchInput[] {

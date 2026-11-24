@@ -90,7 +90,7 @@ export function BracketTree({
           ) : null}
           <div className="flex flex-1 flex-col">
             {round.games.map((drawn) => (
-              <GameLines drawn={drawn} isMirrored={isMirrored} key={drawn.game.sportEventMatchId} picking={picking} />
+              <GameLines drawn={drawn} isMirrored={isMirrored} key={drawn.game.sportEventRoundMatchId} picking={picking} />
             ))}
           </div>
         </div>

@@ -452,7 +452,7 @@ filling them in rather than by finding guards scattered through the code:
   with a detail keyed by family, and declares the one live-score category it accepts, or none.
   Built: stroke play (golf), finish position (horse racing, auto racing, cycling, running),
   and head to head (basketball, scored by knockout round points). Head to head's results are its
-  bracket (`SportEventMatch`), part of the event core rather than a family extension table,
+  bracket (`SportEventRoundMatch`), part of the event core rather than a family extension table,
   since pick'em reads the same matches. Finish position's admin results entry (the finishing
   order) and head to head's match results live in their folders; golf's score corrections predate the
   folders and live in `modules/golf`. Each refuses an event whose sport league's family does not

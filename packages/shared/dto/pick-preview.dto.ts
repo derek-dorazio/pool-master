@@ -53,7 +53,7 @@ export const GamePickPreviewRequestSchema = z.object({
     SurvivorContestRulesSchema,
   ]).describe('The setup\'s rules as the form holds them now, unsaved: a pick\'em, bracket or survivor setup.'),
   picks: z.array(GamePickWriteSchema).max(PICK_PREVIEW_PICKS_MAX)
-    .refine((picks) => new Set(picks.map((pick) => pick.sportEventMatchId)).size === picks.length, {
+    .refine((picks) => new Set(picks.map((pick) => pick.sportEventRoundMatchId)).size === picks.length, {
       message: 'Each game is picked at most once.',
     })
     .describe('The picks the commissioner has tapped so far, one per game, as an entry\'s would be. Empty for the screen as a member first sees it.'),

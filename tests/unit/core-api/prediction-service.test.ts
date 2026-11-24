@@ -20,7 +20,7 @@ import {
   type ContestEntry,
   type Sport,
   type SportDefinition,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { PredictionService, type GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import type { SubmittedWeek } from '../../../packages/core-api/src/modules/notifications';
@@ -119,14 +119,14 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
   });
 
   const input = { contestId: contest.id, entryId: aliceEntry.id, sportEventId: sportEvent.id, actorUserId: alice.id };
-  const pick = (game: SportEventMatch, confidence: number | null, side: 'home' | 'away' = 'home'): ContestEntryMatchPredictionWrite => ({
-    sportEventMatchId: game.id,
+  const pick = (game: SportEventRoundMatch, confidence: number | null, side: 'home' | 'away' = 'home'): ContestEntryMatchPredictionWrite => ({
+    sportEventRoundMatchId: game.id,
     predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
     confidence,
   });
-  const tiePick = (game: SportEventMatch, confidence: number | null): ContestEntryMatchPredictionWrite => ({
-    sportEventMatchId: game.id,
+  const tiePick = (game: SportEventRoundMatch, confidence: number | null): ContestEntryMatchPredictionWrite => ({
+    sportEventRoundMatchId: game.id,
     predictedResult: PredictedResult.TIE,
     sportEventParticipantId: null,
     confidence,
@@ -140,7 +140,7 @@ function setup(options: { mode?: PickEmMode; contestStatus?: ContestStatus; sele
     submittedAt: () => expectDefined(world.entries.get(aliceEntry.id)).events
       .find((row) => row.sportEventId === sportEvent.id)?.submittedAt,
     storedPicks: () => [...week.predictions.values()]
-      .map((row) => [row.sportEventMatchId, row.sportEventParticipantId, row.confidence] as const)
+      .map((row) => [row.sportEventRoundMatchId, row.sportEventParticipantId, row.confidence] as const)
       .sort((left, right) => left[0].localeCompare(right[0])),
     setNow: (when: Date) => { now = when; },
     setContestStatus: (status: ContestStatus) => {
@@ -255,7 +255,7 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
     await expectRefused(
       context.service.saveGamePicks({
         ...context.input,
-        picks: [{ sportEventMatchId: context.games.thursday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'field-not-playing', confidence: 3 }],
+        picks: [{ sportEventRoundMatchId: context.games.thursday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'field-not-playing', confidence: 3 }],
       }),
       'PREDICTION_GAME_STARTED', 409,
     );
@@ -266,7 +266,7 @@ describe('PredictionService.saveGamePicks — what a save is refused for', () =>
     await expectRefused(
       context.service.saveGamePicks({
         ...context.input,
-        picks: [{ sportEventMatchId: context.games.sunday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.games.thursday.homeSportEventParticipantId ?? '', confidence: 99 }],
+        picks: [{ sportEventRoundMatchId: context.games.sunday.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.games.thursday.homeSportEventParticipantId ?? '', confidence: 99 }],
       }),
       'PREDICTION_TEAM_NOT_IN_GAME', 400,
     );
@@ -455,11 +455,11 @@ describe('PredictionService — a submitted week before the first kickoff', () =
     const returnedToDraft = () => context.logger.info.mock.calls.filter(([fields]) => (fields as { action?: string }).action === 'prediction.returnedToDraft');
 
     context.failNextWrite();
-    await expect(context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id })).rejects.toThrow('the write failed');
+    await expect(context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id })).rejects.toThrow('the write failed');
     expect(returnedToDraft()).toHaveLength(0);
     expect(context.weekStatus()).toBe(ContestEntryStatus.SUBMITTED);
 
-    await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    await context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id });
     expect(returnedToDraft()).toHaveLength(1);
   });
 
@@ -467,7 +467,7 @@ describe('PredictionService — a submitted week before the first kickoff', () =
     const context = setup();
     await submitFullWeek(context);
 
-    const view = await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    const view = await context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id });
     expect(view.status).toBe(ContestEntryStatus.DRAFT);
     expect(view.submittedAt).toBeNull();
     expect(view.pickedCount).toBe(2);
@@ -496,7 +496,7 @@ describe('PredictionService — a submitted week before the first kickoff', () =
   it('answers clearing a game with no pick with the week unchanged', async () => {
     const context = setup();
     await context.service.saveGamePicks({ ...context.input, picks: [context.pick(context.games.thursday, 3)] });
-    const view = await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    const view = await context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id });
     expect(view.pickedCount).toBe(1);
   });
 });
@@ -533,7 +533,7 @@ describe('PredictionService — what follows a week that moves status, from the 
     expect(context.week.writtenJobs).toEqual([]);
 
     await submitFullWeek(context);
-    await context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id });
+    await context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id });
     expect(context.weekStatus()).toBe(ContestEntryStatus.DRAFT);
     expect(context.week.writtenJobs).toEqual([contestRebuildJob(context.contest.id), contestRebuildJob(context.contest.id)]);
     expect(context.wakes).toHaveBeenCalledTimes(2);
@@ -577,7 +577,7 @@ describe('PredictionService — after the week\'s first kickoff', () => {
   it('refuses clearing a pick on a game still to start with 409 PREDICTION_CLEAR_AFTER_FIRST_KICKOFF, keeping the week submitted', async () => {
     const context = await kickedOff();
     await expectRefused(
-      context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id }),
+      context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id }),
       'PREDICTION_CLEAR_AFTER_FIRST_KICKOFF', 409,
     );
     expect(context.storedPicks()).toHaveLength(3);
@@ -587,7 +587,7 @@ describe('PredictionService — after the week\'s first kickoff', () => {
   it('refuses the clear once the event is IN_PROGRESS, though its start time is still to come', async () => {
     const context = await kickedOff(SportEventStatus.IN_PROGRESS);
     await expectRefused(
-      context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id }),
+      context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id }),
       'PREDICTION_CLEAR_AFTER_FIRST_KICKOFF', 409,
     );
   });
@@ -595,7 +595,7 @@ describe('PredictionService — after the week\'s first kickoff', () => {
   it('refuses clearing the game that has kicked off with 409 PREDICTION_GAME_STARTED', async () => {
     const context = await kickedOff();
     await expectRefused(
-      context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.thursday.id }),
+      context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.thursday.id }),
       'PREDICTION_GAME_STARTED', 409,
     );
   });
@@ -657,7 +657,7 @@ describe('PredictionService — after the week\'s first kickoff', () => {
       'CONTEST_ENTRY_LOCKED', 409,
     );
     await expectRefused(
-      context.service.clearGamePick({ ...context.input, sportEventMatchId: context.games.sunday.id }),
+      context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: context.games.sunday.id }),
       'CONTEST_ENTRY_LOCKED', 409,
     );
   });

@@ -147,7 +147,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
       sport: 'AMERICAN_FOOTBALL',
       name: run.tourName,
-      ...(await sportLeagueProfileIds(api, headers, '7 tiers of 2')),
+      ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
     });
     const eventIds: string[] = [];
     for (const [index, week] of WEEKS.entries()) {

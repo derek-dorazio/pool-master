@@ -1,4 +1,4 @@
-import { MatchResultSource, MatchSide, MatchStatus, ProviderCode, ProviderGameState, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchResultSource, MatchSide, MatchStatus, ProviderCode, ProviderGameState, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import type { MatchLiveScoreWrite } from '@poolmaster/shared/db';
 import { writeGameScores, type GameScoreWriterDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/game-score-writer';
@@ -13,11 +13,11 @@ const EVENT_ID = 'event-1';
 /** A league that plays single games in every round. */
 const EVENT = { id: EVENT_ID, rounds: null, roundSeriesLengths: [] };
 
-function linked(match: SportEventMatch, externalGameId: string | null, overrides: Partial<SportEventMatch> = {}): SportEventMatch {
+function linked(match: SportEventRoundMatch, externalGameId: string | null, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
   return { ...match, externalGameId, ...overrides };
 }
 
-function bracket(): SportEventMatch[] {
+function bracket(): SportEventRoundMatch[] {
   const [first, second, third] = bracketMatches(EVENT_ID, [
     { matchNumber: 1, round: 1, home: 'sep-KC', away: 'sep-BUF' },
     { matchNumber: 2, round: 1, home: 'sep-PHI', away: 'sep-DAL' },
@@ -30,7 +30,7 @@ function game(externalGameId: string, home: string, away: string, homeScore: num
   return { externalGameId, homeTeamExternalId: `bdl-${home}`, awayTeamExternalId: `bdl-${away}`, homeScore, awayScore, state };
 }
 
-function writer(matches: SportEventMatch[], unmappedTeams: readonly string[] = []) {
+function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[] = []) {
   const recordResult = jest.fn<ReturnType<GameScoreWriterDeps['results']['recordResult']>, Parameters<GameScoreWriterDeps['results']['recordResult']>>()
     .mockResolvedValue([]);
   const findByIds = jest.fn(async (ids: readonly string[]) => ids.map((id) => ({ id, participantId: id.replace('sep-', 'p-') })));
@@ -61,7 +61,7 @@ describe('writeGameScores', () => {
     expect(result).toMatchObject({ updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0 });
     expect(result.writeDiagnostics.summary).toMatchObject({ total: 1, updated: 1 });
     expect(result.writeDiagnostics.rows[0]).toMatchObject({
-      entityType: 'SportEventMatch', disposition: 'UPDATED', providerId: 'balldontlie', externalId: 'g1', internalId: 'm1', name: 'Match 1',
+      entityType: 'SportEventRoundMatch', disposition: 'UPDATED', providerId: 'balldontlie', externalId: 'g1', internalId: 'm1', name: 'Match 1',
       before: { winnerSide: null, homeScore: null, awayScore: null }, after: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 24 },
     });
   });
@@ -340,13 +340,13 @@ describe('writeGameScores', () => {
 
   it('skips with a warning a final the match refuses, such as one locked by the next round\'s result, and writes the rest', async () => {
     const { deps, recordResult, logger } = writer(bracket());
-    recordResult.mockRejectedValueOnce(new SportEventError('locked', 'SPORT_EVENT_MATCH_RESULT_LOCKED', 409));
+    recordResult.mockRejectedValueOnce(new SportEventError('locked', 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', 409));
 
     const result = await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', 27, 24), game('g2', 'PHI', 'DAL', 30, 10)]);
 
     expect(recordResult).toHaveBeenCalledTimes(2);
     expect(logger.warn).toHaveBeenCalledWith(
-      { action: 'liveScore.game.refused', data: { sportEventId: EVENT_ID, matchNumber: 1, externalGameId: 'g1', code: 'SPORT_EVENT_MATCH_RESULT_LOCKED' } },
+      { action: 'liveScore.game.refused', data: { sportEventId: EVENT_ID, matchNumber: 1, externalGameId: 'g1', code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' } },
       expect.any(String),
     );
     expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 1 });
@@ -383,7 +383,7 @@ describe('writeGameScores', () => {
     /** A league whose two playoff rounds are both best of seven. */
     const SEVENS = { id: EVENT_ID, rounds: 2, roundSeriesLengths: [7, 7] };
 
-    function series(): SportEventMatch[] {
+    function series(): SportEventRoundMatch[] {
       return bracketMatches(EVENT_ID, [
         { matchNumber: 1, round: 1, home: 'sep-KC', away: 'sep-BUF' },
         { matchNumber: 2, round: 1, home: 'sep-PHI', away: 'sep-DAL' },

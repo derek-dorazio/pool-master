@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MatchSide } from '@poolmaster/shared/domain';
 import { updateEventBracketMatch } from '@/lib/api';
-import type { SportEventMatchDto } from '@/lib/api';
+import type { SportEventRoundMatchDto } from '@/lib/api';
 import { Button, InlineError, Select, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrors, describeEntry } from './bracket-copy';
@@ -21,7 +21,7 @@ export function PairingEditor({
   context,
   onDone,
 }: {
-  match: SportEventMatchDto;
+  match: SportEventRoundMatchDto;
   homeFed: boolean;
   awayFed: boolean;
   context: BracketContext;

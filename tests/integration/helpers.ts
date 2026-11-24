@@ -54,7 +54,7 @@ import { pickPreviewModule } from '../../packages/core-api/src/modules/selection
 import { eventsModule } from '../../packages/core-api/src/modules/events/routes';
 import { sportsModule } from '../../packages/core-api/src/modules/sports/routes';
 import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-leagues/routes';
-import { pricingProfilesModule, tierProfilesModule } from '../../packages/core-api/src/modules/profiles/routes';
+import { platformPricingProfilesModule, platformTierProfilesModule } from '../../packages/core-api/src/modules/profiles/routes';
 import { createProfileServices } from '../../packages/core-api/src/modules/profiles/wiring';
 import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
@@ -447,8 +447,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues', cdn, providers, webhookProviderIds });
   const profiles = createProfileServices(prisma, testApp.log);
-  testApp.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
-  testApp.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
+  testApp.register(platformTierProfilesModule, { prefix: '/api/v1/tier-profiles', platformTierProfiles: profiles.platformTierProfiles });
+  testApp.register(platformPricingProfilesModule, { prefix: '/api/v1/pricing-profiles', platformPricingProfiles: profiles.platformPricingProfiles });
   testApp.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements, domainEvents });
   testApp.register(pickPreviewModule, { prefix: '/api/v1/leagues/:id/pick-preview', planEntitlements, domainEvents });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
@@ -862,7 +862,7 @@ async function cleanupSportEventParticipantArtifacts(
 
   // Matches name field rows and each other with RESTRICT foreign keys, so the whole bracket of
   // an event goes before its teams.
-  await database.sportEventMatch.deleteMany({
+  await database.sportEventRoundMatch.deleteMany({
     where: {
       sportEvent: {
         sportEventParticipants: { some: { id: { in: sportEventParticipantIds } } },
@@ -1034,7 +1034,7 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.providerSyncFinding.deleteMany();
   await prisma.backgroundJob.deleteMany();
   // Matches name field rows, rounds and each other with RESTRICT foreign keys, so the bracket goes first.
-  await prisma.sportEventMatch.deleteMany();
+  await prisma.sportEventRoundMatch.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
   await prisma.sportEventParticipantRound.deleteMany();
   // Keep standing cleanup before SportEventParticipant because the standing

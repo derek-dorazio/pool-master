@@ -36,7 +36,7 @@ import type {
   ContestSquaresRepository,
   LeagueRepository,
   ReminderCheck,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
@@ -57,7 +57,7 @@ import {
   type ContestSelectionConfig,
   type League,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type User,
   hasSportEventStarted,
 } from '@poolmaster/shared/domain';
@@ -123,7 +123,7 @@ export interface EntryReminderDeps extends LeagueMemberDeps {
   /** The contest's rules: its cutoff, and a draft's roster size. A sweep reads them together. */
   configurations: Pick<ContestConfigurationRepository, 'findByContest' | 'findByContests'>;
   /** By event for cutoffs and a week's games; across events for a survivor season. */
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
   entries: Pick<ContestEntryRepository, 'findByContest'>;
   /** A roster draft's picks, for its progress. */
   picks: Pick<ContestEntryPickRepository, 'findByEntriesWithParticipant'>;
@@ -242,7 +242,7 @@ export class EntryReminders implements DueNotifications {
     const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
     // Each event's window closes at the contest's cutoff on it: a second-chance bracket's is its
     // starting round, after the event itself has started, and a squares grid's is its game's kickoff.
-    const games: SportEventMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START
+    const games: SportEventRoundMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START
       ? []
       : await deps.matches.findBySportEvents(contestEvents.map((sportEvent) => sportEvent.id));
     const windows = contestEvents.map((sportEvent) => ({
@@ -438,7 +438,7 @@ export class EntryReminders implements DueNotifications {
           : allGames.filter((game) => game.status !== MatchStatus.CANCELLED);
         const gameIds = new Set(games.map((game) => game.id));
         const predictions = (await this.deps.predictions.findByEntriesAndEvent(ids, sportEvent.id))
-          .filter((prediction) => gameIds.has(prediction.sportEventMatchId));
+          .filter((prediction) => gameIds.has(prediction.sportEventRoundMatchId));
         made = countBy(predictions.map((prediction) => prediction.contestEntryId));
         of = games.length;
         break;

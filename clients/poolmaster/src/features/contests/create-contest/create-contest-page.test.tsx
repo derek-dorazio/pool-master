@@ -1725,7 +1725,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       sportEventIds: ['nfl-playoffs'],
       contestFormat: 'SQUARES',
       selectionType: 'SQUARES',
-      sportEventMatchId: 'game-afc',
+      sportEventRoundMatchId: 'game-afc',
       configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
     });
   });

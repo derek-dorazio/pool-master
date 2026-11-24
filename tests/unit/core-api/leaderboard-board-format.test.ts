@@ -29,6 +29,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   // #2040: AUTO_NAME leaves the valuation sources. A narrowing, so a format-7 task still serves a
   // format-8 board; participants keep their deprecated, always-empty externalIds.
   8: '4da23d0c552682230276679f528469edafebffb7a52380e4adaa408d7c9227b2',
+  // League model 3 (#2000): SportEventMatchDto renamed SportEventRoundMatchDto; the fields are the same.
+  9: '39e1f479550d5d8165a2637da525300e23b9c80b0b46195c5e4e89888d417fd7',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

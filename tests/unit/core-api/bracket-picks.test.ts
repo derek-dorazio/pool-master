@@ -34,7 +34,7 @@ import {
 
 const { HOME, AWAY } = MatchSide;
 const sidesOf = (resolved: ReturnType<typeof resolveBracketPicks>, matchNumber: number) => resolved.sides.get(`m${matchNumber}`);
-const ids = (picks: ReadonlyArray<{ sportEventMatchId: string }>) => picks.map((each) => each.sportEventMatchId);
+const ids = (picks: ReadonlyArray<{ sportEventRoundMatchId: string }>) => picks.map((each) => each.sportEventRoundMatchId);
 
 describe('resolveBracketPicks — a fixed-link bracket', () => {
   it('offers each first-round game its real teams and a later game the teams the entry picked to win the games feeding it', () => {
@@ -129,7 +129,7 @@ describe('resolveBracketPicks — a reseeded round, as the NFL plays its Divisio
     const before = [...wildCard, pick(7, 'AFC-1'), pick(8, 'AFC-5'), pick(11, 'AFC-5')];
     expect(resolveBracketPicks(nflPlayoff(), before, NFL_SEEDS).stranded).toEqual([]);
 
-    const after = before.map((each) => (each.sportEventMatchId === 'm1' ? pick(1, 'AFC-2') : each));
+    const after = before.map((each) => (each.sportEventRoundMatchId === 'm1' ? pick(1, 'AFC-2') : each));
     const resolved = resolveBracketPicks(nflPlayoff(), after, NFL_SEEDS);
 
     expect(sidesOf(resolved, 7)).toEqual({ home: 'AFC-1', away: 'AFC-5' });

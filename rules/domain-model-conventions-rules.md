@@ -457,7 +457,7 @@ Season's slot) never need context to tell apart.
   (`SportEventRound`, `SportEventParticipant`, …) extend its name.
 - **A platform setting a league picks is a `Platform…Profile` table**, and the league's
   column that picks one is `platform…ProfileId` (`PlatformTierProfile` and
-  `SportLeague.platformTierProfileId`). A profile is defined once, at platform level, and
+  `SportLeague.platformPlatformTierProfileId`). A profile is defined once, at platform level, and
   shared; nothing sets it per sport.
 - **A row of settings that is copied into something when it is created is named
   `…Template`** (`ContestConfigTemplate`); the copy belongs to its target, so a later change
@@ -512,7 +512,7 @@ table set for every variant.
     belongs to the Season, so no standing row is written for them. A new sport adds data and,
     at most, columns every row of the shape can carry, never a `…GolfRound` or `…RaceResult`
     beside the shared shape.
-  - *Status:* today's schema still has the per-family tables (`SportEventMatch` with home
+  - *Status:* today's schema still has the per-family tables (`SportEventRoundMatch` with home
     and away columns, `SportEventParticipantGolfRound`, `…RaceResult`). Code that touches
     them extends nothing new onto them; the league model redesign replaces them (ADR 0012).
 - **A new shape goes with its scoring family, not its sport.** Where a family scores
@@ -882,7 +882,7 @@ ids; the mapping points at it.
   provider an id came from; a provider code in a constant or a `Record`; a sync that falls
   back to a default when a provider value is unknown.
 - *Status:* today's schema still holds provider keys on rows (`SportEvent.externalId`,
-  `Participant.externalId`, `SportEventMatch.externalGameId` and others;
+  `Participant.externalId`, `SportEventRoundMatch.externalGameId` and others;
   `SportLeague.matchKeyword` was replaced by `SportLeagueProviderMapping` in #1997). A change that touches one adds no new reader of it; the league model
   redesign moves them (ADR 0012).
 

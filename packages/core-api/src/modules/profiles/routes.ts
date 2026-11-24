@@ -7,12 +7,12 @@ import rateLimit from '@fastify/rate-limit';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type {
   ApiErrorCode,
-  PricingProfileListResponse,
-  PricingProfileResponse,
-  PricingProfileWriteRequest,
-  TierProfileListResponse,
-  TierProfileResponse,
-  TierProfileWriteRequest,
+  PlatformPricingProfileListResponse,
+  PlatformPricingProfileResponse,
+  PlatformPricingProfileWriteRequest,
+  PlatformTierProfileListResponse,
+  PlatformTierProfileResponse,
+  PlatformTierProfileWriteRequest,
 } from '@poolmaster/shared/dto';
 // Registers ErrorEnvelope, which this module's error responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
@@ -21,8 +21,8 @@ import '@poolmaster/shared/dto/profiles.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { requireRootAdmin } from '../../core/root-admin-guard';
-import { toPricingProfileDto, toTierProfileDto } from '../../mappers';
-import type { PricingProfileService, TierProfileService } from './profile-service';
+import { toPlatformPricingProfileDto, toPlatformTierProfileDto } from '../../mappers';
+import type { PlatformPricingProfileService, PlatformTierProfileService } from './profile-service';
 
 const PROFILE_PARAMS = {
   type: 'object',
@@ -63,28 +63,28 @@ function errors(...statuses: number[]) {
   return Object.fromEntries([...statuses, 429].map((status) => [status, envelope]));
 }
 
-export interface TierProfilesModuleOptions {
-  tierProfiles: TierProfileService;
+export interface PlatformTierProfilesModuleOptions {
+  platformTierProfiles: PlatformTierProfileService;
 }
 
-export async function tierProfilesModule(fastify: FastifyInstance, opts: TierProfilesModuleOptions): Promise<void> {
+export async function platformTierProfilesModule(fastify: FastifyInstance, opts: PlatformTierProfilesModuleOptions): Promise<void> {
   void fastify.register(schemaComponentsPlugin);
   await registerProfileRateLimit(fastify);
   fastify.addHook('onRequest', requireRootAdmin);
   const tags = ['Tier profiles'];
-  const { tierProfiles } = opts;
+  const { platformTierProfiles } = opts;
 
   fastify.get('/', {
     schema: {
       tags,
       summary: 'List tier profiles',
       description: 'Every tier profile, by name, each with how many sport leagues name it. Root admin only.' + RATE_LIMITED,
-      operationId: 'listTierProfiles',
-      response: { 200: schemaRef('TierProfileListResponse'), ...errors(401, 403) },
+      operationId: 'listPlatformTierProfiles',
+      response: { 200: schemaRef('PlatformTierProfileListResponse'), ...errors(401, 403) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (): Promise<TierProfileListResponse> => ({
-      tierProfiles: (await tierProfiles.list()).map(({ profile, sportLeagueCount }) => toTierProfileDto(profile, sportLeagueCount)),
+    handler: async (): Promise<PlatformTierProfileListResponse> => ({
+      platformTierProfiles: (await platformTierProfiles.list()).map(({ profile, sportLeagueCount }) => toPlatformTierProfileDto(profile, sportLeagueCount)),
     }),
   });
 
@@ -92,15 +92,15 @@ export async function tierProfilesModule(fastify: FastifyInstance, opts: TierPro
     schema: {
       tags,
       summary: 'Get a tier profile',
-      description: '404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
-      operationId: 'getTierProfile',
+      description: '404 PLATFORM_TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
+      operationId: 'getPlatformTierProfile',
       params: PROFILE_PARAMS,
-      response: { 200: schemaRef('TierProfileResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('PlatformTierProfileResponse'), ...errors(401, 403, 404) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (request: FastifyRequest<ProfileParams>): Promise<TierProfileResponse> => {
-      const { profile, sportLeagueCount } = await tierProfiles.get(request.params.profileId);
-      return { tierProfile: toTierProfileDto(profile, sportLeagueCount) };
+    handler: async (request: FastifyRequest<ProfileParams>): Promise<PlatformTierProfileResponse> => {
+      const { profile, sportLeagueCount } = await platformTierProfiles.get(request.params.profileId);
+      return { platformTierProfile: toPlatformTierProfileDto(profile, sportLeagueCount) };
     },
   });
 
@@ -108,15 +108,15 @@ export async function tierProfilesModule(fastify: FastifyInstance, opts: TierPro
     schema: {
       tags,
       summary: 'Create a tier profile',
-      description: '409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only.' + RATE_LIMITED,
-      operationId: 'createTierProfile',
-      body: schemaRef('TierProfileWriteRequest'),
-      response: { 201: schemaRef('TierProfileResponse'), ...errors(400, 401, 403, 409, 422) },
+      description: '409 PLATFORM_TIER_PROFILE_CODE_TAKEN or PLATFORM_TIER_PROFILE_NAME_TAKEN when another tier profile has the code or the name; 422 PLATFORM_TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only.' + RATE_LIMITED,
+      operationId: 'createPlatformTierProfile',
+      body: schemaRef('PlatformTierProfileWriteRequest'),
+      response: { 201: schemaRef('PlatformTierProfileResponse'), ...errors(400, 401, 403, 409, 422) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (request: FastifyRequest<{ Body: TierProfileWriteRequest }>, reply: FastifyReply) => {
-      const { profile, sportLeagueCount } = await tierProfiles.create(request.body);
-      return reply.status(201).send({ tierProfile: toTierProfileDto(profile, sportLeagueCount) } satisfies TierProfileResponse);
+    handler: async (request: FastifyRequest<{ Body: PlatformTierProfileWriteRequest }>, reply: FastifyReply) => {
+      const { profile, sportLeagueCount } = await platformTierProfiles.create(request.body);
+      return reply.status(201).send({ platformTierProfile: toPlatformTierProfileDto(profile, sportLeagueCount) } satisfies PlatformTierProfileResponse);
     },
   });
 
@@ -125,16 +125,16 @@ export async function tierProfilesModule(fastify: FastifyInstance, opts: TierPro
       tags,
       summary: 'Update a tier profile',
       description: 'Replaces the profile\'s name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. '
-        + '404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only.' + RATE_LIMITED,
-      operationId: 'updateTierProfile',
+        + '404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create. Root admin only.' + RATE_LIMITED,
+      operationId: 'updatePlatformTierProfile',
       params: PROFILE_PARAMS,
-      body: schemaRef('TierProfileWriteRequest'),
-      response: { 200: schemaRef('TierProfileResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+      body: schemaRef('PlatformTierProfileWriteRequest'),
+      response: { 200: schemaRef('PlatformTierProfileResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (request: FastifyRequest<ProfileParams & { Body: TierProfileWriteRequest }>): Promise<TierProfileResponse> => {
-      const { profile, sportLeagueCount } = await tierProfiles.update(request.params.profileId, request.body);
-      return { tierProfile: toTierProfileDto(profile, sportLeagueCount) };
+    handler: async (request: FastifyRequest<ProfileParams & { Body: PlatformTierProfileWriteRequest }>): Promise<PlatformTierProfileResponse> => {
+      const { profile, sportLeagueCount } = await platformTierProfiles.update(request.params.profileId, request.body);
+      return { platformTierProfile: toPlatformTierProfileDto(profile, sportLeagueCount) };
     },
   });
 
@@ -142,41 +142,41 @@ export async function tierProfilesModule(fastify: FastifyInstance, opts: TierPro
     schema: {
       tags,
       summary: 'Delete a tier profile',
-      description: '409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
-      operationId: 'deleteTierProfile',
+      description: '409 PLATFORM_TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
+      operationId: 'deletePlatformTierProfile',
       params: PROFILE_PARAMS,
       response: { 204: { type: 'null' }, ...errors(401, 403, 404, 409) },
     },
     config: RATE_LIMIT_CONFIG,
     handler: async (request: FastifyRequest<ProfileParams>, reply: FastifyReply) => {
-      await tierProfiles.delete(request.params.profileId);
+      await platformTierProfiles.delete(request.params.profileId);
       return reply.status(204).send();
     },
   });
 }
 
-export interface PricingProfilesModuleOptions {
-  pricingProfiles: PricingProfileService;
+export interface PlatformPricingProfilesModuleOptions {
+  platformPricingProfiles: PlatformPricingProfileService;
 }
 
-export async function pricingProfilesModule(fastify: FastifyInstance, opts: PricingProfilesModuleOptions): Promise<void> {
+export async function platformPricingProfilesModule(fastify: FastifyInstance, opts: PlatformPricingProfilesModuleOptions): Promise<void> {
   void fastify.register(schemaComponentsPlugin);
   await registerProfileRateLimit(fastify);
   fastify.addHook('onRequest', requireRootAdmin);
   const tags = ['Pricing profiles'];
-  const { pricingProfiles } = opts;
+  const { platformPricingProfiles } = opts;
 
   fastify.get('/', {
     schema: {
       tags,
       summary: 'List pricing profiles',
       description: 'Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event\'s Tiers page offers them. Root admin only.' + RATE_LIMITED,
-      operationId: 'listPricingProfiles',
-      response: { 200: schemaRef('PricingProfileListResponse'), ...errors(401, 403) },
+      operationId: 'listPlatformPricingProfiles',
+      response: { 200: schemaRef('PlatformPricingProfileListResponse'), ...errors(401, 403) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (): Promise<PricingProfileListResponse> => ({
-      pricingProfiles: (await pricingProfiles.list()).map(({ profile, sportLeagueCount }) => toPricingProfileDto(profile, sportLeagueCount)),
+    handler: async (): Promise<PlatformPricingProfileListResponse> => ({
+      platformPricingProfiles: (await platformPricingProfiles.list()).map(({ profile, sportLeagueCount }) => toPlatformPricingProfileDto(profile, sportLeagueCount)),
     }),
   });
 
@@ -184,15 +184,15 @@ export async function pricingProfilesModule(fastify: FastifyInstance, opts: Pric
     schema: {
       tags,
       summary: 'Get a pricing profile',
-      description: '404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
-      operationId: 'getPricingProfile',
+      description: '404 PLATFORM_PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
+      operationId: 'getPlatformPricingProfile',
       params: PROFILE_PARAMS,
-      response: { 200: schemaRef('PricingProfileResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('PlatformPricingProfileResponse'), ...errors(401, 403, 404) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (request: FastifyRequest<ProfileParams>): Promise<PricingProfileResponse> => {
-      const { profile, sportLeagueCount } = await pricingProfiles.get(request.params.profileId);
-      return { pricingProfile: toPricingProfileDto(profile, sportLeagueCount) };
+    handler: async (request: FastifyRequest<ProfileParams>): Promise<PlatformPricingProfileResponse> => {
+      const { profile, sportLeagueCount } = await platformPricingProfiles.get(request.params.profileId);
+      return { platformPricingProfile: toPlatformPricingProfileDto(profile, sportLeagueCount) };
     },
   });
 
@@ -200,15 +200,15 @@ export async function pricingProfilesModule(fastify: FastifyInstance, opts: Pric
     schema: {
       tags,
       summary: 'Create a pricing profile',
-      description: '409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only.' + RATE_LIMITED,
-      operationId: 'createPricingProfile',
-      body: schemaRef('PricingProfileWriteRequest'),
-      response: { 201: schemaRef('PricingProfileResponse'), ...errors(400, 401, 403, 409, 422) },
+      description: '409 PLATFORM_PRICING_PROFILE_CODE_TAKEN or PLATFORM_PRICING_PROFILE_NAME_TAKEN when another pricing profile has the code or the name; 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only.' + RATE_LIMITED,
+      operationId: 'createPlatformPricingProfile',
+      body: schemaRef('PlatformPricingProfileWriteRequest'),
+      response: { 201: schemaRef('PlatformPricingProfileResponse'), ...errors(400, 401, 403, 409, 422) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (request: FastifyRequest<{ Body: PricingProfileWriteRequest }>, reply: FastifyReply) => {
-      const { profile, sportLeagueCount } = await pricingProfiles.create(request.body);
-      return reply.status(201).send({ pricingProfile: toPricingProfileDto(profile, sportLeagueCount) } satisfies PricingProfileResponse);
+    handler: async (request: FastifyRequest<{ Body: PlatformPricingProfileWriteRequest }>, reply: FastifyReply) => {
+      const { profile, sportLeagueCount } = await platformPricingProfiles.create(request.body);
+      return reply.status(201).send({ platformPricingProfile: toPlatformPricingProfileDto(profile, sportLeagueCount) } satisfies PlatformPricingProfileResponse);
     },
   });
 
@@ -217,16 +217,16 @@ export async function pricingProfilesModule(fastify: FastifyInstance, opts: Pric
       tags,
       summary: 'Update a pricing profile',
       description: 'Replaces the profile\'s name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. '
-        + '404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only.' + RATE_LIMITED,
-      operationId: 'updatePricingProfile',
+        + '404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create. Root admin only.' + RATE_LIMITED,
+      operationId: 'updatePlatformPricingProfile',
       params: PROFILE_PARAMS,
-      body: schemaRef('PricingProfileWriteRequest'),
-      response: { 200: schemaRef('PricingProfileResponse'), ...errors(400, 401, 403, 404, 409, 422) },
+      body: schemaRef('PlatformPricingProfileWriteRequest'),
+      response: { 200: schemaRef('PlatformPricingProfileResponse'), ...errors(400, 401, 403, 404, 409, 422) },
     },
     config: RATE_LIMIT_CONFIG,
-    handler: async (request: FastifyRequest<ProfileParams & { Body: PricingProfileWriteRequest }>): Promise<PricingProfileResponse> => {
-      const { profile, sportLeagueCount } = await pricingProfiles.update(request.params.profileId, request.body);
-      return { pricingProfile: toPricingProfileDto(profile, sportLeagueCount) };
+    handler: async (request: FastifyRequest<ProfileParams & { Body: PlatformPricingProfileWriteRequest }>): Promise<PlatformPricingProfileResponse> => {
+      const { profile, sportLeagueCount } = await platformPricingProfiles.update(request.params.profileId, request.body);
+      return { platformPricingProfile: toPlatformPricingProfileDto(profile, sportLeagueCount) };
     },
   });
 
@@ -234,14 +234,14 @@ export async function pricingProfilesModule(fastify: FastifyInstance, opts: Pric
     schema: {
       tags,
       summary: 'Delete a pricing profile',
-      description: '409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
-      operationId: 'deletePricingProfile',
+      description: '409 PLATFORM_PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only.' + RATE_LIMITED,
+      operationId: 'deletePlatformPricingProfile',
       params: PROFILE_PARAMS,
       response: { 204: { type: 'null' }, ...errors(401, 403, 404, 409) },
     },
     config: RATE_LIMIT_CONFIG,
     handler: async (request: FastifyRequest<ProfileParams>, reply: FastifyReply) => {
-      await pricingProfiles.delete(request.params.profileId);
+      await platformPricingProfiles.delete(request.params.profileId);
       return reply.status(204).send();
     },
   });

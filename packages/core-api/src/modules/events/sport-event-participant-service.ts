@@ -25,7 +25,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
   SportEventParticipantPatch,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventParticipantView,
   SportEventParticipantValuationRepository,
@@ -176,7 +176,7 @@ export interface SportEventParticipantServiceDeps {
   participants: ParticipantRepository;
   /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
   mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   /** The event's tiers and valuations, read when a save moves a participant into another tier. */
   tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
   valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getEvent, getEventBracket, listEventRounds, listEventTiers } from '@/lib/api';
 import type {
   SportEventDto,
-  SportEventMatchDto,
+  SportEventRoundMatchDto,
   SportEventRoundDto,
   SportEventTierDto,
 } from '@/lib/api';
@@ -84,7 +84,7 @@ export function useSportEventRoundsQuery(eventId: string) {
 export function useSportEventBracketQuery(eventId: string) {
   return useQuery({
     queryKey: QueryKeys.rootAdmin.manageSport.bracket(eventId),
-    queryFn: async (): Promise<SportEventMatchDto[]> => {
+    queryFn: async (): Promise<SportEventRoundMatchDto[]> => {
       const response = await getEventBracket({ path: { eventId } });
       if (!response.data?.matches) {
         throwApiError(response.error, 'Event bracket response is missing data.');

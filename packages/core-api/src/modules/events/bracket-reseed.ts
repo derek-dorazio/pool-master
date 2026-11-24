@@ -8,7 +8,7 @@
  * in its own region. A side an earlier match's link fills keeps that winner.
  */
 
-import { isMatchUnplayed, MatchSide, MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
+import { isMatchUnplayed, MatchSide, MatchStatus, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 
 /** Both sides of one match of a reseeded round, as the admin sets them. */
 export interface RoundMatchup {
@@ -28,16 +28,16 @@ interface EnteringTeam {
 
 const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
 
-function sideOf(match: Pick<SportEventMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>, side: MatchSide): string | null {
+function sideOf(match: Pick<SportEventRoundMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>, side: MatchSide): string | null {
   return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
 }
 
-function winnerOf(match: SportEventMatch): string | null {
+function winnerOf(match: SportEventRoundMatch): string | null {
   return match.status === MatchStatus.COMPLETED && match.winnerSide !== null ? sideOf(match, match.winnerSide) : null;
 }
 
 /** The rounds whose teams are placed by reseeding: each after a round with a match that links nowhere, below the last. */
-export function reseededRounds(bracket: readonly SportEventMatch[]): Set<number> {
+export function reseededRounds(bracket: readonly SportEventRoundMatch[]): Set<number> {
   const lastRound = Math.max(0, ...bracket.map((match) => match.roundNumber));
   return new Set(bracket
     .filter((match) => match.advancesToMatchId === null && match.roundNumber < lastRound)
@@ -60,7 +60,7 @@ export interface ReseededPlaceGap {
  * (fewer). It counts the round before's matches, not its named teams, since in a round after a
  * reseeded round those are placed later too.
  */
-export function findReseededPlaceGaps(bracket: readonly SportEventMatch[]): ReseededPlaceGap[] {
+export function findReseededPlaceGaps(bracket: readonly SportEventRoundMatch[]): ReseededPlaceGap[] {
   const fedSides = new Set(bracket
     .filter((match) => match.advancesToMatchId !== null && match.advancesToSide !== null)
     .map((match) => `${match.advancesToMatchId}/${match.advancesToSide}`));
@@ -90,7 +90,7 @@ function bySeed(left: EnteringTeam, right: EnteringTeam): number {
  * Why a reseeded round cannot be placed yet, or null: the round before has a match without a
  * result, or the round has started.
  */
-export function roundPlacementBlocker(bracket: readonly SportEventMatch[], roundNumber: number): { code: 'BRACKET_ROUND_NOT_FINISHED' | 'BRACKET_ROUND_ALREADY_PLAYED'; reason: string } | null {
+export function roundPlacementBlocker(bracket: readonly SportEventRoundMatch[], roundNumber: number): { code: 'BRACKET_ROUND_NOT_FINISHED' | 'BRACKET_ROUND_ALREADY_PLAYED'; reason: string } | null {
   const unfinished = bracket.filter((match) => match.roundNumber === roundNumber - 1 && match.status !== MatchStatus.COMPLETED);
   if (unfinished.length > 0) {
     return {
@@ -115,7 +115,7 @@ export function roundPlacementBlocker(bracket: readonly SportEventMatch[], round
  * region; a team named in the round that did not play the round before is a bye, and a side a
  * link fills keeps its winner. Both hold their place.
  */
-function enteringTeams(bracket: readonly SportEventMatch[], roundNumber: number, seedOf: ReadonlyMap<string, number | null>): EnteringTeam[] {
+function enteringTeams(bracket: readonly SportEventRoundMatch[], roundNumber: number, seedOf: ReadonlyMap<string, number | null>): EnteringTeam[] {
   const previous = bracket.filter((match) => match.roundNumber === roundNumber - 1);
   const round = bracket.filter((match) => match.roundNumber === roundNumber);
   const playedBefore = new Set(previous.flatMap((match) => SIDES.map((side) => sideOf(match, side))).filter((id): id is string => id !== null));
@@ -151,7 +151,7 @@ function enteringTeams(bracket: readonly SportEventMatch[], roundNumber: number,
  * order.
  */
 export function proposeRoundMatchups(
-  bracket: readonly SportEventMatch[],
+  bracket: readonly SportEventRoundMatch[],
   roundNumber: number,
   seedOf: ReadonlyMap<string, number | null>,
 ): { matchups: RoundMatchup[]; problems: string[] } {
@@ -205,7 +205,7 @@ export function proposeRoundMatchups(
  * round plays once, in its own region; a team holding its place (a bye, a link's winner) keeps it.
  */
 export function findRoundMatchupProblems(
-  bracket: readonly SportEventMatch[],
+  bracket: readonly SportEventRoundMatch[],
   roundNumber: number,
   matchups: readonly RoundMatchup[],
   seedOf: ReadonlyMap<string, number | null>,

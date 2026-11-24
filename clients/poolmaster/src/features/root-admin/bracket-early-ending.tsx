@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MatchEnding, MatchSide } from '@poolmaster/shared/domain';
 import { recordEventMatchResult } from '@/lib/api';
-import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { Button, InlineError, Select, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrors } from './bracket-copy';
@@ -25,7 +25,7 @@ export function EarlyEndingResult({
   away,
   context,
 }: {
-  match: SportEventMatchDto;
+  match: SportEventRoundMatchDto;
   home: SportEventParticipantDto;
   away: SportEventParticipantDto;
   context: BracketContext;

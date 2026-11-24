@@ -3,7 +3,7 @@
  * screens stay inside the limit, a script hammering a route gets 429 PROFILE_RATE_LIMITED.
  */
 import { expect } from '@jest/globals';
-import { ErrorEnvelopeSchema, PricingProfileListResponseSchema, TierProfileListResponseSchema } from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema, PlatformPricingProfileListResponseSchema, PlatformTierProfileListResponseSchema } from '@poolmaster/shared/dto';
 import { PROFILE_REQUESTS_PER_MINUTE } from '../../../packages/core-api/src/modules/profiles/routes';
 import { createTestUser, getApp, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 
@@ -12,8 +12,8 @@ afterAll(() => teardownIntegrationTests());
 
 describe('Profile route rate limit', () => {
   it.each([
-    ['/api/v1/tier-profiles/', TierProfileListResponseSchema, '10.0.1.7', '10.0.1.8'],
-    ['/api/v1/pricing-profiles/', PricingProfileListResponseSchema, '10.0.2.7', '10.0.2.8'],
+    ['/api/v1/tier-profiles/', PlatformTierProfileListResponseSchema, '10.0.1.7', '10.0.1.8'],
+    ['/api/v1/pricing-profiles/', PlatformPricingProfileListResponseSchema, '10.0.2.7', '10.0.2.8'],
   ])('answers every read of %s up to the minute\'s limit, then 429 PROFILE_RATE_LIMITED for that address only', async (url, schema, address, otherAddress) => {
     const app = getApp();
     const rootAdmin = await createTestUser({ isRootAdmin: true });

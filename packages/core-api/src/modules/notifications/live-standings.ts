@@ -36,7 +36,7 @@ import type {
   ContestEntryEventStandingRepository,
   ContestRepository,
   LeagueRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
@@ -99,7 +99,7 @@ export interface LiveStandingsDeps extends LeagueMemberDeps {
   eventStandings: Pick<ContestEntryEventStandingRepository, 'findByContest'>;
   leaderboards: Pick<ContestService, 'leaderboardOf' | 'pickEmLeaderboardOf' | 'survivorLeaderboardOf' | 'bracketStandingsOf'>;
   /** A bracket's games, for when a round finished and when the next one starts. */
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   /** A bracket contest's rules, for the round it starts at. */
   configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
   /** The event's sport league: named on the email, and a bracket's round names in its words. */

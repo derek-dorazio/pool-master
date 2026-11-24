@@ -4,14 +4,14 @@
  * its games has its result or was cancelled, and it finished when the last of them was written: a
  * game records no result time of its own, so its last write is when its result went in.
  */
-import { MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchStatus, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import type { FinishedRound } from '../stroke-play/finished-rounds';
 
 const DECIDED_MATCH_STATUSES: readonly MatchStatus[] = [MatchStatus.COMPLETED, MatchStatus.CANCELLED];
 
 /** The highest round whose every game is decided, from `fromRound` on, or null before any is. */
 export function lastFinishedMatchRound(
-  matches: readonly Pick<SportEventMatch, 'roundNumber' | 'status' | 'updatedAt'>[],
+  matches: readonly Pick<SportEventRoundMatch, 'roundNumber' | 'status' | 'updatedAt'>[],
   fromRound = 1,
 ): FinishedRound | null {
   const roundNumbers = [...new Set(matches.map((match) => match.roundNumber))]

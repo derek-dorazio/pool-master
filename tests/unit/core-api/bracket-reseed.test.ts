@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { MatchEnding, MatchSide, MatchStatus, type SportEventMatch } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   findReseededPlaceGaps,
   findRoundMatchupProblems,
@@ -26,7 +26,7 @@ interface MatchSpec {
   advancesTo?: { matchNumber: number; side: MatchSide };
 }
 
-function nflPlayoff(): SportEventMatch[] {
+function nflPlayoff(): SportEventRoundMatch[] {
   const specs: MatchSpec[] = [
     { matchNumber: 1, round: 1, home: 'AFC-2', away: 'AFC-7', region: 'AFC' },
     { matchNumber: 2, round: 1, home: 'AFC-3', away: 'AFC-6', region: 'AFC' },
@@ -71,7 +71,7 @@ function nflPlayoff(): SportEventMatch[] {
 }
 
 /** The bracket after Wild Card weekend, each match won by the side named. */
-function afterWildCard(winners: ReadonlyMap<number, MatchSide>): SportEventMatch[] {
+function afterWildCard(winners: ReadonlyMap<number, MatchSide>): SportEventRoundMatch[] {
   return nflPlayoff().map((match) => {
     const winnerSide = winners.get(match.matchNumber);
     return winnerSide === undefined ? match : { ...match, status: MatchStatus.COMPLETED, winnerSide };
@@ -152,7 +152,7 @@ describe('proposeRoundMatchups', () => {
 
 describe('an NFL bracket whose conference championships are reseeded too', () => {
   // The Divisional games link nowhere, so the best seed left hosts each conference championship.
-  const unlinkedDivisional = (): SportEventMatch[] => nflPlayoff().map((match) => (match.roundNumber === 2
+  const unlinkedDivisional = (): SportEventRoundMatch[] => nflPlayoff().map((match) => (match.roundNumber === 2
     ? { ...match, advancesToMatchId: null, advancesToSide: null }
     : match));
 
@@ -217,7 +217,7 @@ describe('findRoundMatchupProblems', () => {
 });
 
 describe('findBracketProblems on a league that reseeds', () => {
-  const asInput = (match: SportEventMatch): BracketMatchInput => ({
+  const asInput = (match: SportEventRoundMatch): BracketMatchInput => ({
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
     homeSportEventParticipantId: match.homeSportEventParticipantId,

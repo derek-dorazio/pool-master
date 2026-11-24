@@ -2,10 +2,10 @@
  * Bracket mapper (#698) — an event's matches → their DTOs, dates as ISO strings.
  */
 
-import type { SportEventMatch } from '@poolmaster/shared/domain';
-import type { SportEventMatchDto } from '@poolmaster/shared/dto/bracket.dto';
+import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
+import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
 
-export function mapSportEventMatchToDto(match: SportEventMatch): SportEventMatchDto {
+export function mapSportEventRoundMatchToDto(match: SportEventRoundMatch): SportEventRoundMatchDto {
   return {
     id: match.id,
     sportEventId: match.sportEventId,

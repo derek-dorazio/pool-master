@@ -7,7 +7,7 @@
 import type {
   ContestEntryMatchPredictionRepository,
   ContestEntryWithSquad,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
 } from '@poolmaster/shared/db';
 import { PickOutcome, SelectionType, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type SportEvent } from '@poolmaster/shared/domain';
 import {
@@ -29,7 +29,7 @@ import {
 
 export interface BracketStandingsReadDeps extends ContestLeaderboardReadDeps {
   predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
 }
 
 /** An entry's pick to win a bracket's final, and how that pick stands (#877, #1753). */
@@ -119,7 +119,7 @@ export async function loadBracketStandings(
     // A bracket pick names a team (#792): a tie pick is never one.
     const { kept } = resolveBracketPicks(games, (picksByEntry.get(entry.id) ?? []).filter(isTeamChoice), seedOf, withdrawn);
     const score = scoreBracketPicks(games, kept, seedOf, settings, withdrawn);
-    const finalPick = final ? kept.find((pick) => pick.sportEventMatchId === final.id) : undefined;
+    const finalPick = final ? kept.find((pick) => pick.sportEventRoundMatchId === final.id) : undefined;
     const row = finalPick ? rowOf.get(finalPick.sportEventParticipantId) : undefined;
     const champion: BracketChampionPick | null = final && row
       ? {

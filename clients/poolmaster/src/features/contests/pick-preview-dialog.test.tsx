@@ -80,7 +80,7 @@ function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTe
     gameCount: 1,
     tiebreakerMatchId: 'match-1',
     games: [{
-      sportEventMatchId: 'match-1',
+      sportEventRoundMatchId: 'match-1',
       matchNumber: 1,
       roundNumber: 1,
       kickoff: '2099-11-22T18:00:00.000Z',
@@ -202,7 +202,7 @@ describe('Preview contest entry', () => {
       body: {
         sportEventId: nflEvent.id,
         rules: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: true },
-        picks: [{ sportEventMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: 'sep-bills' }],
+        picks: [{ sportEventRoundMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: 'sep-bills' }],
       },
     }));
     expect(saveGamePicksMock).not.toHaveBeenCalled();

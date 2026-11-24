@@ -15,12 +15,12 @@ describe('toGamePickWrites', () => {
   it('reads a team pick with its team and a tie pick with none, an omitted confidence as none', () => {
     expect(toGamePickWrites({
       picks: [
-        { sportEventMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: TEAM, confidence: 2 },
-        { sportEventMatchId: GAME, predictedResult: PredictedResult.TIE, sportEventParticipantId: null },
+        { sportEventRoundMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: TEAM, confidence: 2 },
+        { sportEventRoundMatchId: GAME, predictedResult: PredictedResult.TIE, sportEventParticipantId: null },
       ],
     })).toEqual([
-      { sportEventMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: TEAM, confidence: 2 },
-      { sportEventMatchId: GAME, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: null },
+      { sportEventRoundMatchId: GAME, predictedResult: PredictedResult.TEAM, sportEventParticipantId: TEAM, confidence: 2 },
+      { sportEventRoundMatchId: GAME, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: null },
     ]);
   });
 
@@ -28,7 +28,7 @@ describe('toGamePickWrites', () => {
     ['a team pick naming no team', { predictedResult: PredictedResult.TEAM, sportEventParticipantId: null }],
     ['a tie pick naming a team', { predictedResult: PredictedResult.TIE, sportEventParticipantId: TEAM }],
   ])('refuses %s with 400 PREDICTION_PICK_INVALID', (_label, choice) => {
-    const read = () => toGamePickWrites({ picks: [{ sportEventMatchId: GAME, ...choice }] });
+    const read = () => toGamePickWrites({ picks: [{ sportEventRoundMatchId: GAME, ...choice }] });
 
     expect(read).toThrow(SelectionError);
     expect(read).toThrow(expect.objectContaining({ code: 'PREDICTION_PICK_INVALID', statusCode: 400 }));

@@ -120,7 +120,7 @@ describe('POST /leagues/:id/pick-preview/games', () => {
     const response = await preview('games', league.id, commissioner, {
       sportEventId: event.id,
       rules: CONFIDENCE,
-      picks: [{ sportEventMatchId: first.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: first.awaySportEventParticipantId, confidence: 2 }],
+      picks: [{ sportEventRoundMatchId: first.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: first.awaySportEventParticipantId, confidence: 2 }],
     });
     expect(response.statusCode).toBe(200);
     const parsed = GamePickPreviewResponseSchema.safeParse(response.json());
@@ -153,7 +153,7 @@ describe('POST /leagues/:id/pick-preview/games', () => {
       call: async ({ commissioner, league, event, games }) => okBody(await preview('games', league.id, commissioner, {
         sportEventId: event.id,
         rules: CONFIDENCE,
-        picks: games.map((game) => ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: game.homeSportEventParticipantId, confidence: null })),
+        picks: games.map((game) => ({ sportEventRoundMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: game.homeSportEventParticipantId, confidence: null })),
       }), GamePickPreviewResponseSchema),
       rowsShown: (body) => body.pickedCount,
     });

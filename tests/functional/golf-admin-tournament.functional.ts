@@ -534,7 +534,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const deny = { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' };
 
     // Deliberately malformed ids and bodies: the refusal must not depend on — or reveal — the input's shape.
-    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', name: `denied-${RUN}`, tierProfileId: 'x', pricingProfileId: 'x' } }), deny);
+    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', name: `denied-${RUN}`, platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
     expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { currentEventYear: 2030 } }), deny);
     expectFunctionalError(await cloneEventYear({ client: c, body: { sportLeagueId: 'x', eventYear: 2030 } }), deny);
     expectFunctionalError(await importEventYearFromProvider({ client: c, body: { sportLeagueId: 'x', eventYear: 2030, providerId: 'x' } }), deny);

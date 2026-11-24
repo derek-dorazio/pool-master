@@ -786,7 +786,7 @@ export interface StandingsEmailPositionRepository {
 
 /** One game's pick as it is saved (#716): replaces the entry's pick on that game, if any. */
 export type ContestEntryMatchPredictionWrite = PredictedChoice & {
-  sportEventMatchId: string;
+  sportEventRoundMatchId: string;
   confidence: number | null;
 };
 
@@ -844,7 +844,7 @@ export interface ContestEntryMatchPredictionRepository {
   /** Several entries' picks on several events' games, each with its event and team: a survivor season's read (#719). */
   findByEntriesAndEvents(contestEntryIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestEntrySeasonPrediction[]>;
   /** Whether any entry, in any contest, has a pick on the game: its spread is then fixed (#720). */
-  hasAnyOnMatch(sportEventMatchId: string): Promise<boolean>;
+  hasAnyOnMatch(sportEventRoundMatchId: string): Promise<boolean>;
   save(change: ContestEntryMatchPredictionSave): Promise<ContestEntryMatchPredictionSaveResult>;
 }
 
