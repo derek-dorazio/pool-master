@@ -756,6 +756,9 @@ Contest:
   contest in it is final; the API returns `isOver`. Crowning freezes its points; the
   commissioner `crownCup` route and button go. A year can't close with a cup uncrowned. A
   correction after crowning raises a finding.
+- Clutch Cards for the 2027 NFL playoffs (Derek 2026-11-24): the goal stays (#937 closed,
+  replaced by slice 26 from the sync); slices are built in the best order with slice 26
+  targeted before late January.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
