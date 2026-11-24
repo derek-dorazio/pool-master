@@ -805,6 +805,9 @@ Contest:
   budget pool on the same event, so cups add no per-slot limit; every counted contest
   counts. The Trophy case help says which contests count. A league that wants practice
   contests out of its Championship picks the "Cup contests" counting profile.
+- Crowning cups plan feature (Derek 2026-11-24, slice 20f): cups crown automatically on
+  every plan, so the CUP_CROWNING plan feature, its gate, its plan-list label and its
+  pricing-table row are removed.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
