@@ -300,4 +300,30 @@ describe('RootAdminRunEventSyncPage', () => {
     });
 
   });
+
+  it('says so when provider health or the Season\'s events fail to load', async () => {
+    listProvidersMock.mockResolvedValue({ error: { error: { code: 'TEST_UNKNOWN', message: 'Providers are down.' } } });
+    listEventsMock.mockResolvedValue({ error: { error: { code: 'TEST_UNKNOWN', message: 'Events are down.' } } });
+
+    renderPage();
+
+    expect(await screen.findByText(/Provider health context is unavailable/)).toBeInTheDocument();
+    expect(await screen.findByText('Loaded events are unavailable right now.')).toBeInTheDocument();
+  });
+
+  it('says the sync could not be submitted when the API refuses it, and logs it as a warning naming the event', async () => {
+    submitEventSyncMock.mockResolvedValue({ error: { error: { code: 'TEST_UNKNOWN', message: 'That event cannot sync now.' } } });
+    renderPage();
+
+    await screen.findByRole('option', { name: /Manual Test Golf Tournament/ });
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-event-id'), { target: { value: 'event-internal-1' } });
+    await waitFor(() => expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled());
+    fireEvent.click(screen.getByTestId('root-admin-event-sync-now'));
+
+    expect(await screen.findByText('We could not submit the event sync right now.')).toBeInTheDocument();
+    const [fields, message] = mockLogger.warn.mock.calls.at(-1) as [{ action: string; data: { eventId: string | null } }, string];
+    expect(fields).toMatchObject({ action: 'rootAdmin.eventSync.failed', data: { eventId: 'golf-masters-2026' } });
+    expect(message).toBe('Manual provider event sync failed');
+  });
+
 });
