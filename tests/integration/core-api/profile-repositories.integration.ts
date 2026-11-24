@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { Sport, TierProfileLastTier } from '@poolmaster/shared/domain';
 import { PrismaPricingProfileRepository, PrismaTierProfileRepository } from '../../../packages/core-api/src/adapters';
 import { getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { SPORT_TIER_PROFILE_NAME, STAT_POOL_TIER_PROFILE_NAME, leagueProfiles } from '../../support/league-profiles';
+import { SPORT_TIER_PROFILE_NAME, leagueProfiles } from '../../support/league-profiles';
 import { expectDefined } from '../../support/expect-defined';
 
 const made = { tierProfileIds: new Set<string>(), pricingProfileIds: new Set<string>(), sportLeagueIds: new Set<string>() };
@@ -25,6 +25,9 @@ afterAll(async () => {
 function uniqueName(label: string): string {
   return `${label} ${randomUUID().slice(0, 8)}`;
 }
+
+/** The id the baseline gave the "6 tiers of 5" profile, which migration 20271218003500 deletes. */
+const OLD_STAT_POOL_TIER_PROFILE_ID = '3ab96023-4255-43c1-ab20-f4c79ae926ec';
 
 const STANDARD_VALUES = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
@@ -46,12 +49,16 @@ describe('The migration to tier and pricing profiles', () => {
   });
 
   it('makes each old layout a profile whose last tier takes everyone left, named for its count and size', async () => {
-    const profiles = await getPrisma().tierProfile.findMany({ where: { name: { in: [...Object.values(SPORT_TIER_PROFILE_NAME), STAT_POOL_TIER_PROFILE_NAME, '6 tiers of 2', '2 tiers of 2'] } } });
+    const profiles = await getPrisma().tierProfile.findMany({ where: { name: { in: [...Object.values(SPORT_TIER_PROFILE_NAME), '6 tiers of 2', '2 tiers of 2'] } } });
 
-    expect(profiles.length).toBe(13);
+    expect(profiles.length).toBe(12);
     for (const profile of profiles) {
       expect(profile).toMatchObject({ name: `${profile.tierCount} tiers of ${profile.tierSize}`, lastTier: 'ALL_REMAINING', lastTierMax: null });
     }
+  });
+
+  it('leaves out the old stat pools\' six-of-five profile, which no sport league names since the old Clutch Card leagues went (#2059)', async () => {
+    await expect(getPrisma().tierProfile.findUnique({ where: { id: OLD_STAT_POOL_TIER_PROFILE_ID } })).resolves.toBeNull();
   });
 
   it('makes Standard and Small pricing profiles from the Budget pricing settings\' defaults, points every sport league at Standard, and drops the settings group', async () => {
