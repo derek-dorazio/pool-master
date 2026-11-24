@@ -66,3 +66,54 @@ describe('Sport leagues with no data provider', () => {
     expect(setups).toBeGreaterThan(0);
   });
 });
+
+/**
+ * The active leagues no provider feeds, switched off by id (#2072). The names are for the reader;
+ * the rows are found by the ids the baseline reference data gave them.
+ */
+const FEEDLESS_SWITCHED_OFF: Record<string, string> = {
+  'c4d2cda5-f6df-4156-8fc2-26bfb5b3352d': 'LPGA Tour',
+  '1d4245e7-27e5-4386-bb2f-fad87ef7b8e5': 'MLS',
+  '6fa88e2c-e828-40f4-9ba1-be3302e54d18': 'ATP',
+  '89753830-f4b5-4c3e-8f30-8dac2465061b': 'WTA',
+  '5e1930aa-989b-4b92-85f0-a3d604f4a546': 'UEFA Champions League',
+};
+/**
+ * Formula 1, active with no feed yet only because slice 10d (#2045) builds its feed. If 10d has not
+ * landed before QA is rebuilt (slice 29), Formula 1 is switched off too and this exception goes.
+ */
+const FORMULA_1_ID = '7ec9d58e-cfa0-4f8e-b7b5-1986cce18d37';
+
+describe('Active sport leagues with no feed', () => {
+  it('switches off the LPGA Tour, MLS, the ATP, the WTA and the Champions League, which no provider league maps', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({
+      where: { id: { in: Object.keys(FEEDLESS_SWITCHED_OFF) } },
+      select: { id: true, isActive: true },
+    });
+
+    expect(Object.fromEntries(leagues.map(({ id, isActive }) => [FEEDLESS_SWITCHED_OFF[id], isActive]))).toEqual(
+      Object.fromEntries(Object.values(FEEDLESS_SWITCHED_OFF).map((name) => [name, false])),
+    );
+  });
+
+  it('leaves no league active without a provider mapping but Formula 1, whose feed is still to come', async () => {
+    const unfed = await getPrisma().sportLeague.findMany({
+      where: { isActive: true, sportLeagueProviderMappings: { none: {} } },
+      select: { id: true },
+    });
+
+    expect(unfed.map(({ id }) => id)).toEqual([FORMULA_1_ID]);
+  });
+
+  it('keeps the switched-off leagues\' contest setups, so a feed brings each back with one flip', async () => {
+    const setups = await getPrisma().contestConfigTemplate.groupBy({
+      by: ['sportLeagueId'],
+      where: { sportLeagueId: { in: Object.keys(FEEDLESS_SWITCHED_OFF) } },
+      _count: { _all: true },
+    });
+
+    expect(setups.map(({ sportLeagueId }) => FEEDLESS_SWITCHED_OFF[sportLeagueId]).sort()).toEqual(
+      Object.values(FEEDLESS_SWITCHED_OFF).sort(),
+    );
+  });
+});
