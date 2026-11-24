@@ -14,6 +14,8 @@ import { NO_ROUND_RESULTS, roundProgressOf, type RoundProgress, type SportEventR
 import { SportEventError } from './errors';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+/** How many rounds `providerEventRoundSchedule` makes. Deleted with it in slice 10b. */
+const PROVIDER_EVENT_DEFAULT_ROUNDS = 4;
 
 /** A round with where it stands (#1889): what the rounds read answers with. */
 export type SportEventRoundView = SportEventRound & { progress: RoundProgress };
@@ -107,6 +109,19 @@ export class SportEventRoundService {
     );
     return this.deps.rounds.findBySportEvent(sportEventId);
   }
+}
+
+/**
+ * A provider event's schedule when no round count is given: four rounds a day apart from
+ * `startDate`, the fourth on `endDate` when the provider sends one. A stopgap until slice 10b
+ * of the league model redesign takes the round count from the event's Round rows and deletes it.
+ */
+export function providerEventRoundSchedule(startDate: Date, endDate: Date | null): SportEventRoundSchedule[] {
+  const schedule = dailyRoundSchedule(PROVIDER_EVENT_DEFAULT_ROUNDS, startDate);
+  if (endDate === null) return schedule;
+  return schedule.map((round) => round.roundNumber === PROVIDER_EVENT_DEFAULT_ROUNDS
+    ? { ...round, scheduledDate: endDate }
+    : round);
 }
 
 /** The default schedule: rounds 1..`rounds` a day apart from `startDate`. */

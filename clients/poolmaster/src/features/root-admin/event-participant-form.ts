@@ -11,7 +11,6 @@ import {
 const NUMERIC_MESSAGES: Record<EventFieldNumericKey, string> = {
   ranking: 'Rank is a whole number from 1, or blank',
   seedNumber: 'Seed is a whole number from 1, or blank',
-  oddsToWin: 'Odds are a number above 0, or blank',
   price: 'Price is a whole number from 0, or blank',
 };
 
@@ -25,7 +24,6 @@ export const participantSchema = z.object({
   tierKey: z.string(),
   price: numeric('price'),
   ranking: numeric('ranking'),
-  oddsToWin: numeric('oddsToWin'),
   seedNumber: numeric('seedNumber'),
 });
 export type ParticipantValues = z.infer<typeof participantSchema>;
@@ -41,12 +39,11 @@ export function participantValuesOf(entry: EventFieldEntry, tiers: readonly Spor
     tierKey: tier?.tierKey ?? '',
     price: typed(eventFieldServerValue(entry, 'price')),
     ranking: typed(entry.ranking),
-    oddsToWin: typed(entry.oddsToWin),
     seedNumber: typed(entry.seedNumber),
   };
 }
 
-/** What the dialog may correct: tier and price until release; rank, odds and seed only where no feed sets them. */
+/** What the dialog may correct: tier and price until release; rank and seed only where no feed sets them. */
 export type ParticipantEditable = { tierAndPrice: boolean; orderValues: boolean };
 
 /**
@@ -62,7 +59,7 @@ export function participantCorrection(
 ): EventFieldPatch | null {
   const keys: EventFieldNumericKey[] = [
     ...(editable.tierAndPrice ? ['price' as const] : []),
-    ...(editable.orderValues ? (['ranking', 'oddsToWin', 'seedNumber'] as const) : []),
+    ...(editable.orderValues ? (['ranking', 'seedNumber'] as const) : []),
   ];
   const changes: Partial<Record<EventFieldNumericKey, number | null>> = {};
   for (const key of keys) {

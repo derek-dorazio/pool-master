@@ -26,7 +26,6 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
     participants: store.participantRepo(), mappings: store.mappingRepo(),
     matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     domainEvents,
-    random: () => 0.5,
   });
   return { store, service, sport, sportLeague, event, domainEvents };
 }
@@ -155,23 +154,6 @@ describe('SportEventParticipantService.getEventParticipant', () => {
 });
 
 describe('SportEventParticipantService — changing the field', () => {
-  it('seeds from the sport league\'s active affiliations with derived seeds and odds, skipping ones already on the field', async () => {
-    const { store, service, sport, sportLeague, event } = setup();
-    const onField = store.addParticipant(sport.id, 'Already');
-    const fresh = store.addParticipant(sport.id, 'Fresh');
-    const retired = store.addParticipant(sport.id, 'Retired', { status: 'RETIRED' });
-    for (const participant of [onField, fresh, retired]) store.affiliate(sportLeague.id, participant.id, 1);
-    store.addToField(event.id, onField.id, { seedNumber: 9 });
-
-    const result = await service.seedFromSportLeague(event.id);
-
-    expect(result).toEqual({ added: 1, skipped: 1, total: 2, seedNumbersDerived: 1, oddsDerived: 1 });
-    const added = store.field.find((entry) => entry.participantId === fresh.id);
-    expect(added).toMatchObject({ seedNumber: 1, ranking: 1 });
-    expect(added?.oddsToWin).toEqual(expect.any(Number));
-    expect(store.field.find((entry) => entry.participantId === onField.id)?.seedNumber).toBe(9);
-  });
-
   it('adds anyone to the field, skipping ones already on it', async () => {
     const { store, service, sport, event } = setup();
     const already = store.addParticipant(sport.id, 'A');
@@ -207,7 +189,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const updateMany = jest.spyOn(field, 'updateMany');
     const service = new SportEventParticipantService({ domainEvents: testDomainEvents(),
       sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(), mappings: store.mappingRepo(),
-      matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(), random: () => 0.5,
+      matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     });
     const same = store.addToField(event.id, store.addParticipant(sport.id, 'Same').id, { ranking: 4, oddsToWin: 20 });
     const moved = store.addToField(event.id, store.addParticipant(sport.id, 'Moved').id, { ranking: 5, oddsToWin: 30 });
@@ -542,19 +524,17 @@ describe('SportEventParticipantService — play-in places', () => {
 });
 
 describe('SportEventParticipantService — leaderboard rebuild (#1466)', () => {
-  it('writes the event\'s rebuild job with each field write (seed, add, grid save, removal) and wakes the runner after each', async () => {
-    const { store, service, sport, sportLeague, event, domainEvents } = setup();
-    store.affiliate(sportLeague.id, store.addParticipant(sport.id, 'Seeded').id, 1);
+  it('writes the event\'s rebuild job with each field write (add, grid save, removal) and wakes the runner after each', async () => {
+    const { store, service, sport, event, domainEvents } = setup();
     const guest = store.addParticipant(sport.id, 'Guest', { sportLeagueId: store.addSportLeague(sport.id, 'LIV Golf').id });
 
-    await service.seedFromSportLeague(event.id);
     await service.addParticipants(event.id, [guest.id]);
     const added = expectDefined(store.field.find((entry) => entry.participantId === guest.id));
     await service.updateParticipants(event.id, [{ sportEventParticipantId: added.id, ranking: 3 }]);
     await service.removeParticipant(event.id, added.id);
 
-    expect(store.backgroundJobs).toEqual(Array.from({ length: 4 }, () => eventRebuildJob(event.id)));
-    expect(domainEvents.changedSportEventIds).toEqual([event.id, event.id, event.id, event.id]);
+    expect(store.backgroundJobs).toEqual(Array.from({ length: 3 }, () => eventRebuildJob(event.id)));
+    expect(domainEvents.changedSportEventIds).toEqual([event.id, event.id, event.id]);
   });
 
   it('writes no rebuild when an add finds everyone already on the field, and none for a refused removal', async () => {

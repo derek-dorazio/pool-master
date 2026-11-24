@@ -29101,47 +29101,6 @@
         "additionalProperties": false,
         "description": "What adding participants did."
       },
-      "SeedSportEventParticipantsResponse": {
-        "type": "object",
-        "properties": {
-          "added": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "skipped": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Already on the field."
-          },
-          "total": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
-            "description": "Active affiliations considered."
-          },
-          "seedNumbersDerived": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "oddsDerived": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          }
-        },
-        "required": [
-          "added",
-          "skipped",
-          "total",
-          "seedNumbersDerived",
-          "oddsDerived"
-        ],
-        "additionalProperties": false,
-        "description": "What seeding the field from the event's sport league did."
-      },
       "UpdateSportEventParticipantsRequest": {
         "type": "object",
         "properties": {
@@ -83409,89 +83368,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportEventParticipantListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/events/{eventId}/participants/seed": {
-      "post": {
-        "operationId": "seedEventParticipants",
-        "summary": "Seed a sport event's field from its sport league",
-        "tags": [
-          "Events"
-        ],
-        "description": "Adds the sport league's active participants with derived seeds and odds; ones already on the field are skipped. Root admin only.",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "path",
-            "name": "eventId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "What seeding the field from the event's sport league did.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SeedSportEventParticipantsResponse"
                 }
               }
             }

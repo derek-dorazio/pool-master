@@ -5,13 +5,11 @@ import { extractErrorMessage } from '@/lib/errors';
 import { EventFieldAddParticipantsModal } from './event-field-add-participants-modal';
 import { EventFieldGridCard } from './event-field-grid-card';
 import { EventFieldRefreshAction } from './event-field-refresh-action';
-import { EventFieldSeedAction } from './event-field-seed-action';
 import { useEventPage } from './event-page-context';
 import { EventSyncsCard } from './event-syncs-card';
 import { PriceAssignAction } from './price-assign-action';
 import { sportEventHasScoreSync } from './sport-admin-utils';
 import { TierAutoAssignActions } from './tier-auto-assign-actions';
-import { useSportLeagueNoun } from './use-sport-catalog';
 import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
 
 /**
@@ -24,7 +22,6 @@ export function EventFieldTab() {
   const [addOpen, setAddOpen] = useState(false);
   const fieldQuery = useSportEventFieldQuery(event.id);
   const tiersQuery = useSportEventTiersQuery(event.id);
-  const sportLeagueNoun = useSportLeagueNoun(event.sport, event.sportLeagueId);
   const entries = useMemo(() => fieldQuery.data ?? [], [fieldQuery.data]);
   const existingParticipantIds = useMemo(() => new Set(entries.map((entry) => entry.participantId)), [entries]);
   const locked = event.tiersLocked;
@@ -51,7 +48,6 @@ export function EventFieldTab() {
       )}
       {isSynced ? null : (
         <>
-          <EventFieldSeedAction eventId={event.id} sport={event.sport} sportLeague={sportLeagueNoun} />
           <Button data-testid="root-admin-event-field-add" onClick={() => setAddOpen(true)} size="sm">
             Add more participants
           </Button>

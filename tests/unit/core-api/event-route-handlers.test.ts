@@ -94,7 +94,6 @@ function fakes() {
       listEventParticipants: fn([fieldRow]),
       getEventParticipant: fn(fieldRow),
       listCachedEventParticipants: fn([fieldRow]),
-      seedFromSportLeague: fn({ addedCount: 3 }),
       addParticipants: fn({ addedCount: 1 }),
       updateParticipants: fn([fieldRow]),
       previewUpload: fn([]),
@@ -413,11 +412,10 @@ describe('rounds, field and tiers', () => {
     ]);
   });
 
-  it('reads the cached field, seeds and adds to it, and answers each field write with the field', async () => {
+  it('reads the cached field, adds to it, and answers each field write with the field', async () => {
     const { services, handlers } = fakes();
 
     const listed = await callHandler(handlers.listEventParticipants, stubRequest({ params }));
-    const seeded = await callHandler(handlers.seedEventParticipants, stubRequest({ params }));
     const added = await callHandler(handlers.addEventParticipants, stubRequest({ params, body: { participantIds: ['p1'] } }));
     const updated = await callHandler(handlers.updateEventParticipants, stubRequest({ params, body: { participants: [] } }));
     const preview = await callHandler(handlers.previewEventParticipantUpload, stubRequest({ params, body: { rows: [] } }));
@@ -425,7 +423,6 @@ describe('rounds, field and tiers', () => {
     const removed = await callHandler(handlers.removeEventParticipant, stubRequest({ params: { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' } }));
 
     expect(listed.body).toMatchObject({ participants: [{ id: 'sep-1' }] });
-    expect(seeded.body).toEqual({ addedCount: 3 });
     expect(services.field.addParticipants).toHaveBeenCalledWith(EVENT_ID, ['p1']);
     expect(added.body).toEqual({ addedCount: 1 });
     expect(updated.body).toMatchObject({ participants: [{ id: 'sep-1' }] });
