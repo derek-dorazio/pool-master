@@ -590,6 +590,7 @@ enum PrismaProviderSyncFindingStatus {
 
 /// What a sync finding is about (#1999).
 enum PrismaProviderSyncFindingKind {
+  PROVIDER_RATE_LIMITED
   UNMAPPED_PARTICIPANT
   WEBHOOK_SECRET_MISSING
 }
