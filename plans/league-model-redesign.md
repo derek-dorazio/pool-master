@@ -642,7 +642,7 @@ Contest:
 - `Contest.startsAt` stops being a stored cutoff; the cutoff function is the one source, the
   API returns it, and the SQL that hides never-opening drafts calls the same rule; the web
   app's lock, entry, current-event and squares-game helpers read API fields (slices 16/18).
-- Tiebreaker (Derek 2026-11-23, slice 18): the kind and its range live in the scoring
+- Tiebreaker (Derek 2026-11-23, slice 18b): the kind and its range live in the scoring
   configuration's settings, e.g. `"tiebreaker": { "kind": "WINNING_SCORE", "min": -30,
   "max": 10 }` (so `tiebreakerKind` is not a separate column), seeded per league by
   migration and returned by the API; the web app's `WINNING_SCORE_OPTIONS` goes. An entry's
@@ -686,7 +686,7 @@ Contest:
   definitions are never deleted while a Season slot points at them. Fallback (Derek): if the
   trophy design needs a stable identity across structure changes, revisit with a template
   phase coverage row (`ContestConfigTemplatePhase`).
-- Cups (Derek 2026-11-24, slice 20): a cup adds up the counted contests that cover a single
+- Cups (Derek 2026-11-24, slice 20c): a cup adds up the counted contests that cover a single
   slot and rank every entry by its own choices (today tiered, budget and the Clutch Card;
   both tiered and budget count). Contests covering several slots (pick'em, survivor,
   bracket, a majors pool) crown their own winner and never count; squares and quick pick
@@ -714,7 +714,7 @@ Contest:
   contest assigned to it is final (not on 31 December). History lists contests by the
   calendar year they completed. The plan's earlier "LeagueYearFinish → Season FK" is
   replaced.
-- Finishes and medals (Derek 2026-11-24, slice 20): `LeagueYearFinish` is renamed
+- Finishes and medals (Derek 2026-11-24, slice 20b): `LeagueYearFinish` is renamed
   `ContestSquadFinish` (one row per team per settled contest, from its best entry: place,
   tied, ranked entries, points, `championshipYear` copied from the contest). Every
   contest type with a finishing order writes them (tiered, budget, quick pick, pick'em,
@@ -724,20 +724,20 @@ Contest:
   contest (its Masters finishes by Season) reads the same rows through the covered slot; its
   team-page screen is #1996.
   Hall of Lame and the record book are unchanged apart from the year rename.
-- Perpetual trophies (Derek 2026-11-24, slice 20): one per (League, `ContestConfigTemplate`),
+- Perpetual trophies (Derek 2026-11-24, slice 20d): one per (League, `ContestConfigTemplate`),
   a real FK replacing the event-series + selection-type key string; named from the template
   and sport league; one plate per Season with that Season's winners; "repeat winner" means
   consecutive Seasons. A contest whose covered slots are all `slotKind` WEEK gets none
   (replaces the `isWeekOfGames` game-count guess). A trophy shows from its first Season
   (`PERPETUAL_TROPHY_MIN_YEARS` goes).
-- Points scales (Derek 2026-11-24, slice 20): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
+- Points scales (Derek 2026-11-24, slice 20c): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
   `CupPointsScale` enum move to `PlatformPointsProfile` (code, name, `kind` TABLE |
   FIELD_BEATEN, `points` list for TABLE, `pointsAfterTable` for STANDARD's tail), seeded by
   migration; `League.platformPointsProfileId` replaces `cupPointsScale`, and a league's own
   CUSTOM list stays on League (`cupCustomPoints`, used when set). Crowned cups freeze the
   profile's points they used. Kept in code as fixed rules: last place needs 3+ teams, medal
   by place, the championship grid's 10 places, one platform time zone for history years.
-- Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
+- Squares (Derek 2026-11-23, slice 18c): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
   the running score from the Game sides' period scores, which hold the feed's points per
@@ -793,14 +793,15 @@ In order:
     "Sync now" on the event queues the same job. In-memory per-sport timers, string locks
     are removed (`scheduledSports` already went in slice 1); the live sweep polls Games, not in-progress events,
     and the "play is underway" heuristics go (S5).
-11. EventSeries removed; event page offers and templates point at slots.
+11. EventSeries removed; event page offers and templates point at slots: template coverage as
+    `ContestConfigTemplateSlot` rows, one default per (sport league, selection type), no
+    template versions.
 12. Sync matching by golf name, with the finding actions.
 13. Sync matching by date window and calendar week, with #1924's backend.
 14. Status bubbling on the handler map, completion per scoring family, release by next
     unstarted slot.
 15. ContestSeasonSlot replaces ContestSportEvent, `squaresFromRound`, `bracketStartRound`;
-    template coverage as `ContestConfigTemplateSlot` rows, one default per (sport league,
-    selection type), no template versions; `sportLeagueSeasonId` on Contest; the §9c drops.
+    `sportLeagueSeasonId` on Contest and Cup; the §9c drops.
 16. Readiness and cutoff from covered slots.
 17. Pick windows per slot and voided picks: `ContestEntrySlot`, `ContestEntrySlotStanding`,
     `ContestEntryRoundMatchPrediction` (side, team for brackets, void columns), snapshot slot FK.
@@ -808,8 +809,9 @@ In order:
 18b. `ContestScoringConfiguration` (one row, FK from template and contest), the
     `scoringDefinition` enum and Zod-validated settings with the tiebreaker (§9c C1, C4); the
     web app's `WINNING_SCORE_OPTIONS` removed.
-18c. Tiebreaker game on the slot (`SportEventSlot.tiebreakerGameId`, root admin change, re-pick
-    on cancellation) and squares winners on Game sides and period scores (§9c C2, C3).
+18c. Squares winners from Game sides and period scores (§9c C2). The tiebreaker game
+    (`SportEventSlot.tiebreakerGameId`, C3) lands in slice 10, the guess on the entry slot row
+    in 17.
 19. Offerings and notices by covered slots.
 20. History keys and Season FKs: `SportLeagueSeason.championshipYear` by migration, copied to
     each contest; unknown feed Season is an ERROR finding; history by completed year.
