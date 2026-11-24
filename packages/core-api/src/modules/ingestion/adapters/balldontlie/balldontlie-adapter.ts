@@ -60,7 +60,6 @@ import {
   ProviderLeagueRefusedError,
   type DateRange,
   type ProviderEventListOptions,
-  type ProviderHealthStatus,
   type ProviderParticipant,
   type ProviderPayloadCapture,
   type ProviderPayloadCaptureSession,
@@ -468,29 +467,6 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       pgaTournamentResultListSchema,
     );
     return { category: 'GOLF', externalEventId: eventId, rounds: toGolfRoundUpdates(tournament, results) };
-  }
-
-  /** One small free-tier read: it proves the key, the plan and the network path together. */
-  async healthCheck(): Promise<ProviderHealthStatus> {
-    const startedAt = Date.now();
-    try {
-      await this.readTournamentPage({ per_page: 1 });
-      return {
-        providerId: this.providerId,
-        status: 'HEALTHY',
-        errorRateLastHour: 0,
-        latencyMsP95: Date.now() - startedAt,
-        lastSuccessfulPoll: new Date(),
-      };
-    } catch (error) {
-      return {
-        providerId: this.providerId,
-        status: 'DOWN',
-        errorRateLastHour: 1,
-        latencyMsP95: Date.now() - startedAt,
-        message: errorMessage(error),
-      };
-    }
   }
 
   /** One page of tournaments. Every tournament read goes through here or `listTournaments`. */

@@ -7,7 +7,7 @@ const columnHelper = createColumnHelper<SyncScheduleRow>();
 export const syncScheduleColumns = [
   columnHelper.accessor('sync', {
     header: 'Sync',
-    meta: { info: 'Health check, Event list, Field or Live scores.', type: { kind: 'text' } },
+    meta: { info: 'Which sync: the event list, the field, or live scores and results.', type: { kind: 'text' } },
   }),
   columnHelper.accessor('everySeconds', {
     header: 'Every',

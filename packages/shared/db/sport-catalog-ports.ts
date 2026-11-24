@@ -547,6 +547,8 @@ export interface SportLeagueOverviewLeague {
   sport: Sport;
   name: string;
   syncProviderId: string | null;
+  /** That provider's name (#1999). */
+  syncProviderName: string | null;
   isActive: boolean;
 }
 

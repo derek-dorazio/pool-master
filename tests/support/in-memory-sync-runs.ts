@@ -7,7 +7,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
-import type { ProviderSyncRun } from '@poolmaster/shared/domain';
+import { ProviderSyncRunStatus, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import { mockFn } from './mock-fn';
 import { inMemoryBackgroundJobs, type InMemoryBackgroundJobs } from './in-memory-background-jobs';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
@@ -68,5 +68,16 @@ export function inMemorySyncRuns(jobs: InMemoryBackgroundJobs = inMemoryBackgrou
       Promise.resolve(rows.filter((row) => row.backgroundJobId !== null && jobIds.includes(row.backgroundJobId)).map((run) => ({ ...run })))),
     clearDetailsBatchSubmittedBefore: mockFn<ProviderSyncRunRepository['clearDetailsBatchSubmittedBefore']>(() => Promise.resolve(0)),
     deleteBatchSubmittedBefore: mockFn<ProviderSyncRunRepository['deleteBatchSubmittedBefore']>(() => Promise.resolve(0)),
+    countFinishedByProvider: mockFn<ProviderSyncRunRepository['countFinishedByProvider']>((since) => {
+      const counts = new Map<string, { providerId: string; finished: number; failed: number }>();
+      for (const run of rows) {
+        if (run.createdAt < since || (run.status !== ProviderSyncRunStatus.COMPLETED && run.status !== ProviderSyncRunStatus.FAILED)) continue;
+        const entry = counts.get(run.providerId) ?? { providerId: run.providerId, finished: 0, failed: 0 };
+        entry.finished += 1;
+        if (run.status === ProviderSyncRunStatus.FAILED) entry.failed += 1;
+        counts.set(run.providerId, entry);
+      }
+      return Promise.resolve([...counts.values()]);
+    }),
   };
 }

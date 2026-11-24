@@ -4762,10 +4762,10 @@ export interface components {
                 }[];
             };
         };
-        /** @description Partial ingestion schedule update: only the policies and properties it names change. */
+        /** @description Partial ingestion schedule update: only the sync kinds and properties it names change. */
         IngestionScheduleConfigPatch: {
             /** @description Partial feed-scheduling update payload. */
-            healthCheck?: {
+            EVENTS?: {
                 /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
                 /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -4776,7 +4776,7 @@ export interface components {
                 lookaheadDays?: number;
             };
             /** @description Partial feed-scheduling update payload. */
-            eventList?: {
+            FIELD?: {
                 /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
                 /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -4787,18 +4787,7 @@ export interface components {
                 lookaheadDays?: number;
             };
             /** @description Partial feed-scheduling update payload. */
-            eventParticipants?: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled?: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-            /** @description Partial feed-scheduling update payload. */
-            eventLiveScores?: {
+            SCORES?: {
                 /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
                 /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -4809,10 +4798,10 @@ export interface components {
                 lookaheadDays?: number;
             };
         };
-        /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league. */
+        /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind. */
         IngestionScheduleConfig: {
-            /** @description Scheduling policy for provider health checks. */
-            healthCheck: {
+            /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+            EVENTS: {
                 /** @description Whether the feed should be scheduled automatically. */
                 enabled: boolean;
                 /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -4822,8 +4811,8 @@ export interface components {
                 /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                 lookaheadDays?: number;
             };
-            /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-            eventList: {
+            /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+            FIELD: {
                 /** @description Whether the feed should be scheduled automatically. */
                 enabled: boolean;
                 /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -4833,19 +4822,8 @@ export interface components {
                 /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                 lookaheadDays?: number;
             };
-            /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-            eventParticipants: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-            /** @description Scheduling policy for live score polling. */
-            eventLiveScores: {
+            /** @description The SCORES sync: live score polling. */
+            SCORES: {
                 /** @description Whether the feed should be scheduled automatically. */
                 enabled: boolean;
                 /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -10173,6 +10151,8 @@ export interface components {
             name: string;
             /** @description The provider that syncs its events. Null when none does. */
             providerId: string | null;
+            /** @description That provider's name, so no reader looks it up by id (#1999). Null when none syncs it. */
+            providerName: string | null;
             /** @description On: offered to customers and synced. Off: hidden and not synced. */
             isActive: boolean;
             /**
@@ -10320,6 +10300,8 @@ export interface components {
                 name: string;
                 /** @description The provider that syncs its events. Null when none does. */
                 providerId: string | null;
+                /** @description That provider's name, so no reader looks it up by id (#1999). Null when none syncs it. */
+                providerName: string | null;
                 /** @description On: offered to customers and synced. Off: hidden and not synced. */
                 isActive: boolean;
                 /**
@@ -11744,6 +11726,8 @@ export interface components {
             externalId: string;
             /** @description Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.) */
             providerId: string;
+            /** @description That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.) */
+            providerName: string | null;
             /**
              * @description Sport the event belongs to.
              * @enum {string}
@@ -12000,6 +11984,8 @@ export interface components {
                 externalId: string;
                 /** @description Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.) */
                 providerId: string;
+                /** @description That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.) */
+                providerName: string | null;
                 /**
                  * @description Sport the event belongs to.
                  * @enum {string}
@@ -12251,6 +12237,8 @@ export interface components {
                 externalId: string;
                 /** @description Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.) */
                 providerId: string;
+                /** @description That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.) */
+                providerName: string | null;
                 /**
                  * @description Sport the event belongs to.
                  * @enum {string}
@@ -12558,6 +12546,8 @@ export interface components {
                 externalId: string;
                 /** @description Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.) */
                 providerId: string;
+                /** @description That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.) */
+                providerName: string | null;
                 /**
                  * @description Sport the event belongs to.
                  * @enum {string}
@@ -16551,8 +16541,8 @@ export interface components {
             } | null;
             /** @description The value in use. */
             value: {
-                /** @description Scheduling policy for provider health checks. */
-                healthCheck: {
+                /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                EVENTS: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -16562,8 +16552,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                eventList: {
+                /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                FIELD: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -16573,19 +16563,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                eventParticipants: {
-                    /** @description Whether the feed should be scheduled automatically. */
-                    enabled: boolean;
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                };
-                /** @description Scheduling policy for live score polling. */
-                eventLiveScores: {
+                /** @description The SCORES sync: live score polling. */
+                SCORES: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -16598,8 +16577,8 @@ export interface components {
             };
             /** @description The value a reset would store. */
             defaults: {
-                /** @description Scheduling policy for provider health checks. */
-                healthCheck: {
+                /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                EVENTS: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -16609,8 +16588,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                eventList: {
+                /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                FIELD: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -16620,19 +16599,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                eventParticipants: {
-                    /** @description Whether the feed should be scheduled automatically. */
-                    enabled: boolean;
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                };
-                /** @description Scheduling policy for live score polling. */
-                eventLiveScores: {
+                /** @description The SCORES sync: live score polling. */
+                SCORES: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17273,8 +17241,8 @@ export interface components {
                 } | null;
                 /** @description The value in use. */
                 value: {
-                    /** @description Scheduling policy for provider health checks. */
-                    healthCheck: {
+                    /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                    EVENTS: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17284,8 +17252,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                    eventList: {
+                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                    FIELD: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17295,19 +17263,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                    eventParticipants: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                    };
-                    /** @description Scheduling policy for live score polling. */
-                    eventLiveScores: {
+                    /** @description The SCORES sync: live score polling. */
+                    SCORES: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17320,8 +17277,8 @@ export interface components {
                 };
                 /** @description The value a reset would store. */
                 defaults: {
-                    /** @description Scheduling policy for provider health checks. */
-                    healthCheck: {
+                    /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                    EVENTS: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17331,8 +17288,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                    eventList: {
+                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                    FIELD: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17342,19 +17299,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                    eventParticipants: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                    };
-                    /** @description Scheduling policy for live score polling. */
-                    eventLiveScores: {
+                    /** @description The SCORES sync: live score polling. */
+                    SCORES: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17970,8 +17916,8 @@ export interface components {
             key: "INGESTION_SCHEDULE_CONFIG";
             /** @description The whole new value. */
             value: {
-                /** @description Scheduling policy for provider health checks. */
-                healthCheck: {
+                /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                EVENTS: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17981,8 +17927,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                eventList: {
+                /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                FIELD: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -17992,19 +17938,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                eventParticipants: {
-                    /** @description Whether the feed should be scheduled automatically. */
-                    enabled: boolean;
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                };
-                /** @description Scheduling policy for live score polling. */
-                eventLiveScores: {
+                /** @description The SCORES sync: live score polling. */
+                SCORES: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -18326,8 +18261,8 @@ export interface components {
             } | null;
             /** @description The stored value before the save; null when the save created the first stored value. */
             previousValue: {
-                /** @description Scheduling policy for provider health checks. */
-                healthCheck: {
+                /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                EVENTS: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -18337,8 +18272,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                eventList: {
+                /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                FIELD: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -18348,19 +18283,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                eventParticipants: {
-                    /** @description Whether the feed should be scheduled automatically. */
-                    enabled: boolean;
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                };
-                /** @description Scheduling policy for live score polling. */
-                eventLiveScores: {
+                /** @description The SCORES sync: live score polling. */
+                SCORES: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -18373,8 +18297,8 @@ export interface components {
             } | null;
             /** @description The value the save stored. */
             newValue: {
-                /** @description Scheduling policy for provider health checks. */
-                healthCheck: {
+                /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                EVENTS: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -18384,8 +18308,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                eventList: {
+                /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                FIELD: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -18395,19 +18319,8 @@ export interface components {
                     /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                     lookaheadDays?: number;
                 };
-                /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                eventParticipants: {
-                    /** @description Whether the feed should be scheduled automatically. */
-                    enabled: boolean;
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                };
-                /** @description Scheduling policy for live score polling. */
-                eventLiveScores: {
+                /** @description The SCORES sync: live score polling. */
+                SCORES: {
                     /** @description Whether the feed should be scheduled automatically. */
                     enabled: boolean;
                     /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -19020,8 +18933,8 @@ export interface components {
                 } | null;
                 /** @description The stored value before the save; null when the save created the first stored value. */
                 previousValue: {
-                    /** @description Scheduling policy for provider health checks. */
-                    healthCheck: {
+                    /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                    EVENTS: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -19031,8 +18944,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                    eventList: {
+                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                    FIELD: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -19042,19 +18955,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                    eventParticipants: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                    };
-                    /** @description Scheduling policy for live score polling. */
-                    eventLiveScores: {
+                    /** @description The SCORES sync: live score polling. */
+                    SCORES: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -19067,8 +18969,8 @@ export interface components {
                 } | null;
                 /** @description The value the save stored. */
                 newValue: {
-                    /** @description Scheduling policy for provider health checks. */
-                    healthCheck: {
+                    /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
+                    EVENTS: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -19078,8 +18980,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for the event list sync: how often each synced sport league's events sync is queued. */
-                    eventList: {
+                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked. */
+                    FIELD: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -19089,19 +18991,8 @@ export interface components {
                         /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
                         lookaheadDays?: number;
                     };
-                    /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-                    eventParticipants: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                    };
-                    /** @description Scheduling policy for live score polling. */
-                    eventLiveScores: {
+                    /** @description The SCORES sync: live score polling. */
+                    SCORES: {
                         /** @description Whether the feed should be scheduled automatically. */
                         enabled: boolean;
                         /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
@@ -24459,24 +24350,22 @@ export interface components {
                 isEnabled: boolean;
             }[];
         };
-        /** @description A sports-data provider with its live health and settings. */
+        /** @description A sports-data provider with its health from its sync runs, and its settings. */
         ProviderSummaryDto: {
             /** @description The id the provider's events carry as their providerId. */
             providerId: string;
             /** @description Provider display name. */
             providerName: string;
             /**
-             * @description Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
+             * @description Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
              * @enum {string|null}
              */
             status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
-            /** @description Provider-reported error rate over the last hour; null when the provider is not running. */
+            /** @description The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished. */
             errorRate: number | null;
-            /** @description Provider-reported p95 latency; null when the provider is not running. */
-            latencyMs: number | null;
             /**
              * Format: date-time
-             * @description When one of the provider's events last changed, else its last successful poll; null when neither is known.
+             * @description When one of the provider's events last changed; null when none is known.
              */
             lastEventAt: string | null;
             /** @description Sports the provider's running adapter covers. */
@@ -24718,17 +24607,15 @@ export interface components {
                 /** @description Provider display name. */
                 providerName: string;
                 /**
-                 * @description Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).
+                 * @description Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
                  * @enum {string|null}
                  */
                 status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
-                /** @description Provider-reported error rate over the last hour; null when the provider is not running. */
+                /** @description The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished. */
                 errorRate: number | null;
-                /** @description Provider-reported p95 latency; null when the provider is not running. */
-                latencyMs: number | null;
                 /**
                  * Format: date-time
-                 * @description When one of the provider's events last changed, else its last successful poll; null when neither is known.
+                 * @description When one of the provider's events last changed; null when none is known.
                  */
                 lastEventAt: string | null;
                 /** @description Sports the provider's running adapter covers. */
@@ -37602,7 +37489,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league. */
+            /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -37644,7 +37531,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league. */
+            /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -37682,7 +37569,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league. */
+            /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind. */
             200: {
                 headers: {
                     [name: string]: unknown;

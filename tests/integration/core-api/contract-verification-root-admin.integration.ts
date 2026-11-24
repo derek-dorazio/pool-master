@@ -100,7 +100,6 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings } from '../helpers';
 import type {
-  ProviderHealthStatus,
   ProviderParticipant,
   ProviderPayloadCapture,
   ProviderPayloadDiagnostics,
@@ -229,17 +228,6 @@ class OperationalContractProvider implements SportDataProvider {
 
   async getLiveScores(): Promise<LiveScoreResult> {
     return { category: 'GOLF', externalEventId: 'unused', rounds: [] };
-  }
-
-  async healthCheck(): Promise<ProviderHealthStatus> {
-    return {
-      providerId: this.providerId,
-      status: 'HEALTHY',
-      errorRateLastHour: 0,
-      latencyMsP95: 8,
-      lastSuccessfulPoll: new Date('2026-04-09T09:59:00.000Z'),
-      message: 'Provider responding normally.',
-    };
   }
 }
 
@@ -692,14 +680,14 @@ describe('Contract verification (root admin)', () => {
       url: '/api/v1/platform/ingestion-schedule',
       headers: rootAdmin.headers,
       payload: {
-        eventLiveScores: {
+        SCORES: {
           intervalSeconds: 45,
         },
       },
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().eventLiveScores.intervalSeconds).toBe(45);
+    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().SCORES.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
       method: 'GET',

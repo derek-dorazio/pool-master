@@ -81,6 +81,7 @@ export function mapSportLeagueOverviewToDto(overview: SportLeagueOverview): Spor
     sport: overview.sport,
     name: overview.name,
     providerId: overview.providerId,
+    providerName: overview.providerName,
     isActive: overview.isActive,
     syncHealth: overview.syncHealth,
     issues: overview.issues.map(mapSportLeagueIssueToDto),
