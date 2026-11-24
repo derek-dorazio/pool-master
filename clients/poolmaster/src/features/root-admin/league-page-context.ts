@@ -8,6 +8,7 @@ export const LEAGUE_PAGE_TABS = [
   { segment: 'participants', label: 'Participants' },
   { segment: 'activity', label: 'Activity' },
   { segment: 'contest-templates', label: 'Contest templates' },
+  { segment: 'structure', label: 'Structure' },
   { segment: 'tools', label: 'Tools' },
 ] as const;
 

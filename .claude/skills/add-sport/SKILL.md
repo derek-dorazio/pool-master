@@ -93,6 +93,23 @@ In order:
    `model-change` skill. A sport whose presets differ by sport league seeds those leagues in
    the same reference-data migration, and each template finds its league by sport and name
    (same section).
+   **A sport league is added only by migration**, never on a screen: the league row, its
+   tier and pricing profiles, its provider mapping when a feed covers it, and its phase and
+   slot definitions, all in the reference-data migration
+   (`rules/domain-model-concepts.md` §5 *The Target Model*). Give it one `SportLeaguePhase` per
+   phase it plays; a phase its sync does not read (the NFL's preseason) is `isSynced` false
+   and gets no slots. Each `SportLeaguePhaseSlot` has a key nothing parses (`WEEK_14`,
+   `FINAL`, `MASTERS`), a `slotKind` counted back from the final (a 12-team bracket's opening
+   round is `ROUND_OF_16`), a proper `name` only where the league has one (Super Bowl, Sweet
+   16), `awardsTrophy`, `squaresEligible` (single games with period scores only), and its
+   series format, games and pairing. Weeks go to the longest season the league plays. An
+   open phase (golf, tennis, racing) has one `TOURNAMENT` slot per recurring tournament. A
+   synced league gives each slot it syncs a `SportLeaguePhaseSlotProviderMapping` on its
+   `SportLeagueProviderMapping`: `PROVIDER_CODE` with the code its adapter reduces a game to
+   (`REG:<week>`, `POST:<the round's place in the postseason, first round 1>`),
+   `NAME_PATTERN` with the normalized tournament name, or `CALENDAR_WEEK` for a daily
+   league's weeks. Mappings are inclusion only: a slot with none is never synced. Open the
+   league's Structure tab on the League page and read it back.
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,
    scoring family, tournament format, default rounds, selection types, scoring
    definitions and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
@@ -315,6 +332,12 @@ down: a lesson that was true mid-series may not be by the end.
 - **A stale sport line on How to Play.** Adding a league or format to a sport that already has
   one fails no build and no test: the new tiles appear, and the sport's line goes on naming only
   the old ones. Rewrite it in the same PR.
+- **A slot named with a generic word.** "Semifinal" or "Week 3" in a slot's `name` is a copy
+  of the display strings the screen already falls back to, and drifts from them. Leave
+  `name` null unless the league has a proper name of its own for the slot.
+- **A slot kind read off a round's name.** A 12-team bracket's First Round is not a
+  `ROUND_OF_64`: kinds count back from the final, so the final is `FINAL`, the round before it
+  `SEMIFINAL`, and so on. The database refuses a second slot of one kind in a phase.
 - **Adding catalog values "for later".** Add a sport, scoring definition or enum value only
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a

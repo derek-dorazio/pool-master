@@ -9436,6 +9436,211 @@ export type SportLeagueParticipantOverviewListResponse = {
 };
 
 /**
+ * How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced.
+ */
+export type SlotProviderMappingDto = {
+    id: string;
+    providerId: string;
+    providerName: string;
+    /**
+     * The provider's own code for the league the mapping reads, such as nfl.
+     */
+    providerLeagueCode: string;
+    providerLeagueName: string;
+    /**
+     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+     */
+    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+    /**
+     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+     */
+    providerValue: string | null;
+};
+
+/**
+ * One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it.
+ */
+export type SportLeagueSlotDefinitionDto = {
+    id: string;
+    /**
+     * A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.
+     */
+    key: string;
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * The week's number in its phase; set only on a WEEK slot.
+     */
+    weekNumber: number | null;
+    /**
+     * The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.
+     */
+    name: string | null;
+    awardsTrophy: boolean;
+    /**
+     * Whether a squares pool can be played on its games.
+     */
+    squaresEligible: boolean;
+    seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+    /**
+     * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
+     */
+    seriesGames: number;
+    pairing: 'FIXED' | 'RESEEDED';
+    /**
+     * By provider, then in the order the sync tries them.
+     */
+    providerMappings: Array<{
+        id: string;
+        providerId: string;
+        providerName: string;
+        /**
+         * The provider's own code for the league the mapping reads, such as nfl.
+         */
+        providerLeagueCode: string;
+        providerLeagueName: string;
+        /**
+         * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+         */
+        matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+        /**
+         * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+         */
+        providerValue: string | null;
+    }>;
+};
+
+/**
+ * One phase definition of a sport league.
+ */
+export type SportLeaguePhaseDefinitionDto = {
+    id: string;
+    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+    /**
+     * Whether the league's sync reads the phase. An unsynced phase has no slots.
+     */
+    isSynced: boolean;
+    /**
+     * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
+     */
+    slots: Array<{
+        id: string;
+        /**
+         * A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * The week's number in its phase; set only on a WEEK slot.
+         */
+        weekNumber: number | null;
+        /**
+         * The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.
+         */
+        name: string | null;
+        awardsTrophy: boolean;
+        /**
+         * Whether a squares pool can be played on its games.
+         */
+        squaresEligible: boolean;
+        seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+        /**
+         * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
+         */
+        seriesGames: number;
+        pairing: 'FIXED' | 'RESEEDED';
+        /**
+         * By provider, then in the order the sync tries them.
+         */
+        providerMappings: Array<{
+            id: string;
+            providerId: string;
+            providerName: string;
+            /**
+             * The provider's own code for the league the mapping reads, such as nfl.
+             */
+            providerLeagueCode: string;
+            providerLeagueName: string;
+            /**
+             * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+             */
+            matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+            /**
+             * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+             */
+            providerValue: string | null;
+        }>;
+    }>;
+};
+
+/**
+ * A sport league's phase and slot definitions, set by migration.
+ */
+export type SportLeagueStructureResponse = {
+    /**
+     * In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.
+     */
+    phases: Array<{
+        id: string;
+        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+        /**
+         * Whether the league's sync reads the phase. An unsynced phase has no slots.
+         */
+        isSynced: boolean;
+        /**
+         * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
+         */
+        slots: Array<{
+            id: string;
+            /**
+             * A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.
+             */
+            key: string;
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * The week's number in its phase; set only on a WEEK slot.
+             */
+            weekNumber: number | null;
+            /**
+             * The league's own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.
+             */
+            name: string | null;
+            awardsTrophy: boolean;
+            /**
+             * Whether a squares pool can be played on its games.
+             */
+            squaresEligible: boolean;
+            seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+            /**
+             * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
+             */
+            seriesGames: number;
+            pairing: 'FIXED' | 'RESEEDED';
+            /**
+             * By provider, then in the order the sync tries them.
+             */
+            providerMappings: Array<{
+                id: string;
+                providerId: string;
+                providerName: string;
+                /**
+                 * The provider's own code for the league the mapping reads, such as nfl.
+                 */
+                providerLeagueCode: string;
+                providerLeagueName: string;
+                /**
+                 * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                 */
+                matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+                /**
+                 * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+                 */
+                providerValue: string | null;
+            }>;
+        }>;
+    }>;
+};
+
+/**
  * Re-ranks participants of the sport league.
  */
 export type SportLeagueParticipantRankingsRequest = {
@@ -36179,6 +36384,41 @@ export type ListSportLeagueSyncsResponses = {
 };
 
 export type ListSportLeagueSyncsResponse = ListSportLeagueSyncsResponses[keyof ListSportLeagueSyncsResponses];
+
+export type GetSportLeagueStructureData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/structure';
+};
+
+export type GetSportLeagueStructureErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetSportLeagueStructureError = GetSportLeagueStructureErrors[keyof GetSportLeagueStructureErrors];
+
+export type GetSportLeagueStructureResponses = {
+    /**
+     * A sport league's phase and slot definitions, set by migration.
+     */
+    200: SportLeagueStructureResponse;
+};
+
+export type GetSportLeagueStructureResponse = GetSportLeagueStructureResponses[keyof GetSportLeagueStructureResponses];
 
 export type ListSportLeagueEventOverviewsData = {
     body?: never;

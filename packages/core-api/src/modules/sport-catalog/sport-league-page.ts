@@ -15,6 +15,7 @@ import {
   AutoReleaseCheckOutcome,
   compareByEnumOrder,
   fieldOrderDecision,
+  orderSportLeagueStructure,
   isProviderSyncedEvent,
   ParticipantAddedBy,
   ProviderSyncKind,
@@ -27,6 +28,7 @@ import {
   type SportEventOverview,
   type SportLeagueEventOverview,
   type SportLeagueParticipantOverview,
+  type SportLeagueStructure,
   type SportLeagueSync,
 } from '@poolmaster/shared/domain';
 import { issuesOf, syncHealthOf } from './sport-league-overview';
@@ -70,6 +72,15 @@ export class SportLeaguePageService {
       lastInFeedAt: mapping?.lastSeenAt ?? null,
       addedBy: mapping === null ? ParticipantAddedBy.ADMIN : ParticipantAddedBy.FEED,
     }));
+  }
+
+  /**
+   * The league's phase and slot definitions with their provider mappings (#2002), in their one
+   * order. Null when the league does not exist.
+   */
+  async getStructure(sportLeagueId: string): Promise<SportLeagueStructure | null> {
+    const phases = await this.deps.reader.readStructure(sportLeagueId);
+    return phases === null ? null : orderSportLeagueStructure(phases);
   }
 
   /** The Event page's header and sync rows (#1889). Null when the event does not exist. */

@@ -12,6 +12,11 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   AutoReleaseCheckOutcome,
+  LeaguePhase,
+  SeriesFormat,
+  SlotKind,
+  SlotPairing,
+  SlotProviderMatchType,
   BracketAdvancement,
   MatchPeriodLayout,
   ParticipantAddedBy,
@@ -310,6 +315,45 @@ export const SportLeagueParticipantOverviewListResponseSchema = z.object({
 }).describe('A sport league\'s participants.');
 export type SportLeagueParticipantOverviewListResponse = z.infer<typeof SportLeagueParticipantOverviewListResponseSchema>;
 
+export const SlotProviderMappingDtoSchema = z.object({
+  id: z.uuid(),
+  providerId: z.uuid(),
+  providerName: z.string(),
+  providerLeagueCode: z.string().describe('The provider\'s own code for the league the mapping reads, such as nfl.'),
+  providerLeagueName: z.string(),
+  matchType: z.enum(SlotProviderMatchType).describe('How a provider\'s game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.'),
+  providerValue: z.string().nullable().describe('The adapter\'s code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.'),
+}).describe('How one provider\'s games match a slot definition. Inclusion only: a provider value no mapping names is not synced.');
+export type SlotProviderMappingDto = z.infer<typeof SlotProviderMappingDtoSchema>;
+
+export const SportLeagueSlotDefinitionDtoSchema = z.object({
+  id: z.uuid(),
+  key: z.string().describe('A code unique in the sport league that nothing parses, such as WEEK_14, FINAL or MASTERS.'),
+  slotKind: z.enum(SlotKind),
+  weekNumber: z.number().int().min(1).nullable().describe('The week\'s number in its phase; set only on a WEEK slot.'),
+  name: z.string().nullable().describe('The league\'s own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.'),
+  awardsTrophy: z.boolean(),
+  squaresEligible: z.boolean().describe('Whether a squares pool can be played on its games.'),
+  seriesFormat: z.enum(SeriesFormat),
+  seriesGames: z.number().int().min(1).describe('Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.'),
+  pairing: z.enum(SlotPairing),
+  providerMappings: z.array(SlotProviderMappingDtoSchema).describe('By provider, then in the order the sync tries them.'),
+}).describe('One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it.');
+export type SportLeagueSlotDefinitionDto = z.infer<typeof SportLeagueSlotDefinitionDtoSchema>;
+
+export const SportLeaguePhaseDefinitionDtoSchema = z.object({
+  id: z.uuid(),
+  phase: z.enum(LeaguePhase),
+  isSynced: z.boolean().describe('Whether the league\'s sync reads the phase. An unsynced phase has no slots.'),
+  slots: z.array(SportLeagueSlotDefinitionDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.'),
+}).describe('One phase definition of a sport league.');
+export type SportLeaguePhaseDefinitionDto = z.infer<typeof SportLeaguePhaseDefinitionDtoSchema>;
+
+export const SportLeagueStructureResponseSchema = z.object({
+  phases: z.array(SportLeaguePhaseDefinitionDtoSchema).describe('In the order a Season plays them: PRESEASON, REGULAR, POSTSEASON.'),
+}).describe('A sport league\'s phase and slot definitions, set by migration.');
+export type SportLeagueStructureResponse = z.infer<typeof SportLeagueStructureResponseSchema>;
+
 // --- Event page: one event's syncs, health, issues and release (#1889) ------------
 
 export const SportEventFieldFeedRowDtoSchema = z.object({
@@ -359,6 +403,10 @@ registerSchema('SportEventOverviewDto', SportEventOverviewDtoSchema);
 registerSchema('SportEventOverviewResponse', SportEventOverviewResponseSchema);
 registerSchema('SportLeagueParticipantOverviewDto', SportLeagueParticipantOverviewDtoSchema);
 registerSchema('SportLeagueParticipantOverviewListResponse', SportLeagueParticipantOverviewListResponseSchema);
+registerSchema('SlotProviderMappingDto', SlotProviderMappingDtoSchema);
+registerSchema('SportLeagueSlotDefinitionDto', SportLeagueSlotDefinitionDtoSchema);
+registerSchema('SportLeaguePhaseDefinitionDto', SportLeaguePhaseDefinitionDtoSchema);
+registerSchema('SportLeagueStructureResponse', SportLeagueStructureResponseSchema);
 registerSchema('SportLeagueParticipantRankingsRequest', SportLeagueParticipantRankingsRequestSchema);
 registerSchema('SportLeagueRankingUploadRequest', SportLeagueRankingUploadRequestSchema);
 registerSchema('UploadRowResolutionDto', UploadRowResolutionDtoSchema);

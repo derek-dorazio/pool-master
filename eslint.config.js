@@ -518,6 +518,7 @@ export default tseslint.config(
     //   bulk-service.ts        a parsed CSV row, before validation
     //   participants/handler.ts an unvalidated HTTP request body
     //   user-account-summary   a display label ("Root admin"), not an enum value
+    //   contest-header, entry-status-peek, event-match-rows  display labels, as noted below
     files: ['packages/core-api/src/**/*.ts', 'packages/shared/domain/**/*.ts',
             'clients/poolmaster/src/**/*.{ts,tsx}'],
     ignores: [
@@ -527,6 +528,11 @@ export default tseslint.config(
       'packages/core-api/src/modules/leagues/handler.ts',
       'packages/core-api/src/modules/squads/handler.ts',
       'clients/poolmaster/src/features/account/user-account-summary.tsx',
+      // Display labels that share a slot definition's field names (#2002): a contest's `phase`
+      // as the page words it, and a match's `pairing` ("Away @ Home").
+      'clients/poolmaster/src/features/contests/contest-header.tsx',
+      'clients/poolmaster/src/features/contests/entry-status-peek.tsx',
+      'clients/poolmaster/src/features/root-admin/event-match-rows.ts',
       '**/*.test.{ts,tsx}',
       '**/*.spec.{ts,tsx}',
     ],
