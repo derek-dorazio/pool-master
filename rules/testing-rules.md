@@ -472,6 +472,16 @@ Do not set a count as a goal in either direction. Let it fall out, then explain 
 | Integration | hooks/pages/user flows | MSW |
 | Browser E2E | deployed browser flows | real deployed API |
 
+### Each slice names its layers
+
+Coverage floors (§1 *Coverage Floors*) say how much of a file runs; they do not say a behaviour
+is proven at the layer that can see it. A route's query count, a migration applying to real
+rows, or a journey reaching settlement only shows up in its own suite. So each slice ticket's
+*Tests* section names, for every scope line, the layers from the tables above that prove it
+(`workflow-rules.md` §1 *A slice ticket is a checklist*), and the PR ticks each with the test
+file. A layer the ticket names and the PR lacks is a blocking review finding; a layer the
+slice skips is stated with its reason. The floors stay as CI gates beside this.
+
 ---
 
 ## 3. Required Local Quality Gates

@@ -25,7 +25,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** A count per web app file: the text-style, titled-tile, card-corner, page-sections and button-style baselines. */
+/** A count per key: the text-style, titled-tile, card-corner, page-sections and button-style baselines per file, and the retired names per name. */
 function countsPerFile(text) {
   return new Map(Object.entries(JSON.parse(text)).filter(([key]) => !key.startsWith('$')));
 }
@@ -36,7 +36,7 @@ function countsPerPair(text) {
   return new Map(pairs.map((pair) => [[...pair.files].sort().join(' + '), pair.count]));
 }
 
-/** A grandfathered-files list: each quoted path on a line of its own counts one, in either quote. */
+/** A grandfathered list (files, or the frozen registry's entries): each quoted string on a line of its own counts one, in either quote. */
 function listedFiles(text) {
   return new Map([...text.matchAll(/^\s*(['"])([^'"]+)\1,?\s*$/gm)].map((match) => [match[2], 1]));
 }
@@ -50,6 +50,8 @@ export const BASELINES = [
   { file: 'eslint-rules/query-states-baseline.mjs', read: listedFiles },
   { file: 'eslint-rules/button-style-baseline.json', read: countsPerFile },
   { file: 'scripts/page-sections-baseline.json', read: countsPerFile },
+  { file: 'scripts/retired-names.json', read: countsPerFile },
+  { file: 'scripts/sport-registry-frozen.json', read: listedFiles },
 ];
 
 /**

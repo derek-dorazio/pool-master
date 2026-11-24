@@ -47,11 +47,11 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Adds a module, port, adapter, mapper, or has one module call another | `architecture-rules.md` §5 *Project Structure and Layer Boundaries*, §4 *Service Topology* (follow-up work goes through the domain event handler map; results needed now are a service call) |
 | Adds a follow-up to a change, or a new kind of change | `architecture-rules.md` §4 *Follow-up work is a domain event handler*; `testing-rules.md` §8 *Domain Event Handler Testing* |
 | Defines product behavior, use cases, or screens | `poolmaster-webapp-rules.md`, `ux-rules.md` |
-| Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |
+| Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md`; a plan that moves facts into the model, the `plan-an-epic` skill and `workflow-rules.md` §1 *Grounding a plan in code before it is reviewed* |
 | Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push*; a Terraform change also `workflow-rules.md` §6 *Applying Terraform* and the `apply-terraform` skill |
 | Lands a Dependabot PR, changes `.github/dependabot.yml`, or upgrades a dependency | the `dependency-updates` skill; `workflow-rules.md` §3 *Required Local Validation Before Push* |
 | Is iOS or Android work | `mobile-rules.md` — one React Native app with Expo, not built or scheduled |
-| Is a review of someone else's diff | the `review-a-pr` skill; `review-triggers.md` — §2 for what the author should have disclosed, §5 *Reviewing for performance cost* when the diff has a performance surface, §9 *Reviewing for hard-coded rules* always |
+| Is a review of someone else's diff | the `review-a-pr` skill; `review-triggers.md` — §2 for what the author should have disclosed, §5 *Reviewing for performance cost* when the diff has a performance surface, §9 *Reviewing for hard-coded rules* always, §10 *Reviewing against the ticket: omissions and leftovers* for a ticketed PR |
 
 **Before any push**, `workflow-rules.md` §3 defines the required gate set, and
 `testing-rules.md` §3 says what a failing gate means for a test. Neither is optional
@@ -87,7 +87,8 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `run-local-stack` | Running the whole app in an agent's container with test data, for screenshots, phone-width reviews or the browser E2E suite |
 | `apply-terraform` | A change under `infrastructure/terraform` needs applying to an environment: the copy-paste steps the owner runs on their machine, and the post-check |
 | `dependency-updates` | The Monday dependency run, or a Dependabot security PR midweek: land each Dependabot PR through the gates, review and merge spacing, set aside an update that breaks, propose new major versions to the owner |
-| `review-a-pr` | Reviewing someone else's PR: read the plan and diff, apply the general pass and every lens the diff has a surface for, always the hard-coded-rules lens, and post the findings on the PR |
+| `review-a-pr` | Reviewing someone else's PR: read the plan, the ticket checklist and the diff, apply the general pass and every lens the diff has a surface for, always the hard-coded-rules lens, tick every ticket line, test layer and retired name against the whole branch, and post the findings on the PR |
+| `plan-an-epic` | Writing or revising a plan and its slice tickets: each fact's model home, the generated list of code that reads it, tickets as checklists (scope, retires, readers, tests), retired names registered, then review against the code and an owner re-map after every split |
 | `scan-hard-coded-rules` | A periodic sweep of the whole codebase for hard-coded per-league facts, name and id-string matching, positional lookups and facts computed in more than one place, reported grouped with the model home for each |
 
 Each skill is a sequence and a set of traps. The authoritative policy stays in `rules/`,
@@ -107,6 +108,7 @@ has the matching surface (the hard-coded-rules lens always applies to production
 - `review-triggers.md` §7 — architectural fit
 - `review-triggers.md` §8 — UI conformance, for a diff that adds or changes a screen
 - `review-triggers.md` §9 — hard-coded rules, for **every** diff that touches production source
+- `review-triggers.md` §10 — the ticket against the whole branch (every checklist line, test layer and retired name), for **every** PR that implements a ticket
 
 `/security-review` covers general security classes; §6 covers what is specific to this
 codebase. What a PR must *disclose* is `review-triggers.md` §1–§4, which is a different
