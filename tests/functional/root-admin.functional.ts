@@ -363,6 +363,8 @@ describe('SDK Functional: Root Admin', () => {
     });
     expect(runResponse.response?.status).toBe(200);
     expect(runResponse.data?.details?.jobPayload).toMatchObject({ recordsProcessed: 2 });
+    // Runs linked to no event are not the shared cleanup's, so this test's go here.
+    await getFunctionalPrisma().providerSyncRun.deleteMany({ where: { providerId, createdAt: submittedAt } });
   });
 
   it('answers 404 PROVIDER_NOT_FOUND when a root admin browses an unknown provider\'s catalog', async () => {
