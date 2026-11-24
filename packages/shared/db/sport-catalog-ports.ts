@@ -4,6 +4,7 @@
  * rule A1): the catalog is reference data, narrowed by filters, never paged (§16).
  */
 
+import type { ProviderSyncFindingOpenCount } from './provider-sync-finding-ports';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
@@ -589,6 +590,8 @@ export interface SportLeagueOverviewFacts {
   nextEventStarts: Map<string, Date>;
   /** Every event that may be overdue (#1865): released, neither completed nor cancelled, started long enough ago. */
   overdueCandidates: SportLeagueOverdueCandidate[];
+  /** Each sport league's OPEN sync findings, per severity (#1999); a league with none has no entry. */
+  openFindings: ProviderSyncFindingOpenCount[];
 }
 
 /** An event whose results may be overdue, in its sport league (#1865). */

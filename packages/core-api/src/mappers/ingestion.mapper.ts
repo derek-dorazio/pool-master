@@ -13,7 +13,6 @@ import type {
   ProviderSyncRunDetailDto,
   ProviderSyncRunDetailsDto,
   ProviderSyncRunDto,
-  UnmappedProviderParticipantDto,
 } from '@poolmaster/shared/dto';
 import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
 import {
@@ -31,7 +30,6 @@ import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/prov
 import type {
   ProviderManualSyncSubmissionResult,
   ProviderSummary,
-  UnmappedParticipant,
 } from '../modules/ingestion/ingestion-service';
 
 /** The provider list, with the ranges each setting may take, from the constants the API checks against. */
@@ -154,16 +152,6 @@ export function toProviderManualSyncSubmissionResponse(
     requestedFeeds: result.requestedFeeds,
     submittedAt: result.submittedAt.toISOString(),
     syncRuns: result.syncRuns.map((run) => toProviderSyncRunDto(run)),
-  };
-}
-
-export function toUnmappedProviderParticipantDto(participant: UnmappedParticipant): UnmappedProviderParticipantDto {
-  return {
-    providerId: participant.providerId,
-    providerName: participant.providerName,
-    externalId: participant.externalId,
-    externalName: participant.externalName,
-    sport: participant.sport,
   };
 }
 

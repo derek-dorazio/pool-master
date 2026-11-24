@@ -684,6 +684,8 @@ export const SportLeagueSyncHealthOrder = explicitOrder<SportLeagueSyncHealth>({
  * linking type: the sync matches participants by feed id alone (#1850), so none waits for a link.
  */
 export const SportLeagueIssueType = {
+  /** The league's OPEN sync findings (#1999), counted by severity. */
+  FINDINGS: 'FINDINGS',
   /** A sync whose latest finished run failed. */
   SYNC: 'SYNC',
   /** A draft event whose latest automatic release check held it. */
@@ -695,11 +697,88 @@ export const SportLeagueIssueType = {
   OVERDUE: 'OVERDUE',
 } as const;
 export type SportLeagueIssueType = (typeof SportLeagueIssueType)[keyof typeof SportLeagueIssueType];
-/** The fixed order the chips show in (#1847, #1865). */
+/** The fixed order the chips show in (#1847, #1865, #1999). */
 export const SportLeagueIssueTypeOrder = explicitOrder<SportLeagueIssueType>({
-  [SportLeagueIssueType.SYNC]: 0,
-  [SportLeagueIssueType.RELEASE]: 1,
-  [SportLeagueIssueType.OVERDUE]: 2,
+  [SportLeagueIssueType.FINDINGS]: 0,
+  [SportLeagueIssueType.SYNC]: 1,
+  [SportLeagueIssueType.RELEASE]: 2,
+  [SportLeagueIssueType.OVERDUE]: 3,
+});
+
+/** How serious a sync finding is (#1999): an ERROR also raises the alarm when it opens. */
+export const ProviderSyncFindingSeverity = {
+  /** Synced data is wrong or missing until someone acts. */
+  ERROR: 'ERROR',
+  /** Something the sync skipped or guessed at; worth a look. */
+  WARNING: 'WARNING',
+  /** Something the sync noticed and left alone on purpose. */
+  INFO: 'INFO',
+} as const;
+export type ProviderSyncFindingSeverity = (typeof ProviderSyncFindingSeverity)[keyof typeof ProviderSyncFindingSeverity];
+/** Most serious first: the order a list and the Sports page's counts show them in. */
+export const ProviderSyncFindingSeverityOrder = explicitOrder<ProviderSyncFindingSeverity>({
+  [ProviderSyncFindingSeverity.ERROR]: 0,
+  [ProviderSyncFindingSeverity.WARNING]: 1,
+  [ProviderSyncFindingSeverity.INFO]: 2,
+});
+
+/**
+ * Where a sync finding stands (#1999). The sync raises it OPEN; it is RESOLVED when the sync
+ * stops seeing it or an admin fixes it, and WAIVED when an admin accepts it, with a note. A
+ * waived finding stays waived when the sync sees it again; a resolved one opens again.
+ */
+export const ProviderSyncFindingStatus = {
+  OPEN: 'OPEN',
+  RESOLVED: 'RESOLVED',
+  WAIVED: 'WAIVED',
+} as const;
+export type ProviderSyncFindingStatus = (typeof ProviderSyncFindingStatus)[keyof typeof ProviderSyncFindingStatus];
+/** The order the values are declared in. */
+export const ProviderSyncFindingStatusOrder = explicitOrder<ProviderSyncFindingStatus>({
+  [ProviderSyncFindingStatus.OPEN]: 0,
+  [ProviderSyncFindingStatus.RESOLVED]: 1,
+  [ProviderSyncFindingStatus.WAIVED]: 2,
+});
+
+/**
+ * What a sync finding is about (#1999). Each kind names its subject: the sport league always,
+ * then the event, the Provider and the provider's own value where the kind has them. Later
+ * slices add their kinds here, with their actions.
+ */
+export const ProviderSyncFindingKind = {
+  /**
+   * The feed sent a participant id no participant of the league is mapped to, so its results
+   * had nowhere to land. Subject: league, Provider and the provider's participant id.
+   */
+  UNMAPPED_PARTICIPANT: 'UNMAPPED_PARTICIPANT',
+  /**
+   * A Provider's webhooks are switched on but its signing secret is not set in this
+   * environment, so its notifications are refused. Subject: each league it syncs, and the
+   * Provider.
+   */
+  WEBHOOK_SECRET_MISSING: 'WEBHOOK_SECRET_MISSING',
+} as const;
+export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
+export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
+
+/** What an admin can do with a sync finding (#1999); the API says which each finding offers. */
+export const ProviderSyncFindingAction = {
+  /** Map the provider's participant id to a participant of the league (UNMAPPED_PARTICIPANT). */
+  MAP_PARTICIPANT: 'MAP_PARTICIPANT',
+  /** Mark it fixed. */
+  RESOLVE: 'RESOLVE',
+  /** Accept it as it is, with a note. */
+  WAIVE: 'WAIVE',
+  /** Open a resolved or waived finding again. */
+  REOPEN: 'REOPEN',
+} as const;
+export type ProviderSyncFindingAction = (typeof ProviderSyncFindingAction)[keyof typeof ProviderSyncFindingAction];
+/** The order the dialog's Actions section lists them in. */
+export const ProviderSyncFindingActionOrder = explicitOrder<ProviderSyncFindingAction>({
+  [ProviderSyncFindingAction.MAP_PARTICIPANT]: 0,
+  [ProviderSyncFindingAction.RESOLVE]: 1,
+  [ProviderSyncFindingAction.WAIVE]: 2,
+  [ProviderSyncFindingAction.REOPEN]: 3,
 });
 
 /** How a sport event is released for contests, on the League page (#1865). */

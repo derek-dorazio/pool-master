@@ -215,7 +215,7 @@ describe('Links to the old sync run history page and its tools (#1887)', () => {
     expect(screen.getByTestId('full-location')).toHaveTextContent(/^\/manage\/providers\/run-event-sync$/);
   });
 
-  it('sends a Map competitor link under Providers, keeping the provider and competitor it names', () => {
+  it('sends an old Map competitor link under Providers, where its unmapped participants path then opens Findings', () => {
     renderSyncLinkAt('/manage/sync/unmapped-participants/map?provider=bdl&competitor=golfer-7');
 
     expect(screen.getByTestId('full-location')).toHaveTextContent('/manage/providers/unmapped-participants/map?provider=bdl&competitor=golfer-7');

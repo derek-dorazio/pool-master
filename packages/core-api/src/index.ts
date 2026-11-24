@@ -71,6 +71,7 @@ import {
   PrismaLeagueRepository,
   PrismaContestRepository,
   PrismaParticipantProviderMappingRepository,
+  PrismaParticipantRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaUserRepository,
@@ -122,6 +123,11 @@ import {
 } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncRunDetailsRetention, SyncRunRetention } from './modules/ingestion/persistence/sync-run-retention';
+import { ProviderSyncFindingService } from './modules/ingestion/findings/provider-sync-finding-service';
+import { SyncFindingRetention } from './modules/ingestion/findings/sync-finding-retention';
+import { syncFindingsModule } from './modules/ingestion/findings/routes';
+import { PrismaProviderSyncFindingRepository } from './adapters/prisma-provider-sync-finding-repository';
+import { ParticipantService } from './modules/participants/service';
 import { registerConfiguredProviders, type SportDataProviderFactory } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
@@ -174,6 +180,14 @@ export function buildApp(options: BuildAppOptions = {}) {
     ...(balldontlieWebhookSecret !== undefined && { [ProviderCode.BALLDONTLIE]: balldontlieWebhookSecret }),
   });
   const providers = providerLookupOf(providerSettings, registry);
+  // The one list of problems the sync found (#1999); the sync raises them, Findings lists them.
+  const syncFindingRepository = new PrismaProviderSyncFindingRepository(prisma);
+  const syncFindings = new ProviderSyncFindingService({
+    repository: syncFindingRepository,
+    providers: providerSettings,
+    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), app.log),
+    logger: app.log,
+  });
   const webhookProviderIds = () => providerWebhooks.onProviderIds();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const appSettings = new AppSettingsService({
@@ -269,6 +283,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       emailRetention,
       new SyncRunDetailsRetention(providerSyncRuns),
       new SyncRunRetention(providerSyncRuns),
+      new SyncFindingRetention(syncFindingRepository),
       new AbandonedDraftRetention(new PrismaContestRepository(prisma), app.log),
       new BackgroundJobRetention(backgroundJobRepository),
     ],
@@ -329,6 +344,7 @@ export function buildApp(options: BuildAppOptions = {}) {
         providerId,
         domainEvents,
         contestActivation: eventLifecycleService,
+        findings: syncFindings,
         logger: app.log,
         scoringFamilyForEvent,
         fieldCache: eventFieldCache,
@@ -378,7 +394,6 @@ export function buildApp(options: BuildAppOptions = {}) {
   const ingestionService = new IngestionService({
     registry,
     sportEvents: new PrismaSportEventRepository(prisma),
-    participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
     syncRuns: providerSyncRuns,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     providerSettings,
@@ -487,6 +502,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     activity,
     providerSettings: new ProviderSettingsService({ repository: providerSettingsRepository, store: providerSettings, webhooks: providerWebhooks, logger: app.log }),
   });
+  app.register(syncFindingsModule, { prefix: '/api/v1/ingestion/sync-findings', syncFindings });
   app.register(activityModule, { prefix: '/api/v1/activity', activity });
   app.register(customersModule, {
     prefix: '/api/v1/customers',
@@ -540,6 +556,18 @@ export function buildApp(options: BuildAppOptions = {}) {
     if (!role.runsBackgroundWork) {
       app.log.info({ action: 'taskRole.apiOnly' }, 'Serving requests only; the worker runs the background work');
       return;
+    }
+
+    // A Provider's webhooks switched on with no signing secret here is an ERROR finding on each
+    // league it syncs (#1999); setting the secret resolves it on the next start.
+    // Not essential to starting: a failure is logged, and the schedulers below still start.
+    try {
+      await syncFindings.checkWebhookSecrets({
+        syncedLeagues: await new PrismaSportLeagueRepository(prisma).findEventSynced(),
+        isMissingSecret: (provider) => providerWebhooks.isFlagWithoutSecret(provider),
+      });
+    } catch (err) {
+      app.log.error({ action: 'ingestion.syncFinding.webhookCheckFailed', err }, 'Checking provider webhook secrets for sync findings failed');
     }
 
     // Ingestion

@@ -1,22 +1,30 @@
 /**
  * #1248 — the root admin's list reads cost the same SQL statements for 2 rows as for 20: the
  * participant catalog, a participant's provider mappings, a settings group's history, the sync
- * runs and one run's diagnostics, the provider participants nobody has mapped, and a provider's
- * event catalog.
+ * runs and one run's diagnostics, the sync findings (#1999), and a provider's event catalog.
  *
- * The last two read a provider, so the case registers one whose participants and events it sets
+ * Some read a provider, so the case registers one whose participants and events it sets
  * per seed. `rules/testing-rules.md` §9B *Query Scaling Tests* says when a route needs one.
  */
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { randomUUID } from 'crypto';
 import type { Prisma } from '@prisma/client';
-import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import {
+  ProviderCode,
+  ProviderSyncFindingKind,
+  ProviderSyncFindingSeverity,
+  ProviderSyncFindingStatus,
+  ProviderSyncRunStatus,
+  Sport,
+} from '@poolmaster/shared/domain';
 import {
   IngestionScheduleConfigSchema,
   ParticipantListResponseSchema,
   ParticipantProviderMappingListResponseSchema,
   ProviderCatalogEventListResponseSchema,
   ProviderListResponseSchema,
+  ProviderSyncFindingListResponseSchema,
+  ProviderSyncFindingResponseSchema,
   ProviderSyncRunDetailDtoSchema,
   ProviderSyncRunListResponseSchema,
   ActivityListResponseSchema,
@@ -30,7 +38,6 @@ import {
   SportLeagueParticipantOverviewListResponseSchema,
   SportLeagueSyncListResponseSchema,
   SystemEmailListResponseSchema,
-  UnmappedProviderParticipantListResponseSchema,
 } from '@poolmaster/shared/dto';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type {
@@ -286,20 +293,31 @@ async function seedSyncRunDetails(rows: number) {
   return { run, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
-/** A root admin, and a provider with `unmapped` golfers nobody has mapped, beside as many that are mapped. */
-async function seedUnmappedParticipants(unmapped: number) {
+/**
+ * A root admin, and `findings` sync findings, each on its own league and event, from the BALLDONTLIE
+ * Provider row, and waived by its own admin, so every relation the list shows differs per row.
+ */
+async function seedSyncFindings(findings: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const golfer = (index: number): ProviderParticipant => ({
-    externalId: `golfer-${suffix}-${String(index)}`, providerId: provider.providerId, sport: Sport.GOLF, name: `Golfer ${suffix} ${String(index)}`, active: true, metadata: {},
-  });
-  const mapped = Array.from({ length: unmapped }, (_, index) => golfer(index));
-  provider.participants = [...mapped, ...Array.from({ length: unmapped }, (_, index) => golfer(unmapped + index))];
-  const sportLeagueId = await participantLeagueId(prisma, sport.id);
-  for (const participant of mapped) {
-    const row = await prisma.participant.create({ data: { sportLeagueId, name: participant.name, participantType: 'INDIVIDUAL', status: 'ACTIVE' } });
-    await prisma.participantProviderMapping.create({ data: { participantId: row.id, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: participant.externalId } });
+  const providerRow = await prisma.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
+  for (let index = 0; index < findings; index += 1) {
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Findings Tour ${suffix} ${String(index)}` } });
+    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Findings Open ${suffix} ${String(index)}` } });
+    const event = await prisma.sportEvent.create({
+      data: { eventSeriesId: series.id, eventYear: 2026, name: `Findings Open ${suffix} ${String(index)}`, sport: Sport.GOLF,
+        providerId: provider.providerId, externalId: `finding-${suffix}-${String(index)}`, startDate: new Date(Date.now() + 7 * DAY) },
+    });
+    const changer = await createTestUser({ isRootAdmin: true });
+    await prisma.providerSyncFinding.create({
+      data: {
+        kind: ProviderSyncFindingKind.UNMAPPED_PARTICIPANT, severity: ProviderSyncFindingSeverity.WARNING, status: ProviderSyncFindingStatus.WAIVED,
+        sportLeagueId: sportLeague.id, sportEventId: event.id, providerId: providerRow.id, providerValue: `golfer-${suffix}-${String(index)}`,
+        waiveNote: 'An amateur the feed lists', statusChangedByUserId: changer.user.id,
+        firstSeenAt: new Date(), lastSeenAt: new Date(), statusChangedAt: new Date(),
+      },
+    });
   }
   return createTestUser({ isRootAdmin: true });
 }
@@ -611,12 +629,28 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET the unmapped provider participants: the same statements for 2 unmapped and 2 mapped golfers as for 20 and 20', async () => {
+  it('GET the sync findings: the same statements for 2 findings as for 20, each with its league and sport, event, Provider and the admin who set its status', async () => {
     await expectConstantQueries({
-      route: 'GET /api/v1/ingestion/unmapped-participants',
-      seed: seedUnmappedParticipants,
-      call: (rootAdmin) => get(`/api/v1/ingestion/unmapped-participants?providerId=${BALLDONTLIE_TEST_PROVIDER_ID}`, rootAdmin),
-      rowsShown: (response) => okBody(response, UnmappedProviderParticipantListResponseSchema).participants.length,
+      route: 'GET /api/v1/ingestion/sync-findings/',
+      seed: seedSyncFindings,
+      call: (rootAdmin) => get('/api/v1/ingestion/sync-findings/', rootAdmin),
+      rowsShown: (response) => okBody(response, ProviderSyncFindingListResponseSchema).findings.length,
+    });
+  });
+
+  it('GET one sync finding: its actions are fixed by its kind and status, read with its league, sport, event, Provider and changer, one statement each', async () => {
+    const rootAdmin = await seedSyncFindings(1);
+    const finding = await getPrisma().providerSyncFinding.update({
+      where: { id: (await getPrisma().providerSyncFinding.findFirstOrThrow({ orderBy: { createdAt: 'desc' } })).id },
+      data: { status: ProviderSyncFindingStatus.OPEN, waiveNote: null },
+    });
+
+    await expectFixedQueries({
+      route: 'GET /api/v1/ingestion/sync-findings/{findingId}',
+      fixedBy: 'the actions an OPEN unmapped participant offers',
+      call: () => get(`/api/v1/ingestion/sync-findings/${finding.id}`, rootAdmin),
+      rowsShown: (response) => okBody(response, ProviderSyncFindingResponseSchema).finding.actions.length,
+      statements: 6,
     });
   });
 

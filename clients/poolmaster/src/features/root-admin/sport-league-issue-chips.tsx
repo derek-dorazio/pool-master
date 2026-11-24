@@ -12,14 +12,16 @@ import {
 } from '@/features/shared/ui';
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { buildSportEventPath } from './manage-navigation';
+import { buildLeagueOpenFindingsPath } from './sync-findings-links';
 import { overdueLateness, RELEASE_CHECK_LABELS, syncFailedText } from './sport-league-overview-text';
 
 import type { SportLeagueIssue } from './sport-league-overview-text';
 
 /**
  * One sport league's Issues cell: a short chip per issue type with its count, in the fixed order
- * the read gives (Sync, Release). Hovering a chip lists the items behind the count, each leading
- * to its fix: a failed sync opens its run, a held release opens its event.
+ * the read gives (Findings, Sync, Release, Overdue). Hovering a chip lists the items behind the
+ * count, each leading to its fix: a severity's open findings open Findings filtered to them, a
+ * failed sync opens its run, a held release opens its event.
  */
 export function SportLeagueIssueChips({
   onOpenSyncRun,
@@ -45,17 +47,36 @@ export function SportLeagueIssueChips({
           testId={`root-admin-sports-issue-${overview.id}-${issue.type}-popover`}
           trigger="cell"
         >
-          <IssueItems issue={issue} onOpenSyncRun={onOpenSyncRun} sport={overview.sport} />
+          <IssueItems issue={issue} onOpenSyncRun={onOpenSyncRun} sport={overview.sport} sportLeagueId={overview.id} />
         </DetailsPeek>
       ))}
     </span>
   );
 }
 
-function IssueItems({ issue, onOpenSyncRun, sport }: { issue: SportLeagueIssue; onOpenSyncRun: (syncRunId: string) => void; sport: Sport }) {
+function IssueItems({ issue, onOpenSyncRun, sport, sportLeagueId }: {
+  issue: SportLeagueIssue;
+  onOpenSyncRun: (syncRunId: string) => void;
+  sport: Sport;
+  sportLeagueId: string;
+}) {
   const displayPreferences = useDisplayPreferences();
   const when = (occurredAt: string) => formatDateTimeDisplay(occurredAt, displayPreferences);
   switch (issue.type) {
+    case 'FINDINGS':
+      return (
+        <SectionRows>
+          {issue.items.map((item) => (
+            <SectionRow
+              facts={`${String(item.count)} open`}
+              key={item.severity}
+              name={enumLabel('ProviderSyncFindingSeverity', item.severity)}
+              testId={`root-admin-sports-issue-findings-${item.severity}`}
+              to={buildLeagueOpenFindingsPath(sportLeagueId, item.severity)}
+            />
+          ))}
+        </SectionRows>
+      );
     case 'SYNC':
       return (
         <SectionRows>

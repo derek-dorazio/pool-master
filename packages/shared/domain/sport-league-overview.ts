@@ -4,6 +4,7 @@
  */
 import type {
   AutoReleaseCheckOutcome,
+  ProviderSyncFindingSeverity,
   ProviderSyncKind,
   Sport,
   SportLeagueIssueTargetType,
@@ -51,7 +52,14 @@ export interface SportLeagueReleaseIssueItem extends SportLeagueIssueItemBase {
  */
 export type SportLeagueOverdueIssueItem = SportLeagueIssueItemBase;
 
+/** How many OPEN sync findings of one severity the league has (#1999); the Findings list shows them. */
+export interface SportLeagueFindingsIssueItem {
+  severity: ProviderSyncFindingSeverity;
+  count: number;
+}
+
 export type SportLeagueIssue =
+  | { type: typeof SportLeagueIssueType.FINDINGS; count: number; items: SportLeagueFindingsIssueItem[] }
   | { type: typeof SportLeagueIssueType.SYNC; count: number; items: SportLeagueSyncIssueItem[] }
   | { type: typeof SportLeagueIssueType.RELEASE; count: number; items: SportLeagueReleaseIssueItem[] }
   | { type: typeof SportLeagueIssueType.OVERDUE; count: number; items: SportLeagueOverdueIssueItem[] };

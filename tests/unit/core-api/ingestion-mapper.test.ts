@@ -10,7 +10,6 @@ import {
   toProviderSummaryDto,
   toProviderSyncRunDetailDto,
   toProviderSyncRunDto,
-  toUnmappedProviderParticipantDto,
 } from '../../../packages/core-api/src/mappers/ingestion.mapper';
 import type { ProviderManualSyncSubmissionResult } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderSyncRunStatus, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
@@ -158,12 +157,6 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     const details = { warnings: ['late'] } as never;
 
     expect(toProviderSyncRunDetailDto({ ...buildRun(), details })).toEqual(expect.objectContaining({ id: 'run-1', details }));
-  });
-
-  it('sends an unmapped participant\'s provider and external name', () => {
-    const participant = { providerId: 'p1', providerName: 'Feed', externalId: 'x1', externalName: 'Scottie', sport: Sport.GOLF };
-
-    expect(toUnmappedProviderParticipantDto(participant)).toEqual(participant);
   });
 
   const providerEvent = {
