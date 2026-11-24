@@ -696,8 +696,8 @@ Contest:
   offered). One default per (sport league, selection type). Coverage mode (Derek
   2026-11-24), `ContestConfigTemplate.coverageMode`: ONE_SLOT (the list is where it may run;
   the commissioner picks one slot: tiered, budget, quick pick, squares, a single-round Clutch
-  Card), ALL_LISTED (covers every listed slot: brackets, a whole-playoffs Clutch Card, a
-  majors pool) or FROM_SLOT (the commissioner picks a starting slot and the contest covers it
+  Card), ALL_LISTED (covers every listed slot of one event: brackets, a whole-tournament tiered
+  pool, a whole-playoffs Clutch Card) or FROM_SLOT (the commissioner picks a starting slot and the contest covers it
   and every later listed slot: season-long pick'em and survivor). A contest copies only the
   slots its mode and the commissioner's choice give into `ContestSeasonSlot`. No template versions: a contest
   copies its slots into `ContestSeasonSlot` at creation, so a template edit (by migration
@@ -708,7 +708,7 @@ Contest:
 - Cups (Derek 2026-11-24, slices 20c and 20f): a cup adds up the counted contests that cover a single
   slot and rank every entry by its own choices (today tiered, budget and the Clutch Card;
   both tiered and budget count). Contests covering several slots (pick'em, survivor,
-  bracket, a majors pool) crown their own winner and never count; squares and quick pick
+  bracket, a whole-tournament pool) crown their own winner and never count; squares and quick pick
   never count. One global rule, no sport branches. Which cups exist is sport league data,
   `SportLeagueCupDefinition` (sport league, name, `coverage` ALL_SLOTS | PHASE |
   LISTED_SLOTS, `phase` only with PHASE by database check) with
@@ -802,6 +802,17 @@ Contest:
   play-in out; the play-in is still synced and fills the bracket before the cutoff.
 - Clutch Card coverage (Derek 2026-11-24, slice 26): a Clutch Card template covers slots of one
   event only (regular-season or playoffs, never both), so one field, pick list and tier set.
+- No multi-tournament field pools (Derek 2026-11-24, slices 11 and 15: "not practical; the
+  Majors cup serves that purpose"): tiered, budget and quick pick contests never span events.
+  The PGA and LPGA majors pools and the ATP and WTA Grand Slam tiered pools are deleted by
+  migration with their code (missed-event 80s, best-N across events). A league runs one
+  contest per major, and the Majors Cup (golf) or Grand Slam Cup (tennis) adds them up.
+  Only pick'em and survivor (FROM_SLOT over WEEK events) span events; ALL_LISTED covers one
+  event's slots. The events sync loads each Season's whole schedule ahead, so coverage is
+  fixed at creation from the Season's slots, with no "slot created" join handler.
+  Future rule (Derek 2026-11-24): if a field contest ever spans several events, it takes
+  one set of picks made once ("Scottie Scheffler for the next three tournaments"), never a
+  pick window per event. Not built now.
 - Corrections after settlement (Derek 2026-11-24, slice 18): the feed's new value is always
   stored; settled results stay frozen; the finding offers a root admin "Re-settle" until the
   contest's championship year closes. Re-settling recomputes the contest and everything
