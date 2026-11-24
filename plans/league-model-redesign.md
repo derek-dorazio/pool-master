@@ -773,6 +773,10 @@ Contest:
   (`contest-events-page.tsx`, `setContestSportEvents`) is deleted. The coverage pick (the
   slot, or the starting slot) is made at creation and can be changed on the contest's
   settings while it is in Set up, with the same picker; from Open its slots are fixed.
+- Cancelled slots (Derek 2026-11-24, slices 6 and 14): Season slot status gains CANCELLED, set
+  from the feed or by a root admin (audited). Contests covering only that slot are cancelled
+  and their entries voided; a multi-slot contest settles on the slots played; cups and the
+  year close treat a cancelled slot as finished.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
