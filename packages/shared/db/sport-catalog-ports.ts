@@ -39,6 +39,7 @@ import type {
   SportEventSyncScope,
   SportEventTier,
   SportLeague,
+  SportLeaguePosition,
   TierLayoutValues,
   PlatformTierProfile,
   ValuationSource,
@@ -99,7 +100,7 @@ export interface SportLeagueRepository {
    * is a stopgap for the browser journeys' own leagues until they move to test slots (#2004).
    */
   create(
-    input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
+    input: Pick<SportLeague, 'sportId' | 'name' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
     firstSeason: SportLeagueSeasonSpan,
   ): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
@@ -144,7 +145,7 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'pricingConfig' | 'tierConfig'>;
+export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -556,6 +557,8 @@ export interface SportLeagueOverviewLeague {
   sport: Sport;
   name: string;
   syncProviderId: string | null;
+  /** That provider's name (#1999). */
+  syncProviderName: string | null;
   isActive: boolean;
 }
 
@@ -723,6 +726,8 @@ export interface SportLeaguePageReader {
   readSeasons(sportLeagueId: string): Promise<SportLeagueSeasonDetail[] | null>;
   /** One event's facts (#1889). Null when the event does not exist. */
   readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
+  /** The league's positions with their provider codes, by display order (#2001). Null when the league does not exist. */
+  readPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null>;
 }
 
 /** A profile write: its code, name and values. */

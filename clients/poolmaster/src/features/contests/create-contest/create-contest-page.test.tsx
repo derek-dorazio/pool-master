@@ -309,7 +309,7 @@ const MARCH_MADNESS_UNDER_WAY = {
   readinessStatus: 'EVENT_STARTED',
   readinessReasons: ['EVENT_STARTED'],
   contestEligible: false,
-  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: null, scoringFamily: null }, [2, 3, 4, 5]),
+  contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3, 4, 5]),
   rounds: 6,
 } as const;
 
@@ -1635,7 +1635,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     readinessStatus: 'EVENT_STARTED',
     readinessReasons: ['EVENT_STARTED'],
     contestEligible: false,
-    contestOpenings: openingsUnderWay({ sport: 'AMERICAN_FOOTBALL', participantType: null, scoringFamily: null }, [2, 3]),
+    contestOpenings: openingsUnderWay({ sport: 'AMERICAN_FOOTBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3]),
     tierCount: 0,
     rounds: 4,
     sportLeagueId: 'nfl',

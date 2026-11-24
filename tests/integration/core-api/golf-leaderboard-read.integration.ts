@@ -31,7 +31,6 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       where: { sport: Sport.GOLF },
       create: {
         sport: Sport.GOLF,
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},

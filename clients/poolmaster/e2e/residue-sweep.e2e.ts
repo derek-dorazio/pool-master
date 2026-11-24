@@ -38,6 +38,8 @@ test('the residue sweep removes a run left behind, league first and users last, 
       timeZone: 'UTC',
       name: tourName,
       ...(await sportLeagueProfileIds(api, admin, 'TIERS_6_OF_10')),
+      participantType: 'INDIVIDUAL',
+      scoringFamily: 'STROKE_PLAY',
     });
     const { event } = await postJson<{ event: { id: string } }>(api, admin, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,

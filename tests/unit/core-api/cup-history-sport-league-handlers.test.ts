@@ -4,7 +4,7 @@
  * not own reaches the global error handler unchanged.
  */
 import { expect } from '@jest/globals';
-import { ContestStatus, CupStatus, PlanFeature, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, CupStatus, PlanFeature, ProviderCode, Sport } from '@poolmaster/shared/domain';
 import type { SportLeagueListResponse } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import { createCupHandlers } from '../../../packages/core-api/src/modules/cups/handler';
@@ -237,7 +237,7 @@ describe('sport league handlers', () => {
   const overviews = new SportLeagueOverviewService({
     reader: {
       readFacts: async () => ({
-        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', syncProviderId: 'balldontlie', isActive: true }],
+        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true }],
         latestSyncRuns: [],
         heldEvents: [],
         eventCounts: new Map([['sl1', 2]]),
@@ -257,6 +257,10 @@ describe('sport league handlers', () => {
     reader: {
       readSyncFacts: (sportLeagueId) => known(sportLeagueId, { league: pageLeague, latestRuns: [] }),
       readEventPageFacts: () => Promise.resolve(null),
+      readPositions: (sportLeagueId) => known(sportLeagueId, [{
+        id: 'pos1', code: 'QB', displayOrder: 1, isFieldEligible: true,
+        providerCodes: [{ providerCode: 'QB', provider: ProviderCode.BALLDONTLIE, providerLeagueCode: 'nfl', providerLeagueName: 'NFL' }],
+      }]),
       readStructure: (sportLeagueId) => known(sportLeagueId, []),
       readSeasons: (sportLeagueId) => known(sportLeagueId, [{
         id: 'season-2026', sportLeagueId: 'sl1', name: '2026', championshipYear: 2026, startsAt: AT, endsAt: new Date('2026-12-31T23:59:59.999Z'),
@@ -287,7 +291,7 @@ describe('sport league handlers', () => {
 
     expect(listed.body).toEqual({
       sportLeagues: [{
-        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', providerId: 'balldontlie', isActive: true,
+        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', providerId: 'balldontlie', providerName: 'BALLDONTLIE', isActive: true,
         syncHealth: 'NOT_RUN_YET', issues: [], season: null, nextEventStartsAt: null, eventCount: 2,
       }],
     });
@@ -359,6 +363,8 @@ describe('sport league handlers', () => {
 
   it('answers the League page\'s syncs, events and participants of a sport league, and each read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
     const syncs = await callHandler(handlers.listSyncs, stubRequest({ params }));
+    const structure = await callHandler(handlers.getStructure, stubRequest({ params }));
+    const positions = await callHandler(handlers.listPositions, stubRequest({ params }));
     const events = await callHandler(handlers.listEventOverviews, stubRequest({ params }));
     const participants = await callHandler(handlers.listParticipantOverviews, stubRequest({ params }));
     const missing = { params: { sportLeagueId: 'nope' } };
@@ -366,7 +372,11 @@ describe('sport league handlers', () => {
     expect(syncs.body).toMatchObject({ syncs: [{ kind: 'EVENTS', health: 'NOT_RUN_YET' }, { kind: 'FIELD' }, { kind: 'SCORES' }] });
     expect(events.body).toMatchObject({ events: [{ id: 'e1', releaseMode: 'MANUAL', releaseAt: null, fieldSize: null, issues: [] }] });
     expect(participants.body).toMatchObject({ participants: [{ id: 'p1', addedBy: 'ADMIN', feedId: null }] });
-    for (const read of [handlers.listSyncs, handlers.listEventOverviews, handlers.listParticipantOverviews]) {
+    expect(structure.body).toEqual({ phases: [] });
+    expect(positions.body).toEqual({
+      positions: [{ id: 'pos1', code: 'QB', displayOrder: 1, isFieldEligible: true, providerCodes: [{ providerCode: 'QB', provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL' }] }],
+    });
+    for (const read of [handlers.listSyncs, handlers.listEventOverviews, handlers.listParticipantOverviews, handlers.getStructure, handlers.listPositions]) {
       expect(await callHandler(read, stubRequest(missing))).toMatchObject({ statusCode: 404, body: { error: { code: 'SPORT_LEAGUE_NOT_FOUND' } } });
     }
   });

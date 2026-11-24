@@ -29,6 +29,7 @@ import {
   type ProviderLeagueSettings,
   type ProviderSettings,
   type Sport,
+  type SportLeaguePlay,
   type SportLeague,
   calendarYearSeason,
 } from '@poolmaster/shared/domain';
@@ -117,7 +118,7 @@ export class SportLeagueService {
    */
   async createSportLeague(
     sport: Sport,
-    input: { name: string; timeZone: string; bracketAdvancement?: BracketAdvancement } & SportLeagueProfileIds,
+    input: { name: string; timeZone: string; bracketAdvancement?: BracketAdvancement } & SportLeaguePlay & SportLeagueProfileIds,
   ): Promise<SportLeagueSummary> {
     if (!isKnownTimeZone(input.timeZone)) {
       throw new SportCatalogError(`Unknown time zone: ${input.timeZone}.`, 'TIME_ZONE_UNKNOWN', 400);
@@ -135,6 +136,8 @@ export class SportLeagueService {
     const sportLeague = await this.deps.sportLeagues.create({
       sportId: sportRow.id,
       name: input.name,
+      participantType: input.participantType,
+      scoringFamily: input.scoringFamily,
       timeZone: input.timeZone,
       bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
       platformTierProfileId: input.platformTierProfileId,

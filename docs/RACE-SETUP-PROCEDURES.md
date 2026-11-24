@@ -46,25 +46,22 @@ field is listed in post order with made-up odds, so it tiers and prices from the
 
 A race can also be built on the same screens (*Races → New race*, then *Field
 → Add more participants*). Untick *Move this race through Live and Completed automatically*
-when you create it, for the reason above, and do not use *Seed field from circuit
-roster*: it adds every horse on the circuit's roster, not only this race's runners.
+when you create it, for the reason above.
 
-## 1. Odds, tiers, prices and release
+## 1. Seeds, tiers, prices and release
 
-A test seed's field already carries odds, so it tiers and prices from them. On a field built by
-hand, enter the odds first.
+A test seed's field already carries odds, so it tiers and prices from them. Odds come only from
+the feed or the test data: the Field dialog shows a horse's odds but never edits them.
 
-### Morning-line odds
+### Seeds on a field built by hand
 
-On *Field*, give every horse its morning-line odds: its row's ⤢, then *Edit*, the **Odds**
-field and *Save corrections*. Leave **Seed** as the load set it, or blank on a field built by hand.
+On a field built by hand, give every horse a seed: its row's ⤢, then *Edit*, the **Seed** field
+and *Save corrections*.
 
-- Enter odds as a number "to 1": 5-2 is `2.5`, 8-1 is `8`, 30-1 is `30`. Lower is shorter.
-- Odds set the tiers (next step) and the budget prices, from the shortest odds down, once every
-  horse has odds. Tiers and prices share one order: odds, then seed, then rank, decided by the
+- Tiers (next step) and budget prices share one order: odds, then seed, then rank, decided by the
   first value every horse has; the dialogs say which.
 - To set them all at once, use *Bulk upload* on the *Tools* tab: CSV or JSON with
-  `playerName` (or `externalId`) and `oddsToWin` per row, *Preview*, then
+  `playerName` (or `externalId`) and `seedNumber` per row, *Preview*, then
   *Apply to field*. It only changes horses already in the field.
 
 ### Tiers

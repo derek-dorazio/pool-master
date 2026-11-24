@@ -11,6 +11,7 @@
  *
  * Scaffolding only: no assertions and no test-specific data here.
  */
+import { sportPlay } from './sport-play';
 import type {
   ContestConfigurationRepository,
   ContestEntryEventStandingRepository,
@@ -265,6 +266,7 @@ export class InMemoryContestWorld {
       status: SportEventStatus.SCHEDULED,
       createdAt: T0,
       updatedAt: T0,
+      ...sportPlay(overrides.sport ?? Sport.GOLF),
       ...overrides,
     } as SportEvent;
     this.sportEvents.set(event.id, event);

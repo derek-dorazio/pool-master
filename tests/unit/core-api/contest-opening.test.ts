@@ -3,6 +3,7 @@
  * open, not yet (unreleased, no field, a later-round bracket's teams unknown), or closed (past
  * the setup's cutoff).
  */
+import { sportPlay } from '../../support/sport-play';
 import { ContestOpening, SelectionType, SportEventStatus, Sport, TournamentFormat } from '@poolmaster/shared/domain';
 import {
   bracketStartRounds,
@@ -32,6 +33,7 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
     rounds: 4,
     salaryCap: null,
     squaresFromRound: null,
+    ...sportPlay(overrides.sport ?? Sport.AMERICAN_FOOTBALL),
     ...overrides,
   };
 }
@@ -135,7 +137,7 @@ describe('bracketStartRounds', () => {
 
 describe('eventContestOpenings, the event list\'s openings per selection type (#1929)', () => {
   function facts(overrides: Partial<EventOpeningFacts> = {}): EventOpeningFacts {
-    return { sport: Sport.BASKETBALL, status: SportEventStatus.SCHEDULED, startDate: LATER, rounds: 6, loadedParticipantCount: 64, ...overrides };
+    return { sport: Sport.BASKETBALL, status: SportEventStatus.SCHEDULED, startDate: LATER, rounds: 6, loadedParticipantCount: 64, ...sportPlay(overrides.sport ?? Sport.BASKETBALL), ...overrides };
   }
   const byType = (rows: EventContestOpening[]) => Object.fromEntries(rows.map((row) => [row.selectionType, row])) as Record<SelectionType, EventContestOpening>;
 

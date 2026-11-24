@@ -18,6 +18,7 @@ import { ParticipantService } from '../../../packages/core-api/src/modules/parti
 import type { ProviderParticipant, SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { leagueProfiles } from '../../support/league-profiles';
+import { sportPlay } from '../../support/sport-play';
 
 // A feed's participants are mapped to its Provider row (#2040), so the suite syncs as BALLDONTLIE.
 const PROVIDER = 'balldontlie';
@@ -57,7 +58,7 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
   };
   const event = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
   // Each event on a sport league of its own, so a test sees only the participants it makes.
-  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
   await prisma.eventSeries.update({ where: { id: event.eventSeriesId }, data: { sportLeagueId: league.id } });
   return { golfer, detail, event, sportLeagueId: league.id, suffix };
 }

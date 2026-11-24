@@ -20,6 +20,7 @@ import { recordStatements, statementCounts } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 import { seriesSeasonId } from '../../support/event-edition';
+import { sportPlay } from '../../support/sport-play';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
 // head-to-head family's GAME writer, through the admin's result path, with the teams' provider
@@ -43,13 +44,13 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: sportOf },
-    create: { sport: sportOf, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: sportOf, tournamentFormat: 'MATCHES' },
     update: {},
   });
   const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Division I Men');
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: leagueName } },
-    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: leagueName },
+    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: leagueName },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });

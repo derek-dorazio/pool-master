@@ -216,22 +216,20 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
     expect(within(screen.getByTestId('root-admin-bracket-round-2')).getByRole('heading')).toHaveTextContent('NBA Finals');
   });
 
-  it('names the data feed a synced result came from, and reads the feed\'s name only when a result came from it', async () => {
-    const synced = sportEventFixture({ ...tournament, providerId: 'balldontlie' });
-    listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'HEALTHY', sportsCovered: ['BASKETBALL'], primaryForSports: [] }] } });
+  it('names the data feed a synced result came from with the event\'s provider name, reading no provider list', async () => {
+    const synced = sportEventFixture({ ...tournament, providerId: 'balldontlie', providerName: 'BALLDONTLIE' });
     seed([
       match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', homeScore: 80, awayScore: 61, resultSource: 'PROVIDER' }),
       match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 72, resultSource: 'ADMIN' }),
     ], { event: synced });
     renderPage();
 
-    // The feed's name arrives with the providers read, after the match: wait for it, not the row.
-    await waitFor(() => expect(screen.getByTestId('root-admin-bracket-source-1')).toHaveTextContent('From BALLDONTLIE'));
+    expect(await screen.findByTestId('root-admin-bracket-source-1')).toHaveTextContent('From BALLDONTLIE');
     expect(screen.queryByTestId('root-admin-bracket-source-2')).not.toBeInTheDocument();
+    expect(listProvidersMock).not.toHaveBeenCalled();
   });
 
-  it('says a synced result came from the data feed while the feed\'s name is unknown', async () => {
-    listProvidersMock.mockResolvedValue({ data: { providers: [] } });
+  it('says a synced result came from the data feed when the event names no provider', async () => {
     seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', resultSource: 'PROVIDER' })]);
     renderPage();
 
@@ -239,23 +237,13 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
   });
 
   it('shows a live game\'s score from the data feed, away side first, and no result for it', async () => {
-    const synced = sportEventFixture({ ...tournament, providerId: 'balldontlie', status: 'IN_PROGRESS' });
-    listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'HEALTHY', sportsCovered: ['BASKETBALL'], primaryForSports: [] }] } });
+    const synced = sportEventFixture({ ...tournament, providerId: 'balldontlie', providerName: 'BALLDONTLIE', status: 'IN_PROGRESS' });
     seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'IN_PROGRESS', homeScore: 40, awayScore: 38 })], { event: synced });
     renderPage();
 
-    await waitFor(() => expect(screen.getByTestId('root-admin-bracket-live-1')).toHaveTextContent('(16) Vermont 38, (1) Duke 40, from BALLDONTLIE'));
+    expect(await screen.findByTestId('root-admin-bracket-live-1')).toHaveTextContent('(16) Vermont 38, (1) Duke 40, from BALLDONTLIE');
     expect(within(screen.getByTestId('root-admin-bracket-match-1')).getByText('In progress')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-bracket-winner-1-HOME')).toHaveTextContent('Duke wins');
-  });
-
-  it('reads no provider list for a bracket whose results an admin entered', async () => {
-    seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', resultSource: 'ADMIN' })]);
-    renderPage();
-
-    await screen.findByTestId('root-admin-bracket-winner-1-HOME');
-    expect(screen.queryByTestId('root-admin-bracket-source-1')).not.toBeInTheDocument();
-    expect(listProvidersMock).not.toHaveBeenCalled();
   });
 
   it('records the tapped team as a game\'s winner, with no scores, and reloads the bracket', async () => {

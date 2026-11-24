@@ -11,6 +11,7 @@ import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, in
 import { heldHere } from '../../support/job-locks';
 import { leagueProfiles } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { sportPlay } from '../../support/sport-play';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
 // Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
@@ -32,10 +33,10 @@ async function golfLeague({ synced = true, isActive = true }: { synced?: boolean
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
   // A migration's league has its Seasons mapped to the provider's; this year's is current (#2003).
   if (synced) await syncSeasonsTo(prisma, league.id, await syncLeagueTo(prisma, league.id, 'pga'), [2027, 2028]);
   return league;

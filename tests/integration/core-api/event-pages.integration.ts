@@ -20,6 +20,7 @@ import {
 } from '../helpers';
 import { cleanupFreshEventEditions, freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { leagueProfiles } from '../../support/league-profiles';
+import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -157,7 +158,7 @@ describe('Event page offers', () => {
     const prisma = getPrisma();
     const { page, remove } = await scratchPage(true);
     const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
-    const switchedOff = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
+    const switchedOff = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sport: Sport.GOLF } });
     try {
       await prisma.eventPageOffer.create({
@@ -217,7 +218,7 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
     const prisma = getPrisma();
     const sportEvent = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma, { name: 'Event page squares' })),
+        ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL, name: 'Event page squares' })),
         externalId: `event-page-squares-${randomUUID()}`, providerId: 'integration-test', sport: Sport.AMERICAN_FOOTBALL,
         name: 'Event page squares', startDate: new Date('2030-01-09T18:00:00.000Z'), status: SportEventStatus.IN_PROGRESS,
       },

@@ -1,8 +1,10 @@
+import { sportPlay } from '../../support/sport-play';
 import type { PrismaClient } from '@prisma/client';
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import {
   SPORT_DEFINITIONS,
   ScoringFamily,
+  Sport,
   SportEventStatus,
   assertNever,
   eventSportDefinition,
@@ -32,9 +34,9 @@ function defaultScoring(event: SportLeagueEvent): ContestScoringSettings {
   }
 }
 
-/** An event of each family: one of a sport whose definition names it. */
+/** An event of each family: one of a sport whose leagues are seeded with it. */
 const EVENT_BY_SCORING_FAMILY = new Map<ScoringFamily, SportLeagueEvent>(
-  Object.values(SPORT_DEFINITIONS).map((definition) => [definition.scoringFamily, { sport: definition.sport }] as const),
+  Object.values(SPORT_DEFINITIONS).map((definition) => [sportPlay(definition.sport).scoringFamily, { sport: definition.sport, ...sportPlay(definition.sport) }] as const),
 );
 
 describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
@@ -86,9 +88,9 @@ describe('finish position', () => {
 });
 
 describe('scoring family registry', () => {
-  it('resolves every registered sport to the module of the family its definition names', () => {
-    for (const definition of Object.values(SPORT_DEFINITIONS)) {
-      expect(scoringFamilyForEvent({ sport: definition.sport })).toBe(getScoringFamilyModule(definition.scoringFamily));
+  it('resolves an event to the module of its sport league\'s scoring family, whatever the sport', () => {
+    for (const family of Object.values(ScoringFamily)) {
+      expect(scoringFamilyForEvent({ sport: Sport.GOLF, scoringFamily: family })).toBe(getScoringFamilyModule(family));
     }
   });
 });

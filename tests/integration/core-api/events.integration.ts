@@ -14,6 +14,7 @@ import { fixtureSeasonId, freshEventEdition } from '../../support/event-edition'
 import { standardEventPricing } from '../../support/budget-pricing';
 import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
+import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -35,7 +36,6 @@ describe('events routes', () => {
       create: {
         id: randomUUID(),
         sport: Sport.GOLF,
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
@@ -144,7 +144,6 @@ describe('events routes', () => {
       create: {
         id: randomUUID(),
         sport: Sport.GOLF,
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
@@ -465,7 +464,7 @@ describe('events routes', () => {
       const admin = await createTestUser({ displayName: 'Season List Admin', isRootAdmin: true });
       const viewer = await createTestUser({ displayName: 'Season List Member' });
       const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-      const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Season List Tour ${randomUUID()}` } });
+      const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Season List Tour ${randomUUID()}` } });
       const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeague.id, 2098);
       const released = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Season List Classic' } });
       const draft = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: 'Season List Open' } });

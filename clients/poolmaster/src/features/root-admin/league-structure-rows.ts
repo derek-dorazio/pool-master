@@ -3,6 +3,7 @@ import { SeriesFormat, type LeaguePhase } from '@poolmaster/shared/domain';
 import type {
   SlotProviderMappingDto,
   SportLeaguePhaseDefinitionDto,
+  SportLeaguePositionProviderCodeDto,
   SportLeagueSeasonDto,
   SportLeagueSeasonProviderMappingDto,
   SportLeagueSeasonSlotDto,
@@ -46,4 +47,9 @@ export function seasonSlotRowsOf(seasons: readonly SportLeagueSeasonDto[]): Seas
 /** One provider's id for a Season in a line: the provider and its league, then the id. */
 export function seasonMappingText(mapping: SportLeagueSeasonProviderMappingDto): string {
   return `${mapping.providerName} ${mapping.providerLeagueCode} · ${mapping.providerSeasonId}`;
+}
+
+/** One provider code in a line, as the slots' mappings read: the provider and its league, then the code its feed sends. */
+export function positionCodeText(code: SportLeaguePositionProviderCodeDto): string {
+  return `${enumLabel('ProviderCode', code.provider)} ${code.providerLeagueCode} · ${code.providerCode}`;
 }

@@ -128,6 +128,7 @@ import { SyncFindingRetention } from './modules/ingestion/findings/sync-finding-
 import { CurrentSeasonRecompute } from './modules/sport-catalog/current-season-recompute';
 import { PrismaSportLeagueSeasonRepository } from './adapters/prisma-sport-league-season-repository';
 import { syncFindingsModule } from './modules/ingestion/findings/routes';
+import { ProviderRateLimitWatch } from './modules/ingestion/findings/provider-rate-limit-watch';
 import { PrismaProviderSyncFindingRepository } from './adapters/prisma-provider-sync-finding-repository';
 import { ParticipantService } from './modules/participants/service';
 import { registerConfiguredProviders, type SportDataProviderFactory } from './modules/ingestion/core/provider-bindings';
@@ -188,6 +189,13 @@ export function buildApp(options: BuildAppOptions = {}) {
     repository: syncFindingRepository,
     providers: providerSettings,
     participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), app.log),
+    logger: app.log,
+  });
+  // A Provider that keeps rate limiting raises a finding on each league it syncs (#2038).
+  const providerRateLimits = new ProviderRateLimitWatch({
+    findings: syncFindings,
+    providers: providerSettings,
+    syncedLeagues: () => new PrismaSportLeagueRepository(prisma).findEventSynced(),
     logger: app.log,
   });
   const webhookProviderIds = () => providerWebhooks.onProviderIds();
@@ -554,7 +562,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     // leagues read takes effect when the task next starts, the rest on the next read (#1997).
     await providerSettings.load();
     providerSettings.start();
-    registerConfiguredProviders(registry, providerSettings, process.env, app.log, options.buildSportDataProviders);
+    registerConfiguredProviders(registry, providerSettings, process.env, app.log, options.buildSportDataProviders, (code) => providerRateLimits.observerFor(code));
     providerWebhooks.warnFlagsWithoutSecret(app.log);
 
     // An API-only task (#1186) serves requests and leaves everything below to the worker.

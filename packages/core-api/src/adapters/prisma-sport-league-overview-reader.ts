@@ -12,7 +12,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { AutoReleaseCheckOutcome, ProviderSyncFindingStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
-import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 
 export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReader {
   constructor(private readonly prisma: PrismaClient) {}
@@ -63,6 +63,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         isActive: league.isActive,
         sport: league.sport.sport,
         syncProviderId: syncProviderIdOf(league),
+        syncProviderName: syncProviderNameOf(league),
       })),
       latestSyncRuns,
       heldEvents: heldEvents.flatMap((event) => {

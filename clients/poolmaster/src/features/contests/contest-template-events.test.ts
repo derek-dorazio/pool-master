@@ -6,7 +6,7 @@ import { buildSportEvent, openingsBeforeStart, openingsUnderWay } from './test/c
 // Contest setup lists an event under a format exactly when the API's opening for it is OPEN
 // (#1929): the page works out nothing from the event's status or readiness itself.
 
-const BASKETBALL = { sport: 'BASKETBALL', participantType: null, scoringFamily: null } as const;
+const BASKETBALL = { sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' } as const;
 
 describe('the events contest setup offers a format on', () => {
   it('lists an event under a format only when the API opens that format on it', () => {

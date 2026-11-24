@@ -14,6 +14,7 @@ import {
   type SportLeagueOverview,
   type SportLeagueParticipantOverview,
   type SportLeagueSeasonDetail,
+  type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
 } from '@poolmaster/shared/domain';
@@ -27,6 +28,7 @@ import type {
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
   SportLeagueSeasonDto,
+  SportLeaguePositionDto,
   SportLeagueStructureResponse,
   SportLeagueSyncDto,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
@@ -36,7 +38,6 @@ export function mapSportToDto(sport: SportConfig): SportDto {
   return {
     id: sport.id,
     sport: sport.sport,
-    participantType: sport.participantType,
     tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
     updatedAt: sport.updatedAt.toISOString(),
@@ -83,6 +84,7 @@ export function mapSportLeagueOverviewToDto(overview: SportLeagueOverview): Spor
     sport: overview.sport,
     name: overview.name,
     providerId: overview.providerId,
+    providerName: overview.providerName,
     isActive: overview.isActive,
     syncHealth: overview.syncHealth,
     issues: overview.issues.map(mapSportLeagueIssueToDto),
@@ -183,6 +185,21 @@ export function mapSportLeagueParticipantOverviewToDto(participant: SportLeagueP
     lastInFeedAt: participant.lastInFeedAt?.toISOString() ?? null,
     addedBy: participant.addedBy,
     createdAt: participant.createdAt.toISOString(),
+  };
+}
+
+export function mapSportLeaguePositionToDto(position: SportLeaguePosition): SportLeaguePositionDto {
+  return {
+    id: position.id,
+    code: position.code,
+    displayOrder: position.displayOrder,
+    isFieldEligible: position.isFieldEligible,
+    providerCodes: position.providerCodes.map((providerCode) => ({
+      providerCode: providerCode.providerCode,
+      provider: providerCode.provider,
+      providerLeagueCode: providerCode.providerLeagueCode,
+      providerLeagueName: providerCode.providerLeagueName,
+    })),
   };
 }
 

@@ -49,12 +49,11 @@ import {
   sportLeagueDefinitionOf,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
-import { deriveGolfTournamentRounds } from '../golf/golf-seeding-algorithm';
 import { SportEventError } from './errors';
 import { describeFailedReleaseCheck, evaluateReleaseChecks, failedReleaseChecks } from './release-checks';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
-import { dailyRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
+import { dailyRoundSchedule, providerEventRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 import { NO_JOBS_FOR_WRITE, combineJobsForWrite } from '../background-jobs';
 import { DomainEventType, type DomainEvents } from '../domain-events';
@@ -798,7 +797,7 @@ function providerEdition(
   input: ProviderEventDetail & { externalId: string; sportLeagueSeasonId: string; providerId: string; rounds?: number },
 ): NewEdition {
   const schedule = input.rounds === undefined
-    ? deriveGolfTournamentRounds(input.startDate, input.endDate)
+    ? providerEventRoundSchedule(input.startDate, input.endDate)
     : dailyRoundSchedule(input.rounds, input.startDate);
   return {
     event: {

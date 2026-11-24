@@ -19,7 +19,6 @@ import {
   releaseEvent,
   replaceEventTierAssignments,
   replaceEventTiers,
-  seedEventParticipants,
   transitionEvent,
   updateEventParticipantGolfRoundScore,
   updateEventParticipants,
@@ -33,6 +32,8 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
+import { Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '../support/sport-play';
 
 // plans/124 §8 — pool-master-z3l. End-to-end golf-admin authoring journey through
 // the generated SDK: tour -> players -> roster upload -> tournament in an event
@@ -51,7 +52,6 @@ async function ensureGolfSportRow(): Promise<void> {
     where: { sport: 'GOLF' },
     create: {
       sport: 'GOLF',
-      participantType: 'INDIVIDUAL',
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
@@ -145,7 +145,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     // --- Sport league (tour) ------------------------------------------------------
     const league = await createSportLeague({
       client: c,
-      body: { ...(await sportLeagueProfiles(c, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `PGA Tour ${RUN}` },
+      body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `PGA Tour ${RUN}` },
     });
     expect(league.response?.status).toBe(201);
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
@@ -199,19 +199,23 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const defaultTiers = await listEventTiers({ client: c, path: { eventId } });
     expect(expectDefined(defaultTiers.data).tiers.length).toBe(6);
 
-    // --- Seed the field from the sport league; derived seeds + odds ------------
-    const seed = await seedEventParticipants({ client: c, path: { eventId } });
-    expect(seed.response?.status).toBe(200);
-    expect(expectDefined(seed.data).added).toBe(20);
-    expect(expectDefined(seed.data).seedNumbersDerived).toBe(20);
-    expect(expectDefined(seed.data).oddsDerived).toBe(20);
+    // --- The field: the tour's 20 golfers, ranked and seeded by upload -------------
+    const fieldAdd = await addEventParticipants({ client: c, path: { eventId }, body: { participantIds: players.map((p) => p.id) } });
+    expect(fieldAdd.response?.status).toBe(200);
+    expect(expectDefined(fieldAdd.data).added).toBe(20);
+    // Each row's distinct values cost a write of their own, so the 20 rows go up in two uploads of
+    // ten to stay inside the per-request query budget.
+    const seedRows = players.map((p, index) => ({ participantId: p.id, ranking: p.rank, seedNumber: index + 1 }));
+    for (const rows of [seedRows.slice(0, 10), seedRows.slice(10)]) {
+      const seeding = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows } });
+      expect(seeding.response?.status).toBe(200);
+    }
 
     let field = await listEventParticipants({ client: c, path: { eventId } });
     expect(expectDefined(field.data).participants.length).toBe(20);
     expect(new Set(expectDefined(field.data).participants.map((e) => e.seedNumber)).size).toBe(20); // unique seed numbers
-    // Odds ordering tracks rank ordering: the rank-1 golfer has the shortest odds.
-    const byRank = [...expectDefined(field.data).participants].sort((a, b) => (a.ranking ?? 0) - (b.ranking ?? 0));
-    expect(expectDefined(byRank[0].oddsToWin)).toBeLessThanOrEqual(expectDefined(byRank[byRank.length - 1].oddsToWin));
+    // No odds are invented: odds come only from a feed.
+    expect(expectDefined(field.data).participants.every((e) => e.oddsToWin == null)).toBe(true);
 
     // --- Withdraw two golfers ---------------------------------------------------
     const wd = await updateEventParticipants({
@@ -228,7 +232,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(wd.response?.status).toBe(200);
 
     // --- 21st participant, of another tour, added straight to the field -------
-    const guestTour = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `LIV ${RUN}` } });
+    const guestTour = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `LIV ${RUN}` } });
     const guestTourId = expectDefined(guestTour.data).sportLeague.id;
     created.sportLeagueIds.add(guestTourId);
     const guest = await createParticipant({
@@ -309,7 +313,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       { status: 404, code: 'EVENT_NOT_FOUND' },
     );
 
-    // --- Reshape to 4 tiers, then auto-assign from ODDS -------------------------
+    // --- Reshape to 4 tiers, then auto-assign in the field's order ---------------
     const fourTiers = await replaceEventTiers({
       client: c,
       path: { eventId },
@@ -437,7 +441,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     created.userIds.add(admin.userId);
     await promoteToRootAdmin(admin);
     const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), timeZone: 'UTC', sport: 'GOLF', name: `Editions Tour ${RUN}` } });
+    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Editions Tour ${RUN}` } });
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     // A new event goes in the league's current Season, so each edition first makes its year's current.
@@ -472,9 +476,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const deny = { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' };
 
     // Deliberately malformed ids and bodies: the refusal must not depend on — or reveal — the input's shape.
-    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', timeZone: 'UTC', name: `denied-${RUN}`, platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
+    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', timeZone: 'UTC', name: `denied-${RUN}`, participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
     expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { name: 'x' } }), deny);
-    expectFunctionalError(await seedEventParticipants({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await rebuildEventLeaderboards({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
     expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: {} }), deny);

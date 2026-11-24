@@ -104,6 +104,7 @@ export const SportEventDtoSchema = z.object({
   id: z.uuid().describe('Sport-event identifier.'),
   externalId: z.string().describe(`Provider-side event identifier used by sync operations. ${ADMIN_ONLY}`),
   providerId: z.string().describe(`Provider that emitted the event, or manual-admin for an admin-authored one. ${ADMIN_ONLY}`),
+  providerName: z.string().nullable().describe(`That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. ${ADMIN_ONLY}`),
   sport: z.enum(Sport).describe('Sport the event belongs to.'),
   name: z.string().describe('Event name shown in contest and event selectors.'),
   venue: z.string().nullable().describe('Venue name when known; null otherwise.'),
@@ -126,8 +127,8 @@ export const SportEventDtoSchema = z.object({
   sportLeagueSeasonId: z.uuid().describe('The Season the event is played in (SportLeagueSeasonDto).'),
   championshipYear: z.number().int().describe('The year the event\'s Season is named for: 2025 for the NFL 2025 Season\'s Super Bowl, played in February 2026; 2026 for an NBA 2025-26 game. Read through the Season.'),
   sportLeagueId: z.uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
-  participantType: z.enum(ParticipantType).nullable().describe('Who competes, when the event\'s sport league overrides its sport. Null competes as the sport does. Read through the series\' sport league.'),
-  scoringFamily: z.enum(ScoringFamily).nullable().describe('How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series\' sport league.'),
+  participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the series\' sport league.'),
+  scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the series\' sport league.'),
   syncScope: z.enum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   providerSynced: z.boolean().describe(`Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
@@ -400,15 +401,6 @@ export const AddSportEventParticipantsResponseSchema = z.object({
 }).describe('What adding participants did.');
 export type AddSportEventParticipantsResponse = z.infer<typeof AddSportEventParticipantsResponseSchema>;
 
-export const SeedSportEventParticipantsResponseSchema = z.object({
-  added: z.number().int(),
-  skipped: z.number().int().describe('Already on the field.'),
-  total: z.number().int().describe('Active affiliations considered.'),
-  seedNumbersDerived: z.number().int(),
-  oddsDerived: z.number().int(),
-}).describe('What seeding the field from the event\'s sport league did.');
-export type SeedSportEventParticipantsResponse = z.infer<typeof SeedSportEventParticipantsResponseSchema>;
-
 /** The largest value the 32-bit integer columns behind ranking and seed number can hold (#437). */
 const MAX_INT32 = 2147483647;
 
@@ -537,7 +529,6 @@ registerSchema('SportEventParticipantDto', SportEventParticipantDtoSchema);
 registerSchema('SportEventParticipantListResponse', SportEventParticipantListResponseSchema);
 registerSchema('AddSportEventParticipantsRequest', AddSportEventParticipantsRequestSchema);
 registerSchema('AddSportEventParticipantsResponse', AddSportEventParticipantsResponseSchema);
-registerSchema('SeedSportEventParticipantsResponse', SeedSportEventParticipantsResponseSchema);
 registerSchema('UpdateSportEventParticipantsRequest', UpdateSportEventParticipantsRequestSchema);
 registerSchema('SportEventParticipantResponse', SportEventParticipantResponseSchema);
 registerSchema('SportEventParticipantUploadRequest', SportEventParticipantUploadRequestSchema);

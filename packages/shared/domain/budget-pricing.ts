@@ -94,3 +94,12 @@ export function priceOnBudgetCurve(values: BudgetPricingValues, position: number
     + (values.topSharePercent - values.floorSharePercent) * (1 - x) ** values.steepness;
   return Math.round((values.salaryCap * sharePercent) / 100 / values.unit) * values.unit;
 }
+
+/**
+ * Prices a field already in its one order, best first (#1807, `orderField`), on the profile's
+ * budget curve. Each id's place in that order puts it on the curve, so a withdrawal leaves no gap,
+ * and a price is explainable from the order alone.
+ */
+export function priceFieldOnBudgetCurve<Id>(values: BudgetPricingValues, orderedField: readonly Id[]): Array<{ id: Id; price: number }> {
+  return orderedField.map((id, position) => ({ id, price: priceOnBudgetCurve(values, position, orderedField.length) }));
+}

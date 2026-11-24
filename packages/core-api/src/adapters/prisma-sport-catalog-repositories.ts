@@ -74,7 +74,7 @@ import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
 import { MATCH_INCLUDE, toSportEventRoundMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
-import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 
 type Db = PrismaClient;
 
@@ -175,7 +175,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   }
 
   async create(
-    input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
+    input: Pick<SportLeague, 'sportId' | 'name' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId' | 'timeZone'>,
     firstSeason: SportLeagueSeasonSpan,
   ): Promise<SportLeague> {
     // The current Season's composite key needs the league and its Season first: two writes.
@@ -184,6 +184,8 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         data: {
           sportId: input.sportId,
           name: input.name,
+          participantType: input.participantType,
+          scoringFamily: input.scoringFamily,
           timeZone: input.timeZone,
           bracketAdvancement: input.bracketAdvancement,
           platformTierProfileId: input.platformTierProfileId,
@@ -1209,7 +1211,6 @@ function toSport(row: Prisma.SportGetPayload<object>): SportConfig {
   return {
     id: row.id,
     sport: row.sport,
-    participantType: row.participantType,
     tournamentFormat: row.tournamentFormat,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -1259,6 +1260,7 @@ const SPORT_EVENT_INCLUDE = {
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
   const syncProviderId = syncProviderIdOf(row.eventSeries.sportLeague);
+  const syncProviderName = syncProviderNameOf(row.eventSeries.sportLeague);
   return {
     id: row.id,
     externalId: row.externalId,
@@ -1280,9 +1282,10 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     sportLeagueId: row.eventSeries.sportLeagueId,
     ...(row.eventSeries.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.eventSeries.sportLeague.matchPeriodLayout }),
     ...(row.eventSeries.sportLeague.squaresFromRound !== null && { squaresFromRound: row.eventSeries.sportLeague.squaresFromRound }),
-    ...(row.eventSeries.sportLeague.participantType !== null && { participantType: row.eventSeries.sportLeague.participantType }),
-    ...(row.eventSeries.sportLeague.scoringFamily !== null && { scoringFamily: row.eventSeries.sportLeague.scoringFamily }),
+    participantType: row.eventSeries.sportLeague.participantType,
+    scoringFamily: row.eventSeries.sportLeague.scoringFamily,
     ...(syncProviderId !== null && { syncProviderId }),
+    ...(syncProviderName !== null && { syncProviderName }),
     syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),

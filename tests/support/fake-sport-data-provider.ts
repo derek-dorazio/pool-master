@@ -27,12 +27,6 @@ export function fakeSportDataProvider(overrides: Partial<SportDataProvider> = {}
     getEventDetails: jest.fn().mockResolvedValue(null),
     getParticipants: jest.fn().mockResolvedValue([]),
     getLiveScores: jest.fn().mockResolvedValue({ category: 'GOLF', externalEventId: 'evt-ext', rounds: [] } satisfies LiveScoreResult),
-    healthCheck: jest.fn().mockResolvedValue({
-      providerId: 'mock-provider',
-      status: 'HEALTHY',
-      errorRateLastHour: 0,
-      latencyMsP95: 50,
-    }),
     ...overrides,
   };
 }

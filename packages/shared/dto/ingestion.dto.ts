@@ -81,10 +81,9 @@ export type ProviderSettingsDto = z.infer<typeof ProviderSettingsDtoSchema>;
 export const ProviderSummaryDtoSchema = z.object({
   providerId: z.string().describe('The id the provider\'s events carry as their providerId.'),
   providerName: z.string().describe('Provider display name.'),
-  status: ProviderHealthStatusSchema.nullable().describe('Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).'),
-  errorRate: z.number().nullable().describe('Provider-reported error rate over the last hour; null when the provider is not running.'),
-  latencyMs: z.number().nullable().describe('Provider-reported p95 latency; null when the provider is not running.'),
-  lastEventAt: DateTimeSchema.nullable().describe('When one of the provider\'s events last changed, else its last successful poll; null when neither is known.'),
+  status: ProviderHealthStatusSchema.nullable().describe('Health from the provider\'s sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.'),
+  errorRate: z.number().nullable().describe('The share of the provider\'s sync runs of the last hour that failed, 0 to 1; null when none finished.'),
+  lastEventAt: DateTimeSchema.nullable().describe('When one of the provider\'s events last changed; null when none is known.'),
   sportsCovered: z.array(SportDtoSchema).describe('Sports the provider\'s running adapter covers.'),
   primaryForSports: z.array(SportDtoSchema).describe('The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.'),
   activeEventCount: z.number().int().describe('The provider\'s events that are scheduled or in progress.'),
@@ -96,7 +95,7 @@ export const ProviderSummaryDtoSchema = z.object({
     + 'A job belongs to the provider syncing its sport league, or the provider its event is linked to.',
   ),
   settings: ProviderSettingsDtoSchema.nullable().describe('The provider\'s row and leagues, which the Providers page edits; null for a provider running without a Provider row.'),
-}).describe('A sports-data provider with its live health and settings.');
+}).describe('A sports-data provider with its health from its sync runs, and its settings.');
 export type ProviderSummaryDto = z.infer<typeof ProviderSummaryDtoSchema>;
 
 export const UpdateProviderRequestSchema = z.object({

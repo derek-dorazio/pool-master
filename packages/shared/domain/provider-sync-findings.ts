@@ -73,6 +73,7 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.UNMAPPED_PARTICIPANT]: [ProviderSyncFindingAction.MAP_PARTICIPANT],
   [ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING]: [],
   [ProviderSyncFindingKind.SEASON_MISSING]: [],
+  [ProviderSyncFindingKind.PROVIDER_RATE_LIMITED]: [],
 };
 
 /**

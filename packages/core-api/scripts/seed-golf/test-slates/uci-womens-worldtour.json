@@ -6,6 +6,8 @@
     "sportLeagues": [
       "UCI Women's WorldTour"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "PLAYERS",
       "FIELDS"

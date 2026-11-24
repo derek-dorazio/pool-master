@@ -10,7 +10,6 @@ import type {
   LinkSportEventScoreSourceRequest,
   ReplaceSportEventTierAssignmentsRequest,
   ReplaceSportEventTiersRequest,
-  SeedSportEventParticipantsResponse,
   SportEventListQuery,
   SportEventListResponse,
   SportEventParticipantListResponse,
@@ -296,10 +295,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     // Every contest's pick screens poll it: the field read in the last 30 seconds answers (#1163).
     listEventParticipants: async (request: FastifyRequest<EventParams>): Promise<SportEventParticipantListResponse> => {
       return { participants: (await field.listCachedEventParticipants(request.params.eventId)).map(mapSportEventParticipantToDto) };
-    },
-
-    seedEventParticipants: async (request: FastifyRequest<EventParams>): Promise<SeedSportEventParticipantsResponse> => {
-      return field.seedFromSportLeague(request.params.eventId);
     },
 
     addEventParticipants: async (

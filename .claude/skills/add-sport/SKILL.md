@@ -94,7 +94,8 @@ In order:
    the same reference-data migration, and each template finds its league by sport and name
    (same section).
    **A sport league is added only by migration**, never on a screen: the league row, its
-   tier and pricing profiles, its provider mapping when a feed covers it, and its phase and
+   tier and pricing profiles, its provider mapping when a feed covers it, its participant type
+   and scoring family, its playing positions with their provider codes, and its phase and
    slot definitions, all in the reference-data migration
    (`rules/domain-model-concepts.md` §5 *The Target Model*). Give it one `SportLeaguePhase` per
    phase it plays; a phase its sync does not read (the NFL's preseason) is `isSynced` false
@@ -116,9 +117,10 @@ In order:
    adds a Season (it raises `SEASON_MISSING` instead) and `currentSeasonId` is never set by hand:
    the nightly recompute sets it. Open the league's Structure tab on the League page and read
    it back.
-2. **Sport definition.** Add its `SportDefinition` to the sport registry: participant type,
-   scoring family, tournament format, default rounds, selection types, scoring
-   definitions and round labels. Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
+2. **Sport definition.** Add its `SportDefinition` to the sport registry: tournament format,
+   default rounds, selection types, scoring definitions and round labels. Who competes and how
+   it is scored go on each of its sport league rows, never on the sport
+   (`rules/architecture-rules.md` §4 *Sport extension*). Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
    Its words go in the display strings, not the definition: a `sport.<SPORT>` entry in
    `en-US.ts` for every role it uses (`rules/ux-rules.md` §16 *Display Strings*).
    A sport whose family lands before its scoring may register with no scoring definitions;
@@ -224,12 +226,12 @@ down: a lesson that was true mid-series may not be by the end.
 
 ## Where this goes wrong
 
-- **Reading an event's definition off its sport alone.** A sport league can override its
-  sport's participant type, so anything decided
-  for an event (its family, selection types, scoring definitions, tiers, rounds, whether it
-  plays matches) reads `eventSportDefinition(event)` or `eventPlaysMatches(event)`. Whatever
-  builds an event shape for a service (contest setup's event reader) carries the overrides
-  along, or the event silently plays its sport's way.
+- **Reading an event's definition off its sport alone.** The participant type and scoring
+  family are the sport league's, so anything decided for an event (its family, selection
+  types, scoring definitions, tiers, rounds, whether it plays matches) reads
+  `eventSportDefinition(event)` or `eventPlaysMatches(event)`. Whatever builds an event shape
+  for a service (contest setup's event reader) carries the league's two along; the types
+  require them, so a reader that drops them does not compile.
 
 - **Comparing the sport by value.** `event.sport === Sport.TENNIS` outside the sport registry
   and scoring-family folders is the bug this structure exists to prevent; lint rejects it.

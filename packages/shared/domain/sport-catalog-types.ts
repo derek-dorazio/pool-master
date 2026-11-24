@@ -96,12 +96,11 @@ export interface SportLeague extends DomainEntity {
    */
   displayOrder: number | null;
   /**
-   * Who competes and how its events are scored, when not as its sport (#934); null takes the
-   * sport's. Read through
-   * `sportLeagueDefinitionOf`. Reference data, set where the league is seeded.
+   * Who competes and how its events are scored (#2001): the league is the one home of both.
+   * Read through `sportLeagueDefinitionOf`. Reference data, set where the league is seeded.
    */
-  participantType: ParticipantType | null;
-  scoringFamily: ScoringFamily | null;
+  participantType: ParticipantType;
+  scoringFamily: ScoringFamily;
 }
 
 /** A scheduled sub-period of an event — a golf round, a match day. */

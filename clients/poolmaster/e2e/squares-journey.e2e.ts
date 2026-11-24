@@ -139,6 +139,8 @@ test('act 1: the root admin releases an American football event of one game betw
       timeZone: 'UTC',
       name: run.tourName,
       ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
+      participantType: 'TEAM',
+      scoringFamily: 'HEAD_TO_HEAD',
     });
     const { event } = await postJson<{ event: { id: string } }>(api, headers, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,
@@ -161,7 +163,7 @@ test('act 1: the root admin releases an American football event of one game betw
     await postJson(api, headers, `/api/v1/events/${event.id}/participants`, { participantIds });
     // Release asks every event for its roster setup too: seeds, tiers and prices.
     await postJson(api, headers, `/api/v1/events/${event.id}/participants/upload`, {
-      rows: teams.map((name, seed) => ({ playerName: teamName(run, name), seedNumber: seed + 1, oddsToWin: 2 + seed * 5 })),
+      rows: teams.map((name, seed) => ({ playerName: teamName(run, name), seedNumber: seed + 1 })),
     });
     await postJson(api, headers, `/api/v1/events/${event.id}/tiers`, { tiers: TWO_TIERS }, 'put');
     await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, { tierSize: 1 });

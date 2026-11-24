@@ -45,7 +45,8 @@ function shown(value: number | string | null): string {
 /**
  * A field participant on the Event page's Field grid (⤢, the Event page spec): its details, then
  * its tier and price, with Withdraw (or Return to field) and Edit. Edit corrects the tier and price
- * until release, and the rank, odds and seed of an event no feed sets them on. A manual tier or
+ * until release, and the rank and seed of an event no feed sets them on. Odds are shown but never
+ * edited: they come only from the feed. A manual tier or
  * price stops that kind following automatic tiering or pricing for the event.
  */
 export function EventParticipantDialog({
@@ -163,9 +164,6 @@ export function EventParticipantDialog({
               </FormField>
               <FormField error={form.formState.errors.ranking?.message} label="Rank">
                 <Input data-testid={`${testId}-edit-rank`} inputMode="numeric" {...form.register('ranking')} />
-              </FormField>
-              <FormField error={form.formState.errors.oddsToWin?.message} label="Odds">
-                <Input data-testid={`${testId}-edit-odds`} inputMode="decimal" {...form.register('oddsToWin')} />
               </FormField>
             </>
           ) : null}

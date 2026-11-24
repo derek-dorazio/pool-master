@@ -7,12 +7,16 @@
  * two fixtures never collide on the one-edition-per-Season constraint by accident. A test about
  * series, Seasons or that constraint builds its own series instead.
  *
- * The fixture tour hangs off the GOLF sport row because the sport list validates names against
- * the Sport enum; a made-up sport row would break any contract test that lists sports.
+ * The fixture tour hangs off a real sport row (GOLF unless the test names another) because the
+ * sport list validates names against the Sport enum; a made-up sport row would break any contract
+ * test that lists sports. Each sport has its own fixture tour, playing as that sport's leagues are
+ * seeded, since an event is scored by its league's family (#2001).
  */
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
+import { getDefaultTournamentFormatForSport, Sport } from '@poolmaster/shared/domain';
 import { leagueProfiles } from './league-profiles';
+import { sportPlay } from './sport-play';
 
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
 /** Starts every fixture series' name, so its cleanup finds the ones on the PGA TOUR too. */
@@ -88,18 +92,14 @@ export async function seriesSeasonId(
 
 export async function freshEventEdition(
   prisma: Db,
-  options: { name?: string; championshipYear?: number; onPgaTour?: boolean } = {},
+  options: { name?: string; championshipYear?: number; onPgaTour?: boolean; sport?: Sport } = {},
 ): Promise<EventEdition> {
-  const sport = await prisma.sport.upsert({
-    where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
-    update: {},
-  });
+  const sport = await sportRow(prisma, options.sport ?? Sport.GOLF);
   // Every contest setup is one sport league's (#1825), and the fixture tour has none: an event a
   // contest is made from a seeded setup on goes on the PGA TOUR, the migrations' own league.
   const tour = options.onPgaTour
     ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
-    : { id: await fixtureTourId(prisma) };
+    : { id: await fixtureTourId(prisma, sport.sport) };
   const series = await prisma.eventSeries.create({
     data: { sportLeagueId: tour.id, name: `${FIXTURE_SERIES_PREFIX}${options.name ?? 'Fixture series'} ${randomUUID()}` },
   });
@@ -113,18 +113,14 @@ export async function freshEventEdition(
  * here. Like every league a migration adds (#2002), the tour has its phase and slot definitions: a
  * regular season of one tournament, the slot its Seasons and events link to once they have one.
  */
-export async function fixtureTourId(prisma: Db): Promise<string> {
-  const sport = await prisma.sport.upsert({
-    where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
-    update: {},
-  });
+export async function fixtureTourId(prisma: Db, sportCode: Sport = Sport.GOLF): Promise<string> {
+  const sport = await sportRow(prisma, sportCode);
   const where = { sportId_name: { sportId: sport.id, name: FIXTURE_TOUR_NAME } };
   let sportLeagueId: string;
   try {
     sportLeagueId = (await prisma.sportLeague.upsert({
       where,
-      create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: FIXTURE_TOUR_NAME, timeZone: TEST_LEAGUE_TIME_ZONE },
+      create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME, timeZone: TEST_LEAGUE_TIME_ZONE },
       update: {},
       select: { id: true },
     })).id;
@@ -153,6 +149,11 @@ async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<
 }
 
 /** Removes the fixture series, on the fixture tour or the PGA TOUR, that no event uses any more. */
+/** A sport's row, made on first use (cleanupTestData clears the sports table). */
+function sportRow(prisma: Db, sport: Sport) {
+  return prisma.sport.upsert({ where: { sport }, create: { sport, tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
+}
+
 export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'eventSeries'>): Promise<void> {
   await prisma.eventSeries.deleteMany({
     where: {

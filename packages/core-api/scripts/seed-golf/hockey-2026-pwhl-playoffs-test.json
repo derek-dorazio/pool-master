@@ -6,6 +6,8 @@
     "sportLeagues": [
       "PWHL"
     ],
+    "participantType": "TEAM",
+    "scoringFamily": "HEAD_TO_HEAD",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

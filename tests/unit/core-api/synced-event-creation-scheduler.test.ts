@@ -11,8 +11,8 @@ import { heldElsewhere, heldHere } from '../../support/job-locks';
 
 const MINUTE = 60 * 1000;
 
-function scheduleWith(eventList: IngestionScheduleConfig['eventList']) {
-  const config = { ...INGESTION_SCHEDULE_SETTINGS.defaults({}), eventList };
+function scheduleWith(eventList: IngestionScheduleConfig['EVENTS']) {
+  const config = { ...INGESTION_SCHEDULE_SETTINGS.defaults({}), EVENTS: eventList };
   return { getConfig: jest.fn(() => Promise.resolve(config)) };
 }
 
@@ -84,7 +84,7 @@ describe('SyncedEventCreationScheduler', () => {
       scheduler.start();
       await jest.advanceTimersByTimeAsync(10 * MINUTE);
       expect(leagueEventsSync.queueScheduled).not.toHaveBeenCalled();
-      schedule.getConfig.mockResolvedValue({ ...INGESTION_SCHEDULE_SETTINGS.defaults({}), eventList: { enabled: true, intervalMinutes: 360 } });
+      schedule.getConfig.mockResolvedValue({ ...INGESTION_SCHEDULE_SETTINGS.defaults({}), EVENTS: { enabled: true, intervalMinutes: 360 } });
       await jest.advanceTimersByTimeAsync(MINUTE);
 
       expect(leagueEventsSync.queueScheduled).toHaveBeenCalledTimes(1);

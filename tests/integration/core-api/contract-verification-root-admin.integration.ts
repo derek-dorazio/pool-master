@@ -100,7 +100,6 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings } from '../helpers';
 import type {
-  ProviderHealthStatus,
   ProviderParticipant,
   ProviderPayloadCapture,
   ProviderPayloadDiagnostics,
@@ -108,7 +107,6 @@ import type {
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { freshEventEdition, withCurrentSeason } from '../../support/event-edition';
 import type { z } from 'zod';
@@ -119,6 +117,8 @@ import { participantLeagueId } from '../../support/participant-league';
 import { leagueProfiles } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
+import { Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '../../support/sport-play';
 
 // The shared package exports the participant response schema but not its inferred type.
 type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
@@ -229,17 +229,6 @@ class OperationalContractProvider implements SportDataProvider {
 
   async getLiveScores(): Promise<LiveScoreResult> {
     return { category: 'GOLF', externalEventId: 'unused', rounds: [] };
-  }
-
-  async healthCheck(): Promise<ProviderHealthStatus> {
-    return {
-      providerId: this.providerId,
-      status: 'HEALTHY',
-      errorRateLastHour: 0,
-      latencyMsP95: 8,
-      lastSuccessfulPoll: new Date('2026-04-09T09:59:00.000Z'),
-      message: 'Provider responding normally.',
-    };
   }
 }
 
@@ -693,14 +682,14 @@ describe('Contract verification (root admin)', () => {
       url: '/api/v1/platform/ingestion-schedule',
       headers: rootAdmin.headers,
       payload: {
-        eventLiveScores: {
+        SCORES: {
           intervalSeconds: 45,
         },
       },
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
     expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().eventLiveScores.intervalSeconds).toBe(45);
+    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().SCORES.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
       method: 'GET',
@@ -1167,7 +1156,6 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1235,7 +1223,6 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1253,7 +1240,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
@@ -1677,7 +1664,6 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1710,7 +1696,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), timeZone: 'UTC', sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
+        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
@@ -1784,13 +1770,13 @@ describe('Contract verification (root admin)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
+    const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
     // A migration's league has its Seasons mapped to the provider's, one of them current (#2003).
     const [seasonId] = await syncSeasonsTo(prisma, synced.id, await syncLeagueTo(prisma, synced.id, 'pga'), [2085]);
-    const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
+    const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
 
     try {
       const syncRes = await app.inject({
@@ -1864,18 +1850,18 @@ describe('Contract verification (root admin)', () => {
     const stamp = Date.now().toString().slice(-8);
     const horseRacing = await prisma.sport.upsert({
       where: { sport: 'HORSE_RACING' },
-      create: { sport: 'HORSE_RACING', participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' },
+      create: { sport: 'HORSE_RACING', tournamentFormat: 'RACE' },
       update: {},
     });
     const golf = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[]) => {
       const event = await prisma.sportEvent.create({
         data: {
-          ...(await freshEventEdition(prisma)),
+          ...(await freshEventEdition(prisma, { sport })),
           externalId: `race-contract-${sport}-${stamp}`,
           providerId: 'manual-admin',
           sport,

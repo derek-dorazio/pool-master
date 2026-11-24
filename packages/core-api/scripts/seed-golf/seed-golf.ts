@@ -43,7 +43,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { eventPlaysMatches, findSportRow, getSportDefinition, MatchSide, MatchStatus, type ProviderCode, ScoringFamily, type Sport, type SportDefinition, SportEventStatus, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
+import { eventPlaysMatches, findSportRow, MatchSide, MatchStatus, type ProviderCode, ScoringFamily, type Sport, SportEventStatus, type SportLeagueDefinition, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -322,8 +322,8 @@ function bracketChanges(
 
 class Loader {
   readonly rows: LoadRow[] = [];
-  /** Each sport league's definition on the site, by name: its sport's, with what the league overrides. */
-  private readonly leagueDefinitions = new Map<string, SportDefinition>();
+  /** Each sport league's definition on the site, by name: its sport's, with the league's participant type and scoring family. */
+  private readonly leagueDefinitions = new Map<string, SportLeagueDefinition>();
   private readonly apply: boolean;
   private readonly contents: ReadonlySet<SportDataContent>;
   private readonly offsetDays: number;
@@ -355,8 +355,8 @@ class Loader {
   }
 
   /** The league's definition, as ensureLeague read it off the site. */
-  private definitionOf(league: SportDataLeague): SportDefinition {
-    return this.leagueDefinitions.get(league.name) ?? getSportDefinition(this.sport);
+  private definitionOf(league: SportDataLeague): SportLeagueDefinition {
+    return this.leagueDefinitions.get(league.name) ?? sportLeagueDefinitionOf(this.sport, this.file.scope);
   }
 
   /**
@@ -365,7 +365,7 @@ class Loader {
    * creates it with the lifecycle run by hand (docs/RACE-SETUP-PROCEDURES.md).
    */
   private get resultsEnteredByHand(): boolean {
-    return getSportDefinition(this.sport).scoringFamily === ScoringFamily.FINISH_POSITION;
+    return this.file.scope.scoringFamily === ScoringFamily.FINISH_POSITION;
   }
 
   private report(row: LoadRow): void {
@@ -386,6 +386,10 @@ class Loader {
     const { name, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
     const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
+    if (existing && (existing.participantType !== this.file.scope.participantType || existing.scoringFamily !== this.file.scope.scoringFamily)) {
+      // The league on the site is the one home of how it plays (#2001); a file that says otherwise is wrong.
+      throw new Error(`${name} on the site plays ${existing.participantType} ${existing.scoringFamily}; the file says ${this.file.scope.participantType} ${this.file.scope.scoringFamily}.`);
+    }
     if (existing) {
       this.leagueDefinitions.set(name, sportLeagueDefinitionOf(this.sport, existing));
       const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;

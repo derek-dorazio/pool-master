@@ -15,7 +15,7 @@ import type {
   SportEventRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, eventSportDefinition, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted } from '@poolmaster/shared/domain';
+import { MatchStatus, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
@@ -113,18 +113,14 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       sport: event.sport,
       sportLeagueId: event.sportLeagueId,
       championshipYear: event.championshipYear,
-      // A sport league scored by its own family plays that family's format; any other plays its
-      // sport's.
-      tournamentFormat: (event.scoringFamily ?? null) === null
-        ? sportByKind.get(event.sport)?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport)
-        : eventSportDefinition(event).tournamentFormat,
+      tournamentFormat: sportByKind.get(event.sport)?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport),
       participantCount: event.participantCount ?? null,
       loadedParticipantCount: loaded.get(event.id) ?? 0,
       rounds: event.rounds ?? null,
       salaryCap: event.pricingConfig?.salaryCap ?? null,
       squaresFromRound: event.squaresFromRound ?? null,
-      participantType: event.participantType ?? null,
-      scoringFamily: event.scoringFamily ?? null,
+      participantType: event.participantType,
+      scoringFamily: event.scoringFamily,
     }));
   };
   return {

@@ -45,6 +45,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportPlay } from '../support/sport-play';
 
 // Knockout scoring end to end over HTTP (#699): an admin releases a four-team, two-round bracket, a
 // commissioner runs a contest scored by knockout round points (1 for a first-round win, 2 for the
@@ -107,7 +108,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -115,7 +116,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const a = admin.client;
 
     // --- A released two-round tournament ------------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const tournament = await createEvent({

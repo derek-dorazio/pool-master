@@ -50,9 +50,6 @@ export interface SportDataProvider {
    * `LiveScoreResult` discriminated by sport category.
    */
   getLiveScores(eventId: string): Promise<LiveScoreResult>;
-
-  /** Health check — is the provider API responding? */
-  healthCheck(): Promise<ProviderHealthStatus>;
 }
 
 export interface ProviderPayloadCapture {
@@ -257,11 +254,3 @@ export interface ProviderParticipantMetadata {
   [key: string]: unknown;
 }
 
-export interface ProviderHealthStatus {
-  providerId: string;
-  status: 'HEALTHY' | 'DEGRADED' | 'DOWN';
-  lastSuccessfulPoll?: Date;
-  errorRateLastHour: number;
-  latencyMsP95: number;
-  message?: string;
-}

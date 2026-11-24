@@ -28,6 +28,7 @@ import {
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
   type ProviderSettings,
+  providerHealthOfRuns,
   providerSourceIdOf,
 } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
@@ -51,7 +52,8 @@ import type { ProviderWebhookSwitch } from './provider-webhook-switch';
 import { jobDeferredUntilOf } from '../background-jobs/job-error-type';
 
 /** The window the provider list counts rate-limited jobs over (#1881). */
-const DAY_MS = 24 * 3_600_000;
+const HOUR_MS = 3_600_000;
+const DAY_MS = 24 * HOUR_MS;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -60,10 +62,9 @@ const DAY_MS = 24 * 3_600_000;
 export interface ProviderSummary {
   providerId: string;
   providerName: string;
-  /** Null, with the error rate and latency, when the provider is not running in this task. */
+  /** From its sync runs of the last hour; null, with the error rate, when none finished (#1999). */
   status: ProviderHealthStatus | null;
   errorRate: number | null;
-  latencyMs: number | null;
   lastEventAt: Date | null;
   sportsCovered: Sport[];
   /** The covered sports this provider is the default for (catalog browse, new links). */
@@ -235,18 +236,20 @@ export class IngestionService {
   // -------------------------------------------------------------------------
 
   /**
-   * Every registered provider with its live health. A provider whose live check throws
-   * fails the list: there is no stored health to fall back on.
+   * Every registered provider, with its health from its own sync runs of the last hour (#1999):
+   * no route calls a provider live.
    */
   async listProviders(): Promise<ProviderSummary[]> {
     const providers = this.registry.getAllProviders();
     const rows = this.providerSettings.all();
     const providerIds = [...new Set([...providers.map((provider) => provider.providerId), ...rows.map((row) => providerSourceIdOf(row.code))])];
-    const [eventSummaries, syncedLeagues, rateLimited] = await Promise.all([
+    const [eventSummaries, syncedLeagues, rateLimited, runCounts] = await Promise.all([
       this.sportEvents.summarizeByProviders(providerIds),
       this.sportLeagues.findEventSynced(),
       this.jobHistory.countByScope({ errorType: JobErrorType.RATE_LIMITED, since: new Date(this.now().getTime() - DAY_MS) }),
+      this.syncRuns.countFinishedByProvider(new Date(this.now().getTime() - HOUR_MS)),
     ]);
+    const runCountsByProvider = new Map(runCounts.map((counts) => [counts.providerId, counts]));
     const syncedLeagueCounts = new Map<string, number>();
     const leagueProviders = new Map<string, string>();
     for (const league of syncedLeagues) {
@@ -258,19 +261,18 @@ export class IngestionService {
     }
     const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
     const rowsById = new Map(rows.map((row) => [providerSourceIdOf(row.code), row]));
-    const summaries = await Promise.all(providerIds.map(async (providerId): Promise<ProviderSummary> => {
+    const summaries = providerIds.map((providerId): ProviderSummary => {
       const provider = this.registry.getProviderById(providerId);
       const row = rowsById.get(providerId);
-      const health = provider === null ? null : await provider.healthCheck();
+      const health = providerHealthOfRuns(row === undefined ? undefined : runCountsByProvider.get(row.id));
       const events = eventSummaries.get(providerId);
       const sportsCovered = provider?.sportsCovered ?? [];
       return {
         providerId,
         providerName: row?.name ?? provider?.providerName ?? providerId,
-        status: health?.status ?? null,
-        errorRate: health?.errorRateLastHour ?? null,
-        latencyMs: health?.latencyMsP95 ?? null,
-        lastEventAt: events?.lastChangedAt ?? health?.lastSuccessfulPoll ?? null,
+        status: health.status,
+        errorRate: health.errorRate,
+        lastEventAt: events?.lastChangedAt ?? null,
         sportsCovered,
         primaryForSports: sportsCovered.filter((sport) => this.registry.getProvider(sport)?.providerId === providerId),
         activeEventCount: events?.activeEventCount ?? 0,
@@ -280,7 +282,7 @@ export class IngestionService {
         rateLimitedJobsLast24h: rateLimitedCounts.get(providerId) ?? 0,
         settings: row === undefined ? null : { ...row, webhookSecretSet: this.webhooks.isSecretSet(row.code) },
       };
-    }));
+    });
     return summaries.sort((a, b) => a.providerName.localeCompare(b.providerName));
   }
 

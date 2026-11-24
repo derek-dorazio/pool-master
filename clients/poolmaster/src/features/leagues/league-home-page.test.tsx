@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PlanFeature } from '@poolmaster/shared/domain';
+import { PlanFeature, Sport } from '@poolmaster/shared/domain';
 import { bindApiMocks } from '@/test/msw-api';
+import { sportPlay } from '@/test/sport-play';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { LeagueHomePage } from './league-home-page';
 import {
@@ -97,7 +98,7 @@ function contest(id: string, name: string, status: ContestStatus, sportEventId =
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     leagueId: 'league-1',
-    sportEvents: [{ sportEventId, sequence: 1, name: `Event ${sportEventId}`, startDate: '2026-05-01T12:00:00.000Z', status: 'SCHEDULED' }],
+    sportEvents: [{ sportEventId, sequence: 1, name: `Event ${sportEventId}`, startDate: '2026-05-01T12:00:00.000Z', status: 'SCHEDULED', ...sportPlay(Sport.GOLF) }],
     sport: 'GOLF',
     entryCount,
     entriesPerContest: null as number | null,
@@ -142,6 +143,7 @@ function liveLeaderboard(contestId: string, entries: ReturnType<typeof standing>
     contestId,
     sportEventId: `event-${contestId}`,
     sport: 'GOLF',
+    ...sportPlay(Sport.GOLF),
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     upsetBonus: false,

@@ -3,6 +3,8 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '@/test/sport-play';
 import { ContestEntryPage } from './contest-entry-page';
 import { ContestEntryLeagueRedirect } from './contest-entry-league-redirect';
 import { QueryKeys } from '@/lib/query-keys';
@@ -161,17 +163,20 @@ function contestEventFixture(overrides: Record<string, unknown> = {}) {
 
 /** The contest read: a one-event golf contest unless `overrides` says otherwise. */
 function contestFixture(overrides: Record<string, unknown> = {}) {
+  const sport = (overrides['sport'] ?? Sport.GOLF) as Sport;
+  const sportEvents = (overrides['sportEvents'] ?? [contestEventFixture()]) as Record<string, unknown>[];
   return {
     id: 'contest-1',
     leagueId: 'league-1',
-    sport: 'GOLF',
+    sport,
     name: 'Bohler Masters Tiered',
     status: 'OPEN',
     contestType: 'ROSTER',
     selectionType: 'TIERED',
-    sportEvents: [contestEventFixture()],
     myEntryIds: ['entry-1'],
     ...overrides,
+    // Each event carries its league's play, as the contest read does.
+    sportEvents: sportEvents.map((event) => ({ ...sportPlay(sport), ...event })),
   };
 }
 

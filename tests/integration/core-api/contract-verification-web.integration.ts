@@ -301,7 +301,7 @@ describe('Contract verification (web)', () => {
     await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       update: {},
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     });
     await prisma.sportEvent.create({
       data: {
@@ -575,7 +575,6 @@ describe('Contract verification (web)', () => {
       update: {},
       create: {
         sport: Sport.GOLF,
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
@@ -702,8 +701,8 @@ describe('Contract verification (web)', () => {
       // The contest carries each event's end, so its schedule reads no event (#1198).
       endDate: sportEvent.endDate?.toISOString(),
       status: sportEvent.status,
-      participantType: null,
-      scoringFamily: null,
+      participantType: 'INDIVIDUAL',
+      scoringFamily: 'STROKE_PLAY',
     }]);
 
     // Once it is final, it leaves the current list for its finished year's (#1161).
@@ -932,7 +931,7 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const event = await prisma.sportEvent.create({
@@ -1008,12 +1007,12 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
       update: {},
     });
     const event = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma)),
+        ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })),
         externalId: `contract-pickem-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
         sport: Sport.BASKETBALL,

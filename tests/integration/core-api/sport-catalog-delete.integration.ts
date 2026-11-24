@@ -20,6 +20,7 @@ import {
 import { recordStatements } from '../statement-log';
 import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportPlay } from '../../support/sport-play';
 
 const SMALL = 2;
 const LARGE = 20;
@@ -45,14 +46,14 @@ afterAll(async () => {
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
 }
 
 async function tour(sportId: string): Promise<string> {
-  const row = await getPrisma().sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
+  const row = await getPrisma().sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
   made.sportLeagueIds.add(row.id);
   return row.id;
 }

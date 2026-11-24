@@ -16,8 +16,8 @@ import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpe
 /**
  * #749 — the knockout journey, on the 2025 WNBA playoffs as they were played (seeds and series
  * results from `basketball-2025-wnba-playoffs-test.json`): the root admin builds the playoffs on
- * the shared Manage pages (a league, the eight teams, the tournament, its field with seeds and
- * odds, tiers from those odds, prices), loads the bracket with one pairing still open, completes
+ * the shared Manage pages (a league, the eight teams, the tournament, its field with seeds, tiers
+ * from those seeds, prices), loads the bracket with one pairing still open, completes
  * that pairing on the bracket tab, and releases it (act 1); a new commissioner creates a
  * basketball contest on it scored 1, 2, 4 a round with the seed-difference upset bonus (act 2);
  * a new member joins by link and picks one team from each tier, each shown by its seed (act 3);
@@ -33,20 +33,20 @@ import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpe
  * games carry no times.
  */
 
-/** The 2025 WNBA playoff field, by seed: index 0 is the 1 seed. Odds to win are the test file's. */
-const TEAMS: ReadonlyArray<{ name: string; seed: number; oddsToWin: number }> = [
-  { name: 'Minnesota Lynx', seed: 1, oddsToWin: 2.5 },
-  { name: 'Las Vegas Aces', seed: 2, oddsToWin: 3.5 },
-  { name: 'Atlanta Dream', seed: 3, oddsToWin: 5 },
-  { name: 'Phoenix Mercury', seed: 4, oddsToWin: 7 },
-  { name: 'New York Liberty', seed: 5, oddsToWin: 8 },
-  { name: 'Indiana Fever', seed: 6, oddsToWin: 15 },
-  { name: 'Seattle Storm', seed: 7, oddsToWin: 25 },
-  { name: 'Golden State Valkyries', seed: 8, oddsToWin: 40 },
+/** The 2025 WNBA playoff field, by seed: index 0 is the 1 seed. */
+const TEAMS: ReadonlyArray<{ name: string; seed: number }> = [
+  { name: 'Minnesota Lynx', seed: 1 },
+  { name: 'Las Vegas Aces', seed: 2 },
+  { name: 'Atlanta Dream', seed: 3 },
+  { name: 'Phoenix Mercury', seed: 4 },
+  { name: 'New York Liberty', seed: 5 },
+  { name: 'Indiana Fever', seed: 6 },
+  { name: 'Seattle Storm', seed: 7 },
+  { name: 'Golden State Valkyries', seed: 8 },
 ];
 
 /**
- * Basketball's four tiers don't fill at 16 a tier from eight teams, so tiers from odds spread
+ * Basketball's four tiers don't fill at 16 a tier from eight teams, so tiers from seeds spread
  * them evenly: two a tier, the 1 and 2 seeds first.
  */
 const TIER_OF_SEED: readonly number[] = [1, 1, 2, 2, 3, 3, 4, 4];
@@ -188,7 +188,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
 
   const leagueId = await test.step('create a basketball league', async () => {
     // A league is added by migration, so a journey makes its own through the API.
-    const id = await createJourneySportLeague(page, { sport: 'BASKETBALL', name: run.tourName, platformTierProfileCode: 'TIERS_4_OF_16' });
+    const id = await createJourneySportLeague(page, { sport: 'BASKETBALL', name: run.tourName, participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', platformTierProfileCode: 'TIERS_4_OF_16' });
     // The Sports page's one grid lists every sport league, the new one too.
     await page.goto('/manage/sports');
     await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
@@ -237,7 +237,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
   });
 
-  const fieldEntryIds = await test.step('set each team\'s seed and odds to win in its Field dialog', async () => {
+  const fieldEntryIds = await test.step('set each team\'s seed in its Field dialog', async () => {
     // Read straight from the API, for each team's field-entry id (the golden journey's tiers step
     // has the reason it is not sniffed from the page).
     const fieldResponse = await page.request.get(`/api/v1/events/${eventId}/participants`);
@@ -252,13 +252,13 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     });
 
     for (const [index, entryId] of entryIds.entries()) {
-      await correctFieldParticipant(page, eventId, entryId, { seedNumber: TEAMS[index].seed, oddsToWin: TEAMS[index].oddsToWin });
+      await correctFieldParticipant(page, eventId, entryId, { seedNumber: TEAMS[index].seed });
     }
     return entryIds;
   });
   journey.fieldEntryIds = fieldEntryIds;
 
-  await test.step('tier the field, which has odds for every team, two teams a tier, and price it', async () => {
+  await test.step('tier the field, which has a seed for every team, two teams a tier, and price it', async () => {
     await page.getByTestId('root-admin-tier-auto-tiers').click();
     await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${eventId}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {

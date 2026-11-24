@@ -3,6 +3,7 @@ import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { SPORT_PLATFORM_TIER_PROFILE_CODE, STANDARD_PLATFORM_PRICING_PROFILE_CODE } from '../support/league-profiles';
 import { fixtureSeasonId, withCurrentSeason } from '../support/event-edition';
+import { sportPlay } from '../support/sport-play';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
@@ -289,10 +290,10 @@ export async function sportLeagueProfiles(client: Client, sport: Sport): Promise
 /**
  * A run's own sport league, standing in for one a migration adds: a test data file loads into a
  * league the site has and never creates one, so a suite that loads a file under a tagged league
- * name adds that league first. Returns its id.
+ * name adds that league first, playing as its sport's leagues do. Returns its id.
  */
 export async function addRunSportLeague(client: Client, sport: Sport, name: string): Promise<string> {
-  const created = await createSportLeague({ client, body: { ...(await sportLeagueProfiles(client, sport)), timeZone: 'UTC', sport, name } });
+  const created = await createSportLeague({ client, body: { ...(await sportLeagueProfiles(client, sport)), ...sportPlay(sport), timeZone: 'UTC', sport, name } });
   if (!created.data) {
     throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
   }

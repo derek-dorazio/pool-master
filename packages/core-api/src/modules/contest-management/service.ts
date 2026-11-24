@@ -120,12 +120,9 @@ export interface ContestCreateSportEventState {
   salaryCap: number | null;
   /** Its sport league's first round of single games a squares contest can be played on; null for every round (#787). */
   squaresFromRound: number | null;
-  /**
-   * Its sport league's participant type and scoring family when not its sport's (#934). Read
-   * through `eventSportDefinition`.
-   */
-  participantType?: ParticipantType | null;
-  scoringFamily?: ScoringFamily | null;
+  /** Its sport league's participant type and scoring family (#2001). Read through `eventSportDefinition`. */
+  participantType: ParticipantType;
+  scoringFamily: ScoringFamily;
 }
 
 export interface ContestCreateSportEventReader {

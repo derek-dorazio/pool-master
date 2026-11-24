@@ -44,6 +44,7 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
+import { sportPlay } from '../support/sport-play';
 
 // An NFL regular-season week end to end over HTTP (#715). The week is its own event of one round,
 // its field the eight teams playing, and its four games link nowhere: they form no bracket, even
@@ -108,7 +109,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Week Director' });
@@ -118,7 +119,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // --- A league that reseeds its playoffs, and a week of three games --------------------------
     const nfl = await createSportLeague({
       client: a,
-      body: { ...(await sportLeagueProfiles(a, Sport.AMERICAN_FOOTBALL)), timeZone: 'UTC', sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+      body: { ...(await sportLeagueProfiles(a, Sport.AMERICAN_FOOTBALL)), ...sportPlay(Sport.AMERICAN_FOOTBALL), timeZone: 'UTC', sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
     });
     const sportLeagueId = expectDefined(nfl.data, JSON.stringify(nfl.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);

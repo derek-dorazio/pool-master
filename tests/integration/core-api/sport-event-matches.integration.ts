@@ -21,6 +21,7 @@ import { createRoundRows, createSportEventRow } from '../../support/sport-event-
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { leagueProfiles } from '../../support/league-profiles';
 import { seriesSeasonId } from '../../support/event-edition';
+import { sportPlay } from '../../support/sport-play';
 
 // An event's bracket against real Postgres (#698): the match port's one read and its writes, what
 // removing a field row or the event does to it, the play-in fill, and every database check the
@@ -51,12 +52,12 @@ async function createBracketEvent() {
   // The integration cleanup empties sport leagues no template names, so the basketball rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.BASKETBALL },
-    create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NCAA Division I Men' } },
-    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NCAA Division I Men' },
+    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NCAA Division I Men' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });

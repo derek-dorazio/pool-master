@@ -6,6 +6,7 @@ import { recordStatements, statementCounts } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
 import { leagueProfiles } from '../../support/league-profiles';
 import { fixtureSeasonId, withCurrentSeason } from '../../support/event-edition';
+import { sportPlay } from '../../support/sport-play';
 
 // Creating and importing events against real Postgres (#1253): each writes its events,
 // their series, rounds and default tiers in a fixed number of queries however many events, and
@@ -26,10 +27,10 @@ async function golfTour() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
+  const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
   await withCurrentSeason(prisma, tour.id, 2087);
   return tour;
 }

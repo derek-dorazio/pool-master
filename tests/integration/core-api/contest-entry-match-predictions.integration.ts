@@ -28,6 +28,7 @@ import { createRoundRows, createSportEventRow } from '../../support/sport-event-
 import { createContestRow } from '../../support/contest-rows';
 import { leagueProfiles } from '../../support/league-profiles';
 import { seriesSeasonId } from '../../support/event-edition';
+import { sportPlay } from '../../support/sport-play';
 
 // A pick'em entry's game picks against real Postgres (#716): the prediction port's read and its
 // one write (upsert, clear and the week's status, all or none), the database checks the migration
@@ -58,12 +59,12 @@ async function createWeek(label: string, startDate: Date) {
   // The integration cleanup empties sport leagues no template names, so the football rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NFL' },
+    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });

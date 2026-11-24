@@ -45,7 +45,7 @@ async function golfEvent() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const edition = await freshEventEdition(prisma);
@@ -102,7 +102,7 @@ async function eventWithField(sport: Sport, names: readonly string[]) {
   const sportRow = await prisma.sport.findUniqueOrThrow({ where: { sport } });
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { sport })),
       externalId: `field-reads-${randomUUID()}`,
       providerId: 'integration-test',
       sport,

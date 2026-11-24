@@ -24,7 +24,6 @@ const {
   listEventTiersMock,
   replaceEventTierAssignmentsMock,
   updateEventParticipantsMock,
-  seedEventParticipantsMock,
   refreshEventParticipantsMock,
   addEventParticipantsMock,
   listSportLeaguesMock,
@@ -46,7 +45,6 @@ const {
     listEventTiersMock: vi.fn(),
     replaceEventTierAssignmentsMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
-    seedEventParticipantsMock: vi.fn(),
     refreshEventParticipantsMock: vi.fn(),
     addEventParticipantsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
@@ -61,7 +59,6 @@ bindApiMocks({
   listEventTiers: listEventTiersMock,
   replaceEventTierAssignments: replaceEventTierAssignmentsMock,
   updateEventParticipants: updateEventParticipantsMock,
-  seedEventParticipants: seedEventParticipantsMock,
   refreshEventParticipants: refreshEventParticipantsMock,
   addEventParticipants: addEventParticipantsMock,
   listSportLeagues: listSportLeaguesMock,
@@ -184,7 +181,8 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
     const guestRow = screen.getByTestId('root-admin-event-field-row-sep-guest');
     expect(within(guestRow).getByText('Guest')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-event-field-seed')).toBeInTheDocument();
+    // Seeding a field from the league roster is gone: seeds come from the feed or the upload.
+    expect(screen.queryByTestId('root-admin-event-field-seed')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-event-field-add')).toBeInTheDocument();
     // NONE sync scope -> no Load/Refresh action.
     expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
@@ -198,14 +196,13 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     expect(refresh).toHaveTextContent('Load Participant Field');
   });
 
-  it('offers no hand correction tools on a synced event (no seed, add or load), only automatic tiers and prices', async () => {
+  it('offers no hand correction tools on a synced event (no add or load), only automatic tiers and prices', async () => {
     seed({ tournament: { syncScope: 'SCORES_ONLY', status: 'DRAFT', tiersLocked: false } });
     renderPage({ isSynced: true });
 
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-tier-auto-tiers')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-event-field-add')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-event-field-seed')).not.toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-event-field-refresh')).not.toBeInTheDocument();
   });
 
@@ -320,19 +317,17 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     expect(replaceEventTierAssignmentsMock).not.toHaveBeenCalled();
   });
 
-  it('keeps Save off while a typed odds value is not a number', async () => {
+  it('shows a participant\'s odds but never offers them for editing, since odds come only from the feed', async () => {
     seed();
     renderPage();
 
     const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
     await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
-    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-edit'));
-    const odds = screen.getByTestId('root-admin-event-participant-dialog-edit-odds');
-    await userEvent.clear(odds);
-    await userEvent.type(odds, 'abc');
+    expect(await screen.findByTestId('root-admin-event-participant-dialog-odds')).toHaveTextContent('8.5');
+    await userEvent.click(screen.getByTestId('root-admin-event-participant-dialog-edit'));
 
-    expect(await screen.findByText('Odds are a number above 0, or blank')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-event-participant-dialog-save')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-event-participant-dialog-edit-rank')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-participant-dialog-edit-odds')).not.toBeInTheDocument();
   });
 
   it('corrects only tier and price on a synced event, whose feed sets rank, odds and seed', async () => {
@@ -366,26 +361,6 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     expect(screen.getByTestId('root-admin-event-field-upload-textarea')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-event-field-upload-close')).not.toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-event-field-upload-open')).not.toBeInTheDocument();
-  });
-
-  it('pool-master-za4 seeds the field from the league roster behind a confirmation', async () => {
-    seed();
-    seedEventParticipantsMock.mockResolvedValue({
-      data: { added: 140, skipped: 2, total: 142, seedNumbersDerived: 140, oddsDerived: 140 },
-    });
-    renderPage();
-
-    await userEvent.click(await screen.findByTestId('root-admin-event-field-seed'));
-    await userEvent.click(screen.getByTestId('root-admin-event-field-seed-confirm'));
-
-    await waitFor(() =>
-      expect(seedEventParticipantsMock).toHaveBeenCalledWith(
-        expect.objectContaining({ path: { eventId: 'evt-1' } }),
-      ),
-    );
-    expect(
-      await screen.findByTestId('root-admin-event-field-seed-result'),
-    ).toHaveTextContent('Added 140');
   });
 
   it('pool-master-za4 adds participants from the event\'s own league roster', async () => {
@@ -438,52 +413,6 @@ describe('Field editor header actions: refusals, singular counts and closing dia
   function refusal(code: string, message: string, status = 422) {
     return { error: { error: { code, message } }, response: { status } };
   }
-
-  describe('seed from league roster', () => {
-    it('uses singular wording when exactly one golfer is added and one seed number derived', async () => {
-      seed();
-      seedEventParticipantsMock.mockResolvedValue({
-        data: { added: 1, skipped: 0, total: 1, seedNumbersDerived: 1, oddsDerived: 1 },
-      });
-      renderPage();
-
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-seed'));
-      await userEvent.click(screen.getByTestId('root-admin-event-field-seed-confirm'));
-
-      expect(await screen.findByTestId('root-admin-event-field-seed-result')).toHaveTextContent(
-        'Added 1 golfer (0 already in the field). Derived 1 seed number and 1 odds.',
-      );
-    });
-
-    it('shows the server\'s reason in the confirmation when seeding is refused, and adds no result', async () => {
-      seed();
-      seedEventParticipantsMock.mockResolvedValue(
-        refusal('BAD_REQUEST', 'The PGA Tour roster has no golfers to seed.'),
-      );
-      renderPage();
-
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-seed'));
-      await userEvent.click(screen.getByTestId('root-admin-event-field-seed-confirm'));
-
-      const modal = await screen.findByTestId('root-admin-event-field-seed-modal');
-      expect(await within(modal).findByText('The request is not valid. Check the details and try again.')).toBeInTheDocument();
-      expect(screen.queryByTestId('root-admin-event-field-seed-result')).not.toBeInTheDocument();
-    });
-
-    it('closes the seed confirmation from its close button without seeding', async () => {
-      seed();
-      renderPage();
-
-      await userEvent.click(await screen.findByTestId('root-admin-event-field-seed'));
-      const modal = await screen.findByTestId('root-admin-event-field-seed-modal');
-      await userEvent.click(within(modal).getByRole('button', { name: /^Close / }));
-
-      await waitFor(() =>
-        expect(screen.queryByTestId('root-admin-event-field-seed-modal')).not.toBeInTheDocument(),
-      );
-      expect(seedEventParticipantsMock).not.toHaveBeenCalled();
-    });
-  });
 
   describe('load or refresh the participant field', () => {
     it('loads an empty linked field at once, without a confirmation, and says the sync started', async () => {

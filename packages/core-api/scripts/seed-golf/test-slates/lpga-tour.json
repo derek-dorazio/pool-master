@@ -6,6 +6,8 @@
     "sportLeagues": [
       "LPGA Tour"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "STROKE_PLAY",
     "contents": [
       "PLAYERS",
       "FIELDS"

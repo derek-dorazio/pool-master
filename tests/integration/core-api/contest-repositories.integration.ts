@@ -46,6 +46,7 @@ import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 import { LeaderboardRebuildSubject, rebuildLeaderboardsJob } from '../../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
+import { sportPlay } from '../../support/sport-play';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -105,7 +106,7 @@ async function createLeagueAndEvent() {
   ]);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -978,13 +979,13 @@ describe('ContestConfigTemplateRepository', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const suffix = randomUUID().slice(0, 8);
     const [pga, lpga] = await Promise.all([
-      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `PGA-style ${suffix}` } }),
-      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: sport.id, name: `LPGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `PGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `LPGA-style ${suffix}` } }),
     ]);
     return { pga, lpga };
   }
@@ -1139,7 +1140,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const prisma = getPrisma();
     const { league, event, series, covering, edition } = await seriesWithTemplate();
     const otherTour = await prisma.sportLeague.create({
-      data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
+      data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
     });
     const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
     const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
