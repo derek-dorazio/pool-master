@@ -34,9 +34,10 @@ beforeEach(() => cleanupTestData());
  * The overview's whole cost, the root admin's session check included: the event; then its league,
  * its latest run of each kind, whether it is overdue (the event, its rounds and their last match
  * starts), its field and the event page offering its series; then those latest runs and the
- * field's provider mappings. A new read, or one sent per field row, moves it.
+ * field's provider mappings; and the league's sync provider, its selected mapping, provider league
+ * and provider one read each (#1997). A new read, or one sent per field row, moves it.
  */
-const OVERVIEW_STATEMENTS = 11;
+const OVERVIEW_STATEMENTS = 14;
 
 /**
  * A draft golf event `golfers` strong in a synced tour of its own that releases a week out, each
@@ -140,7 +141,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     });
   });
 
-  it('sends exactly 10 statements, the session check included, for a field of 2 and of 20 alike', async () => {
+  it('sends exactly 14 statements, the session check included and the league\'s selected mapping, provider league and provider one read each, for a field of 2 and of 20 alike', async () => {
     const { small, large } = await measureQueryScaling({
       seed: seedSyncedEvent,
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/overview`, rootAdmin),

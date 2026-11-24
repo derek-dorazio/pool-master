@@ -27705,7 +27705,65 @@ export type ProviderLeagueResponse = {
 };
 
 /**
- * Every registered provider.
+ * The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself.
+ */
+export type ProviderSettingRangesDto = {
+    /**
+     * A provider's requestsPerMinute.
+     */
+    requestsPerMinute: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+    /**
+     * A provider's webhookPollMinutes and webhookRoundPollMinutes.
+     */
+    pollMinutes: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+    /**
+     * A provider's priority.
+     */
+    priority: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+    /**
+     * A provider league's quietAfterMinutes and typicalGameMinutes.
+     */
+    leagueMinutes: {
+        /**
+         * The smallest value the API takes.
+         */
+        min: number;
+        /**
+         * The largest value the API takes.
+         */
+        max: number;
+    };
+};
+
+/**
+ * Every registered provider, and the ranges their settings may take.
  */
 export type ProviderListResponse = {
     providers: Array<{
@@ -27856,6 +27914,63 @@ export type ProviderListResponse = {
             }>;
         } | null;
     }>;
+    /**
+     * The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself.
+     */
+    settingRanges: {
+        /**
+         * A provider's requestsPerMinute.
+         */
+        requestsPerMinute: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+        /**
+         * A provider's webhookPollMinutes and webhookRoundPollMinutes.
+         */
+        pollMinutes: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+        /**
+         * A provider's priority.
+         */
+        priority: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+        /**
+         * A provider league's quietAfterMinutes and typicalGameMinutes.
+         */
+        leagueMinutes: {
+            /**
+             * The smallest value the API takes.
+             */
+            min: number;
+            /**
+             * The largest value the API takes.
+             */
+            max: number;
+        };
+    };
 };
 
 /**
@@ -37564,7 +37679,7 @@ export type ListProvidersError = ListProvidersErrors[keyof ListProvidersErrors];
 
 export type ListProvidersResponses = {
     /**
-     * Every registered provider.
+     * Every registered provider, and the ranges their settings may take.
      */
     200: ProviderListResponse;
 };

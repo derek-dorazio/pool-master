@@ -4,6 +4,12 @@
  * does not own reaches the global error handler unchanged.
  */
 import { expect } from '@jest/globals';
+import {
+  PROVIDER_LEAGUE_MINUTES_RANGE,
+  PROVIDER_POLL_MINUTES_RANGE,
+  PROVIDER_PRIORITY_RANGE,
+  PROVIDER_REQUESTS_PER_MINUTE_RANGE,
+} from '../../../packages/shared/domain';
 import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import type { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
@@ -50,10 +56,18 @@ const handlersOver = (fake: ReturnType<typeof service>, sources = scoreSources(j
   createIngestionHandlers(fake as unknown as IngestionService, sources, settings as unknown as ProviderSettingsService);
 
 describe('ingestion provider and run handlers', () => {
-  it('lists the registered providers', async () => {
+  it('lists the registered providers with the range the API holds each setting to', async () => {
     const reply = await callHandler(handlersOver(service()).listProviders, stubRequest({ contextLogger: false }));
 
-    expect(reply.body).toMatchObject({ providers: [{ providerId: 'feed', lastEventAt: null }] });
+    expect(reply.body).toMatchObject({
+      providers: [{ providerId: 'feed', lastEventAt: null }],
+      settingRanges: {
+        requestsPerMinute: PROVIDER_REQUESTS_PER_MINUTE_RANGE,
+        pollMinutes: PROVIDER_POLL_MINUTES_RANGE,
+        priority: PROVIDER_PRIORITY_RANGE,
+        leagueMinutes: PROVIDER_LEAGUE_MINUTES_RANGE,
+      },
+    });
   });
 
   it('saves a provider\'s settings and answers its row with whether its webhook secret is set', async () => {

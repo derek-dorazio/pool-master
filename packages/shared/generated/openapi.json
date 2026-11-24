@@ -67826,6 +67826,111 @@
         "additionalProperties": false,
         "description": "A provider league as saved."
       },
+      "ProviderSettingRangesDto": {
+        "type": "object",
+        "properties": {
+          "requestsPerMinute": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The smallest value the API takes."
+              },
+              "max": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The largest value the API takes."
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ],
+            "additionalProperties": false,
+            "description": "A provider's requestsPerMinute."
+          },
+          "pollMinutes": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The smallest value the API takes."
+              },
+              "max": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The largest value the API takes."
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ],
+            "additionalProperties": false,
+            "description": "A provider's webhookPollMinutes and webhookRoundPollMinutes."
+          },
+          "priority": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The smallest value the API takes."
+              },
+              "max": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The largest value the API takes."
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ],
+            "additionalProperties": false,
+            "description": "A provider's priority."
+          },
+          "leagueMinutes": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The smallest value the API takes."
+              },
+              "max": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The largest value the API takes."
+              }
+            },
+            "required": [
+              "min",
+              "max"
+            ],
+            "additionalProperties": false,
+            "description": "A provider league's quietAfterMinutes and typicalGameMinutes."
+          }
+        },
+        "required": [
+          "requestsPerMinute",
+          "pollMinutes",
+          "priority",
+          "leagueMinutes"
+        ],
+        "additionalProperties": false,
+        "description": "The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself."
+      },
       "ProviderListResponse": {
         "type": "object",
         "properties": {
@@ -68135,13 +68240,119 @@
               "additionalProperties": false,
               "description": "A sports-data provider with its live health and settings."
             }
+          },
+          "settingRanges": {
+            "type": "object",
+            "properties": {
+              "requestsPerMinute": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The smallest value the API takes."
+                  },
+                  "max": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The largest value the API takes."
+                  }
+                },
+                "required": [
+                  "min",
+                  "max"
+                ],
+                "additionalProperties": false,
+                "description": "A provider's requestsPerMinute."
+              },
+              "pollMinutes": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The smallest value the API takes."
+                  },
+                  "max": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The largest value the API takes."
+                  }
+                },
+                "required": [
+                  "min",
+                  "max"
+                ],
+                "additionalProperties": false,
+                "description": "A provider's webhookPollMinutes and webhookRoundPollMinutes."
+              },
+              "priority": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The smallest value the API takes."
+                  },
+                  "max": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The largest value the API takes."
+                  }
+                },
+                "required": [
+                  "min",
+                  "max"
+                ],
+                "additionalProperties": false,
+                "description": "A provider's priority."
+              },
+              "leagueMinutes": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The smallest value the API takes."
+                  },
+                  "max": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "The largest value the API takes."
+                  }
+                },
+                "required": [
+                  "min",
+                  "max"
+                ],
+                "additionalProperties": false,
+                "description": "A provider league's quietAfterMinutes and typicalGameMinutes."
+              }
+            },
+            "required": [
+              "requestsPerMinute",
+              "pollMinutes",
+              "priority",
+              "leagueMinutes"
+            ],
+            "additionalProperties": false,
+            "description": "The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself."
           }
         },
         "required": [
-          "providers"
+          "providers",
+          "settingRanges"
         ],
         "additionalProperties": false,
-        "description": "Every registered provider."
+        "description": "Every registered provider, and the ranges their settings may take."
       },
       "ProviderSyncRunDto": {
         "type": "object",
@@ -87653,7 +87864,7 @@
         "description": "Every provider with a Provider row or running in this task, each with a live health check made for this request (none for one not running), the sports its adapter covers, how many of its events are scheduled or in progress, and its settings and leagues (#1997).",
         "responses": {
           "200": {
-            "description": "Every registered provider.",
+            "description": "Every registered provider, and the ranges their settings may take.",
             "content": {
               "application/json": {
                 "schema": {

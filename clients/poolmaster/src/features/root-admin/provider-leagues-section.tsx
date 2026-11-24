@@ -4,7 +4,7 @@ import { extractErrorMessage } from '@/lib/errors';
 import type { ProviderSummaryDto } from '@/lib/api';
 import { providerLeagueColumns, type ProviderLeagueRow } from './provider-league-columns';
 import { ProviderLeagueDialog } from './provider-league-dialog';
-import { useProvidersQuery } from './use-providers-query';
+import { useProviderSettingRanges, useProvidersQuery } from './use-providers-query';
 
 /** Every provider's own leagues, each with its provider's name. */
 function leagueRowsOf(providers: readonly ProviderSummaryDto[]): ProviderLeagueRow[] {
@@ -21,6 +21,7 @@ function leagueRowsOf(providers: readonly ProviderSummaryDto[]): ProviderLeagueR
  */
 export function ProviderLeaguesSection() {
   const providersQuery = useProvidersQuery();
+  const ranges = useProviderSettingRanges();
   const [openLeagueId, setOpenLeagueId] = useState<string | null>(null);
   const rows = leagueRowsOf(providersQuery.data ?? []);
   const openLeague = rows.find((league) => league.id === openLeagueId);
@@ -47,7 +48,7 @@ export function ProviderLeaguesSection() {
           />
         )}
       </QueryState>
-      {openLeague ? <ProviderLeagueDialog league={openLeague} onClose={() => setOpenLeagueId(null)} /> : null}
+      {openLeague ? <ProviderLeagueDialog league={openLeague} onClose={() => setOpenLeagueId(null)} ranges={ranges} /> : null}
     </SectionCard>
   );
 }

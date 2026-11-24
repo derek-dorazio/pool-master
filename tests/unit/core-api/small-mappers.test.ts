@@ -15,7 +15,7 @@ import {
   type SportConfig,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
-import { buildLeague, buildUser } from '../../factories';
+import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
 import { toAuthResponse, toTokenRefreshResponse } from '../../../packages/core-api/src/mappers/auth.mapper';
 import { toLeaguePaymentListResponse, toUserPaymentListResponse } from '../../../packages/core-api/src/mappers/billing.mapper';
 import {
@@ -310,6 +310,18 @@ describe('sport catalog mappers', () => {
     expect(dto.roundNames).toEqual(roundNames);
     expect(dto.roundNames).not.toBe(roundNames);
     expect(dto).toEqual(expect.objectContaining({ participantCount: 32, sportEventCount: 18, createdAt: ISO }));
+  });
+
+  it('sends a sport league\'s selected provider mapping as a copy with the provider\'s name, and null for a league not synced', () => {
+    const base = { id: 'sl1', sportId: 's1', sport: 'NFL', name: 'NFL', roundNames: [], participantCount: 0, sportEventCount: 0, createdAt: AT, updatedAt: AT };
+    const mapping = buildProviderMapping({ providerLeagueCode: 'nfl', providerLeagueName: 'NFL' });
+
+    const synced = mapSportLeagueToDto({ ...base, selectedProviderMapping: mapping } as unknown as SportLeagueSummary);
+
+    expect(synced.selectedProviderMapping).toEqual(mapping);
+    expect(synced.selectedProviderMapping).not.toBe(mapping);
+    expect(synced.selectedProviderMapping?.providerName).toBe('BALLDONTLIE');
+    expect(mapSportLeagueToDto({ ...base, selectedProviderMapping: null } as unknown as SportLeagueSummary).selectedProviderMapping).toBeNull();
   });
 
   it('sends a ranking upload row\'s resolution and participant', () => {

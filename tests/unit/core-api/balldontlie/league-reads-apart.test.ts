@@ -162,12 +162,18 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
     await expect(read).rejects.toThrow('/nfl/v1/games');
   });
 
-  it('reads every league as a sport\'s list when the code asked for names none of them', async () => {
-    const harness = setup({ ...nflRoutes, '/ncaaf/v1/games': pagedRoute([]), '/ncaaf/v1/teams': () => ({ body: { data: [] } }) });
+  it('reads no league and lists nothing, with a warning, when the code asked for names no enabled league of the sport', async () => {
+    const logger = fakeLogger();
+    const harness = setup({ ...nflRoutes, '/ncaaf/v1/games': pagedRoute([]), '/ncaaf/v1/teams': () => ({ body: { data: [] } }) }, logger);
     restore = harness.restore;
 
-    await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'xfl' });
+    const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026, { providerLeagueCode: 'xfl' });
 
-    expect(pathsRead(harness.api)).toEqual(['/ncaaf/v1/games', '/nfl/v1/games']);
+    expect(events).toEqual([]);
+    expect(pathsRead(harness.api)).toEqual([]);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'balldontlie.league.not_enabled', sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'xfl' }),
+      expect.any(String),
+    );
   });
 });

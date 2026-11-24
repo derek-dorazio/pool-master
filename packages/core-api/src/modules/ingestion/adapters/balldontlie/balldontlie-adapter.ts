@@ -277,18 +277,25 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   async getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]> {
     const leagues = this.leagues.get(sport) ?? [];
     const code = options?.providerLeagueCode;
-    const named = code === undefined ? [] : leagues.filter((league) => league.code === code);
-    if (named.length > 0) {
-      return (await Promise.all(named.map(async (league) => {
-        try {
-          return withLeagueCode(league, await league.events(dateRange));
-        } catch (error) {
-          if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.tour, error.status, { cause: error });
-          throw error;
-        }
-      }))).flat();
+    if (code === undefined) {
+      return this.eachLeague(sport, leagues, 'events', async (league) => withLeagueCode(league, await league.events(dateRange)));
     }
-    return this.eachLeague(sport, leagues, 'events', async (league) => withLeagueCode(league, await league.events(dateRange)));
+    const named = leagues.filter((league) => league.code === code);
+    if (named.length === 0) {
+      // A code no enabled league of the sport carries (a league switched off, or mapped to
+      // another sport) has no events here: reading every league instead would hand back
+      // another league's list as if it were this one's.
+      this.logger?.warn({ action: 'balldontlie.league.not_enabled', sport, providerLeagueCode: code }, 'BALLDONTLIE has no enabled league with this code for the sport');
+      return [];
+    }
+    return (await Promise.all(named.map(async (league) => {
+      try {
+        return withLeagueCode(league, await league.events(dateRange));
+      } catch (error) {
+        if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.tour, error.status, { cause: error });
+        throw error;
+      }
+    }))).flat();
   }
 
   /**

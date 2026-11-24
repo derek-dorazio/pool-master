@@ -98,7 +98,7 @@ describe('Provider game slate (#1728)', () => {
 
   it('leaves an event of a league that is not synced without games', async () => {
     const { event, game } = await syncedWeek();
-    await getPrisma().sportLeague.updateMany({ where: { eventSeries: { some: { id: event.eventSeriesId } } }, data: { syncProviderId: null } });
+    await getPrisma().sportLeague.updateMany({ where: { eventSeries: { some: { id: event.eventSeriesId } } }, data: { selectedProviderMappingId: null } });
     const { providerGames } = integrationSportEventServices();
 
     await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: event.externalId, games: [game('g1', 'Bears', 'Lions', 0)] }))

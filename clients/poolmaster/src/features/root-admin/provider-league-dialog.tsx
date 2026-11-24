@@ -1,22 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { PROVIDER_LEAGUE_MINUTES_RANGE } from '@poolmaster/shared/domain';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { DetailEditModal, FormField, Input, showToast, type Fact } from '@/features/shared/ui';
+import type { ProviderSettingRangesDto } from '@/lib/api';
 import { OnOffField } from './on-off-field';
 import type { ProviderLeagueRow } from './provider-league-columns';
 import { useUpdateProviderLeague } from './use-update-provider';
 import { wholeNumberIn } from './whole-number-field';
 
-const leagueSchema = z.object({
-  isEnabled: z.enum(['on', 'off']),
-  typicalGameMinutes: wholeNumberIn(PROVIDER_LEAGUE_MINUTES_RANGE),
-  quietAfterMinutes: wholeNumberIn(PROVIDER_LEAGUE_MINUTES_RANGE),
-});
+/** The API sends the allowed range (§17), so the web app holds no limits of its own. */
+function leagueSchemaOf(minutes: ProviderSettingRangesDto['leagueMinutes'] | undefined) {
+  return z.object({
+    isEnabled: z.enum(['on', 'off']),
+    typicalGameMinutes: wholeNumberIn(minutes),
+    quietAfterMinutes: wholeNumberIn(minutes),
+  });
+}
 
-type LeagueValues = z.infer<typeof leagueSchema>;
+type LeagueValues = z.infer<ReturnType<typeof leagueSchemaOf>>;
 
 function valuesOf(league: ProviderLeagueRow): LeagueValues {
   return {
@@ -27,10 +30,15 @@ function valuesOf(league: ProviderLeagueRow): LeagueValues {
 }
 
 /** One provider league's settings (#1997), then Edit for its switch and its two lengths. */
-export function ProviderLeagueDialog({ league, onClose }: { league: ProviderLeagueRow; onClose: () => void }) {
+export function ProviderLeagueDialog({ league, onClose, ranges }: {
+  league: ProviderLeagueRow;
+  onClose: () => void;
+  ranges: ProviderSettingRangesDto | undefined;
+}) {
   const testId = 'root-admin-provider-league-dialog';
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const current = valuesOf(league);
+  const leagueSchema = useMemo(() => leagueSchemaOf(ranges?.leagueMinutes), [ranges]);
   const form = useForm<LeagueValues>({ resolver: zodResolver(leagueSchema), defaultValues: current, mode: 'onChange' });
   const updateMutation = useUpdateProviderLeague({
     providerId: league.providerId,
@@ -81,7 +89,12 @@ export function ProviderLeagueDialog({ league, onClose }: { league: ProviderLeag
       title={mode === 'view' ? league.name : `${league.name} · Edit`}
     >
       <div className="grid gap-4">
-        <OnOffField label="Status" registration={form.register('isEnabled')} testId={`${testId}-enabled-input`} />
+        <OnOffField
+          help="Switching a league on or off takes effect when the servers next start."
+          label="Status"
+          registration={form.register('isEnabled')}
+          testId={`${testId}-enabled-input`}
+        />
         <FormField error={form.formState.errors.typicalGameMinutes?.message} label="Typical game, minutes">
           <Input data-testid={`${testId}-typical-input`} inputMode="numeric" {...form.register('typicalGameMinutes')} />
         </FormField>

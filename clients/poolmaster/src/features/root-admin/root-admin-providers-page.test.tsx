@@ -45,8 +45,17 @@ function scheduleGroup(value: IngestionScheduleConfig = SCHEDULE, saved = true):
   };
 }
 
+// The ranges the API holds each setting to; narrower than the API's own so a test proves the
+// dialogs read them from the response rather than holding their own.
+const settingRanges = {
+  requestsPerMinute: { min: 2, max: 1000 },
+  pollMinutes: { min: 1, max: 240 },
+  priority: { min: 1, max: 100 },
+  leagueMinutes: { min: 5, max: 600 },
+};
+
 function seed({ providers = [provider(), provider({ providerId: 'mock', providerName: 'Mock feed', status: 'DOWN', requestsPerMinute: null, webhooksEnabled: false, syncedSportLeagueCount: 0, rateLimitedJobsLast24h: 0, settings: null })], group = scheduleGroup() } = {}) {
-  mocks.listProviders.mockResolvedValue({ data: { providers } });
+  mocks.listProviders.mockResolvedValue({ data: { providers, settingRanges } });
   mocks.getSettingsGroup.mockResolvedValue({ data: group });
 }
 
@@ -165,7 +174,7 @@ describe('RootAdminProvidersPage', () => {
     await userEvent.clear(rate);
     await userEvent.type(rate, '0');
 
-    expect(await screen.findByText('Enter a whole number from 1 to 6000')).toBeInTheDocument();
+    expect(await screen.findByText('Enter a whole number from 2 to 1000')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-provider-dialog-save')).toBeDisabled();
     expect(mocks.updateProviderSettings).not.toHaveBeenCalled();
   });
@@ -229,6 +238,34 @@ describe('RootAdminProvidersPage', () => {
       path: { providerId: providerSettingsFixture().id, providerLeagueId: '00000000-0000-4000-8000-0000000000c2' },
       body: { typicalGameMinutes: 200 },
     })));
+  });
+
+  it('keeps a league\'s Save off for a length outside the range the API sends', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-provider-league-mlb'));
+    await userEvent.click(await screen.findByTestId('root-admin-provider-league-dialog-edit'));
+    const typical = screen.getByTestId('root-admin-provider-league-dialog-typical-input');
+    await userEvent.clear(typical);
+    await userEvent.type(typical, '700');
+
+    expect(await screen.findByText('Enter a whole number from 5 to 600')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-provider-league-dialog-save')).toBeDisabled();
+  });
+
+  it('checks only for a whole number while the API has sent no ranges', async () => {
+    seed();
+    mocks.listProviders.mockResolvedValue({ data: { providers: [provider()] } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-provider-league-mlb'));
+    await userEvent.click(await screen.findByTestId('root-admin-provider-league-dialog-edit'));
+    const typical = screen.getByTestId('root-admin-provider-league-dialog-typical-input');
+    await userEvent.clear(typical);
+    await userEvent.type(typical, '2.5');
+
+    expect(await screen.findByText('Enter a whole number')).toBeInTheDocument();
   });
 
   it('shows a row per sync with how often it runs and which events it covers, Field always running and a switched-off sync as Off', async () => {

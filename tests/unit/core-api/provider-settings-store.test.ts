@@ -1,5 +1,5 @@
 import { ProviderCode, type ProviderSettings } from '@poolmaster/shared/domain';
-import { ProviderSettingsStore } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
+import { PROVIDER_SETTINGS_REFRESH_MS, ProviderSettingsStore } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
 import { ProviderWebhookSwitch } from '../../../packages/core-api/src/modules/ingestion/provider-webhook-switch';
 import { BALLDONTLIE_TEST_LEAGUES, balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
 import { fakeLogger } from '../../support/fake-logger';
@@ -48,6 +48,35 @@ describe('ProviderSettingsStore (#1997)', () => {
     store.replace(balldontlieTestProvider({ requestsPerMinute: 600 }));
 
     expect(store.all()).toHaveLength(1);
+    expect(store.byCode(ProviderCode.BALLDONTLIE)?.requestsPerMinute).toBe(600);
+  });
+
+  it('adds a saved provider it did not hold, in priority order', async () => {
+    const store = storeOf(() => Promise.resolve([balldontlieTestProvider({ priority: 5 })]));
+    await store.load();
+    const first = { ...balldontlieTestProvider({ priority: 1 }), id: '00000000-0000-4000-8000-0000000000f1' };
+
+    store.replace(first);
+
+    expect(store.all().map((provider) => [provider.id, provider.priority])).toEqual([[first.id, 1], [balldontlieTestProvider().id, 5]]);
+  });
+
+  it('refreshes every minute by default, and keeps the last rows on a failed read even with no logger', async () => {
+    jest.useFakeTimers();
+    const reads = [
+      Promise.resolve([balldontlieTestProvider({ requestsPerMinute: 60 })]),
+      Promise.reject(new Error('database down')),
+      Promise.resolve([balldontlieTestProvider({ requestsPerMinute: 600 })]),
+    ];
+    const store = new ProviderSettingsStore({ findAll: () => reads.shift() ?? Promise.resolve([]) });
+    await store.load();
+    store.start();
+
+    await jest.advanceTimersByTimeAsync(PROVIDER_SETTINGS_REFRESH_MS);
+    expect(store.byCode(ProviderCode.BALLDONTLIE)?.requestsPerMinute).toBe(60);
+    await jest.advanceTimersByTimeAsync(PROVIDER_SETTINGS_REFRESH_MS);
+    store.stop();
+
     expect(store.byCode(ProviderCode.BALLDONTLIE)?.requestsPerMinute).toBe(600);
   });
 

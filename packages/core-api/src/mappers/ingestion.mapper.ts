@@ -8,6 +8,7 @@ import type {
   ProviderLeagueDto,
   ProviderSettingsDto,
   ProviderManualSyncSubmissionResponse,
+  ProviderListResponse,
   ProviderSummaryDto,
   ProviderSyncRunDetailDto,
   ProviderSyncRunDetailsDto,
@@ -15,7 +16,16 @@ import type {
   UnmappedProviderParticipantDto,
 } from '@poolmaster/shared/dto';
 import { ProviderSyncRequestPayloadDtoSchema } from '@poolmaster/shared/dto';
-import type { ProviderLeagueSettings, ProviderSettings, ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import {
+  PROVIDER_LEAGUE_MINUTES_RANGE,
+  PROVIDER_POLL_MINUTES_RANGE,
+  PROVIDER_PRIORITY_RANGE,
+  PROVIDER_REQUESTS_PER_MINUTE_RANGE,
+  type ProviderLeagueSettings,
+  type ProviderSettings,
+  type ProviderSyncRun,
+  type ProviderSyncRunWithDetails,
+} from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
@@ -23,6 +33,19 @@ import type {
   ProviderSummary,
   UnmappedParticipant,
 } from '../modules/ingestion/ingestion-service';
+
+/** The provider list, with the ranges each setting may take, from the constants the API checks against. */
+export function toProviderListResponse(providers: readonly ProviderSummary[]): ProviderListResponse {
+  return {
+    providers: providers.map(toProviderSummaryDto),
+    settingRanges: {
+      requestsPerMinute: { ...PROVIDER_REQUESTS_PER_MINUTE_RANGE },
+      pollMinutes: { ...PROVIDER_POLL_MINUTES_RANGE },
+      priority: { ...PROVIDER_PRIORITY_RANGE },
+      leagueMinutes: { ...PROVIDER_LEAGUE_MINUTES_RANGE },
+    },
+  };
+}
 
 export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummaryDto {
   return {

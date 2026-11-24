@@ -32,7 +32,7 @@ import {
   toProviderLeagueDto,
   toProviderSettingsDto,
   toProviderManualSyncSubmissionResponse,
-  toProviderSummaryDto,
+  toProviderListResponse,
   toProviderSyncRunDetailDto,
   toProviderSyncRunDto,
   toUnmappedProviderParticipantDto,
@@ -59,7 +59,7 @@ export function createIngestionHandlers(
     logger.debug('Listing providers');
     const providers = await ingestionService.listProviders();
     logger.info({ count: providers.length }, 'Listed providers');
-    return reply.send({ providers: providers.map(toProviderSummaryDto) });
+    return reply.send(toProviderListResponse(providers));
   }
 
   async function updateProvider(

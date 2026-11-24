@@ -1,10 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  PROVIDER_POLL_MINUTES_RANGE,
-  PROVIDER_PRIORITY_RANGE,
-  PROVIDER_REQUESTS_PER_MINUTE_RANGE,
-} from '@poolmaster/shared/domain';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -19,24 +14,27 @@ import {
   type Fact,
 } from '@/features/shared/ui';
 import { OnOffField } from './on-off-field';
-import type { ProviderSettingsDto, ProviderSummaryDto } from '@/lib/api';
+import type { ProviderSettingRangesDto, ProviderSettingsDto, ProviderSummaryDto } from '@/lib/api';
 import { errorRateText, latencyText, requestsPerMinuteText, webhooksText } from './provider-facts';
 import { ProviderStatusChip } from './provider-status-chip';
 import { useUpdateProviderSettings } from './use-update-provider';
 import { wholeNumberIn } from './whole-number-field';
 
-const settingsSchema = z.object({
-  baseUrl: z.url({ protocol: /^https$/, error: 'Enter an https URL' }),
-  requestsPerMinute: wholeNumberIn(PROVIDER_REQUESTS_PER_MINUTE_RANGE),
-  webhooksEnabled: z.enum(['on', 'off']),
-  webhookPollMinutes: wholeNumberIn(PROVIDER_POLL_MINUTES_RANGE),
-  webhookRoundPollMinutes: wholeNumberIn(PROVIDER_POLL_MINUTES_RANGE),
-  hasPlayerStats: z.enum(['yes', 'no']),
-  isEnabled: z.enum(['on', 'off']),
-  priority: wholeNumberIn(PROVIDER_PRIORITY_RANGE),
-});
+/** The settings form, held to the ranges the API sends. */
+function settingsSchemaOf(ranges: ProviderSettingRangesDto | undefined) {
+  return z.object({
+    baseUrl: z.url({ protocol: /^https$/, error: 'Enter an https URL' }),
+    requestsPerMinute: wholeNumberIn(ranges?.requestsPerMinute),
+    webhooksEnabled: z.enum(['on', 'off']),
+    webhookPollMinutes: wholeNumberIn(ranges?.pollMinutes),
+    webhookRoundPollMinutes: wholeNumberIn(ranges?.pollMinutes),
+    hasPlayerStats: z.enum(['yes', 'no']),
+    isEnabled: z.enum(['on', 'off']),
+    priority: wholeNumberIn(ranges?.priority),
+  });
+}
 
-type SettingsValues = z.infer<typeof settingsSchema>;
+type SettingsValues = z.infer<ReturnType<typeof settingsSchemaOf>>;
 
 function valuesOf(settings: ProviderSettingsDto): SettingsValues {
   return {
@@ -79,6 +77,7 @@ export function ProviderDialog({
   onCheckNow,
   onClose,
   provider,
+  ranges,
 }: {
   /** When the list holding this provider was read, which is when it was checked. */
   checkedAt: string;
@@ -86,11 +85,14 @@ export function ProviderDialog({
   onCheckNow: () => void;
   onClose: () => void;
   provider: ProviderSummaryDto;
+  /** The ranges the API holds each setting to; undefined while they load. */
+  ranges: ProviderSettingRangesDto | undefined;
 }) {
   const testId = 'root-admin-provider-dialog';
   const settings = provider.settings;
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const current = settings === null ? null : valuesOf(settings);
+  const settingsSchema = useMemo(() => settingsSchemaOf(ranges), [ranges]);
   const form = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
     ...(current !== null && { defaultValues: current }),

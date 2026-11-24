@@ -34,6 +34,11 @@ function buildProvider(overrides: Partial<SportDataProvider> = {}): SportDataPro
 const SYNCED_PROVIDER = 'balldontlie';
 
 /** A sport league row read with its selected provider mapping, as the service reads it; null code: not synced. */
+/** A sport league's provider mappings as the browse reads them, each to a BALLDONTLIE league. */
+function mappingRows(...providerLeagueCodes: string[]) {
+  return providerLeagueCodes.map((code) => ({ providerLeague: { code, provider: { code: 'BALLDONTLIE' } } }));
+}
+
 function leagueRow(providerLeagueCode: string | null, extra: Record<string, unknown> = {}) {
   return {
     id: 'league-1', name: 'PGA TOUR', sport: { sport: 'GOLF' }, ...extra,
@@ -113,7 +118,7 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
     expect(result).toEqual([event]);
   });
 
-  it('narrows the browse to the provider league the sport league\'s selected mapping names, by the code each event carries, never by its name', async () => {
+  it('narrows the browse to the provider league the sport league is mapped to, by the code each event carries, never by its name', async () => {
     const provider = buildProvider({
       providerId: SYNCED_PROVIDER,
       getUpcomingEvents: jest.fn().mockResolvedValue([
@@ -122,29 +127,50 @@ describe('EventScoreSourceService.listCandidateEvents', () => {
         buildProviderEvent({ externalId: 'nba-exhibition', name: 'NBA Exhibition' }),
       ]),
     });
-    const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue(leagueRow('nba')) } };
-    const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(provider));
+    const findMany = jest.fn().mockResolvedValue(mappingRows('nba'));
+    const service = new EventScoreSourceService(asPrismaClient({ sportLeagueProviderMapping: { findMany } }), registryWith(provider));
 
     const result = await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1' });
 
     expect(result.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
     expect(provider.getUpcomingEvents).toHaveBeenCalledWith(Sport.BASKETBALL, undefined, { providerLeagueCode: 'nba' });
+    // Every mapping counts, selected for the league's sync or not: a mapped league that is not
+    // synced yet still browses its own provider league, not the whole sport's feed.
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { sportLeagueId: 'league-1' } }));
   });
 
-  it('applies no league filter when the sport league is not synced, or is synced from another provider', async () => {
+  it('keeps the events of every provider league a sport league is mapped to on this provider, asking the provider for all of them', async () => {
+    const provider = buildProvider({
+      providerId: SYNCED_PROVIDER,
+      getUpcomingEvents: jest.fn().mockResolvedValue([
+        buildProviderEvent({ externalId: 'nba-1', providerLeagueCode: 'nba' }),
+        buildProviderEvent({ externalId: 'wnba-1', providerLeagueCode: 'wnba' }),
+        buildProviderEvent({ externalId: 'ncaab-1', providerLeagueCode: 'ncaab' }),
+      ]),
+    });
+    const findMany = jest.fn().mockResolvedValue(mappingRows('nba', 'wnba'));
+    const service = new EventScoreSourceService(asPrismaClient({ sportLeagueProviderMapping: { findMany } }), registryWith(provider));
+
+    const result = await service.listCandidateEvents(SYNCED_PROVIDER, Sport.BASKETBALL, { sportLeagueId: 'league-1' });
+
+    expect(result.map((event) => event.externalId)).toEqual(['nba-1', 'wnba-1']);
+    expect(provider.getUpcomingEvents).toHaveBeenCalledWith(Sport.BASKETBALL, undefined, undefined);
+  });
+
+  it('applies no league filter when the sport league has no mapping, or is mapped only to another provider', async () => {
     const provider = buildProvider({
       getUpcomingEvents: jest.fn().mockResolvedValue([
         buildProviderEvent({ externalId: 'ext-1', name: 'PGA Championship', providerLeagueCode: 'pga' }),
         buildProviderEvent({ externalId: 'ext-2', name: 'LIV Golf Miami' }),
       ]),
     });
-    const findUnique = jest.fn().mockResolvedValueOnce(leagueRow(null)).mockResolvedValueOnce(leagueRow('pga'));
-    const service = new EventScoreSourceService(asPrismaClient({ sportLeague: { findUnique } }), registryWith(provider));
+    const findMany = jest.fn().mockResolvedValueOnce([]).mockResolvedValueOnce(mappingRows('pga'));
+    const service = new EventScoreSourceService(asPrismaClient({ sportLeagueProviderMapping: { findMany } }), registryWith(provider));
 
-    const unsynced = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
+    const unmapped = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
     const otherProvider = await service.listCandidateEvents('mock-golf', Sport.GOLF, { sportLeagueId: 'league-1' });
 
-    expect(unsynced.map((event) => event.externalId)).toEqual(['ext-1', 'ext-2']);
+    expect(unmapped.map((event) => event.externalId)).toEqual(['ext-1', 'ext-2']);
     expect(otherProvider.map((event) => event.externalId)).toEqual(['ext-1', 'ext-2']);
     expect(provider.getUpcomingEvents).toHaveBeenLastCalledWith(Sport.GOLF, undefined, undefined);
   });

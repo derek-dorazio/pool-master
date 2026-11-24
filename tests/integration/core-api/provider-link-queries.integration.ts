@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
-import { ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
@@ -276,5 +276,16 @@ describe('EventScoreSourceService tour reads', () => {
 
     expect(narrowed.map((event) => event.externalId)).toEqual(['pga-1']);
     expect(all.map((event) => event.externalId)).toEqual(['pga-1', 'lpga-1', 'none-1']);
+  });
+
+  it('narrows a mapped league\'s browse to its provider league even before the mapping is selected for its sync', async () => {
+    const prisma = getPrisma();
+    const mapped = await createTourLeague(null);
+    const providerLeague = await prisma.providerLeague.findFirstOrThrow({ where: { code: 'pga', provider: { code: ProviderCode.BALLDONTLIE } }, select: { id: true } });
+    await prisma.sportLeagueProviderMapping.create({ data: { sportLeagueId: mapped.id, providerLeagueId: providerLeague.id } });
+
+    const narrowed = await service().listCandidateEvents(SYNCED_PROVIDER_ID, Sport.GOLF, { sportLeagueId: mapped.id });
+
+    expect(narrowed.map((event) => event.externalId)).toEqual(['pga-1']);
   });
 });

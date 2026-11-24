@@ -153,9 +153,23 @@ export const ProviderLeagueResponseSchema = z.object({
 }).describe('A provider league as saved.');
 export type ProviderLeagueResponse = z.infer<typeof ProviderLeagueResponseSchema>;
 
+const SettingRangeDtoSchema = z.object({
+  min: z.number().int().describe('The smallest value the API takes.'),
+  max: z.number().int().describe('The largest value the API takes.'),
+}).describe('The whole numbers a provider setting may take, inclusive.');
+
+export const ProviderSettingRangesDtoSchema = z.object({
+  requestsPerMinute: SettingRangeDtoSchema.describe('A provider\'s requestsPerMinute.'),
+  pollMinutes: SettingRangeDtoSchema.describe('A provider\'s webhookPollMinutes and webhookRoundPollMinutes.'),
+  priority: SettingRangeDtoSchema.describe('A provider\'s priority.'),
+  leagueMinutes: SettingRangeDtoSchema.describe('A provider league\'s quietAfterMinutes and typicalGameMinutes.'),
+}).describe('The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself.');
+export type ProviderSettingRangesDto = z.infer<typeof ProviderSettingRangesDtoSchema>;
+
 export const ProviderListResponseSchema = z.object({
   providers: z.array(ProviderSummaryDtoSchema),
-}).describe('Every registered provider.');
+  settingRanges: ProviderSettingRangesDtoSchema,
+}).describe('Every registered provider, and the ranges their settings may take.');
 export type ProviderListResponse = z.infer<typeof ProviderListResponseSchema>;
 
 // --- Sync runs ---
@@ -417,6 +431,7 @@ registerSchema('UpdateProviderRequest', UpdateProviderRequestSchema);
 registerSchema('ProviderSettingsResponse', ProviderSettingsResponseSchema);
 registerSchema('UpdateProviderLeagueRequest', UpdateProviderLeagueRequestSchema);
 registerSchema('ProviderLeagueResponse', ProviderLeagueResponseSchema);
+registerSchema('ProviderSettingRangesDto', ProviderSettingRangesDtoSchema);
 registerSchema('ProviderListResponse', ProviderListResponseSchema);
 registerSchema('ProviderSyncRunDto', ProviderSyncRunDtoSchema);
 registerSchema('ProviderSyncRunDetailDto', ProviderSyncRunDetailDtoSchema);

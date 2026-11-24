@@ -24340,7 +24340,38 @@ export interface components {
                 isEnabled: boolean;
             };
         };
-        /** @description Every registered provider. */
+        /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
+        ProviderSettingRangesDto: {
+            /** @description A provider's requestsPerMinute. */
+            requestsPerMinute: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
+            pollMinutes: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider's priority. */
+            priority: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
+            leagueMinutes: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+        };
+        /** @description Every registered provider, and the ranges their settings may take. */
         ProviderListResponse: {
             providers: {
                 /** @description The id the provider's events carry as their providerId. */
@@ -24442,6 +24473,37 @@ export interface components {
                     }[];
                 } | null;
             }[];
+            /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
+            settingRanges: {
+                /** @description A provider's requestsPerMinute. */
+                requestsPerMinute: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
+                pollMinutes: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider's priority. */
+                priority: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
+                leagueMinutes: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+            };
         };
         /** @description One feed's sync against a provider, with its diagnostics. */
         ProviderSyncRunDto: {
@@ -37437,7 +37499,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Every registered provider. */
+            /** @description Every registered provider, and the ranges their settings may take. */
             200: {
                 headers: {
                     [name: string]: unknown;

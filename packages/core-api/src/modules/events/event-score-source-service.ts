@@ -20,7 +20,7 @@
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
-import { MANUAL_ADMIN_PROVIDER_ID, SportEventSyncScope, type Sport } from '@poolmaster/shared/domain';
+import { MANUAL_ADMIN_PROVIDER_ID, providerSourceIdOf, SportEventSyncScope, type Sport } from '@poolmaster/shared/domain';
 import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '../../adapters/prisma-sport-catalog-repositories';
 import { ProviderRegistry } from '../ingestion/core/provider-registry';
 import {
@@ -57,13 +57,26 @@ const EARLIEST_DATE = new Date(-8.64e15);
 const LATEST_DATE = new Date(8.64e15);
 
 /**
- * The provider league code a sport league's sync reads (#1997): its selected provider mapping's,
- * when that mapping is to this provider; null otherwise.
+ * The provider league codes a sport league is mapped to on this provider (#1997), selected for its
+ * sync or not, so a mapped league that is not synced yet still browses its own provider league and
+ * not the whole sport's feed. Empty for a league with no mapping to this provider.
  */
-async function selectedProviderLeagueCode(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<string | null> {
-  const row = await prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: SELECTED_PROVIDER_MAPPING_INCLUDE });
-  const mapping = row === null ? null : toSelectedProviderMapping(row.selectedProviderMapping);
-  return mapping !== null && mapping.providerId === providerId ? mapping.providerLeagueCode : null;
+async function mappedProviderLeagueCodes(prisma: PrismaClient, sportLeagueId: string, providerId: string): Promise<string[]> {
+  const mappings = await prisma.sportLeagueProviderMapping.findMany({
+    where: { sportLeagueId },
+    select: { providerLeague: { select: { code: true, provider: { select: { code: true } } } } },
+    orderBy: { providerLeague: { code: 'asc' } },
+  });
+  return mappings
+    .filter((mapping) => providerSourceIdOf(mapping.providerLeague.provider.code) === providerId)
+    .map((mapping) => mapping.providerLeague.code);
+}
+
+/** The browse's ask of its provider: the one provider league, when the league maps exactly one. */
+function askedForAlone(codes: ReadonlySet<string>): { providerLeagueCode: string } | undefined {
+  if (codes.size !== 1) return undefined;
+  const [code] = codes;
+  return { providerLeagueCode: code };
 }
 
 export class EventScoreSourceService {
@@ -95,15 +108,17 @@ export class EventScoreSourceService {
       ? { from: options.from ?? EARLIEST_DATE, to: options.to ?? LATEST_DATE }
       : undefined;
 
-    // A league with no selected mapping to this provider names no provider league to keep.
-    const providerLeagueCode = options.sportLeagueId
-      ? await selectedProviderLeagueCode(this.prisma, options.sportLeagueId, providerId)
-      : null;
-    const events = await provider.getUpcomingEvents(sport, dateRange, providerLeagueCode === null ? undefined : { providerLeagueCode });
+    // A league with no mapping to this provider names no provider league to keep. One mapped
+    // league is asked for alone; several are read together and kept by their codes.
+    const providerLeagueCodes = options.sportLeagueId
+      ? new Set(await mappedProviderLeagueCodes(this.prisma, options.sportLeagueId, providerId))
+      : new Set<string>();
+    const events = await provider.getUpcomingEvents(sport, dateRange, askedForAlone(providerLeagueCodes));
     const search = options.search?.trim().toLowerCase() || null;
 
     return events
-      .filter((event) => providerLeagueCode === null || event.providerLeagueCode === providerLeagueCode)
+      .filter((event) => providerLeagueCodes.size === 0
+        || (event.providerLeagueCode !== undefined && providerLeagueCodes.has(event.providerLeagueCode)))
       .filter((event) => !search || event.name.toLowerCase().includes(search));
   }
 
