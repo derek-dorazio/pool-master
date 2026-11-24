@@ -798,12 +798,28 @@ In order:
 13. Sync matching by date window and calendar week, with #1924's backend.
 14. Status bubbling on the handler map, completion per scoring family, release by next
     unstarted slot.
-15. ContestSeasonSlot replaces ContestSportEvent, `squaresFromRound`, `bracketStartRound`.
+15. ContestSeasonSlot replaces ContestSportEvent, `squaresFromRound`, `bracketStartRound`;
+    template coverage as `ContestConfigTemplateSlot` rows, one default per (sport league,
+    selection type), no template versions; `sportLeagueSeasonId` on Contest; the §9c drops.
 16. Readiness and cutoff from covered slots.
-17. Pick windows per slot and voided picks.
+17. Pick windows per slot and voided picks: `ContestEntrySlot`, `ContestEntrySlotStanding`,
+    `ContestEntryRoundMatchPrediction` (side, team for brackets, void columns), snapshot slot FK.
 18. Settlement by covered slots.
+18b. `ContestScoringConfiguration` (one row, FK from template and contest), the
+    `scoringDefinition` enum and Zod-validated settings with the tiebreaker (§9c C1, C4); the
+    web app's `WINNING_SCORE_OPTIONS` removed.
+18c. Tiebreaker game on the slot (`SportEventSlot.tiebreakerGameId`, root admin change, re-pick
+    on cancellation) and squares winners on Game sides and period scores (§9c C2, C3).
 19. Offerings and notices by covered slots.
-20. History keys and Season FKs.
+20. History keys and Season FKs: `SportLeagueSeason.championshipYear` by migration, copied to
+    each contest; unknown feed Season is an ERROR finding; history by completed year.
+20b. `ContestSquadFinish` replaces LeagueYearFinish, written by every ranked type but squares;
+    medals read it.
+20c. Cups: `SportLeagueCupDefinition` and its slot rows seeded by migration, Cup keyed (League,
+    Season, definition), `cupWeight` and CupWeight removed; `PlatformPointsProfile` with
+    `League.platformPointsProfileId`.
+20d. Perpetual trophies keyed (League, ContestConfigTemplate), one plate per Season from the
+    first, none for all-WEEK templates; PERPETUAL_TROPHY_MIN_YEARS removed.
 21. Rosters and player field rows (closes #1859); horse trainer column.
 22. Player stats (StatLine removed).
 23. Composites and scores.
