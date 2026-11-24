@@ -28,6 +28,7 @@ import {
   BackgroundJobRunner,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { leagueProfiles } from '../../support/league-profiles';
+import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
@@ -297,10 +298,10 @@ describe('Activity reads and job results (#1819)', () => {
     const suffix = randomUUID().slice(0, 8);
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
+    const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Jobs Open ${suffix}` } });
     const event = await prisma.sportEvent.create({
       data: {
@@ -415,10 +416,10 @@ describe('Activity reads and job results (#1819)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const empty = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
+    const empty = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
     const job = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', trigger: JobTrigger.SYSTEM, payload: {}, sportLeagueId: empty.id } });
 
     await expect(repository().findActivity({ sportLeagueId: empty.id, createdFrom: new Date(Date.now() - HOUR), createdTo: new Date(Date.now() + HOUR) }))

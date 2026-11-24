@@ -6,6 +6,8 @@
     "sportLeagues": [
       "World Marathon Majors (men)"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "PLAYERS",
       "FIELDS"

@@ -118,7 +118,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'Create a sport league',
-      description: 'Adding a tour is one call, not a migration. 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
+      description: 'A new sport league, with who competes in its events and how they are scored (#2001), both fixed once set. The platform\'s own leagues are added by migration (the add-sport skill). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. Root admin only.',
       operationId: 'createSportLeague',
       body: schemaRef('CreateSportLeagueRequest'),
       response: { 201: schemaRef('SportLeagueResponse'), ...errors(403, 404, 409, 422) },
@@ -175,6 +175,21 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       response: { 200: schemaRef('SportLeagueSyncListResponse'), ...errors(401, 403, 404) },
     },
     handler: handler.listSyncs,
+  });
+
+  fastify.get('/:sportLeagueId/positions', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport league\'s positions with their provider codes',
+      description: 'The League page\'s Structure tab (#2001): every playing position of the sport league, by display order, never paged, '
+        + 'with whether its players can be picked into a field and each provider\'s codes for it. Set by migration; read-only. '
+        + 'Read in a fixed number of queries. Root admin only.',
+      operationId: 'listSportLeaguePositions',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 200: schemaRef('SportLeaguePositionListResponse'), ...errors(401, 403, 404) },
+    },
+    handler: handler.listPositions,
   });
 
   fastify.get('/:sportLeagueId/events/overview', {

@@ -1,5 +1,5 @@
 import { displayString, type DisplayStringValues, sportWord } from '@poolmaster/shared/display-strings';
-import { eventSportDefinition, formatParticipantStatusLabel, type Sport, type SportDefinition, type SportNoun, sportNoun } from '@poolmaster/shared/domain';
+import { eventSportDefinition, formatParticipantStatusLabel, type Sport, type SportLeagueDefinition, type SportNoun, sportNoun } from '@poolmaster/shared/domain';
 import type { ContestDto } from '@/lib/api';
 import type { SelectionParticipant } from './contest-entry-selection';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
@@ -7,14 +7,15 @@ import type { EntryTiebreakerUi } from './scoring-family-ui/types';
 
 /**
  * The definition a contest plays (#936): its events' sport league's. A contest covers one sport
- * league, so its first event's overrides are every event's. Null for a contest with no sport.
+ * league, so its first event's participant type and scoring family are every event's. Null for a
+ * contest with no sport or no event.
  */
-export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportDefinition | null {
-  if (!contest.sport) {
+export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportLeagueDefinition | null {
+  const first = contest.sportEvents.at(0);
+  if (!contest.sport || !first) {
     return null;
   }
-  const first = contest.sportEvents.at(0);
-  return eventSportDefinition({ sport: contest.sport, participantType: first?.participantType, scoringFamily: first?.scoringFamily });
+  return eventSportDefinition({ sport: contest.sport, participantType: first.participantType, scoringFamily: first.scoringFamily });
 }
 
 /**

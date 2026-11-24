@@ -1,4 +1,5 @@
-import { eventSportDefinition, type SportLeagueEvent } from './sport-league-definition';
+import { getSportDefinition } from './registry';
+import type { SportLeagueEvent } from './sport-league-definition';
 
 /**
  * A sport league's own entry for one round of an event, from a list kept first to final (round
@@ -15,18 +16,18 @@ function leagueRoundEntry<T>(leagueList: readonly T[], roundNumber: number, roun
 
 /**
  * How one round of an event is labelled: by its sport league's own round names where the league
- * has one for the round (#706: the NBA's "Conference Finals"), otherwise by the event's sport
- * league definition (`SportDefinition.roundLabel`). League round names are proper names and
+ * has one for the round (#706: the NBA's "Conference Finals"), otherwise by its sport's
+ * (`SportDefinition.roundLabel`). League round names are proper names and
  * never translated; a numbered round reads the reader's locale.
  */
 export function eventRoundLabel(
-  event: SportLeagueEvent,
+  event: Pick<SportLeagueEvent, 'sport'>,
   leagueRoundNames: readonly string[],
   roundNumber: number,
   roundCount: number,
   locale?: string | null,
 ): string {
-  return leagueRoundEntry(leagueRoundNames, roundNumber, roundCount) ?? eventSportDefinition(event).roundLabel(roundNumber, roundCount, locale);
+  return leagueRoundEntry(leagueRoundNames, roundNumber, roundCount) ?? getSportDefinition(event.sport).roundLabel(roundNumber, roundCount, locale);
 }
 
 /**

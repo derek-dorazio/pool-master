@@ -20,7 +20,6 @@ import type {
 import type { ContestEntryTotals } from '@poolmaster/shared/db';
 import {
   ScoringFamily,
-  eventSportDefinition,
   type ParticipantType,
   type Sport,
   type Contest,
@@ -129,11 +128,11 @@ export interface ContestLeaderboardModel {
   sportEventId: string;
   sport: Sport;
   /**
-   * The shown event's sport league overrides (#934), null where it plays as its sport. Its
-   * definition, read through them, names the scoring family whose pick detail its picks carry.
+   * The shown event's sport league's participant type and scoring family (#2001). The family
+   * names the pick detail its picks carry.
    */
-  participantType: ParticipantType | null;
-  scoringFamily: ScoringFamily | null;
+  participantType: ParticipantType;
+  scoringFamily: ScoringFamily;
   scoringDefinitionId: ParticipantScoringDefinitionId;
   countingRule: ContestLeaderboardCountingRule;
   /** Whether the contest scores an upset bonus: a knockout contest with its bonus on (#1748). */
@@ -151,9 +150,9 @@ export interface ContestSportEventRow {
   startDate: Date;
   endDate?: Date;
   status: SportEventStatus;
-  /** Its sport league's overrides (#934), absent where it plays as its sport. */
-  participantType?: ParticipantType | null;
-  scoringFamily?: ScoringFamily | null;
+  /** Its sport league's participant type and scoring family (#2001). */
+  participantType: ParticipantType;
+  scoringFamily: ScoringFamily;
 }
 
 function toContestSportEventDto(event: ContestSportEventRow, sequence: number): ContestSportEventDto {
@@ -164,8 +163,8 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number): 
     startDate: event.startDate.toISOString(),
     endDate: event.endDate?.toISOString() ?? null,
     status: event.status,
-    participantType: event.participantType ?? null,
-    scoringFamily: event.scoringFamily ?? null,
+    participantType: event.participantType,
+    scoringFamily: event.scoringFamily,
   };
 }
 
@@ -361,7 +360,7 @@ export function toContestLeaderboardSnapshotResponse(
 export function toContestLeaderboardResponse(
   leaderboard: ContestLeaderboardModel,
 ): ContestLeaderboardResponse {
-  const pickDetail = LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY[eventSportDefinition(leaderboard).scoringFamily];
+  const pickDetail = LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY[leaderboard.scoringFamily];
   return {
     contestId: leaderboard.contestId,
     sportEventId: leaderboard.sportEventId,

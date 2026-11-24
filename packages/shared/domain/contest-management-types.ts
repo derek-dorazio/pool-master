@@ -63,11 +63,11 @@ export interface SportEvent extends DomainEntity {
    */
   squaresFromRound?: number;
   /**
-   * The series' sport league's participant type and scoring family when not its sport's (#934),
-   * read through the series like `sportLeagueId`; absent plays the sport's. Read through `eventSportDefinition`.
+   * The series' sport league's participant type and scoring family (#2001), read through the
+   * series like `sportLeagueId`. Read through `eventSportDefinition`.
    */
-  participantType?: ParticipantType | null;
-  scoringFamily?: ScoringFamily | null;
+  participantType: ParticipantType;
+  scoringFamily: ScoringFamily;
   /**
    * The provider whose sync creates and keeps the series' sport league's events (ADR 0011), read
    * through the series like `sportLeagueId`; absent when an admin authors them. Whether this

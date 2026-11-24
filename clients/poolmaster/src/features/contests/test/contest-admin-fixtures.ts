@@ -1,4 +1,5 @@
 import { ContestOpening, SelectionType, eventSportDefinition } from '@poolmaster/shared/domain';
+import { sportPlay } from '@/test/sport-play';
 import type {
   ContestDto,
   ContestEntryDto,
@@ -65,7 +66,7 @@ export function withEventOpenings<T>(response: T): T {
       events: events.map((event) => (event.contestOpenings !== undefined ? event : {
         ...event,
         contestOpenings: openingsBeforeStart(
-          { sport: event.sport, participantType: event.participantType ?? null, scoringFamily: event.scoringFamily ?? null },
+          { ...sportPlay(event.sport), sport: event.sport, ...(event.participantType && { participantType: event.participantType }), ...(event.scoringFamily && { scoringFamily: event.scoringFamily }) },
           event.contestEligible === false ? ContestOpening.NOT_YET : ContestOpening.OPEN,
         ),
       })),
@@ -98,8 +99,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     eventSeriesId: '00000000-0000-4000-8000-000000000001',
     eventYear: 2099,
     sportLeagueId: '00000000-0000-4000-8000-000000000002',
-    participantType: null,
-    scoringFamily: null,
+    ...sportPlay(overrides.sport ?? 'GOLF'),
     syncScope: 'SCORES_ONLY',
     providerSynced: false,
     autoLifecycleEnabled: true,
@@ -131,8 +131,8 @@ export function buildContestSportEvent(
     startDate: FUTURE_START,
     endDate: null,
     status: 'SCHEDULED',
-    participantType: null,
-    scoringFamily: null,
+    participantType: 'INDIVIDUAL',
+    scoringFamily: 'STROKE_PLAY',
     ...overrides,
   };
 }

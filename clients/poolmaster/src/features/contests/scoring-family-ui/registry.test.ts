@@ -1,10 +1,10 @@
+import { sportPlay } from '@/test/sport-play';
 import { describe, expect, it } from 'vitest';
 import { displayString } from '@poolmaster/shared/display-strings';
 import {
-  getSportDefinition,
   ScoringFamily,
   Sport,
-  SUPPORTED_SPORTS,
+  sportLeagueDefinitionOf,
 } from '@poolmaster/shared/domain';
 import type {
   ContestEntryStandingDto,
@@ -16,7 +16,7 @@ import { buildLeaderboardView } from '../contest-leaderboard';
 import { getScoringFamilyUi, SCORING_FAMILY_UI } from './registry';
 import { strokePlayUi } from './stroke-play';
 
-const golf = getSportDefinition(Sport.GOLF);
+const golf = sportLeagueDefinitionOf(Sport.GOLF, sportPlay(Sport.GOLF));
 
 const cutGolfer: SportEventParticipantDto = {
   id: 'sep-1',
@@ -81,8 +81,8 @@ const golfLeaderboard: ContestLeaderboardResponse = {
   contestId: 'contest-1',
   sportEventId: 'event-1',
   sport: 'GOLF',
-  participantType: null,
-  scoringFamily: null,
+  participantType: 'INDIVIDUAL',
+  scoringFamily: 'STROKE_PLAY',
   scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
   countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
   upsetBonus: false,
@@ -92,14 +92,14 @@ const golfLeaderboard: ContestLeaderboardResponse = {
 };
 
 describe('SCORING_FAMILY_UI', () => {
-  it('resolves golf to the stroke-play entry through its sport definition', () => {
+  it('resolves golf to the stroke-play entry through its sport league scoring family', () => {
     expect(golf.scoringFamily).toBe(ScoringFamily.STROKE_PLAY);
     expect(getScoringFamilyUi(golf)).toBe(strokePlayUi);
   });
 
-  it('has an entry for every supported sport\'s scoring family, so no leaderboard resolves to nothing', () => {
-    for (const sport of SUPPORTED_SPORTS) {
-      expect(SCORING_FAMILY_UI[getSportDefinition(sport).scoringFamily]).toBeDefined();
+  it('has an entry for every scoring family, so no leaderboard resolves to nothing', () => {
+    for (const family of Object.values(ScoringFamily)) {
+      expect(SCORING_FAMILY_UI[family]).toBeDefined();
     }
   });
 });

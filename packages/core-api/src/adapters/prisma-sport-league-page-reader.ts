@@ -14,7 +14,7 @@ import type {
   SportLeaguePageRun,
   SportLeagueSyncFacts,
 } from '@poolmaster/shared/db';
-import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { ProviderSyncRunStatus, type SportLeaguePosition } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { outcomeSummary } from './prisma-sport-league-overview-reader';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
@@ -114,6 +114,42 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       }
     }
     return participants.map((participant) => ({ participant, mapping: mappingByParticipant.get(participant.id) ?? null }));
+  }
+
+  async readPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null> {
+    const [league, positions] = await Promise.all([
+      this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { id: true } }),
+      this.prisma.sportLeaguePosition.findMany({
+        where: { sportLeagueId },
+        select: {
+          id: true,
+          code: true,
+          displayOrder: true,
+          isFieldEligible: true,
+          providerCodes: {
+            select: {
+              providerCode: true,
+              sportLeagueProviderMapping: {
+                select: { providerLeague: { select: { code: true, name: true, provider: { select: { code: true } } } } },
+              },
+            },
+            orderBy: [{ sportLeagueProviderMapping: { providerLeague: { code: 'asc' } } }, { providerCode: 'asc' }],
+          },
+        },
+        orderBy: [{ displayOrder: 'asc' }, { code: 'asc' }],
+      }),
+    ]);
+    if (league === null) return null;
+    return positions.map(({ providerCodes, ...position }) => ({
+      ...position,
+      providerCodes: providerCodes
+        .map(({ providerCode, sportLeagueProviderMapping: { providerLeague } }) => ({
+          providerCode,
+          provider: providerLeague.provider.code,
+          providerLeagueCode: providerLeague.code,
+          providerLeagueName: providerLeague.name,
+        })),
+    }));
   }
 
   async readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null> {

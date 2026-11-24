@@ -336,7 +336,7 @@ sequenceDiagram
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
 
-The family is the sport's own (`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
+The family is the event's sport league's (`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
 
 | Category | Writer | Writes |
 |---|---|---|

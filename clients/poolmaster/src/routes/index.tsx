@@ -46,7 +46,6 @@ import { LeagueToolsTab } from '@/features/root-admin/league-tools-tab';
 import { ParticipantLinkRedirect } from '@/features/root-admin/participant-link-redirect';
 import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin-participant-create-page';
 import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
-import { RootAdminSportLeagueCreatePage } from '@/features/root-admin/root-admin-sport-league-create-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { EventPageLayout } from '@/features/root-admin/event-page-layout';
@@ -409,7 +408,6 @@ export const router = createBrowserRouter([
                       // A sport's own entry and its old league list now open the Sports page (#1848).
                       { index: true, element: <Navigate replace to={SPORTS_PATH} /> },
                       { path: 'leagues', element: <Navigate replace to={SPORTS_PATH} /> },
-                      { path: 'leagues/new', element: <RootAdminSportLeagueCreatePage /> },
                       {
                         // A sport league's own page and its tabs (#1866).
                         path: 'leagues/:leagueId',

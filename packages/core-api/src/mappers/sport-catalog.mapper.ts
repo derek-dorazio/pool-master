@@ -13,6 +13,7 @@ import {
   type SportLeagueIssueTarget,
   type SportLeagueOverview,
   type SportLeagueParticipantOverview,
+  type SportLeaguePosition,
   type SportLeagueSync,
 } from '@poolmaster/shared/domain';
 import type {
@@ -24,6 +25,7 @@ import type {
   SportEventOverviewDto,
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
+  SportLeaguePositionDto,
   SportLeagueSyncDto,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
 import type { RankingUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
@@ -32,7 +34,6 @@ export function mapSportToDto(sport: SportConfig): SportDto {
   return {
     id: sport.id,
     sport: sport.sport,
-    participantType: sport.participantType,
     tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
     updatedAt: sport.updatedAt.toISOString(),
@@ -178,5 +179,20 @@ export function mapSportLeagueParticipantOverviewToDto(participant: SportLeagueP
     lastInFeedAt: participant.lastInFeedAt?.toISOString() ?? null,
     addedBy: participant.addedBy,
     createdAt: participant.createdAt.toISOString(),
+  };
+}
+
+export function mapSportLeaguePositionToDto(position: SportLeaguePosition): SportLeaguePositionDto {
+  return {
+    id: position.id,
+    code: position.code,
+    displayOrder: position.displayOrder,
+    isFieldEligible: position.isFieldEligible,
+    providerCodes: position.providerCodes.map((providerCode) => ({
+      providerCode: providerCode.providerCode,
+      provider: providerCode.provider,
+      providerLeagueCode: providerCode.providerLeagueCode,
+      providerLeagueName: providerCode.providerLeagueName,
+    })),
   };
 }

@@ -36,6 +36,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { leagueProfiles } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportPlay } from '../../support/sport-play';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -71,7 +72,7 @@ function repos() {
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
@@ -232,7 +233,7 @@ describe('SportEventRepository — writes', () => {
 describe('EventSeriesRepository', () => {
   it('finds a sport league\'s recurring event by name, creating it only the first time', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
     const { eventSeries } = repos();
 
     const first = await seriesNamed(eventSeries, sportLeague.id, 'The Masters');
@@ -245,7 +246,7 @@ describe('EventSeriesRepository', () => {
   // plans/147 decision 9 (#314) — a series is a dimension with a lifecycle, and starts active.
   it('creates a series active', async () => {
     const sportId = await golfSportId();
-    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const sportLeague = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
 
     const series = await seriesNamed(repos().eventSeries, sportLeague.id, 'The Masters');
 
@@ -639,7 +640,7 @@ describe('The sport league\'s first squares round on the event read', () => {
   it('reads the league\'s squaresFromRound onto its event, and leaves it unset for a league without one', async () => {
     const prisma = getPrisma();
     const { events } = repos();
-    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
+    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
     const series = await prisma.eventSeries.create({ data: { sportLeagueId: league.id, name: `Squares round series ${randomUUID()}` } });
     try {
       const withRound = await createSportEventRow(events, {
@@ -870,7 +871,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
   /** A golf sport league of its own, synced from BALLDONTLIE's PGA TOUR unless `synced` is false, with this release window. */
   async function syncedLeague(synced: boolean, autoReleaseDaysBeforeStart: number | null = 7) {
     const league = await getPrisma().sportLeague.create({
-      data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, autoReleaseDaysBeforeStart },
+      data: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${LEAGUE_PREFIX} ${randomUUID()}`, autoReleaseDaysBeforeStart },
     });
     if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
     return league;

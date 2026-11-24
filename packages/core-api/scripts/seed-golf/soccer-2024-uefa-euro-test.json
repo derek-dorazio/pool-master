@@ -6,6 +6,8 @@
     "sportLeagues": [
       "UEFA European Championship"
     ],
+    "participantType": "TEAM",
+    "scoringFamily": "HEAD_TO_HEAD",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

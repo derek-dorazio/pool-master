@@ -50,10 +50,16 @@ export function RootAdminParticipantCreatePage() {
 
   const createMutation = useInvalidatingMutation({
     mutationFn: async (values: NewPlayerValues) => {
+      // A participant is its league's kind: a team in a team league (#2001).
+      // poolmaster-allow-list-lookup: the league picker's own list, already on screen
+      const league = (leaguesQuery.data ?? []).find((row) => row.id === values.sportLeagueId);
+      if (!league) {
+        throw new Error(`The chosen ${sportLeague.one} is not one of ${definition.name.toLowerCase()}'s.`);
+      }
       const response = await createParticipant({
         body: {
           sportLeagueId: values.sportLeagueId,
-          participantType: definition.participantType,
+          participantType: league.participantType,
           name: values.name,
           ...(values.shortName?.trim() ? { shortName: values.shortName.trim() } : {}),
           ...(values.nationality?.trim()

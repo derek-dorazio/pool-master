@@ -7659,10 +7659,6 @@ export type SportDto = {
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Whether the sport's competitors are individuals or teams.
-     */
-    participantType: 'INDIVIDUAL' | 'TEAM';
-    /**
      * Structural format of the sport's events; decides which contest formats are valid.
      */
     tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
@@ -7692,10 +7688,6 @@ export type SportListResponse = {
          * The sport.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
-         * Whether the sport's competitors are individuals or teams.
-         */
-        participantType: 'INDIVIDUAL' | 'TEAM';
         /**
          * Structural format of the sport's events; decides which contest formats are valid.
          */
@@ -7843,13 +7835,13 @@ export type SportLeagueDto = {
      */
     displayName: string | null;
     /**
-     * Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
+     * Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
      */
-    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
+     * How the sport league's events are scored. Set when the league is created, never changed.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
      * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
      */
@@ -7988,13 +7980,13 @@ export type SportLeagueListResponse = {
          */
         displayName: string | null;
         /**
-         * Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
+         * Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
          */
-        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
+         * How the sport league's events are scored. Set when the league is created, never changed.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
          * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
          */
@@ -8120,13 +8112,13 @@ export type SportLeagueResponse = {
          */
         displayName: string | null;
         /**
-         * Who competes in the sport league's events, when not its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
+         * Who competes in the sport league's events: teams or individuals. Set when the league is created, never changed.
          */
-        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the sport league's events are scored, when not as its sport's. Null takes the sport's. Set with the league's reference data, never by a request.
+         * How the sport league's events are scored. Set when the league is created, never changed.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
          * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
          */
@@ -8162,6 +8154,14 @@ export type CreateSportLeagueRequest = {
      * Unique within the sport.
      */
     name: string;
+    /**
+     * Who competes in its events: teams or individuals. Fixed once set.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM';
+    /**
+     * How its events are scored. Fixed once set.
+     */
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
      * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
      */
@@ -9550,6 +9550,113 @@ export type SportLeagueParticipantOverviewListResponse = {
 };
 
 /**
+ * One provider's code for a sport league position.
+ */
+export type SportLeaguePositionProviderCodeDto = {
+    /**
+     * The provider's own code for the position, exactly as its feed sends it.
+     */
+    providerCode: string;
+    /**
+     * The provider whose code it is.
+     */
+    provider: 'BALLDONTLIE';
+    /**
+     * The provider's own code for the league the code is from.
+     */
+    providerLeagueCode: string;
+    /**
+     * The provider's own name for that league.
+     */
+    providerLeagueName: string;
+};
+
+/**
+ * One of a sport league's playing positions. Set by migration; never edited through the API.
+ */
+export type SportLeaguePositionDto = {
+    id: string;
+    /**
+     * The position's key within its league (QB). Screens read its words by this code.
+     */
+    code: string;
+    /**
+     * Where it sits when the league's positions are listed. Display only.
+     */
+    displayOrder: number;
+    /**
+     * Whether its players can be picked into an event's field. The roster sync keeps only these players.
+     */
+    isFieldEligible: boolean;
+    /**
+     * Each provider's codes for the position, by provider league then code. A feed code with no row is not one of the league's positions.
+     */
+    providerCodes: Array<{
+        /**
+         * The provider's own code for the position, exactly as its feed sends it.
+         */
+        providerCode: string;
+        /**
+         * The provider whose code it is.
+         */
+        provider: 'BALLDONTLIE';
+        /**
+         * The provider's own code for the league the code is from.
+         */
+        providerLeagueCode: string;
+        /**
+         * The provider's own name for that league.
+         */
+        providerLeagueName: string;
+    }>;
+};
+
+/**
+ * A sport league's positions.
+ */
+export type SportLeaguePositionListResponse = {
+    /**
+     * Every position of the sport league, by display order, never paged. Empty for a league with none.
+     */
+    positions: Array<{
+        id: string;
+        /**
+         * The position's key within its league (QB). Screens read its words by this code.
+         */
+        code: string;
+        /**
+         * Where it sits when the league's positions are listed. Display only.
+         */
+        displayOrder: number;
+        /**
+         * Whether its players can be picked into an event's field. The roster sync keeps only these players.
+         */
+        isFieldEligible: boolean;
+        /**
+         * Each provider's codes for the position, by provider league then code. A feed code with no row is not one of the league's positions.
+         */
+        providerCodes: Array<{
+            /**
+             * The provider's own code for the position, exactly as its feed sends it.
+             */
+            providerCode: string;
+            /**
+             * The provider whose code it is.
+             */
+            provider: 'BALLDONTLIE';
+            /**
+             * The provider's own code for the league the code is from.
+             */
+            providerLeagueCode: string;
+            /**
+             * The provider's own name for that league.
+             */
+            providerLeagueName: string;
+        }>;
+    }>;
+};
+
+/**
  * Re-ranks participants of the sport league.
  */
 export type SportLeagueParticipantRankingsRequest = {
@@ -9923,13 +10030,13 @@ export type SportEventDto = {
      */
     sportLeagueId: string;
     /**
-     * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
+     * Who competes: teams or individuals. Read through the series' sport league.
      */
-    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
+     * How the event is scored. Read through the series' sport league.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
      * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
@@ -10272,13 +10379,13 @@ export type SportEventListResponse = {
          */
         sportLeagueId: string;
         /**
-         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
+         * Who competes: teams or individuals. Read through the series' sport league.
          */
-        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
+         * How the event is scored. Read through the series' sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -10616,13 +10723,13 @@ export type SportEventResponse = {
          */
         sportLeagueId: string;
         /**
-         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
+         * Who competes: teams or individuals. Read through the series' sport league.
          */
-        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
+         * How the event is scored. Read through the series' sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -11031,13 +11138,13 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         sportLeagueId: string;
         /**
-         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. Read through the series' sport league.
+         * Who competes: teams or individuals. Read through the series' sport league.
          */
-        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. Read through the series' sport league.
+         * How the event is scored. Read through the series' sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -13133,13 +13240,13 @@ export type ContestSportEventDto = {
      */
     status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
-     * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+     * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
      */
-    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+     * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
 };
 
 /**
@@ -13251,13 +13358,13 @@ export type ContestDto = {
          */
         status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
-         * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+         * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
          */
-        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+         * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
          */
-        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     }>;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
@@ -13677,13 +13784,13 @@ export type ContestLeaderboardResponse = {
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Who competes in the shown event, when its sport league overrides its sport. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
+     * Who competes in the shown event, from its sport league. A client reads the event's definition from the sport and these two.
      */
-    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * How the shown event is scored, when its sport league overrides its sport. Null scores as the sport does.
+     * How the shown event is scored, from its sport league.
      */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
@@ -14144,13 +14251,13 @@ export type ContestResponse = {
              */
             status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
             /**
-             * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
              */
-            participantType: 'INDIVIDUAL' | 'TEAM' | null;
+            participantType: 'INDIVIDUAL' | 'TEAM';
             /**
-             * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
              */
-            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
@@ -14241,13 +14348,13 @@ export type ContestListResponse = {
              */
             status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
             /**
-             * Who competes, when the event's sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
              */
-            participantType: 'INDIVIDUAL' | 'TEAM' | null;
+            participantType: 'INDIVIDUAL' | 'TEAM';
             /**
-             * How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
              */
-            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
+            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
@@ -36549,6 +36656,41 @@ export type ListSportLeagueSyncsResponses = {
 };
 
 export type ListSportLeagueSyncsResponse = ListSportLeagueSyncsResponses[keyof ListSportLeagueSyncsResponses];
+
+export type ListSportLeaguePositionsData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/positions';
+};
+
+export type ListSportLeaguePositionsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListSportLeaguePositionsError = ListSportLeaguePositionsErrors[keyof ListSportLeaguePositionsErrors];
+
+export type ListSportLeaguePositionsResponses = {
+    /**
+     * A sport league's positions.
+     */
+    200: SportLeaguePositionListResponse;
+};
+
+export type ListSportLeaguePositionsResponse = ListSportLeaguePositionsResponses[keyof ListSportLeaguePositionsResponses];
 
 export type ListSportLeagueEventOverviewsData = {
     body?: never;

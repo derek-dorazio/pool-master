@@ -7,6 +7,8 @@
       "ATP",
       "WTA"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "HEAD_TO_HEAD",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

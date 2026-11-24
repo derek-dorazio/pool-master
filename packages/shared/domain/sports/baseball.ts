@@ -1,6 +1,5 @@
 import { displayString } from '../../display-strings/display-strings';
-import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import { ScoringFamily } from './scoring-family';
+import { SelectionType, Sport, TournamentFormat } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /** What the rounds of an MLB postseason are called, counted back from the World Series. */
@@ -19,8 +18,6 @@ const ROUND_NAMES_FROM_FINAL = ['World Series', 'League Championship Series', 'D
 export const baseballSportDefinition: SportDefinition = {
   sport: Sport.BASEBALL,
   name: 'Baseball',
-  participantType: ParticipantType.TEAM,
-  scoringFamily: ScoringFamily.HEAD_TO_HEAD,
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],

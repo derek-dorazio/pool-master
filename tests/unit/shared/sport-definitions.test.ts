@@ -8,7 +8,6 @@ import {
   isPredictionSelectionType,
   MatchPeriodLayout,
   PARTICIPANT_SCORING_DEFINITIONS,
-  ScoringFamily,
   SelectionType,
   Sport,
   SPORT_DEFINITIONS,
@@ -60,8 +59,7 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
-  it('names a known scoring family, and a tournament format that admits at least one contest format', () => {
-    expect(Object.values(ScoringFamily)).toContain(definition.scoringFamily);
+  it('names a tournament format that admits at least one contest format', () => {
     expect(getDefaultTournamentFormatForSport(sport)).toBe(definition.tournamentFormat);
     expect(getValidContestFormatsForTournamentFormat(definition.tournamentFormat).length).toBeGreaterThan(0);
   });
@@ -75,7 +73,7 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
   });
 
   it('has its own display string for a game that ends level exactly when it plays matches, so results and picks call a tie by its word (#792)', () => {
-    expect('tie' in enUS.sport[definition.sport]).toBe(definition.scoringFamily === ScoringFamily.HEAD_TO_HEAD);
+    expect('tie' in enUS.sport[definition.sport]).toBe(sportPlaysMatches(definition.sport));
   });
 
   it('says a shoot-out word exactly when it settles level knockout matches by a shoot-out', () => {
@@ -120,13 +118,10 @@ describe('sport registry', () => {
 
     expect(golf.roundLabel(2, 4)).toBe('Round 2');
     expect(sportVocabulary(golf).eliminated).toBe('Cut');
-    expect(golf.scoringFamily).toBe(ScoringFamily.STROKE_PLAY);
   });
 
   it('scores horse racing by finishing place, calls a withdrawn horse Scratched, and reads the generic Eliminated, having no word of its own', () => {
     const horseRacing = getSportDefinition(Sport.HORSE_RACING);
-
-    expect(horseRacing.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(horseRacing.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
     expect(sportVocabulary(horseRacing).withdrawn).toBe('Scratched');
     expect(sportVocabulary(horseRacing).eliminated).toBe('Eliminated');
@@ -156,7 +151,6 @@ describe('sport registry', () => {
     const autoRacing = getSportDefinition(Sport.AUTO_RACING);
 
     expect(autoRacing.name).toBe('Auto racing');
-    expect(autoRacing.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(autoRacing.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
     expect(sportVocabulary(autoRacing)).toMatchObject({
       participant: { one: 'driver', many: 'drivers' },
@@ -182,7 +176,6 @@ describe('sport registry', () => {
     const cycling = getSportDefinition(Sport.CYCLING);
 
     expect(cycling.name).toBe('Cycling');
-    expect(cycling.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(cycling.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
     expect(sportVocabulary(cycling)).toMatchObject({
       participant: { one: 'rider', many: 'riders' },
@@ -208,8 +201,6 @@ describe('sport registry', () => {
     const running = getSportDefinition(Sport.RUNNING);
 
     expect(running.name).toBe('Running');
-    expect(running.participantType).toBe('INDIVIDUAL');
-    expect(running.scoringFamily).toBe(ScoringFamily.FINISH_POSITION);
     expect(running.scoringDefinitions).toEqual(['FINISH_POSITION_POINTS']);
     expect(sportVocabulary(running)).toMatchObject({
       participant: { one: 'runner', many: 'runners' },
@@ -250,10 +241,8 @@ describe('sportAllowsSelectionType', () => {
 describe('basketball', () => {
   const basketball = getSportDefinition(Sport.BASKETBALL);
 
-  it('is a team sport played as a knockout bracket, scored head to head by knockout round points', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(basketball.name).toBe('Basketball');
-    expect(basketball.participantType).toBe('TEAM');
-    expect(basketball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(basketball.tournamentFormat).toBe(TournamentFormat.MATCHES);
     expect(basketball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(sportPlaysMatches(Sport.BASKETBALL)).toBe(true);
@@ -296,10 +285,8 @@ describe('basketball', () => {
 describe('American football', () => {
   const americanFootball = getSportDefinition(Sport.AMERICAN_FOOTBALL);
 
-  it('is a team sport played as a knockout bracket, scored head to head by knockout round points', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(americanFootball.name).toBe('American football');
-    expect(americanFootball.participantType).toBe('TEAM');
-    expect(americanFootball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(americanFootball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(sportPlaysMatches(Sport.AMERICAN_FOOTBALL)).toBe(true);
   });
@@ -336,10 +323,8 @@ describe('American football', () => {
 describe('hockey', () => {
   const hockey = getSportDefinition(Sport.HOCKEY);
 
-  it('is a team sport played as a knockout bracket, scored head to head by knockout round points, in three periods a game', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points, in three periods a game', () => {
     expect(hockey.name).toBe('Hockey');
-    expect(hockey.participantType).toBe('TEAM');
-    expect(hockey.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(hockey.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(hockey.matchPeriodLayout).toBe(MatchPeriodLayout.THREE_PERIODS);
     expect(sportPlaysMatches(Sport.HOCKEY)).toBe(true);
@@ -372,10 +357,8 @@ describe('hockey', () => {
 describe('baseball', () => {
   const baseball = getSportDefinition(Sport.BASEBALL);
 
-  it('is a team sport played as a knockout bracket, scored head to head by knockout round points, keeping no score by period', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points, keeping no score by period', () => {
     expect(baseball.name).toBe('Baseball');
-    expect(baseball.participantType).toBe('TEAM');
-    expect(baseball.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(baseball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(baseball.matchPeriodLayout).toBeUndefined();
     expect(sportPlaysMatches(Sport.BASEBALL)).toBe(true);
@@ -406,10 +389,8 @@ describe('baseball', () => {
 describe('soccer', () => {
   const soccer = getSportDefinition(Sport.SOCCER);
 
-  it('is a team sport played as a knockout bracket, scored head to head by knockout round points, in two halves a match', () => {
+  it('is a team sport played as a knockout bracket, scored by knockout round points, in two halves a match', () => {
     expect(soccer.name).toBe('Soccer');
-    expect(soccer.participantType).toBe('TEAM');
-    expect(soccer.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(soccer.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(soccer.matchPeriodLayout).toBe(MatchPeriodLayout.HALVES);
     expect(sportPlaysMatches(Sport.SOCCER)).toBe(true);
@@ -451,10 +432,8 @@ describe('soccer', () => {
 describe('tennis', () => {
   const tennis = getSportDefinition(Sport.TENNIS);
 
-  it('is an individual sport played as a knockout draw, scored head to head by knockout round points, with no periods and no shoot-out', () => {
+  it('is an individual sport played as a knockout draw, scored by knockout round points, with no periods and no shoot-out', () => {
     expect(tennis.name).toBe('Tennis');
-    expect(tennis.participantType).toBe('INDIVIDUAL');
-    expect(tennis.scoringFamily).toBe(ScoringFamily.HEAD_TO_HEAD);
     expect(tennis.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(tennis.matchPeriodLayout).toBeUndefined();
     expect(tennis.shootout).toBe(false);

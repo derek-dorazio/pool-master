@@ -27,6 +27,7 @@ import {
   type SportEventOverview,
   type SportLeagueEventOverview,
   type SportLeagueParticipantOverview,
+  type SportLeaguePosition,
   type SportLeagueSync,
 } from '@poolmaster/shared/domain';
 import { issuesOf, syncHealthOf } from './sport-league-overview';
@@ -70,6 +71,11 @@ export class SportLeaguePageService {
       lastInFeedAt: mapping?.lastSeenAt ?? null,
       addedBy: mapping === null ? ParticipantAddedBy.ADMIN : ParticipantAddedBy.FEED,
     }));
+  }
+
+  /** The league's positions with their provider codes (#2001). Null when the league does not exist. */
+  async listPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null> {
+    return this.deps.reader.readPositions(sportLeagueId);
   }
 
   /** The Event page's header and sync rows (#1889). Null when the event does not exist. */

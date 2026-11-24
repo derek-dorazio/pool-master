@@ -3,6 +3,8 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '@/test/sport-play';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import {
   apiSuccess,
@@ -192,6 +194,7 @@ function contestResponse(status: ContestStatusFixture, myEntryIds: string[] = []
           sequence: 1,
           name: 'The Masters',
           startDate: '2026-04-09T12:00:00.000Z',
+          ...sportPlay(Sport.GOLF),
           status: status === 'OPEN' ? 'SCHEDULED' : status === 'ACTIVE' ? 'IN_PROGRESS' : 'COMPLETED',
         }],
       },
@@ -206,6 +209,7 @@ function leaderboardResponse(entryTotalScore = -5) {
       contestId: 'contest-1',
       sportEventId: 'event-1',
       sport: 'GOLF',
+      ...sportPlay(Sport.GOLF),
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
       upsetBonus: false,
@@ -389,6 +393,7 @@ describe('ContestLeaderboardPage', () => {
     return {
       ...base,
       sport: 'BASKETBALL',
+      ...sportPlay(Sport.BASKETBALL),
       scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
       upsetBonus: true,
       participants: [teamRow('sep-1', 'Vermont'), teamRow('sep-2', 'Gonzaga'), teamRow('sep-3', 'Arizona'), teamRow('sep-4', 'Duke')],
@@ -896,6 +901,7 @@ describe('ContestLeaderboardPage', () => {
         contestId: 'contest-1',
         sportEventId: 'event-1',
         sport: 'GOLF',
+        ...sportPlay(Sport.GOLF),
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         upsetBonus: false,
@@ -921,6 +927,7 @@ describe('ContestLeaderboardPage', () => {
         contestId: 'contest-1',
         sportEventId: 'event-1',
         sport: 'GOLF',
+        ...sportPlay(Sport.GOLF),
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         upsetBonus: false,

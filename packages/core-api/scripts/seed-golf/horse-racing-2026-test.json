@@ -6,6 +6,8 @@
     "sportLeagues": [
       "US Thoroughbred"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

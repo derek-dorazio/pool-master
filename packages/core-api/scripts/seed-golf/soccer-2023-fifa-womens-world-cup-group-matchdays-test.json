@@ -6,6 +6,8 @@
     "sportLeagues": [
       "FIFA Women's World Cup"
     ],
+    "participantType": "TEAM",
+    "scoringFamily": "HEAD_TO_HEAD",
     "contents": [
       "SCHEDULE",
       "PLAYERS",

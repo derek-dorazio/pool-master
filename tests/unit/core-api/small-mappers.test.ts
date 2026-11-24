@@ -11,10 +11,12 @@ import {
   PlanCap,
   PlanFeature,
   PredictedResult,
+  ProviderCode,
   type EmailMessage,
   type SportConfig,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
+import { SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
 import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
 import { toAuthResponse, toTokenRefreshResponse } from '../../../packages/core-api/src/mappers/auth.mapper';
 import { toLeaguePaymentListResponse, toUserPaymentListResponse } from '../../../packages/core-api/src/mappers/billing.mapper';
@@ -30,6 +32,7 @@ import { mapRaceResultPreviewToDto } from '../../../packages/core-api/src/mapper
 import { toSelectionGroupDto } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
   mapRankingUploadPreviewRowToDto,
+  mapSportLeaguePositionToDto,
   mapSportLeagueToDto,
   mapSportToDto,
 } from '../../../packages/core-api/src/mappers/sport-catalog.mapper';
@@ -72,6 +75,20 @@ function match(overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMa
     ...overrides,
   } as unknown as SportEventRoundMatch;
 }
+
+describe('mapSportLeaguePositionToDto', () => {
+  it('gives a position its code, display order, field eligibility and each provider\'s code for it, in the order read', () => {
+    const position = {
+      id: '11111111-1111-4111-8111-111111111111', code: 'QB', displayOrder: 1, isFieldEligible: true,
+      providerCodes: [
+        { providerCode: 'QB', provider: ProviderCode.BALLDONTLIE, providerLeagueCode: 'nfl', providerLeagueName: 'NFL' },
+        { providerCode: 'Q', provider: ProviderCode.BALLDONTLIE, providerLeagueCode: 'nfl', providerLeagueName: 'NFL' },
+      ],
+    };
+
+    expect(SportLeaguePositionDtoSchema.parse(mapSportLeaguePositionToDto(position))).toEqual(position);
+  });
+});
 
 describe('mapSportEventRoundMatchToDto', () => {
   it('sends the scheduled date as ISO and each period score as its number and two scores only', () => {
@@ -294,9 +311,9 @@ describe('toSelectionGroupDto', () => {
 
 describe('sport catalog mappers', () => {
   it('sends a sport with its dates as ISO', () => {
-    const sport = { id: 's1', sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE', createdAt: AT, updatedAt: AT } as unknown as SportConfig;
+    const sport = { id: 's1', sport: 'GOLF', tournamentFormat: 'STROKE', createdAt: AT, updatedAt: AT } as unknown as SportConfig;
 
-    expect(mapSportToDto(sport)).toEqual({ id: 's1', sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE', createdAt: ISO, updatedAt: ISO });
+    expect(mapSportToDto(sport)).toEqual({ id: 's1', sport: 'GOLF', tournamentFormat: 'STROKE', createdAt: ISO, updatedAt: ISO });
   });
 
   it('sends a sport league with a copy of its round names and its counts', () => {
