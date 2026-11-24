@@ -39,7 +39,8 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, ValuationSource } from '@poolmaster/shared/domain';
+import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
@@ -128,13 +129,14 @@ export class InMemorySportEvents {
   // --- Fixtures ---------------------------------------------------------------------
 
   addSport(sport: SportConfig['sport']): SportConfig {
-    const row: SportConfig = stamp({ id: this.id('sport'), sport, ...sportRowKeys(sport), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' });
+    const row: SportConfig = stamp({ id: this.id('sport'), sport, ...sportRowKeys(sport), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' });
     this.sports.push(row);
     return row;
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+    const play = sportPlay(this.sports.find((row) => row.id === sportId)?.sport ?? Sport.GOLF);
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -183,7 +185,7 @@ export class InMemorySportEvents {
       id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
       eventSeriesId: this.id('event-series'), eventYear: 2026, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
-      metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...overrides,
+      metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
     });
     this.events.push(event);
     return event;
@@ -231,7 +233,7 @@ export class InMemorySportEvents {
       findBySportAndUrlSegment: async (sportId, urlSegment) => this.sportLeagues.find((row) => row.sportId === sportId && row.urlSegment === urlSegment) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },

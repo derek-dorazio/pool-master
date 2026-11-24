@@ -1,3 +1,4 @@
+import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
 import { ParticipantType, ScoringFamily, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
@@ -23,12 +24,14 @@ describe('toContestListResponse', () => {
     name: 'The Masters',
     startDate: new Date('2026-04-09T12:40:00.000Z'),
     status: SportEventStatus.SCHEDULED,
+    ...sportPlay(Sport.GOLF),
   };
   const pga = {
     id: 'event-2',
     name: 'PGA Championship',
     startDate: new Date('2026-05-14T12:00:00.000Z'),
     status: SportEventStatus.SCHEDULED,
+    ...sportPlay(Sport.GOLF),
   };
 
   it('gives each listed contest its entry count and its event\'s id, sequence, name, start and status', () => {
@@ -109,7 +112,7 @@ describe('toContestResponse events', () => {
       .toEqual([expect.objectContaining({ sportEventId: 'event-1', name: 'The Masters' })]);
   });
 
-  it('names an event\'s overrides on the contest\'s event, so a page reads the event\'s definition rather than its sport\'s', () => {
+  it('carries each event\'s sport league participant type and scoring family on the contest\'s event, so a page reads the event\'s definition', () => {
     const worldSeries = {
       id: 'event-1', name: 'World Series', startDate: new Date('2026-10-23T00:08:00.000Z'), status: SportEventStatus.SCHEDULED,
       participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD,
@@ -117,7 +120,7 @@ describe('toContestResponse events', () => {
     const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents;
     const [bracketEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), 20).contest.sportEvents;
 
-    expect([golfEvent.participantType, golfEvent.scoringFamily]).toEqual([null, null]);
+    expect([golfEvent.participantType, golfEvent.scoringFamily]).toEqual([ParticipantType.INDIVIDUAL, ScoringFamily.STROKE_PLAY]);
     expect([bracketEvent.participantType, bracketEvent.scoringFamily]).toEqual([ParticipantType.TEAM, ScoringFamily.HEAD_TO_HEAD]);
   });
 
@@ -127,7 +130,7 @@ describe('toContestResponse events', () => {
   });
 
   function masters() {
-    return { id: 'event-1', name: 'The Masters', startDate: new Date('2026-04-09T12:40:00.000Z'), status: SportEventStatus.SCHEDULED };
+    return { id: 'event-1', name: 'The Masters', startDate: new Date('2026-04-09T12:40:00.000Z'), status: SportEventStatus.SCHEDULED, ...sportPlay(Sport.GOLF) };
   }
 });
 
@@ -137,8 +140,7 @@ describe('toContestLeaderboardResponse', () => {
       contestId: 'contest-1',
       sportEventId: 'event-1',
       sport: Sport.GOLF,
-      participantType: null,
-      scoringFamily: null,
+      ...sportPlay(Sport.GOLF),
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
       upsetBonus: false,
@@ -156,8 +158,7 @@ describe('toContestLeaderboardResponse', () => {
       contestId: 'contest-1',
       sportEventId: 'event-1',
       sport: Sport.HORSE_RACING,
-      participantType: null,
-      scoringFamily: null,
+      ...sportPlay(Sport.HORSE_RACING),
       scoringDefinitionId: 'FINISH_POSITION_POINTS',
       countingRule: { type: 'BEST_N', count: 3, pickCount: 6 },
       upsetBonus: false,
@@ -205,8 +206,7 @@ describe('toContestLeaderboardResponse per-sport pick detail', () => {
     contestId: 'contest-1',
     sportEventId: 'event-1',
     sport,
-    participantType: null,
-    scoringFamily: null,
+    ...sportPlay(sport),
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     upsetBonus: false,

@@ -321,7 +321,7 @@ describe('League › Contest types', () => {
     };
     const MARCH_MADNESS_UNDER_WAY = {
       ...MARCH_MADNESS, status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false,
-      contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: null, scoringFamily: null }, [2, 3, 4, 5]),
+      contestOpenings: openingsUnderWay({ sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }, [2, 3, 4, 5]),
     };
 
     function primeBrackets(event: Record<string, unknown>) {

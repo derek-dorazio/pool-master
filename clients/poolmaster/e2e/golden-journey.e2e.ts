@@ -196,7 +196,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
 
     const tourId = await test.step('create a golf tour', async () => {
       // A league is added by migration, so a journey makes its own through the API.
-      const id = await createJourneySportLeague(page, { sport: 'GOLF', name: run.tourName, platformTierProfileCode: 'TIERS_6_OF_10' });
+      const id = await createJourneySportLeague(page, { sport: 'GOLF', name: run.tourName, participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', platformTierProfileCode: 'TIERS_6_OF_10' });
       // The Sports page's one grid lists every sport league, the new one too.
       await page.goto('/manage/sports');
       await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();

@@ -17,7 +17,7 @@ import {
 
 /** The fields of an event the helpers read; the rest of the DTO plays no part. */
 function event(fields: Pick<SportEventDto, 'id' | 'sport'> & Partial<Pick<SportEventDto, 'scoringFamily'>>): SportEventDto {
-  return { participantType: null, scoringFamily: null, ...fields } as SportEventDto;
+  return { participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', ...fields } as SportEventDto;
 }
 
 type Preset = Pick<ContestConfigTemplateDto, 'id' | 'isDefault'>;

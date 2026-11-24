@@ -142,7 +142,7 @@ async function seedImportedGolfEvent(options: {
   const startDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 
@@ -926,7 +926,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -1088,7 +1088,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -1236,7 +1236,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -1381,7 +1381,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 

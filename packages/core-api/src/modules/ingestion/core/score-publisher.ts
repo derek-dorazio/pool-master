@@ -139,7 +139,7 @@ export async function publishLiveScoreUpdate(
   // batch of the one category it accepts: a family entered by an admin accepts none.
   const writer = deps.scoringFamilyForEvent({
     sport: sportEvent.eventSeries.sportLeague.sport.sport,
-    scoringFamily: sportEvent.eventSeries.sportLeague.scoringFamily ?? undefined,
+    scoringFamily: sportEvent.eventSeries.sportLeague.scoringFamily,
   }).liveScores;
   const acceptedCategory = writer?.category ?? null;
   const target: LiveScoreTargetEvent = {

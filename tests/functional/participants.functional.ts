@@ -9,6 +9,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { sportRowKeys } from '../support/sport-rows';
+import { sportPlay } from '../support/sport-play';
 
 // #235 — participant writes are root-admin only (A10: authority from the token claim). Before
 // this slice any authenticated user could create or rename a shared catalog participant.
@@ -21,10 +22,10 @@ async function golfTourId(): Promise<string> {
   const database = getFunctionalPrisma();
   const sport = await database.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await database.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(database)), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
+  const tour = await database.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(database)), ...sportPlay(sport.sport), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
   createdSportLeagueIds.push(tour.id);
   return tour.id;
 }

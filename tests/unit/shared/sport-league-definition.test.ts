@@ -8,41 +8,44 @@ import {
   Sport,
   sportLeagueDefinitionOf,
 } from '@poolmaster/shared/domain';
+import { sportPlay } from '../../support/sport-play';
 
-// A sport league's definition (#934): its sport's, with the participant type the league sets.
+// A sport league's definition (#934, #2001): its sport's, with the league's own participant type
+// and scoring family, which the sport registry no longer carries.
 
 describe('sportLeagueDefinitionOf', () => {
-  it('gives a sport league with no overrides its sport\'s definition, unchanged', () => {
-    expect(sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: null, scoringFamily: null })).toBe(getSportDefinition(Sport.BASEBALL));
+  it('gives a sport league its sport\'s definition with the league\'s participant type and scoring family', () => {
+    const definition = sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD });
+
+    expect(definition).toEqual({ ...getSportDefinition(Sport.BASEBALL), participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD });
   });
 
-  it('keeps the sport\'s scoring for a league that sets only its participant type', () => {
-    const definition = sportLeagueDefinitionOf(Sport.GOLF, { participantType: ParticipantType.TEAM, scoringFamily: null });
+  it('takes the league\'s play as it is, so a team golf league keeps stroke-play scoring definitions', () => {
+    const definition = sportLeagueDefinitionOf(Sport.GOLF, { participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.STROKE_PLAY });
 
     expect([definition.participantType, definition.scoringFamily, definition.scoringDefinitions])
       .toEqual([ParticipantType.TEAM, ScoringFamily.STROKE_PLAY, ['GOLF_RELATIVE_TO_PAR_TOTAL']]);
   });
 
-  it('keeps the sport\'s definition for a league that names its sport\'s own family', () => {
-    expect(sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: null, scoringFamily: ScoringFamily.HEAD_TO_HEAD })).toBe(getSportDefinition(Sport.BASEBALL));
-  });
+  it('copies only the two play fields from a league row, never anything else on it', () => {
+    const league = { ...sportPlay(Sport.GOLF), name: 'PGA TOUR', sport: Sport.BASEBALL };
 
-  it('refuses any family a sport is not scored by, as a broken reference row', () => {
-    expect(() => sportLeagueDefinitionOf(Sport.GOLF, { participantType: null, scoringFamily: ScoringFamily.HEAD_TO_HEAD }))
-      .toThrow('A GOLF sport league cannot be scored by HEAD_TO_HEAD');
-    expect(() => sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: null, scoringFamily: ScoringFamily.STROKE_PLAY }))
-      .toThrow('A BASEBALL sport league cannot be scored by STROKE_PLAY');
+    expect(sportLeagueDefinitionOf(Sport.GOLF, league)).toEqual({ ...getSportDefinition(Sport.GOLF), ...sportPlay(Sport.GOLF) });
   });
 });
 
 describe('An event read through its sport league', () => {
-  it('reads its sport\'s definition, with the participant type the event carries', () => {
-    expect(eventSportDefinition({ sport: Sport.BASEBALL })).toBe(getSportDefinition(Sport.BASEBALL));
-    expect(eventSportDefinition({ sport: Sport.GOLF, participantType: ParticipantType.TEAM }).participantType).toBe(ParticipantType.TEAM);
+  it('reads its sport\'s definition with the participant type and scoring family the event carries', () => {
+    const definition = eventSportDefinition({ sport: Sport.GOLF, participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.STROKE_PLAY });
+
+    expect([definition.sport, definition.participantType, definition.scoringFamily]).toEqual([Sport.GOLF, ParticipantType.TEAM, ScoringFamily.STROKE_PLAY]);
   });
 
   it('plays matches when its sport does, and is the kind of match event its sport\'s format names', () => {
-    expect([eventPlaysMatches({ sport: Sport.BASEBALL }), eventPlaysMatches({ sport: Sport.GOLF })]).toEqual([true, false]);
-    expect(contestTemplateEventTypeOf({ sport: Sport.BASEBALL, rounds: 4 })).toBe('KNOCKOUT');
+    expect([
+      eventPlaysMatches({ sport: Sport.BASEBALL, ...sportPlay(Sport.BASEBALL) }),
+      eventPlaysMatches({ sport: Sport.GOLF, ...sportPlay(Sport.GOLF) }),
+    ]).toEqual([true, false]);
+    expect(contestTemplateEventTypeOf({ sport: Sport.BASEBALL, ...sportPlay(Sport.BASEBALL), rounds: 4 })).toBe('KNOCKOUT');
   });
 });

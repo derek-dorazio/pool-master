@@ -20,6 +20,7 @@ import {
 } from '../helpers';
 import { cleanupFreshEventEditions, freshEventEdition } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -156,7 +157,7 @@ describe('Event page offers', () => {
     const prisma = getPrisma();
     const { page, remove } = await scratchPage(true);
     const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
-    const switchedOff = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
+    const switchedOff = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sportLeague: { sport: { sport: Sport.GOLF } } } });
     try {
       await prisma.eventPageOffer.create({

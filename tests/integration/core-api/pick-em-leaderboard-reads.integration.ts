@@ -40,6 +40,7 @@ import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
+import { sportPlay } from '../../support/sport-play';
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
 // season has, the games of every week come from one query, and only the week under way loads its
@@ -62,12 +63,12 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
   // The integration cleanup empties sport leagues no template names, so the football rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: 'NFL' },
+    create: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });

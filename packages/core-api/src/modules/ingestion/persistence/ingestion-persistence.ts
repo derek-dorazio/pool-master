@@ -292,7 +292,7 @@ export class IngestionPersistence {
       },
       include: {
         eventSeries: {
-          select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true, participantType: true } } } } },
+          select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } },
         },
       },
     });
@@ -313,8 +313,7 @@ export class IngestionPersistence {
     const { sportLeague } = persistedEvent.eventSeries;
     const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants, {
       id: sportLeague.id,
-      // A league's participants are its own kind, else its sport's.
-      participantType: sportLeague.participantType ?? sportLeague.sport.participantType,
+      participantType: sportLeague.participantType,
     });
     let sportEventParticipantsPersisted: number;
     const seedsLocked = seedsLockedOn(persistedEvent);
@@ -481,7 +480,7 @@ type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participa
 /** Whether an event's seeds are locked: a released bracket's are (#698), since the upset bonus reads them as they stood at release. */
 function seedsLockedOn(event: {
   status: SportEventStatus;
-  eventSeries: { sportLeague: { participantType: ParticipantType | null; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily']; sport: { sport: Sport } } };
+  eventSeries: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily']; sport: { sport: Sport } } };
 }): boolean {
   const { sportLeague } = event.eventSeries;
   return eventPlaysMatches({ sport: sportLeague.sport.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;

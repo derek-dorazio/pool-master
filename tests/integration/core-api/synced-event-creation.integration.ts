@@ -11,6 +11,7 @@ import { heldHere } from '../../support/job-locks';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
+import { sportPlay } from '../../support/sport-play';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
 // Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
@@ -32,10 +33,10 @@ async function golfLeague({ synced = true, isActive = true }: { synced?: boolean
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const league = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
+  const league = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
   if (synced) await syncLeagueTo(prisma, league.id, 'pga');
   return league;
 }

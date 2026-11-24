@@ -1,3 +1,4 @@
+import { sportPlay } from '@/test/sport-play';
 import type {
   ParticipantDto,
   PlatformPricingProfileDto,
@@ -56,8 +57,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     eventSeriesId: 'event-series-1',
     eventYear: 2026,
     sportLeagueId: 'league-1',
-    participantType: null,
-    scoringFamily: null,
+    ...sportPlay(overrides.sport ?? 'GOLF'),
     syncScope: 'NONE',
     providerSynced: false,
     autoLifecycleEnabled: true,
@@ -255,7 +255,6 @@ export const GOLF_SPORT_FIXTURE: SportDto = {
   sport: 'GOLF',
   urlSegment: 'golf',
   displayOrder: 5,
-  participantType: 'INDIVIDUAL',
   tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -354,8 +353,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     squaresFromRound: null,
     noun: null,
     displayName: null,
-    participantType: null,
-    scoringFamily: null,
+    ...sportPlay(overrides.sport ?? 'GOLF'),
     displayOrder: null,
     currentEventYear: null,
     isActive: true,

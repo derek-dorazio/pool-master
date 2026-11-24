@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SportLeaguePhaseDefinitionDto } from '@/lib/api';
-import { mappingText, seriesText, slotRowsOf } from './league-structure-rows';
+import { mappingText, positionCodeText, seriesText, slotRowsOf } from './league-structure-rows';
 
 // The Structure tab's words for a slot (#2002): its name, series and provider mappings.
 
@@ -15,6 +15,10 @@ describe('league structure rows', () => {
       id: 'm', providerId: 'p', providerName: 'BALLDONTLIE', providerLeagueCode: 'pga', providerLeagueName: 'PGA TOUR', matchType: 'NAME_PATTERN', providerValue: 'masters tournament',
     } as const;
     expect(mappingText(mapping)).toBe('BALLDONTLIE pga · Name pattern masters tournament');
+  });
+
+  it('writes a position\'s provider code as its provider and league, then the code the feed sends', () => {
+    expect(positionCodeText({ provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL', providerCode: 'QB' })).toBe('BALLDONTLIE nfl · QB');
   });
 
   it('flattens phases into slot rows that carry their phase, in the order given', () => {

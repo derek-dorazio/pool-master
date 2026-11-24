@@ -38,6 +38,7 @@ import type {
   SportEventSyncScope,
   SportEventTier,
   SportLeague,
+  SportLeaguePosition,
   TierLayoutValues,
   PlatformTierProfile,
   ValuationSource,
@@ -91,7 +92,7 @@ export interface SportLeagueRepository {
   findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague>;
+  create(input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -131,7 +132,7 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'tierConfig'>;
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -722,6 +723,8 @@ export interface SportLeaguePageReader {
   readStructure(sportLeagueId: string): Promise<SportLeaguePhaseDefinition[] | null>;
   /** One event's facts (#1889). Null when the event does not exist. */
   readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
+  /** The league's positions with their provider codes, by display order (#2001). Null when the league does not exist. */
+  readPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null>;
 }
 
 /** A profile write: its code, name and values. */

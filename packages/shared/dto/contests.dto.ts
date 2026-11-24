@@ -72,8 +72,8 @@ export const ContestSportEventDtoSchema = z.object({
   startDate: z.iso.datetime().describe('The event\'s scheduled start: when its picks close.'),
   endDate: z.iso.datetime().nullable().describe('The event\'s scheduled end when known; null otherwise. The last event\'s end is when the contest is expected to finish.'),
   status: z.enum(SportEventStatus).describe('The event\'s own status. Each event of a contest is picked, submitted, played and settled on its own (#713).'),
-  participantType: z.enum(ParticipantType).nullable().describe('Who competes, when the event\'s sport league overrides its sport. Null competes as the sport does. The same on every event of a contest, which covers one sport league.'),
-  scoringFamily: z.enum(ScoringFamily).nullable().describe('How the event is scored, when its sport league overrides its sport. Null scores as the sport does. The same on every event of a contest, which covers one sport league.'),
+  participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals, from the event\'s sport league. The same on every event of a contest, which covers one sport league.'),
+  scoringFamily: z.enum(ScoringFamily).describe('How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.'),
 }).describe('One event a contest covers, enough to name, order and pick it without reading the event (#713).');
 export type ContestSportEventDto = z.infer<typeof ContestSportEventDtoSchema>;
 
@@ -240,8 +240,8 @@ export const ContestLeaderboardResponseSchema = z.object({
   sport: z.enum(Sport).describe(
     'Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.',
   ),
-  participantType: z.enum(ParticipantType).nullable().describe('Who competes in the shown event, when its sport league overrides its sport. Null competes as the sport does. A client reads the event\'s definition from the sport and both overrides.'),
-  scoringFamily: z.enum(ScoringFamily).nullable().describe('How the shown event is scored, when its sport league overrides its sport. Null scores as the sport does.'),
+  participantType: z.enum(ParticipantType).describe('Who competes in the shown event, from its sport league. A client reads the event\'s definition from the sport and these two.'),
+  scoringFamily: z.enum(ScoringFamily).describe('How the shown event is scored, from its sport league.'),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema.describe(
     'The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client\'s own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.',
   ),

@@ -63,6 +63,7 @@ import { createEventLifecycleService } from '../../packages/core-api/src/modules
 import { PrismaSportEventRepository } from '../../packages/core-api/src/adapters';
 import { NO_SETTLE_JOBS } from '../support/event-settlement';
 import { sportRowKeys } from '../support/sport-rows';
+import { sportPlay } from '../support/sport-play';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -142,7 +143,7 @@ async function releasedKnockout(options: {
   // The migration's reference row, restored in case an earlier suite cleared the sports table.
   await getFunctionalPrisma().sport.upsert({
     where: { sport: Sport.BASKETBALL },
-    create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const admin = await buildRegisteredUser({ displayName: `${options.label} Director` });
@@ -151,7 +152,7 @@ async function releasedKnockout(options: {
 
   const sportLeague = await createSportLeague({
     client: a,
-    body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
+    body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
   });
   const sportLeagueId = expectDefined(sportLeague.data, JSON.stringify(sportLeague.error)).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);

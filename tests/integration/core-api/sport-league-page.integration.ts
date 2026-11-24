@@ -28,6 +28,7 @@ import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setup
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
+import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -43,7 +44,7 @@ const fromNow = (ms: number) => new Date(Date.now() + ms);
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
@@ -52,7 +53,7 @@ async function golfSportId(): Promise<string> {
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
 async function sportLeague(name: string, { synced = false, ...extra }: { synced?: boolean; autoReleaseDaysBeforeStart?: number } = {}) {
   const league = await getPrisma().sportLeague.create({
-    data: { ...(await sportLeagueRowDefaults(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
+    data: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
   });
   if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
   return league;

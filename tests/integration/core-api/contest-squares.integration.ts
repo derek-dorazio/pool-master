@@ -12,7 +12,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { holdContestLocks, waitUntilBlockedBy } from '../contest-lock';
-import { ParticipantType } from '@poolmaster/shared/domain';
+import { ParticipantType, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaContestEntryRepository,
   PrismaContestRepository,
@@ -55,12 +55,12 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   })));
   const sport = await prisma.sport.upsert({
     where: { sport: 'AMERICAN_FOOTBALL' },
-    create: { sport: 'AMERICAN_FOOTBALL', ...sportRowKeys('AMERICAN_FOOTBALL'), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: 'AMERICAN_FOOTBALL', ...sportRowKeys('AMERICAN_FOOTBALL'), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { sport: 'AMERICAN_FOOTBALL' })),
+      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
       externalId: `squares-${suffix}`,
       providerId: 'integration-test',
       name: `Squares Event ${suffix}`,

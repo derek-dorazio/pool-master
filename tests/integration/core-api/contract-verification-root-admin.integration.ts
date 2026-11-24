@@ -107,7 +107,6 @@ import type {
   SportEvent,
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import type { Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
 import type { z } from 'zod';
@@ -118,6 +117,8 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
+import { Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '../../support/sport-play';
 
 // The shared package exports the participant response schema but not its inferred type.
 type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
@@ -1166,7 +1167,6 @@ describe('Contract verification (root admin)', () => {
       create: {
         sport: 'GOLF',
         ...sportRowKeys('GOLF'),
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1235,7 +1235,6 @@ describe('Contract verification (root admin)', () => {
       create: {
         sport: 'GOLF',
         ...sportRowKeys('GOLF'),
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1253,7 +1252,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await sportLeagueRowDefaults(getPrisma())), sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
+        payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
@@ -1702,7 +1701,6 @@ describe('Contract verification (root admin)', () => {
       create: {
         sport: 'GOLF',
         ...sportRowKeys('GOLF'),
-        participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1735,7 +1733,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await sportLeagueRowDefaults(getPrisma())), sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
+        payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
@@ -1808,7 +1806,7 @@ describe('Contract verification (root admin)', () => {
     const rootAdmin = await createTestUser({ displayName: 'Root Admin Import Year Contract User', isRootAdmin: true });
     await getPrisma().sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const created = { sportLeagueIds: [] as string[] };
@@ -1818,7 +1816,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await sportLeagueRowDefaults(getPrisma())), sport: 'GOLF', name: `Import Contract Tour ${stamp}` },
+        payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `Import Contract Tour ${stamp}` },
       });
       expect(leagueRes.statusCode).toBe(201);
       const sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
@@ -1856,7 +1854,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await sportLeagueRowDefaults(getPrisma())), sport: 'GOLF', name: `Import Contract Bare Tour ${stamp}` },
+        payload: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `Import Contract Bare Tour ${stamp}` },
       });
       created.sportLeagueIds.push(bareRes.json<SportLeagueResponse>().sportLeague.id);
       const noKeywordRes = await app.inject({
@@ -1887,12 +1885,12 @@ describe('Contract verification (root admin)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const synced = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
+    const synced = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
     await syncLeagueTo(prisma, synced.id, 'pga');
-    const unsynced = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
+    const unsynced = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
 
     try {
       const syncRes = await app.inject({
@@ -1966,12 +1964,12 @@ describe('Contract verification (root admin)', () => {
     const stamp = Date.now().toString().slice(-8);
     const horseRacing = await prisma.sport.upsert({
       where: { sport: 'HORSE_RACING' },
-      create: { sport: 'HORSE_RACING', ...sportRowKeys('HORSE_RACING'), participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' },
+      create: { sport: 'HORSE_RACING', ...sportRowKeys('HORSE_RACING'), tournamentFormat: 'RACE' },
       update: {},
     });
     const golf = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[]) => {

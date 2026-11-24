@@ -6,6 +6,8 @@
     "sportLeagues": [
       "Formula 1"
     ],
+    "participantType": "INDIVIDUAL",
+    "scoringFamily": "FINISH_POSITION",
     "contents": [
       "PLAYERS",
       "FIELDS"

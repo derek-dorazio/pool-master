@@ -178,12 +178,14 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return rows.map(toSportLeague);
   }
 
-  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague> {
+  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'participantType' | 'scoringFamily' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague> {
     return toSportLeague(await this.prisma.sportLeague.create({
       data: {
         sportId: input.sportId,
         name: input.name,
         urlSegment: input.urlSegment,
+        participantType: input.participantType,
+        scoringFamily: input.scoringFamily,
         bracketAdvancement: input.bracketAdvancement,
         platformTierProfileId: input.platformTierProfileId,
         platformPricingProfileId: input.platformPricingProfileId,
@@ -1224,7 +1226,6 @@ function toSport(row: Prisma.SportGetPayload<object>): SportConfig {
     sport: row.sport,
     urlSegment: row.urlSegment,
     displayOrder: row.displayOrder,
-    participantType: row.participantType,
     tournamentFormat: row.tournamentFormat,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -1294,8 +1295,8 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     sportLeagueId: row.eventSeries.sportLeagueId,
     ...(row.eventSeries.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.eventSeries.sportLeague.matchPeriodLayout }),
     ...(row.eventSeries.sportLeague.squaresFromRound !== null && { squaresFromRound: row.eventSeries.sportLeague.squaresFromRound }),
-    ...(row.eventSeries.sportLeague.participantType !== null && { participantType: row.eventSeries.sportLeague.participantType }),
-    ...(row.eventSeries.sportLeague.scoringFamily !== null && { scoringFamily: row.eventSeries.sportLeague.scoringFamily }),
+    participantType: row.eventSeries.sportLeague.participantType,
+    scoringFamily: row.eventSeries.sportLeague.scoringFamily,
     ...(syncProviderId !== null && { syncProviderId }),
     syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,

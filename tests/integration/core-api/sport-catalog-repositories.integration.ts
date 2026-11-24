@@ -23,6 +23,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { sportPlay } from '../../support/sport-play';
 
 // The catalog and event-core ports against real Postgres: each query returns the right
 // rows, scoping actually scopes, ordering is what the port promises, and the bulk writes
@@ -38,7 +39,7 @@ beforeEach(() => cleanupTestData());
 async function golfSport() {
   return getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -75,7 +76,7 @@ describe('Sport and SportLeague repositories', () => {
     const golf = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());
 
-    await expect(sports.findById(golf.id)).resolves.toMatchObject({ id: golf.id, sport: Sport.GOLF, participantType: 'INDIVIDUAL' });
+    await expect(sports.findById(golf.id)).resolves.toMatchObject({ id: golf.id, sport: Sport.GOLF });
     await expect(sports.findById(randomUUID())).resolves.toBeNull();
     // Every sport the migrations seed survives the cleanup, as reference data, listed by each row's
     // stored display order (most popular first), not the database enum's declaration order.
@@ -168,8 +169,8 @@ describe('Sport and SportLeague repositories', () => {
     const sport = await golfSport();
     const sports = new PrismaSportRepository(getAppPrisma());
     const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
-    await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
-    const liv = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'LIV Golf', bracketAdvancement: BracketAdvancement.FIXED });
+    await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const liv = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'LIV Golf', bracketAdvancement: BracketAdvancement.FIXED });
     await sportLeagues.update(liv.id, { isActive: false });
 
     // Golf's reference leagues (the PGA TOUR its majors template names, #714) survive the cleanup,
@@ -185,9 +186,9 @@ describe('Sport and SportLeague repositories', () => {
   it('reads the sport leagues with the ids asked for in one read, none for an unknown id or no ids (#1166)', async () => {
     const sport = await golfSport();
     const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
-    const pga = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
-    const liv = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'LIV Golf', bracketAdvancement: BracketAdvancement.FIXED });
-    await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'Korn Ferry Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const pga = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const liv = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'LIV Golf', bracketAdvancement: BracketAdvancement.FIXED });
+    await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'Korn Ferry Tour', bracketAdvancement: BracketAdvancement.FIXED });
 
     const rows = await sportLeagues.findByIds([pga.id, liv.id, randomUUID()]);
 
@@ -200,7 +201,7 @@ describe('Sport and SportLeague repositories', () => {
     const prisma = getPrisma();
     const tag = randomUUID().slice(0, 8);
     const league = async (name: string, data: Record<string, unknown> = {}) => prisma.sportLeague.create({
-      data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `${tag} ${name}`, ...data },
+      data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `${tag} ${name}`, ...data },
     });
     const pgaTour = await prisma.providerLeague.findFirstOrThrow({ where: { code: 'pga' }, select: { id: true } });
     const repository = new PrismaSportLeagueRepository(getAppPrisma());
@@ -221,7 +222,7 @@ describe('Sport and SportLeague repositories', () => {
     const prisma = getPrisma();
     const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
     const pgaTour = await prisma.providerLeague.findFirstOrThrow({ where: { code: 'pga' }, select: { id: true } });
-    const league = await sportLeagues.create({ ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Mapped Tour ${randomUUID().slice(0, 8)}`, bracketAdvancement: BracketAdvancement.FIXED });
+    const league = await sportLeagues.create({ ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Mapped Tour ${randomUUID().slice(0, 8)}`, bracketAdvancement: BracketAdvancement.FIXED });
 
     const synced = await sportLeagues.update(league.id, { syncProviderLeagueId: pgaTour.id });
     const again = await sportLeagues.update(league.id, { syncProviderLeagueId: pgaTour.id });
@@ -241,8 +242,8 @@ describe('Sport and SportLeague repositories', () => {
     const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
     const pgaTour = await prisma.providerLeague.findFirstOrThrow({ where: { code: 'pga' }, select: { id: true } });
     const tag = randomUUID().slice(0, 8);
-    const mapped = await sportLeagues.create({ ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Owner ${tag}`, bracketAdvancement: BracketAdvancement.FIXED });
-    const other = await sportLeagues.create({ ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Other ${tag}`, bracketAdvancement: BracketAdvancement.FIXED });
+    const mapped = await sportLeagues.create({ ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Owner ${tag}`, bracketAdvancement: BracketAdvancement.FIXED });
+    const other = await sportLeagues.create({ ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Other ${tag}`, bracketAdvancement: BracketAdvancement.FIXED });
     const mapping = (await sportLeagues.update(mapped.id, { syncProviderLeagueId: pgaTour.id })).selectedProviderMapping;
 
     await expect(prisma.sportLeague.update({ where: { id: other.id }, data: { selectedProviderMappingId: mapping?.id ?? null } })).rejects.toThrow();
@@ -251,7 +252,7 @@ describe('Sport and SportLeague repositories', () => {
   it('records the sport league\'s current event year through update (plans/147 decision 6)', async () => {
     const sport = await golfSport();
     const sportLeagues = new PrismaSportLeagueRepository(getAppPrisma());
-    const pga = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const pga = await sportLeagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
 
     await sportLeagues.update(pga.id, { currentEventYear: 2026 });
 
@@ -263,7 +264,7 @@ describe('Sport and SportLeague repositories', () => {
 describe('SportEventRepository — series and event year', () => {
   async function tour(name: string) {
     const sport = await golfSport();
-    return new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name, bracketAdvancement: BracketAdvancement.FIXED });
+    return new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name, bracketAdvancement: BracketAdvancement.FIXED });
   }
 
   async function edition(eventSeriesId: string, eventYear: number, tag: string) {
@@ -338,8 +339,8 @@ describe('ParticipantRepository — a sport league\'s roster (#1853)', () => {
     const sport = await golfSport();
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());
     const suffix = randomUUID().slice(0, 8);
-    const pga = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: `Roster Tour ${suffix}`, bracketAdvancement: BracketAdvancement.FIXED });
-    const lpga = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: `Roster Women's Tour ${suffix}`, bracketAdvancement: BracketAdvancement.FIXED });
+    const pga = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: `Roster Tour ${suffix}`, bracketAdvancement: BracketAdvancement.FIXED });
+    const lpga = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: `Roster Women's Tour ${suffix}`, bracketAdvancement: BracketAdvancement.FIXED });
     const [ben, al, cy] = [
       await createLeagueParticipant(pga.id, 'Ben'),
       await createLeagueParticipant(pga.id, 'Al'),
@@ -512,7 +513,7 @@ describe('ParticipantRepository — search and matching', () => {
     const sport = await golfSport();
     const mappings = new PrismaParticipantProviderMappingRepository(getAppPrisma());
     const [first, second] = [await createParticipant(sport.id, 'First'), await createParticipant(sport.id, 'Second')];
-    const lcs = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'Other league', bracketAdvancement: BracketAdvancement.FIXED });
+    const lcs = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'Other league', bracketAdvancement: BracketAdvancement.FIXED });
     const elsewhere = await createLeagueParticipant(lcs.id, 'First elsewhere');
     const identity = { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL' as const, externalId: 'feed-42' };
 
@@ -571,7 +572,7 @@ describe('ParticipantRepository — search and matching', () => {
 describe('SportEvent core repositories', () => {
   it('filters events by status and sport league, orders by start, and counts participants with zeros', async () => {
     const sport = await golfSport();
-    const pga = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const pga = await new PrismaSportLeagueRepository(getAppPrisma()).create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'PGA Tour', bracketAdvancement: BracketAdvancement.FIXED });
     const series = await seriesNamed(new PrismaEventSeriesRepository(getAppPrisma()), pga.id, 'The Memorial');
     const later = await createEvent('later', { startDate: new Date('2026-06-01T00:00:00.000Z'), eventSeriesId: series.id, eventYear: 2026 });
     const earlier = await createEvent('earlier', { startDate: new Date('2026-05-01T00:00:00.000Z'), status: 'IN_PROGRESS' });
@@ -591,8 +592,8 @@ describe('SportEvent core repositories', () => {
   it('lists a sport league\'s event years once each, earliest first, leaving out a draft-only year for a non-admin read', async () => {
     const sport = await golfSport();
     const leagues = new PrismaSportLeagueRepository(getAppPrisma());
-    const tour = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'Years Tour', bracketAdvancement: BracketAdvancement.FIXED });
-    const other = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'Other Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const tour = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'Years Tour', bracketAdvancement: BracketAdvancement.FIXED });
+    const other = await leagues.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'Other Tour', bracketAdvancement: BracketAdvancement.FIXED });
     const seriesRepo = new PrismaEventSeriesRepository(getAppPrisma());
     const masters = await seriesNamed(seriesRepo, tour.id, 'Years Masters');
     const open = await seriesNamed(seriesRepo, tour.id, 'Years Open');
@@ -675,8 +676,8 @@ describe('SportEvent core repositories', () => {
     const tours = new PrismaSportLeagueRepository(getPrisma());
     const series = new PrismaEventSeriesRepository(getPrisma());
     const [pga, lpga] = [
-      await tours.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'Field PGA', bracketAdvancement: BracketAdvancement.FIXED }),
-      await tours.create({ ...(await sportLeagueRowDefaults(getPrisma())), sportId: sport.id, name: 'Field LPGA', bracketAdvancement: BracketAdvancement.FIXED }),
+      await tours.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'Field PGA', bracketAdvancement: BracketAdvancement.FIXED }),
+      await tours.create({ ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(sport.sport), sportId: sport.id, name: 'Field LPGA', bracketAdvancement: BracketAdvancement.FIXED }),
     ];
     const pgaEvent = await createEvent('pga-field', { eventSeriesId: (await seriesNamed(series, pga.id, 'Field Open')).id, eventYear: 2026 });
     const lpgaEvent = await createEvent('lpga-field', { eventSeriesId: (await seriesNamed(series, lpga.id, 'Field Classic')).id, eventYear: 2026 });

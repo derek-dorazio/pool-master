@@ -211,7 +211,8 @@ export interface EmailSuppression extends DomainEntity {
 
 /**
  * The reference row for a built sport (#603). `sport` is the sport itself; what a screen calls it
- * comes from code, not from this row. `tournamentFormat` drives the validity matrix.
+ * comes from code, not from this row. `tournamentFormat` drives the validity matrix. Who competes
+ * and how it is scored are each sport league's (#2001).
  */
 export interface SportConfig extends DomainEntity {
   sport: Sport;
@@ -219,7 +220,6 @@ export interface SportConfig extends DomainEntity {
   urlSegment: string;
   /** Where it sits wherever sports are listed together, the most popular first; lower first. */
   displayOrder: number;
-  participantType: ParticipantType;
   tournamentFormat: TournamentFormat;
 }
 

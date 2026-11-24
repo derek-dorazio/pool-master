@@ -34,6 +34,7 @@ import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTes
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
+import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -49,11 +50,11 @@ async function golfLeague(): Promise<{ id: string; name: string }> {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return prisma.sportLeague.create({
-    data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
+    data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
     select: { id: true, name: true },
   });
 }

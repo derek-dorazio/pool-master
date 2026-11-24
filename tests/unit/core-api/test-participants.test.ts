@@ -1,3 +1,4 @@
+import { sportPlay } from '../../support/sport-play';
 import type { ContestConfigTemplateListResponse, SelectionStateResponse } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestTemplateEventType, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { formatLoadReport, LoadAction, LoadMode, LoadSubject } from '../../../packages/core-api/scripts/seed-golf/load-report';
@@ -77,7 +78,7 @@ describe('test participants: where and under what name', () => {
 
   it('shows test participant rows in the report only on a run that loads them', () => {
     const file = {
-      scope: { sport: 'HORSE_RACING', season: 2026, sportLeagues: ['US Thoroughbred'], contents: ['SCHEDULE'] },
+      scope: { sport: 'HORSE_RACING', season: 2026, sportLeagues: ['US Thoroughbred'], participantType: 'INDIVIDUAL', scoringFamily: 'FINISH_POSITION', contents: ['SCHEDULE'] },
       testData: true,
       provenance: { gatheredAt: '2026-10-01', gatheredBy: 'test', sources: [{ name: 'Source', url: 'https://example.com' }] },
       sportLeagues: [],
@@ -117,13 +118,13 @@ describe('test participants: which template a test contest is built from', () =>
   ];
 
   it('builds no test contest on an NFL week, which offers no roster template, instead of borrowing a playoff template whose round values do not fit one round', () => {
-    const week = { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, rounds: 1 };
+    const week = { sport: Sport.AMERICAN_FOOTBALL, ...sportPlay(Sport.AMERICAN_FOOTBALL), sportLeagueId: NFL, rounds: 1 };
 
     expect(chooseContestTemplate(nflTemplates, week)).toBeNull();
   });
 
   it('builds a playoff test contest from the league\'s default roster template, never a draw', () => {
-    const playoffs = { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: NFL, rounds: 4 };
+    const playoffs = { sport: Sport.AMERICAN_FOOTBALL, ...sportPlay(Sport.AMERICAN_FOOTBALL), sportLeagueId: NFL, rounds: 4 };
 
     expect(chooseContestTemplate(nflTemplates, playoffs)?.templateKey).toBe('nfl-budget-doubling');
   });
@@ -133,7 +134,7 @@ describe('test participants: which template a test contest is built from', () =>
     const LPGA = 'lpga-league';
     const golf = (templateKey: string, sportLeagueId: string, isDefault: boolean) =>
       template(templateKey, { sport: Sport.GOLF, sportLeagueId, eventType: null, isDefault });
-    const tournament = { sport: Sport.GOLF, sportLeagueId: LPGA, rounds: 4 };
+    const tournament = { sport: Sport.GOLF, ...sportPlay(Sport.GOLF), sportLeagueId: LPGA, rounds: 4 };
 
     expect(chooseContestTemplate([golf('pga-default', PGA, true), golf('lpga-other', LPGA, false), golf('lpga-default', LPGA, true)], tournament)?.templateKey).toBe('lpga-default');
   });

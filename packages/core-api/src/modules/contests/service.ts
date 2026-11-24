@@ -1049,8 +1049,8 @@ export class ContestService {
       contestId,
       sportEventId: shownEvent.id,
       sport: shownEvent.sport,
-      participantType: shownEvent.participantType ?? null,
-      scoringFamily: shownEvent.scoringFamily ?? null,
+      participantType: shownEvent.participantType,
+      scoringFamily: shownEvent.scoringFamily,
       scoringDefinitionId,
       // #1740 — M of "best N of M": the picks a full entry holds, said once in the header.
       countingRule: { ...shownCountingRule, pickCount: resolveLineupSize(configuration?.configJson, shown.field) },

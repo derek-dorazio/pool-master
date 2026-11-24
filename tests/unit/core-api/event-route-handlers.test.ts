@@ -3,8 +3,9 @@
  * the root admin's counts, the dates a body's ISO strings become, what each write answers with,
  * and the status each provider sync refusal is sent with.
  */
+import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
-import { SportEventStatus, SportEventSyncScope, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus, SportEventSyncScope, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
@@ -43,6 +44,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     autoLifecycleEnabled: true,
     createdAt: AT,
     updatedAt: AT,
+    ...sportPlay(overrides.sport ?? Sport.GOLF),
     ...overrides,
   };
 }

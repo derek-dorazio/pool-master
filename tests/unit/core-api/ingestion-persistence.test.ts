@@ -54,7 +54,7 @@ function linkedRow(overrides: Record<string, unknown> & { sport?: Sport } = {}) 
     metadata: {},
     syncScope: 'SCORES_ONLY',
     // The event's sport league, which the sync's new participants belong to (#1853).
-    eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport, participantType: sport === Sport.GOLF ? 'INDIVIDUAL' : 'TEAM' } } },
+    eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport } } },
     ...rest,
   };
 }
@@ -263,7 +263,7 @@ describe('IngestionPersistence', () => {
         fieldLocked: true,
         metadata: detail.metadata,
       },
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport: Sport.GOLF, participantType: 'INDIVIDUAL' } } } },
+      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1',
         isActive: true,
@@ -317,7 +317,7 @@ describe('IngestionPersistence', () => {
     const prisma = fieldSyncPrisma({
       externalId: 'nba-player-1',
       eventRow: linkedRow({ sport: Sport.BASKETBALL }),
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport: Sport.BASKETBALL, participantType: 'TEAM' } } } },
+      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: Sport.BASKETBALL } } } },
       fieldRow: null,
       unlinkedRanked: [{ ranking: 2, participant: { id: 'site-doncic', name: 'Luka Dončić' } }, { ranking: 5, participant: { id: 'site-brown', name: 'Jaylen Brown' } }],
     });
@@ -369,7 +369,7 @@ describe('IngestionPersistence', () => {
       linkedEvent: {
         id: 'sport-event-1',
         status,
-        eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport: Sport.BASKETBALL, participantType: 'TEAM' } } },
+        eventSeries: { sportLeague: { id: 'league-event', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: Sport.BASKETBALL } } },
       },
       fieldRow: {
         id: 'sport-event-participant-1',
@@ -403,7 +403,7 @@ describe('IngestionPersistence', () => {
       return fieldSyncPrisma({
         externalId: 'golfer-01',
         eventRow: linkedRow(),
-        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport: Sport.GOLF, participantType: 'INDIVIDUAL' } } } },
+        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
         fieldRow: null,
         createField,
       });
@@ -491,7 +491,7 @@ describe('IngestionPersistence', () => {
         fieldLocked: true,
         metadata: detail.metadata,
       },
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport: Sport.GOLF, participantType: 'INDIVIDUAL' } } } },
+      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1',
         isActive: true,
@@ -534,7 +534,7 @@ describe('IngestionPersistence', () => {
     const prisma = fieldSyncPrisma({
       externalId: 'golfer-01',
       eventRow: { id: 'sport-event-1', externalId: 'golf-open-2026', providerId: 'balldontlie', sport: Sport.GOLF, name: 'Manual Test Golf Tournament', venue: null, location: null, startDate: detail.startDate, endDate: null, status: 'SCHEDULED', rounds: null, participantCount: null, metadata: detail.metadata },
-      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport: Sport.GOLF, participantType: 'INDIVIDUAL' } } } },
+      linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
       fieldRow: {
         id: 'sport-event-participant-1', isActive: true, inactiveReason: null, ranking: 7, oddsToWin: 8.5, seedNumber: 1,
         metadata: { seed: 1, odds: 8.5, oddsSourceEventId: 'golf-open-2026' },
@@ -655,7 +655,7 @@ describe('IngestionPersistence: provider participants with no mapping yet', () =
   /** The site's participant of a name, which no feed id maps: a sync never links it by its name (#1850). */
   type SiteParticipant = { id: string; sportLeagueId: string; name: string };
 
-  const EVENT_LEAGUE = { id: 'league-event', participantType: null, scoringFamily: null, sport: { sport: Sport.GOLF, participantType: 'INDIVIDUAL' } };
+  const EVENT_LEAGUE = { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } };
 
   function golfer(externalId: string, name: string, providerId = 'balldontlie'): ProviderParticipant {
     return { externalId, providerId, sport: Sport.GOLF, name, active: true, metadata: {} };

@@ -621,7 +621,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
     const leagues = await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: tennis.id });
     const ncaaRounds = ['First Round', 'Second Round', 'Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
 
-    expect(tennis.participantType).toBe('INDIVIDUAL');
+    expect(new Set(leagues.map((league) => league.participantType))).toEqual(new Set(['INDIVIDUAL']));
     const platformTierProfileCodes = new Map((await getPrisma().platformTierProfile.findMany()).map((profile) => [profile.id, profile.code]));
     expect(leagues.map((league) => [league.name, league.bracketAdvancement, league.roundNames, platformTierProfileCodes.get(league.platformTierProfileId)])).toEqual([
       ['ATP', 'FIXED', [], 'TIERS_6_OF_8'],
@@ -818,13 +818,6 @@ describe('The seeded NFL league and its knockout templates', () => {
     expect(namesBySport.get(Sport.HORSE_RACING)).toEqual(['US Thoroughbred']);
     expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women']);
     expect(namesBySport.get(Sport.SOCCER)?.slice(-2)).toEqual(['NCAA Division I Men', 'NCAA Division I Women']);
-  });
-
-  it('scores every seeded sport league by its own sport\'s family, so no league overrides how its sport is scored', async () => {
-    const leagues = await getPrisma().sportLeague.findMany({ select: { name: true, scoringFamily: true, sport: { select: { sport: true } } } });
-
-    expect(leagues.filter((league) => league.scoringFamily !== null && league.scoringFamily !== getSportDefinition(league.sport.sport).scoringFamily)
-      .map((league) => `${league.sport.sport} ${league.name}`)).toEqual([]);
   });
 
   it('gives every seeded active event page with offers exactly one primary offer, whose edition dates the page', async () => {

@@ -16,6 +16,8 @@ import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, t
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { sportRowKeys } from '../support/sport-rows';
+import { Sport } from '@poolmaster/shared/domain';
+import { sportPlay } from '../support/sport-play';
 
 // #1400 — a root admin deletes a sport league (a tour) or a participant (a player) that nothing
 // uses any more, and is refused while something still does. The e2e teardown could only make
@@ -54,7 +56,7 @@ afterAll(async () => {
 async function ensureGolfSportRow(): Promise<void> {
   await getFunctionalPrisma().sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -67,7 +69,7 @@ async function rootAdmin(): Promise<RegisteredUserContext> {
 }
 
 async function newTour(client: Client, name: string): Promise<string> {
-  const tour = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, 'GOLF')), sport: 'GOLF', name: `${name} ${RUN}` } });
+  const tour = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, 'GOLF')), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `${name} ${RUN}` } });
   expect(tour.response?.status).toBe(201);
   const id = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(id);

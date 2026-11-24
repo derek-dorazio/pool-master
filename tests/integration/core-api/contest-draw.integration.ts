@@ -66,7 +66,7 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
 
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({

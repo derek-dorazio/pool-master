@@ -148,6 +148,8 @@ test('act 1: the root admin releases two American football weeks, each one game 
       sport: 'AMERICAN_FOOTBALL',
       name: run.tourName,
       ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
+      participantType: 'TEAM',
+      scoringFamily: 'HEAD_TO_HEAD',
     });
     const eventIds: string[] = [];
     for (const [index, week] of WEEKS.entries()) {

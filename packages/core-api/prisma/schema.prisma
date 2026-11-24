@@ -1100,7 +1100,6 @@ model Sport {
   /// Where the sport sits wherever sports are listed together, grids included (#2042): the most
   /// popular first. Lower comes first. Display only, never used to identify a sport.
   displayOrder     Int                    @unique @map("display_order")
-  participantType  PrismaParticipantType  @map("participant_type")
   /// No default (#236): the table that discriminates between sports must not
   /// make a row a stroke-play golf sport by omission. Creators take it from
   /// DEFAULT_TOURNAMENT_FORMAT_BY_SPORT.
@@ -1173,12 +1172,13 @@ model SportLeague {
   /// first; null comes after every ordered league, by name. Reference data, set by the migration
   /// that seeds the league.
   displayOrder               Int?                     @map("display_order")
-  /// Who competes in its events, when not its sport's (#934). Null: the sport's. Reference data,
-  /// set by the migration that seeds the league.
-  participantType            PrismaParticipantType?   @map("participant_type")
-  /// How its events are scored, when not by its sport's family (#934). Null: the sport's.
-  /// Reference data, set by the migration that seeds the league.
-  scoringFamily              PrismaScoringFamily?     @map("scoring_family")
+  /// Who competes in its events: teams or individuals (#2001). The league is the one home of
+  /// this fact; the sport says nothing about it. Reference data, set by the migration that
+  /// seeds the league.
+  participantType            PrismaParticipantType    @map("participant_type")
+  /// How its events' results are stored and scored (#2001). The league is the one home of this
+  /// fact. Reference data, set by the migration that seeds the league.
+  scoringFamily              PrismaScoringFamily      @map("scoring_family")
   /// The provider league whose sync creates and keeps this sport league's events (ADR 0011,
   /// #1997): one of the league's own provider mappings, so a league can be mapped to a second
   /// provider before it switches. Null: the league is not synced. Set by a root admin.
@@ -1204,6 +1204,7 @@ model SportLeague {
   phaseSlots                  SportLeaguePhaseSlot[]
   syncFindings                ProviderSyncFinding[]
   syncRuns                    ProviderSyncRun[]
+  positions                   SportLeaguePosition[]
   /// The composite key keeps the selected mapping one of the league's own.
   selectedProviderMapping     SportLeagueProviderMapping?  @relation("SelectedSportLeagueProviderMapping", fields: [id, selectedProviderMappingId], references: [sportLeagueId, id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -2478,9 +2479,10 @@ model SportLeagueProviderMapping {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeague    SportLeague    @relation("SportLeagueProviderMappings", fields: [sportLeagueId], references: [id], onDelete: Cascade)
-  providerLeague ProviderLeague @relation(fields: [providerLeagueId], references: [id], onDelete: Restrict)
-  selectedBy     SportLeague?   @relation("SelectedSportLeagueProviderMapping")
+  sportLeague    SportLeague                           @relation("SportLeagueProviderMappings", fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  providerLeague ProviderLeague                        @relation(fields: [providerLeagueId], references: [id], onDelete: Restrict)
+  selectedBy     SportLeague?                          @relation("SelectedSportLeagueProviderMapping")
+  positionCodes  SportLeaguePositionProviderMapping[]
   slotMappings   SportLeaguePhaseSlotProviderMapping[]
 
   @@unique([sportLeagueId, providerLeagueId])
@@ -2488,6 +2490,56 @@ model SportLeagueProviderMapping {
   @@unique([sportLeagueId, id])
   @@index([providerLeagueId])
   @@map("sport_league_provider_mappings")
+}
+
+/// One of a sport league's playing positions (#2001, plans/league-model-redesign.md §1): the NFL's
+/// QB or K. Timeless, one set per league, set by migration. Only a field-eligible position's
+/// players are kept on a Season's roster; the roster sync drops the rest while reading.
+model SportLeaguePosition {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId   String   @map("sport_league_id") @db.Uuid
+  /// The position's key within its league, capital letters, digits and underscores: QB. Screens
+  /// read its words from the display strings by this code.
+  code            String   @db.VarChar(20)
+  /// Where the position sits when a league's positions are listed. Display only: never used to
+  /// find a position or to order play.
+  displayOrder    Int      @map("display_order")
+  /// Whether the position's players can be picked into an event's field.
+  isFieldEligible Boolean  @map("is_field_eligible")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeague   SportLeague                          @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  providerCodes SportLeaguePositionProviderMapping[]
+
+  @@unique([sportLeagueId, code])
+  /// The target of the provider code rows' composite key, which keeps a code on its own league.
+  @@unique([sportLeagueId, id])
+  @@map("sport_league_positions")
+}
+
+/// A provider's code for one of a sport league's positions (#2001): BALLDONTLIE's NFL
+/// `position_abbreviation` QB. Inclusion only: a code with no row is not one of the league's
+/// positions. Several codes may name one position. Set by migration.
+model SportLeaguePositionProviderMapping {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId                String   @map("sport_league_id") @db.Uuid
+  sportLeaguePositionId        String   @map("sport_league_position_id") @db.Uuid
+  sportLeagueProviderMappingId String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's own code for the position, exactly as its feed sends it.
+  providerCode                 String   @map("provider_code") @db.VarChar(50)
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// Both composite keys run through the sport league, so the position and the provider league
+  /// mapping are always the same league's.
+  position                   SportLeaguePosition        @relation(fields: [sportLeagueId, sportLeaguePositionId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_position_provider_mappings_position_fkey")
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_position_provider_mappings_provider_mapping_fkey")
+
+  @@unique([sportLeagueProviderMappingId, providerCode])
+  @@index([sportLeagueId, sportLeaguePositionId])
+  @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_position_provider_mappings_provider_mapping_idx")
+  @@map("sport_league_position_provider_mappings")
 }
 
 /// The three phases a sport league's Season can have (#2002, plans/league-model-redesign.md §1).

@@ -29,6 +29,7 @@ import {
   type ProviderSettings,
   type Sport,
   type SportConfig,
+  type SportLeaguePlay,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
@@ -113,7 +114,7 @@ export class SportLeagueService {
    */
   async createSportLeague(
     sport: Sport,
-    input: { name: string; urlSegment: string; bracketAdvancement?: BracketAdvancement } & SportLeagueProfileIds,
+    input: { name: string; urlSegment: string; bracketAdvancement?: BracketAdvancement } & SportLeaguePlay & SportLeagueProfileIds,
   ): Promise<SportLeagueSummary> {
     const sportRow = await requireSport(this.deps.sports, sport);
     this.assertAdvancementFits(sport, input.bracketAdvancement);
@@ -136,6 +137,8 @@ export class SportLeagueService {
       sportId: sportRow.id,
       name: input.name,
       urlSegment: input.urlSegment,
+      participantType: input.participantType,
+      scoringFamily: input.scoringFamily,
       bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
       platformTierProfileId: input.platformTierProfileId,
       platformPricingProfileId: input.platformPricingProfileId,
