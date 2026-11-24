@@ -3,8 +3,8 @@
 **Tracking issue:** #1917
 
 Agreed with Derek in the project thread "Sync Clutch Cards through their parent league",
-2026-11-19 to 2026-11-21, and revised after a model, design and ticket review. No slice is
-dispatched until Derek gives the go.
+2026-11-19 to 2026-11-21, and revised after a model, design and ticket review. Derek gave the go to implement on
+2026-11-24; slice 0 (ADR 0012, #1979, #2037) is done.
 
 See *Names* for every table, old and new.
 
@@ -44,7 +44,7 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SportEventParticipantValuation` | `SportEventSlotParticipantValuation` | Tier and price per event slot and field row. |
 | `SportEventRound` | same name | A scoring unit; gains a required slot FK and its `matchFormat`. |
 | `SportEventMatch` | `SportEventRoundMatch` | Any meeting of sides in a round: two teams, two players, or a whole field. A best-of series is one Match. |
-| `SportEventMatch` home/away columns | `SportEventRoundMatchSide` | One side of a Match: field row (empty until known), side number, home/away, seed, spread, rollup outcome. |
+| `SportEventMatch` home/away columns | `SportEventRoundMatchSide` | One side of a Match: field row (empty until known), side number, spread, rollup outcome. Home/away is on the Game side result; seed on the field row. |
 | none | `SportEventRoundMatchGame` | One played game: date, status, scores. |
 | none | `SportEventRoundMatchGameProviderMapping` | A provider's game id (team-sport game, PGA round, PGA match). |
 | `SportEventMatch` home/away scores, `SportEventParticipantGolfRound`, `SportEventParticipantRaceResult` | `SportEventRoundMatchGameSideResult` | A side's result in one Game: score, text result, score to par, position, start position, periods completed, start period, status. |
@@ -133,6 +133,7 @@ The current model was built one sport at a time and leans on code to look right:
   - NAME_PATTERN: open phases;
   - DATE_WINDOW: feeds with no round marker, such as the NCAAF postseason. It uses a team
     filter.
+  - CALENDAR_WEEK: daily-schedule leagues' REGULAR weeks, by the global date rule.
   - Inclusion only (Derek 2026-11-22): a row names each provider value we sync, and
     anything else is not synced. Each unmapped value raises one INFO finding per league and
     value (deduplicated, not per game), so a new format is seen once and never synced by
@@ -146,7 +147,8 @@ The current model was built one sport at a time and leans on code to look right:
 - **SportLeagueSeason**: its own identity (start year and date span, unique per league and
   start year, span checked against its slots), with a **SportLeagueSeasonProviderMapping** per provider.
   - Test data (Derek): a few "Test-" events live in the **current** Season, each on its own
-    Season slot row flagged `isTestData` (unique per Season, definition and flag), with
+    Season slot row flagged `isTestData`, with a label (several per definition; unique on Season,
+    definition and label), with
     re-dated dates. The sync never reads or writes test slots, so test and synced events
     never share a slot. QA only; never in production.
   - `SportLeague.currentSeasonId` follows one global rule: the Season whose span includes
@@ -178,9 +180,10 @@ The current model was built one sport at a time and leans on code to look right:
     his roster team at each field sync until release.
   - Player rows are built only in leagues whose templates include a Clutch Card.
   - Seed, play-in place, withdrawn and eliminated reasons stay.
-  - **Team** tiers and prices sit on the event's first covered slot (`SportEventSlotTier`,
-    slice 7b), over the field rows not eliminated entering that slot (bye teams in), frozen
-    at release. **Every field check,
+  - **Team** tiers and prices sit on the event slot (`SportEventSlotTier`, slice 7b): a set
+    is built for each event slot that a template lists as a starting point, over the field
+    rows not eliminated entering that slot (bye teams in), and frozen when that slot opens.
+    A contest reads its first covered slot's set. **Every field check,
     count, tier and price runs over team rows only**, so player rows never block release.
 - **SportEventRound**: a scoring unit, numbered within its event, with a **required** FK to one
   of its own event's slots (enforced by a composite FK). A week event's round 1 is
@@ -200,15 +203,17 @@ The current model was built one sport at a time and leans on code to look right:
   - It is numbered within its round in kickoff order, and the number is stable once set.
   - Status is written once, from its Games.
 - **SportEventRoundMatchSide**: one side of a Match.
-  - Field row (a team or a player), `sideNumber`, `homeAway` HOME / AWAY / NONE, seed and
-    spread. The field row is empty until the side is known (an undecided bracket slot, a
+  - Field row (a team or a player), `sideNumber` and spread (side 1 only). Home/away is on
+    each Game side result, since it alternates in a series; the seed is on the field row
+    only. The field row is empty until the side is known (an undecided bracket slot, a
     knockout match before its teams are set).
   - `outcome` WON / LOST / TIED / PENDING is a rollup from the Games, written only by the
     result writer (a series' 4–2). FIELD matches leave it empty.
   - Advancement is the next match plus a side number, unique per target side.
   - Pick'em picks and bracket picks point at a Match side.
   - `sideNumber` is the side's fixed place, not home or away: sync writes the away side as 1
-    and the home side as 2; a neutral-site or FIELD match uses `homeAway` NONE (Derek 2026-11-24).
+    and the home side as 2 on Matches it creates; a neutral-site or FIELD Game uses
+    `homeAway` NONE (Derek 2026-11-24).
   - Constraints: unique (match, side number) and (match, field row); a HEAD_TO_HEAD match has
     exactly sides 1 and 2, written in one transaction by the one writer; composite FKs keep
     every side in its Match's event.
@@ -226,8 +231,8 @@ The current model was built one sport at a time and leans on code to look right:
   side: `score` (points, goals, strokes, holes up), a text result where the feed sends one
   ("4 & 3"), `scoreToPar` from the feed (never derived from a par, which breaks for
   multi-course events and mid-round), `position` (finish place), `startPosition`,
-  `periodsCompleted` and `startPeriod` (holes thru, back-nine starts), shootout score and
-  `status` (DNF, DSQ, DNS, WD within that Game).
+  `periodsCompleted` and `startPeriod` (holes thru, back-nine starts), `homeAway` HOME /
+  AWAY / NONE, and `status` (DNF, DSQ, DNS, WD within that Game).
   - **…GameSideResultPeriodScore**: one row per Game side and period, with a period kind REGULAR /
     OVERTIME / SHOOTOUT. Golf hole scores are stored only where a contest reads them; none
     does today.
@@ -324,8 +329,9 @@ The current model was built one sport at a time and leans on code to look right:
 
 ## 6. How the sync builds it
 
-1. **Seasons**: fetch the current and next Season through SeasonProviderMapping, with no
-   rollover-month constants.
+1. **Seasons**: Seasons are added by migration. The sync maps the provider's season id to an
+   existing Season row through SeasonProviderMapping (no rollover-month constants); an
+   unknown Season is an ERROR finding.
 2. **Slots**: only synced phases.
    - One league-agnostic adapter per provider reduces each game to a provider code
      (`REG:5`, `POST:3`, a tournament id).
@@ -363,7 +369,8 @@ The current model was built one sport at a time and leans on code to look right:
      admin finding.
    - **The event's status is derived from its slots.** EventLifecycleService stays the one
      status writer. A draft stays DRAFT whatever its slots do; release moves it to its
-     derived status. Event COMPLETED no longer settles contests.
+     derived status. From slice 18, Event COMPLETED no longer settles contests (slice 14
+     keeps today's trigger).
    - Ratings, results emails and notifications are handlers on the map.
    - The per-event `autoLifecycleEnabled` stays as the one switch, with an admin action to
      set a slot's status.
@@ -385,13 +392,15 @@ loses the slots already under way. The event-level "event started" readiness rea
 **Contest templates name their slots** as a list of slot definitions, with a coverage mode
 (§9c):
 
-| Template | Covers |
-|---|---|
-| Super Bowl squares | FINAL |
-| Super Bowl Clutch Card | FINAL |
-| Playoff bracket, survivor, tiered, budget, quick pick | every POSTSEASON slot but the play-in |
-| Playoffs Clutch Card | every POSTSEASON slot of one event |
-| NFL week pick'em | its WEEK slot |
+| Template | Coverage mode | Covers |
+|---|---|---|
+| Super Bowl squares | ONE_SLOT | FINAL |
+| Super Bowl Clutch Card | ONE_SLOT | FINAL |
+| Playoff bracket, survivor | FROM_SLOT | every POSTSEASON slot but the play-in |
+| Whole-tournament tiered, budget, quick pick | ALL_LISTED | every POSTSEASON slot but the play-in |
+| Round tiered, budget, quick pick | ONE_SLOT | each starting-point POSTSEASON slot |
+| Playoffs Clutch Card | ALL_LISTED | every POSTSEASON slot of one event |
+| NFL week pick'em | ONE_SLOT | each WEEK slot |
 
 **The contest's covered slots**:
 
@@ -411,7 +420,8 @@ loses the slots already under way. The event-level "event started" readiness rea
 - **Pick windows per slot.** For pick'em and survivor over several slots, a slot's picks
   open when its matchups are known, close at its first Game, and are revealed then. A
   single-slot contest behaves as today.
-- **Settlement** runs when every covered slot is COMPLETED, as a job keyed by the contest.
+- **Settlement** runs when every covered slot is COMPLETED or CANCELLED, as a job keyed by
+  the contest; squares settle on their one Game, final or cancelled.
   Leaderboards rebuild through the existing snapshot job, one per contest.
 - **Team tiered, budget and quick pick contests** cover what their template's coverage mode
   gives (§9c) and use their first covered slot's team tiers. Bracket templates may list slots (Championship Weekend =
@@ -651,8 +661,9 @@ Contest:
   tied on score order by the closest guess to the feed's winning total to par; still tied
   share the place (T1).
 - Tiebreaker game (Derek 2026-11-23, slices 10/17): a slot value,
-  `SportEventSlot.tiebreakerGameId`, shared by every contest covering the slot. Set at slot
-  release by one rule: latest scheduled start, ties to the lower Game id (a FINAL slot's
+  `SportEventSlot.tiebreakerGameId`, shared by every contest covering the slot. Set when the
+  slot's pick window opens (its matchups known), then re-run on each schedule change until
+  that Game starts, by one rule: latest scheduled start, ties to the lower Game id (a FINAL slot's
   championship; a regular week's last kickoff). A root admin can change it in the event's
   slot dialog until that Game starts (audited). If it is cancelled or moved out of the slot,
   the rule picks again and raises a finding; guesses carry over. Replaces
@@ -751,9 +762,9 @@ Contest:
   `CupPointsScale` enum move to `PlatformPointsProfile` (code, name, `kind` TABLE |
   FIELD_BEATEN, `points` list for TABLE, `pointsAfterTable` for STANDARD's tail), seeded by
   migration; `League.platformPointsProfileId` replaces `cupPointsScale`, and a league's own
-  CUSTOM list stays on League (`cupCustomPoints`, used when set). Crowned cups freeze the
+  league's custom list is a points profile row the league owns (`cupCustomPoints` goes). Crowned cups freeze the
   profile's points they used. Kept in code as fixed rules: last place needs 3+ teams, medal
-  by place, the championship grid's 10 places, one platform time zone for history years.
+  by place, the championship grid's 10 places.
 - Championship counting (Derek 2026-11-24, slice 20e): `PlatformChampionshipProfile`
   (code, `counting` ALL_FINISHES | CUP_CONTESTS), seeded by migration with two rows ("All
   contests", "Cup contests"); `League.platformChampionshipProfileId`, default All contests,
@@ -840,7 +851,8 @@ Contest:
     migration deletes cups that match no definition (an NFL pick'em cup) and finishes from
     squares; the 20b migration refills or deletes old finish and year-review rows.
   - The cup counting rule has a model home: `ContestConfigTemplate.countsInCups`, seeded by
-    migration (tiered, budget, Clutch Card), copied to the contest; no selection-type set in
+    migration (tiered, budget, Clutch Card), true only on ONE_SLOT templates and enforced by
+    a check, so multi-slot templates never count; copied to the contest; no selection-type set in
     code. Cup contest lists show only counted contests. Cup and points-profile names that
     are generic words ("Season Cup", "Standard") are display strings keyed by code; a name
     column holds only proper names ("Majors Cup").
@@ -1252,5 +1264,5 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
    `SportLeagueProviderMapping`, `ProviderSyncFinding`, `PlatformScoringProfile`,
    `PlatformRatingProfile`, `PlatformTierProfile`, `PlatformPricingProfile`; contests `ContestSeasonSlot` (avoids `ContestEntryPick.slot`). Every provider key
    lives in a `…ProviderMapping` table.
-6. ~~Test data~~ Settled: test events in the current Season on flagged test slot rows (§2).
-   the loader re-dates test events into it.
+6. ~~Test data~~ Settled: test events in the current Season on labelled test slot rows
+   (§2); the loader re-dates test events into them.
