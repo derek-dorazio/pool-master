@@ -10,7 +10,7 @@ export const PROVIDER_STATUS_TONES: Record<ProviderStatus, ChipProps['tone']> = 
   DOWN: 'danger',
 };
 
-/** The share of calls that failed in the last hour, as a percent to one place; null when the provider is not running. */
+/** The share of its sync runs that failed in the last hour, as a percent to one place; null when none finished. */
 export function errorRatePercent(provider: Pick<ProviderSummaryDto, 'errorRate'>): number | null {
   return provider.errorRate === null ? null : Math.round(provider.errorRate * 1000) / 10;
 }
@@ -18,12 +18,7 @@ export function errorRatePercent(provider: Pick<ProviderSummaryDto, 'errorRate'>
 /** The error rate as the page shows it. */
 export function errorRateText(provider: Pick<ProviderSummaryDto, 'errorRate'>): string {
   const percent = errorRatePercent(provider);
-  return percent === null ? 'Not running' : `${String(percent)}%`;
-}
-
-/** The p95 latency as the page shows it. */
-export function latencyText(provider: Pick<ProviderSummaryDto, 'latencyMs'>): string {
-  return provider.latencyMs === null ? 'Not running' : `${String(provider.latencyMs)} ms`;
+  return percent === null ? 'No runs' : `${String(percent)}%`;
 }
 
 /** A request rate a minute, or "Not paced" for a provider that does not pace its calls. */

@@ -12,6 +12,7 @@ import {
   SportEventStatus,
   type SportEventContest,
   type SportEventTier,
+  eventProviderNameOf,
 } from '@poolmaster/shared/domain';
 import type {
   ImportSportEventYearFromProviderResponse,
@@ -57,6 +58,7 @@ export function mapSportEventToDto({
     id: event.id,
     externalId: event.externalId,
     providerId: event.providerId,
+    providerName: eventProviderNameOf(event),
     sport: event.sport,
     sportUrlSegment: event.sportUrlSegment,
     name: event.name,

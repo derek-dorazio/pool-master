@@ -1787,7 +1787,7 @@
       "IngestionScheduleConfigPatch": {
         "type": "object",
         "properties": {
-          "healthCheck": {
+          "EVENTS": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1816,7 +1816,7 @@
             "additionalProperties": false,
             "description": "Partial feed-scheduling update payload."
           },
-          "eventList": {
+          "FIELD": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1845,36 +1845,7 @@
             "additionalProperties": false,
             "description": "Partial feed-scheduling update payload."
           },
-          "eventParticipants": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling update payload."
-          },
-          "eventLiveScores": {
+          "SCORES": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1905,12 +1876,12 @@
           }
         },
         "additionalProperties": false,
-        "description": "Partial ingestion schedule update: only the policies and properties it names change."
+        "description": "Partial ingestion schedule update: only the sync kinds and properties it names change."
       },
       "IngestionScheduleConfig": {
         "type": "object",
         "properties": {
-          "healthCheck": {
+          "EVENTS": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1940,9 +1911,9 @@
               "enabled"
             ],
             "additionalProperties": false,
-            "description": "Scheduling policy for provider health checks."
+            "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
           },
-          "eventList": {
+          "FIELD": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -1972,9 +1943,9 @@
               "enabled"
             ],
             "additionalProperties": false,
-            "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+            "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
           },
-          "eventParticipants": {
+          "SCORES": {
             "type": "object",
             "properties": {
               "enabled": {
@@ -2004,49 +1975,16 @@
               "enabled"
             ],
             "additionalProperties": false,
-            "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-          },
-          "eventLiveScores": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for live score polling."
+            "description": "The SCORES sync: live score polling."
           }
         },
         "required": [
-          "healthCheck",
-          "eventList",
-          "eventParticipants",
-          "eventLiveScores"
+          "EVENTS",
+          "FIELD",
+          "SCORES"
         ],
         "additionalProperties": false,
-        "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league."
+        "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind."
       },
       "PlanCapsDto": {
         "type": "object",
@@ -19147,6 +19085,13 @@
               "null"
             ]
           },
+          "providerName": {
+            "description": "That provider's name, so no reader looks it up by id (#1999). Null when none syncs it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "isActive": {
             "type": "boolean",
             "description": "On: offered to customers and synced. Off: hidden and not synced."
@@ -19518,6 +19463,7 @@
           "sportDisplayOrder",
           "name",
           "providerId",
+          "providerName",
           "isActive",
           "syncHealth",
           "issues",
@@ -19571,6 +19517,13 @@
                 },
                 "providerId": {
                   "description": "The provider that syncs its events. Null when none does.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "providerName": {
+                  "description": "That provider's name, so no reader looks it up by id (#1999). Null when none syncs it.",
                   "type": [
                     "string",
                     "null"
@@ -19947,6 +19900,7 @@
                 "sportDisplayOrder",
                 "name",
                 "providerId",
+                "providerName",
                 "isActive",
                 "syncHealth",
                 "issues",
@@ -23721,6 +23675,13 @@
             "type": "string",
             "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
           },
+          "providerName": {
+            "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "sport": {
             "type": "string",
             "enum": [
@@ -24410,6 +24371,7 @@
           "id",
           "externalId",
           "providerId",
+          "providerName",
           "sport",
           "sportUrlSegment",
           "name",
@@ -24522,6 +24484,13 @@
                 "providerId": {
                   "type": "string",
                   "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+                },
+                "providerName": {
+                  "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "sport": {
                   "type": "string",
@@ -25212,6 +25181,7 @@
                 "id",
                 "externalId",
                 "providerId",
+                "providerName",
                 "sport",
                 "sportUrlSegment",
                 "name",
@@ -25311,6 +25281,13 @@
               "providerId": {
                 "type": "string",
                 "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+              },
+              "providerName": {
+                "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "sport": {
                 "type": "string",
@@ -26001,6 +25978,7 @@
               "id",
               "externalId",
               "providerId",
+              "providerName",
               "sport",
               "sportUrlSegment",
               "name",
@@ -26222,6 +26200,13 @@
                 "providerId": {
                   "type": "string",
                   "description": "Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)"
+                },
+                "providerName": {
+                  "description": "That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "sport": {
                   "type": "string",
@@ -26912,6 +26897,7 @@
                 "id",
                 "externalId",
                 "providerId",
+                "providerName",
                 "sport",
                 "sportUrlSegment",
                 "name",
@@ -38800,7 +38786,7 @@
               "value": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38830,9 +38816,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38862,9 +38848,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38894,46 +38880,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The value in use."
@@ -38941,7 +38894,7 @@
               "defaults": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -38971,9 +38924,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -39003,9 +38956,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -39035,46 +38988,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -40914,7 +40834,7 @@
                     "value": {
                       "type": "object",
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40944,9 +40864,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -40976,9 +40896,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -41008,46 +40928,13 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false,
                       "description": "The value in use."
@@ -41055,7 +40942,7 @@
                     "defaults": {
                       "type": "object",
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -41085,9 +40972,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -41117,9 +41004,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -41149,46 +41036,13 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false,
                       "description": "The value a reset would store."
@@ -42985,7 +42839,7 @@
               "value": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -43015,9 +42869,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -43047,9 +42901,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -43079,46 +42933,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The whole new value."
@@ -44040,7 +43861,7 @@
                   "null"
                 ],
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44070,9 +43891,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44102,9 +43923,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44134,53 +43955,20 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false
               },
               "newValue": {
                 "type": "object",
                 "properties": {
-                  "healthCheck": {
+                  "EVENTS": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44210,9 +43998,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for provider health checks."
+                    "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                   },
-                  "eventList": {
+                  "FIELD": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44242,9 +44030,9 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                   },
-                  "eventParticipants": {
+                  "SCORES": {
                     "type": "object",
                     "properties": {
                       "enabled": {
@@ -44274,46 +44062,13 @@
                       "enabled"
                     ],
                     "additionalProperties": false,
-                    "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                  },
-                  "eventLiveScores": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "additionalProperties": false,
-                    "description": "Scheduling policy for live score polling."
+                    "description": "The SCORES sync: live score polling."
                   }
                 },
                 "required": [
-                  "healthCheck",
-                  "eventList",
-                  "eventParticipants",
-                  "eventLiveScores"
+                  "EVENTS",
+                  "FIELD",
+                  "SCORES"
                 ],
                 "additionalProperties": false,
                 "description": "The value the save stored."
@@ -46098,7 +45853,7 @@
                         "null"
                       ],
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46128,9 +45883,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46160,9 +45915,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46192,53 +45947,20 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false
                     },
                     "newValue": {
                       "type": "object",
                       "properties": {
-                        "healthCheck": {
+                        "EVENTS": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46268,9 +45990,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for provider health checks."
+                          "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
                         },
-                        "eventList": {
+                        "FIELD": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46300,9 +46022,9 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for the event list sync: how often each synced sport league's events sync is queued."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
                         },
-                        "eventParticipants": {
+                        "SCORES": {
                           "type": "object",
                           "properties": {
                             "enabled": {
@@ -46332,46 +46054,13 @@
                             "enabled"
                           ],
                           "additionalProperties": false,
-                          "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-                        },
-                        "eventLiveScores": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "additionalProperties": false,
-                          "description": "Scheduling policy for live score polling."
+                          "description": "The SCORES sync: live score polling."
                         }
                       },
                       "required": [
-                        "healthCheck",
-                        "eventList",
-                        "eventParticipants",
-                        "eventLiveScores"
+                        "EVENTS",
+                        "FIELD",
+                        "SCORES"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
@@ -68271,7 +67960,7 @@
             "description": "Provider display name."
           },
           "status": {
-            "description": "Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).",
+            "description": "Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.",
             "type": [
               "string",
               "null"
@@ -68284,21 +67973,14 @@
             ]
           },
           "errorRate": {
-            "description": "Provider-reported error rate over the last hour; null when the provider is not running.",
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "latencyMs": {
-            "description": "Provider-reported p95 latency; null when the provider is not running.",
+            "description": "The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished.",
             "type": [
               "number",
               "null"
             ]
           },
           "lastEventAt": {
-            "description": "When one of the provider's events last changed, else its last successful poll; null when neither is known.",
+            "description": "When one of the provider's events last changed; null when none is known.",
             "type": [
               "string",
               "null"
@@ -68544,7 +68226,6 @@
           "providerName",
           "status",
           "errorRate",
-          "latencyMs",
           "lastEventAt",
           "sportsCovered",
           "primaryForSports",
@@ -68556,7 +68237,7 @@
           "settings"
         ],
         "additionalProperties": false,
-        "description": "A sports-data provider with its live health and settings."
+        "description": "A sports-data provider with its health from its sync runs, and its settings."
       },
       "UpdateProviderRequest": {
         "type": "object",
@@ -68994,7 +68675,7 @@
                   "description": "Provider display name."
                 },
                 "status": {
-                  "description": "Health from a live check made for this request; null when the provider is not running in this task (switched off, or its API key is not set).",
+                  "description": "Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.",
                   "type": [
                     "string",
                     "null"
@@ -69007,21 +68688,14 @@
                   ]
                 },
                 "errorRate": {
-                  "description": "Provider-reported error rate over the last hour; null when the provider is not running.",
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "latencyMs": {
-                  "description": "Provider-reported p95 latency; null when the provider is not running.",
+                  "description": "The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished.",
                   "type": [
                     "number",
                     "null"
                   ]
                 },
                 "lastEventAt": {
-                  "description": "When one of the provider's events last changed, else its last successful poll; null when neither is known.",
+                  "description": "When one of the provider's events last changed; null when none is known.",
                   "type": [
                     "string",
                     "null"
@@ -69267,7 +68941,6 @@
                 "providerName",
                 "status",
                 "errorRate",
-                "latencyMs",
                 "lastEventAt",
                 "sportsCovered",
                 "primaryForSports",
@@ -69279,7 +68952,7 @@
                 "settings"
               ],
               "additionalProperties": false,
-              "description": "A sports-data provider with its live health and settings."
+              "description": "A sports-data provider with its health from its sync runs, and its settings."
             }
           },
           "settingRanges": {
@@ -88908,7 +88581,7 @@
         "description": "Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.",
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league.",
+            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
             "content": {
               "application/json": {
                 "schema": {
@@ -88958,7 +88631,7 @@
         },
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league.",
+            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
             "content": {
               "application/json": {
                 "schema": {
@@ -89000,7 +88673,7 @@
         "description": "Resets ingestion scheduling back to the platform defaults.",
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league.",
+            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
             "content": {
               "application/json": {
                 "schema": {

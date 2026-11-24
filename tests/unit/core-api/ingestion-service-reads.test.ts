@@ -69,7 +69,7 @@ function service(
 }
 
 describe('IngestionService.listProviders', () => {
-  it('lists a provider with its live health and its event activity', async () => {
+  it('lists a provider with its event activity, and no health while it has no Provider row to own runs', async () => {
     const provider = fakeSportDataProvider({ providerId: 'zebra', providerName: 'Zebra Feed', sportsCovered: [Sport.GOLF] });
     const lastChangedAt = new Date('2026-05-30T09:00:00.000Z');
     const sportEvents = fakeSportEventRepo({
@@ -80,32 +80,52 @@ describe('IngestionService.listProviders', () => {
 
     expect(providers).toEqual([
       expect.objectContaining({
-        providerId: 'zebra', status: 'HEALTHY', lastEventAt: lastChangedAt, activeEventCount: 3, sportsCovered: [Sport.GOLF],
+        providerId: 'zebra', status: null, errorRate: null, lastEventAt: lastChangedAt, activeEventCount: 3, sportsCovered: [Sport.GOLF],
       }),
     ]);
   });
 
-  it('falls back to a provider\'s last successful poll for its last event time when it has no events', async () => {
-    const provider = fakeSportDataProvider({
-      providerId: 'alpha',
-      sportsCovered: [Sport.GOLF],
-      healthCheck: jest.fn().mockResolvedValue({
-        providerId: 'alpha', status: 'DEGRADED', errorRateLastHour: 0.2, latencyMsP95: 900,
-        lastSuccessfulPoll: new Date('2026-05-01T00:00:00.000Z'),
-      }),
-    });
+  it('reads a provider\'s health from its sync runs of the last hour: DEGRADED with the failed share when some failed, ignoring older and unfinished runs, and calling the provider never', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-05-30T12:00:00.000Z'));
+    try {
+      const provider = fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: [Sport.GOLF] });
+      const runs = syncRuns();
+      const run = (status: 'COMPLETED' | 'FAILED' | 'IN_PROGRESS', createdAt: string) => runs.create({
+        ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, status,
+        startedAt: null, completedAt: null, payload: {}, createdAt: new Date(createdAt),
+      });
+      await run('COMPLETED', '2026-05-30T11:30:00.000Z');
+      await run('COMPLETED', '2026-05-30T11:40:00.000Z');
+      await run('FAILED', '2026-05-30T11:50:00.000Z');
+      await run('IN_PROGRESS', '2026-05-30T11:55:00.000Z');
+      await run('FAILED', '2026-05-30T10:00:00.000Z');
 
-    const providers = await service({
-      registry: registryWith(provider),
-    }).listProviders();
+      const [summary] = await service({
+        registry: registryWith(provider),
+        providerSettings: settingsOf(balldontlieTestProvider()),
+        syncRuns: runs,
+      }).listProviders();
 
-    expect(providers).toEqual([
-      expect.objectContaining({
-        providerId: 'alpha', status: 'DEGRADED', errorRate: 0.2, latencyMs: 900,
-        lastEventAt: new Date('2026-05-01T00:00:00.000Z'), activeEventCount: 0,
-        sportsCovered: [Sport.GOLF],
-      }),
-    ]);
+      expect(summary).toMatchObject({ providerId: 'balldontlie', status: 'DEGRADED', errorRate: 1 / 3 });
+      expect(summary).not.toHaveProperty('latencyMs');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('shows a provider as HEALTHY when none of its runs of the hour failed, DOWN when all did, and unknown (null) when none finished', async () => {
+    const provider = fakeSportDataProvider({ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: [Sport.GOLF] });
+    const health = async (counts: { finished: number; failed: number } | null) => {
+      const runs = syncRuns({
+        countFinishedByProvider: jest.fn().mockResolvedValue(counts === null ? [] : [{ providerId: balldontlieTestProvider().id, ...counts }]),
+      });
+      const [summary] = await service({ registry: registryWith(provider), providerSettings: settingsOf(balldontlieTestProvider()), syncRuns: runs }).listProviders();
+      return { status: summary.status, errorRate: summary.errorRate };
+    };
+
+    await expect(health({ finished: 4, failed: 0 })).resolves.toEqual({ status: 'HEALTHY', errorRate: 0 });
+    await expect(health({ finished: 2, failed: 2 })).resolves.toEqual({ status: 'DOWN', errorRate: 1 });
+    await expect(health(null)).resolves.toEqual({ status: null, errorRate: null });
   });
 
   it('lists every sport a provider covers, and a null last-event time when it has none', async () => {
@@ -212,12 +232,6 @@ describe('IngestionService.listProviders', () => {
       expect.objectContaining({ providerId: 'balldontlie', rateLimitedJobsLast24h: 5 }),
       expect.objectContaining({ providerId: 'mock', rateLimitedJobsLast24h: 1 }),
     ]);
-  });
-
-  it('fails the list when a provider\'s live health check throws, since there is no stored health to show', async () => {
-    const provider = fakeSportDataProvider({ healthCheck: jest.fn().mockRejectedValue(new Error('provider down')) });
-
-    await expect(service({ registry: registryWith(provider) }).listProviders()).rejects.toThrow('provider down');
   });
 });
 

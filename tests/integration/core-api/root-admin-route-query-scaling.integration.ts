@@ -43,7 +43,6 @@ import {
 } from '@poolmaster/shared/dto';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type {
-  ProviderHealthStatus,
   ProviderParticipant,
   SportDataProvider,
   SportEvent,
@@ -96,10 +95,6 @@ class ScalingProvider implements SportDataProvider {
 
   async getLiveScores(eventId: string): Promise<LiveScoreResult> {
     return { category: 'GOLF', externalEventId: eventId, rounds: [] };
-  }
-
-  async healthCheck(): Promise<ProviderHealthStatus> {
-    return { providerId: this.providerId, status: 'HEALTHY', errorRateLastHour: 0, latencyMsP95: 1 };
   }
 }
 
@@ -801,7 +796,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     });
   });
 
-  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, their synced sport leagues read in one more with the provider each syncs from (its selected mapping, provider league and provider, one read each, #1997), and their rate-limited jobs counted in one grouped query, with their events read once for all of them, without the rest of each row', async () => {
+  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, their synced sport leagues read in one more with the provider each syncs from (its selected mapping, provider league and provider, one read each, #1997), and their rate-limited jobs counted in one grouped query, with their events read once for all of them, and their sync runs of the last hour counted in one grouped query for their health (#1999, no live provider call), without the rest of each row', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
     await seedRateLimitedJobs();
     await expectFixedQueries({
@@ -813,7 +808,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
         expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 2], [tennisProvider.providerId, 1]]);
         return providers.length;
       },
-      statements: 9,
+      statements: 10,
     });
   });
 });

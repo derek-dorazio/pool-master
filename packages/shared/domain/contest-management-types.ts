@@ -77,6 +77,8 @@ export interface SportEvent extends DomainEntity {
    * event is one the sync keeps is `isProviderSyncedEvent`.
    */
   syncProviderId?: string;
+  /** That provider's name (#1999), read with it; absent when an admin authors the league's events. */
+  syncProviderName?: string;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;

@@ -11,6 +11,7 @@ import type {
   IngestionScheduleConfigPatch,
 } from '@poolmaster/shared/dto/config.dto';
 import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
+import { ProviderSyncKind } from '@poolmaster/shared/domain';
 import type { AppSettingsService } from './app-settings-service';
 import { defineSettingsGroup } from './settings-group';
 
@@ -20,21 +21,17 @@ export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionSchedule
   description: 'How often each provider feed runs: one schedule for every sport league.',
   schema: IngestionScheduleConfigSchema,
   defaults: () => ({
-    healthCheck: {
-      enabled: true,
-      intervalMinutes: 5,
-    },
     // The synced sport leagues' events sync, every six hours (#1871; was a constant).
-    eventList: {
+    [ProviderSyncKind.EVENTS]: {
       enabled: true,
       intervalMinutes: 360,
     },
-    eventParticipants: {
+    [ProviderSyncKind.FIELD]: {
       enabled: false,
       intervalMinutes: 360,
       lookaheadDays: 14,
     },
-    eventLiveScores: {
+    [ProviderSyncKind.SCORES]: {
       enabled: true,
       intervalSeconds: 300,
     },
@@ -118,10 +115,9 @@ function applyPatch(
   patch: IngestionScheduleConfigPatch,
 ): IngestionScheduleConfig {
   return {
-    healthCheck: mergePolicy(config.healthCheck, patch.healthCheck),
-    eventList: mergePolicy(config.eventList, patch.eventList),
-    eventParticipants: mergePolicy(config.eventParticipants, patch.eventParticipants),
-    eventLiveScores: mergePolicy(config.eventLiveScores, patch.eventLiveScores),
+    [ProviderSyncKind.EVENTS]: mergePolicy(config.EVENTS, patch.EVENTS),
+    [ProviderSyncKind.FIELD]: mergePolicy(config.FIELD, patch.FIELD),
+    [ProviderSyncKind.SCORES]: mergePolicy(config.SCORES, patch.SCORES),
   };
 }
 

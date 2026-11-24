@@ -93,6 +93,7 @@ function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOvervi
     sportDisplayOrder: 1,
     name: 'NBA',
     providerId: 'balldontlie',
+    providerName: 'BALLDONTLIE',
     isActive: true,
     syncHealth: 'OK',
     issues: [],
@@ -105,7 +106,7 @@ function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOvervi
 
 const OVERVIEWS = [
   overview({}),
-  overview({ id: 'summer', name: 'Summer League', providerId: null, syncHealth: 'OFF' }),
+  overview({ id: 'summer', name: 'Summer League', providerId: null, providerName: null, syncHealth: 'OFF' }),
 ];
 
 function sync(kind: SportLeagueSyncDto['kind']): SportLeagueSyncDto {

@@ -153,6 +153,7 @@ function leagueOverview(overrides: Partial<SportLeagueOverviewDto> = {}): SportL
     sportDisplayOrder: 5,
     name: 'PGA Tour',
     providerId: null,
+    providerName: null,
     isActive: true,
     syncHealth: 'OFF',
     issues: [],

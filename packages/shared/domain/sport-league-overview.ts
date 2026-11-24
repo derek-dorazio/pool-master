@@ -80,6 +80,8 @@ export interface SportLeagueOverview {
   name: string;
   /** The provider that syncs its events. Null when none does. */
   providerId: string | null;
+  /** That provider's name (#1999). Null when none does. */
+  providerName: string | null;
   isActive: boolean;
   syncHealth: SportLeagueSyncHealth;
   /** Only the types with something to do, in their fixed order. */

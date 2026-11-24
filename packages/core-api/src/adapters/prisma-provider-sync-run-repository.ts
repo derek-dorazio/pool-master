@@ -11,7 +11,7 @@ import type {
   ProviderSyncRunRepository,
   ProviderSyncRunUpdate,
 } from '@poolmaster/shared/db';
-import type { BackgroundJobRequest, ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
+import { ProviderSyncRunStatus, type BackgroundJobRequest, type ProviderSyncRun, type ProviderSyncRunCounts, type ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
 import { SPORT_LEAGUE_SPORT_SELECT, type SportLeagueSportRow } from './sport-of';
 
@@ -147,6 +147,23 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
       where: { id: { in: batch.map((row) => row.id) } },
     });
     return count;
+  }
+
+  async countFinishedByProvider(since: Date): Promise<ProviderSyncRunCounts[]> {
+    // One grouped read over the window, on the created_at index.
+    const groups = await this.prisma.providerSyncRun.groupBy({
+      by: ['providerId', 'status'],
+      where: { createdAt: { gte: since }, status: { in: [ProviderSyncRunStatus.COMPLETED, ProviderSyncRunStatus.FAILED] } },
+      _count: { _all: true },
+    });
+    const counts = new Map<string, ProviderSyncRunCounts>();
+    for (const group of groups) {
+      const entry = counts.get(group.providerId) ?? { providerId: group.providerId, finished: 0, failed: 0 };
+      entry.finished += group._count._all;
+      if (group.status === ProviderSyncRunStatus.FAILED) entry.failed += group._count._all;
+      counts.set(group.providerId, entry);
+    }
+    return [...counts.values()];
   }
 }
 

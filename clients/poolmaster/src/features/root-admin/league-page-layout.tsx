@@ -15,7 +15,6 @@ import { SportLeagueSettingsDialog } from './sport-league-settings-dialog';
 import { SyncRunByIdDialog } from './sync-run-by-id-dialog';
 import { failedJobCount, useActivity } from './use-activity';
 import { useManagedSport } from './use-managed-sport';
-import { useProvidersQuery } from './use-providers-query';
 import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
 
 /**
@@ -35,7 +34,6 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const { sport, sportUrlSegment } = useManagedSport();
   const { pathname } = useLocation();
   const overviewsQuery = useSportLeagueOverviewsQuery();
-  const providersQuery = useProvidersQuery();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openSyncRunId, setOpenSyncRunId] = useState<string | null>(null);
   const basePath = buildSportLeaguePath(sportUrlSegment, sportLeague.id);
@@ -64,7 +62,6 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
     testId: `root-admin-league-tab-${tab.segment}`,
     to: `${basePath}/${tab.segment}`,
   }));
-  const providerNames = new Map((providersQuery.data ?? []).map((provider) => [provider.providerId, provider.providerName]));
   const context: LeaguePageContext = { sportLeague, overview, isSynced, activity };
 
   return (
@@ -87,7 +84,7 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
             <SyncHealthChip health={overview.syncHealth} />
             <SportLeagueIssueChips onOpenSyncRun={setOpenSyncRunId} overview={overview} />
             <Text tone="muted">
-              {providerText(overview, (id) => providerNames.get(id) ?? id)}
+              {providerText(overview)}
             </Text>
           </span>
         )}

@@ -36,7 +36,7 @@ export const enUS = {
     },
     ProviderHealthStatus: {
       HEALTHY: 'Up',
-      DEGRADED: 'Slow',
+      DEGRADED: 'Partly failing',
       DOWN: 'Down',
     },
     ProviderCode: {

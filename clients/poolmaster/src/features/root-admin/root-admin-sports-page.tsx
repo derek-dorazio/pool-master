@@ -8,7 +8,6 @@ import { sportsCountLine } from './sport-league-overview-text';
 import { SportLeagueSettingsDialog } from './sport-league-settings-dialog';
 import { SportsPageTabs } from './sports-page-tabs';
 import { SyncRunByIdDialog } from './sync-run-by-id-dialog';
-import { useProvidersQuery } from './use-providers-query';
 import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
 
 /**
@@ -19,21 +18,15 @@ import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
  */
 export function RootAdminSportsPage() {
   const overviewsQuery = useSportLeagueOverviewsQuery();
-  const providersQuery = useProvidersQuery();
   const [settingsLeagueId, setSettingsLeagueId] = useState<string | null>(null);
   const [openSyncRunId, setOpenSyncRunId] = useState<string | null>(null);
 
   const overviews = overviewsQuery.data;
-  const providers = providersQuery.data;
-  const columns = useMemo(() => {
-    const providerNames = new Map((providers ?? []).map((provider) => [provider.providerId, provider.providerName]));
-    return sportLeagueOverviewColumns({
-      nameOfProvider: (providerId) => providerNames.get(providerId) ?? providerId,
-      onOpenSettings: setSettingsLeagueId,
-      onOpenSyncRun: setOpenSyncRunId,
-      sportOrder: sportDisplayOrder((overviews ?? []).map(({ sport, sportDisplayOrder: displayOrder }) => ({ sport, displayOrder }))),
-    });
-  }, [overviews, providers]);
+  const columns = useMemo(() => sportLeagueOverviewColumns({
+    onOpenSettings: setSettingsLeagueId,
+    onOpenSyncRun: setOpenSyncRunId,
+    sportOrder: sportDisplayOrder((overviews ?? []).map(({ sport, sportDisplayOrder: displayOrder }) => ({ sport, displayOrder }))),
+  }), [overviews]);
 
   return (
     <section className="space-y-6" data-testid="root-admin-sports-page">

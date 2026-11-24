@@ -13,7 +13,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { AutoReleaseCheckOutcome, ProviderSyncFindingStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
-import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 
 export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReader {
   constructor(private readonly prisma: PrismaClient) {}
@@ -54,7 +54,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
     const leagueOfSeries = seriesLeagues(await this.prisma.eventSeries.findMany({ select: { id: true, sportLeagueId: true } }));
 
     return {
-      leagues: leagues.map(({ sport, selectedProviderMapping, ...league }) => ({ ...league, sport: sport.sport, sportUrlSegment: sport.urlSegment, sportDisplayOrder: sport.displayOrder, syncProviderId: syncProviderIdOf({ selectedProviderMapping }) })),
+      leagues: leagues.map(({ sport, selectedProviderMapping, ...league }) => ({ ...league, sport: sport.sport, sportUrlSegment: sport.urlSegment, sportDisplayOrder: sport.displayOrder, syncProviderId: syncProviderIdOf({ selectedProviderMapping }), syncProviderName: syncProviderNameOf({ selectedProviderMapping }) })),
       latestSyncRuns,
       heldEvents: heldEvents.flatMap((event) => {
         // The check constraint sets the time with the outcome.

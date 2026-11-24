@@ -104,6 +104,7 @@ export const SportEventDtoSchema = z.object({
   id: z.uuid().describe('Sport-event identifier.'),
   externalId: z.string().describe(`Provider-side event identifier used by sync operations. ${ADMIN_ONLY}`),
   providerId: z.string().describe(`Provider that emitted the event, or manual-admin for an admin-authored one. ${ADMIN_ONLY}`),
+  providerName: z.string().nullable().describe(`That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. ${ADMIN_ONLY}`),
   sport: z.enum(Sport).describe('Sport the event belongs to.'),
   sportUrlSegment: z.string().describe('The URL segment of the event\'s sport, read through its sport league: what a web address names the sport by.'),
   name: z.string().describe('Event name shown in contest and event selectors.'),

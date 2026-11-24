@@ -1,21 +1,14 @@
 import { z } from 'zod';
 import type { IngestionScheduleConfig, IngestionScheduleConfigPatch } from '@/lib/api';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { assertNever, explicitOrderValues, ProviderSyncKind, ProviderSyncKindOrder } from '@poolmaster/shared/domain';
 import { plural } from '@/lib/plural';
 
-/** The schedule's four syncs, one row each on the Providers page (#1873), in the order they run for an event. */
-export const SYNC_SCHEDULE_KEYS = ['healthCheck', 'eventList', 'eventParticipants', 'eventLiveScores'] as const;
-export type SyncScheduleKey = (typeof SYNC_SCHEDULE_KEYS)[number];
-
-/** Each sync's name in the domain's words, and the unit its interval is set in. */
-const SYNCS: Record<SyncScheduleKey, { label: string; unit: 'minutes' | 'seconds' }> = {
-  healthCheck: { label: 'Health check', unit: 'minutes' },
-  eventList: { label: 'Event list', unit: 'minutes' },
-  eventParticipants: { label: 'Field', unit: 'minutes' },
-  eventLiveScores: { label: 'Live scores', unit: 'seconds' },
-};
+/** The schedule's syncs, one row each on the Providers page (#1873), keyed by sync kind (#1999) in the order they run for an event. */
+const SYNC_SCHEDULE_KINDS = explicitOrderValues(ProviderSyncKindOrder);
 
 export type SyncScheduleRow = {
-  key: SyncScheduleKey;
+  key: ProviderSyncKind;
   sync: string;
   /** Whether it runs on its interval. Field always does, so it has no switch. */
   enabled: boolean;
@@ -41,47 +34,54 @@ export function formatInterval(seconds: number): string {
   return rest === 0 ? `${String(hours)} h` : `${String(hours)} h ${String(rest)} min`;
 }
 
-function intervalOf(key: SyncScheduleKey, config: IngestionScheduleConfig): number {
-  const policy = config[key];
-  return (SYNCS[key].unit === 'seconds' ? policy.intervalSeconds : policy.intervalMinutes) ?? 0;
+/** The unit a sync's interval is set in: seconds when the schedule holds it in seconds, else minutes. */
+function unitOf(policy: IngestionScheduleConfig[ProviderSyncKind]): 'minutes' | 'seconds' {
+  return policy.intervalSeconds === undefined ? 'minutes' : 'seconds';
+}
+
+function intervalOf(policy: IngestionScheduleConfig[ProviderSyncKind]): number {
+  return (unitOf(policy) === 'seconds' ? policy.intervalSeconds : policy.intervalMinutes) ?? 0;
 }
 
 /**
  * Whether the sync runs on its interval. The field sync runs for synced sport leagues whatever its
  * switch says (ADR 0011), so its row always shows its interval.
  */
-function runs(key: SyncScheduleKey, config: IngestionScheduleConfig): boolean {
-  return key === 'eventParticipants' || config[key].enabled;
+function runs(kind: ProviderSyncKind, config: IngestionScheduleConfig): boolean {
+  return kind === ProviderSyncKind.FIELD || config[kind].enabled;
 }
 
-function whichEvents(key: SyncScheduleKey, config: IngestionScheduleConfig): string {
-  switch (key) {
-    case 'eventParticipants':
-      return `Events starting in the next ${plural(config.eventParticipants.lookaheadDays ?? 0, 'day')}`;
-    case 'eventLiveScores':
+function whichEvents(kind: ProviderSyncKind, config: IngestionScheduleConfig): string {
+  switch (kind) {
+    case ProviderSyncKind.FIELD:
+      return `Events starting in the next ${plural(config.FIELD.lookaheadDays ?? 0, 'day')}`;
+    case ProviderSyncKind.SCORES:
       return 'Events in progress; webhooks arrive between runs';
-    case 'healthCheck':
-    case 'eventList':
+    case ProviderSyncKind.EVENTS:
       return '—';
+    default:
+      return assertNever(kind);
   }
 }
 
-/** The four rows the Sync schedules grid shows, from the one schedule every sport league follows. */
+/** One row per sync kind for the Sync schedules grid, from the one schedule every sport league follows. */
 export function syncScheduleRows(config: IngestionScheduleConfig): SyncScheduleRow[] {
-  return SYNC_SCHEDULE_KEYS.map((key) => {
-    const interval = intervalOf(key, config);
-    const seconds = SYNCS[key].unit === 'seconds' ? interval : interval * 60;
-    const on = runs(key, config);
+  return SYNC_SCHEDULE_KINDS.map((kind) => {
+    const policy = config[kind];
+    const unit = unitOf(policy);
+    const interval = intervalOf(policy);
+    const seconds = unit === 'seconds' ? interval : interval * 60;
+    const on = runs(kind, config);
     return {
-      key,
-      sync: SYNCS[key].label,
+      key: kind,
+      sync: enumLabel('ProviderSyncKind', kind),
       enabled: on,
       everySeconds: on ? seconds : null,
       every: on ? formatInterval(seconds) : 'Off',
-      whichEvents: whichEvents(key, config),
-      unit: SYNCS[key].unit,
+      whichEvents: whichEvents(kind, config),
+      unit,
       interval,
-      lookaheadDays: key === 'eventParticipants' ? config.eventParticipants.lookaheadDays ?? 0 : null,
+      lookaheadDays: policy.lookaheadDays ?? null,
     };
   });
 }
@@ -106,8 +106,8 @@ export function syncScheduleFormValues(row: SyncScheduleRow): SyncScheduleFormVa
 /** The save for one row: only that sync's switch and interval, and Field's days ahead (Field has no switch). */
 export function syncSchedulePatch(row: SyncScheduleRow, values: SyncScheduleFormValues): IngestionScheduleConfigPatch {
   const interval = Number(values.interval);
-  if (row.key === 'eventParticipants') {
-    return { eventParticipants: { intervalMinutes: interval, lookaheadDays: Number(values.lookaheadDays) } };
+  if (row.key === ProviderSyncKind.FIELD) {
+    return { FIELD: { intervalMinutes: interval, lookaheadDays: Number(values.lookaheadDays) } };
   }
   const every = row.unit === 'seconds' ? { intervalSeconds: interval } : { intervalMinutes: interval };
   return { [row.key]: { enabled: values.enabled, ...every } };

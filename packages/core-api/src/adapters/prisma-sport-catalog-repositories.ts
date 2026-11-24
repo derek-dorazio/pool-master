@@ -73,7 +73,7 @@ import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
 import { MATCH_INCLUDE, toSportEventRoundMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
-import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
+import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 import { SPORT_EVENT_SPORT_SELECT, SPORT_LEAGUE_SPORT_SELECT, sportEventSportWhere, sportOfEvent, sportUrlSegmentOfEvent } from './sport-of';
 
 type Db = PrismaClient;
@@ -1274,6 +1274,7 @@ const SPORT_EVENT_INCLUDE = {
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
   const syncProviderId = syncProviderIdOf(row.eventSeries.sportLeague);
+  const syncProviderName = syncProviderNameOf(row.eventSeries.sportLeague);
   return {
     id: row.id,
     externalId: row.externalId,
@@ -1298,6 +1299,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     participantType: row.eventSeries.sportLeague.participantType,
     scoringFamily: row.eventSeries.sportLeague.scoringFamily,
     ...(syncProviderId !== null && { syncProviderId }),
+    ...(syncProviderName !== null && { syncProviderName }),
     syncScope: row.syncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),

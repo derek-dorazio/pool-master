@@ -1,9 +1,10 @@
+import type { ProviderSyncKind } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { DataGrid, QueryState, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { SyncScheduleDialog } from './sync-schedule-dialog';
 import { syncScheduleColumns } from './sync-schedule-columns';
-import { syncScheduleRows, type SyncScheduleKey } from './sync-schedule-rows';
+import { syncScheduleRows } from './sync-schedule-rows';
 import { useSettingsGroupQuery } from './use-settings-groups';
 
 /**
@@ -13,7 +14,7 @@ import { useSettingsGroupQuery } from './use-settings-groups';
  */
 export function SyncSchedulesSection() {
   const scheduleQuery = useSettingsGroupQuery('INGESTION_SCHEDULE_CONFIG');
-  const [openKey, setOpenKey] = useState<SyncScheduleKey | null>(null);
+  const [openKey, setOpenKey] = useState<ProviderSyncKind | null>(null);
   const group = scheduleQuery.data;
   const rows = useMemo(() => (group ? syncScheduleRows(group.value) : []), [group]);
   const openRow = rows.find((row) => row.key === openKey);

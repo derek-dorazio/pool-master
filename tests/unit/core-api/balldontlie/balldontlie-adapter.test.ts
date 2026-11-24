@@ -272,31 +272,6 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
     });
   });
 
-  describe('healthCheck', () => {
-    it('is HEALTHY when a one-row free-tier read succeeds', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      const health = await harness.adapter.healthCheck();
-
-      expect(health).toMatchObject({ providerId: 'balldontlie', status: 'HEALTHY', errorRateLastHour: 0 });
-      expect(health.lastSuccessfulPoll).toBeInstanceOf(Date);
-      expect(requestLine(harness.api)).toEqual(['/pga/v2/tournaments?per_page=1&include_format=true']);
-    });
-
-    it('is DOWN with the vendor\'s reason when the key is refused', async () => {
-      const api = createFakeBalldontlie({ league: 'pga', apiKey: 'the-real-key', routes: defaultRoutes });
-      const originalFetch = global.fetch;
-      global.fetch = api.fetch;
-      restore = () => { global.fetch = originalFetch; };
-      const adapter = new BalldontlieAdapter({ connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }), apiKey: 'a-wrong-key', leagues: BALLDONTLIE_TEST_LEAGUES });
-
-      const health = await adapter.healthCheck();
-
-      expect(health).toMatchObject({ status: 'DOWN', errorRateLastHour: 1, message: 'BALLDONTLIE request /pga/v2/tournaments?per_page=1&include_format=true failed: 401 Unauthorized' });
-    });
-  });
-
   describe('payload capture', () => {
     it('keeps the raw responses of reads made inside a capture session for the sync run, and none outside', async () => {
       const harness = setup();
