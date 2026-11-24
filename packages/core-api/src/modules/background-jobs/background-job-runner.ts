@@ -5,7 +5,8 @@
  * poll catches retries, lapsed leases and jobs queued on another task.
  *
  * A handler that throws is tried again 1, 5 and 30 minutes later, then the job is FAILED with an
- * error log. A task that stops mid-job leaves it RUNNING until its lease ends, and the next claim
+ * error log. An error that asks for its job to run later, such as a provider rate limiting the
+ * call (league model slice 1c), queues it again for then without counting the try. A task that stops mid-job leaves it RUNNING until its lease ends, and the next claim
  * after that runs it again, so every handler is idempotent.
  */
 
@@ -14,7 +15,7 @@ import type { BackgroundJobRepository } from '@poolmaster/shared/db';
 import { JobErrorType, type BackgroundJob, type BackgroundJobType, type JobTrigger } from '@poolmaster/shared/domain';
 import { errorMessageWithCause } from '../../core/error-message';
 import { runWithJobStart, SYSTEM_START } from '../../core/job-start';
-import { jobErrorTypeOf } from './job-error-type';
+import { jobDeferredUntilOf, jobErrorTypeOf } from './job-error-type';
 import { outsideRequest } from '../../core/request-scope';
 import { BACKGROUND_JOB_PAYLOADS, type BackgroundJobPayload } from './background-job-payloads';
 import { DISCARD_BACKGROUND_JOB, type BackgroundJobAnswer } from './background-job-outcome';
@@ -78,7 +79,7 @@ export class PermanentBackgroundJobError extends Error {
 }
 
 export interface BackgroundJobRunnerOptions {
-  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'renewLease' | 'markRetry' | 'markFailed' | 'deleteClaimed'>;
+  jobs: Pick<BackgroundJobRepository, 'claimDue' | 'markSucceeded' | 'renewLease' | 'markRetry' | 'markDeferred' | 'markFailed' | 'deleteClaimed'>;
   handlers: BackgroundJobHandlers;
   pollMs?: number;
   concurrency?: number;
@@ -99,6 +100,22 @@ export function readBackgroundJobPollMs(env: NodeJS.ProcessEnv): number {
     throw new Error(`BACKGROUND_JOB_POLL_MS must be a whole number of milliseconds above 0; got "${raw}"`);
   }
   return pollMs;
+}
+
+/**
+ * The most core-api tasks that run the background work at once (league model slice 1c), which the
+ * environment variable BACKGROUND_JOB_MAX_TASKS sets; 1 when unset. Each task paces its provider
+ * calls to an even share of a provider's rate limit, so this must be at least the most tasks a
+ * deploy or scale-out runs together. Anything but a whole number above 0 refuses to start.
+ */
+export function readBackgroundJobMaxTasks(env: NodeJS.ProcessEnv): number {
+  const raw = env['BACKGROUND_JOB_MAX_TASKS'];
+  if (raw === undefined || raw === '') return 1;
+  const maxTasks = Number(raw);
+  if (!Number.isInteger(maxTasks) || maxTasks <= 0) {
+    throw new Error(`BACKGROUND_JOB_MAX_TASKS must be a whole number above 0; got "${raw}"`);
+  }
+  return maxTasks;
 }
 
 export class BackgroundJobRunner {
@@ -293,6 +310,18 @@ export class BackgroundJobRunner {
     const errorType = jobErrorTypeOf(err);
     const refs = { jobId: job.id, type: job.type, attempt: job.attempts, error, errorType };
     try {
+      const deferUntil = err instanceof PermanentBackgroundJobError ? null : jobDeferredUntilOf(err);
+      if (deferUntil !== null) {
+        if (!await this.options.jobs.markDeferred(job, { runAt: deferUntil, error, errorType })) {
+          this.lostClaim(job);
+          return;
+        }
+        this.options.logger?.warn({
+          action: 'backgroundJobs.deferred',
+          data: { ...refs, deferUntil: deferUntil.toISOString() },
+        }, 'Background job was turned away for now; it will run again then, and the try does not count');
+        return;
+      }
       if (job.attempts <= BACKGROUND_JOB_RETRY_DELAYS_MS.length && !(err instanceof PermanentBackgroundJobError)) {
         const retryInMs = BACKGROUND_JOB_RETRY_DELAYS_MS[job.attempts - 1];
         if (!await this.options.jobs.markRetry(job, { runAt: new Date(this.now().getTime() + retryInMs), error, errorType })) {

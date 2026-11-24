@@ -45,6 +45,7 @@ import type { ProviderSyncRunLedger } from '../persistence/provider-sync-run-led
 import type { LiveScorePersistenceResult } from './score-publisher';
 import { countLiveScoreUpdates } from './live-score-count';
 import { runWithJobStart, SCHEDULE_START } from '../../../core/job-start';
+import { jobDeferredUntilOf } from '../../background-jobs/job-error-type';
 
 export type { IngestionFeedType } from './sync-orchestrator';
 
@@ -807,6 +808,9 @@ export class IngestionScheduler {
       job.status = 'COMPLETED';
       job.completedAt = new Date();
     } catch (err) {
+      // The provider turned the call away for now (league model 1c): the caller's job is queued
+      // again for when it will answer, so the failure is thrown, not kept as this run's outcome.
+      if (jobDeferredUntilOf(err) !== null) throw err;
       job.providerPayload = buildProviderPayload(feed, provider, payloadCaptureSession);
       const failure = toIngestionFailureLog(err);
       this.logger?.error({

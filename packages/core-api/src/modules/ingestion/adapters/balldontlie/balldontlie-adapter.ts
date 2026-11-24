@@ -87,6 +87,7 @@ import { NflReader } from './nfl-reader';
 import { CFP_LEAGUE, parseCfpScope } from './ncaaf-mapping';
 import { NcaafReader } from './ncaaf-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, BalldontlieRequestError, type BalldontlieQuery } from './balldontlie-client';
+import { jobDeferredUntilOf } from '../../../background-jobs/job-error-type';
 import {
   PgaCompetitorType,
   pgaPlayerListSchema,
@@ -111,6 +112,8 @@ export interface BalldontlieAdapterOptions {
   baseUrl: string;
   apiKey: string;
   requestsPerMinute: number;
+  /** The most tasks that run background work at once, each taking an even share of the limit; 1 when unset. */
+  maxTasks?: number;
   /** For tests: the client's clock and wait. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
@@ -178,7 +181,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly logger: FastifyBaseLogger | undefined;
 
   constructor(options: BalldontlieAdapterOptions) {
-    this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
+    this.client = new BalldontlieClient({ ...options, providerId: this.providerId, payloads: this.payloads });
     this.requestsPerMinute = options.requestsPerMinute;
     this.logger = options.logger;
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
@@ -256,12 +259,17 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
    * Each of a sport's leagues read on its own, their lists together. A league whose read is
    * refused or fails is left out and logged (`balldontlie.league.unavailable`), so one league's
    * plan or outage never empties its neighbours' lists; when every league fails, the first
-   * failure is thrown, as a one-league sport's always is.
+   * failure is thrown, as a one-league sport's always is. A league the provider rate limits is
+   * never left out: its refusal is thrown, so the job is deferred rather than syncing a partial list.
    */
   private async eachLeague<Item>(sport: Sport, leagues: readonly LeagueReads[], what: 'events' | 'participants', read: (league: LeagueReads) => Promise<Item[]>): Promise<Item[]> {
     const results = await Promise.allSettled(leagues.map(read));
     const failures = results.flatMap((result, index) => (result.status === 'rejected' ? [{ league: leagues[index], reason: result.reason as unknown }] : []));
     if (failures.length > 0 && failures.length === results.length) throw failures[0].reason;
+    // A rate-limited league is not missing from the feed: leaving it out would sync a partial list
+    // as if it were whole. Its refusal ends the read, and the job runs again when the provider answers.
+    const rateLimited = failures.find(({ reason }) => jobDeferredUntilOf(reason) !== null);
+    if (rateLimited) throw rateLimited.reason;
     for (const { league, reason } of failures) {
       this.logger?.warn(
         {

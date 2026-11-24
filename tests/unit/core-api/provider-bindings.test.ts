@@ -303,7 +303,7 @@ describe('provider bindings', () => {
 
     it('fails startup on a rate limit that is not a whole number of at least one', () => {
       expect(() => registerConfiguredProviders(new ProviderRegistry(), bdlEnv({ ...fullBinding, requestsPerMinute: 0 }, 'a-key')))
-        .toThrow('BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not 0.');
+        .toThrow('balldontlie requestsPerMinute must be a whole number of at least 1, not 0.');
     });
 
     it('registers BALLDONTLIE beside the mock when both are bound, the default as golf\'s primary and the other as a secondary', () => {

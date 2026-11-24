@@ -13,6 +13,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { stubInstance } from '../../support/stub-instance';
+import { ProviderRateLimitedError } from '../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 
 type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'participantMappings' | 'syncRuns' | 'jobs' | 'sportLeagues' | 'webhookProviderIds' | 'jobHistory'>;
@@ -157,6 +158,55 @@ describe('IngestionService manual sync submission', () => {
       feeds: ['EVENTLIVESCORES'],
       mockEventState: 'live',
     });
+  });
+
+  it('ends a manual sync\'s try when the provider rate limits a feed, and runs the feeds still waiting when the job is queued again, without counting the try', async () => {
+    const syncRuns = inMemorySyncRuns();
+    const completed = {
+      jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'mock-contest-feed', sport: Sport.GOLF, eventExternalId: 'open-2026',
+      status: 'COMPLETED', recordsProcessed: 1, errors: 0, errorLog: [], warnings: [], stats: {},
+    };
+    // Already due again, so the one drain runs the deferred try too.
+    const refusal = new ProviderRateLimitedError('mock-contest-feed', new Date(Date.now() - 1_000), 'its circuit is open');
+    const scheduler = stubInstance(IngestionScheduler, {
+      runEventSync: jest.fn().mockRejectedValueOnce(refusal).mockResolvedValue([completed]),
+    });
+    const service = new IngestionService({
+      ...ports({ syncRuns }),
+      registry: registryWith(fakeSportDataProvider({ providerId: 'mock-contest-feed', sportsCovered: [Sport.GOLF] })),
+      scheduler,
+      logger: fakeLogger(),
+      ingestionConfigReader: {
+        getConfig: jest.fn().mockResolvedValue({
+          scheduledSports: [Sport.GOLF],
+          healthCheck: { enabled: true, intervalMinutes: 5 },
+          eventParticipants: { enabled: true, intervalMinutes: 360, lookaheadDays: 14 },
+          eventLiveScores: { enabled: true, intervalSeconds: 30 },
+          eventList: { enabled: true, intervalMinutes: 360 },
+        }),
+      },
+      syncOrchestrator: new SyncOrchestrator({ now: () => new Date() }),
+    });
+    await service.syncEventData({
+      sport: Sport.GOLF,
+      providerId: 'mock-contest-feed',
+      eventId: 'open-2026',
+      feeds: ['EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
+    }, 'admin-1', 'admin@example.com');
+
+    const runner = new BackgroundJobRunner({
+      jobs: syncRuns.jobs,
+      handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload, context) => service.runManualEventSync(payload, context) }),
+    });
+    await runner.drain();
+
+    expect(scheduler.runEventSync).toHaveBeenCalledTimes(2);
+    expect(scheduler.runEventSync).toHaveBeenLastCalledWith(expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
+    expect(syncRuns.rows.map((run) => [run.payload['requestedFeed'], run.status])).toEqual([
+      ['EVENTLIVESCORES', 'FAILED'],
+      ['EVENTPARTICIPANTS', 'COMPLETED'],
+    ]);
+    expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ status: 'SUCCEEDED', attempts: 1 })]);
   });
 
   describe('pool-master-cgb: manual sync-trigger syncScope guard', () => {
