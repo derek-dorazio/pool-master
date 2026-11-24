@@ -2368,11 +2368,11 @@ export const listEventPages = <ThrowOnError extends boolean = false>(options?: O
 /**
  * Get an event page
  *
- * One event page by its sport and slug, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.
+ * One event page by its address, the sport's URL segment then the page's, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.
  */
 export const getEventPage = <ThrowOnError extends boolean = false>(options: Options<GetEventPageData, ThrowOnError>): RequestResult<GetEventPageResponses, GetEventPageErrors, ThrowOnError> => (options.client ?? client).get<GetEventPageResponses, GetEventPageErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/v1/event-pages/{sport}/{pageSlug}',
+    url: '/api/v1/event-pages/{sportUrlSegment}/{urlSegment}',
     ...options
 });
 

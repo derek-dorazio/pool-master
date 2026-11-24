@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CreateSportEventRequest } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventCreatePage } from './root-admin-sport-event-create-page';
-import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { sportEventFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // plans/124 §6.3 / §4.4a — /manage/sports/golf/events/new (pool-master-3dg). plans/147: a
 // tournament is created on a tour, in an event year, where it used to be created in a season.
@@ -56,9 +56,9 @@ function renderPage(
   tours = [sportLeagueFixture({ id: 'league-1' }), sportLeagueFixture({ id: 'league-2', name: 'LPGA Tour' })],
 ) {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: tours } });
-  const queryClient = new QueryClient({
+  const queryClient = sportsQueryClient(new QueryClient({
     defaultOptions: { queries: { retry: false } },
-  });
+  }));
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[entry]}>

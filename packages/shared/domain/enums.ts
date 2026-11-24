@@ -28,20 +28,10 @@ export const Sport = {
   TENNIS: 'TENNIS',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
-/** The most popular first, the ancillary sports (cycling, running) last, wherever sports are listed, grids included. */
-export const SportOrder = explicitOrder<Sport>({
-  [Sport.AMERICAN_FOOTBALL]: 0,
-  [Sport.BASKETBALL]: 1,
-  [Sport.BASEBALL]: 2,
-  [Sport.HOCKEY]: 3,
-  [Sport.SOCCER]: 4,
-  [Sport.GOLF]: 5,
-  [Sport.AUTO_RACING]: 6,
-  [Sport.TENNIS]: 7,
-  [Sport.HORSE_RACING]: 8,
-  [Sport.CYCLING]: 9,
-  [Sport.RUNNING]: 10,
-});
+/**
+ * No order here: each sport's row carries its display order (`Sport.displayOrder`, #2042), and
+ * every list of sports sorts by it as the API returns it.
+ */
 
 export const ParticipantType = {
   INDIVIDUAL: 'INDIVIDUAL',

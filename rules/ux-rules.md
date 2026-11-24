@@ -531,8 +531,9 @@ administration area (root admin included), reusing the same shared components.
     is no create or copy-from in the UI. An open card
     offers Create contest to a signed-in viewer who runs an active league, on
     the shown league's default (with every sport shown, the most popular sport's
-    first league's), asking which league when they run several (#1104). Sports run most popular first
-    (`SPORTS_BY_POPULARITY`, cycling and running last), and each sport's leagues
+    first league's), asking which league when they run several (#1104). Sports run in the sport
+    row's `displayOrder` (`SportDto.displayOrder`, carried on each sport league as
+    `sportDisplayOrder`: the major team sports first, cycling and running last), and each sport's leagues
     by their `displayOrder`: major professional leagues first, then the NCAA's.
     A league whose name alone doesn't say the sport ("NCAA Division I Men") gets
     a `displayName` with its reference data, and every seeded league gets a
@@ -641,7 +642,7 @@ administration area (root admin included), reusing the same shared components.
 
 ## 13. Event Pages
 
-An event page (`/play/<sport>/<slug>`) is the public page for one event a fan would name
+An event page (`/play/<sport URL segment>/<page URL segment>`) is the public page for one event a fan would name
 (Championship Weekend, the Super Bowl), whatever sport leagues and series run it. It is the
 landing page that ads, emails and shared links point at.
 
@@ -658,8 +659,8 @@ Play until the Clutch Card returns as a contest type (#2054).
    page's words never claim an offer is open.
 3. **Words live in the web app.** A page's name, eyebrow, hook line, when picks close, the
    league named in its "not affiliated" footer, and each offer's card (contest type, one line,
-   two facts, when it opens) are in `EVENT_PAGE_COPY`, keyed by sport and the page's stored
-   slug. A page without copy still renders, its name from the slug, its hook from its sport's
+   two facts, when it opens) are in `EVENT_PAGE_COPY`, keyed by the sport's and the page's stored
+   URL segments. A page without copy still renders, its name from its URL segment, its hook from its sport's
    How to Play line and each card from the selection type's name and the template's
    description, but a page ships with copy.
 4. **Real names on our pages, generic names in ads.** Our pages name the real event. Copy
@@ -674,7 +675,7 @@ Play until the Clutch Card returns as a contest type (#2054).
    image, the same file the email about its events uses (`sportHeaderImagePath`), so one photo
    per sport serves both and a new sport's photo arrives with its email header. No other
    in-app page carries these photos: setup and league pages stay compact.
-7. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
+7. **Addresses are forever.** A sport's or a page's URL segment is never changed or reused, because it lives in emails,
    ads and other people's chats. A page that ends is made inactive, and may redirect to the
    page that replaces it.
 

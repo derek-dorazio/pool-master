@@ -23,6 +23,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The roster contest leaderboard's reads against real Postgres (#1162): however many events the
 // contest has, its entries come from one query and its picks from one more, and only the picks
@@ -48,7 +49,7 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -56,7 +57,6 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
       ...(await freshEventEdition(prisma)),
       externalId: `leaderboard-reads-${randomUUID()}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
       name: `${label} ${randomUUID().slice(0, 6)}`,
       startDate: new Date(Date.now() - daysAgo * DAY),
       endDate: new Date(Date.now() - daysAgo * DAY + 3 * DAY),
@@ -156,11 +156,9 @@ async function fourMajors(status: ContestStatus, lastSettled: boolean) {
     });
     entries.push(entry);
     await prisma.contestEntryPick.createMany({
-      data: majors.flatMap(({ field }) => field.map((row, index) => ({
+      data: majors.flatMap(({ field }) => field.map((row) => ({
         entryId: entry.id,
         sportEventParticipantId: row.id,
-        contestFormat: 'ROSTER' as const,
-        slot: index + 1,
         pickedAt: new Date(),
       }))),
     });
@@ -243,8 +241,8 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
       },
     });
     await prisma.contestEntryPick.createMany({
-      data: picks.flatMap(({ fieldRowIds }) => fieldRowIds.map((sportEventParticipantId, index) => ({
-        entryId: entry.id, sportEventParticipantId, contestFormat: 'ROSTER' as const, slot: index + 1, pickedAt: new Date(),
+      data: picks.flatMap(({ fieldRowIds }) => fieldRowIds.map((sportEventParticipantId) => ({
+        entryId: entry.id, sportEventParticipantId, pickedAt: new Date(),
       }))),
     });
     return entry;
@@ -480,10 +478,10 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     for (const table of ['contest_entries', 'contest_entry_picks', 'sport_event_participants', 'contest_configurations']) {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
-    // The contest (6), the reader's squad membership (1; the league membership is kept by the
+    // The contest (9: its sport is read through its events' series and league since #2042), the reader's squad membership (1; the league membership is kept by the
     // task since the first read, #1438), and the snapshot (1): pinned, however many entries,
     // picks and golfers.
-    expect(statements).toHaveLength(8);
+    expect(statements).toHaveLength(11);
   });
 
   it('rebuilds a stored board from the new scores after a score write, moving its version up, and builds none for a contest no one has read', async () => {

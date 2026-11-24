@@ -7,7 +7,8 @@ import { expectMatchesSchema } from '../../support/expect-matches-schema';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { BALLDONTLIE_WEBHOOK_PAYLOADS as PAYLOADS, signedBalldontlieDelivery } from '../../support/balldontlie-webhooks';
 import { cleanupTestData, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // BALLDONTLIE's webhook notifications reach POST /api/v1/provider-webhooks/balldontlie (#1498),
 // signed with the endpoint secret. A verified notification about a linked, in-progress event
@@ -39,17 +40,16 @@ async function linkedEvent(input: {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: input.sport },
-    create: { sport: input.sport, participantType: input.sport === Sport.GOLF ? 'INDIVIDUAL' : 'TEAM', tournamentFormat: input.sport === Sport.GOLF ? 'STROKE_PLAY_TOURNAMENT' : 'MATCHES' },
+    create: { sport: input.sport, ...sportRowKeys(input.sport), participantType: input.sport === Sport.GOLF ? 'INDIVIDUAL' : 'TEAM', tournamentFormat: input.sport === Sport.GOLF ? 'STROKE_PLAY_TOURNAMENT' : 'MATCHES' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `League ${randomUUID()}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `League ${randomUUID()}` } });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Series ${randomUUID()}` } });
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
     eventYear: 2026,
     externalId: input.externalId,
     providerId: PROVIDER,
-    sport: input.sport,
     name: input.externalId,
     startDate: input.startDate ?? new Date('2026-11-12T18:00:00.000Z'),
     status: input.status ?? SportEventStatus.IN_PROGRESS,

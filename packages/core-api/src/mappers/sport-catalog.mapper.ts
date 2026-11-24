@@ -32,6 +32,8 @@ export function mapSportToDto(sport: SportConfig): SportDto {
   return {
     id: sport.id,
     sport: sport.sport,
+    urlSegment: sport.urlSegment,
+    displayOrder: sport.displayOrder,
     participantType: sport.participantType,
     tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
@@ -44,7 +46,10 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     id: sportLeague.id,
     sportId: sportLeague.sportId,
     sport: sportLeague.sport,
+    sportUrlSegment: sportLeague.sportUrlSegment,
+    sportDisplayOrder: sportLeague.sportDisplayOrder,
     name: sportLeague.name,
+    urlSegment: sportLeague.urlSegment,
     currentEventYear: sportLeague.currentEventYear,
     isActive: sportLeague.isActive,
     selectedProviderMapping: sportLeague.selectedProviderMapping === null ? null : { ...sportLeague.selectedProviderMapping },
@@ -76,6 +81,8 @@ export function mapSportLeagueOverviewToDto(overview: SportLeagueOverview): Spor
   return {
     id: overview.id,
     sport: overview.sport,
+    sportUrlSegment: overview.sportUrlSegment,
+    sportDisplayOrder: overview.sportDisplayOrder,
     name: overview.name,
     providerId: overview.providerId,
     isActive: overview.isActive,
@@ -140,7 +147,7 @@ export function mapSportEventOverviewToDto(overview: SportEventOverview): SportE
       feedId: row.feedId,
       lastInFeedAt: row.lastInFeedAt?.toISOString() ?? null,
     })),
-    eventPageSlug: overview.eventPageSlug,
+    eventPagePath: overview.eventPagePath,
   };
 }
 

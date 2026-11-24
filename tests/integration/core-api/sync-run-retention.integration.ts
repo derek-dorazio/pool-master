@@ -4,7 +4,7 @@
  */
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { Prisma } from '@prisma/client';
-import { ProviderCode, ProviderSyncRunStatus, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { PrismaProviderSyncRunRepository } from '../../../packages/core-api/src/adapters';
 import {
   SyncRunDetailsRetention,
@@ -32,7 +32,6 @@ async function seedRun(label: string, createdAt: Date, details: object | null = 
   const run = await repo.create({
     ...SCHEDULED_SCORES_RUN,
     providerCode: ProviderCode.BALLDONTLIE,
-    sport: Sport.GOLF,
     status: ProviderSyncRunStatus.COMPLETED,
     startedAt: null,
     completedAt: null,

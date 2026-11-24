@@ -1,4 +1,4 @@
-import { sportVocabulary } from '@poolmaster/shared/domain';
+import { isUrlSegment, sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -17,6 +17,7 @@ import { upperFirst } from '@/lib/upper-first';
 
 const newTourSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
+  urlSegment: z.string().trim().refine(isUrlSegment, 'Use small letters, digits and single hyphens, like pga-tour'),
   platformTierProfileId: z.string().min(1, 'Choose a tier profile'),
   platformPricingProfileId: z.string().min(1, 'Choose a pricing profile'),
 });
@@ -41,7 +42,7 @@ export function RootAdminSportLeagueCreatePage() {
 
   const form = useForm<NewTourValues>({
     resolver: zodResolver(newTourSchema),
-    defaultValues: { name: '', platformTierProfileId: '', platformPricingProfileId: '' },
+    defaultValues: { name: '', urlSegment: '', platformTierProfileId: '', platformPricingProfileId: '' },
     mode: 'onChange',
   });
 
@@ -51,6 +52,7 @@ export function RootAdminSportLeagueCreatePage() {
         body: {
           sport,
           name: values.name,
+          urlSegment: values.urlSegment,
           platformTierProfileId: values.platformTierProfileId,
           platformPricingProfileId: values.platformPricingProfileId,
         },
@@ -85,6 +87,16 @@ export function RootAdminSportLeagueCreatePage() {
         <Input
           data-testid="root-admin-sport-league-list-new-name"
           {...form.register('name')}
+        />
+      </FormField>
+      <FormField
+        error={form.formState.errors.urlSegment?.message}
+        helperText="What its web addresses call it, such as pga-tour. It never changes once set."
+        label="URL segment"
+      >
+        <Input
+          data-testid="root-admin-sport-league-list-new-url-segment"
+          {...form.register('urlSegment')}
         />
       </FormField>
       <FormField

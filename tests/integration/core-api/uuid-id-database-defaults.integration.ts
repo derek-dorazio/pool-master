@@ -34,7 +34,8 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 
 /** Every row this suite creates carries this prefix in its natural key, so cleanup is exact. */
 const NAME_PREFIX = 'UUIDDEFAULT';
@@ -49,7 +50,7 @@ async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: 'GOLF' },
     update: {},
-    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
   });
   return sport.id;
 }
@@ -74,11 +75,12 @@ describe('#340 database-generated uuid ids', () => {
 
     // No "id" column. Before #340 this failed on the NOT NULL constraint, which is why
     // reference-data migrations had to supply gen_random_uuid() themselves.
-    const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
+    const { platformTierProfileId, platformPricingProfileId, urlSegment } = await sportLeagueRowDefaults(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at") VALUES ($1::uuid, $2, $3::uuid, $4::uuid, NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "url_segment", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at") VALUES ($1::uuid, $2, $3, $4::uuid, $5::uuid, NOW())`,
       sportId,
       name,
+      urlSegment,
       platformTierProfileId,
       platformPricingProfileId,
     );
@@ -96,7 +98,7 @@ describe('#340 database-generated uuid ids', () => {
 
     // The claim #340 makes about write paths: `dbgenerated` does not take the id away from
     // the caller. Every repository in this codebase that supplies one keeps working.
-    const created = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), id: chosenId, sportId, name } });
+    const created = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), id: chosenId, sportId, name } });
 
     expect(created.id).toBe(chosenId);
     const reread = await prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } } });
@@ -107,7 +109,7 @@ describe('#340 database-generated uuid ids', () => {
     const prisma = getPrisma();
     const sportId = await golfSportId();
 
-    const created = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: uniqueName() } });
+    const created = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId, name: uniqueName() } });
 
     expect(created.id).toMatch(UUID_PATTERN);
   });
@@ -118,15 +120,17 @@ describe('#340 database-generated uuid ids', () => {
     const first = uniqueName();
     const second = uniqueName();
 
-    const { platformTierProfileId, platformPricingProfileId } = await leagueProfiles(prisma);
+    const { platformTierProfileId, platformPricingProfileId } = await sportLeagueRowDefaults(prisma);
     await prisma.$executeRawUnsafe(
-      `INSERT INTO "sport_leagues" ("sport_id", "name", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at")
-       VALUES ($1::uuid, $2, $4::uuid, $5::uuid, NOW()), ($1::uuid, $3, $4::uuid, $5::uuid, NOW())`,
+      `INSERT INTO "sport_leagues" ("sport_id", "name", "url_segment", "platform_tier_profile_id", "platform_pricing_profile_id", "updated_at")
+       VALUES ($1::uuid, $2, $6, $4::uuid, $5::uuid, NOW()), ($1::uuid, $3, $7, $4::uuid, $5::uuid, NOW())`,
       sportId,
       first,
       second,
       platformTierProfileId,
       platformPricingProfileId,
+      `test-${randomUUID()}`,
+      `test-${randomUUID()}`,
     );
 
     const rows = await prisma.sportLeague.findMany({
@@ -148,7 +152,7 @@ describe('#340 sport_leagues bounded text columns', () => {
 
     // The declared bound is the one the database has always had. 255 must still fit.
     const created = await prisma.sportLeague.create({
-      data: { ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(255) },
+      data: { ...(await sportLeagueRowDefaults(prisma)), sportId, name: nameOfLength(255) },
     });
 
     expect(created.name).toHaveLength(255);
@@ -161,7 +165,7 @@ describe('#340 sport_leagues bounded text columns', () => {
     // Before #340 the schema declared unbounded `String` for a column the database bounded at
     // 255. The schema was the artifact that was wrong, and this is the behavior it misdescribed.
     await expect(
-      prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: nameOfLength(256) } }),
+      prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId, name: nameOfLength(256) } }),
     ).rejects.toThrow();
   });
 });

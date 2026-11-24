@@ -12,7 +12,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { holdContestLocks, waitUntilBlockedBy } from '../contest-lock';
-import { ParticipantType, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType, SelectionType } from '@poolmaster/shared/domain';
 import {
   ContestDrawAlreadyRunError,
   ContestDrawEntriesChangedError,
@@ -25,6 +25,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -65,7 +66,7 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
 
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
@@ -73,7 +74,6 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
       ...(await freshEventEdition(prisma)),
       externalId: `draw-${suffix}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
       name: `Draw Event ${suffix}`,
       startDate: new Date('2030-01-01T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -145,12 +145,12 @@ describe('ContestEntryPickService.recordDraw', () => {
       where: { entry: { contestId: fixture.contestId } },
       orderBy: { pickSequence: 'asc' },
     });
-    expect(picks.map((pick) => [pick.entryId, pick.sportEventParticipantId, pick.lineupSlot, pick.pickSequence, pick.contestFormat, pick.isAutoPicked]))
+    expect(picks.map((pick) => [pick.entryId, pick.sportEventParticipantId, pick.lineupSlot, pick.pickSequence, pick.isAutoPicked]))
       .toEqual([
-        [second, draw.fieldOrder[0], 1, 1, 'ROSTER', true],
-        [first, draw.fieldOrder[1], 1, 2, 'ROSTER', true],
-        [second, draw.fieldOrder[2], 2, 3, 'ROSTER', true],
-        [first, draw.fieldOrder[3], 2, 4, 'ROSTER', true],
+        [second, draw.fieldOrder[0], 1, 1, true],
+        [first, draw.fieldOrder[1], 1, 2, true],
+        [second, draw.fieldOrder[2], 2, 3, true],
+        [first, draw.fieldOrder[3], 2, 4, true],
       ]);
     const entries = await prisma.contestEntryEvent.findMany({ where: { contestEntry: { contestId: fixture.contestId } } });
     expect(entries.map((entry) => entry.status)).toEqual(['SUBMITTED', 'SUBMITTED']);
@@ -364,7 +364,6 @@ describe('quick pick receipts, queued by the draw for the lifecycle sweep (#1171
         ...(await freshEventEdition(prisma)),
         externalId: `draw-later-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: 'Draw Later Event',
         startDate: new Date('2031-01-01T12:00:00.000Z'),
         status: 'SCHEDULED',

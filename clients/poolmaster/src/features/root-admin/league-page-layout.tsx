@@ -32,13 +32,13 @@ export function LeaguePageLayout() {
 }
 
 function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
-  const { sport } = useManagedSport();
+  const { sport, sportUrlSegment } = useManagedSport();
   const { pathname } = useLocation();
   const overviewsQuery = useSportLeagueOverviewsQuery();
   const providersQuery = useProvidersQuery();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openSyncRunId, setOpenSyncRunId] = useState<string | null>(null);
-  const basePath = buildSportLeaguePath(sport, sportLeague.id);
+  const basePath = buildSportLeaguePath(sportUrlSegment, sportLeague.id);
   const openSegment = pathname.slice(basePath.length + 1).split('/')[0];
   // Held here, not in the Activity tab, so the jobs read stay with the page and its tab keeps its
   // count; it re-reads only while the tab is open.

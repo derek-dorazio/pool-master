@@ -35,12 +35,15 @@ import { ScoringFamily } from '../domain/sports/scoring-family';
 import { AUTO_RELEASE_DAYS_MAX, ReleaseCheckKey } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
 import { FieldOrderBasis } from '../domain/field-ordering';
+import { URL_SEGMENT_PATTERN } from '../domain/url-segment';
 
 // --- Sport ---------------------------------------------------------------------
 
 export const SportDtoSchema = z.object({
   id: z.uuid().describe('Sport identifier — what Participant.sportId and SportLeague.sportId point at.'),
   sport: z.enum(Sport).describe('The sport.'),
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport\'s name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given.'),
+  displayOrder: z.number().int().describe('Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.'),
   participantType: z.enum(ParticipantType).describe('Whether the sport\'s competitors are individuals or teams.'),
   tournamentFormat: z.enum(TournamentFormat).describe('Structural format of the sport\'s events; decides which contest formats are valid.'),
   createdAt: DateTimeSchema,
@@ -49,7 +52,7 @@ export const SportDtoSchema = z.object({
 export type SportDto = z.infer<typeof SportDtoSchema>;
 
 export const SportListResponseSchema = z.object({
-  sports: z.array(SportDtoSchema).describe('Every sport, ordered by sport.'),
+  sports: z.array(SportDtoSchema).describe('Every sport, in display order.'),
 }).describe('The sports.');
 export type SportListResponse = z.infer<typeof SportListResponseSchema>;
 
@@ -73,7 +76,10 @@ export const SportLeagueDtoSchema = z.object({
   id: z.uuid().describe('Sport league identifier.'),
   sportId: z.uuid().describe('The sport this sport league belongs to.'),
   sport: z.enum(Sport).describe('The sport this sport league belongs to, as the sport enum.'),
+  sportUrlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('Its sport\'s URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.'),
+  sportDisplayOrder: z.number().int().describe('Its sport\'s display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.'),
   name: z.string().describe('Sport league name, e.g. "PGA Tour".'),
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport league\'s name in web addresses within its sport, such as wnba (How to Play\'s ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.'),
   currentEventYear: z.number().int().nullable().describe('The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.'),
   isActive: z.boolean().describe('Whether the sport league is in use; a read filter, not a write lock.'),
   selectedProviderMapping: SportLeagueProviderMappingDtoSchema.nullable().describe('The provider league whose sync creates and keeps the sport league\'s events (ADR 0011): a scheduled pass imports that provider league\'s events for this calendar year and the next, each born DRAFT and linked for scores, skipping events already linked and series that already have that year\'s edition. null when the league is not synced.'),
@@ -116,6 +122,7 @@ export type SportLeagueResponse = z.infer<typeof SportLeagueResponseSchema>;
 export const CreateSportLeagueRequestSchema = z.object({
   sport: z.enum(Sport).describe('The sport the new sport league belongs to.'),
   name: z.string().min(1).describe('Unique within the sport.'),
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).max(100).describe('The sport league\'s name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are.'),
   bracketAdvancement: z.enum(BracketAdvancement).optional().describe('FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.'),
   platformTierProfileId: z.uuid().describe('The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.'),
   platformPricingProfileId: z.uuid().describe('The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.'),
@@ -233,6 +240,8 @@ export type SportLeagueIssueDto = z.infer<typeof SportLeagueIssueDtoSchema>;
 export const SportLeagueOverviewDtoSchema = z.object({
   id: z.uuid(),
   sport: z.enum(Sport),
+  sportUrlSegment: z.string().describe('Its sport\'s URL segment (SportDto.urlSegment): what a link to the league\'s Manage page names the sport by.'),
+  sportDisplayOrder: z.number().int().describe('Its sport\'s place wherever sports are listed together, lower first (the sport row\'s displayOrder): sort the sport column by it.'),
   name: z.string(),
   providerId: z.string().nullable().describe('The provider that syncs its events. Null when none does.'),
   isActive: z.boolean().describe('On: offered to customers and synced. Off: hidden and not synced.'),
@@ -340,7 +349,7 @@ export const SportEventOverviewDtoSchema = z.object({
   tierOrderBasis: z.enum(FieldOrderBasis).nullable().describe('The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.'),
   tierOrderCoversField: z.boolean().describe('False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.'),
   fieldFeed: z.array(SportEventFieldFeedRowDtoSchema).describe('One per field row, active or withdrawn, never paged.'),
-  eventPageSlug: z.string().nullable().describe('The slug of the active event page offering the event\'s series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.'),
+  eventPagePath: z.string().nullable().describe('The web address of the active event page offering the event\'s series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.'),
 }).describe('The root admin\'s Event page header and sync rows.');
 export type SportEventOverviewDto = z.infer<typeof SportEventOverviewDtoSchema>;
 

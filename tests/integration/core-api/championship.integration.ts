@@ -39,7 +39,6 @@ async function seedLeague() {
           ...edition,
           externalId: `champ-${randomUUID()}`,
           providerId: 'integration-test',
-          sport: 'GOLF',
           name: `${name} ${index} ${suffix}`,
           startDate: new Date('2026-04-09T12:00:00.000Z'),
         },

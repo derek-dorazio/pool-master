@@ -6,7 +6,6 @@ import {
   SportEventStatusOrder,
   SportLeagueIssueTypeOrder,
   type SportLeagueIssueType,
-  type Sport,
 } from '@poolmaster/shared/domain';
 import { StatusBadge, Text } from '@/features/shared/ui';
 import type { SportLeagueEventOverviewDto } from '@/lib/api';
@@ -37,11 +36,12 @@ export function defaultEventYear(
 export function leagueEventColumns({
   initialYear,
   onOpenSyncRun,
-  sport,
+  sportUrlSegment,
 }: {
   initialYear: number | null;
   onOpenSyncRun: (syncRunId: string) => void;
-  sport: Sport;
+  /** The league's sport's URL segment, which an issue's link to an event names. */
+  sportUrlSegment: string;
 }) {
   return [
     columnHelper.accessor('name', {
@@ -102,7 +102,7 @@ export function leagueEventColumns({
         },
       },
       enableSorting: false,
-      cell: ({ row }) => <SportLeagueIssueChips onOpenSyncRun={onOpenSyncRun} overview={{ ...row.original, sport }} />,
+      cell: ({ row }) => <SportLeagueIssueChips onOpenSyncRun={onOpenSyncRun} overview={{ ...row.original, sportUrlSegment }} />,
     }),
     columnHelper.accessor('lastSyncedAt', {
       header: 'Last synced',

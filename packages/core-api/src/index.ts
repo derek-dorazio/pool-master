@@ -79,7 +79,6 @@ import {
   PrismaSportEventRoundRepository,
   PrismaBackgroundJobRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
   PrismaSquaresRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
@@ -371,7 +370,6 @@ export function buildApp(options: BuildAppOptions = {}) {
   // A sport league's events sync (#1819): the schedule and an admin's Sync now queue the same job.
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
     scoreSource: new EventScoreSourceService(prisma, registry, app.log),
     sportEvents: sportEventServices.sportEvents,
     syncRuns: providerSyncRuns,

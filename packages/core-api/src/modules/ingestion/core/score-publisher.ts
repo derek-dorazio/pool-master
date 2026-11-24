@@ -98,7 +98,7 @@ export async function publishLiveScoreUpdate(
   // to one event, then dispatch to the per-category persistence path.
   const sportEvent = await deps.prisma.sportEvent.findUnique({
     where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
-    select: { id: true, sport: true, rounds: true, status: true, eventSeries: { select: { sportLeague: { select: { id: true, scoringFamily: true, roundSeriesLengths: true } } } } },
+    select: { id: true, rounds: true, status: true, eventSeries: { select: { sportLeague: { select: { id: true, scoringFamily: true, roundSeriesLengths: true, sport: { select: { sport: true } } } } } } },
   });
   if (!sportEvent) {
     deps.logger?.warn(
@@ -138,7 +138,7 @@ export async function publishLiveScoreUpdate(
   // The event's scoring family writes the batch into its own result rows (#606), and only a
   // batch of the one category it accepts: a family entered by an admin accepts none.
   const writer = deps.scoringFamilyForEvent({
-    sport: sportEvent.sport,
+    sport: sportEvent.eventSeries.sportLeague.sport.sport,
     scoringFamily: sportEvent.eventSeries.sportLeague.scoringFamily ?? undefined,
   }).liveScores;
   const acceptedCategory = writer?.category ?? null;
@@ -156,7 +156,7 @@ export async function publishLiveScoreUpdate(
           providerId: deps.providerId,
           externalEventId: validated.externalEventId,
           sportEventId: sportEvent.id,
-          sport: sportEvent.sport,
+          sport: sportEvent.eventSeries.sportLeague.sport.sport,
           category: validated.category,
           acceptedCategory,
         },

@@ -140,7 +140,7 @@ function eventOverview(overrides: Partial<SportEventOverviewDto> = {}): SportEve
     tierOrderBasis: 'ODDS',
     tierOrderCoversField: true,
     fieldFeed: [],
-    eventPageSlug: null,
+    eventPagePath: null,
     ...overrides,
   };
 }
@@ -149,6 +149,8 @@ function leagueOverview(overrides: Partial<SportLeagueOverviewDto> = {}): SportL
   return {
     id: 'league-1',
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
+    sportDisplayOrder: 5,
     name: 'PGA Tour',
     providerId: null,
     isActive: true,
@@ -630,7 +632,7 @@ describe('Event page ⚙ dialog', () => {
   });
 
   it('offers Open event page › to the event page that offers its series, and no such action when none does', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { overview: eventOverview({ eventPageSlug: 'the-masters' }) });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { overview: eventOverview({ eventPagePath: '/play/golf/the-masters' }) });
 
     const dialog = await openSettings();
     expect(await within(dialog).findByTestId('root-admin-event-settings-dialog-open-event-page')).toHaveAttribute('href', '/play/golf/the-masters');

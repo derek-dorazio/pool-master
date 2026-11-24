@@ -125,7 +125,7 @@ Only flows that never write:
 
 | Area | Routes or work | Notes |
 |---|---|---|
-| Marketing and catalog | `GET /event-pages`, `/event-pages/:sport/:pageSlug`, `/sports`, `/sport-leagues` (list, detail, affiliations), `/contest-config-templates`, `/plans` | Changed only by root admins and migrations. |
+| Marketing and catalog | `GET /event-pages`, `/event-pages/:sportUrlSegment/:urlSegment`, `/sports`, `/sport-leagues` (list, detail, affiliations), `/contest-config-templates`, `/plans` | Changed only by root admins and migrations. |
 | Trophy room and history | `GET /history/summary`, `/trophies`, `/records`, `/squads/:squadId`, `/squads/:squadId/years`, `/contests`; `GET /championship`, `/championship/:year` | Not `GET /history/year-review`: the commissioner sends it and the page reads it back. |
 | Completed contests | `GET /contests/:contestId`, its entries and all four leaderboards, **when the contest is settled** | The handler reads the contest's status on the writer (one row by key), and reads the heavy part from the reader only if it is settled. Open and live contests stay on the writer. |
 | Completed events | event detail, matches, results and participants for events that are final | Same rule: status on the writer, the rest from the reader once final. |

@@ -16,6 +16,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     externalId: 'mock-major-2026',
     providerId: 'mock-contest-feed',
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
     name: 'Mock Major',
     status: 'SCHEDULED',
     // Far ahead, so the mapper's own clock always reads it as not yet started.

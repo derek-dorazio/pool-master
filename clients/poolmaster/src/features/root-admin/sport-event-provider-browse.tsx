@@ -62,7 +62,7 @@ export function SportEventProviderBrowse({
     feature: 'root-admin-sport-event-create-page',
   });
   const navigate = useNavigate();
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { event: eventNoun, round } = sportVocabulary(definition);
 
   const [browseFrom, setBrowseFrom] = useState(() => defaultWindowValue(0, displayPreferences.timeZone));
@@ -108,7 +108,7 @@ export function SportEventProviderBrowse({
         { action: 'event.create.provider', data: { id: tournament.id } },
         'Created event from provider event',
       );
-      void navigate(buildSportEventPath(sport, tournament.id));
+      void navigate(buildSportEventPath(sportUrlSegment, tournament.id));
     },
     onError: (error) => {
       logger.warn(

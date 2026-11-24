@@ -73,7 +73,7 @@ function renderCard() {
   ];
   render(
     <QueryClientProvider client={queryClient}>
-      <EventFieldUploadCard entries={entries} eventId="evt-1" onClose={vi.fn()} sport="GOLF" />
+      <EventFieldUploadCard entries={entries} eventId="evt-1" onClose={vi.fn()} sport="GOLF" sportUrlSegment="golf" />
     </QueryClientProvider>,
   );
   return { invalidate };

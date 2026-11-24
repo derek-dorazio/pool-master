@@ -21,12 +21,14 @@ export type InMemorySyncRuns = jest.Mocked<ProviderSyncRunRepository> & {
 
 export function inMemorySyncRuns(jobs: InMemoryBackgroundJobs = inMemoryBackgroundJobs()): InMemorySyncRuns {
   const rows: ProviderSyncRun[] = [];
-  // A run is keyed to its Provider row by code (#2040); with no event table its eventId stays null.
+  // A run is keyed to its Provider row by code (#2040); with no event or league table its eventId
+  // and sport (read through its sport league, #2042) stay null.
   const toRun = ({ providerCode, ...input }: Parameters<ProviderSyncRunRepository['create']>[0]): ProviderSyncRun => ({
     id: randomUUID(),
     ...input,
     providerId: TEST_PROVIDER_ROWS[providerCode].id,
     providerName: TEST_PROVIDER_ROWS[providerCode].name,
+    sport: null,
     eventId: null,
     createdAt: input.createdAt ?? new Date(),
   });

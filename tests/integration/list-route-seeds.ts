@@ -11,7 +11,8 @@ import type { Response } from 'light-my-request';
 import type { z } from 'zod';
 import { createTestUser, getApp, getPrisma, type TestUserResult } from './helpers';
 import { freshEventEdition } from '../support/event-edition';
-import { leagueProfiles } from '../support/league-profiles';
+import { sportLeagueRowDefaults } from '../support/league-profiles';
+import { sportRowKeys } from '../support/sport-rows';
 
 export const DAY = 24 * 60 * 60 * 1000;
 export const HOUR = 60 * 60 * 1000;
@@ -62,13 +63,13 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const startDate = new Date(Date.now() + startsInDays * DAY);
   const edition = await freshEventEdition(prisma, { eventYear: startDate.getUTCFullYear() });
   if (ownSportLeague) {
-    const tour = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Scaling Tour ${suffix}` } });
+    const tour = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Scaling Tour ${suffix}` } });
     await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
   }
   // The field's golfers belong to the event's sport league (#1853).
@@ -78,7 +79,6 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
       ...edition,
       externalId: `scaling-${suffix}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
       name: `Scaling Open ${suffix}`,
       startDate,
       endDate: new Date(startDate.getTime() + 3 * DAY),
@@ -118,12 +118,12 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   // The integration cleanup empties sport leagues no template names, so the football rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: 'NFL' } },
-    create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: 'NFL' },
+    create: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: 'NFL' },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Week ${suffix}` } });
@@ -133,7 +133,6 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
       eventYear: startDate.getUTCFullYear(),
       externalId: `scaling-week-${suffix}`,
       providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL,
       name: `Scaling Week ${suffix}`,
       startDate,
       status,

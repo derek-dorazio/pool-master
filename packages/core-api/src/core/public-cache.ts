@@ -39,7 +39,7 @@ export type PublicReadPath = (typeof PublicReadPath)[keyof typeof PublicReadPath
 /** The routes, as registered, whose anonymous 200 answers are public. Each is also public in the auth guard. */
 export const PUBLIC_CACHED_READS: ReadonlySet<string> = new Set([
   '/api/v1/event-pages',
-  '/api/v1/event-pages/:sport/:pageSlug',
+  '/api/v1/event-pages/:sportUrlSegment/:urlSegment',
   '/api/v1/sport-leagues',
   '/api/v1/contest-config-templates',
   '/api/v1/plans',

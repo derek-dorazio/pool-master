@@ -383,12 +383,12 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const waiting = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
     });
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'IN_PROGRESS',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
 
@@ -411,7 +411,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const started = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'IN_PROGRESS',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'IN_PROGRESS',
       startedAt: new Date(), completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
 
@@ -447,12 +447,12 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs });
     const failing = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTPARTICIPANTS' },
     });
     const healthy = await runs.create({
       ...SCHEDULED_SCORES_RUN,
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, status: 'SUBMITTED',
+      providerCode: ProviderCode.BALLDONTLIE, status: 'SUBMITTED',
       startedAt: null, completedAt: null, payload: { requestedFeed: 'EVENTLIVESCORES' },
     });
     const payload = { syncRunIds: [failing.id, healthy.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' };

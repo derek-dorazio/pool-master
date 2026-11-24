@@ -32,6 +32,8 @@ export interface SportLeagueProviderMapping {
 export interface SportLeague extends DomainEntity {
   sportId: string;
   name: string;
+  /** Its name in addresses within its sport (#2042): `?league=wnba`. Stored, never built from the name. */
+  urlSegment: string;
   /**
    * The event year the sport league is currently on. Not a foreign key: setting it
    * refuses a year the sport league has no events in (plans/147 decision 6).

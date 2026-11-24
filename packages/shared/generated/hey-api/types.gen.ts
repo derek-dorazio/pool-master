@@ -7659,6 +7659,14 @@ export type SportDto = {
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
+     * The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given.
+     */
+    urlSegment: string;
+    /**
+     * Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.
+     */
+    displayOrder: number;
+    /**
      * Whether the sport's competitors are individuals or teams.
      */
     participantType: 'INDIVIDUAL' | 'TEAM';
@@ -7681,7 +7689,7 @@ export type SportDto = {
  */
 export type SportListResponse = {
     /**
-     * Every sport, ordered by sport.
+     * Every sport, in display order.
      */
     sports: Array<{
         /**
@@ -7692,6 +7700,14 @@ export type SportListResponse = {
          * The sport.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given.
+         */
+        urlSegment: string;
+        /**
+         * Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.
+         */
+        displayOrder: number;
         /**
          * Whether the sport's competitors are individuals or teams.
          */
@@ -7762,9 +7778,21 @@ export type SportLeagueDto = {
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
+     * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
+     */
+    sportUrlSegment: string;
+    /**
+     * Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.
+     */
+    sportDisplayOrder: number;
+    /**
      * Sport league name, e.g. "PGA Tour".
      */
     name: string;
+    /**
+     * The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.
+     */
+    urlSegment: string;
     /**
      * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
      */
@@ -7907,9 +7935,21 @@ export type SportLeagueListResponse = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
+         * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
+         */
+        sportUrlSegment: string;
+        /**
+         * Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.
+         */
+        sportDisplayOrder: number;
+        /**
          * Sport league name, e.g. "PGA Tour".
          */
         name: string;
+        /**
+         * The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.
+         */
+        urlSegment: string;
         /**
          * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
          */
@@ -8039,9 +8079,21 @@ export type SportLeagueResponse = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
+         * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
+         */
+        sportUrlSegment: string;
+        /**
+         * Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.
+         */
+        sportDisplayOrder: number;
+        /**
          * Sport league name, e.g. "PGA Tour".
          */
         name: string;
+        /**
+         * The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.
+         */
+        urlSegment: string;
         /**
          * The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set.
          */
@@ -8163,6 +8215,10 @@ export type CreateSportLeagueRequest = {
      */
     name: string;
     /**
+     * The sport league's name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are.
+     */
+    urlSegment: string;
+    /**
      * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
      */
     bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
@@ -8214,6 +8270,14 @@ export type UpdateSportLeagueRequest = {
 export type SportLeagueOverviewDto = {
     id: string;
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by.
+     */
+    sportUrlSegment: string;
+    /**
+     * Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it.
+     */
+    sportDisplayOrder: number;
     name: string;
     /**
      * The provider that syncs its events. Null when none does.
@@ -8387,6 +8451,14 @@ export type SportLeagueOverviewListResponse = {
     sportLeagues: Array<{
         id: string;
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by.
+         */
+        sportUrlSegment: string;
+        /**
+         * Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it.
+         */
+        sportDisplayOrder: number;
         name: string;
         /**
          * The provider that syncs its events. Null when none does.
@@ -9241,9 +9313,9 @@ export type SportEventOverviewDto = {
         lastInFeedAt: string | null;
     }>;
     /**
-     * The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.
+     * The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.
      */
-    eventPageSlug: string | null;
+    eventPagePath: string | null;
 };
 
 /**
@@ -9466,9 +9538,9 @@ export type SportEventOverviewResponse = {
             lastInFeedAt: string | null;
         }>;
         /**
-         * The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.
+         * The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.
          */
-        eventPageSlug: string | null;
+        eventPagePath: string | null;
     };
 };
 
@@ -9783,6 +9855,10 @@ export type SportEventDto = {
      * Sport the event belongs to.
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
+     */
+    sportUrlSegment: string;
     /**
      * Event name shown in contest and event selectors.
      */
@@ -10133,6 +10209,10 @@ export type SportEventListResponse = {
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
+         * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
+         */
+        sportUrlSegment: string;
+        /**
          * Event name shown in contest and event selectors.
          */
         name: string;
@@ -10476,6 +10556,10 @@ export type SportEventResponse = {
          * Sport the event belongs to.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
+         */
+        sportUrlSegment: string;
         /**
          * Event name shown in contest and event selectors.
          */
@@ -10891,6 +10975,10 @@ export type ImportSportEventYearFromProviderResponse = {
          * Sport the event belongs to.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
+         */
+        sportUrlSegment: string;
         /**
          * Event name shown in contest and event selectors.
          */
@@ -13261,6 +13349,10 @@ export type ContestDto = {
     }>;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
+     * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
+     */
+    sportUrlSegment?: string | null;
+    /**
      * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
      */
     entryCount?: number;
@@ -13447,7 +13539,7 @@ export type ScoredContestEntryPickDto = {
      */
     pickedAt: string;
     /**
-     * Optional roster slot from the pick row.
+     * Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).
      */
     slot: number | null;
     /**
@@ -13585,7 +13677,7 @@ export type ContestEntryStandingDto = {
          */
         pickedAt: string;
         /**
-         * Optional roster slot from the pick row.
+         * Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).
          */
         slot: number | null;
         /**
@@ -14039,7 +14131,7 @@ export type ContestLeaderboardResponse = {
              */
             pickedAt: string;
             /**
-             * Optional roster slot from the pick row.
+             * Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).
              */
             slot: number | null;
             /**
@@ -14154,6 +14246,10 @@ export type ContestResponse = {
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
+         * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
+         */
+        sportUrlSegment?: string | null;
+        /**
          * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
          */
         entryCount?: number;
@@ -14250,6 +14346,10 @@ export type ContestListResponse = {
             scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | null;
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        /**
+         * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
+         */
+        sportUrlSegment?: string | null;
         /**
          * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
          */
@@ -23665,13 +23765,21 @@ export type EventPageOfferDto = {
 export type EventPageDto = {
     id: string;
     /**
-     * The sport the page belongs to; its URL's first segment is this sport's path segment.
+     * The sport the page belongs to.
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+     * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
      */
-    slug: string;
+    sportUrlSegment: string;
+    /**
+     * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+     */
+    urlSegment: string;
+    /**
+     * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+     */
+    path: string;
     /**
      * Where the page sits among its sport's pages, lower first.
      */
@@ -23684,11 +23792,22 @@ export type EventPageDto = {
      * For a retired page with a successor, the page its URL now goes to; null otherwise.
      */
     redirectTo: {
+        /**
+         * The sport the page belongs to.
+         */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+         * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
          */
-        slug: string;
+        sportUrlSegment: string;
+        /**
+         * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+         */
+        urlSegment: string;
+        /**
+         * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+         */
+        path: string;
     } | null;
     /**
      * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
@@ -24245,13 +24364,21 @@ export type EventPageResponse = {
     eventPage: {
         id: string;
         /**
-         * The sport the page belongs to; its URL's first segment is this sport's path segment.
+         * The sport the page belongs to.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+         * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
          */
-        slug: string;
+        sportUrlSegment: string;
+        /**
+         * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+         */
+        urlSegment: string;
+        /**
+         * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+         */
+        path: string;
         /**
          * Where the page sits among its sport's pages, lower first.
          */
@@ -24264,11 +24391,22 @@ export type EventPageResponse = {
          * For a retired page with a successor, the page its URL now goes to; null otherwise.
          */
         redirectTo: {
+            /**
+             * The sport the page belongs to.
+             */
             sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
-             * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+             * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
              */
-            slug: string;
+            sportUrlSegment: string;
+            /**
+             * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+             */
+            urlSegment: string;
+            /**
+             * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+             */
+            path: string;
         } | null;
         /**
          * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
@@ -24840,13 +24978,21 @@ export type EventPageListResponse = {
     eventPages: Array<{
         id: string;
         /**
-         * The sport the page belongs to; its URL's first segment is this sport's path segment.
+         * The sport the page belongs to.
          */
         sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+         * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
          */
-        slug: string;
+        sportUrlSegment: string;
+        /**
+         * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+         */
+        urlSegment: string;
+        /**
+         * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+         */
+        path: string;
         /**
          * Where the page sits among its sport's pages, lower first.
          */
@@ -24859,11 +25005,22 @@ export type EventPageListResponse = {
          * For a retired page with a successor, the page its URL now goes to; null otherwise.
          */
         redirectTo: {
+            /**
+             * The sport the page belongs to.
+             */
             sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
-             * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+             * The sport's stored URL segment, such as american-football: the first segment of the page's web address.
              */
-            slug: string;
+            sportUrlSegment: string;
+            /**
+             * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+             */
+            urlSegment: string;
+            /**
+             * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+             */
+            path: string;
         } | null;
         /**
          * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
@@ -28055,7 +28212,10 @@ export type ProviderSyncRunDto = {
      * That Provider's name.
      */
     providerName: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * The run's sport, its sport league's; null for a run with no sport league.
+     */
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
@@ -28212,7 +28372,10 @@ export type ProviderSyncRunDetailDto = {
      * That Provider's name.
      */
     providerName: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * The run's sport, its sport league's; null for a run with no sport league.
+     */
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
@@ -28519,6 +28682,9 @@ export type ProviderSyncRunListQuery = {
      * Only the runs of this Provider.
      */
     providerId?: string;
+    /**
+     * Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
+     */
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
@@ -28545,7 +28711,10 @@ export type ProviderSyncRunListResponse = {
          * That Provider's name.
          */
         providerName: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The run's sport, its sport league's; null for a run with no sport league.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
@@ -28714,7 +28883,10 @@ export type ProviderManualSyncSubmissionResponse = {
          * That Provider's name.
          */
         providerName: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The run's sport, its sport league's; null for a run with no sport league.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
@@ -37195,16 +37367,16 @@ export type GetEventPageData = {
     body?: never;
     path: {
         /**
-         * The page's sport.
+         * The page's sport, by the sport's stored URL segment, such as american-football: the first segment of the page's web address.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sportUrlSegment: string;
         /**
-         * The page's stored URL name, such as championship-weekend.
+         * The page's stored URL segment within its sport, such as championship-weekend.
          */
-        pageSlug: string;
+        urlSegment: string;
     };
     query?: never;
-    url: '/api/v1/event-pages/{sport}/{pageSlug}';
+    url: '/api/v1/event-pages/{sportUrlSegment}/{urlSegment}';
 };
 
 export type GetEventPageErrors = {
@@ -38046,6 +38218,9 @@ export type ListProviderSyncRunsData = {
          * Only the runs of this Provider.
          */
         providerId?: string;
+        /**
+         * Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
+         */
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**

@@ -70,7 +70,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
 
   // --- Event pages: public reference data ---
   {
-    route: 'GET /api/v1/event-pages/:sport/:pageSlug',
+    route: 'GET /api/v1/event-pages/:sportUrlSegment/:urlSegment',
     reason: 'Public by design (auth-guard skips it, #1007): a migration-seeded event page with the next editions of public sport events, identical for every viewer and tied to no league or user.',
   },
 

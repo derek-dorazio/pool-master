@@ -19,7 +19,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { ParticipantType, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType, SelectionType } from '@poolmaster/shared/domain';
 import type {
   ContestEntryResponse,
   ContestResponse,
@@ -27,6 +27,7 @@ import type {
 } from '@poolmaster/shared/dto';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -59,7 +60,7 @@ describe('RosterPick CRUD integration', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -78,7 +79,6 @@ describe('RosterPick CRUD integration', () => {
         ...(await freshEventEdition(prisma)),
         externalId: `roster-pick-crud-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: 'Roster Pick CRUD Event',
         startDate: eventTiming.startDate,
         status: 'SCHEDULED',
@@ -143,7 +143,6 @@ describe('RosterPick CRUD integration', () => {
         lineupSlot: 1,
         pickSequence: 1,
         pickedAt: new Date('2026-04-10T12:05:00.000Z'),
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });
@@ -179,7 +178,6 @@ describe('RosterPick CRUD integration', () => {
           lineupSlot: 3,
           pickSequence: 4,
           pickedAt: new Date('2026-04-10T12:06:00.000Z'),
-          contestFormat: 'ROSTER',
         isAutoPicked: false,
         },
       }),

@@ -7,7 +7,7 @@ import type { SportLeagueOverviewDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportsPage } from './root-admin-sports-page';
 import { sportsCountLine } from './sport-league-overview-text';
-import { platformPricingProfilesFixture, providerMappingFixture, providerSummaryFixture, sportLeagueFixture, STANDARD_PLATFORM_PRICING_PROFILE_ID } from './sport-test-fixtures';
+import { platformPricingProfilesFixture, providerMappingFixture, providerSummaryFixture, sportLeagueFixture, STANDARD_PLATFORM_PRICING_PROFILE_ID, SPORTS_FIXTURE } from './sport-test-fixtures';
 import { buildLeagueOpenFindingsPath } from './sync-findings-links';
 
 // /manage/sports, the root admin's landing page (#1848): every sport league in one grid.
@@ -56,9 +56,12 @@ const PLATFORM_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
 const OTHER_PLATFORM_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a2';
 
 function overview(overrides: Partial<SportLeagueOverviewDto> = {}): SportLeagueOverviewDto {
+  const sportRow = SPORTS_FIXTURE.find((row) => row.sport === (overrides.sport ?? 'BASEBALL'));
   return {
     id: 'mlb',
     sport: 'BASEBALL',
+    sportUrlSegment: sportRow?.urlSegment ?? 'baseball',
+    sportDisplayOrder: sportRow?.displayOrder ?? 2,
     name: 'MLB',
     providerId: 'balldontlie',
     isActive: true,

@@ -86,9 +86,11 @@ export interface SportLeagueRepository {
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
+  /** The sport's league at this URL segment (#2042), or null when none has it. */
+  findBySportAndUrlSegment(sportId: string, urlSegment: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague>;
+  create(input: Pick<SportLeague, 'sportId' | 'name' | 'urlSegment' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
    * Deletes the sport league unless something still uses it (#1400), in one transaction that locks
@@ -128,7 +130,7 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'tierConfig'>;
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'tierConfig'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -543,6 +545,10 @@ export interface ParticipantMatchQuery {
 export interface SportLeagueOverviewLeague {
   id: string;
   sport: Sport;
+  /** Its sport's URL segment (#2042). */
+  sportUrlSegment: string;
+  /** Its sport's display order (#2042). */
+  sportDisplayOrder: number;
   name: string;
   syncProviderId: string | null;
   isActive: boolean;
@@ -695,10 +701,10 @@ export interface SportEventPageFacts {
   overdueCandidates: OverdueEventFacts[];
   field: SportEventPageFieldRow[];
   /**
-   * The slug of the active event page that offers the event's series, in its sport; the first by
+   * The address of the active event page that offers the event's series; the first by
    * the pages' display order when more than one does. Null when none does.
    */
-  eventPageSlug: string | null;
+  eventPagePath: string | null;
 }
 
 export interface SportLeaguePageReader {

@@ -17,11 +17,12 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { createSportEventRow } from '../../support/sport-event-rows';
-import { freshEventEdition } from '../../support/event-edition';
+import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // Sync-run history and score-source links, which only the HTTP contract tests reached before
 // (#508): which runs each filter keeps and in what order, and what a link or unlink writes.
@@ -39,13 +40,14 @@ describe('ProviderSyncRunRepository.findAll', () => {
 
   async function seedRuns() {
     const repo = new PrismaProviderSyncRunRepository(getAppPrisma());
-    const run = (
+    // A run's sport is its sport league's (#2042): each run names a fixture league of its sport.
+    const run = async (
       label: string,
       overrides: { sport?: Sport; status?: ProviderSyncRunStatus; createdAt: Date; startedAt: Date | null },
     ) => repo.create({
       ...SCHEDULED_SCORES_RUN,
+      sportLeagueId: await fixtureTourId(getPrisma(), overrides.sport ?? Sport.GOLF),
       providerCode: ProviderCode.BALLDONTLIE,
-      sport: overrides.sport ?? Sport.GOLF,
       status: overrides.status ?? ProviderSyncRunStatus.COMPLETED,
       startedAt: overrides.startedAt,
       completedAt: null,
@@ -87,7 +89,6 @@ describe('ProviderSyncRunRepository.findAll', () => {
       ...(await freshEventEdition(getPrisma())),
       externalId: `feed-event-${randomUUID().slice(0, 8)}`,
       providerId: SYNCED_PROVIDER_ID,
-      sport: Sport.GOLF,
       name: `Run Event ${randomUUID().slice(0, 8)}`,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
@@ -97,11 +98,11 @@ describe('ProviderSyncRunRepository.findAll', () => {
       autoLifecycleEnabled: true,
     });
     const linked = await repo.create({
-      ...SCHEDULED_SCORES_RUN, sportEventId: event.id, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF,
+      ...SCHEDULED_SCORES_RUN, sportEventId: event.id, providerCode: ProviderCode.BALLDONTLIE,
       status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, payload: {},
     });
     const unlinked = await repo.create({
-      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF,
+      ...SCHEDULED_SCORES_RUN, providerCode: ProviderCode.BALLDONTLIE,
       status: ProviderSyncRunStatus.COMPLETED, startedAt: null, completedAt: null, payload: {},
     });
 
@@ -116,7 +117,6 @@ describe('ProviderSyncRunRepository details (#1174)', () => {
   const submitted = () => repo().create({
     ...SCHEDULED_SCORES_RUN,
     providerCode: ProviderCode.BALLDONTLIE,
-    sport: Sport.GOLF,
     status: ProviderSyncRunStatus.SUBMITTED,
     startedAt: null,
     completedAt: null,
@@ -169,7 +169,6 @@ describe('EventScoreSourceService links', () => {
       ...(await freshEventEdition(getPrisma())),
       externalId: `manual-${randomUUID()}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
       name,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
@@ -270,10 +269,10 @@ describe('EventScoreSourceService tour reads', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const league = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Tour ${randomUUID()}` } });
+    const league = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Tour ${randomUUID()}` } });
     if (providerLeagueCode !== null) await syncLeagueTo(prisma, league.id, providerLeagueCode);
     return league;
   }

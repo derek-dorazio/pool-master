@@ -59,27 +59,10 @@ const POINTS_BY_SERIES: Record<string, number[]> = {
   'Formula 1': FORMULA_1_POINTS,
 };
 
-async function leagueTemplates() {
-  return getPrisma().contestConfigTemplate.findMany({
-    include: { sportLeague: { include: { sport: true } } },
-    orderBy: [{ sportLeagueId: 'asc' }, { sortOrder: 'asc' }],
-  });
-}
-
 describe('Seeded contest templates and their sport leagues', () => {
-  it('puts every template in a league of the template\'s own sport', async () => {
-    const templates = await leagueTemplates();
-
-    expect(templates.length).toBeGreaterThan(0);
-    const misplaced = templates
-      .filter((template) => template.sportLeague.sport.sport !== template.sport)
-      .map((template) => `${template.templateKey}: ${template.sport} template in a ${template.sportLeague.sport.sport} league`);
-    expect(misplaced).toEqual([]);
-  });
-
   it('seeds auto racing\'s three series, each with a budget, a tiered and a random-draw template of its own, every one the default of its format', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AUTO_RACING },
+      where: { sportLeague: { sport: { sport: Sport.AUTO_RACING } } },
       include: { sportLeague: { include: { sport: true } } },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -106,7 +89,7 @@ describe('Seeded contest templates and their sport leagues', () => {
 
   it('sorts the Formula 1 budget default first among the Formula 1 templates', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AUTO_RACING, sportLeague: { name: 'Formula 1' } },
+      where: { sportLeague: { sport: { sport: Sport.AUTO_RACING }, name: 'Formula 1' } },
       orderBy: { sortOrder: 'asc' },
     });
 
@@ -119,7 +102,7 @@ describe('Seeded contest templates and their sport leagues', () => {
 
   it('presets NASCAR Cup Series points over 40 places, IndyCar points over 33 and Formula 1 points over 10, each a valid template configuration', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AUTO_RACING },
+      where: { sportLeague: { sport: { sport: Sport.AUTO_RACING } } },
       include: { sportLeague: true },
     });
 
@@ -144,7 +127,7 @@ describe('Seeded contest templates and their sport leagues', () => {
 
   it('counts five drivers in the budget presets, five in the NASCAR and IndyCar tiered presets, four in the Formula 1 tiered preset and one in the random draw', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AUTO_RACING },
+      where: { sportLeague: { sport: { sport: Sport.AUTO_RACING } } },
       orderBy: { templateKey: 'asc' },
     });
 
@@ -193,7 +176,7 @@ describe('Seeded contest templates and their sport leagues', () => {
 describe('Seeded PGA TOUR majors pool template', () => {
   it('seeds an active majors template on the PGA TOUR and on the LPGA Tour, neither a default, naming each tour\'s majors\' series, with golf\'s one-a-tier, best-four rules', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.GOLF, eventSeriesNames: { isEmpty: false } },
+      where: { sportLeague: { sport: { sport: Sport.GOLF } }, eventSeriesNames: { isEmpty: false } },
       include: { sportLeague: true },
       orderBy: { templateKey: 'asc' },
     });
@@ -237,7 +220,7 @@ const CYCLING_TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 describe('Golf and horse racing setups, one copy per sport league', () => {
   it('gives PGA TOUR and LPGA Tour each their own copy of golf\'s seven every-event setups, with the same keys and rules and three defaults each, so a change to one league\'s setup leaves the other\'s alone', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.GOLF, active: true, eventSeriesNames: { isEmpty: true } },
+      where: { sportLeague: { sport: { sport: Sport.GOLF } }, active: true, eventSeriesNames: { isEmpty: true } },
       include: { sportLeague: true },
       orderBy: [{ sortOrder: 'asc' }],
     });
@@ -260,7 +243,7 @@ describe('Golf and horse racing setups, one copy per sport league', () => {
 
   it('seeds golf\'s "Top four tiers" setup on each tour beside its default tiered one: one golfer from each of the first four tiers, all four count, not a default (#704)', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.GOLF, templateKey: 'golf-tiered-top-four-tiers' },
+      where: { sportLeague: { sport: { sport: Sport.GOLF } }, templateKey: 'golf-tiered-top-four-tiers' },
       include: { sportLeague: true },
       orderBy: { sportLeague: { name: 'asc' } },
     });
@@ -276,7 +259,7 @@ describe('Golf and horse racing setups, one copy per sport league', () => {
 
   it('gives US Thoroughbred horse racing\'s three setups as its own, kept while the league is switched off, one default per way of picking', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.HORSE_RACING },
+      where: { sportLeague: { sport: { sport: Sport.HORSE_RACING } } },
       include: { sportLeague: true },
       orderBy: [{ sortOrder: 'asc' }],
     });
@@ -292,7 +275,7 @@ describe('Golf and horse racing setups, one copy per sport league', () => {
 describe('Seeded cycling tours and their Top 10 templates', () => {
   it('seeds cycling\'s two tours, each with a tiered, a budget and a random-draw template of its own, every one the default of its format', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.CYCLING },
+      where: { sportLeague: { sport: { sport: Sport.CYCLING } } },
       include: { sportLeague: { include: { sport: true } } },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -315,7 +298,7 @@ describe('Seeded cycling tours and their Top 10 templates', () => {
   });
 
   it('presets Top 10 points (10 down to 1, 0 for an abandon) on every cycling template, each a valid template configuration', async () => {
-    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.CYCLING } });
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sportLeague: { sport: { sport: Sport.CYCLING } } } });
 
     expect(templates).toHaveLength(6);
     for (const template of templates) {
@@ -331,7 +314,7 @@ describe('Seeded cycling tours and their Top 10 templates', () => {
 
   it('counts five riders in the tiered and budget presets and one in the random draw', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.CYCLING },
+      where: { sportLeague: { sport: { sport: Sport.CYCLING } } },
       orderBy: { templateKey: 'asc' },
     });
 
@@ -378,7 +361,7 @@ const RUNNING_TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 describe('Seeded running series and their Top 10 templates', () => {
   it('seeds running\'s two World Marathon Majors series, each with a tiered, a budget and a random-draw template of its own, every one the default of its format', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.RUNNING },
+      where: { sportLeague: { sport: { sport: Sport.RUNNING } } },
       include: { sportLeague: { include: { sport: true } } },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -402,7 +385,7 @@ describe('Seeded running series and their Top 10 templates', () => {
   });
 
   it('presets Top 10 points (10 down to 1, 0 for a runner who drops out) on every running template, each a valid template configuration', async () => {
-    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sport: Sport.RUNNING } });
+    const templates = await getPrisma().contestConfigTemplate.findMany({ where: { sportLeague: { sport: { sport: Sport.RUNNING } } } });
 
     expect(templates).toHaveLength(6);
     for (const template of templates) {
@@ -418,7 +401,7 @@ describe('Seeded running series and their Top 10 templates', () => {
 
   it('counts four runners in the tiered (one from each of four tiers) and budget presets and one in the random draw', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.RUNNING },
+      where: { sportLeague: { sport: { sport: Sport.RUNNING } } },
       orderBy: { templateKey: 'asc' },
     });
 
@@ -465,7 +448,7 @@ const DOUBLING_ROUND_VALUES = [1, 2, 4, 8, 16, 32];
 describe('Seeded NCAA basketball leagues and their knockout templates', () => {
   it('seeds both NCAA Division I leagues with a Doubling and a Doubling + upset bonus template for each roster selection type, the plain Doubling one each format\'s default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' }, contestFormat: ContestFormat.ROSTER },
+      where: { sportLeague: { sport: { sport: Sport.BASKETBALL } }, templateKey: { startsWith: 'ncaa-' }, contestFormat: ContestFormat.ROSTER },
       include: { sportLeague: { include: { sport: true } } },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -495,7 +478,7 @@ describe('Seeded NCAA basketball leagues and their knockout templates', () => {
 
   it('presets round values 1, 2, 4, 8, 16 and 32 on every roster and bracket template, with no upset bonus on Doubling and the seed difference times 1 on Doubling + upset bonus', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.BASKETBALL, templateKey: { startsWith: 'ncaa-' }, selectionType: { notIn: [SelectionType.SURVIVOR, SelectionType.SQUARES] } },
+      where: { sportLeague: { sport: { sport: Sport.BASKETBALL } }, templateKey: { startsWith: 'ncaa-' }, selectionType: { notIn: [SelectionType.SURVIVOR, SelectionType.SQUARES] } },
     });
 
     expect(templates).toHaveLength(18);
@@ -562,7 +545,7 @@ describe('Seeded soccer competitions and their knockout templates', () => {
 
   it.each(SOCCER_COMPETITIONS)('gives %s eleven knockout templates, one default per format, every roster and bracket preset doubling from 1 to its final', async (name, prefix, roundValues, budgetRoster) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.SOCCER, sportLeague: { name }, eventType: ContestTemplateEventType.KNOCKOUT },
+      where: { sportLeague: { sport: { sport: Sport.SOCCER }, name }, eventType: ContestTemplateEventType.KNOCKOUT },
       orderBy: [{ sortOrder: 'asc' }],
     });
 
@@ -599,7 +582,7 @@ describe('Seeded soccer competitions and their knockout templates', () => {
 describe('Seeded soccer week templates', () => {
   it('gives the Premier League pick\'em straight up and confidence on draw-pick weeks and Last Man Standing, whose teams can be picked again once all 20 are used', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.SOCCER, sportLeague: { name: 'Premier League' } },
+      where: { sportLeague: { sport: { sport: Sport.SOCCER }, name: 'Premier League' } },
       orderBy: [{ sortOrder: 'asc' }],
     });
 
@@ -615,7 +598,7 @@ describe('Seeded soccer week templates', () => {
     'gives %s pick\'em on its group matchdays, straight up the default, and no matchday survivor',
     async (name, prefix) => {
       const templates = await getPrisma().contestConfigTemplate.findMany({
-        where: { sport: Sport.SOCCER, sportLeague: { name }, eventType: ContestTemplateEventType.WEEK },
+        where: { sportLeague: { sport: { sport: Sport.SOCCER }, name }, eventType: ContestTemplateEventType.WEEK },
         orderBy: [{ sortOrder: 'asc' }],
       });
 
@@ -650,7 +633,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
 
   it.each([['ATP', 'atp'], ['WTA', 'wta']] as const)('gives the %s thirteen knockout templates, one default per format, with Seeds only picking from the first four tiers and the second-week bracket starting at the fourth round', async (name, prefix) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.TENNIS, sportLeague: { name } },
+      where: { sportLeague: { sport: { sport: Sport.TENNIS }, name } },
       orderBy: [{ sortOrder: 'asc' }],
     });
 
@@ -690,7 +673,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
 
   it.each([['NCAA Division I Men', 'ncaa-men-tennis'], ['NCAA Division I Women', 'ncaa-women-tennis']] as const)('gives %s ten knockout templates, one default per format, each roster and bracket preset doubling from 1 to 32 in the six-round draw\'s final', async (name, prefix) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.TENNIS, sportLeague: { name } },
+      where: { sportLeague: { sport: { sport: Sport.TENNIS }, name } },
       orderBy: [{ sortOrder: 'asc' }],
     });
 
@@ -724,7 +707,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
 
   it('names the four Grand Slams on each tour\'s Slams pool, and on no other tennis template', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.TENNIS, eventSeriesNames: { isEmpty: false } },
+      where: { sportLeague: { sport: { sport: Sport.TENNIS } }, eventSeriesNames: { isEmpty: false } },
       include: { sportLeague: true },
       orderBy: { templateKey: 'asc' },
     });
@@ -740,7 +723,7 @@ describe('Seeded tennis tours and their knockout templates', () => {
 describe('The seeded NFL league and its knockout templates', () => {
   it('seeds the NFL, which reseeds, with a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AMERICAN_FOOTBALL, templateKey: { startsWith: 'nfl-' }, contestFormat: ContestFormat.ROSTER },
+      where: { sportLeague: { sport: { sport: Sport.AMERICAN_FOOTBALL } }, templateKey: { startsWith: 'nfl-' }, contestFormat: ContestFormat.ROSTER },
       include: { sportLeague: true },
       orderBy: [{ templateKey: 'asc' }],
     });
@@ -769,11 +752,11 @@ describe('The seeded NFL league and its knockout templates', () => {
   it('seeds one squares template on the NFL, the College Football Playoff, men\'s and women\'s March Madness, men\'s and women\'s college hockey and each soccer competition, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
-      include: { sportLeague: true },
+      include: { sportLeague: { include: { sport: true } } },
       orderBy: { templateKey: 'asc' },
     });
 
-    expect(templates.map((template) => [template.templateKey, template.sport, template.selectionType, template.isDefault, template.sportLeague.name])).toEqual([
+    expect(templates.map((template) => [template.templateKey, template.sportLeague.sport.sport, template.selectionType, template.isDefault, template.sportLeague.name])).toEqual([
       ['cfp-squares', Sport.AMERICAN_FOOTBALL, SelectionType.SQUARES, true, 'College Football Playoff'],
       ['champions-league-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'UEFA Champions League'],
       ['copa-america-squares', Sport.SOCCER, SelectionType.SQUARES, true, 'Copa América'],
@@ -845,9 +828,9 @@ describe('The seeded NFL league and its knockout templates', () => {
   });
 
   it('gives every seeded active event page with offers exactly one primary offer, whose edition dates the page', async () => {
-    const pages = await getPrisma().eventPage.findMany({ where: { isActive: true }, select: { slug: true, offers: { select: { isPrimary: true } } } });
+    const pages = await getPrisma().eventPage.findMany({ where: { isActive: true }, select: { urlSegment: true, offers: { select: { isPrimary: true } } } });
 
-    expect(pages.filter((page) => page.offers.length > 0 && page.offers.filter((offer) => offer.isPrimary).length !== 1).map((page) => page.slug)).toEqual([]);
+    expect(pages.filter((page) => page.offers.length > 0 && page.offers.filter((offer) => offer.isPrimary).length !== 1).map((page) => page.urlSegment)).toEqual([]);
   });
 });
 
@@ -858,17 +841,17 @@ describe('Every seeded contest template, whatever its sport', () => {
   async function activeTemplates() {
     return getPrisma().contestConfigTemplate.findMany({
       where: { active: true },
-      include: { sportLeague: { include: { platformTierProfile: true } } },
-      orderBy: [{ sport: 'asc' }, { templateKey: 'asc' }],
+      include: { sportLeague: { include: { platformTierProfile: true, sport: true } } },
+      orderBy: [{ sportLeague: { sport: { sport: 'asc' } } }, { templateKey: 'asc' }],
     });
   }
 
   it('parses as its own selection type\'s rules, one the sport offers, scored by a definition the sport offers or one that needs no settings', async () => {
     const templates = await activeTemplates();
 
-    expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(SCORED_SPORTS));
+    expect(new Set(templates.map((template) => template.sportLeague.sport.sport))).toEqual(new Set(SCORED_SPORTS));
     const problems = templates.flatMap((template) => {
-      const definition = sportLeagueDefinitionOf(template.sport, template.sportLeague);
+      const definition = sportLeagueDefinitionOf(template.sportLeague.sport.sport, template.sportLeague);
       const parsed = ContestRulesWithEntryLimitSchema.safeParse(template.configJson);
       if (!parsed.success) {
         return [`${template.templateKey}: rules do not parse`];
@@ -879,10 +862,10 @@ describe('Every seeded contest template, whatever its sport', () => {
         found.push(`${template.templateKey}: ${rules.selectionType} rules on a ${template.selectionType} template`);
       }
       if (!sportAllowsSelectionType(definition, rules.selectionType)) {
-        found.push(`${template.templateKey}: ${template.sport} offers no ${rules.selectionType} selection`);
+        found.push(`${template.templateKey}: ${template.sportLeague.sport.sport} offers no ${rules.selectionType} selection`);
       }
       if (rules.scoring && !definition.scoringDefinitions.includes(rules.scoring.participantScoringDefinitionId)) {
-        found.push(`${template.templateKey}: ${template.sport} offers no ${rules.scoring.participantScoringDefinitionId} scoring`);
+        found.push(`${template.templateKey}: ${template.sportLeague.sport.sport} offers no ${rules.scoring.participantScoringDefinitionId} scoring`);
       }
       // With no preset, the sport's first definition is used with its default settings, which
       // only a definition that takes none has.
@@ -990,7 +973,7 @@ describe('The seeded NBA and WNBA leagues and their knockout templates', () => {
     { league: 'WNBA', prefix: 'wnba', roundValues: [1, 2, 4], rosterSize: 3 },
   ])('gives the $league a Doubling and a Doubling + upset bonus template per roster selection type, on one round value per round, the plain Doubling one each format\'s default', async ({ league, prefix, roundValues, rosterSize }) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.BASKETBALL, sportLeague: { name: league }, contestFormat: ContestFormat.ROSTER },
+      where: { sportLeague: { sport: { sport: Sport.BASKETBALL }, name: league }, contestFormat: ContestFormat.ROSTER },
       orderBy: [{ templateKey: 'asc' }],
     });
 
@@ -1036,7 +1019,7 @@ describe('The seeded College Football Playoff league and its knockout templates'
 
   it('gives the College Football Playoff a Doubling and a Doubling + upset bonus template per roster selection type on round values 1, 2, 4, 8, the plain Doubling one each format\'s default, picking one team from each of six tiers', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sport: Sport.AMERICAN_FOOTBALL, sportLeague: { name: 'College Football Playoff' }, contestFormat: ContestFormat.ROSTER },
+      where: { sportLeague: { sport: { sport: Sport.AMERICAN_FOOTBALL }, name: 'College Football Playoff' }, contestFormat: ContestFormat.ROSTER },
       orderBy: [{ templateKey: 'asc' }],
     });
 
@@ -1110,7 +1093,7 @@ describe('Every seeded sport league\'s default templates and their names (#802)'
     const scopes = leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport))
       .map((league) => ({ name: league.name, sport: league.sport.sport, sportLeagueId: league.id, definition: sportLeagueDefinitionOf(league.sport.sport, league) }));
 
-    const problems = scopes.flatMap(({ name, sport, sportLeagueId, definition }) => {
+    const problems = scopes.flatMap(({ name, sportLeagueId, definition }) => {
       const kinds: Array<{ eventType: ContestTemplateEventType | null; selectionTypes: readonly SelectionType[] }> = definitionPlaysMatches(definition)
         ? [
           ...(LEAGUES_PLAYED_ONLY_IN_WEEKS.includes(name) ? [] : [{ eventType: ContestTemplateEventType.KNOCKOUT, selectionTypes: KNOCKOUT_SELECTION_TYPES }]),
@@ -1123,8 +1106,7 @@ describe('Every seeded sport league\'s default templates and their names (#802)'
         .flatMap((selectionType) => {
           // What Create contest lists for an event of this kind: the league's own templates, for
           // this kind of event or for any.
-          const defaults = templates.filter((template) => template.sport === sport
-            && template.selectionType === selectionType
+          const defaults = templates.filter((template) => template.selectionType === selectionType
             && template.isDefault
             && template.sportLeagueId === sportLeagueId
             && (template.eventType === null || template.eventType === eventType));

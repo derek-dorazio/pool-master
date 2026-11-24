@@ -351,7 +351,11 @@ describe('EventScoreSourceError', () => {
 });
 
 describe('EventScoreSourceService linking a score source', () => {
-  const golfEvent = { id: 'event-1', sport: 'GOLF', providerId: 'manual-admin', externalId: 'manual-1', syncScope: 'NONE' };
+  const eventOf = (sport: string) => ({
+    id: 'event-1', providerId: 'manual-admin', externalId: 'manual-1', syncScope: 'NONE',
+    eventSeries: { sportLeague: { sport: { sport, urlSegment: sport.toLowerCase() } } },
+  });
+  const golfEvent = eventOf('GOLF');
 
   function linking(options: { conflict?: boolean; provider?: SportDataProvider | null; event?: Record<string, unknown> } = {}) {
     const prisma = {
@@ -378,7 +382,7 @@ describe('EventScoreSourceService linking a score source', () => {
 
   it('refuses an unknown provider (404), a provider not covering the sport (422) and a provider event already linked elsewhere (409), writing nothing', async () => {
     const unknown = linking({ provider: null });
-    const otherSport = linking({ event: { ...golfEvent, sport: 'TENNIS' } });
+    const otherSport = linking({ event: eventOf('TENNIS') });
     const taken = linking({ conflict: true });
     const input = { providerId: 'mock-golf', externalId: 'ext-1' };
 

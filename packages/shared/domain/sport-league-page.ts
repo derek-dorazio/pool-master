@@ -104,6 +104,6 @@ export interface SportEventOverview {
   tierOrderCoversField: boolean;
   /** One per field row, active or withdrawn. */
   fieldFeed: SportEventFieldFeedRow[];
-  /** The slug of the event page (`/play/<sport>/<slug>`) offering its series; null when none does. */
-  eventPageSlug: string | null;
+  /** The address of the event page offering its series (`/play/<sport>/<page>`); null when none does. */
+  eventPagePath: string | null;
 }

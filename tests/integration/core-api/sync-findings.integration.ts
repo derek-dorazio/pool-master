@@ -28,8 +28,9 @@ import { SYNC_FINDINGS_REQUESTS_PER_MINUTE } from '../../../packages/core-api/sr
 import { SyncFindingRetention } from '../../../packages/core-api/src/modules/ingestion/findings/sync-finding-retention';
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -45,11 +46,11 @@ async function golfLeague(): Promise<{ id: string; name: string }> {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return prisma.sportLeague.create({
-    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
+    data: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
     select: { id: true, name: true },
   });
 }

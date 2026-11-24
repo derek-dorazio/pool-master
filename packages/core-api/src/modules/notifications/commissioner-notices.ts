@@ -307,7 +307,7 @@ export class CommissionerNotices implements DueNotifications {
               eventName: sportEvent.name,
               sportLeagueName: sportLeagueNames.get(sportEvent.sportLeagueId) ?? '',
               startsAt: sportEvent.startDate,
-              imageUrl: buildEmailSportImageUrl(this.deps.appBaseUrl, sportEvent.sport),
+              imageUrl: buildEmailSportImageUrl(this.deps.appBaseUrl, sportEvent.sportUrlSegment),
               eventPageUrl: this.eventPageUrl(pages, sportEvent),
             };
             if (contestLeagues.get(sportEvent.id)?.has(league.id)) return { ...base, state: DigestEventState.CONTEST_SET_UP };

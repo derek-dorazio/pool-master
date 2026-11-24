@@ -37,6 +37,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -261,7 +262,7 @@ async function tieredGolfEvent(name: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -269,7 +270,6 @@ async function tieredGolfEvent(name: string) {
       ...(await freshEventEdition(prisma)),
       externalId: `read-once-${randomUUID()}`,
       providerId: 'integration-test',
-      sport: Sport.GOLF,
       name,
       startDate: buildContestEligibleEventTiming().startDate,
       status: 'SCHEDULED',
@@ -360,15 +360,14 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
       externalId: `read-once-squares-${suffix}`,
       providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL,
       name: `Read Once Bowl ${suffix}`,
       startDate: new Date(Date.now() - 3 * 60 * 60 * 1000),
       status: 'IN_PROGRESS',
@@ -662,10 +661,9 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
   const suffix = randomUUID().slice(0, 8);
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
       externalId: `read-once-changed-${suffix}`,
       providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL,
       name: `Read Once Changed ${suffix}`,
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: 'SCHEDULED',

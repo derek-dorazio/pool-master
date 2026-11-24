@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportLeagueCreatePage } from './root-admin-sport-league-create-page';
-import { platformPricingProfilesFixture, STANDARD_PLATFORM_PRICING_PROFILE_ID } from './sport-test-fixtures';
+import { platformPricingProfilesFixture, STANDARD_PLATFORM_PRICING_PROFILE_ID, sportsQueryClient } from './sport-test-fixtures';
 
 // /manage/sports/golf/leagues/new, the New tour page; a new tour then shows on the Sports page.
 
@@ -69,9 +69,9 @@ function league(overrides: Record<string, unknown> = {}) {
 }
 
 function renderPage(path = '/manage/sports/golf/leagues/new') {
-  const queryClient = new QueryClient({
+  const queryClient = sportsQueryClient(new QueryClient({
     defaultOptions: { queries: { retry: false } },
-  });
+  }));
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
@@ -101,6 +101,7 @@ describe('RootAdminSportLeagueCreatePage', () => {
       await screen.findByTestId('root-admin-sport-league-list-new-name'),
       'DP World Tour',
     );
+    await userEvent.type(screen.getByTestId('root-admin-sport-league-list-new-url-segment'), 'dp-world-tour');
     await chooseProfiles();
     await userEvent.click(screen.getByTestId('root-admin-sport-league-list-new-save'));
 
@@ -110,6 +111,7 @@ describe('RootAdminSportLeagueCreatePage', () => {
           body: {
             sport: 'GOLF',
             name: 'DP World Tour',
+            urlSegment: 'dp-world-tour',
             platformTierProfileId: GOLF_PLATFORM_TIER_PROFILE_ID,
             platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
           },
@@ -124,6 +126,7 @@ describe('RootAdminSportLeagueCreatePage', () => {
     renderPage();
 
     await userEvent.type(await screen.findByTestId('root-admin-sport-league-list-new-name'), 'DP World Tour');
+    await userEvent.type(screen.getByTestId('root-admin-sport-league-list-new-url-segment'), 'dp-world-tour');
     await screen.findByRole('option', { name: '6 tiers of 10' });
     await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-list-new-tier-profile'), '6 tiers of 10');
     expect(screen.getByTestId('root-admin-sport-league-list-new-save')).toBeDisabled();
@@ -145,11 +148,24 @@ describe('RootAdminSportLeagueCreatePage', () => {
       await screen.findByTestId('root-admin-sport-league-list-new-name'),
       'PGA Tour',
     );
+    await userEvent.type(screen.getByTestId('root-admin-sport-league-list-new-url-segment'), 'pga-tour');
     await chooseProfiles();
     await userEvent.click(screen.getByTestId('root-admin-sport-league-list-new-save'));
 
     expect(await screen.findByText('A sport league already uses that name.')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-sport-league-create-page')).toBeInTheDocument();
+  });
+
+  it('keeps Create disabled while the URL segment is not lower case words joined by single dashes', async () => {
+    seedProfiles();
+    renderPage();
+
+    await userEvent.type(await screen.findByTestId('root-admin-sport-league-list-new-name'), 'DP World Tour');
+    await userEvent.type(screen.getByTestId('root-admin-sport-league-list-new-url-segment'), 'DP World Tour');
+    await chooseProfiles();
+
+    expect(await screen.findByText('Use small letters, digits and single hyphens, like pga-tour')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sport-league-list-new-save')).toBeDisabled();
   });
 
   it('returns to the Sports page from Cancel without creating anything', async () => {

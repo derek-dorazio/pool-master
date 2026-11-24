@@ -382,9 +382,11 @@ class Loader {
    * is set on a new league, and changed on an existing one that has another.
    */
   private async ensureLeague(client: Client, league: SportDataLeague): Promise<string | null> {
-    const { name, bracketAdvancement } = league;
+    const { name, urlSegment, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
-    const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
+    const existing = urlSegment === undefined
+      ? sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase())
+      : sportLeagues.find((row) => row.urlSegment === urlSegment);
     this.leagueDefinitions.set(name, existing ? sportLeagueDefinitionOf(this.sport, existing) : getSportDefinition(this.sport));
     if (existing) {
       const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;
@@ -409,13 +411,16 @@ class Loader {
     }
     this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.ADD, name, detail: null });
     if (!this.apply) return null;
+    if (urlSegment === undefined) {
+      throw new Error(`${name} is not on the site: give it a urlSegment in the file to create it.`);
+    }
     // A new league tiers as the sport's own leagues do and prices with Standard (#1844).
     const sibling = sportLeagues[0];
     const { platformTierProfileId } = found(sibling, `Another ${this.sport} sport league, whose tier profile a new one names`);
     const { platformPricingProfileId } = await this.standardPricing(client);
     const created = await must(createSportLeague({
       client,
-      body: { sport: this.sport, name, platformTierProfileId, platformPricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
+      body: { sport: this.sport, name, urlSegment, platformTierProfileId, platformPricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
     }), `Create sport league ${name}`);
     return created.sportLeague.id;
   }

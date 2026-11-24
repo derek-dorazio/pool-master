@@ -24,6 +24,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     id: 'sl-pga',
     sportId: 'sport-golf',
     name: 'PGA Tour',
+    urlSegment: 'pga-tour',
     bracketAdvancement: BracketAdvancement.FIXED,
     roundNames: [],
     platformTierProfileId: 'tier-profile-1',
@@ -110,7 +111,7 @@ function buildService(overrides: {
 describe('SportLeagueService — sport leagues', () => {
   it('lists the sport\'s sport leagues with their sport and their participant and event counts, zero where there are none', async () => {
     const { service } = buildService({
-      sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour' })]) },
+      sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour', urlSegment: 'champions-tour' })]) },
       participants: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 144]])) },
       sportEvents: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 3]])) },
     });
@@ -132,16 +133,32 @@ describe('SportLeagueService — sport leagues', () => {
   it('creates a sport league — adding the Champions Tour is one call, not a migration', async () => {
     const { service } = buildService();
 
-    const created = await service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour' });
+    const created = await service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour', urlSegment: 'champions-tour' });
 
-    expect(created).toMatchObject({ sportId: 'sport-golf', name: 'Champions Tour' });
+    expect(created).toMatchObject({ sportId: 'sport-golf', name: 'Champions Tour', urlSegment: 'champions-tour' });
   });
 
   it('rejects a sport league name already used for the sport with 409', async () => {
     const { service } = buildService({ sportLeagues: { findBySportAndName: jest.fn().mockResolvedValue(sportLeague()) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'PGA Tour' }))
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'PGA Tour', urlSegment: 'pga-tour' }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS', statusCode: 409 });
+  });
+
+  it('rejects a URL segment another league of the sport already has with 409, creating nothing', async () => {
+    const { service, deps } = buildService({ sportLeagues: { findBySportAndUrlSegment: jest.fn().mockResolvedValue(sportLeague()) } });
+
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour', urlSegment: 'pga-tour' }))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS', statusCode: 409 });
+    expect(deps.sportLeagues.create).not.toHaveBeenCalled();
+  });
+
+  it('stores the URL segment a new sport league is given', async () => {
+    const { service, deps } = buildService();
+
+    await service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour', urlSegment: 'champions-tour' });
+
+    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining({ urlSegment: 'champions-tour' }));
   });
 });
 
@@ -149,7 +166,7 @@ describe('SportLeagueService — tier and pricing profiles', () => {
   it('creates a sport league naming the tier and pricing profiles it is given', async () => {
     const { service, deps } = buildService();
 
-    await service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour' });
+    await service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour', urlSegment: 'champions-tour' });
 
     expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining(PROFILES));
   });
@@ -157,7 +174,7 @@ describe('SportLeagueService — tier and pricing profiles', () => {
   it('refuses a new sport league naming an unknown tier profile with 404 PLATFORM_TIER_PROFILE_NOT_FOUND, creating nothing', async () => {
     const { service, deps } = buildService({ platformTierProfiles: { findById: jest.fn().mockResolvedValue(null) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour' }))
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour', urlSegment: 'champions-tour' }))
       .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NOT_FOUND', statusCode: 404 });
     expect(deps.sportLeagues.create).not.toHaveBeenCalled();
   });
@@ -183,15 +200,15 @@ describe('SportLeagueService — bracket advancement', () => {
   it('creates a sport league fixed by default, and one that reseeds when its sport plays a bracket', async () => {
     const { service } = buildService({ sports: { findBySport: jest.fn().mockResolvedValue(BASKETBALL) } });
 
-    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, name: 'Harbour Conference' })).resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.FIXED });
-    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, name: 'Gridiron League', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
+    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, name: 'Harbour Conference', urlSegment: 'harbour-conference' })).resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.FIXED });
+    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, name: 'Gridiron League', urlSegment: 'gridiron-league', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
       .resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
   });
 
   it('refuses (422 SPORT_LEAGUE_NOT_BRACKET) a golf sport league that reseeds, on create and on update, writing nothing', async () => {
     const { service, deps } = buildService({ sports: { findById: jest.fn().mockResolvedValue(GOLF) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
+    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour', urlSegment: 'champions-tour', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
     await expect(service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });

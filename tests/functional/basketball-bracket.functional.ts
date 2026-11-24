@@ -22,7 +22,7 @@ import {
   SportEventRoundMatchResponseSchema,
   SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -32,6 +32,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportRowKeys } from '../support/sport-rows';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
 // run's own league, with one place standing for a First Four pairing, loads its
@@ -88,7 +89,7 @@ describe('SDK Functional: Basketball bracket', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -96,7 +97,7 @@ describe('SDK Functional: Basketball bracket', () => {
     const a = admin.client;
 
     // --- A league, a tournament in it, and its field --------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
     expect(conference.response?.status).toBe(201);
     const sportLeagueId = expectDefined(conference.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);

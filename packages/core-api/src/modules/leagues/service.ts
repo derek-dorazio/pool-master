@@ -495,9 +495,6 @@ export class LeagueService {
       await tx.participantContestScoringRule.deleteMany({
         where: { contestConfiguration: { contest: { leagueId } } },
       });
-      await tx.contestPrizeDefinition.deleteMany({
-        where: { contestConfiguration: { contest: { leagueId } } },
-      });
       await tx.contestConfiguration.deleteMany({
         where: { contest: { leagueId } },
       });

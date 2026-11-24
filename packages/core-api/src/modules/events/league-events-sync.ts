@@ -17,7 +17,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncRunRepository, SportLeagueRepository, SportRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncRunRepository, SportLeagueRepository } from '@poolmaster/shared/db';
 import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
@@ -54,7 +54,6 @@ const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT
 
 export interface LeagueEventsSyncOptions {
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findEventSynced'>;
-  sports: Pick<SportRepository, 'findById'>;
   scoreSource: Pick<EventScoreSourceService, 'listTourEventsForYear'>;
   sportEvents: Pick<SportEventService, 'importProviderEventYear' | 'keepProviderEventsCurrent'>;
   syncRuns: Pick<ProviderSyncRunRepository, 'create' | 'update' | 'findByBackgroundJobIds'>;
@@ -117,8 +116,6 @@ export class LeagueEventsSync {
     if (!sportLeague) throw new PermanentBackgroundJobError(`Sport league ${payload.sportLeagueId} no longer exists`);
     const selected = sportLeague.selectedProviderMapping;
     if (selected === null) throw new PermanentBackgroundJobError(`No provider syncs ${sportLeague.name}'s events any more`);
-    const sport = (await this.options.sports.findById(sportLeague.sportId))?.sport;
-    if (sport === undefined) throw new PermanentBackgroundJobError(`Sport league ${sportLeague.name} belongs to no known sport`);
 
     // A try whose job another task has claimed stops before it records a run of its own.
     if (!await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
@@ -127,7 +124,6 @@ export class LeagueEventsSync {
     const providerId = selected.providerId;
     const run = await this.options.syncRuns.create({
       providerCode: selected.providerCode,
-      sport,
       kind: ProviderSyncKind.EVENTS,
       trigger: context.trigger,
       sportLeagueId: sportLeague.id,

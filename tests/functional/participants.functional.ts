@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { createParticipant, updateParticipant } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
-import { leagueProfiles } from '../support/league-profiles';
+import { sportLeagueRowDefaults } from '../support/league-profiles';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
   expectFunctionalError,
   getFunctionalPrisma,
 } from './setup';
+import { sportRowKeys } from '../support/sport-rows';
 
 // #235 — participant writes are root-admin only (A10: authority from the token claim). Before
 // this slice any authenticated user could create or rename a shared catalog participant.
@@ -20,10 +21,10 @@ async function golfTourId(): Promise<string> {
   const database = getFunctionalPrisma();
   const sport = await database.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await database.sportLeague.create({ data: { ...(await leagueProfiles(database)), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
+  const tour = await database.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(database)), sportId: sport.id, name: `FAPI Tour ${randomUUID()}` } });
   createdSportLeagueIds.push(tour.id);
   return tour.id;
 }

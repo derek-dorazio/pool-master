@@ -30,6 +30,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     externalId: 'masters-2026',
     providerId: 'feed',
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
     name: 'The Masters',
     status: 'SCHEDULED',
     startDate: new Date('2999-04-09T12:00:00.000Z'),
@@ -65,7 +66,7 @@ const EVENT_OVERVIEW: SportEventOverview = {
   tierOrderBasis: 'ODDS',
   tierOrderCoversField: true,
   fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: AT }],
-  eventPageSlug: 'the-masters',
+  eventPagePath: '/play/golf/the-masters',
 };
 const contest = { id: 'c1', name: 'Sentry pick 6', status: 'OPEN', league: { id: 'l1', leagueCode: 'HOOPS', name: 'Office Hoops' }, contestTemplate: null, entryCount: 2, createdAt: AT };
 
@@ -375,7 +376,7 @@ describe('the event overview', () => {
         tierOrderBasis: 'ODDS',
         tierOrderCoversField: true,
         fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: ISO }],
-        eventPageSlug: 'the-masters',
+        eventPagePath: '/play/golf/the-masters',
       },
     });
   });

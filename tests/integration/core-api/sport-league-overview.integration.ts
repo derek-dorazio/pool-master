@@ -15,8 +15,9 @@ import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/in
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { findUnindexedScans } from '../index-check';
 import { recordStatements } from '../statement-log';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -32,7 +33,7 @@ const days = (count: number) => new Date(NOW.getTime() + count * DAY_MS);
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
@@ -41,7 +42,7 @@ async function golfSportId(): Promise<string> {
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
 async function sportLeague(name: string, { synced = false }: { synced?: boolean } = {}) {
   const league = await getPrisma().sportLeague.create({
-    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}` },
+    data: { ...(await sportLeagueRowDefaults(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}` },
   });
   if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
   return league;
@@ -51,7 +52,7 @@ async function event(sportLeagueId: string, input: { eventYear: number; startDat
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), ...input },
+    data: { eventSeriesId: series.id, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), ...input },
   });
 }
 
@@ -66,7 +67,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const held = await event(tour.id, { eventYear: 2027, startDate: days(30), status: 'DRAFT' });
     await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] });
     const run = (kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date, payloadJson: Prisma.InputJsonValue = {}) => ({
-      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, status, createdAt, payloadJson,
+      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: tour.id, status, createdAt, payloadJson,
     });
     await prisma.providerSyncRun.createMany({
       data: [
@@ -83,7 +84,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const { result: facts, statements } = await recordStatements(() => new PrismaSportLeagueOverviewReader(getAppPrisma()).readFacts(NOW));
 
     expect(facts.leagues).toEqual(expect.arrayContaining([
-      { id: tour.id, sport: Sport.GOLF, name: tour.name, syncProviderId: 'balldontlie', isActive: true },
+      { id: tour.id, sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 5, name: tour.name, syncProviderId: 'balldontlie', isActive: true },
     ]));
     expect(facts.latestSyncRuns.filter((latest) => latest.sportLeagueId === tour.id).sort((left, right) => left.kind.localeCompare(right.kind))).toEqual([
       expect.objectContaining({ kind: ProviderSyncKind.EVENTS, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.' }),

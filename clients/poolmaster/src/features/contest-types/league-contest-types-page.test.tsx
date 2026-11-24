@@ -6,6 +6,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { openingsUnderWay, withEventOpenings } from '@/features/contests/test/contest-admin-fixtures';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { LeagueContestTypesPage } from './league-contest-types-page';
+import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 
 const { getLeagueByCodeMock, listContestConfigTemplatesMock, listEventsMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -91,7 +92,7 @@ function primeMocks(role: 'COMMISSIONER' | 'MEMBER', { isActive = true }: { isAc
     },
   });
   listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: TEMPLATES } });
-  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NFL, name: 'NFL', sport: 'AMERICAN_FOOTBALL', participantType: null, scoringFamily: null, isActive: true }, { id: NBA, name: 'NBA', sport: 'BASKETBALL', participantType: null, scoringFamily: null, isActive: true }] } });
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: NFL, name: 'NFL', sport: 'AMERICAN_FOOTBALL' }), sportLeagueFixture({ id: NBA, name: 'NBA', sport: 'BASKETBALL' })] } });
   listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
     data: { events: options.query?.sport === 'AMERICAN_FOOTBALL' ? [NFL_WEEK] : [] },
   }));
@@ -150,9 +151,9 @@ describe('League › Contest types', () => {
       template('horse-racing-tiered', { id: 'tpl-horse-tiered', sport: 'HORSE_RACING', sportLeagueId: THOROUGHBRED, eventType: null }),
     ];
     const GOLF_LEAGUES = [
-      { id: PGA, name: 'PGA TOUR', sport: 'GOLF', participantType: null, scoringFamily: null, isActive: true, displayOrder: 10 },
-      { id: LPGA, name: 'LPGA Tour', sport: 'GOLF', participantType: null, scoringFamily: null, isActive: true, displayOrder: 20 },
-      { id: THOROUGHBRED, name: 'US Thoroughbred', sport: 'HORSE_RACING', participantType: null, scoringFamily: null, isActive: true, displayOrder: 10 },
+      sportLeagueFixture({ id: PGA, name: 'PGA TOUR', sport: 'GOLF', displayOrder: 10 }),
+      sportLeagueFixture({ id: LPGA, name: 'LPGA Tour', sport: 'GOLF', displayOrder: 20 }),
+      sportLeagueFixture({ id: THOROUGHBRED, name: 'US Thoroughbred', sport: 'HORSE_RACING', displayOrder: 10 }),
     ];
     /** A PGA TOUR tournament coming up; nothing on the LPGA Tour yet. */
     const PGA_EVENT = { ...NFL_WEEK, id: 'pga-event', sport: 'GOLF', name: 'The Players', participantCount: 144, rounds: 4, sportLeagueId: PGA };
@@ -218,7 +219,7 @@ describe('League › Contest types', () => {
     expect(await screen.findByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
     expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
     const column = screen.getByRole('navigation', { name: 'Sports and leagues' });
-    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Basketball 1', 'NBA', 'American football 2']);
+    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'American football 2', 'Basketball 1', 'NBA']);
     expect(within(column).getByRole('link', { current: 'page' })).toHaveTextContent('Basketball');
 
     fireEvent.click(screen.getByTestId('contest-types-leagues-column-american-football'));
@@ -326,7 +327,7 @@ describe('League › Contest types', () => {
     function primeBrackets(event: Record<string, unknown>) {
       primeMocks('COMMISSIONER');
       listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BRACKETS } });
-      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NCAA_MEN, name: 'NCAA Men', sport: 'BASKETBALL', participantType: null, scoringFamily: null, isActive: true }] } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: NCAA_MEN, name: 'NCAA Men', sport: 'BASKETBALL' })] } });
       listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
         data: { events: options.query?.sport === 'BASKETBALL' ? [event] : [] },
       }));

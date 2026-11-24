@@ -23,7 +23,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -33,6 +33,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
+import { sportRowKeys } from '../support/sport-rows';
 
 // Horse racing end to end over HTTP (#622, #623): an admin builds a race and its field, a
 // commissioner runs a Win/Place/Show contest from the sport's template, the draw deals each entry
@@ -88,7 +89,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.HORSE_RACING },
-      create: { sport: Sport.HORSE_RACING, participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' },
+      create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING), participantType: 'INDIVIDUAL', tournamentFormat: 'RACE' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Race Admin' });
@@ -96,7 +97,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const a = admin.client;
 
     // --- The race and its field ------------------------------------------------------------
-    const circuit = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.HORSE_RACING)), sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
+    const circuit = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.HORSE_RACING)), sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
     expect(circuit.response?.status).toBe(201);
     const sportLeagueId = expectDefined(circuit.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);

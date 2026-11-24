@@ -7,7 +7,6 @@ import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
   JobTrigger,
-  Sport,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
@@ -68,7 +67,6 @@ function build(options: {
   const logger = fakeLogger();
   const sync = new LeagueEventsSync({
     sportLeagues,
-    sports: { findById: jest.fn(async () => ({ sport: Sport.GOLF }) as never) },
     scoreSource,
     sportEvents,
     syncRuns,
@@ -228,7 +226,6 @@ describe('LeagueEventsSync', () => {
       expect(run).toMatchObject({
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         providerName: 'BALLDONTLIE',
-        sport: Sport.GOLF,
         eventId: null,
         kind: ProviderSyncKind.EVENTS,
         trigger: JobTrigger.SCHEDULE,
@@ -316,7 +313,7 @@ describe('LeagueEventsSync', () => {
       const { sync, syncRuns } = build({ leagues: [pga] });
       const jobId = randomUUID();
       const stale = await syncRuns.create({
-        providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.SCHEDULE,
+        providerCode: ProviderCode.BALLDONTLIE, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.SCHEDULE,
         sportLeagueId: pga.id, sportEventId: null, backgroundJobId: jobId, status: ProviderSyncRunStatus.IN_PROGRESS,
         startedAt: NOW, completedAt: null, payload: {},
       });

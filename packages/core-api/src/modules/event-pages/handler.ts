@@ -1,5 +1,4 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { Sport } from '@poolmaster/shared/domain';
 import type { EventPageListQuery, EventPageListResponse } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
 import { keepPublicUntil } from '../../core/public-cache';
@@ -41,12 +40,12 @@ export function createEventPageHandlers(service: EventPageService, caches: Event
   }
 
   async function getEventPage(
-    request: FastifyRequest<{ Params: { sport: Sport; pageSlug: string } }>,
+    request: FastifyRequest<{ Params: { sportUrlSegment: string; urlSegment: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
     try {
-      const { sport, pageSlug } = request.params;
-      const page = await current(caches.pages, `${sport}/${pageSlug}`, (view) => [view], () => service.getPage(sport, pageSlug));
+      const { sportUrlSegment, urlSegment } = request.params;
+      const page = await current(caches.pages, `${sportUrlSegment}/${urlSegment}`, (view) => [view], () => service.getPage(sportUrlSegment, urlSegment));
       keepPublicUntil(reply, eventPagesChangeAt([page]));
       return reply.send({ eventPage: toEventPageDto(page) });
     } catch (error) {

@@ -79,6 +79,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     externalId: 'ext-event-1',
     providerId: 'manual-admin',
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
     name: 'The Masters',
     venue: 'Augusta National',
     location: 'Augusta, GA',

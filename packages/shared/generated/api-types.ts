@@ -3168,7 +3168,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/event-pages/{sport}/{pageSlug}": {
+    "/api/v1/event-pages/{sportUrlSegment}/{urlSegment}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3177,7 +3177,7 @@ export interface paths {
         };
         /**
          * Get an event page
-         * @description One event page by its sport and slug, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.
+         * @description One event page by its address, the sport's URL segment then the page's, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["getEventPage"];
         put?: never;
@@ -9664,6 +9664,10 @@ export interface components {
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given. */
+            urlSegment: string;
+            /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
+            displayOrder: number;
             /**
              * @description Whether the sport's competitors are individuals or teams.
              * @enum {string}
@@ -9687,7 +9691,7 @@ export interface components {
         };
         /** @description The sports. */
         SportListResponse: {
-            /** @description Every sport, ordered by sport. */
+            /** @description Every sport, in display order. */
             sports: {
                 /**
                  * Format: uuid
@@ -9699,6 +9703,10 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The sport's name in web addresses, such as american-football (/play/american-football/..., /manage/sports/american-football, ?sport=american-football). Stored, never built from the code: link with it as given. */
+                urlSegment: string;
+                /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
+                displayOrder: number;
                 /**
                  * @description Whether the sport's competitors are individuals or teams.
                  * @enum {string}
@@ -9764,8 +9772,14 @@ export interface components {
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league. */
+            sportUrlSegment: string;
+            /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
+            sportDisplayOrder: number;
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
+            /** @description The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever. */
+            urlSegment: string;
             /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
             currentEventYear: number | null;
             /** @description Whether the sport league is in use; a read filter, not a write lock. */
@@ -9885,8 +9899,14 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league. */
+                sportUrlSegment: string;
+                /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
+                sportDisplayOrder: number;
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
+                /** @description The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever. */
+                urlSegment: string;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
@@ -9997,8 +10017,14 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league. */
+                sportUrlSegment: string;
+                /** @description Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first. */
+                sportDisplayOrder: number;
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
+                /** @description The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever. */
+                urlSegment: string;
                 /** @description The event year the sport league is currently on, if one is set. Always a year the sport league has events in when it was set. */
                 currentEventYear: number | null;
                 /** @description Whether the sport league is in use; a read filter, not a write lock. */
@@ -10099,6 +10125,8 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Unique within the sport. */
             name: string;
+            /** @description The sport league's name in web addresses, such as wnba: lower case letters and digits, words joined by single dashes. Unique within the sport (409 SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS), and kept forever, because addresses are. */
+            urlSegment: string;
             /**
              * @description FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
              * @enum {string}
@@ -10150,6 +10178,10 @@ export interface components {
             id: string;
             /** @enum {string} */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by. */
+            sportUrlSegment: string;
+            /** @description Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it. */
+            sportDisplayOrder: number;
             name: string;
             /** @description The provider that syncs its events. Null when none does. */
             providerId: string | null;
@@ -10297,6 +10329,10 @@ export interface components {
                 id: string;
                 /** @enum {string} */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by. */
+                sportUrlSegment: string;
+                /** @description Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it. */
+                sportDisplayOrder: number;
                 name: string;
                 /** @description The provider that syncs its events. Null when none does. */
                 providerId: string | null;
@@ -11058,8 +11094,8 @@ export interface components {
                  */
                 lastInFeedAt: string | null;
             }[];
-            /** @description The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does. */
-            eventPageSlug: string | null;
+            /** @description The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does. */
+            eventPagePath: string | null;
         };
         /** @description One event's overview. */
         SportEventOverviewResponse: {
@@ -11257,8 +11293,8 @@ export interface components {
                      */
                     lastInFeedAt: string | null;
                 }[];
-                /** @description The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does. */
-                eventPageSlug: string | null;
+                /** @description The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does. */
+                eventPagePath: string | null;
             };
         };
         /** @description One participant on the League page's Participants grid. */
@@ -11503,6 +11539,8 @@ export interface components {
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description The URL segment of the event's sport, read through its sport league: what a web address names the sport by. */
+            sportUrlSegment: string;
             /** @description Event name shown in contest and event selectors. */
             name: string;
             /** @description Venue name when known; null otherwise. */
@@ -11759,6 +11797,8 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The URL segment of the event's sport, read through its sport league: what a web address names the sport by. */
+                sportUrlSegment: string;
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -12010,6 +12050,8 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The URL segment of the event's sport, read through its sport league: what a web address names the sport by. */
+                sportUrlSegment: string;
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -12317,6 +12359,8 @@ export interface components {
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The URL segment of the event's sport, read through its sport league: what a web address names the sport by. */
+                sportUrlSegment: string;
                 /** @description Event name shown in contest and event selectors. */
                 name: string;
                 /** @description Venue name when known; null otherwise. */
@@ -14133,6 +14177,8 @@ export interface components {
             }[];
             /** @enum {string|null} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+            /** @description The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is. */
+            sportUrlSegment?: string | null;
             /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
             entryCount?: number;
             /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
@@ -14274,7 +14320,7 @@ export interface components {
              * @description When this participant was picked.
              */
             pickedAt: string;
-            /** @description Optional roster slot from the pick row. */
+            /** @description Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules). */
             slot: number | null;
             /** @description Whether this pick currently counts toward the entry's total under the counting rule. */
             isCounting: boolean;
@@ -14348,7 +14394,7 @@ export interface components {
                  * @description When this participant was picked.
                  */
                 pickedAt: string;
-                /** @description Optional roster slot from the pick row. */
+                /** @description Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules). */
                 slot: number | null;
                 /** @description Whether this pick currently counts toward the entry's total under the counting rule. */
                 isCounting: boolean;
@@ -14678,7 +14724,7 @@ export interface components {
                      * @description When this participant was picked.
                      */
                     pickedAt: string;
-                    /** @description Optional roster slot from the pick row. */
+                    /** @description Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules). */
                     slot: number | null;
                     /** @description Whether this pick currently counts toward the entry's total under the counting rule. */
                     isCounting: boolean;
@@ -14764,6 +14810,8 @@ export interface components {
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                /** @description The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is. */
+                sportUrlSegment?: string | null;
                 /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
                 entryCount?: number;
                 /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
@@ -14849,6 +14897,8 @@ export interface components {
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                /** @description The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is. */
+                sportUrlSegment?: string | null;
                 /** @description Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes. */
                 entryCount?: number;
                 /** @description Number of squads with at least one entry that submitted an event (#1197). Single-contest read only. */
@@ -21557,22 +21607,33 @@ export interface components {
             /** Format: uuid */
             id: string;
             /**
-             * @description The sport the page belongs to; its URL's first segment is this sport's path segment.
+             * @description The sport the page belongs to.
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
-            slug: string;
+            /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+            sportUrlSegment: string;
+            /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
+            urlSegment: string;
+            /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
+            path: string;
             /** @description Where the page sits among its sport's pages, lower first. */
             displayOrder: number;
             /** @description False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved. */
             isActive: boolean;
             /** @description For a retired page with a successor, the page its URL now goes to; null otherwise. */
             redirectTo: {
-                /** @enum {string} */
+                /**
+                 * @description The sport the page belongs to.
+                 * @enum {string}
+                 */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
-                slug: string;
+                /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                sportUrlSegment: string;
+                /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
+                urlSegment: string;
+                /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
+                path: string;
             } | null;
             /** @description The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons. */
             offers: {
@@ -21980,22 +22041,33 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description The sport the page belongs to; its URL's first segment is this sport's path segment.
+                 * @description The sport the page belongs to.
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
-                slug: string;
+                /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                sportUrlSegment: string;
+                /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
+                urlSegment: string;
+                /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
+                path: string;
                 /** @description Where the page sits among its sport's pages, lower first. */
                 displayOrder: number;
                 /** @description False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved. */
                 isActive: boolean;
                 /** @description For a retired page with a successor, the page its URL now goes to; null otherwise. */
                 redirectTo: {
-                    /** @enum {string} */
+                    /**
+                     * @description The sport the page belongs to.
+                     * @enum {string}
+                     */
                     sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                    /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
-                    slug: string;
+                    /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                    sportUrlSegment: string;
+                    /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
+                    urlSegment: string;
+                    /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
+                    path: string;
                 } | null;
                 /** @description The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons. */
                 offers: {
@@ -22414,22 +22486,33 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description The sport the page belongs to; its URL's first segment is this sport's path segment.
+                 * @description The sport the page belongs to.
                  * @enum {string}
                  */
                 sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
-                slug: string;
+                /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                sportUrlSegment: string;
+                /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
+                urlSegment: string;
+                /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
+                path: string;
                 /** @description Where the page sits among its sport's pages, lower first. */
                 displayOrder: number;
                 /** @description False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved. */
                 isActive: boolean;
                 /** @description For a retired page with a successor, the page its URL now goes to; null otherwise. */
                 redirectTo: {
-                    /** @enum {string} */
+                    /**
+                     * @description The sport the page belongs to.
+                     * @enum {string}
+                     */
                     sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                    /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
-                    slug: string;
+                    /** @description The sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                    sportUrlSegment: string;
+                    /** @description The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). */
+                    urlSegment: string;
+                    /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
+                    path: string;
                 } | null;
                 /** @description The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons. */
                 offers: {
@@ -24616,8 +24699,11 @@ export interface components {
             providerId: string;
             /** @description That Provider's name. */
             providerName: string;
-            /** @enum {string} */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /**
+             * @description The run's sport, its sport league's; null for a run with no sport league.
+             * @enum {string|null}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
             /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
             eventId: string | null;
             /**
@@ -24750,8 +24836,11 @@ export interface components {
             providerId: string;
             /** @description That Provider's name. */
             providerName: string;
-            /** @enum {string} */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /**
+             * @description The run's sport, its sport league's; null for a run with no sport league.
+             * @enum {string|null}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
             /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
             eventId: string | null;
             /**
@@ -24991,7 +25080,10 @@ export interface components {
              * @description Only the runs of this Provider.
              */
             providerId?: string;
-            /** @enum {string} */
+            /**
+             * @description Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
+             * @enum {string}
+             */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @enum {string} */
             status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
@@ -25017,8 +25109,11 @@ export interface components {
                 providerId: string;
                 /** @description That Provider's name. */
                 providerName: string;
-                /** @enum {string} */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /**
+                 * @description The run's sport, its sport league's; null for a run with no sport league.
+                 * @enum {string|null}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
                 /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
                 eventId: string | null;
                 /**
@@ -25163,8 +25258,11 @@ export interface components {
                 providerId: string;
                 /** @description That Provider's name. */
                 providerName: string;
-                /** @enum {string} */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /**
+                 * @description The run's sport, its sport league's; null for a run with no sport league.
+                 * @enum {string|null}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
                 /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
                 eventId: string | null;
                 /**
@@ -36710,10 +36808,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description The page's sport. */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description The page's stored URL name, such as championship-weekend. */
-                pageSlug: string;
+                /** @description The page's sport, by the sport's stored URL segment, such as american-football: the first segment of the page's web address. */
+                sportUrlSegment: string;
+                /** @description The page's stored URL segment within its sport, such as championship-weekend. */
+                urlSegment: string;
             };
             cookie?: never;
         };
@@ -37865,6 +37963,7 @@ export interface operations {
             query?: {
                 /** @description Only the runs of this Provider. */
                 providerId?: string;
+                /** @description Only the runs of this sport's sport leagues. A run with no sport league is in no sport. */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
                 /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */

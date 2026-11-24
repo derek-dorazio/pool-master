@@ -19,7 +19,7 @@ import { upperFirst } from '@/lib/upper-first';
  * years come from their own small read, and only the chosen year's tournaments load (#1251).
  */
 export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLeagueDto }) {
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { event: eventNoun } = sportVocabulary(definition);
   const yearsQuery = useSportLeagueEventYearsQuery(sportLeague.id);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -81,7 +81,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
           <LinkButton
             data-testid="root-admin-sport-league-calendar-new-tournament"
             size="sm"
-            to={`${buildSportEventListPath(sport)}/new?sportLeagueId=${sportLeague.id}&eventYear=${eventYear}`}
+            to={`${buildSportEventListPath(sportUrlSegment)}/new?sportLeagueId=${sportLeague.id}&eventYear=${eventYear}`}
           >
             {`New ${eventNoun.one}`}
           </LinkButton>

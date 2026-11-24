@@ -1,4 +1,4 @@
-import { SPORTS_BY_POPULARITY, SUPPORTED_SPORTS, getSportDefinition, sportLeagueDefinitionOf, type SelectionType, type Sport, type SportDefinition } from '@poolmaster/shared/domain';
+import { getSportDefinition, sportLeagueDefinitionOf, type SelectionType, type Sport, type SportDefinition } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportLeagueDto } from '@/lib/api';
 
 /**
@@ -23,13 +23,15 @@ export interface ContestCatalogLeague {
   sportLeagueId: string;
   /** What the page calls it, as How to Play does: "NCAA Men's Hockey", not "NCAA Division I Men". */
   name: string;
-  /** Its name in the page's link: `?sport=golf&league=pga-tour`. */
-  slug: string;
+  /** Its stored URL segment, its name in the page's link: `?sport=golf&league=pga-tour`. */
+  urlSegment: string;
   tiles: ContestTypeTile[];
 }
 
 export interface ContestCatalogSport<Group> {
   sport: Sport;
+  /** The sport's URL segment, its name in the page's link: `?sport=golf`. */
+  urlSegment: string;
   name: string;
   groups: Group[];
 }
@@ -80,8 +82,30 @@ export function contestTypeCount(leagues: readonly Pick<ContestCatalogLeague, 't
   return leagues.reduce((count, league) => count + league.tiles.length, 0);
 }
 
+/** A sport as its sport leagues carry it: its URL segment and display order, read from the API. */
+interface CatalogSportRef {
+  sport: Sport;
+  urlSegment: string;
+}
+
 /**
- * The league contest types page's catalog (#1716): each sport in the platform's order, a section
+ * Each sport with an active sport league, in the sports' display order (SportDto.displayOrder,
+ * which each league carries), the NFL's sport first: the order both catalogs list sports in.
+ */
+function sportsInDisplayOrder(sportLeagues: readonly SportLeagueDto[]): CatalogSportRef[] {
+  const bySport = new Map<Sport, SportLeagueDto>();
+  for (const sportLeague of sportLeagues) {
+    if (sportLeague.isActive && !bySport.has(sportLeague.sport)) {
+      bySport.set(sportLeague.sport, sportLeague);
+    }
+  }
+  return [...bySport.values()]
+    .sort((left, right) => left.sportDisplayOrder - right.sportDisplayOrder)
+    .map((sportLeague) => ({ sport: sportLeague.sport, urlSegment: sportLeague.sportUrlSegment }));
+}
+
+/**
+ * The league contest types page's catalog (#1716): each sport in the sports' display order, a section
  * for each of its active sport leagues in display order, listing every contest type a contest in
  * that league can be created from: its own templates, one tile per format and kind of event.
  * A contest is always created in a sport league,
@@ -92,7 +116,7 @@ export function buildLeagueContestCatalog(
   templates: readonly ContestConfigTemplateDto[],
   sportLeagues: readonly SportLeagueDto[],
 ): ContestCatalogSport<ContestCatalogLeague>[] {
-  return SUPPORTED_SPORTS.flatMap((sport) => {
+  return sportsInDisplayOrder(sportLeagues).flatMap(({ sport, urlSegment }) => {
     const sportTemplates = templates.filter((template) => template.sport === sport);
     const groups = activeSportLeaguesOf(sport, sportLeagues)
       .map((sportLeague) => {
@@ -100,12 +124,12 @@ export function buildLeagueContestCatalog(
         return {
           sportLeagueId: sportLeague.id,
           name: sportLeague.displayName ?? sportLeague.name,
-          slug: catalogSlug(sportLeague.name),
+          urlSegment: sportLeague.urlSegment,
           tiles: toTiles(sportLeague.id, offeredIn(sportLeague, definition, sportTemplates), definition.selectionTypes),
         };
       })
       .filter((league) => league.tiles.length > 0);
-    return groups.length ? [{ sport, name: getSportDefinition(sport).name, groups }] : [];
+    return groups.length ? [{ sport, urlSegment, name: getSportDefinition(sport).name, groups }] : [];
   });
 }
 
@@ -114,8 +138,8 @@ export interface PublicCatalogLeague {
   sportLeagueId: string;
   /** What the page calls it beside other sports' leagues: "NCAA Men's Basketball", not "NCAA Division I Men". */
   name: string;
-  /** Its name in the page's link: `?sport=basketball&league=wnba`. */
-  slug: string;
+  /** Its stored URL segment, its name in the page's link: `?sport=basketball&league=wnba`. */
+  urlSegment: string;
   /** What it plays: its sport's definition, with what the league overrides. */
   definition: SportDefinition;
   groups: ContestTypeTile[];
@@ -123,11 +147,6 @@ export interface PublicCatalogLeague {
 
 export interface PublicCatalogSport extends ContestCatalogSport<ContestTypeTile> {
   leagues: PublicCatalogLeague[];
-}
-
-/** A name as the page's link spells it: `NCAA Division I Men` is `ncaa-division-i-men`, `Copa América` is `copa-america`. */
-export function catalogSlug(name: string) {
-  return name.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 /** One tile per format, in the sport's format order, each led by its default, with no variations. */
@@ -164,7 +183,7 @@ function offeredIn(sportLeague: SportLeagueDto, definition: SportDefinition, spo
 }
 
 /**
- * The public How to Play page's catalog: each sport, the most popular first, with its formats,
+ * The public How to Play page's catalog: each sport in the sports' display order, with its formats,
  * one tile each, led by the format's default of the first sport league to offer it; then each of
  * its active sport leagues in display order, with the formats it offers, its own templates leading
  * its sport's, and the definition it plays. A sport league that offers none is left out, as is a sport with no templates
@@ -174,7 +193,7 @@ export function buildPublicContestCatalog(
   templates: readonly ContestConfigTemplateDto[],
   sportLeagues: readonly SportLeagueDto[],
 ): PublicCatalogSport[] {
-  return SPORTS_BY_POPULARITY.flatMap((sport) => {
+  return sportsInDisplayOrder(sportLeagues).flatMap(({ sport, urlSegment }) => {
     const definition = getSportDefinition(sport);
     const activeLeagues = activeSportLeaguesOf(sport, sportLeagues);
     // A switched-off league's own setups (#1812) shape none of its sport's tiles.
@@ -188,7 +207,7 @@ export function buildPublicContestCatalog(
         return {
           sportLeagueId: sportLeague.id,
           name: sportLeague.displayName ?? sportLeague.name,
-          slug: catalogSlug(sportLeague.name),
+          urlSegment: sportLeague.urlSegment,
           definition: leagueDefinition,
           groups: toFormatTiles(
             `${sport}/${sportLeague.id}`,
@@ -198,6 +217,6 @@ export function buildPublicContestCatalog(
         };
       })
       .filter((league) => league.groups.length > 0);
-    return groups.length && activeLeagues.length ? [{ sport, name: definition.name, groups, leagues }] : [];
+    return groups.length && activeLeagues.length ? [{ sport, urlSegment, name: definition.name, groups, leagues }] : [];
   });
 }

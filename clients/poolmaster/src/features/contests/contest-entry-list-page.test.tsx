@@ -217,6 +217,7 @@ function primeMocks(opts?: {
         selectionType: opts?.selectionType ?? 'TIERED',
         leagueId: 'league-1',
         sport: 'GOLF',
+        sportUrlSegment: 'golf',
         entryCount: entries.length,
         // Every team's entries, drafts included, as the cap counts them.
         allEntryCount: opts?.allEntryCount ?? entries.length,

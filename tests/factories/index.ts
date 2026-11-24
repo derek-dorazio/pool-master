@@ -78,6 +78,7 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     id,
     sportId: 'sport-golf',
     name: `Sport League ${id}`,
+    urlSegment: `sport-league-${id}`,
     displayName: null,
     displayOrder: null,
     currentEventYear: null,

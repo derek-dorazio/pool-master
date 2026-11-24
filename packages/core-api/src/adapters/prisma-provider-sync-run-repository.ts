@@ -13,17 +13,19 @@ import type {
 } from '@poolmaster/shared/db';
 import type { BackgroundJobRequest, ProviderSyncRun, ProviderSyncRunWithDetails } from '@poolmaster/shared/domain';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
+import { SPORT_LEAGUE_SPORT_SELECT, type SportLeagueSportRow } from './sport-of';
 
 export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(input: ProviderSyncRunCreate): Promise<ProviderSyncRun> {
     // One write: the Provider row and the event are reached by their keys.
-    const { providerCode, sportEventId, ...data } = toCreateData(input);
+    const { providerCode, sportEventId, sportLeagueId, ...data } = toCreateData(input);
     return toProviderSyncRun(await this.prisma.providerSyncRun.create({
       data: {
         ...data,
         provider: { connect: { code: providerCode } },
+        ...(sportLeagueId !== null && { sportLeague: { connect: { id: sportLeagueId } } }),
         ...(sportEventId !== null && { sportEvent: { connect: { id: sportEventId } } }),
       },
       include: RUN_RELATIONS,
@@ -99,7 +101,8 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
     const rows = await this.prisma.providerSyncRun.findMany({
       where: {
         providerId: filters.providerId,
-        sport: filters.sport,
+        // A run's sport is its sport league's (#2042).
+        ...(filters.sport !== undefined && { sportLeague: { sport: { sport: filters.sport } } }),
         status: filters.status,
         createdAt: { gte: filters.createdFrom, lte: filters.createdTo },
       },
@@ -151,11 +154,13 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
 const RUN_RELATIONS = {
   provider: { select: { name: true } },
   sportEvent: { select: { externalId: true } },
+  sportLeague: { select: SPORT_LEAGUE_SPORT_SELECT },
 } as const;
 
 type RunRow = Omit<ProviderSyncRunRow, 'detailsJson'> & {
   provider: { name: string };
   sportEvent: { externalId: string } | null;
+  sportLeague: SportLeagueSportRow | null;
 };
 
 function toProviderSyncRun(row: RunRow): ProviderSyncRun {
@@ -163,7 +168,7 @@ function toProviderSyncRun(row: RunRow): ProviderSyncRun {
     id: row.id,
     providerId: row.providerId,
     providerName: row.provider.name,
-    sport: row.sport,
+    sport: row.sportLeague?.sport.sport ?? null,
     eventId: row.sportEvent?.externalId ?? null,
     kind: row.kind,
     trigger: row.trigger,
@@ -188,7 +193,6 @@ function toPayload(payload: Prisma.JsonValue): Record<string, unknown> {
 function toCreateData(input: ProviderSyncRunCreate) {
   return {
     providerCode: input.providerCode,
-    sport: input.sport,
     kind: input.kind,
     trigger: input.trigger,
     sportLeagueId: input.sportLeagueId,

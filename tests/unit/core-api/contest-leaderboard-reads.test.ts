@@ -47,7 +47,7 @@ describe('contest leaderboard reads', () => {
     });
   });
 
-  it('reads only the entries that submitted the scored event, gives an entry with no picks an empty list, and an unslotted pick a null slot', async () => {
+  it('reads only the entries that submitted the scored event and gives an entry with no picks an empty list', async () => {
     const entries = fakeContestEntryRepo({
       findByContestWithSquad: jest.fn().mockResolvedValue([
         { id: 'entry-1', entryNumber: 1, name: 'One', squadId: 'squad-1', squadName: 'Squad One', events: [{ sportEventId: 'event-1', status: 'SUBMITTED' }] },
@@ -60,14 +60,14 @@ describe('contest leaderboard reads', () => {
       entries,
       picks: fakeContestEntryPickRepo({
         findByEntriesAndEvents: jest.fn().mockResolvedValue([
-          { id: 'pick-1', entryId: 'entry-1', sportEventId: 'event-1', sportEventParticipantId: 'sep-1', pickedAt, slot: undefined },
+          { id: 'pick-1', entryId: 'entry-1', sportEventId: 'event-1', sportEventParticipantId: 'sep-1', pickedAt },
         ]),
       }),
     }, 'contest-1', 'event-1');
 
     expect(entries.findByContestWithSquad).toHaveBeenCalledWith('contest-1', { submittedFor: 'event-1' });
     expect(rows.map((row) => [row.id, row.squad.name, row.picks])).toEqual([
-      ['entry-1', 'Squad One', [{ id: 'pick-1', sportEventParticipantId: 'sep-1', pickedAt, slot: null }]],
+      ['entry-1', 'Squad One', [{ id: 'pick-1', sportEventParticipantId: 'sep-1', pickedAt }]],
       ['entry-2', 'Squad Two', []],
     ]);
   });

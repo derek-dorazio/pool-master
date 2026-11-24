@@ -1,7 +1,7 @@
 import { eventRoundLabel, ParticipantStatus, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
-import { getParticipant, listEventYears, listEvents, listSportLeagueParticipants, listSportLeagues } from '@/lib/api';
-import type { ParticipantDto, SportEventDto, SportLeagueDto } from '@/lib/api';
+import { getParticipant, listEventYears, listEvents, listSportLeagueParticipants, listSportLeagues, listSports } from '@/lib/api';
+import type { ParticipantDto, SportDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { LOADING_TEXT } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -12,6 +12,25 @@ import { QueryKeys } from '@/lib/query-keys';
  * event list filtered by sport league), and a sport league's participants (golfers, horses). Built for
  * golf first; every sport's pages read through them since #623.
  */
+
+/**
+ * Every sport the platform runs, in its display order, with the URL segment each one's Manage
+ * pages are addressed by (#2042).
+ */
+export function useSportsQuery() {
+  return useQuery({
+    queryKey: QueryKeys.sports.list,
+    queryFn: async (): Promise<SportDto[]> => {
+      const response = await listSports();
+      if (!response.data?.sports) {
+        throwApiError(response.error, 'Sport list response is missing data.');
+      }
+      return response.data.sports;
+    },
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
 
 export function useSportLeaguesQuery(sport: Sport) {
   return useQuery({

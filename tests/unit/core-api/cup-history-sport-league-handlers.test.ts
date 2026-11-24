@@ -237,7 +237,7 @@ describe('sport league handlers', () => {
   const overviews = new SportLeagueOverviewService({
     reader: {
       readFacts: async () => ({
-        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', syncProviderId: 'balldontlie', isActive: true }],
+        leagues: [{ id: 'sl1', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour', syncProviderId: 'balldontlie', isActive: true }],
         latestSyncRuns: [],
         heldEvents: [],
         eventCounts: new Map([['sl1', 2]]),
@@ -282,7 +282,7 @@ describe('sport league handlers', () => {
 
     expect(listed.body).toEqual({
       sportLeagues: [{
-        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', providerId: 'balldontlie', isActive: true,
+        id: 'sl1', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour', providerId: 'balldontlie', isActive: true,
         syncHealth: 'NOT_RUN_YET', issues: [], season: null, nextEventStartsAt: null, eventCount: 2,
       }],
     });

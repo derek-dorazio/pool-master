@@ -25,8 +25,9 @@ import {
 } from '@poolmaster/shared/dto';
 import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -42,7 +43,7 @@ const fromNow = (ms: number) => new Date(Date.now() + ms);
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
@@ -51,7 +52,7 @@ async function golfSportId(): Promise<string> {
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
 async function sportLeague(name: string, { synced = false, ...extra }: { synced?: boolean; autoReleaseDaysBeforeStart?: number } = {}) {
   const league = await getPrisma().sportLeague.create({
-    data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
+    data: { ...(await sportLeagueRowDefaults(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
   });
   if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
   return league;
@@ -61,7 +62,7 @@ async function event(sportLeagueId: string, input: { startDate: Date; status?: '
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, eventYear: 2026, sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), syncScope: 'SCORES_ONLY', ...input },
+    data: { eventSeriesId: series.id, eventYear: 2026, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), syncScope: 'SCORES_ONLY', ...input },
   });
 }
 
@@ -75,7 +76,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
     const tour = await sportLeague('Page Tour', { synced: true });
     const other = await sportLeague('Page Other Tour', { synced: true });
     const run = (sportLeagueId: string, kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date) => ({
-      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId, status, createdAt,
+      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, status, createdAt,
       payloadJson: { stats: { writeCreated: 2, writeUpdated: 3 } },
     });
     await getPrisma().providerSyncRun.createMany({
@@ -117,7 +118,7 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
     await getPrisma().sportEventParticipant.create({ data: { sportEventId: released.id, participantId: golfer.id } });
     const synced = fromNow(-2 * HOUR_MS);
     await getPrisma().providerSyncRun.create({
-      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced, payloadJson: {} },
+      data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: tour.id, sportEventId: released.id, status: 'COMPLETED', createdAt: synced, payloadJson: {} },
     });
 
     const response = await get(`/api/v1/sport-leagues/${tour.id}/events/overview`);

@@ -5,7 +5,7 @@ import {
   contestEntryEventStatus,
   extendRules,
   findSportRow,
-  isEventPageSlug,
+  isUrlSegment,
 } from '@poolmaster/shared/domain';
 import { UpdateContestEntryRequestSchema } from '../../../packages/shared/dto';
 
@@ -21,12 +21,14 @@ describe('findSportRow', () => {
   });
 });
 
-describe('isEventPageSlug', () => {
-  it('accepts lower case words joined by single dashes and refuses capitals, doubled dashes and an end dash', () => {
-    expect(isEventPageSlug('championship-weekend')).toBe(true);
-    expect(isEventPageSlug('Championship-Weekend')).toBe(false);
-    expect(isEventPageSlug('championship--weekend')).toBe(false);
-    expect(isEventPageSlug('weekend-')).toBe(false);
+describe('isUrlSegment', () => {
+  it('accepts lower case words and digits joined by single dashes and refuses capitals, doubled dashes, an end dash and an empty segment', () => {
+    expect(isUrlSegment('championship-weekend')).toBe(true);
+    expect(isUrlSegment('Championship-Weekend')).toBe(false);
+    expect(isUrlSegment('championship--weekend')).toBe(false);
+    expect(isUrlSegment('weekend-')).toBe(false);
+    expect(isUrlSegment('')).toBe(false);
+    expect(isUrlSegment('formula-1')).toBe(true);
   });
 });
 

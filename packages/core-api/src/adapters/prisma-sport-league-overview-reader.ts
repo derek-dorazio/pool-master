@@ -22,7 +22,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
     const notCancelled = { not: SportEventStatus.CANCELLED };
     const [leagues, latestSyncRuns, heldEvents, yearGroups, nextGroups, overdueCandidates, findingGroups] = await Promise.all([
       this.prisma.sportLeague.findMany({
-        select: { id: true, name: true, ...SYNC_PROVIDER_SELECT, isActive: true, sport: { select: { sport: true } } },
+        select: { id: true, name: true, ...SYNC_PROVIDER_SELECT, isActive: true, sport: { select: { sport: true, urlSegment: true, displayOrder: true } } },
       }),
       this.latestSyncRuns(),
       this.prisma.sportEvent.findMany({
@@ -54,7 +54,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
     const leagueOfSeries = seriesLeagues(await this.prisma.eventSeries.findMany({ select: { id: true, sportLeagueId: true } }));
 
     return {
-      leagues: leagues.map(({ sport, selectedProviderMapping, ...league }) => ({ ...league, sport: sport.sport, syncProviderId: syncProviderIdOf({ selectedProviderMapping }) })),
+      leagues: leagues.map(({ sport, selectedProviderMapping, ...league }) => ({ ...league, sport: sport.sport, sportUrlSegment: sport.urlSegment, sportDisplayOrder: sport.displayOrder, syncProviderId: syncProviderIdOf({ selectedProviderMapping }) })),
       latestSyncRuns,
       heldEvents: heldEvents.flatMap((event) => {
         // The check constraint sets the time with the outcome.

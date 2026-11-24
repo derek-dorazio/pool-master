@@ -20,7 +20,6 @@ import {
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
-  SportOrder,
   type OverdueEventFacts,
   type SeasonSpan,
   type SportLeagueFindingsIssueItem,
@@ -54,6 +53,8 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
     return {
       id: league.id,
       sport: league.sport,
+      sportUrlSegment: league.sportUrlSegment,
+      sportDisplayOrder: league.sportDisplayOrder,
       name: league.name,
       providerId,
       isActive: league.isActive,
@@ -163,10 +164,8 @@ export function seasonOf(spans: readonly (SeasonSpan & { eventYear: number })[],
   return chosen === undefined ? null : { start: chosen.start, end: chosen.end };
 }
 
-const compareSport = compareByEnumOrder(SportOrder);
-
 function compareOverviews(left: SportLeagueOverview, right: SportLeagueOverview): number {
-  return compareSport(left.sport, right.sport) || left.name.localeCompare(right.name);
+  return left.sportDisplayOrder - right.sportDisplayOrder || left.name.localeCompare(right.name);
 }
 
 function groupBy<T>(items: readonly T[], key: (item: T) => string): Map<string, T[]> {

@@ -40,7 +40,7 @@ import {
   PickEmLeaderboardResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -51,6 +51,7 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
+import { sportRowKeys } from '../support/sport-rows';
 
 // A pick'em week scored against the spread end to end over HTTP (#720). An admin releases a week of
 // four unlinked basketball games and sets three spreads; a straight-up pool against the spread is
@@ -119,7 +120,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Spread Director' });
@@ -127,7 +128,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const a = admin.client;
 
     // --- A released week of four games ------------------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
+    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), sport: Sport.BASKETBALL, name: `Spread Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];

@@ -56,11 +56,11 @@ export function LeagueContestTypesPage() {
   const filterable = useMemo(() => catalog.map((sport) => ({
     ...sport,
     count: contestTypeCount(sport.groups),
-    leagues: sport.groups.map(({ slug, name }) => ({ slug, name })),
+    leagues: sport.groups.map(({ urlSegment, name }) => ({ urlSegment, name })),
   })), [catalog]);
   const choice = useSportLeagueChoice(filterable);
   const shownSports = choice.sport
-    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.league === null || choice.league.slug === group.slug) }]
+    ? [{ ...choice.sport, groups: choice.sport.groups.filter((group) => choice.league === null || choice.league.urlSegment === group.urlSegment) }]
     : catalog;
 
   // A commissioner's create links need each sport's events: a contest type with none coming up
@@ -125,7 +125,7 @@ export function LeagueContestTypesPage() {
                       <Heading level={4} variant="eyebrow">{group.name}</Heading>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {group.tiles.map((tile) => (
-                          <ContestTypeTileCard createPathFor={createPathFor(group.sportLeagueId)} key={tile.key} testId={`contest-type-${group.slug}`} tile={tile} />
+                          <ContestTypeTileCard createPathFor={createPathFor(group.sportLeagueId)} key={tile.key} testId={`contest-type-${group.urlSegment}`} tile={tile} />
                         ))}
                       </div>
                     </div>

@@ -1019,6 +1019,7 @@ export const enUS = {
     SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED: 'An event already has its bracket, so how winners advance cannot change.',
     SPORT_LEAGUE_IN_USE: 'This league is in use, so it cannot be deleted.',
     SPORT_LEAGUE_NAME_ALREADY_EXISTS: 'A sport league already uses that name.',
+    SPORT_LEAGUE_URL_SEGMENT_ALREADY_EXISTS: 'A sport league of this sport already uses that URL segment.',
     SPORT_LEAGUE_NOT_BRACKET: 'This league plays no bracket.',
     SPORT_LEAGUE_NOT_FOUND: 'Sport league not found.',
     SPORT_LEAGUE_NOT_SYNCED: 'No provider syncs this league\'s events.',

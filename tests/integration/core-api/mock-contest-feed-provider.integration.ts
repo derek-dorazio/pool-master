@@ -412,25 +412,16 @@ async function createGolfLiveEntries(input: {
     }),
   ]);
   await Promise.all([
-    ...input.leaderPicks.map((sportEventParticipantId, index) =>
-      createGolfLivePick(leader.id, sportEventParticipantId, index + 1),
-    ),
-    ...input.chaserPicks.map((sportEventParticipantId, index) =>
-      createGolfLivePick(chaser.id, sportEventParticipantId, index + 1),
-    ),
+    ...input.leaderPicks.map((sportEventParticipantId) => createGolfLivePick(leader.id, sportEventParticipantId)),
+    ...input.chaserPicks.map((sportEventParticipantId) => createGolfLivePick(chaser.id, sportEventParticipantId)),
   ]);
 
   return { leader, chaser };
 }
 
-async function createGolfLivePick(entryId: string, sportEventParticipantId: string, slot: number) {
+async function createGolfLivePick(entryId: string, sportEventParticipantId: string) {
   return getPrisma().contestEntryPick.create({
-    data: {
-      entryId,
-      sportEventParticipantId,
-      contestFormat: 'ROSTER',
-      slot,
-    },
+    data: { entryId, sportEventParticipantId },
   });
 }
 
@@ -840,12 +831,11 @@ describe('mock contest feed provider event-first verification', () => {
       '/v1/scenarios/golf-major-2026/events/golf-genesis-scottish-open-2026/detail',
     ]));
 
-    const persistedProviderSports = await prisma.sportEvent.findMany({
+    const persistedProviderEvents = await prisma.sportEvent.findMany({
       where: { providerId },
-      distinct: ['sport'],
-      select: { sport: true },
+      select: { eventSeries: { select: { sportLeague: { select: { sport: { select: { sport: true } } } } } } },
     });
-    expect(persistedProviderSports.map((row) => row.sport)).toEqual(['GOLF']);
+    expect([...new Set(persistedProviderEvents.map((row) => row.eventSeries.sportLeague.sport.sport))]).toEqual(['GOLF']);
     // #205 — each run carries the job it executed (`jobPayload`); the separate job table is gone.
     expect(scheduledRuns.map((run) => readStoredSyncRunDetails(run.detailsJson)?.jobPayload)).toEqual([
       expect.objectContaining({ jobType: 'EVENT_PARTICIPANTS_SYNC' }),

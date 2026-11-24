@@ -17,8 +17,9 @@ import { createRoundRows, createSportEventRow } from '../../support/sport-event-
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { recordStatements, statementCounts } from '../statement-log';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
 // head-to-head family's GAME writer, through the admin's result path, with the teams' provider
@@ -42,13 +43,13 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: sportOf },
-    create: { sport: sportOf, participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: sportOf, ...sportRowKeys(sportOf), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
   const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Division I Men');
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: leagueName } },
-    create: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: leagueName },
+    create: { ...(await sportLeagueRowDefaults(prisma)), sportId: sport.id, name: leagueName },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });
@@ -59,7 +60,6 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
     eventYear: 2027,
     externalId,
     providerId: PROVIDER,
-    sport: sportOf,
     name: 'Final Four',
     startDate: new Date('2027-04-03T22:00:00.000Z'),
     status: 'IN_PROGRESS',
@@ -335,6 +335,8 @@ describe('game scores from a provider', () => {
       ['SELECT sport_event_rounds', 1],
       ['SELECT sport_events', 1],
       ['SELECT sport_leagues', 1],
+      // The event's sport, read through its league (#2042), to pick its scoring family's writer.
+      ['SELECT sports', 1],
       ['UPDATE sport_event_round_matches', 2],
     ]);
     const [first, second] = await matches.findBySportEvent(event.id);
@@ -369,6 +371,7 @@ describe('game scores from a provider', () => {
       ['SELECT sport_event_rounds', 3],
       ['SELECT sport_events', 3],
       ['SELECT sport_leagues', 3],
+      ['SELECT sports', 3],
       ['UPDATE sport_event_round_matches', 4],
     ]);
   });

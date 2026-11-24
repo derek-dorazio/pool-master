@@ -60,7 +60,7 @@ async function seedSyncedEvent(golfers: number) {
     });
   }
   const failedRun = await prisma.providerSyncRun.create({
-    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId, sportEventId: event.id, status: 'FAILED', payloadJson: {} },
+    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, sportEventId: event.id, status: 'FAILED', payloadJson: {} },
   });
   return { event, field, seenAt, failedRun, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
@@ -106,8 +106,8 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     const { event } = await seedEventWithField(1, { status: SportEventStatus.DRAFT });
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId }, select: { sportLeagueId: true, name: true } });
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ select: { id: true } });
-    const slug = `event-overview-${randomUUID().slice(0, 8)}`;
-    const page = await prisma.eventPage.create({ data: { sport: event.sport, slug, displayOrder: 9000 } });
+    const urlSegment = `event-overview-${randomUUID().slice(0, 8)}`;
+    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment, displayOrder: 9000 } });
     await prisma.eventPageOffer.create({
       data: { eventPageId: page.id, sportLeagueId: series.sportLeagueId, eventSeriesName: series.name, templateId: template.id, sortOrder: 1, isPrimary: true },
     });
@@ -118,7 +118,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
       await prisma.eventPage.update({ where: { id: page.id }, data: { isActive: false } });
       const retired = okBody(await get(`/api/v1/events/${event.id}/overview`, rootAdmin), SportEventOverviewResponseSchema);
 
-      expect([offered.overview.eventPageSlug, retired.overview.eventPageSlug]).toEqual([slug, null]);
+      expect([offered.overview.eventPagePath, retired.overview.eventPagePath]).toEqual([`/play/golf/${urlSegment}`, null]);
     } finally {
       await prisma.eventPage.delete({ where: { id: page.id } });
     }

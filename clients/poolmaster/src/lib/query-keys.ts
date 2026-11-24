@@ -125,7 +125,7 @@ export const QueryKeys = {
   },
   /** The public event pages (#1007): one by its address, and the active ones of a sport or all. */
   eventPages: {
-    detail: (sport: string, pageSlug: string) => ['poolmaster', 'event-pages', sport, pageSlug] as const,
+    detail: (sportUrlSegment: string, urlSegment: string) => ['poolmaster', 'event-pages', sportUrlSegment, urlSegment] as const,
     list: (sport: string | null, upcoming: boolean) => ['poolmaster', 'event-pages', 'list', sport, upcoming] as const,
   },
   leagues: {

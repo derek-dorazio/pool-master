@@ -30,7 +30,7 @@ export function RootAdminSportEventCreatePage() {
   const [mode, setMode] = useState<CreateMode>('manual');
   const [selection, setSelection] = useState<Partial<SportEventEdition>>({});
 
-  const { sport, definition } = useManagedSport();
+  const { sport, sportUrlSegment, definition } = useManagedSport();
   const { event, sportLeague: sportLeagueNoun } = sportVocabulary(definition);
   const sportName = definition.name.toLowerCase();
   const sportLeaguesQuery = useSportLeaguesQuery(sport);
@@ -70,7 +70,7 @@ export function RootAdminSportEventCreatePage() {
           <div className="mt-3">
             <LinkButton
               data-testid="root-admin-sport-event-create-tours-link"
-              to={buildSportLeagueCreatePath(sport)}
+              to={buildSportLeagueCreatePath(sportUrlSegment)}
               variant="secondary"
             >
               New {sportLeagueNoun.one}

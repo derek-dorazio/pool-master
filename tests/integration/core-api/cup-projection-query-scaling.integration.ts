@@ -122,8 +122,8 @@ function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?:
       });
       entryIds.push(entry.id);
       await prisma.contestEntryPick.createMany({
-        data: field.slice(2 * team, 2 * team + 2).map((row, slot) => ({
-          entryId: entry.id, sportEventParticipantId: row.id, contestFormat: 'ROSTER' as const, slot: slot + 1, pickedAt: new Date(),
+        data: field.slice(2 * team, 2 * team + 2).map((row) => ({
+          entryId: entry.id, sportEventParticipantId: row.id, pickedAt: new Date(),
           isAutoPicked: selectionType === SelectionType.RANDOM_DRAW,
         })),
       });

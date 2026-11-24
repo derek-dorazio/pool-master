@@ -14,6 +14,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -31,6 +32,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       where: { sport: Sport.GOLF },
       create: {
         sport: Sport.GOLF,
+        ...sportRowKeys(Sport.GOLF),
         participantType: 'INDIVIDUAL',
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
@@ -80,7 +82,6 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         ...(await freshEventEdition(prisma)),
         externalId: `golf-leaderboard-event-${suffix}`,
         providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: `Golf Leaderboard Invitational ${suffix}`,
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
@@ -193,12 +194,12 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       }),
     ]);
     await Promise.all([
-      createGolfLeaderboardPick(entryOne.id, participants[0].id, 1),
-      createGolfLeaderboardPick(entryOne.id, participants[1].id, 2),
-      createGolfLeaderboardPick(entryOne.id, participants[2].id, 3),
-      createGolfLeaderboardPick(entryTwo.id, participants[3].id, 1),
-      createGolfLeaderboardPick(entryTwo.id, participants[1].id, 2),
-      createGolfLeaderboardPick(entryTwo.id, participants[2].id, 3),
+      createGolfLeaderboardPick(entryOne.id, participants[0].id),
+      createGolfLeaderboardPick(entryOne.id, participants[1].id),
+      createGolfLeaderboardPick(entryOne.id, participants[2].id),
+      createGolfLeaderboardPick(entryTwo.id, participants[3].id),
+      createGolfLeaderboardPick(entryTwo.id, participants[1].id),
+      createGolfLeaderboardPick(entryTwo.id, participants[2].id),
     ]);
 
     const response = await getApp().inject({
@@ -375,13 +376,8 @@ async function createGolfLeaderboardParticipant(input: {
   return sportEventParticipant;
 }
 
-async function createGolfLeaderboardPick(entryId: string, sportEventParticipantId: string, slot: number) {
+async function createGolfLeaderboardPick(entryId: string, sportEventParticipantId: string) {
   return getPrisma().contestEntryPick.create({
-    data: {
-      entryId,
-      sportEventParticipantId,
-      contestFormat: 'ROSTER',
-      slot,
-    },
+    data: { entryId, sportEventParticipantId },
   });
 }

@@ -1,11 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { SportLeagueCalendarCard } from './sport-league-calendar-card';
-import { sportEventFixture, providerMappingFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { sportEventFixture, providerMappingFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // plans/147 — a tour's tournaments by event year: the season list, the season home page,
 // "set as current" and "clone to next year" all moved here when the season was collapsed into the event.
@@ -62,7 +62,7 @@ function renderCard(sportLeague = SPORT_LEAGUE, providers = MOCK_FEED_ONLY) {
   listEventYearsMock.mockResolvedValue({ data: { years: [2026, 2025] } });
   listProvidersMock.mockResolvedValue({ data: { providers } });
   return render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider client={sportsQueryClient()}>
       <MemoryRouter initialEntries={[`/manage/sports/golf/leagues/${sportLeague.id}`]}>
         <Routes>
           <Route element={<SportLeagueCalendarCard sportLeague={sportLeague} />} path="/manage/sports/:sport/leagues/:leagueId" />

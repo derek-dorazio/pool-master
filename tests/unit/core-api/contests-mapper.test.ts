@@ -178,7 +178,6 @@ describe('toContestLeaderboardResponse', () => {
           pickId: 'pick-1',
           sportEventParticipantId: 'sep-1',
           pickedAt: new Date('2026-05-01T12:00:00.000Z'),
-          slot: 1,
           isCounting: true,
           isDropped: false,
           participant: {
@@ -228,7 +227,6 @@ describe('toContestLeaderboardResponse per-sport pick detail', () => {
         pickId: 'pick-1',
         sportEventParticipantId: 'sep-1',
         pickedAt: AS_OF,
-        slot: null,
         isCounting: true,
         isDropped: false,
         participant,

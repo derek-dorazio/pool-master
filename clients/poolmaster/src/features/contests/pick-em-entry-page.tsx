@@ -264,7 +264,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           : gamePicks.mode === PickEmMode.CONFIDENCE
           ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value. Each pick locks at its game's kickoff.`
           : `${pickInstruction}. Each correct pick scores 1 point. Each pick locks at its game's kickoff.`) : undefined}
-        helpLink={canChange ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) } : undefined}
+        helpLink={canChange ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sportUrlSegment ?? null, contest.selectionType) } : undefined}
         padded
         testId="pick-em-picks"
         title={canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}

@@ -12,7 +12,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { holdContestLocks, waitUntilBlockedBy } from '../contest-lock';
-import { ParticipantType, Sport } from '@poolmaster/shared/domain';
+import { ParticipantType } from '@poolmaster/shared/domain';
 import {
   PrismaContestEntryRepository,
   PrismaContestRepository,
@@ -21,6 +21,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { recordStatements } from '../statement-log';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -54,15 +55,14 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   })));
   const sport = await prisma.sport.upsert({
     where: { sport: 'AMERICAN_FOOTBALL' },
-    create: { sport: 'AMERICAN_FOOTBALL', participantType: 'TEAM', tournamentFormat: 'MATCHES' },
+    create: { sport: 'AMERICAN_FOOTBALL', ...sportRowKeys('AMERICAN_FOOTBALL'), participantType: 'TEAM', tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportEvent = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { sport: 'AMERICAN_FOOTBALL' })),
       externalId: `squares-${suffix}`,
       providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL,
       name: `Squares Event ${suffix}`,
       startDate: new Date('2030-02-03T23:30:00.000Z'),
       status: 'SCHEDULED',

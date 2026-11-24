@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Navigate, Route, Routes, useLocation } from 'react-router';
@@ -17,7 +17,7 @@ import { LeagueContestTemplatesTab } from './league-contest-templates-tab';
 import { LeagueEventsTab } from './league-events-tab';
 import { LeaguePageLayout } from './league-page-layout';
 import { LeagueParticipantsTab } from './league-participants-tab';
-import { providerMappingFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { providerMappingFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // The root admin's League page (#1866): the header, the tab set, and each tab's grid and dialog.
 
@@ -80,6 +80,8 @@ function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOvervi
   return {
     id: 'nba',
     sport: 'BASKETBALL',
+    sportUrlSegment: 'basketball',
+    sportDisplayOrder: 1,
     name: 'NBA',
     providerId: 'balldontlie',
     isActive: true,
@@ -195,7 +197,7 @@ function renderLeaguePage(path: string) {
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: OVERVIEWS } });
   listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['BASKETBALL'] }] } });
   listSportLeagueSyncsMock.mockResolvedValue({ data: { syncs: [sync('EVENTS'), sync('FIELD'), sync('SCORES')] } });
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryClient = sportsQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
