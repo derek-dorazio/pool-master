@@ -719,6 +719,12 @@ Contest:
   contest (its Masters finishes by Season) reads the same rows through the covered slot; its
   team-page screen is #1996.
   Hall of Lame and the record book are unchanged apart from the year rename.
+- Perpetual trophies (Derek 2026-11-24, slice 20): one per (League, `ContestConfigTemplate`),
+  a real FK replacing the event-series + selection-type key string; named from the template
+  and sport league; one plate per Season with that Season's winners; "repeat winner" means
+  consecutive Seasons. A contest whose covered slots are all `slotKind` WEEK gets none
+  (replaces the `isWeekOfGames` game-count guess). A trophy shows from its first Season
+  (`PERPETUAL_TROPHY_MIN_YEARS` goes).
 - Squares (Derek 2026-11-23, slice 18): rows are side 1 and columns side 2 by side number,
   not away and home. `ContestSquaresWinner` keeps the period, box and winning entry (frozen
   at settlement, as decided in October) but drops `homeScore`/`awayScore`; the screen reads
