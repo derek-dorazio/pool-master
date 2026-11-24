@@ -789,6 +789,13 @@ Contest:
   play-in out; the play-in is still synced and fills the bracket before the cutoff.
 - Clutch Card coverage (Derek 2026-11-24, slice 26): a Clutch Card template covers slots of one
   event only (regular-season or playoffs, never both), so one field, pick list and tier set.
+- Corrections after settlement (Derek 2026-11-24, slice 18): the feed's new value is always
+  stored; settled results stay frozen; the finding offers a root admin "Re-settle" until the
+  contest's championship year closes. Re-settling recomputes the contest and everything
+  downstream (finishes, medals, cups, the Championship), is audited and notifies the
+  league's commissioners.
+- F1 (from "F1 only car racing at launch" and sync-only): BALLDONTLIE covers F1, so slice
+  10d adds the F1 adapter on FIELD Matches (races as Games, drivers as sides).
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
@@ -880,6 +887,7 @@ In order:
     "Sync now" on the event queues the same job. In-memory per-sport timers, string locks
     are removed (`scheduledSports` already went in slice 1); the live sweep polls Games, not in-progress events,
     and the "play is underway" heuristics go (S5).
+10d. F1 adapter: races on FIELD Matches from BALLDONTLIE's F1 API.
 11. EventSeries removed; event page offers and templates point at slots: template coverage as
     `ContestConfigTemplateSlot` rows, one default per (sport league, selection type), no
     template versions.
