@@ -2,7 +2,7 @@ import { getSportDefinition } from '@poolmaster/shared/domain';
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { Button, LinkButton, PageHeader, PageTabs, Text, type PageLinkTab } from '@/features/shared/ui';
+import { Button, PageHeader, PageTabs, Text, type PageLinkTab } from '@/features/shared/ui';
 import type { SportLeagueDto } from '@/lib/api';
 import { isSyncedLeague, leaguePageTabs, type LeaguePageContext } from './league-page-context';
 import { buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
@@ -20,7 +20,7 @@ import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
 
 /**
  * /manage/sports/:sport/leagues/:leagueId, a sport league's own page (#1866): the breadcrumb back
- * to Sports, the header with the league's chips, provider and Clutch Cards, its ⚙, then the tab row
+ * to Sports, the header with the league's chips and provider, its ⚙, then the tab row
  * over the open tab. The Activity tab counts the league's failed jobs once they are read.
  */
 export function LeaguePageLayout() {
@@ -48,8 +48,6 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
   const overviews = overviewsQuery.data ?? [];
   // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const overview = overviews.find((candidate) => candidate.id === sportLeague.id);
-  // poolmaster-allow-list-lookup: the same few dozen sport leagues, for this league's Clutch Cards
-  const clutchCards = overviews.filter((candidate) => candidate.parentSportLeagueId === sportLeague.id);
   const isSynced = isSyncedLeague(sportLeague, overview);
   const tabs = leaguePageTabs(isSynced);
   // A synced league has no Tools tab, so its old link lands on Events.
@@ -89,20 +87,8 @@ function LoadedLeaguePage({ sportLeague }: { sportLeague: SportLeagueDto }) {
             <SyncHealthChip health={overview.syncHealth} />
             <SportLeagueIssueChips onOpenSyncRun={setOpenSyncRunId} overview={overview} />
             <Text tone="muted">
-              {/* poolmaster-allow-list-lookup: the parent league's name, from the sport leagues already read */}
-              {providerText(overview, (id) => overviews.find((candidate) => candidate.id === id)?.name, (id) => providerNames.get(id) ?? id)}
+              {providerText(overview, (id) => providerNames.get(id) ?? id)}
             </Text>
-            {clutchCards.map((clutchCard) => (
-              <LinkButton
-                data-testid={`root-admin-league-clutch-card-${clutchCard.id}`}
-                key={clutchCard.id}
-                size="sm"
-                to={buildSportLeaguePath(clutchCard.sport, clutchCard.id)}
-                variant="link"
-              >
-                {clutchCard.name}
-              </LinkButton>
-            ))}
           </span>
         )}
         status={<OnOffChip on={sportLeague.isActive} />}

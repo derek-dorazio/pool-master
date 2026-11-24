@@ -71,7 +71,6 @@ export type {
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
   SportEvent,
-  SportEventParent,
   SportEventReadinessReason,
   SportEventReadinessStatus,
   SportEventParticipant,

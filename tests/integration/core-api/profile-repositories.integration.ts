@@ -29,7 +29,7 @@ function uniqueName(label: string): string {
 const STANDARD_VALUES = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 describe('The migration to tier and pricing profiles', () => {
-  it('points every seeded sport league at its old layout: its sport\'s, a stat pool\'s six of five, or the College Football Playoff\'s and the PWHL\'s own count of two', async () => {
+  it('points every seeded sport league at its old layout: its sport\'s, or the College Football Playoff\'s and the PWHL\'s own count of two', async () => {
     const leagues = await getPrisma().sportLeague.findMany({
       include: { sport: true, tierProfile: true },
       orderBy: [{ sport: { sport: 'asc' } }, { name: 'asc' }],
@@ -37,12 +37,11 @@ describe('The migration to tier and pricing profiles', () => {
     const overrides: Record<string, string> = { 'College Football Playoff': '6 tiers of 2', PWHL: '2 tiers of 2' };
 
     const mismatched = leagues.flatMap((league) => {
-      const expected = overrides[league.name]
-        ?? (league.scoringFamily === 'COMPOSITE' ? STAT_POOL_TIER_PROFILE_NAME : SPORT_TIER_PROFILE_NAME[league.sport.sport]);
+      const expected = overrides[league.name] ?? SPORT_TIER_PROFILE_NAME[league.sport.sport];
       return league.tierProfile.name === expected ? [] : [`${league.sport.sport} ${league.name}: ${league.tierProfile.name}, expected ${expected}`];
     });
 
-    expect(leagues.length).toBeGreaterThan(40);
+    expect(leagues.length).toBeGreaterThan(30);
     expect(mismatched).toEqual([]);
   });
 

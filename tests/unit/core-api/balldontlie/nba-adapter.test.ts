@@ -1,19 +1,15 @@
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
-import { EventScoreSourceService } from '../../../../packages/core-api/src/modules/events/event-score-source-service';
-import { registryWith } from '../../../support/fake-sport-data-provider';
-import { asPrismaClient } from '../../../support/prisma-double';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
-import { nbaGames, nbaRoutes, nbaStatRows } from '../../../support/balldontlie-nba-routes';
+import { nbaGames, nbaRoutes } from '../../../support/balldontlie-nba-routes';
 
 /**
  * The adapter's NBA playoffs reads against a fake BALLDONTLIE that checks every request it
  * sends, and every reply it is given, against the vendor's published NBA document (see
  * balldontlie-fake-api.ts), from the NBA fixtures balldontlie-nba-routes.ts serves: the 2025
  * Finals (the 2024 season's), Oklahoma City over Indiana in seven, the 2025 season's first round
- * under way, and a whole 2023 bracket whose Finals are two games in, with the third live, for a
- * Clutch Card's box scores and stars (#1497). Fixtures holding only a round's games read as that
- * season's first round. The basketball lists also read the NCAA tournaments and the WNBA, served empty.
+ * under way, and a whole 2023 bracket whose Finals are two games in, with the third live.
+ * Fixtures holding only a round's games read as that season's first round. The basketball lists also read the NCAA tournaments and the WNBA, served empty.
  */
 
 const API_KEY = 'test-api-key';
@@ -53,7 +49,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
   afterEach(() => restore?.());
 
   describe('getUpcomingEvents', () => {
-    it('lists each season\'s playoffs and each round it has reached starting in the range, reading the seasons whose playoffs fall in its years and only their playoff games', async () => {
+    it('lists each season\'s playoffs starting in the range, reading the seasons whose playoffs fall in its years and only their playoff games', async () => {
       const harness = setup();
       restore = harness.restore;
 
@@ -62,8 +58,6 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
       expect(events.map((event) => [event.externalId, event.name, event.status, event.metadata])).toEqual([
         ['nba-2024-postseason', 'NBA Playoffs', 'COMPLETED', { tour: 'NBA', season: 2024 }],
         ['nba-2025-postseason', 'NBA Playoffs', 'IN_PROGRESS', { tour: 'NBA', season: 2025 }],
-        ['nba-2024-postseason-round-1', 'NBA First Round', 'IN_PROGRESS', { tour: 'NBA First Round', season: 2024, round: 1 }],
-        ['nba-2025-postseason-round-1', 'NBA First Round', 'IN_PROGRESS', { tour: 'NBA First Round', season: 2025, round: 1 }],
       ]);
       expect(requestLine(harness.api)).toEqual([
         '/nba/v1/games?seasons[]=2024&season_type=playoffs&per_page=100',
@@ -77,7 +71,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
 
-      expect(events.map((event) => event.externalId)).toEqual(['nba-2025-postseason', 'nba-2025-postseason-round-1']);
+      expect(events.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
       expect(seasonsRead(harness.api)).toEqual(['2025']);
     });
 
@@ -97,7 +91,7 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
 
       const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL);
 
-      expect(events.map((event) => event.externalId)).toEqual(['nba-2025-postseason', 'nba-2025-postseason-round-1']);
+      expect(events.map((event) => event.externalId)).toEqual(['nba-2025-postseason']);
       expect(seasonsRead(harness.api)).toEqual(['2025', '2026']);
     });
   });
@@ -243,133 +237,5 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
     restore = harness.restore;
 
     await expect(harness.adapter.getLiveScores('nba-2024-postseason')).rejects.toThrow('game 18444001 has no home_team');
-  });
-  describe('a playoff round, a Clutch Card\'s event (#1497)', () => {
-    it('lists each round a season has reached, a round complete once its every series is decided, the Finals under way', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      const events = await harness.adapter.getUpcomingEvents(Sport.BASKETBALL, { from: new Date('2024-01-01T00:00:00Z'), to: new Date('2024-12-31T23:59:59Z') });
-
-      expect(events.map((event) => [event.externalId, event.name, event.status, event.fieldLocked])).toEqual([
-        ['nba-2023-postseason', 'NBA Playoffs', 'IN_PROGRESS', true],
-        ['nba-2023-postseason-round-1', 'NBA First Round', 'COMPLETED', true],
-        ['nba-2023-postseason-round-2', 'NBA Conference Semifinals', 'COMPLETED', true],
-        ['nba-2023-postseason-round-3', 'NBA Conference Finals', 'COMPLETED', true],
-        ['nba-2023-postseason-round-4', 'NBA Finals', 'IN_PROGRESS', true],
-      ]);
-      expect(seasonsRead(harness.api)).toEqual(['2023']);
-    });
-
-    it('gives the Finals with both teams\' active players as its field under the round\'s tour, so they link to the NBA Finals league\'s stars, in one roster read for the two teams', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      const detail = await harness.adapter.getEventDetails('nba-2023-postseason-round-4');
-
-      expect(detail).toMatchObject({
-        externalId: 'nba-2023-postseason-round-4',
-        name: 'NBA Finals',
-        startDate: new Date('2024-06-03T23:30:00.000Z'),
-        participantCount: 5,
-        metadata: { tour: 'NBA Finals', season: 2023, round: 4 },
-      });
-      expect(detail?.participants.map((player) => [player.externalId, player.name, player.metadata])).toEqual([
-        ['nba-player-132', 'Luka Doncic', { position: 'G', team: 'Dallas Mavericks', tour: 'NBA Finals' }],
-        ['nba-player-3202', 'Jayson Tatum', { position: 'F', team: 'Boston Celtics', tour: 'NBA Finals' }],
-        ['nba-player-3547', 'Jaylen Brown', { position: 'G', team: 'Boston Celtics', tour: 'NBA Finals' }],
-        ['nba-player-56677', 'Kyrie Irving', { position: 'G', team: 'Dallas Mavericks', tour: 'NBA Finals' }],
-        ['nba-player-666786', 'Neemias Queta', { position: 'C', team: 'Boston Celtics', tour: 'NBA Finals' }],
-      ]);
-      expect(requestLine(harness.api)).toEqual([
-        '/nba/v1/games?seasons[]=2023&season_type=playoffs&per_page=100',
-        '/nba/v1/players/active?team_ids[]=2&team_ids[]=7&per_page=100',
-      ]);
-    });
-
-    it('reads the rosters of all four teams of the conference finals\' two series', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      await harness.adapter.getEventDetails('nba-2023-postseason-round-3');
-
-      expect(requestLine(harness.api)[1]).toMatch(/^\/nba\/v1\/players\/active\?(team_ids\[\]=\d+&){4}per_page=100$/);
-    });
-
-    it.each([
-      ['NBA', ['nba-2023-postseason']],
-      ['NBA Finals', ['nba-2023-postseason-round-4']],
-      ['NBA Conference Finals', ['nba-2023-postseason-round-3']],
-    ])('imports into the sport league keyed %s, by tour, only its own events of the year', async (matchKeyword, expected) => {
-      const harness = setup();
-      restore = harness.restore;
-      const prisma = { sportLeague: { findUnique: jest.fn().mockResolvedValue({ id: 'league', name: matchKeyword, matchKeyword, sport: { sport: Sport.BASKETBALL } }) } };
-      const service = new EventScoreSourceService(asPrismaClient(prisma), registryWith(harness.adapter));
-
-      const events = await service.listTourEventsForYear('balldontlie', 'league', 2024);
-
-      expect(events.map((event) => event.externalId)).toEqual(expected);
-    });
-
-    it('gives nothing for a round no series has reached, without reading a roster', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      await expect(harness.adapter.getEventDetails('nba-2025-postseason-round-2')).resolves.toBeNull();
-      expect(requestLine(harness.api)).toEqual(['/nba/v1/games?seasons[]=2025&season_type=playoffs&per_page=100']);
-    });
-
-    it('gives the Finals\' box scores in the STAT_LINE category, each game numbered within the series, reading the stats of only the games under way or done', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      const result = await harness.adapter.getLiveScores('nba-2023-postseason-round-4');
-
-      expect(result).toMatchObject({ category: 'STAT_LINE', externalEventId: 'nba-2023-postseason-round-4' });
-      const games = result.category === 'STAT_LINE' ? result.games : [];
-      expect(games.map((game) => [game.externalGameId, game.gameNumber, game.state, game.lines.length])).toEqual([
-        ['23900076', 1, ProviderGameState.FINAL, 4],
-        ['23900077', 2, ProviderGameState.FINAL, 5],
-        ['23900078', 3, ProviderGameState.IN_PROGRESS, 4],
-        ['23900079', 4, ProviderGameState.SCHEDULED, 0],
-      ]);
-      expect(games[0].lines[0]).toEqual({
-        participantExternalId: 'nba-player-3202',
-        stats: [{ stat: 'POINTS', value: 22 }, { stat: 'REBOUNDS', value: 12 }, { stat: 'ASSISTS', value: 6 }],
-      });
-      expect(requestLine(harness.api)).toEqual([
-        '/nba/v1/games?seasons[]=2023&season_type=playoffs&per_page=100',
-        '/nba/v1/stats?game_ids[]=23900076&game_ids[]=23900077&game_ids[]=23900078&per_page=100',
-      ]);
-    });
-
-    it('leaves out a player who sat a game out, listed with zero minutes, and keeps him the game he got in', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      const result = await harness.adapter.getLiveScores('nba-2023-postseason-round-4');
-
-      const queta = (gameNumber: number) => (result.category === 'STAT_LINE' ? result.games : [])
-        .find((game) => game.gameNumber === gameNumber)?.lines.find((line) => line.participantExternalId === 'nba-player-666786');
-      expect(queta(1)).toBeUndefined();
-      expect(queta(2)?.stats).toEqual([{ stat: 'POINTS', value: 2 }, { stat: 'REBOUNDS', value: 1 }, { stat: 'ASSISTS', value: 0 }]);
-    });
-
-    it('makes no stats read for a round with no game under way', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      const result = await harness.adapter.getLiveScores('nba-2025-postseason-round-2');
-
-      expect(result).toEqual({ category: 'STAT_LINE', externalEventId: 'nba-2025-postseason-round-2', games: [] });
-      expect(requestLine(harness.api)).toEqual(['/nba/v1/games?seasons[]=2025&season_type=playoffs&per_page=100']);
-    });
-
-    it('refuses a played stat row without the points Triple Threat scores, naming the player', async () => {
-      const harness = setup({ ...nbaRoutes, '/nba/v1/stats': pagedRoute([{ ...nbaStatRows[0], pts: undefined }]) });
-      restore = harness.restore;
-
-      await expect(harness.adapter.getLiveScores('nba-2023-postseason-round-4')).rejects.toThrow('player 3202\'s stat row has no pts');
-    });
   });
 });

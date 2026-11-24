@@ -8,7 +8,6 @@ import {
   isPredictionSelectionType,
   MatchPeriodLayout,
   PARTICIPANT_SCORING_DEFINITIONS,
-  ParticipantType,
   ScoringFamily,
   SelectionType,
   Sport,
@@ -520,10 +519,5 @@ describe('round labels from a sport league\'s own round names', () => {
       'First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
     ]);
     expect(eventRoundLabel({ sport: Sport.BASKETBALL }, nba, 5, 4)).toBe(getSportDefinition(Sport.BASKETBALL).roundLabel(5, 4));
-  });
-
-  it('names a stat pool event\'s rounds as games, not by its sport\'s postseason rounds', () => {
-    const worldSeries = { sport: Sport.BASEBALL, participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE };
-    expect([1, 7].map((roundNumber) => eventRoundLabel(worldSeries, [], roundNumber, 7))).toEqual(['Game 1', 'Game 7']);
   });
 });

@@ -18,7 +18,7 @@ import type {
 } from './display-strings-module';
 import type { enUS } from './en-US';
 import { DISPLAY_STRING_MODULES, SOURCE_LOCALE } from './languages';
-import { isSportNounRole, type OptionalSportWordRole, type SportNounRole, type SportWordRole } from './sport-word-roles';
+import { isSportNounRole, type OptionalSportWordRole, type SportWordRole } from './sport-word-roles';
 
 const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
 type PluralBase<K extends string> = K extends `${infer Base}_${'zero' | 'one' | 'two' | 'few' | 'many' | 'other'}` ? Base : K;
@@ -87,16 +87,10 @@ export type DisplayStringOptions = { readonly form?: DisplayForm };
 export type EnumLabelOptions = { readonly form?: DisplayForm; readonly locale?: string };
 
 /**
- * Words a definition reads from another role of its sport (#1960): a championship stat pool's
- * competitors are players and its rounds games, whatever its sport calls them. Noun for noun.
+ * Whose words to read: a sport, a sport league definition, or null for the generic words (a
+ * contest that names no sport).
  */
-export type SportWordOverrides = { readonly [R in SportNounRole]?: SportNounRole };
-
-/**
- * Whose words to read: a sport, a sport league definition with the roles it reads elsewhere, or
- * null for the generic words (a contest that names no sport).
- */
-export type SportWordSource = Sport | { readonly sport: Sport; readonly wordOverrides?: SportWordOverrides } | null;
+export type SportWordSource = Sport | { readonly sport: Sport } | null;
 
 /** A sport word lookup's options: `count` picks a noun's plural form (1 when left out). */
 export type SportWordOptions = { readonly count?: number; readonly form?: DisplayForm; readonly locale?: string | null };
@@ -197,17 +191,15 @@ export function createDisplayStrings(modules: Readonly<Record<string, DisplayStr
 
   /**
    * A sport word (#1960): the sport's own `sport.<SPORT>.<role>`, else the generic `word.<role>`,
-   * else none. A definition's override reads another role in its place.
+   * else none.
    */
   const sportWord = ((source: SportWordSource, role: SportWordRole, options?: SportWordOptions): string | undefined => {
     const sport = typeof source === 'string' || source === null ? source : source.sport;
-    const overrides = typeof source === 'string' || source === null ? undefined : source.wordOverrides;
-    const read = isSportNounRole(role) ? overrides?.[role] ?? role : role;
     const lng = moduleLocaleFor(options?.locale);
-    const candidates = sport === null ? [`word.${read}`] : [`sport.${sport}.${read}`, `word.${read}`];
+    const candidates = sport === null ? [`word.${role}`] : [`sport.${sport}.${role}`, `word.${role}`];
     const key = candidates.find((candidate) => holds(lng, candidate) || holds(SOURCE_LOCALE, candidate));
     if (key === undefined) return undefined;
-    const values = isSportNounRole(read) ? { count: options?.count ?? 1 } : undefined;
+    const values = isSportNounRole(role) ? { count: options?.count ?? 1 } : undefined;
     return lookup(key, values, options?.locale, options?.form);
   }) as SportWordLookup;
 
@@ -235,7 +227,7 @@ export function displayString<K extends DisplayStringKey>(key: K, ...args: Displ
  * What a sport's audience calls a role, in the reader's language (#1960):
  * `sportWord(Sport.GOLF, 'participant', { count: 2 })` is "golfers". A sport with no word of its
  * own reads the generic one (`word.participant`); an optional role (`rider`) may have none, and
- * reads undefined. Pass a sport league definition to read its overrides (a stat pool's players).
+ * reads undefined.
  */
 export const sportWord: SportWordLookup = ((source: SportWordSource, role: SportWordRole, options?: SportWordOptions) =>
   appDisplayStrings.sportWord(source, role, options)) as SportWordLookup;

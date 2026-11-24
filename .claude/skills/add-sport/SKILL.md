@@ -60,10 +60,6 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      single games. A league its sport's word for a sport league does not fit (tennis's "tour"
      for the NCAA's championships) sets `SportLeague.noun`, seeded with the league.
    - Finish position: points by place (horse racing, auto racing, cycling).
-   - Composite: a championship stat pool's players, each game scored by the sport's composite
-     of their stat lines (Box Score for baseball). No sport is scored by it: a sport league
-     names it, with a field of players (`SportLeague.scoringFamily`, `SportLeague.participantType`),
-     and plays the sport's stat pool definition (`sportLeagueDefinitionOf`).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
 2. **Participant type.** Individual or team.
@@ -157,11 +153,6 @@ In order:
    line for a new sport, and rewrite it when a slice adds a sport league or a format to a
    sport already there. Then open both pages and read the sport's section
    (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*, item 12).
-   A new championship stat pool league (the `add-clutch-card-league` skill has the whole recipe)
-   also belongs on the Clutch Card page's calendar
-   (`/play/clutch-card`): its round's entry in the page's copy names the league exactly as its
-   migration does, in the right sport, or the round stays "Coming soon"
-   (`rules/ux-rules.md` §13 *Event Pages*).
 9. **Tests.** The registry conformance suite covers the new definition automatically; make
    sure it runs. Add the sport's row to the sport x selection-type scenario suite
    (`tests/functional/sport-selection-scenarios.functional.ts`): one played event from its
@@ -211,7 +202,7 @@ down: a lesson that was true mid-series may not be by the end.
 ## Where this goes wrong
 
 - **Reading an event's definition off its sport alone.** A sport league can override its
-  sport's participant type and scoring family (a team sport's stat pool), so anything decided
+  sport's participant type, so anything decided
   for an event (its family, selection types, scoring definitions, tiers, rounds, whether it
   plays matches) reads `eventSportDefinition(event)` or `eventPlaysMatches(event)`. Whatever
   builds an event shape for a service (contest setup's event reader) carries the overrides

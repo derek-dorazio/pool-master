@@ -58,7 +58,6 @@ function pick(knockout: ScoredContestEntryPickDto['knockout']): ScoredContestEnt
     golf: null,
     race: null,
     knockout,
-    composite: null,
   };
 }
 

@@ -3,7 +3,7 @@
  * open, not yet (unreleased, no field, a later-round bracket's teams unknown), or closed (past
  * the setup's cutoff).
  */
-import { ContestOpening, ParticipantType, ScoringFamily, SelectionType, SportEventStatus, Sport, TournamentFormat } from '@poolmaster/shared/domain';
+import { ContestOpening, SelectionType, SportEventStatus, Sport, TournamentFormat } from '@poolmaster/shared/domain';
 import {
   bracketStartRounds,
   contestOpening,
@@ -171,11 +171,6 @@ describe('eventContestOpenings, the event list\'s openings per selection type (#
     expect(closed(eventContestOpenings(facts({ status: SportEventStatus.COMPLETED, startDate: EARLIER }), NOW))).toBe(true);
     expect(closed(eventContestOpenings(facts({ startDate: EARLIER }), NOW))).toBe(true);
     expect(closed(eventContestOpenings(facts({ sport: Sport.GOLF, status: SportEventStatus.IN_PROGRESS, startDate: EARLIER }), NOW))).toBe(true);
-  });
-
-  it('offers a stat pool event only its own definition\'s formats, with no bracket', () => {
-    const statPool = facts({ sport: Sport.BASEBALL, participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE });
-    expect(eventContestOpenings(statPool, NOW).map((row) => row.selectionType)).toEqual(['TIERED', 'BUDGET_PICK', 'RANDOM_DRAW']);
   });
 
   it('counts a bracket\'s rounds by the sport\'s default when the event sets none', () => {

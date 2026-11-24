@@ -31,21 +31,20 @@ type Story = StoryObj<typeof meta>;
 export const Entry: Story = {};
 export const Loading: Story = { args: { children: <LoadingState body="Loading team..." size="inline" /> } };
 
-/** A value that opens (#1747): a game's score on a stat pool leaderboard, that game's stats in the card. */
+/** A value that opens (#1747): a team's wins on a leaderboard, the games it played in the card. */
 export const OnAValue: Story = {
   args: {
     children: (
       <PeekCard
         facts={[
-          { label: "Points", value: "19" },
-          { label: "Rebounds", value: "7" },
-          { label: "Assists", value: "5" },
+          { label: "First Round", value: "beat Miami 4-1" },
+          { label: "Conference Semifinals", value: "beat Indiana 4-2" },
         ]}
-        title="G2 · Jayson Tatum"
+        title="Boston Celtics"
       />
     ),
-    icon: "22",
-    label: "G2 stats for Jayson Tatum",
+    icon: "2",
+    label: "Wins for Boston Celtics",
     trigger: "text",
   },
 };

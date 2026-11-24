@@ -54,7 +54,7 @@ import {
 } from '../helpers';
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
-import { leagueProfiles, STAT_POOL_TIER_PROFILE_NAME } from '../../support/league-profiles';
+import { leagueProfiles } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
@@ -229,8 +229,7 @@ async function seedLeagueActivity(jobs: number) {
 }
 
 /**
- * Rate-limited jobs on both providers: one failed on a sport league the golf provider syncs and
- * one on its Clutch Card, and one waiting to retry tomorrow on an event of each provider, so the provider list reads their
+ * Rate-limited jobs on both providers: one failed on a sport league the golf provider syncs, and one waiting to retry tomorrow on an event of each provider, so the provider list reads their
  * events, all at once.
  */
 async function seedRateLimitedJobs() {
@@ -240,9 +239,6 @@ async function seedRateLimitedJobs() {
   const sportLeague = await prisma.sportLeague.create({
     data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Tour ${suffix}`, matchKeyword: `LIM${suffix}`, eventSyncProviderId: provider.providerId },
   });
-  const clutchCard = await prisma.sportLeague.create({
-    data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `Limited Clutch Card ${suffix}`, matchKeyword: `LIMC${suffix}`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id },
-  });
   const events = await Promise.all([provider, tennisProvider].map(async (owner) => prisma.sportEvent.create({
     data: {
       eventSeriesId: (await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Limited ${owner.providerName} ${suffix}` } })).id, eventYear: 2026, name: `Limited ${owner.providerName} ${suffix}`, sport: owner.sportsCovered[0],
@@ -251,10 +247,10 @@ async function seedRateLimitedJobs() {
   })));
   await prisma.backgroundJob.createMany({
     data: [
-      ...[sportLeague, clutchCard].map((league) => ({
-        type: 'SYNC_LEAGUE_EVENTS' as const, trigger: 'SYSTEM' as const, payload: { sportLeagueId: league.id, eventYears: [2026] },
-        sportLeagueId: league.id, status: 'FAILED' as const, errorType: 'RATE_LIMITED' as const, completedAt: new Date(),
-      })),
+      {
+        type: 'SYNC_LEAGUE_EVENTS' as const, trigger: 'SYSTEM' as const, payload: { sportLeagueId: sportLeague.id, eventYears: [2026] },
+        sportLeagueId: sportLeague.id, status: 'FAILED' as const, errorType: 'RATE_LIMITED' as const, completedAt: new Date(),
+      },
       ...events.map((event) => ({
         type: 'SETTLE_SPORT_EVENT_CONTESTS' as const, trigger: 'SYSTEM' as const, payload: { sportEventId: event.id, completedAt: new Date().toISOString() },
         sportEventId: event.id, status: 'QUEUED' as const, errorType: 'RATE_LIMITED' as const, startedAt: new Date(), runAt: new Date(Date.now() + DAY),
@@ -329,7 +325,7 @@ async function seedCatalogEvents(events: number) {
 /**
  * A root admin, and `leagues` synced golf sport leagues of one run, each with what every column of
  * the Sports page reads (#1847): an upcoming event with a scheduled round, a draft its automatic
- * release held, a failed event list run and a completed field run, and a Clutch Card league of its own whose event covers the upcoming event's round.
+ * release held, a failed event list run and a completed field run.
  */
 async function seedSportLeagueOverviews(leagues: number) {
   const prisma = getPrisma();
@@ -363,16 +359,6 @@ async function seedSportLeagueOverviews(leagues: number) {
         { kind: 'EVENTS', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.FAILED, payloadJson: { outcome: { summary: 'Interrupted before it finished.' } } },
         { kind: 'FIELD', trigger: 'SCHEDULE', providerId: provider.providerId, sport: Sport.GOLF, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED, payloadJson: {} },
       ],
-    });
-    const clutchCard = await prisma.sportLeague.create({
-      data: { ...(await leagueProfiles(prisma, STAT_POOL_TIER_PROFILE_NAME)), sportId: sport.id, name: `${name} Clutch Card`, matchKeyword: `OVC${suffix}${String(index)}`, scoringFamily: 'COMPOSITE', parentSportLeagueId: sportLeague.id, parentRoundNumbers: [1] },
-    });
-    const clutchSeries = await prisma.eventSeries.create({ data: { sportLeagueId: clutchCard.id, name: `${name} Clutch Card` } });
-    await prisma.sportEvent.create({
-      data: {
-        eventSeriesId: clutchSeries.id, eventYear: 2026, name: `${name} Clutch Card`, sport: Sport.GOLF, providerId: provider.providerId,
-        externalId: `${suffix}-${String(index)}-clutch`, startDate: upcoming.startDate, parentEventId: upcoming.id, parentRoundNumbers: [1],
-      },
     });
   }
   return { suffix, rootAdmin: await createTestUser({ isRootAdmin: true }) };
@@ -495,7 +481,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET the sport league overview: the same statements for 2 leagues, each with its Clutch Card, runs, held draft and overdue event, as for 20 (#1847, #1865)', async () => {
+  it('GET the sport league overview: the same statements for 2 leagues, each with its runs, held draft and overdue event, as for 20 (#1847, #1865)', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/sport-leagues/overview',
       seed: seedSportLeagueOverviews,
@@ -503,11 +489,8 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
       rowsShown: (response) => {
         const rows = okBody(response, SportLeagueOverviewListResponseSchema).sportLeagues.filter((row) => row.name.startsWith('Overview Tour'));
         // Every seeded league shows what was seeded for it, so a read that skipped one would show here.
-        for (const row of rows.filter((overview) => overview.kind === 'REAL')) {
+        for (const row of rows) {
           expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([['SYNC', 1], ['RELEASE', 1], ['OVERDUE', 1]]);
-        }
-        for (const row of rows.filter((overview) => overview.kind === 'CLUTCH_CARD')) {
-          expect(row).toMatchObject({ syncHealth: 'ERROR', eventCount: 1 });
           expect(row.season).not.toBeNull();
         }
         return rows.length;
@@ -711,7 +694,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
     });
   });
 
-  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, their synced sport leagues and the Clutch Cards under them read in one more, and their rate-limited jobs counted in one grouped query, with their events read once for all of them, without the rest of each row', async () => {
+  it('GET the providers: one row per registered provider, with their events counted and dated in one grouped query each, their synced sport leagues read in one more, and their rate-limited jobs counted in one grouped query, with their events read once for all of them, without the rest of each row', async () => {
     const rootAdmin = await createTestUser({ isRootAdmin: true });
     await seedRateLimitedJobs();
     await expectFixedQueries({
@@ -720,7 +703,7 @@ describe('fixed-length root admin lists cost the same statements every time', ()
       call: () => get('/api/v1/ingestion/providers', rootAdmin),
       rowsShown: (response) => {
         const { providers } = okBody(response, ProviderListResponseSchema);
-        expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 3], [tennisProvider.providerId, 1]]);
+        expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 2], [tennisProvider.providerId, 1]]);
         return providers.length;
       },
       statements: 6,

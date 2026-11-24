@@ -1,76 +1,35 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { createEvent, getEventPage, listEventPages, listSportLeagues } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { EventPageOfferState, Sport } from '@poolmaster/shared/domain';
 import { EventPageListResponseSchema, EventPageResponseSchema } from '@poolmaster/shared/dto';
-import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
-import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
-import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { createSeasonEvent, deleteSeasonEvents } from './season-events';
 
 // The public event pages end to end over HTTP (#1007): a visitor with no session reads
-// Championship Weekend while its Clutch Card edition is still a draft (NOT_YET), then once the
-// edition is loaded and released with its field (OPEN), finds the page in the list, and gets a
-// 404 for an address no page has.
+// Championship Weekend once the NFL Playoffs have an edition, its bracket offer the primary one
+// that dates the page, finds the page in the list and the upcoming list, and gets a 404 for an
+// address no page has. Other suites create NFL events of their own, so the edition the page
+// shows is not asserted here; which edition an offer shows is the event page service's unit tests'.
 
-const RUN = `event-pages-${Date.now()}`;
-const SEED = join(__dirname, '../../packages/core-api/scripts/seed-golf/american-football-2026-nfl-championships-test.json');
 const YEAR = 2099;
 
-let sportLeagueId = '';
-/** The NFL playoffs events this run created for its Clutch Card editions to name as their parent. */
-const seasonEventIds: string[] = [];
-
-/** Every event of the Championship Weekend sport league, and this run's players. */
-async function cleanup(): Promise<void> {
-  const db = getFunctionalPrisma();
-  if (sportLeagueId !== '') {
-    const series = { eventSeries: { sportLeagueId } };
-    const where = { sportEvent: series };
-    await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: where } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: where } });
-    await db.sportEventParticipant.deleteMany({ where });
-    await db.sportEventRound.deleteMany({ where });
-    await db.sportEventTier.deleteMany({ where });
-    await db.sportEvent.deleteMany({ where: series });
-    await db.eventSeries.deleteMany({ where: { sportLeagueId } });
-  }
-  const participantIds = (await db.participant.findMany({ where: { externalId: { startsWith: RUN } }, select: { id: true } })).map((row) => row.id);
-  await db.participant.deleteMany({ where: { id: { in: participantIds } } });
-}
+/** The NFL Playoffs edition this run created. */
+const createdEventIds: string[] = [];
 
 afterAll(async () => {
   await cleanupFunctionalData();
-  await cleanup();
-  await deleteSeasonEvents(seasonEventIds);
+  if (createdEventIds.length > 0) {
+    const db = getFunctionalPrisma();
+    const where = { sportEventId: { in: createdEventIds } };
+    await db.sportEventRound.deleteMany({ where });
+    await db.sportEventTier.deleteMany({ where });
+    const events = await db.sportEvent.findMany({ where: { id: { in: createdEventIds } }, select: { eventSeriesId: true } });
+    await db.sportEvent.deleteMany({ where: { id: { in: createdEventIds } } });
+    await db.eventSeries.deleteMany({ where: { id: { in: events.map((event) => event.eventSeriesId) }, sportEvents: { none: {} } } });
+  }
   await disconnectFunctionalPrisma();
 });
-
-/** The Conference Championships seed moved to a future season: its schedule, players and field, no results. */
-function upcomingSeed(): SportDataFile {
-  const file = parseSportDataFile(JSON.parse(readFileSync(SEED, 'utf8')) as unknown);
-  file.scope.season = YEAR;
-  file.scope.sportLeagues = ['Championship Weekend'];
-  file.scope.contents = file.scope.contents.filter((content) => ['SCHEDULE', 'PLAYERS', 'FIELDS'].includes(content));
-  file.sportLeagues = file.sportLeagues.filter((league) => league.name === 'Championship Weekend');
-  for (const league of file.sportLeagues) {
-    for (const player of league.players) {
-      player.key = `${RUN}-${player.key}`;
-      player.name = `${player.name} ${RUN}`;
-    }
-    for (const event of league.events) {
-      event.startDate = `${YEAR}-01-24`;
-      event.endDate = `${YEAR}-01-24`;
-      for (const entry of event.field) entry.player = `${RUN}-${entry.player}`;
-      delete event.games;
-    }
-  }
-  return file;
-}
 
 async function readPage(client: Client) {
   const response = await getEventPage({ client, path: { sport: Sport.AMERICAN_FOOTBALL, pageSlug: 'championship-weekend' } });
@@ -79,52 +38,36 @@ async function readPage(client: Client) {
 }
 
 describe('SDK Functional: event pages (#1007)', () => {
-  it('shows a visitor the Clutch Card as opening later while its edition is a draft, and as open once it is released with its field', async () => {
+  it('shows a visitor Championship Weekend with the NFL bracket from the conference championships as its primary offer once the playoffs have an edition', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Event Page Editor' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    sportLeagueId = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
-      .find((league) => league.name === 'Championship Weekend')).id;
-    await cleanup();
+    const nflId = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+      .find((league) => league.name === 'NFL')).id;
+    const created = await createEvent({
+      client: a,
+      body: { sportLeagueId: nflId, eventYear: YEAR, name: 'NFL Playoffs', startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4, autoLifecycleEnabled: false },
+    });
+    expect(created.response?.status).toBe(201);
+    createdEventIds.push(expectDefined(created.data).event.id);
     const visitor = getSdkClient();
 
-    // --- Between seasons: no Clutch Card edition, so no Clutch Card offer ----------------------
-    expect((await readPage(visitor)).offers.some((offer) => offer.isPrimary)).toBe(false);
-
-    // --- A draft edition: the offer shows when it is expected ---------------------------------
-    // Its season event first, which the edition names as its parent (#1820).
-    seasonEventIds.push(await createSeasonEvent(a, {
-      sport: Sport.AMERICAN_FOOTBALL, sportLeague: 'NFL', name: `NFL Playoffs ${RUN}`, eventYear: YEAR,
-      startDate: `${YEAR}-01-10T18:00:00.000Z`, endDate: `${YEAR}-02-09T12:00:00.000Z`, rounds: 4,
-    }));
-    const draft = await createEvent({
-      client: a,
-      body: { sportLeagueId, eventYear: YEAR, name: 'Conference Championships', startDate: `${YEAR}-01-24T20:00:00.000Z`, rounds: 1, autoLifecycleEnabled: false },
-    });
-    expect(draft.response?.status).toBe(201);
-    const drafted = await readPage(visitor);
-    expect(drafted.offers.find((offer) => offer.isPrimary)).toMatchObject({
-      sportLeagueName: 'Championship Weekend',
-      state: EventPageOfferState.NOT_YET,
-      startsAtRound: null,
-      edition: { sportEventId: expectDefined(draft.data).event.id, name: 'Conference Championships', eventYear: YEAR, startDate: `${YEAR}-01-24T20:00:00.000Z` },
-      template: { templateKey: 'championship-weekend-tiered-redzone' },
-    });
-    await cleanup();
-
-    // --- Released with its field: the offer is open -----------------------------------------
-    await loadSportData(upcomingSeed(), { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
-    const released = await readPage(visitor);
-    expect(released.offers.find((offer) => offer.isPrimary)).toMatchObject({ state: EventPageOfferState.OPEN, edition: { eventYear: YEAR } });
+    // --- The page: its bracket offer is the primary, starting at the conference championships --
+    const page = await readPage(visitor);
+    const primary = expectDefined(page.offers.find((offer) => offer.isPrimary));
+    expect(primary).toMatchObject({ sportLeagueName: 'NFL', startsAtRound: 3, template: { templateKey: 'nfl-bracket-second-chance-doubling' } });
+    expect([EventPageOfferState.NOT_YET, EventPageOfferState.OPEN]).toContain(primary.state);
+    expect(page.offers.filter((offer) => offer.isPrimary)).toHaveLength(1);
 
     // --- The list carries the same page --------------------------------------------------------
     const list = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL } })).data);
-    expect(list.eventPages.find((page) => page.slug === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.state).toBe(EventPageOfferState.OPEN);
+    expect(list.eventPages.find((listed) => listed.slug === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.template.templateKey)
+      .toBe('nfl-bracket-second-chance-doubling');
 
     // --- The upcoming list: only pages with a primary edition coming, soonest first (#1202) ------
     const upcoming = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL, upcoming: true } })).data);
-    expect(upcoming.eventPages.map((page) => page.slug)).toContain('championship-weekend');
-    const starts = upcoming.eventPages.map((page) => expectDefined(page.offers.find((offer) => offer.isPrimary)).edition.startDate);
+    expect(upcoming.eventPages.map((listed) => listed.slug)).toContain('championship-weekend');
+    const starts = upcoming.eventPages.map((listed) => expectDefined(listed.offers.find((offer) => offer.isPrimary)).edition.startDate);
     expect(starts).toEqual([...starts].sort());
   });
 

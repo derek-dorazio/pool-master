@@ -8,7 +8,6 @@ import type {
   Sport,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
-  SportLeagueKind,
   SportLeagueSyncHealth,
 } from './enums';
 import type { ReleaseCheckKey } from './release-checks';
@@ -67,10 +66,7 @@ export interface SportLeagueOverview {
   id: string;
   sport: Sport;
   name: string;
-  /** The season league it is a round of (#1701), a Clutch Card's parent; null for any other. */
-  parentSportLeagueId: string | null;
-  kind: SportLeagueKind;
-  /** The provider that syncs its events; a Clutch Card's parent's. Null when none does. */
+  /** The provider that syncs its events. Null when none does. */
   providerId: string | null;
   isActive: boolean;
   syncHealth: SportLeagueSyncHealth;

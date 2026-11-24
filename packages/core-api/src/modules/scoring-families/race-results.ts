@@ -14,7 +14,6 @@ const STORES_RACE_RESULTS: Readonly<Record<ScoringFamily, boolean>> = {
   [ScoringFamily.STROKE_PLAY]: false,
   [ScoringFamily.FINISH_POSITION]: true,
   [ScoringFamily.HEAD_TO_HEAD]: false,
-  [ScoringFamily.COMPOSITE]: false,
 };
 
 /** Whether the event stores race results, by its sport league's scoring family. */

@@ -2,8 +2,7 @@
  * The facts to judge which sport events' results are overdue (#1865), for the Sports page's
  * overview and the League page's events read alike: every released event neither completed nor
  * cancelled that started long enough ago to be overdue, with its rounds and each round's latest match
- * start. A Clutch Card event plays no rounds of its own, so it takes the rounds of its parent
- * event it covers (#1820). At most three grouped reads, however many events.
+ * start. At most three grouped reads, however many events.
  */
 import type { PrismaClient } from '@prisma/client';
 import {
@@ -35,16 +34,16 @@ export async function readOverdueCandidates(
       ...(eventIds !== undefined && { id: { in: [...eventIds] } }),
     },
     select: {
-      id: true, name: true, sport: true, status: true, startDate: true, endDate: true, eventSeriesId: true, parentEventId: true, parentRoundNumbers: true,
+      id: true, name: true, sport: true, status: true, startDate: true, endDate: true, eventSeriesId: true,
     },
   });
   if (events.length === 0) return [];
 
-  const roundEventIds = [...new Set(events.map((event) => event.parentEventId ?? event.id))];
+  const roundEventIds = events.map((event) => event.id);
   const [rounds, matchStarts] = await Promise.all([
     prisma.sportEventRound.findMany({
       where: { sportEventId: { in: roundEventIds } },
-      select: { id: true, sportEventId: true, roundNumber: true, scheduledDate: true, scheduledEndAt: true },
+      select: { id: true, sportEventId: true, scheduledDate: true, scheduledEndAt: true },
     }),
     prisma.sportEventMatch.groupBy({
       by: ['sportEventRoundId'],
@@ -53,10 +52,9 @@ export async function readOverdueCandidates(
     }),
   ]);
   const latestMatchStartByRound = new Map(matchStarts.map((group) => [group.sportEventRoundId, group._max.scheduledDate]));
-  const roundsByEvent = new Map<string, (OverdueRoundFacts & { roundNumber: number })[]>();
+  const roundsByEvent = new Map<string, OverdueRoundFacts[]>();
   for (const round of rounds) {
     const facts = {
-      roundNumber: round.roundNumber,
       scheduledDate: round.scheduledDate,
       scheduledEndAt: round.scheduledEndAt,
       latestMatchStart: latestMatchStartByRound.get(round.id) ?? null,
@@ -67,8 +65,7 @@ export async function readOverdueCandidates(
   }
 
   return events.map((event) => {
-    const own = roundsByEvent.get(event.parentEventId ?? event.id) ?? [];
-    const covered = event.parentEventId === null ? own : own.filter((round) => event.parentRoundNumbers.includes(round.roundNumber));
+    const scheduled = roundsByEvent.get(event.id) ?? [];
     return {
       id: event.id,
       name: event.name,
@@ -77,7 +74,7 @@ export async function readOverdueCandidates(
       startDate: event.startDate,
       endDate: event.endDate,
       eventSeriesId: event.eventSeriesId,
-      rounds: covered.map((round) => ({ scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt, latestMatchStart: round.latestMatchStart })),
+      rounds: scheduled.map((round) => ({ scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt, latestMatchStart: round.latestMatchStart })),
     };
   });
 }

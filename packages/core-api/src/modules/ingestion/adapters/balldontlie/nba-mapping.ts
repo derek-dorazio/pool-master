@@ -2,32 +2,24 @@
  * The NBA's playoffs from BALLDONTLIE (#1496): the league as the shared series-playoffs mapping
  * needs it, the normalizers from the vendor's NBA shapes, and the two reads behind them. Each
  * round is a best of seven, one match of the bracket whose games' winners the GAME writer counts
- * (#1545). The games and teams endpoints name no paid tier in the vendor's document. A round's
- * Clutch Card (#1497) reads the round's games' stat rows (`/nba/v1/stats`) and its teams' active
- * rosters, each scored by Triple Threat: points, rebounds and assists, all of which the vendor
- * reports.
+ * (#1545). The games and teams endpoints name no paid tier in the vendor's document.
  */
 
-import { Sport, SportStat } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieContractError, type BalldontlieClient } from './balldontlie-client';
 import {
   NBA_CONFERENCES,
   NBA_PLAYOFFS_SEASON_TYPE,
   nbaGameListSchema,
-  nbaPlayerListSchema,
   nbaStandingListSchema,
-  nbaStatsListSchema,
   nbaTeamListSchema,
   type NbaStanding,
   type NbaGame,
-  type NbaPlayer,
-  type NbaStats,
   type NbaTeam,
 } from './nba-contract';
 import type { PlayoffSeedRanks } from './series-playoff-bracket';
-import type { PlayoffPlayer, PlayoffStatLine } from './series-playoff-rounds';
 import { BracketShapeKind, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
-import type { PlayoffRoundsSource } from './series-playoffs-reader';
+import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const NBA_PLAYOFFS: PlayoffsLeague = {
   key: 'nba',
@@ -50,9 +42,7 @@ export const NBA_PLAYOFFS: PlayoffsLeague = {
 
 const GAMES_PATH = '/nba/v1/games';
 const TEAMS_PATH = '/nba/v1/teams';
-const STATS_PATH = '/nba/v1/stats';
 const STANDINGS_PATH = '/nba/v1/standings';
-const ACTIVE_PLAYERS_PATH = '/nba/v1/players/active';
 
 /** A field the document leaves optional but without which a row cannot be placed or scored. */
 function required<Value>(value: Value | undefined, path: string, row: string, field: string): Value {
@@ -96,39 +86,6 @@ export function toNbaPlayoffGame(game: NbaGame): PlayoffGame {
   };
 }
 
-/** A line's minutes say the player was on the floor: any minutes or seconds other than zero. */
-function played(minutes: string | undefined): boolean {
-  return minutes !== undefined && /[1-9]/.test(minutes);
-}
-
-/**
- * A stat row as the line Triple Threat scores (points, rebounds and assists), or null for a player
- * who did not play: the vendor lists a player who did not get in with zero or empty minutes, and
- * such a player has no line, as the loader's box scores have none.
- */
-export function toNbaStatLine(row: NbaStats): PlayoffStatLine | null {
-  if (!played(row.min)) return null;
-  const player = required(row.player, STATS_PATH, 'a stat row', 'player');
-  const playerId = required(player.id, STATS_PATH, 'a stat row\'s player', 'id');
-  const label = `player ${String(playerId)}'s stat row`;
-  return {
-    gameId: required(required(row.game, STATS_PATH, label, 'game').id, STATS_PATH, label, 'game id'),
-    playerId,
-    stats: [
-      { stat: SportStat.POINTS, value: required(row.pts, STATS_PATH, label, 'pts') },
-      { stat: SportStat.REBOUNDS, value: required(row.reb, STATS_PATH, label, 'reb') },
-      { stat: SportStat.ASSISTS, value: required(row.ast, STATS_PATH, label, 'ast') },
-    ],
-  };
-}
-
-export function toNbaPlayoffPlayer(player: NbaPlayer): PlayoffPlayer {
-  const id = required(player.id, ACTIVE_PLAYERS_PATH, 'a player', 'id');
-  const name = [player.first_name, player.last_name].filter((part) => part !== undefined && part !== '').join(' ');
-  if (name === '') throw new BalldontlieContractError(ACTIVE_PLAYERS_PATH, [`player ${String(id)} has no first_name or last_name`]);
-  return { id, name, metadata: { position: player.position, team: player.team?.full_name } };
-}
-
 /**
  * Each team's rank in its conference, the seed of the 1 to 6 seeds; the 7 and 8 seeds come from
  * the play-in, so their ranks are not their seeds, and the bracket reads them from who they meet.
@@ -141,11 +98,8 @@ export function toNbaSeedRanks(standings: readonly NbaStanding[]): PlayoffSeedRa
   }));
 }
 
-/**
- * The NBA's reads: a season's playoff games (never the play-in), every team, the stat rows of some
- * games, and some teams' active rosters.
- */
-export function nbaPlayoffsSource(client: BalldontlieClient): PlayoffRoundsSource {
+/** The NBA's reads: a season's playoff games (never the play-in), every team, and the standings. */
+export function nbaPlayoffsSource(client: BalldontlieClient): PlayoffsSource {
   return {
     league: NBA_PLAYOFFS,
     async games(season) {
@@ -159,18 +113,6 @@ export function nbaPlayoffsSource(client: BalldontlieClient): PlayoffRoundsSourc
     async seedRanks(season) {
       const page = await client.get(STANDINGS_PATH, { season }, nbaStandingListSchema);
       return toNbaSeedRanks(page.data);
-    },
-    async statLines(gameIds) {
-      if (gameIds.length === 0) return [];
-      const rows = await client.getAllPages(STATS_PATH, { 'game_ids[]': gameIds }, nbaStatsListSchema);
-      return rows.flatMap((row) => {
-        const line = toNbaStatLine(row);
-        return line === null ? [] : [line];
-      });
-    },
-    async players(teamIds) {
-      const players = await client.getAllPages(ACTIVE_PLAYERS_PATH, { 'team_ids[]': teamIds }, nbaPlayerListSchema);
-      return players.map(toNbaPlayoffPlayer);
     },
   };
 }

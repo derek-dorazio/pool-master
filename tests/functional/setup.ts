@@ -360,15 +360,6 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
-  await database.sportEventParticipantStatLine.deleteMany({
-    where: {
-      participantRound: {
-        sportEventParticipantId: {
-          in: sportEventParticipantIds,
-        },
-      },
-    },
-  });
   await database.sportEventParticipantRound.deleteMany({
     where: {
       sportEventParticipantId: {

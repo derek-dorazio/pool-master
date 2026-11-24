@@ -108,7 +108,7 @@ describe('field row mappers', () => {
     });
   });
 
-  it('nests a scored row\'s valuation, its standing with golf detail, each round with golf and stat lines, and its race result', () => {
+  it('nests a scored row\'s valuation, its standing with golf detail, each round with golf, and its race result', () => {
     const view = {
       entry: { ...entry, isActive: false, inactiveReason: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 },
       participant: scottie,
@@ -118,8 +118,8 @@ describe('field row mappers', () => {
         golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 18 },
       },
       rounds: [
-        { round: { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: new Date('2026-04-09T23:00:00.000Z') }, golf: { strokes: 68, scoreToPar: -4, thru: 18 }, statLines: [{ stat: 'BIRDIES', value: 6 }] },
-        { round: { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null }, golf: null, statLines: [] },
+        { round: { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: new Date('2026-04-09T23:00:00.000Z') }, golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
+        { round: { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null }, golf: null },
       ],
       raceResult: { finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true, riderName: null },
       affiliatedWithSportLeague: false,
@@ -139,8 +139,8 @@ describe('field row mappers', () => {
       golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 18 },
     });
     expect(dto.rounds).toEqual([
-      { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4, thru: 18 }, statLines: [{ stat: 'BIRDIES', value: 6 }] },
-      { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null, golf: null, statLines: [] },
+      { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
+      { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null, golf: null },
     ]);
     expect(dto.race).toEqual({ finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true, riderName: null });
   });

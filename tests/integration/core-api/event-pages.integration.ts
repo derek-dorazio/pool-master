@@ -31,7 +31,7 @@ afterAll(async () => {
 const NOW = new Date('2030-01-10T12:00:00.000Z');
 
 describe('Seeded event pages', () => {
-  it('seeds Championship Weekend with the Clutch Card first and primary, the NFL bracket from the conference round, then NFL Squares', async () => {
+  it('seeds Championship Weekend with the NFL bracket from the conference round first and primary, then NFL Squares', async () => {
     const pages = new PrismaEventPageRepository(getAppPrisma());
 
     const page = await pages.findBySportSlug(Sport.AMERICAN_FOOTBALL, 'championship-weekend');
@@ -39,8 +39,7 @@ describe('Seeded event pages', () => {
 
     expect(page).toMatchObject({ isActive: true, redirectTo: null });
     expect(offers.map((offer) => [offer.sportLeagueName, offer.eventSeriesName, offer.template.templateKey, offer.bracketStartRound, offer.isPrimary])).toEqual([
-      ['Championship Weekend', 'Conference Championships', 'championship-weekend-tiered-redzone', null, true],
-      ['NFL', 'NFL Playoffs', 'nfl-bracket-second-chance-doubling', 3, false],
+      ['NFL', 'NFL Playoffs', 'nfl-bracket-second-chance-doubling', 3, true],
       ['NFL', 'NFL Playoffs', 'nfl-squares', null, false],
     ]);
   });
@@ -101,7 +100,7 @@ describe('PrismaEventPageRepository page reads', () => {
 });
 
 describe('Event page offers', () => {
-  /** A throwaway golf page with the seeded Clutch Card's league and a copy of its template, removed after. */
+  /** A throwaway golf page with the seeded primary offer's league and a copy of its template, removed after. */
   async function scratchPage(templateActive: boolean) {
     const prisma = getPrisma();
     const seeded = await prisma.eventPageOffer.findFirstOrThrow({ where: { isPrimary: true, eventPage: { slug: 'championship-weekend' } }, include: { template: true } });

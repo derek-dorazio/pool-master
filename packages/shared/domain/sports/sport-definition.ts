@@ -1,8 +1,6 @@
 import type { ParticipantScoringDefinitionId } from '../contest-scoring';
 import type { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
-import type { SportWordOverrides } from '../../display-strings/display-strings';
 import type { ScoringFamily } from './scoring-family';
-import type { SportComposite } from './sport-stats';
 
 /** A noun in its singular and plural, as the audience says it, read from the display strings. */
 export interface SportNoun {
@@ -56,12 +54,6 @@ export interface SportDefinition {
    */
   scoringDefinitions: readonly ParticipantScoringDefinitionId[];
   /**
-   * Roles this definition reads from another of its sport's roles (#1960): a championship stat
-   * pool's competitors are players and its rounds games. Absent reads every role as its own. The
-   * words themselves are display strings (`sportWord`, `sportVocabulary`), never registry data.
-   */
-  wordOverrides?: SportWordOverrides;
-  /**
    * The periods a game is played in, for a sport that plays matches and keeps a score at the end
    * of each one (American football's quarters). A sport league may play another layout
    * (`SportLeague.matchPeriodLayout`: men's college basketball's halves); read both through
@@ -84,14 +76,8 @@ export interface SportDefinition {
   shootout: boolean;
   /**
    * How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. A round with no
-   * proper name reads a display string (`word.roundNumber`, `word.raceNumber`, `word.gameNumber`)
+   * proper name reads a display string (`word.roundNumber`, `word.raceNumber`)
    * in the reader's locale.
    */
   roundLabel: (roundNumber: number, roundCount: number, locale?: string | null) => string;
-  /**
-   * The sport's one composite score, for a sport whose championship has a stat pool (#932): Box
-   * Score for baseball. A sport league whose scoring family is `COMPOSITE` plays it, read through
-   * `sportLeagueDefinitionOf`. Null for a sport with no stat pool.
-   */
-  composite: SportComposite | null;
 }

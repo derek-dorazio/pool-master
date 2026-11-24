@@ -143,23 +143,6 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     expect(await prisma.participantProviderMapping.count({ where: { participantId: { in: [small, large] } } })).toBe(0);
   });
 
-  it('refuses to delete a season league a playoff round names with 409 SPORT_LEAGUE_IN_USE naming the round, and keeps both', async () => {
-    const admin = await createTestUser({ isRootAdmin: true });
-    const prisma = getPrisma();
-    const sportId = await golfSportId();
-    const season = await tour(sportId);
-    const round = await prisma.sportLeague.create({ data: { ...(await leagueProfiles(prisma)), sportId, name: `Delete Guard Final ${randomUUID().slice(0, 8)}`, parentSportLeagueId: season } });
-    made.sportLeagueIds.add(round.id);
-
-    const response = await remove(`/api/v1/sport-leagues/${season}`, admin);
-
-    expect(response.statusCode).toBe(409);
-    const { error } = ErrorEnvelopeSchema.parse(response.json());
-    expect(error.code).toBe('SPORT_LEAGUE_IN_USE');
-    expect(error.message).toContain('1 playoff round');
-    expect(await prisma.sportLeague.findUnique({ where: { id: round.id }, select: { parentSportLeagueId: true } })).toEqual({ parentSportLeagueId: season });
-  });
-
   it('refuses to delete a sport league a contest setup is offered for with 409 SPORT_LEAGUE_IN_USE naming the setup, and keeps it', async () => {
     const admin = await createTestUser({ isRootAdmin: true });
     const sportLeagueId = await tour(await golfSportId());
@@ -231,10 +214,10 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
 });
 
 /**
- * Find; then one transaction: begin, lock the sport league, lock its series, its six uses (events,
- * contest setups, event page offers, cups, playoff rounds, participants: one count each), series,
+ * Find; then one transaction: begin, lock the sport league, lock its series, its five uses (events,
+ * contest setups, event page offers, cups, participants: one count each), series,
  * the leagues that muted it, the sport league, commit.
  */
-const SPORT_LEAGUE_DELETE_STATEMENTS = 14;
+const SPORT_LEAGUE_DELETE_STATEMENTS = 13;
 /** One transaction: begin, lock the participant, count their field rows, provider identities, the participant, commit. */
 const PARTICIPANT_DELETE_STATEMENTS = 6;

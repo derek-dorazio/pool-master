@@ -1,6 +1,6 @@
 import { SportEventStatus } from '@poolmaster/shared/domain';
 import { LoadAction, LoadSubject, withoutRepeatedRows, type LoadRow } from '../../../packages/core-api/scripts/seed-golf/load-report';
-import { rollingOffsetDays, selectTestSeedEvents, shiftedEventDates, testSeedParentEventId, type StoredTestEvent } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
+import { rollingOffsetDays, selectTestSeedEvents, shiftedEventDates, type StoredTestEvent } from '../../../packages/core-api/scripts/seed-golf/seed-golf-data';
 import { SportDataContent, type SportDataEvent, type SportDataFile } from '../../../packages/core-api/scripts/seed-golf/sport-data-file';
 
 // Tuesday 10 November 2026, mid-morning in New York.
@@ -217,24 +217,5 @@ describe('a test seed report', () => {
     expect(withoutRepeatedRows(rows).map((kept) => `${kept.subject} ${kept.name}`)).toEqual([
       'SPORT_LEAGUE NFL', 'PLAYER Bills', 'EVENT Test- NFL Week 1', 'EVENT Test- NFL Week 2',
     ]);
-  });
-});
-
-describe('the season event a test Clutch Card event names as its parent (#1820)', () => {
-  const candidate = (id: string, name: string, rounds: number | null, startDate: string) => ({ id, name, rounds, startDate });
-
-  it('names the latest-starting test season event with the rounds the Clutch Card league covers', () => {
-    const events = [
-      candidate('real', 'MLB Postseason', 4, '2026-12-01T12:00:00.000Z'),
-      candidate('older', 'Test- MLB Postseason', 4, '2026-11-01T12:00:00.000Z'),
-      candidate('short', 'Test- MLB Wild Card', 1, '2026-12-05T12:00:00.000Z'),
-      candidate('newest', 'Test- MLB Postseason (2)', 4, '2026-11-20T12:00:00.000Z'),
-    ];
-
-    expect(testSeedParentEventId(events, [4])).toBe('newest');
-  });
-
-  it('names none while no test season event with the rounds is on the site, so the Clutch Card event is not added', () => {
-    expect(testSeedParentEventId([candidate('real', 'MLB Postseason', 4, '2026-12-01T12:00:00.000Z'), candidate('unrounded', 'Test- MLB Postseason', null, '2026-12-01T12:00:00.000Z')], [4])).toBeNull();
   });
 });

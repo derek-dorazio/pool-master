@@ -45,7 +45,7 @@ export const BALLDONTLIE_WEBHOOK_GAME_LEAGUES: Readonly<Record<string, GameLeagu
   // The College Football Playoff (`ncaaf-2025-cfp`) and every game in its window. A college
   // quarter runs 50 to 60 minutes, and a playoff halftime plus a quarter about 85 to 90.
   ncaaf: { sport: Sport.AMERICAN_FOOTBALL, eventIdPrefix: 'ncaaf-', gameEvents: GAME_EVENTS, quietAfterMinutes: 110 },
-  // The playoffs and each playoff round's Clutch Card event (`nba-2025-postseason[-round-1]`).
+  // The playoffs (`nba-2025-postseason`).
   // A quarter runs 30 to 40 minutes, and the second plus halftime about 55.
   nba: { sport: Sport.BASKETBALL, eventIdPrefix: 'nba-', gameEvents: GAME_EVENTS, quietAfterMinutes: 75 },
   // A men's half runs 45 to 60 minutes, with timeouts and fouls late in the game.

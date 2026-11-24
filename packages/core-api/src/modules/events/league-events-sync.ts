@@ -22,7 +22,6 @@ import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
   JobTrigger,
-  isClutchCardLeague,
   type BackgroundJob,
   type BackgroundJobOutcome,
   type ProviderSyncRun,
@@ -64,9 +63,6 @@ export interface LeagueEventsSyncOptions {
   now?: () => Date;
 }
 
-/** How long after the season leagues' jobs a Clutch Card league's scheduled job is due. */
-export const CLUTCH_CARD_SYNC_DELAY_MS = 10 * 60_000;
-
 /** What one year of a league's events sync did. */
 interface YearSync {
   eventYear: number;
@@ -106,15 +102,11 @@ export class LeagueEventsSync {
   async queueScheduled(): Promise<number> {
     const leagues = await this.options.sportLeagues.findEventSynced();
     const eventYears = this.scheduledYears();
-    // A Clutch Card event names its season event (#1820), so each Clutch Card league's job is due
-    // after the season leagues' jobs: a new season event is on the site before its rounds import.
-    // One that still misses its season event is skipped as NO_PARENT_EVENT and made by a later sync.
-    const clutchCardRunAt = new Date(this.now().getTime() + CLUTCH_CARD_SYNC_DELAY_MS);
     // poolmaster-allow-direct-job: the sync schedule's timer starts each league's sync
     return this.options.jobs.enqueueAll(leagues.map((league) => syncLeagueEventsJob(this.options.jobs, {
       sportLeagueId: league.id,
       eventYears,
-    }, { start: SCHEDULE_START, ...(isClutchCardLeague(league) && { runAt: clutchCardRunAt }) })));
+    }, { start: SCHEDULE_START })));
   }
 
   /** The SYNC_LEAGUE_EVENTS job. */

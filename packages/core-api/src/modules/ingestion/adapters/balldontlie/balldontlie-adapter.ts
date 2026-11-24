@@ -28,9 +28,6 @@
  * GAME category, from which the GAME writer counts each best-of-seven series' wins (#1545).
  * Basketball's events and teams are the NCAA tournaments', the NBA's and the WNBA's, each read on
  * its own.
- * Each playoff round is an event too (#1497, `series-playoff-rounds.ts`): a Clutch Card's
- * (`nba-2025-postseason-round-4`, the NBA Finals), its teams' active players, and its games' box
- * scores in the STAT_LINE category.
  *
  * NHL (#1496, `nhl-mapping.ts` through the same shared reader): each season's playoffs as an
  * event (`nhl-2025-postseason`), its teams, and every playoff game's score in the GAME category,
@@ -79,9 +76,8 @@ import { MLB_POSTSEASON, mlbPostseasonSource } from './mlb-mapping';
 import { NBA_PLAYOFFS, nbaPlayoffsSource } from './nba-mapping';
 import { WNBA_PLAYOFFS, wnbaPlayoffsSource } from './wnba-mapping';
 import { NHL_PLAYOFFS, nhlPlayoffsSource } from './nhl-mapping';
-import { parsePlayoffRoundScope } from './series-playoff-rounds';
 import { parsePlayoffsScope } from './series-playoffs';
-import { PlayoffRoundsReader, PlayoffsReader } from './series-playoffs-reader';
+import { PlayoffsReader } from './series-playoffs-reader';
 import { EPL_TOUR, parseEplScope } from './epl-mapping';
 import { EplReader } from './epl-reader';
 import { FIFA_WC_TOUR, parseWorldCupScope } from './fifa-world-cup-mapping';
@@ -172,7 +168,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly client: BalldontlieClient;
   private readonly nfl: NflReader;
   private readonly ncaaf: NcaafReader;
-  private readonly nba: PlayoffRoundsReader;
+  private readonly nba: PlayoffsReader;
   private readonly nhl: PlayoffsReader;
   private readonly mlb: PlayoffsReader;
   private readonly wnba: PlayoffsReader;
@@ -190,7 +186,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     this.logger = options.logger;
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
     this.ncaaf = new NcaafReader(this.client, options.now ?? Date.now);
-    this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
+    this.nba = new PlayoffsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
     this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
     this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.now ?? Date.now, options.logger);
     this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
@@ -320,10 +316,6 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     if (ncaaScope) {
       return this.ncaa[ncaaScope.league.key].eventDetails(ncaaScope.season);
     }
-    const nbaRound = parsePlayoffRoundScope(NBA_PLAYOFFS, eventId);
-    if (nbaRound !== null) {
-      return this.nba.roundEventDetails(nbaRound.season, nbaRound.round);
-    }
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {
       return this.nba.eventDetails(nbaSeason);
@@ -393,10 +385,6 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const ncaaScope = parseNcaaTournamentScope(eventId);
     if (ncaaScope) {
       return this.ncaa[ncaaScope.league.key].liveScores(ncaaScope.season);
-    }
-    const nbaRound = parsePlayoffRoundScope(NBA_PLAYOFFS, eventId);
-    if (nbaRound !== null) {
-      return this.nba.roundLiveScores(nbaRound.season, nbaRound.round);
     }
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {

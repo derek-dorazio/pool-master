@@ -32,7 +32,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, type SportComposite, sportPlaysMatches, SPORT_STAT_VALUE_MAX, SportStat, sportStatValueMin, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -51,11 +51,6 @@ export const SportDataContent = {
   BRACKET: 'BRACKET',
   /** Made-up odds, tiers, prices and scores; test data only. */
   RESULTS: 'RESULTS',
-  /**
-   * A championship stat pool's box scores (#935): each game's line for every player who played
-   * it, real data. Only a file of stat pool leagues (scored by the composite family) has it.
-   */
-  STATS: 'STATS',
 } as const;
 export type SportDataContent = (typeof SportDataContent)[keyof typeof SportDataContent];
 
@@ -75,22 +70,6 @@ const PlayerSchema = z.object({
   countryCode: z.string().length(2),
   /** The player's ranking on the sport league, set when they join it. */
   ranking: z.number().int().positive(),
-  /** A stat pool player's team ("Los Angeles Dodgers"), stored as their team affiliation. */
-  team: z.string().min(1).max(255).optional(),
-  /** A stat pool player's position ("SS"), stored as their role. */
-  position: z.string().min(1).max(50).optional(),
-}).strict();
-
-/** A box score line's stats: each one the sport's composite counts, a stat left out counting 0. Only yards go below 0. */
-const StatLineSchema = z.object(Object.fromEntries(
-  Object.values(SportStat).map((stat) => [stat, z.number().int().min(-SPORT_STAT_VALUE_MAX).max(SPORT_STAT_VALUE_MAX).optional()]),
-) as Record<SportStat, z.ZodOptional<z.ZodNumber>>).strict();
-
-const GameSchema = z.object({
-  /** The game's place in the series, its round: 1 for Game 1. */
-  gameNumber: z.number().int().min(1),
-  /** Every player who played it, each once: a key from the event's field and their line. */
-  lines: z.array(z.object({ player: z.string().min(1), stats: StatLineSchema }).strict()),
 }).strict();
 
 const FieldEntrySchema = z.object({
@@ -210,8 +189,6 @@ const EventSchema = z.object({
   field: z.array(FieldEntrySchema),
   /** A bracket sport's only: the event's bracket, every match of it. */
   matches: z.array(MatchSchema).optional(),
-  /** A stat pool's only (STATS): the box scores of the games played so far. */
-  games: z.array(GameSchema).optional(),
 }).strict();
 
 const SportLeagueSchema = z.object({
@@ -245,7 +222,6 @@ type ParsedSportDataFile = z.infer<typeof SportDataFileSchema>;
 export type SportDataPlayer = z.infer<typeof PlayerSchema>;
 export type SportDataFieldEntry = z.infer<typeof FieldEntrySchema>;
 export type SportDataMatch = z.infer<typeof MatchSchema>;
-export type SportDataGame = z.infer<typeof GameSchema>;
 export type SportDataEvent = z.infer<typeof EventSchema>;
 export type SportDataLeague = z.infer<typeof SportLeagueSchema>;
 export type SportDataFile = Omit<ParsedSportDataFile, 'scope'> & {
@@ -342,8 +318,6 @@ const SeedResults = {
   MATCH_RESULTS: 'MATCH_RESULTS',
   /** A race: each field entry's raceResult. */
   FINISHING_ORDER: 'FINISHING_ORDER',
-  /** A stat pool: each game's real box score (STATS), the field tiered by its ranking. */
-  STAT_LINES: 'STAT_LINES',
 } as const;
 type SeedResults = (typeof SeedResults)[keyof typeof SeedResults];
 
@@ -351,10 +325,9 @@ const SEED_RESULTS: Readonly<Record<ScoringFamily, SeedResults>> = {
   [ScoringFamily.STROKE_PLAY]: SeedResults.STROKE_ROUNDS,
   [ScoringFamily.HEAD_TO_HEAD]: SeedResults.MATCH_RESULTS,
   [ScoringFamily.FINISH_POSITION]: SeedResults.FINISHING_ORDER,
-  [ScoringFamily.COMPOSITE]: SeedResults.STAT_LINES,
 };
 
-function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, playsBracket: boolean, results: SeedResults, composite: SportComposite | null, problems: string[]): void {
+function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, playsBracket: boolean, results: SeedResults, problems: string[]): void {
   const contents = new Set(file.scope.contents);
   for (const key of duplicates(league.players.map((player) => player.key))) {
     problems.push(`${league.name}: player key ${key} appears more than once.`);
@@ -409,9 +382,7 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
         }
         if (entry.raceResult !== undefined) problems.push(`${where}: ${entry.player} carries raceResult, which only a race's test seed has.`);
       } else {
-        // A stat pool's field is tiered by its ranking (the regular season's composite), never odds.
-        if (results === SeedResults.STAT_LINES && entry.ranking === undefined) problems.push(`${where}: ${entry.player} needs a ranking in test data, to tier the field by.`);
-        if (results !== SeedResults.STAT_LINES && entry.oddsToWin === undefined) problems.push(`${where}: ${entry.player} needs oddsToWin in test data.`);
+        if (entry.oddsToWin === undefined) problems.push(`${where}: ${entry.player} needs oddsToWin in test data.`);
         const golfOnly = GOLF_ONLY_FIELD_KEYS.filter((key) => entry[key] !== undefined);
         if (golfOnly.length > 0) problems.push(`${where}: ${entry.player} carries ${golfOnly.join(', ')}, which only a golf test seed has.`);
         if (results === SeedResults.FINISHING_ORDER && entry.raceResult === undefined) problems.push(`${where}: ${entry.player} needs raceResult in test data.`);
@@ -435,36 +406,8 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
       problems.push(`${where}: ${key} is in the field but in no match, and the release refuses a field member left out of the games.`);
     }
     for (const problem of periodScoreProblems(file.scope.sport, matches)) problems.push(`${where}: ${problem}.`);
-    for (const problem of gameProblems(event, fieldKeys, contents.has(SportDataContent.STATS), composite)) problems.push(`${where}: ${problem}.`);
     for (const problem of tieProblems(event, matches)) problems.push(`${where}: ${problem}.`);
   }
-}
-
-/**
- * What is wrong with a stat pool event's box scores: a game the event does not schedule or given
- * twice, a player off the field or listed twice in a game, or a stat the sport's composite does
- * not count.
- */
-function gameProblems(event: SportDataEvent, fieldKeys: ReadonlySet<string>, loadsStats: boolean, composite: SportComposite | null): string[] {
-  const games = event.games ?? [];
-  if (games.length === 0) return [];
-  if (!loadsStats) return ['has box scores, but the scope\'s contents leave out STATS'];
-  const problems: string[] = [];
-  for (const number of duplicates(games.map((game) => String(game.gameNumber)))) problems.push(`game ${number} appears more than once`);
-  const counted = new Set<string>(composite?.stats ?? []);
-  for (const game of games) {
-    if (game.gameNumber > event.rounds) problems.push(`game ${game.gameNumber} is beyond its ${event.rounds} games`);
-    for (const key of duplicates(game.lines.map((line) => line.player))) problems.push(`game ${game.gameNumber}: ${key} has more than one line`);
-    for (const line of game.lines) {
-      if (!fieldKeys.has(line.player)) problems.push(`game ${game.gameNumber}: ${line.player} is not in the field`);
-      const strays = Object.keys(line.stats).filter((stat) => !counted.has(stat));
-      if (strays.length > 0) problems.push(`game ${game.gameNumber}: ${line.player}'s ${strays.join(', ')} ${strays.length === 1 ? 'is not a stat' : 'are not stats'} the ${composite?.name ?? 'composite'} counts`);
-      for (const [stat, value] of Object.entries(line.stats) as Array<[SportStat, number]>) {
-        if (value < sportStatValueMin(stat)) problems.push(`game ${game.gameNumber}: ${line.player}'s ${stat} is ${value}; only yards go below 0`);
-      }
-    }
-  }
-  return problems;
 }
 
 /**
@@ -551,17 +494,8 @@ export function parseSportDataFile(json: unknown): SportDataFile {
     problems.push(`scope.sport ${sport} is not a sport in the sport registry.`);
   }
   const contents = new Set(file.scope.contents);
-  // A file of box scores is a stat pool's: its leagues play golf's shape, whatever their sport plays.
-  const statPool = contents.has(SportDataContent.STATS);
-  const composite = isSport(sport) && statPool ? getSportDefinition(sport).composite : null;
-  const strokePlay = isSport(sport) && !statPool && getSportDefinition(sport).scoringFamily === ScoringFamily.STROKE_PLAY;
-  const playsBracket = isSport(sport) && !statPool && sportPlaysMatches(sport);
-  if (statPool && !contents.has(SportDataContent.FIELDS)) {
-    problems.push('scope.contents has STATS without FIELDS: a box score names field players, so the file carries the field.');
-  }
-  if (isSport(sport) && statPool && composite === null) {
-    problems.push(`scope.contents has STATS, but ${getSportDefinition(sport).name.toLowerCase()} has no stat pool.`);
-  }
+  const strokePlay = isSport(sport) && getSportDefinition(sport).scoringFamily === ScoringFamily.STROKE_PLAY;
+  const playsBracket = isSport(sport) && sportPlaysMatches(sport);
   if (contents.has(SportDataContent.FIELDS) && !contents.has(SportDataContent.PLAYERS)) {
     problems.push('scope.contents has FIELDS without PLAYERS: a field names its players, so the file carries them.');
   }
@@ -599,9 +533,8 @@ export function parseSportDataFile(json: unknown): SportDataFile {
   }
   // An unknown sport is already refused; its par is not worth a second problem.
   // An unknown sport's entries are read as a bracket's, which asks least of them.
-  const results = statPool ? SeedResults.STAT_LINES
-    : isSport(sport) ? SEED_RESULTS[getSportDefinition(sport).scoringFamily] : SeedResults.MATCH_RESULTS;
-  for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), playsBracket || !isSport(sport), results, composite, problems);
+  const results = isSport(sport) ? SEED_RESULTS[getSportDefinition(sport).scoringFamily] : SeedResults.MATCH_RESULTS;
+  for (const league of file.sportLeagues) checkLeague(league, file, strokePlay || !isSport(sport), playsBracket || !isSport(sport), results, problems);
 
   if (problems.length > 0 || !isSport(sport)) throw new SportDataFileError(problems);
   return { ...file, scope: { ...file.scope, sport } };

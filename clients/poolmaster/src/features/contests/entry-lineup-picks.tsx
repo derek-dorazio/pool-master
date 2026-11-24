@@ -46,7 +46,7 @@ function orderPicks(picks: readonly ContestEntryParticipantDetailDto[], values: 
   });
 }
 
-/** A pick's team and playing role, where it has them: a Clutch Card's "KC QB". */
+/** A pick's team and playing role, where it has them: "KC QB". */
 function pickAffiliation(pick: ContestEntryParticipantDetailDto) {
   return [pick.teamAffiliation, pick.role].filter(Boolean).join(' ');
 }

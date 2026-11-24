@@ -24,7 +24,7 @@ specified in [`BACKGROUND-JOBS.md`](BACKGROUND-JOBS.md).
 - **A participant links by feed id only**, within its event's sport league. Names are never
   compared. Test data shares a row with the sync by carrying the same feed id.
 - **Each league adds a reader, not a pipeline**: a scope id format, a few vendor reads, and a
-  mapping into one of three shared shapes (`GOLF`, `GAME`, `STAT_LINE`).
+  mapping into one of two shared shapes (`GOLF`, `GAME`).
 
 ```mermaid
 flowchart LR
@@ -49,7 +49,7 @@ flowchart LR
   T1 & T2 & T3 --> S
   E & S --> R --> A --> RD --> CP --> C --> V[(api.balldontlie.io)]
   E & S --> L
-  S -- scores --> P[publishLiveScoreUpdate] --> W[GOLF / GAME / STAT_LINE writer]
+  S -- scores --> P[publishLiveScoreUpdate] --> W[GOLF / GAME writer]
   S -- field --> IP[IngestionPersistence] --> GT[SYNC_EVENT_GAMES_AND_TIERS job<br/>games, then tiers and prices]
   W & IP --> J[REBUILD_LEADERBOARDS job]
 ```
@@ -103,7 +103,7 @@ retried on the usual 1, 5 and 30 minutes.
 
 **The Providers page** also counts each provider's rate-limited jobs of the last 24 hours (jobs
 whose latest try hit the client's 429). Jobs carry no provider: a job belongs to the provider
-syncing its sport league (a Clutch Card league counts toward its parent league's provider) or to
+syncing its sport league or to
 the provider its event is linked to.
 
 ## 2. Events sync
@@ -116,9 +116,7 @@ Seeded by migration on `sport_leagues`:
 |---|---|
 | `match_keyword` | Must equal the `metadata.tour` the adapter puts on the league's events (`core/league-keyword.ts`, case-insensitive). Required before `event_sync_provider_id` can be set. |
 | `event_sync_provider_id` | Makes the league synced. Refused unless the provider is registered and covers the sport. |
-| `scoring_family` | `NULL` (the sport's own family) except `COMPOSITE` on stat pool leagues such as Clutch Cards. |
 | `round_series_lengths` | Best-of lengths per round for series playoffs (NBA/NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`). Empty means single games. |
-| `parent_sport_league_id`, `parent_round_numbers` | A Clutch Card league's season league and the rounds its events cover. |
 | `tier_profile_id`, `pricing_profile_id` | The profiles the field's tiers and prices come from (§3). |
 | `auto_release_days_before_start` | The auto-release window (default 7, `null` never). |
 
@@ -142,11 +140,6 @@ the Event list policy; a root admin's **Sync now**
 | `DRAFT`, `SCHEDULED`, `POSTPONED` | name, venue, start, end |
 | `IN_PROGRESS` | name, venue, end |
 | `COMPLETED`, `CANCELLED` | nothing |
-
-**Clutch Card events** name their parent: the season event of the parent league whose rounds they
-cover (the World Series round of the MLB Postseason). Clutch Card jobs are queued 10 minutes after
-the season leagues' jobs so the parent exists first; one with no single parent on the site is
-skipped as `NO_PARENT_EVENT` and created by a later run.
 
 On a synced event the admin's Edit details shows name, venue and dates read-only
 (`SportEventDto.providerSynced`); location, rounds, field, tiers, prices, release and result entry
@@ -180,7 +173,7 @@ leaves no row.
 
 | Table | Written |
 |---|---|
-| `participants` | One per feed id per sport league. A feed id no participant of the event's league is mapped to creates a new participant in that league, whatever the site already holds by that name. A Clutch Card league owns its players, so the World Series and the ALCS each have a row for one player under the same feed id. |
+| `participants` | One per feed id per sport league. A feed id no participant of the event's league is mapped to creates a new participant in that league, whatever the site already holds by that name. |
 | `participant_provider_mappings` | Unique on `(provider_id, external_id, sport_league_id)`. `EXACT` when the sync created it, `MANUAL` when bound by hand or by test data. `last_seen_at` is set on every mapping a field sync matches. |
 | `sport_event_participants` | The field row: active, ranking, seed, odds. A released bracket's seeds are kept. |
 
@@ -253,15 +246,14 @@ ran it), its sport league and event (looked up from the linked event when the ca
 none), and the job that ran it. Each background job records the same trigger and who started it
 ("Started by" on screen). The root admin's shared Activity grid (`GET /api/v1/activity`) lists
 jobs with their runs, and the Sports, League and Event pages read each league's and event's
-latest run per kind for its sync health. A Clutch Card league shows its parent's `EVENTS` run.
+latest run per kind for its sync health.
 
 The Field and Scores timers still run outside the job table; moving them onto jobs is the next
 step (#1835).
 
 **Overdue.** A released event is `OVERDUE` when it is neither completed nor cancelled more than
 4 hours after it should have ended (its last round's end, else its last start plus the sport's
-typical play). A draft never released is never overdue. A Clutch Card event is judged by the
-parent rounds it covers. One function:
+typical play). A draft never released is never overdue. One function:
 `overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
 
 ### Webhooks
@@ -297,21 +289,19 @@ sequenceDiagram
   participant F as Scoring family writer
   S->>A: getLiveScores(externalId)
   A->>A: route by scope id to the league reader
-  A-->>S: LiveScoreResult {GOLF | GAME | STAT_LINE}
+  A-->>S: LiveScoreResult {GOLF | GAME}
   S->>P: onLiveScores(result, providerId)
   P->>P: Zod-validate; find event by (provider_id, external_id); skip unless IN_PROGRESS
   P->>F: the event's scoring family's writer, if it accepts the category
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
 
-The family is the sport's own unless the league overrides it to `COMPOSITE`
-(`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
+The family is the sport's own (`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
 
 | Category | Writer | Writes |
 |---|---|---|
 | `GOLF` | `GolfScoreService` | Rounds and standings. Stroke play only. |
 | `GAME` | `writeGameScores` | `sport_event_matches`: links `external_game_id`, live scores, finals through `MatchResultService.recordResult` (`result_source = PROVIDER`). Postponed games are marked `POSTPONED`. |
-| `STAT_LINE` | `writeStatLineGames` | One participant round per star per game, plus stat lines. |
 
 **GAME linking.** A single-game round links the game to the one open match between its two
 teams; two candidates link nothing until a later sync. A best-of series links no game: the
@@ -319,10 +309,6 @@ writer counts each final game's winner and records the result once a side has mo
 A First Four winner first fills its play-in place. **An admin's result stands**: a different
 provider final is logged, not written; clearing the result hands the match back. A level
 knockout game takes its winner from the shoot-out.
-
-**STAT_LINE.** Each `nba-player-<id>` maps to a star in the field; others are skipped. Live lines
-are rewritten each sync, final lines are never reopened, and the sync overwrites an admin's
-correction. The lifecycle will not complete an event with a line still in progress.
 
 **Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
 `SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as
@@ -342,7 +328,6 @@ routes by external id; an id no league claims is read as a PGA TOUR tournament.
 | College Football Playoff | `CFP` | `ncaaf-<season>-cfp` | `ncaaf-team-<id>` | `GAME` | `ncaaf-*` |
 | NCAA men / women | `NCAAM` / `NCAAW` | `ncaab-<season>-tournament`, `ncaaw-…` | `ncaab-team-<id>`, `ncaaw-…` | `GAME` | `ncaa-tournament-*` |
 | NBA / NHL / MLB / WNBA playoffs | `NBA` / `NHL` / `MLB` / `WNBA` | `<league>-<season>-postseason` | `<league>-team-<id>` | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
-| NBA Clutch Cards (Finals, Conference Finals) | the league's name | `nba-<season>-postseason-round-<r>` | `nba-player-<id>` | `STAT_LINE` | `series-playoff-rounds.ts`, `nba-mapping.ts` |
 | Premier League | `EPL` | `epl-<season>-matchweek-<n>` | `epl-team-<id>` | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
 | FIFA World Cup | `FIFAWC` | `fifa-wc-<year>-knockout` | `fifa-wc-team-<id>` | `GAME` with shoot-outs | `fifa-world-cup-*` |
 
@@ -354,8 +339,7 @@ League notes that are not obvious from the code:
   teams and would score the wrong match. Swap it for a vendor marker if the paid tier has one.
 - **Series playoffs** hand every postseason game over each sync, because the writer counts
   wins from the batch. Readers keep games by the vendor's `postseason` flag for the asked
-  season, so every normalizer must read it. A league whose rounds are Clutch Cards supplies a
-  `PlayoffRoundsSource` (box scores); only it lists round events.
+  season, so every normalizer must read it.
 - **Round numbering** (`playoffSeries`): a team's first series is round 1, each later one is one
   past the later of its teams' previous series, which puts MLB's bye teams in round 2.
 - **WNBA** has no postseason filter, so the whole season is read. **NHL** places games on
@@ -372,7 +356,7 @@ scheduled syncs.
 |---|---|
 | Cycling | #682 |
 | Running | #683 |
-| FIFA Women's World Cup (and its Clutch Cards), UEFA Euro, Copa América | #1814 |
+| FIFA Women's World Cup, UEFA Euro, Copa América | #1814 |
 | NASCAR, IndyCar | #681 (provider check #1813, deferred) |
 | Horse racing | #680 (provider check #1813, deferred) |
 | NWSL, PWHL, college hockey, NCAA soccer and tennis | #1815 |
@@ -392,8 +376,7 @@ A new league usually touches only these:
    league supplies a `PlayoffsSource` instead.
 5. **Adapter routing**: a branch in `getEventDetails` and `getLiveScores` ahead of the PGA
    fallback, and the league in the `leagues` map.
-6. **Migration**: `match_keyword` only where `NULL`; `round_series_lengths` for a series league;
-   `parent_*` for a Clutch Card league.
+6. **Migration**: `match_keyword` only where `NULL`; `round_series_lengths` for a series league.
 7. **Webhooks**: an entry in `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` with its prefix and
    `quietAfterMinutes`, or its notifications are dropped.
 8. **Docs**: this page.

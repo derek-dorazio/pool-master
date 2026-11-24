@@ -15,8 +15,6 @@ const SWITCHED_OFF = [
   'AUTO_RACING/NASCAR Cup Series',
   'CYCLING/UCI WorldTour',
   "CYCLING/UCI Women's WorldTour",
-  'HOCKEY/Men\'s Frozen Four',
-  "HOCKEY/Men's Hockey National Championship",
   'HOCKEY/NCAA Division I Men',
   'HOCKEY/NCAA Division I Women',
   'HOCKEY/PWHL',
@@ -29,8 +27,6 @@ const SWITCHED_OFF = [
   'SOCCER/NCAA Division I Women',
   'SOCCER/NWSL',
   'SOCCER/UEFA European Championship',
-  "SOCCER/Women's World Cup Final",
-  "SOCCER/Women's World Cup Semifinals",
   'TENNIS/NCAA Division I Men',
   'TENNIS/NCAA Division I Women',
 ].sort((left, right) => left.localeCompare(right));
@@ -49,7 +45,7 @@ describe('Sport leagues with no data provider', () => {
       where: {
         OR: [
           { name: 'Formula 1', sport: { sport: Sport.AUTO_RACING } },
-          { name: { in: ['NCAA Division I Men', 'NCAA Division I Women', "Men's Final Four", "Men's Basketball National Championship"] }, sport: { sport: Sport.BASKETBALL } },
+          { name: { in: ['NCAA Division I Men', 'NCAA Division I Women'] }, sport: { sport: Sport.BASKETBALL } },
         ],
       },
       select: { name: true, isActive: true },
@@ -57,8 +53,6 @@ describe('Sport leagues with no data provider', () => {
 
     expect(kept.map(({ name, isActive }) => [name, isActive]).sort(([left], [right]) => String(left).localeCompare(String(right)))).toEqual([
       ['Formula 1', true],
-      ["Men's Basketball National Championship", true],
-      ["Men's Final Four", true],
       ['NCAA Division I Men', true],
       ['NCAA Division I Women', true],
     ]);

@@ -436,30 +436,6 @@ enum PrismaScoringFamily {
   STROKE_PLAY
   FINISH_POSITION
   HEAD_TO_HEAD
-  /// A stat pool's (#932): each game, a player scores the sport's composite of their stats.
-  COMPOSITE
-}
-
-/// One component stat of a sport's composite (#934), as a stat line counts it.
-enum PrismaSportStat {
-  TOTAL_BASES
-  RUNS
-  RUNS_BATTED_IN
-  WALKS
-  STOLEN_BASES
-  POINTS
-  REBOUNDS
-  ASSISTS
-  GOALS
-  SHOTS_ON_GOAL
-  SHOTS_ON_TARGET
-  PASSING_TOUCHDOWNS
-  RUSHING_TOUCHDOWNS
-  RECEIVING_TOUCHDOWNS
-  RECEPTIONS
-  PASSING_YARDS
-  RUSHING_YARDS
-  RECEIVING_YARDS
 }
 
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
@@ -1176,26 +1152,12 @@ model SportLeague {
   /// first; null comes after every ordered league, by name. Reference data, set by the migration
   /// that seeds the league.
   displayOrder               Int?                     @map("display_order")
-  /// Who competes in its events, when not its sport's (#934: the World Series stat pool's field is
-  /// players, not teams). Null: the sport's. Reference data, set by the migration that seeds the
-  /// league.
+  /// Who competes in its events, when not its sport's (#934). Null: the sport's. Reference data,
+  /// set by the migration that seeds the league.
   participantType            PrismaParticipantType?   @map("participant_type")
-  /// How its events are scored, when not by its sport's family (#934: COMPOSITE for a
-  /// championship stat pool). Null: the sport's. Reference data, set by the migration that seeds
-  /// the league.
+  /// How its events are scored, when not by its sport's family (#934). Null: the sport's.
+  /// Reference data, set by the migration that seeds the league.
   scoringFamily              PrismaScoringFamily?     @map("scoring_family")
-  /// The season league a playoff round's sport league belongs to (#1701: the Stanley Cup Final
-  /// and the NHL Conference Finals are the NHL's, the Men's Frozen Four NCAA Division I Men's
-  /// hockey), so pages list each round under its league. Null for a league that is no other's
-  /// round; a season league its rounds name is not deleted. Reference data, set by the migration
-  /// that seeds the round league.
-  parentSportLeagueId        String?                  @map("parent_sport_league_id") @db.Uuid
-  /// The rounds of its parent league's season event that each of its events covers (#1820): the
-  /// World Series is round 4 of the MLB Postseason, the Men's Final Four round 5 of the NCAA
-  /// tournament. Set on every Clutch Card league, with its parent league; empty for any other.
-  /// Creating a Clutch Card event copies it onto the event with the parent it finds. Reference
-  /// data, set by the migration that seeds the round league.
-  parentRoundNumbers         Int[]                    @default([]) @map("parent_round_numbers")
   /// The provider whose sync creates and keeps this sport league's events (ADR 0011, #1725):
   /// a scheduled pass imports the provider's events for the league's tour, born DRAFT. Null:
   /// an admin authors them. Set by a root admin per league, only once its reader is built and
@@ -1209,20 +1171,17 @@ model SportLeague {
   createdAt                  DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
-  sport                     Sport                          @relation(fields: [sportId], references: [id])
-  tierProfile               TierProfile                    @relation(fields: [tierProfileId], references: [id], onDelete: Restrict)
-  pricingProfile            PricingProfile                 @relation(fields: [pricingProfileId], references: [id], onDelete: Restrict)
-  parentSportLeague         SportLeague?                   @relation("SportLeagueRounds", fields: [parentSportLeagueId], references: [id], onDelete: Restrict)
-  rounds                    SportLeague[]                  @relation("SportLeagueRounds")
-  participants              Participant[]
-  providerMappings          ParticipantProviderMapping[]
-  eventSeries               EventSeries[]
-  contestConfigTemplates    ContestConfigTemplate[]
-  cups                      Cup[]
-  eventPageOffers           EventPageOffer[]
+  sport                  Sport                        @relation(fields: [sportId], references: [id])
+  tierProfile            TierProfile                  @relation(fields: [tierProfileId], references: [id], onDelete: Restrict)
+  pricingProfile         PricingProfile               @relation(fields: [pricingProfileId], references: [id], onDelete: Restrict)
+  participants           Participant[]
+  providerMappings       ParticipantProviderMapping[]
+  eventSeries            EventSeries[]
+  contestConfigTemplates ContestConfigTemplate[]
+  cups                   Cup[]
+  eventPageOffers        EventPageOffer[]
 
   @@unique([sportId, name])
-  @@index([parentSportLeagueId])
   @@index([tierProfileId])
   @@index([pricingProfileId])
   @@map("sport_leagues")
@@ -2082,15 +2041,6 @@ model SportEvent {
   // When the event's provider last sent a webhook notification about it (#1499). Null until one
   // arrives. The scheduler warns when play is underway and none has arrived for a while.
   lastProviderNotificationAt DateTime?                      @map("last_provider_notification_at") @db.Timestamptz
-  // A Clutch Card event's parent (#1820): the season event of its sport league's parent league
-  // whose rounds it covers (the World Series round of the MLB Postseason). Set on every Clutch
-  // Card event created since #1820 and on no other event; the service picks the parent when the
-  // event is created and refuses one without. A check constraint keeps the two columns together:
-  // both set or neither. An event a Clutch Card event names cannot be deleted.
-  parentEventId              String?                        @map("parent_event_id") @db.Uuid
-  // The parent event's rounds this Clutch Card event covers, from its sport league's
-  // `parentRoundNumbers`; empty when it has no parent.
-  parentRoundNumbers         Int[]                          @default([]) @map("parent_round_numbers")
   // The latest automatic release check (#1847): when the release job last judged the event,
   // whether it released or held it, and the checks that held it. Null and empty until the first
   // check; each check overwrites the one before, and a root admin's release by hand clears it. A
@@ -2107,8 +2057,6 @@ model SportEvent {
   createdAt                  DateTime                       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
 
-  parentEvent                SportEvent?                        @relation("ClutchCardParentEvent", fields: [parentEventId], references: [id], onDelete: Restrict)
-  clutchCardEvents           SportEvent[]                       @relation("ClutchCardParentEvent")
   contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]
   pendingDrawReceipts        ContestDraw[]               @relation("ContestDrawReceiptsPending")
@@ -2123,7 +2071,6 @@ model SportEvent {
   // One edition of a series per year: there is one 2026 Masters (plans/147 decision 5).
   @@unique([eventSeriesId, eventYear])
   @@index([eventYear])
-  @@index([parentEventId])
   @@index([sport, status])
   @@index([startDate, endDate])
   @@index([status])
@@ -2292,7 +2239,6 @@ model SportEventParticipantRound {
   sportEventParticipant SportEventParticipant           @relation(fields: [sportEventParticipantId], references: [id])
   sportEventRound       SportEventRound                 @relation(fields: [sportEventRoundId], references: [id])
   golf                  SportEventParticipantGolfRound?
-  statLines             SportEventParticipantStatLine[]
 
   @@unique([sportEventParticipantId, sportEventRoundId])
   @@index([sportEventRoundId])
@@ -2313,23 +2259,6 @@ model SportEventParticipantGolfRound {
   participantRound SportEventParticipantRound @relation(fields: [participantRoundId], references: [id])
 
   @@map("sport_event_participant_golf_rounds")
-}
-
-/// The composite family's extension of a participant round (#934): one component stat of a
-/// player's game. The composite is computed from a round's lines and never stored. A stat with
-/// no line counts 0.
-model SportEventParticipantStatLine {
-  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  participantRoundId String          @map("participant_round_id") @db.Uuid
-  stat               PrismaSportStat
-  value              Int
-  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz
-
-  participantRound SportEventParticipantRound @relation(fields: [participantRoundId], references: [id])
-
-  @@unique([participantRoundId, stat])
-  @@map("sport_event_participant_stat_lines")
 }
 
 /// A participant's running standing in one event, cross-sport.

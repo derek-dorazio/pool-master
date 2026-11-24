@@ -53,7 +53,6 @@ export type SharedEnums = {
   ProviderSyncRunStatus: Enums.ProviderSyncRunStatus;
   ProviderSyncKind: Enums.ProviderSyncKind;
   AutoReleaseCheckOutcome: Enums.AutoReleaseCheckOutcome;
-  SportLeagueKind: Enums.SportLeagueKind;
   SportLeagueSyncHealth: Enums.SportLeagueSyncHealth;
   SportLeagueIssueType: Enums.SportLeagueIssueType;
   SportEventReleaseMode: Enums.SportEventReleaseMode;
@@ -123,7 +122,6 @@ export type SharedEnums = {
   YearReviewStatus: Enums.YearReviewStatus;
   TierProfileLastTier: Enums.TierProfileLastTier;
   ChampionshipTile: Enums.ChampionshipTile;
-  SportStat: Enums.SportStat;
 };
 
 /** The name of a shared enum: `'ContestStatus'`. */

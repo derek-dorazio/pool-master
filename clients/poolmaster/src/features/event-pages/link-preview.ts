@@ -14,7 +14,7 @@ export interface LinkPreview {
   imageFile: string;
   /** Over the name on the image, as on the page: "NFL conference championships". */
   eyebrow: string;
-  /** The image's row of ways to play, in the page's order: "Clutch Card", "Bracket", "Squares". */
+  /** The image's row of ways to play, in the page's order: "Bracket", "Squares". */
   contestTypes: readonly string[];
 }
 

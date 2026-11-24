@@ -314,7 +314,7 @@ describe('IngestionPersistence', () => {
     const prisma = fieldSyncPrisma({
       externalId: 'nba-player-1',
       eventRow: linkedRow({ sport: Sport.BASKETBALL }),
-      linkedEvent: { id: 'sport-event-1', sport: Sport.BASKETBALL, status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE', sport: { participantType: 'INDIVIDUAL' } } } },
+      linkedEvent: { id: 'sport-event-1', sport: Sport.BASKETBALL, status: 'SCHEDULED', eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { participantType: 'TEAM' } } } },
       fieldRow: null,
       unlinkedRanked: [{ ranking: 2, participant: { id: 'site-doncic', name: 'Luka Dončić' } }, { ranking: 5, participant: { id: 'site-brown', name: 'Jaylen Brown' } }],
     });
@@ -343,13 +343,10 @@ describe('IngestionPersistence', () => {
 
   // #698 — a released bracket's seeds are fixed: the field sync keeps the stored seed, while a
   // draft still takes the provider's.
-  // #934 — a stat pool event (the NBA Finals' players) plays no bracket, so a released one has no
-  // seeds to lock either.
   it.each([
-    ['keeps the stored seed 3 on a released basketball event', 'SCHEDULED', null, 3],
-    ['takes the provider\'s seed 1 on a draft basketball event', 'DRAFT', null, 1],
-    ['takes the provider\'s seed 1 on a released basketball stat pool event', 'SCHEDULED', 'COMPOSITE', 1],
-  ])('%s', async (_label, status, scoringFamily, expectedSeed) => {
+    ['keeps the stored seed 3 on a released basketball event', 'SCHEDULED', 3],
+    ['takes the provider\'s seed 1 on a draft basketball event', 'DRAFT', 1],
+  ])('%s', async (_label, status, expectedSeed) => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       sport: Sport.BASKETBALL,
@@ -370,7 +367,7 @@ describe('IngestionPersistence', () => {
         id: 'sport-event-1',
         sport: Sport.BASKETBALL,
         status,
-        eventSeries: { sportLeague: { id: 'league-event', participantType: scoringFamily === null ? null : 'INDIVIDUAL', scoringFamily, sport: { participantType: 'INDIVIDUAL' } } },
+        eventSeries: { sportLeague: { id: 'league-event', participantType: null, scoringFamily: null, sport: { participantType: 'TEAM' } } },
       },
       fieldRow: {
         id: 'sport-event-participant-1',

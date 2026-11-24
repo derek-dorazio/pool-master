@@ -16,10 +16,9 @@ export function LeagueParticipantsTab() {
   const participantsQuery = useSportLeagueParticipantOverviewsQuery(sportLeague.id);
   const [openParticipantId, setOpenParticipantId] = useState<string | null>(null);
   const participants = participantsQuery.data;
-  const isClutchCard = sportLeague.parentRoundNumbers.length > 0;
   const columns = useMemo(
-    () => leagueParticipantColumns(leagueParticipantColumnIds(participants ?? [], { isClutchCard })),
-    [isClutchCard, participants],
+    () => leagueParticipantColumns(leagueParticipantColumnIds(participants ?? [])),
+    [participants],
   );
   // poolmaster-allow-list-lookup: one lookup on the grid's own rows when the dialog opens
   const openParticipant = participants?.find((participant) => participant.id === openParticipantId);

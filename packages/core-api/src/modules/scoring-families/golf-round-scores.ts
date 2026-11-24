@@ -14,7 +14,6 @@ const STORES_GOLF_ROUND_SCORES: Readonly<Record<ScoringFamily, boolean>> = {
   [ScoringFamily.STROKE_PLAY]: true,
   [ScoringFamily.FINISH_POSITION]: false,
   [ScoringFamily.HEAD_TO_HEAD]: false,
-  [ScoringFamily.COMPOSITE]: false,
 };
 
 /** Whether the event stores golf round scores, by its sport league's scoring family. */

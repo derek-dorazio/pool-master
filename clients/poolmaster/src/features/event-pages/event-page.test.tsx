@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import { EventPage } from './event-page';
+import { EventPage, MovedPage } from './event-page';
 import { championshipWeekendFixture } from './event-page-test-fixtures';
 
 const { authState, getEventPageMock, listEventPagesMock, listLeaguePlansMock, mockLogger } = vi.hoisted(() => {
@@ -55,7 +56,7 @@ afterEach(() => {
 });
 
 describe('Event page', () => {
-  it('shows Championship Weekend\'s hook, its date, and a card per way to play, the Clutch Card saying when it opens', async () => {
+  it('shows Championship Weekend\'s hook, its date, and a card per way to play, the bracket saying when it opens', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture()] } });
     listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, previewPlan: 'PREMIUM', paymentsEnabled: false, expansionPrices: {} } });
@@ -66,11 +67,8 @@ describe('Event page', () => {
     expect(screen.getByTestId('event-page-when')).toHaveTextContent('Picks close at the first kickoff');
     expect(getEventPageMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sport: 'AMERICAN_FOOTBALL', pageSlug: 'championship-weekend' } }));
 
-    const clutchCard = screen.getByTestId('event-page-offer-championship-weekend-tiered-redzone');
-    expect(clutchCard).toHaveTextContent('Clutch Card');
-    expect(clutchCard).toHaveTextContent('New');
-    expect(screen.getByTestId('event-page-offer-championship-weekend-tiered-redzone-opens')).toHaveTextContent('Opens when the four teams are set');
-    expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling-start')).toHaveTextContent('Start with Bracket');
+    expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling')).toHaveTextContent('Bracket');
+    expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling-opens')).toHaveTextContent('Opens when the four teams are set');
     expect(screen.getByTestId('event-page-offer-nfl-squares-start')).toHaveTextContent('Start with Squares');
     expect(await screen.findByTestId('event-page-gift')).toHaveTextContent('Premium free for 6 months');
     expect(screen.getByTestId('event-page-disclaimer')).toHaveTextContent('Not affiliated with the NFL or any sports league.');
@@ -107,8 +105,8 @@ describe('Event page', () => {
     renderPage();
 
     const start = '/start?sport=american-football&page=championship-weekend&template=';
-    expect(await screen.findByTestId('event-page-start')).toHaveAttribute('href', `${start}template-championship-weekend-tiered-redzone`);
-    expect(screen.getByTestId('event-page-offer-championship-weekend-tiered-redzone-start')).toHaveTextContent('Start your league now');
+    expect(await screen.findByTestId('event-page-start')).toHaveAttribute('href', `${start}template-nfl-bracket-second-chance-doubling`);
+    expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling-start')).toHaveTextContent('Start your league now');
     expect(screen.getByTestId('event-page-offer-nfl-squares-start')).toHaveAttribute('href', `${start}template-nfl-squares`);
   });
 
@@ -170,10 +168,27 @@ describe('Event page', () => {
     expect(screen.getByTestId('event-page-moved')).toBeInTheDocument();
   });
 
-  it('shows an error, not the moved page, when the page cannot load', async () => {
+  it('keeps the Clutch Card\'s old address as an inactive page that links to How to Play, reading no event page', () => {
+    render(
+      <MemoryRouter initialEntries={['/play/clutch-card']}>
+        <Routes>
+          <Route element={<MovedPage />} path="/play/clutch-card" />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('event-page-moved')).toHaveTextContent('This page has moved');
+    expect(screen.getByRole('link', { name: 'See every way to play' })).toHaveAttribute('href', '/how-to-play');
+    expect(getEventPageMock).not.toHaveBeenCalled();
+  });
+
+  it('shows an error, not the moved page, when the page cannot load, and Retry reads the page again', async () => {
     getEventPageMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down.' } }, status: 500 });
     renderPage();
 
     expect(await screen.findByTestId('event-page-error')).toHaveTextContent("We couldn't load this event.");
+    const reads = getEventPageMock.mock.calls.length;
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await vi.waitFor(() => expect(getEventPageMock.mock.calls.length).toBeGreaterThan(reads));
   });
 });

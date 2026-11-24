@@ -322,7 +322,7 @@ type LeaderboardEntryDto = ContestLeaderboardResponse['entries'][number];
 type LeaderboardPickDto = LeaderboardEntryDto['picks'][number];
 
 /** How a scoring family's detail block appears on a leaderboard pick (#606). */
-type LeaderboardFamilyPickDetailMapper = (pick: ScoredContestEntryPickRow) => Pick<LeaderboardPickDto, 'golf' | 'race' | 'knockout' | 'composite'>;
+type LeaderboardFamilyPickDetailMapper = (pick: ScoredContestEntryPickRow) => Pick<LeaderboardPickDto, 'golf' | 'race' | 'knockout'>;
 
 const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, LeaderboardFamilyPickDetailMapper>> = {
   [ScoringFamily.STROKE_PLAY]: (pick) => ({
@@ -333,9 +333,8 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
     },
     race: null,
     knockout: null,
-    composite: null,
   }),
-  [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score }, knockout: null, composite: null }),
+  [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score }, knockout: null }),
   [ScoringFamily.HEAD_TO_HEAD]: (pick) => {
     const { wins, upsetBonusPoints, isAlive } = participantScoreDetailFor(
       ScoringFamily.HEAD_TO_HEAD,
@@ -345,18 +344,8 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
       golf: null,
       race: null,
       knockout: { points: pick.participant.score, wins, upsetBonusPoints, isAlive },
-      composite: null,
     };
   },
-  [ScoringFamily.COMPOSITE]: (pick) => ({
-    golf: null,
-    race: null,
-    knockout: null,
-    composite: {
-      points: pick.participant.score,
-      games: participantScoreDetailFor(ScoringFamily.COMPOSITE, pick.participant.detail).gameScores,
-    },
-  }),
 };
 
 /**

@@ -56,8 +56,7 @@ whatever the file calls them. A feed id no participant holds yet is bound to the
 participant (`PUT /api/v1/participants/{id}/provider-mappings`), so a later sync fields that row
 instead of creating a duplicate; the report lists each as "feed id … bound". A file that gives
 one feed id to two players of one league is refused. A feed id names one participant per sport
-league (#1853): a Clutch Card league's players carry their season league's feed ids, and each is
-its own row, created in that league. Feed ids go on participants only, never on a "Test-"
+league (#1853). Feed ids go on participants only, never on a "Test-"
 event: a real game id would let the live score poll write real results onto it. They are added
 as each provider serves them, league by league; a player with none is matched by key, then
 name, as before.
@@ -74,29 +73,6 @@ March Madness region) where the seed is not its place in the field, and `isPlayI
 First Four pairing. The run refuses a bracket the bracket endpoint would refuse, before any
 write.
 
-**Box scores.** A file of a championship stat pool, with `STATS` in its `contents`, loads a
-sport league of players scored by the composite family (the League Championship Series, World
-Series, NBA Conference Finals, NBA Finals, NHL Conference Finals, Stanley Cup Final, NFL
-Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's Final Four,
-Men's Basketball National Championship, Men's Frozen Four, Men's Hockey National Championship, Champions League Semifinals,
-Champions League Final, Women's World Cup Semifinals, Women's World Cup Final, WNBA Semifinals and WNBA Finals
-leagues the migrations create). Its players
-may give their `team` and `position`, and each event may give its `games`: each game's number
-and its box score, one `lines` row per field player who played, with that player's count of each
-stat the sport's composite counts (`TOTAL_BASES`, `RUNS`, `RUNS_BATTED_IN`, `WALKS` and
-`STOLEN_BASES` for baseball's Box Score; `POINTS`, `REBOUNDS`, `ASSISTS` for basketball's Triple
-Threat; `GOALS`, `ASSISTS`, `SHOTS_ON_GOAL` for hockey's Power Play; `GOALS`, `ASSISTS`, `SHOTS_ON_TARGET` for
-soccer's Hat Trick; touchdowns, receptions and
-yards for football's Redzone). A stat left out counts 0. The run refuses a game beyond the
-event's games, a player off the field, a stat the composite does not count, and a `STATS` file
-for a league that is not a stat pool on the site. Each player's line for a game replaces the
-stored one, and a stored line for a player the game leaves out is cleared.
-
-Each test Clutch Card event names its parent itself (#1820): the latest test season event of its
-season league ("Test- MLB Postseason" for the World Series). With none on the site yet, the run
-lists the Clutch Card event as a conflict and leaves it out. Loading every test file loads the
-box score files last, after the season leagues'.
-
 **Released as it loads.** Each league's first new test event is released; the ones after it
 are set up whole and left drafts (*A few "Test-" events at a time* below). When no active
 player has a tier yet, the event's tiers are assigned by the field's ranking; when none has a
@@ -112,12 +88,11 @@ at noon UTC on its start date. Every loaded event ends at noon UTC the day after
 A test seed carries the results its sport is scored on: golf's made-up stroke rounds, a
 bracket's match results (entered as each game is played; *Results go in as the games are
 played* below), a race's real finishing order (each runner's `raceResult`, entered just before
-release as the official result; *Seeded 2026 races* below), or a stat pool's real box scores
-(*Seeded championship stat pools* below). Any sport may also have a test slate.
+release as the official result; *Seeded 2026 races* below). Any sport may also have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
-`PLAYERS`, `FIELDS`, `BRACKET`, `STATS`, `RESULTS`), `testData: true` and its `provenance`. A
+`PLAYERS`, `FIELDS`, `BRACKET`, `RESULTS`), `testData: true` and its `provenance`. A
 test seed's `contents` hold at least `SCHEDULE`, `PLAYERS`, `FIELDS` and `RESULTS`; a test slate's
 just `PLAYERS` and `FIELDS`. A run refuses the whole file before writing if anything strays
 outside the scope: an event outside the season, a league the scope does not name, or a file
@@ -150,8 +125,6 @@ of sport carries:
   splits into one file per year its weeks start in.
 - **A race**: each field entry's made-up `oddsToWin` and real `raceResult`, in grid or post
   order; a dead heat repeats a place and skips the next.
-- **A stat pool**: `contents` add `STATS`, each field entry a `ranking` to tier by, and each
-  game's box score.
 
 Give each player the provider's feed id wherever the provider serves it today (*Feed ids*
 above); never guess one. Validate the file with the unit tests in `tests/unit/core-api/` before
@@ -409,40 +382,6 @@ the top two on byes into the Division Series, every round a series scored in gam
 Angeles Dodgers beat the Toronto Blue Jays 4-3 in the World Series. Seeds, pairings, series
 scores and each series' Game 1 first pitch are real, and the odds are made up. It loads as the
 hockey seeds do.
-
-## Seeded championship stat pools
-
-Each championship stat pool league the migrations create has a test file of its last
-championship as played, with every game's real box score:
-`baseball-2026-league-championship-series-test.json` (the 2026 ALCS and NLCS as one event, game N
-holding each series' Game N: Tampa Bay over Cleveland in six, Milwaukee over the Dodgers in four),
-`baseball-2025-world-series-test.json`
-(the Dodgers over the Blue Jays in seven), `basketball-2026-nba-conference-finals-test.json`
-(both 2026 conference finals as one event, game N holding each series' Game N: the Spurs over the
-Thunder in seven, the Knicks over the Cavaliers in four), `basketball-2026-nba-finals-test.json` (the Knicks
-over the Spurs in five), `hockey-2026-nhl-conference-finals-test.json`
-(both 2026 conference finals as one event, game N holding each series' Game N: Carolina over
-Montreal in five, Vegas over Colorado in four), `hockey-2026-stanley-cup-final-test.json`
-(Carolina over Vegas in six) and `american-football-2026-nfl-championships-test.json` (the 2025 season's Conference
-Championship weekend and Super Bowl LX, one game each) and
-`american-football-2026-cfp-semifinals-and-championship-test.json` (the 2025-26 College Football
-Playoff's semifinals, both played as one event of one game, and Indiana over Miami in the
-National Championship) and `basketball-2026-mens-final-four-test.json` (the 2026 men's semifinals, both
-one event of one game, and Michigan over UConn in the title game) and
-`hockey-2026-mens-frozen-four-test.json` (the 2026 men's Frozen Four semifinals, both one event of
-one game, and Denver over Wisconsin in the title game) and
-`soccer-2026-champions-league-semifinals-and-final-test.json` (the 2025-26 Champions League
-semifinals as one event of two games, game 1 the first legs and game 2 the second legs, and Paris
-Saint-Germain over Arsenal on penalties in the final) and
-`soccer-2023-womens-world-cup-semifinals-and-final-test.json` (the 2023 Women's World Cup
-semifinals, both one event of one game, and Spain over England in the final) and
-`basketball-2026-wnba-semifinals-and-finals-test.json` (both 2026 WNBA semifinal series as one
-event, game N holding each series' Game N: Atlanta's sweep of New York and Golden State's of Las
-Vegas, and Golden State over Atlanta in seven in the Finals). The field is both teams' players who
-can score the sport's composite, ranked by their regular-season composite total; tiers come
-from that ranking and prices are the default curve, so no odds are made up. Each box score was
-checked player by player against a second source, named in the file's provenance. A test load
-creates each event with its field, writes every game's lines and releases it.
 
 ## Seeded soccer knockouts
 

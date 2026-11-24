@@ -1,24 +1,10 @@
 import { displayString } from '../../display-strings/display-strings';
-import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat, SportStat } from '../enums';
+import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
-import { statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of a college hockey bracket are called, counted back from the final. */
 const ROUND_NAMES_FROM_FINAL = ['National Championship', 'Frozen Four', 'Regional Finals', 'Regional Semifinals'] as const;
-
-/** The stats Power Play counts. */
-const HOCKEY_STATS = [SportStat.GOALS, SportStat.ASSISTS, SportStat.SHOTS_ON_GOAL] as const;
-/** One of Power Play's stats: hockey's typed slice of `SportStat`. */
-type HockeyStat = (typeof HOCKEY_STATS)[number];
-
-/** Power Play (#932): 2 x goals + assists + shots on goal, a skater's game. */
-const hockeyComposite: SportComposite<HockeyStat> = {
-  name: 'Power Play',
-  stats: HOCKEY_STATS,
-  defaultGames: 7,
-  score: (line) => 2 * statValue(line, SportStat.GOALS) + statValue(line, SportStat.ASSISTS) + statValue(line, SportStat.SHOTS_ON_GOAL),
-};
 
 /**
  * Hockey (#788): teams playing a knockout bracket, scored by the head-to-head family from the
@@ -44,7 +30,6 @@ export const hockeySportDefinition: SportDefinition = {
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // Playoff games play overtime to a goal, so none ends in a shoot-out (#791).
   shootout: false,
-  composite: hockeyComposite,
   matchPeriodLayout: MatchPeriodLayout.THREE_PERIODS,
   // A four-round bracket reads Regional Semifinals, Regional Finals, Frozen Four, National
   // Championship; a shorter one keeps the names counted back from its final.
