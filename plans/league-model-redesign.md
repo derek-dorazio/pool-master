@@ -801,6 +801,10 @@ Contest:
   by team plus the new provider's roster. Each unmatched player raises a finding with a
   "map to" action, and the switch stays blocked while any ERROR finding is open. Names are
   never matched.
+- Two contests on one slot (Derek 2026-11-24, slice 20f): leagues don't run a tiered and a
+  budget pool on the same event, so cups add no per-slot limit; every counted contest
+  counts. The Trophy case help says which contests count. A league that wants practice
+  contests out of its Championship picks the "Cup contests" counting profile.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
