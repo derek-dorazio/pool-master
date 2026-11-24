@@ -116,8 +116,14 @@ In order:
    `SportLeagueProviderMapping`: `PROVIDER_CODE` with the code its adapter reduces a game to
    (`REG:<week>`, `POST:<the round's place in the postseason, first round 1>`),
    `NAME_PATTERN` with the normalized tournament name, or `CALENDAR_WEEK` for a daily
-   league's weeks. Mappings are inclusion only: a slot with none is never synced. Open the
-   league's Structure tab on the League page and read it back.
+   league's weeks. Mappings are inclusion only: a slot with none is never synced. The same
+   migration sets the league's `timeZone` (the IANA zone its calendar weeks break in) and adds
+   its Seasons: one `SportLeagueSeason` per championship year, named as the league names it
+   (`2026`, `2026-27`), with its span, unique on league and year, and for a synced league each
+   Season's `SportLeagueSeasonProviderMapping` with the provider's own id for it. The sync never
+   adds a Season (it raises `SEASON_MISSING` instead) and `currentSeasonId` is never set by hand:
+   the nightly recompute sets it. Open the league's Structure tab on the League page and read
+   it back.
 2. **Sport definition.** Add its `SportDefinition` to the sport registry: tournament format,
    default rounds, selection types, scoring definitions and round labels. Who competes and how
    it is scored go on each of its sport league rows, never on the sport

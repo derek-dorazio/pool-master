@@ -9,6 +9,7 @@ import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardo
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
+import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // A synced league's game week and fixed-shape playoff take their games from its provider (ADR
@@ -35,12 +36,12 @@ async function syncedWeek() {
     create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}` } });
   await syncLeagueTo(prisma, sportLeague.id, 'nfl');
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Week 11 ${randomUUID()}` } });
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
     eventSeriesId: eventSeries.id,
-    eventYear: 2026,
+    sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
     externalId: `nfl-2026-week-11-${randomUUID().slice(0, 6)}`,
     providerId: PROVIDER,
     name: 'NFL Week 11',
@@ -116,13 +117,13 @@ describe('Provider game slate (#1728)', () => {
       update: {},
     });
     const sportLeague = await prisma.sportLeague.create({
-      data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}`, bracketAdvancement: 'RESEED_BY_SEED' },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `NFL ${randomUUID()}`, bracketAdvancement: 'RESEED_BY_SEED' },
     });
     await syncLeagueTo(prisma, sportLeague.id, 'nfl');
     const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `NFL Playoffs ${randomUUID()}` } });
     const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
       eventSeriesId: eventSeries.id,
-      eventYear: 2026,
+      sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
       externalId: `nfl-2026-postseason-${randomUUID().slice(0, 6)}`,
       providerId: PROVIDER,
       name: 'NFL Playoffs',

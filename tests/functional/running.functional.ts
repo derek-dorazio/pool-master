@@ -22,7 +22,7 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -95,7 +95,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
 
     const race = await createEvent({
       client: a,
-      body: { sportLeagueId: majorsMen.id, eventYear: 2099, name: `Harbour Marathon ${RUN}`, startDate: '2099-04-19T13:30:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(majorsMen.id, 2099), name: `Harbour Marathon ${RUN}`, startDate: '2099-04-19T13:30:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;

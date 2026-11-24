@@ -111,6 +111,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     'GET /api/v1/events/:eventId/bracket',
     'GET /api/v1/sport-leagues/:sportLeagueId',
     'GET /api/v1/sport-leagues/:sportLeagueId/participants',
+    'GET /api/v1/sport-leagues/:sportLeagueId/seasons',
     'GET /api/v1/participants/:id',
   ].map((route) => ({
     route,

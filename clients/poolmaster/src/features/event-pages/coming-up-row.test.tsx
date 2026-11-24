@@ -32,7 +32,7 @@ describe('Coming up row', () => {
       id: 'page-sb',
       urlSegment: 'super-bowl',
       path: '/play/american-football/super-bowl',
-      offers: [{ ...championshipWeekendFixture().offers[0], edition: { sportEventId: 'sb', name: 'Super Bowl', eventYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
+      offers: [{ ...championshipWeekendFixture().offers[0], edition: { sportEventId: 'sb', name: 'Super Bowl', championshipYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
     });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture(), superBowl] } });
     renderRow('AMERICAN_FOOTBALL');

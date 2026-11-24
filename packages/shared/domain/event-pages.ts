@@ -63,7 +63,8 @@ export interface EventPageOffer {
 export interface EventPageEdition {
   sportEventId: string;
   name: string;
-  eventYear: number;
+  /** The year its Season is named for. */
+  championshipYear: number;
   startDate: Date;
   endDate: Date | null;
 }

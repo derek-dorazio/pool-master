@@ -23,7 +23,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -98,7 +98,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const a = admin.client;
 
     // --- The race and its field ------------------------------------------------------------
-    const circuit = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.HORSE_RACING)), ...sportPlay(Sport.HORSE_RACING), sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
+    const circuit = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.HORSE_RACING)), ...sportPlay(Sport.HORSE_RACING), timeZone: 'UTC', sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
     expect(circuit.response?.status).toBe(201);
     const sportLeagueId = expectDefined(circuit.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
@@ -106,7 +106,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
 
     const race = await createEvent({
       client: a,
-      body: { sportLeagueId, eventYear: 2099, name: `Harbour Stakes ${RUN}`, startDate: '2099-05-02T22:00:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Harbour Stakes ${RUN}`, startDate: '2099-05-02T22:00:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;

@@ -11,7 +11,6 @@ import {
   getEventBracket,
   listContestConfigTemplates,
   listEventParticipants,
-  listEvents,
   listSportLeagues,
   openContest,
   recordEventMatchPeriodScore,
@@ -23,7 +22,7 @@ import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
@@ -94,7 +93,7 @@ describe('SDK Functional: American football', () => {
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
-    const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id, eventYear: 2026 } })).data).events
+    const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));
     created.sportEventIds.add(event.id);
     expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);

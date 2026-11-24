@@ -47,10 +47,10 @@ describe('toEventPageDto (#2042)', () => {
       page: CURRENT,
       offers: [{
         offer: OFFER, startsAtRound: null, state: EventPageOfferState.OPEN, closesAt: STAMP,
-        edition: { sportEventId: 'cw-2027', name: 'Conference Championships', eventYear: 2027, startDate: STAMP, endDate: new Date('2026-10-02T00:00:00.000Z') },
+        edition: { sportEventId: 'cw-2027', name: 'Conference Championships', championshipYear: 2027, startDate: STAMP, endDate: new Date('2026-10-02T00:00:00.000Z') },
       }, {
         offer: { ...OFFER, id: 'tiered-open-ended' }, startsAtRound: null, state: EventPageOfferState.NOT_YET, closesAt: STAMP,
-        edition: { sportEventId: 'cw-2028', name: 'Conference Championships', eventYear: 2028, startDate: STAMP, endDate: null },
+        edition: { sportEventId: 'cw-2028', name: 'Conference Championships', championshipYear: 2028, startDate: STAMP, endDate: null },
       }],
     });
 

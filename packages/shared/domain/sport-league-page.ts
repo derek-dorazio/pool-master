@@ -43,7 +43,8 @@ export interface SportLeagueSync {
 export interface SportLeagueEventOverview {
   id: string;
   name: string;
-  eventYear: number;
+  /** The Season it is played in. */
+  sportLeagueSeasonId: string;
   startDate: Date;
   endDate: Date | null;
   status: SportEventStatus;

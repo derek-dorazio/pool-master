@@ -12,7 +12,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { ProviderCode } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueCreateBody } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, sportLeagueCreateBody, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { sportRowKeys } from '../support/sport-rows';
@@ -69,7 +69,7 @@ async function rootAdmin(): Promise<RegisteredUserContext> {
 }
 
 async function newTour(client: Client, name: string): Promise<string> {
-  const tour = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, 'GOLF')), ...sportPlay(Sport.GOLF), sport: 'GOLF', name: `${name} ${RUN}` } });
+  const tour = await createSportLeague({ client, body: { ...(await sportLeagueCreateBody(client, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `${name} ${RUN}` } });
   expect(tour.response?.status).toBe(201);
   const id = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(id);
@@ -95,8 +95,7 @@ async function newTournament(client: Client, sportLeagueId: string, name: string
       startDate: '2099-07-16T08:00:00.000Z',
       endDate: '2099-07-19T20:00:00.000Z',
       rounds: 4,
-      sportLeagueId,
-      eventYear: 2099,
+      sportLeagueId: await inCurrentSeason(sportLeagueId, 2099),
       autoLifecycleEnabled: false,
     },
   });

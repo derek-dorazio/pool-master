@@ -22,6 +22,7 @@ import type {
 import {
   BracketAdvancement,
   getSportDefinition,
+  isKnownTimeZone,
   providerSourceIdOf,
   sportPlaysMatches,
   type Participant,
@@ -31,6 +32,7 @@ import {
   type SportConfig,
   type SportLeaguePlay,
   type SportLeague,
+  type SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
@@ -86,6 +88,8 @@ export interface SportLeagueServiceDeps {
   platformTierProfiles: Pick<PlatformTierProfileRepository, 'findById'>;
   platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findById'>;
   logger?: FastifyBaseLogger;
+  /** The clock a new sport league's first Season is read from; the system clock by default. */
+  now?: () => Date;
 }
 
 /** The two profiles a sport league names (#1844). */
@@ -110,12 +114,19 @@ export class SportLeagueService {
 
   /**
    * 422 SPORT_LEAGUE_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket;
-   * 404 PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for a profile that does not exist.
+   * 404 PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for a profile that does not exist;
+   * 400 TIME_ZONE_UNKNOWN for a time zone the runtime does not know (#2003). It starts with this
+   * calendar year's Season as its current one, so an event can be made on it; every later Season
+   * is added by migration. That first Season is a stopgap for the browser journeys' own leagues and
+   * goes when they move to test slots (#2004).
    */
   async createSportLeague(
     sport: Sport,
-    input: { name: string; urlSegment: string; bracketAdvancement?: BracketAdvancement } & SportLeaguePlay & SportLeagueProfileIds,
+    input: { name: string; urlSegment: string; timeZone: string; bracketAdvancement?: BracketAdvancement } & SportLeaguePlay & SportLeagueProfileIds,
   ): Promise<SportLeagueSummary> {
+    if (!isKnownTimeZone(input.timeZone)) {
+      throw new SportCatalogError(`Unknown time zone: ${input.timeZone}.`, 'TIME_ZONE_UNKNOWN', 400);
+    }
     const sportRow = await requireSport(this.deps.sports, sport);
     this.assertAdvancementFits(sport, input.bracketAdvancement);
     await this.assertProfilesExist(input);
@@ -139,22 +150,18 @@ export class SportLeagueService {
       urlSegment: input.urlSegment,
       participantType: input.participantType,
       scoringFamily: input.scoringFamily,
+      timeZone: input.timeZone,
       bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
       platformTierProfileId: input.platformTierProfileId,
       platformPricingProfileId: input.platformPricingProfileId,
-    });
+    }, calendarYearSeason((this.deps.now ?? (() => new Date()))()));
     this.deps.logger?.info({ sportLeagueId: sportLeague.id, sport, name: input.name }, 'Created sport league');
     return (await this.summarize([sportLeague]))[0];
   }
 
   /**
-   * 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league.
-   *
-   * Setting `currentEventYear` is "set as current" (plans/147 decision 6). It replaced a
-   * foreign key to a season, which made the database guarantee the target existed; a plain
-   * year column accepts 1823. So the guarantee is kept here instead: 422
-   * EVENT_YEAR_HAS_NO_EVENTS for a year this sport league has no events in. It is one write
-   * on the sport league row, so the sport league never has two current years.
+   * 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. Its current Season is never set here:
+   * the daily recompute sets it (#2003).
    *
    * 422 SPORT_LEAGUE_NOT_BRACKET for RESEED_BY_SEED on a sport not played as a bracket. 409
    * SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED for a change of `bracketAdvancement` while any event of
@@ -176,7 +183,6 @@ export class SportLeagueService {
   async updateSportLeague(
     sportLeagueId: string,
     updates: Pick<SportLeagueUpdate, 'name' | 'isActive' | 'bracketAdvancement' | 'syncProviderLeagueId' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>
-      & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
     await this.assertEventSyncFits(sportLeague, updates);
@@ -186,21 +192,9 @@ export class SportLeagueService {
       if (sportRow) this.assertAdvancementFits(sportRow.sport, updates.bracketAdvancement);
       if (updates.bracketAdvancement !== sportLeague.bracketAdvancement) await this.assertNoBracketLoaded(sportLeague);
     }
-    if (updates.currentEventYear !== undefined) {
-      const events = (await this.deps.sportEvents.countBySportLeagues([sportLeagueId], { eventYear: updates.currentEventYear }))
-        .get(sportLeagueId) ?? 0;
-      if (events === 0) {
-        throw new SportCatalogError(
-          `${sportLeague.name} has no events in ${updates.currentEventYear}, so it cannot be the current year.`,
-          'EVENT_YEAR_HAS_NO_EVENTS',
-          422,
-        );
-      }
-    }
     const updated = await this.deps.sportLeagues.update(sportLeagueId, {
       name: updates.name,
       isActive: updates.isActive,
-      currentEventYear: updates.currentEventYear,
       bracketAdvancement: updates.bracketAdvancement,
       syncProviderLeagueId: updates.syncProviderLeagueId,
       autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart,
@@ -218,9 +212,6 @@ export class SportLeagueService {
     }
     if (updates.autoReleaseDaysBeforeStart !== undefined && updates.autoReleaseDaysBeforeStart !== sportLeague.autoReleaseDaysBeforeStart) {
       this.deps.logger?.info({ sportLeagueId, autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }, 'Set sport league automatic release window');
-    }
-    if (updates.currentEventYear !== undefined) {
-      this.deps.logger?.info({ sportLeagueId, currentEventYear: updates.currentEventYear }, 'Set current event year');
     }
     return (await this.summarize([updated]))[0];
   }
@@ -430,4 +421,20 @@ export function describeSportLeagueUses(uses: SportLeagueUses): string[] {
     ...counted(uses.cupCount, 'league cup', 'league cups'),
     ...counted(uses.participantCount, 'participant', 'participants'),
   ];
+}
+
+/**
+ * The one Season a sport league made through the admin API starts with (#2003): `now`'s calendar
+ * year in UTC, named for it. Every other Season is added by migration. A stopgap for the browser
+ * journeys, which make their own leagues, kept private to this service so nothing else builds a
+ * Season from the clock; slice 7 (#2004) deletes it when the journeys move to test slots.
+ */
+function calendarYearSeason(now: Date): SportLeagueSeasonSpan {
+  const championshipYear = now.getUTCFullYear();
+  return {
+    name: String(championshipYear),
+    championshipYear,
+    startsAt: new Date(Date.UTC(championshipYear, 0, 1)),
+    endsAt: new Date(Date.UTC(championshipYear + 1, 0, 1) - 1),
+  };
 }

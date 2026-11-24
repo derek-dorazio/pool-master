@@ -48,7 +48,7 @@ const pages: EventPageRepository = {
   findByUrlSegments: () => Promise.resolve(PAGE),
   findActive: () => Promise.resolve([PAGE]),
   findOffers: () => Promise.resolve([OFFER]),
-  findEditionsNotOver: (series) => Promise.resolve(series.map(() => [{ sportEventId: 'cw-2027', name: 'Conference Championships', eventYear: 2027, startDate: STAMP, endDate: null }])),
+  findEditionsNotOver: (series) => Promise.resolve(series.map(() => [{ sportEventId: 'cw-2027', name: 'Conference Championships', championshipYear: 2027, startDate: STAMP, endDate: null }])),
 };
 
 /** An app whose offer closes at each of `cutoffs` in turn, one per time the page is computed. */

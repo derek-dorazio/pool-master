@@ -20,6 +20,7 @@ import { recordStatements, statementCounts } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 import { sportRowKeys } from '../../support/sport-rows';
+import { seriesSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
@@ -50,7 +51,7 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Division I Men');
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: leagueName } },
-    create: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: leagueName },
+    create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: leagueName },
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });
@@ -58,7 +59,7 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const externalId = `scope-${randomUUID()}`;
   const event = await createSportEventRow(events, {
     eventSeriesId: eventSeries.id,
-    eventYear: 2027,
+    sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2027),
     externalId,
     providerId: PROVIDER,
     name: 'Final Four',
@@ -371,6 +372,7 @@ describe('game scores from a provider', () => {
       ['SELECT sport_event_round_matches', 3],
       ['SELECT sport_event_rounds', 3],
       ['SELECT sport_events', 3],
+      ['SELECT sport_league_seasons', 2],
       ['SELECT sport_leagues', 3],
       ['SELECT sports', 3],
       ['UPDATE sport_event_round_matches', 4],

@@ -20,7 +20,7 @@ const EventPageAddressShape = {
 export const EventPageEditionDtoSchema = z.object({
   sportEventId: z.uuid().describe('The edition\'s sport event: the one Create contest starts on.'),
   name: z.string().describe('The edition\'s name, such as "Conference Championships".'),
-  eventYear: z.number().int().describe('The year the edition is branded with.'),
+  championshipYear: z.number().int().describe('The year the edition\'s Season is named for (SportEventDto.championshipYear).'),
   startDate: DateTimeSchema.describe('When the edition starts. For a NOT_YET offer, when it is expected.'),
   endDate: DateTimeSchema.nullable().describe('When the edition ends, when known.'),
 }).describe('The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.');

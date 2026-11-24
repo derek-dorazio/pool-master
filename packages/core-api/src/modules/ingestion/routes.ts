@@ -153,9 +153,9 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'Sync a sport league\'s events now',
-      description: 'Queues the sport league\'s events sync as a background job, the same job its schedule queues every six hours, and answers it at once (202): the provider\'s events for the league\'s tour become its events, and the ones already linked take the provider\'s name, venue and dates. '
+      description: 'Queues the sport league\'s events sync as a background job, the same job its schedule queues every six hours, and answers it at once (202): the provider\'s events for each Season it reads (the named one, or the current Season and every later one), asked for by the provider\'s own id for the Season, become its events in that Season, and the ones already linked take the provider\'s name, venue and dates. '
         + 'The job records an EVENTS sync run with what it created, updated and skipped; follow it on Activity. When the league\'s sync is already waiting to run, answers that job. '
-        + '404 SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when no provider syncs the league\'s events.',
+        + '404 SPORT_LEAGUE_NOT_FOUND, or SPORT_LEAGUE_SEASON_NOT_FOUND for a Season that is not the league\'s; 422 SPORT_LEAGUE_NOT_SYNCED when no provider syncs the league\'s events, SPORT_LEAGUE_SEASON_NOT_MAPPED when the provider has no id for the named Season.',
       operationId: 'syncLeagueEvents',
       params: {
         type: 'object',
@@ -168,7 +168,7 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     handler: async (request: FastifyRequest<{ Params: { sportLeagueId: string }; Body: LeagueEventsSyncRequest }>, reply: FastifyReply) => {
       const job = await opts.leagueEventsSync.syncNow({
         sportLeagueId: request.params.sportLeagueId,
-        eventYear: request.body.eventYear,
+        sportLeagueSeasonId: request.body.sportLeagueSeasonId,
         requestedByUserId: requireAuthUser(request).userId,
       });
       const [presented] = await opts.activity.present([job]);

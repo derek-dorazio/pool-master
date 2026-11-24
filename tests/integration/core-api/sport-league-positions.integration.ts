@@ -30,7 +30,7 @@ async function sportId(sport: Sport): Promise<string> {
 async function mappedGolfLeague(name: string) {
   const prisma = getPrisma();
   const league = await prisma.sportLeague.create({
-    data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: await sportId(Sport.GOLF), name: `${name} ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: await sportId(Sport.GOLF), name: `${name} ${randomUUID().slice(0, 8)}` },
   });
   const mappingId = await syncLeagueTo(prisma, league.id, 'pga');
   return { league, mappingId };
@@ -159,7 +159,7 @@ describe('POST /api/v1/sport-leagues', () => {
       method: 'POST',
       url: '/api/v1/sport-leagues',
       headers: rootAdmin.headers,
-      payload: { sport: Sport.TENNIS, name: `Team Tennis ${randomUUID().slice(0, 8)}`, participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD, ...profiles },
+      payload: { sport: Sport.TENNIS, name: `Team Tennis ${randomUUID().slice(0, 8)}`, participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD, timeZone: 'UTC', ...profiles },
     });
 
     expect(response.statusCode).toBe(201);

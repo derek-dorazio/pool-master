@@ -33,7 +33,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { freshEventEdition } from '../../support/event-edition';
+import { fixtureSeasonId, freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { mockFn } from '../../support/mock-fn';
 import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
@@ -85,9 +85,8 @@ const PINNED_RELEASE_COUNTS: Array<[string, number]> = [
   ['SELECT contests', 1],
   ['SELECT event_series', 4],
   ['SELECT sport_events', 3],
-  // Each event's sport is read through its series' league (#2042).
-  ['SELECT sport_leagues', 3],
-  ['SELECT sports', 3],
+  ['SELECT sport_league_seasons', 2],
+  ['SELECT sport_leagues', 2],
   ['UPDATE sport_events', 1],
 ];
 
@@ -731,7 +730,7 @@ async function createSecondTourEvent(fixtureEventSeriesId: string, suffix: strin
   const event = await prisma.sportEvent.create({
     data: {
       eventSeriesId: series.id,
-      eventYear: 2026,
+      sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026),
       externalId: `plan-cap-${suffix}`,
       providerId: 'integration-test',
       name: `Plan Cap Classic ${suffix}`,
@@ -979,8 +978,8 @@ describe('ContestConfigTemplateRepository', () => {
     });
     const suffix = randomUUID().slice(0, 8);
     const [pga, lpga] = await Promise.all([
-      prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `PGA-style ${suffix}` } }),
-      prisma.sportLeague.create({ data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `LPGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `PGA-style ${suffix}` } }),
+      prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `LPGA-style ${suffix}` } }),
     ]);
     return { pga, lpga };
   }
@@ -1125,7 +1124,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const fixture = await createLeagueAndEvent();
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: fixture.event.eventSeriesId } });
     const covering = await createSeriesTemplate('covering', series.sportLeagueId, ['Some Other Major', series.name]);
-    const edition = { id: randomUUID(), eventSeriesId: series.id, eventYear: fixture.event.eventYear };
+    const edition = { id: randomUUID(), eventSeriesId: series.id, sportLeagueSeasonId: fixture.event.sportLeagueSeasonId };
     return { ...fixture, series, covering, edition };
   }
 
@@ -1133,7 +1132,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const prisma = getPrisma();
     const { league, event, series, covering, edition } = await seriesWithTemplate();
     const otherTour = await prisma.sportLeague.create({
-      data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: (await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } })).id, name: `${prefix}other tour` },
     });
     const otherLeague = await createSeriesTemplate('other-league', otherTour.id, [series.name]);
     const otherSeries = await createSeriesTemplate('other-series', series.sportLeagueId, ['Some Other Major']);
@@ -1148,9 +1147,9 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     await expect(repos().contests.findJoinableByReleasedEdition({ ...edition, eventSeriesId: randomUUID() })).resolves.toEqual([]);
   });
 
-  it('leaves out a COMPLETED pool, a drawn pool, a squares-drawn pool, a pool that already has the edition and a pool of another year\'s events, keeping the rest (one with no events yet among them) oldest first', async () => {
+  it('leaves out a COMPLETED pool, a drawn pool, a squares-drawn pool, a pool that already has the edition and a pool of another Season\'s events, keeping the rest (one with no events yet among them) oldest first', async () => {
     const prisma = getPrisma();
-    const { league, event, suffix, covering, edition } = await seriesWithTemplate();
+    const { league, event, suffix, covering, edition, series } = await seriesWithTemplate();
     const first = await contestFromTemplate(league.id, event.id, 'Live Pool', covering.id, ContestStatus.ACTIVE);
     const second = await contestFromTemplate(league.id, event.id, 'Draft Pool', covering.id, ContestStatus.DRAFT);
     await contestFromTemplate(league.id, event.id, 'Finished Pool', covering.id, ContestStatus.COMPLETED);
@@ -1164,7 +1163,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     const { event: released } = await createLaterEvent(suffix);
     await contestFromTemplate(league.id, [event.id, released.id], 'Already Has It', covering.id);
     const { event: lastYear } = await createLaterEvent(suffix, new Date('2025-07-16T12:00:00.000Z'));
-    await prisma.sportEvent.update({ where: { id: lastYear.id }, data: { eventYear: edition.eventYear - 1 } });
+    await prisma.sportEvent.update({ where: { id: lastYear.id }, data: { sportLeagueSeasonId: await fixtureSeasonId(prisma, series.sportLeagueId, 2025) } });
     await contestFromTemplate(league.id, [event.id, lastYear.id], 'Mixed Years Pool', covering.id);
 
     const found = await repos().contests.findJoinableByReleasedEdition({ ...edition, id: released.id });

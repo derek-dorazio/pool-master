@@ -24,7 +24,7 @@ import {
   GamePicksResponseSchema,
   ErrorEnvelopeSchema,
   SportEventListResponseSchema,
-  SportEventYearListResponseSchema,
+  SportLeagueSeasonListResponseSchema,
   GenerateInviteLinkResponseSchema,
   ListLeagueInvitationsResponseSchema,
   ResendLeagueInvitationResponseSchema,
@@ -52,7 +52,7 @@ import {
   Sport,
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-import { freshEventEdition } from '../../support/event-edition';
+import { freshEventEdition, seriesSeasonId } from '../../support/event-edition';
 import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 
@@ -376,15 +376,16 @@ describe('Contract verification (web)', () => {
         where: { id: eventId },
         select: { eventSeries: { select: { sportLeagueId: true } } },
       });
-      const yearsRes = await getApp().inject({
+      // Any signed-in user reads a sport league's Seasons, the pickers' options (#2003).
+      const seasonsRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/events/years?sportLeagueId=${eventSeries.sportLeagueId}`,
+        url: `/api/v1/sport-leagues/${eventSeries.sportLeagueId}/seasons`,
         headers: viewer.headers,
       });
-      expect(yearsRes.statusCode).toBe(200);
-      const years = SportEventYearListResponseSchema.safeParse(yearsRes.json());
-      expect(years.success).toBe(true);
-      expect(years.data?.years).toContain(event?.eventYear);
+      expect(seasonsRes.statusCode).toBe(200);
+      const seasons = SportLeagueSeasonListResponseSchema.safeParse(seasonsRes.json());
+      expect(seasons.success).toBe(true);
+      expect(seasons.data?.seasons.map((season) => season.id)).toContain(event?.sportLeagueSeasonId);
     } finally {
       await prisma.sportEventParticipantGolfStanding.deleteMany({
         where: {
@@ -593,7 +594,7 @@ describe('Contract verification (web)', () => {
     const sportEvent = await getPrisma().sportEvent.create({
       data: {
         eventSeriesId: series.id,
-        eventYear: eventTiming.startDate.getUTCFullYear(),
+        sportLeagueSeasonId: await seriesSeasonId(getPrisma(), series.id, eventTiming.startDate.getUTCFullYear()),
         externalId: `contract-event-${randomUUID().slice(0, 8)}`,
         providerId: 'integration-test',
         name: 'Contract Event',

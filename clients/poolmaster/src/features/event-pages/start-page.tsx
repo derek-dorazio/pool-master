@@ -37,7 +37,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
   const logger = useMemo(() => getLogger().child({ feature: 'start-page' }), []);
   const contestsQuery = useLeagueContestsQuery(offer ? league.id : '');
   const cap = league.planEntitlements.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
-  const year = offer?.edition.eventYear ?? 0;
+  const year = offer?.edition.championshipYear ?? 0;
   const isCapCounted = offer !== null && cap !== null;
   const usedQuery = useQuery({ ...sportLeaguesUsedQuery(league.id, year), enabled: isCapCounted });
   const isChecking = (offer !== null && contestsQuery.isPending) || (isCapCounted && usedQuery.isPending);

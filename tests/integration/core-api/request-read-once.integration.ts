@@ -72,6 +72,7 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_round_matches', 1],
   ['SELECT sport_event_rounds', 1],
   ['SELECT sport_events', 1],
+  ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
   ['SELECT sports', 1], // a sport is read through its event's series and league since #2042 (#2089)
   ['UPDATE sport_event_round_matches', 1],
@@ -90,6 +91,7 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 2],
+  ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
   ['SELECT sports', 2], // a sport is read through its event's series and league since #2042 (#2089)
   ['UPDATE sport_events', 1],
@@ -342,8 +344,9 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_event_participants', 3],
       ['SELECT sport_event_tiers', 3],
       ['SELECT sport_events', 3],
-      ['SELECT sport_leagues', 4],
-      ['SELECT sports', 4],
+      ['SELECT sport_league_seasons', 1],
+      ['SELECT sport_leagues', 2],
+      ['SELECT sports', 1],
       ['SELECT users', 1],
       ['UPDATE contests', 1],
     ]);
@@ -725,8 +728,8 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
-  ['SELECT sport_leagues', 3],
-  ['SELECT sports', 3],
+  ['SELECT sport_league_seasons', 2],
+  ['SELECT sport_leagues', 2],
   ['UPDATE sport_events', 1],
 ];
 
@@ -746,8 +749,8 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_rounds', 1],
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
-  ['SELECT sport_leagues', 4],
-  ['SELECT sports', 4],
+  ['SELECT sport_league_seasons', 3],
+  ['SELECT sport_leagues', 3],
   ['UPDATE contests', 1],
   ['UPDATE sport_events', 1],
 ];

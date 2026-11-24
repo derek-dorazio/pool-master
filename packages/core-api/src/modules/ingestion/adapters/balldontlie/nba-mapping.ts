@@ -35,7 +35,6 @@ export const NBA_PLAYOFFS: PlayoffsLeague = {
   // The 2025 season opens in October 2025; its playoffs run from April into June 2026.
   playoffYearOffset: 1,
   // September, ahead of October's opening night.
-  seasonRolloverMonth: 8,
   // Each conference seeds its own half; the West's is listed first, as an admin loads it.
   bracket: { kind: BracketShapeKind.SEEDED, groups: ['West', 'East'] },
 };

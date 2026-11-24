@@ -136,6 +136,7 @@ test('act 1: the root admin releases an American football event of one game betw
 
     const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
       sport: 'AMERICAN_FOOTBALL',
+      timeZone: 'UTC',
       name: run.tourName,
       urlSegment: e2eLeagueUrlSegment(),
       ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
@@ -144,7 +145,6 @@ test('act 1: the root admin releases an American football event of one game betw
     });
     const { event } = await postJson<{ event: { id: string } }>(api, headers, '/api/v1/events/', {
       sportLeagueId: sportLeague.id,
-      eventYear: 2099,
       name: run.tournamentName,
       startDate: KICKOFF,
       rounds: 1,

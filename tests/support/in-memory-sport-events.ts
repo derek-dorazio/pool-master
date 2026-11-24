@@ -88,6 +88,9 @@ export const NO_PICKS_ON_EVENT: Pick<SportEventBracketServiceDeps, 'predictions'
 
 /** The sport league of an event or participant made without one. */
 const UNPLACED_SPORT_LEAGUE_ID = 'sport-league-unplaced';
+/** The Season every league in the store is in unless a test adds another (#2003). */
+export const IN_MEMORY_SEASON_ID = 'season-2026';
+const IN_MEMORY_SEASON_YEAR = 2026;
 
 export class InMemorySportEvents {
   private sequence = 0;
@@ -120,6 +123,8 @@ export class InMemorySportEvents {
   backgroundJobs: BackgroundJobRequest[] = [];
   /** Active contest setups each sport league offers (#1823); a league not listed offers one. */
   contestSetupCounts = new Map<string, number>();
+  /** Each Season's championship year (#2003), which an event reads through its Season. */
+  seasonYears = new Map<string, number>([[IN_MEMORY_SEASON_ID, IN_MEMORY_SEASON_YEAR]]);
 
   id(prefix: string): string {
     this.sequence += 1;
@@ -136,7 +141,7 @@ export class InMemorySportEvents {
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
     const play = sportPlay(this.sports.find((row) => row.id === sportId)?.sport ?? Sport.GOLF);
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, timeZone: 'UTC', isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -178,15 +183,18 @@ export class InMemorySportEvents {
 
   /**
    * An event, by default an edition of a series of its own on a placeholder sport league.
-   * Pass `sportLeagueId` (and `eventSeriesId`, `eventYear`) to place it on a real one.
+   * Pass `sportLeagueId` (and `eventSeriesId`, `sportLeagueSeasonId`) to place it on a real one;
+   * its championship year is its Season's.
    */
   addEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     const event: SportEvent = stamp({
       id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
-      eventSeriesId: this.id('event-series'), eventYear: 2026, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
+      eventSeriesId: this.id('event-series'), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
       metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
+      championshipYear: 0,
     });
+    event.championshipYear = overrides.championshipYear ?? this.seasonYears.get(event.sportLeagueSeasonId) ?? IN_MEMORY_SEASON_YEAR;
     this.events.push(event);
     return event;
   }
@@ -233,7 +241,7 @@ export class InMemorySportEvents {
       findBySportAndUrlSegment: async (sportId, urlSegment) => this.sportLeagues.find((row) => row.sportId === sportId && row.urlSegment === urlSegment) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },
@@ -327,7 +335,8 @@ export class InMemorySportEvents {
       findAll: async (filters) => this.events.filter((row) => (
         (filters.statuses === undefined || filters.statuses.includes(row.status))
         && (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
-        && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
+        && (filters.sportLeagueSeasonId === undefined || row.sportLeagueSeasonId === filters.sportLeagueSeasonId)
+        && (filters.eventSeriesId === undefined || row.eventSeriesId === filters.eventSeriesId)
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))
         && (!filters.releasedOnly || row.status !== 'DRAFT')
         // An event's league the store never made (addEvent's default) counts as on.
@@ -335,19 +344,16 @@ export class InMemorySportEvents {
         && (filters.startsFrom === undefined || row.startDate >= filters.startsFrom)
         && (filters.startsBefore === undefined || row.startDate < filters.startsBefore)
       )),
-      findEventYears: async (sportLeagueId, options) => [...new Set(this.events
-        .filter((row) => row.sportLeagueId === sportLeagueId && (!options.releasedOnly || row.status !== 'DRAFT'))
-        .map((row) => row.eventYear))].sort((left, right) => left - right),
       createMany: async (inputs: readonly SportEventCreate[]) => {
-        // The database's one-edition-per-year constraint, raised the way Prisma raises it, and
+        // The database's one-edition-per-Season constraint, raised the way Prisma raises it, and
         // before any row is written: the insert is all or none.
-        const editions = new Set(this.events.map((row) => `${row.eventSeriesId}|${row.eventYear}`));
+        const editions = new Set(this.events.map((row) => `${row.eventSeriesId}|${row.sportLeagueSeasonId}`));
         for (const input of inputs) {
-          const edition = `${input.eventSeriesId}|${input.eventYear}`;
+          const edition = `${input.eventSeriesId}|${input.sportLeagueSeasonId}`;
           if (editions.has(edition)) {
             throw Object.assign(new Error('Unique constraint failed'), {
               code: 'P2002',
-              meta: { target: ['event_series_id', 'event_year'] },
+              meta: { target: ['event_series_id', 'sport_league_season_id'] },
             });
           }
           editions.add(edition);
@@ -401,9 +407,7 @@ export class InMemorySportEvents {
         .sort((left, right) => left.tierNumber - right.tierNumber)
         .map((tier) => tier.label)])),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
-      countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (
-        row.sportLeagueId === id && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
-      )).length),
+      countBySportLeagues: async (ids) => count(ids, (id) => this.events.filter((row) => row.sportLeagueId === id).length),
       sportLeagueHasLoadedBracket: async (sportLeagueId) => this.matchRows.some((match) => (
         this.events.some((event) => event.id === match.sportEventId && event.sportLeagueId === sportLeagueId)
       )),

@@ -5,10 +5,8 @@ import type {
   AddSportEventParticipantsResponse,
   AutoAssignSportEventPricesRequest,
   AutoAssignSportEventTiersRequest,
-  CloneSportEventYearRequest,
   CreateSportEventFromProviderEventRequest,
   CreateSportEventRequest,
-  ImportSportEventYearFromProviderRequest,
   LinkSportEventScoreSourceRequest,
   ReplaceSportEventTierAssignmentsRequest,
   ReplaceSportEventTiersRequest,
@@ -22,8 +20,6 @@ import type {
   SportEventContestListResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
-  SportEventYearListQuery,
-  SportEventYearListResponse,
   TransitionSportEventRequest,
   UpdateSportEventParticipantsRequest,
   UpdateSportEventRequest,
@@ -56,14 +52,12 @@ import {
   mapFieldUploadPreviewToDto,
   mapGolfRoundScorePreviewToDto,
   mapRaceResultPreviewToDto,
-  mapProviderEventYearImportToResponse,
   mapSportEventRoundMatchToDto,
   mapSportEventParticipantToDto,
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
   mapSportEventTierToDto,
   mapSportEventToDto,
-  mapSportEventYearsToResponse,
   toProviderManualSyncSubmissionResponse,
 } from '../../mappers';
 import type { IngestionService } from '../ingestion/ingestion-service';
@@ -89,11 +83,11 @@ function isRootAdmin(request: FastifyRequest): boolean {
 
 /**
  * The event lists a caller other than a root admin may read (#1348): events that can still take a
- * contest, or one sport league's season. Both stay small; a sport across every year is the root
+ * contest, or one Season's (#2003). Both stay small; a sport across every Season is the root
  * admin's catalog alone.
  */
 function isMemberEventList(query: SportEventListQuery): boolean {
-  const oneSeason = query.sportLeagueId !== undefined && query.eventYear !== undefined;
+  const oneSeason = query.sportLeagueSeasonId !== undefined;
   return isOfferableEventList(query) || oneSeason;
 }
 
@@ -166,12 +160,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return { events };
     },
 
-    listEventYears: async (request: FastifyRequest<{ Querystring: SportEventYearListQuery }>): Promise<SportEventYearListResponse> => {
-      // As in listEvents: a year with only drafts is a root admin's alone.
-      const years = await sportEvents.listEventYears(request.query.sportLeagueId, { releasedOnly: !isRootAdmin(request) });
-      return mapSportEventYearsToResponse(years);
-    },
-
     getEvent: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
       // As in listEvents: a draft is a 404 to anyone but a root admin, whose read alone counts readiness.
       const rootAdmin = isRootAdmin(request);
@@ -193,32 +181,16 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Body: CreateSportEventFromProviderEventRequest }>,
       reply: FastifyReply,
     ) => {
-      const { sportLeagueId, eventYear, providerId, externalId, rounds: roundCount } = request.body;
+      const { sportLeagueId, providerId, externalId, rounds: roundCount } = request.body;
       const providerEvent = await scoreSource.getProviderEventDetail(providerId, externalId);
       const created = await sportEvents.createEventFromProviderEvent({
         sportLeagueId,
-        eventYear,
         providerId,
         externalId,
         rounds: roundCount,
         providerEvent,
       });
       return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
-    },
-
-    cloneEventYear: async (request: FastifyRequest<{ Body: CloneSportEventYearRequest }>, reply: FastifyReply) => {
-      const cloned = await sportEvents.cloneEventYear(request.body);
-      return reply.status(201).send({ events: cloned.map(mapSportEventToDto) } satisfies SportEventListResponse);
-    },
-
-    importEventYearFromProvider: async (
-      request: FastifyRequest<{ Body: ImportSportEventYearFromProviderRequest }>,
-      reply: FastifyReply,
-    ) => {
-      const { sportLeagueId, eventYear, providerId } = request.body;
-      const providerEvents = await scoreSource.listTourEventsForYear(providerId, sportLeagueId, eventYear);
-      const result = await sportEvents.importProviderEventYear({ sportLeagueId, eventYear, providerId, providerEvents });
-      return reply.status(201).send(mapProviderEventYearImportToResponse(result));
     },
 
     updateEvent: async (request: FastifyRequest<EventParams & { Body: UpdateSportEventRequest }>): Promise<SportEventResponse> => {

@@ -294,7 +294,6 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findByProviderRef: one(),
     findByProviderRefs: many(),
     findAll: many(),
-    findEventYears: many(),
     createMany: echoCreateMany('sport-event'),
     update: echoUpdate(),
     transitionStatus: one(),

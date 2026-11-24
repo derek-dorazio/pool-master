@@ -23,8 +23,8 @@ export interface SeriesContest {
   eventSeriesId: string;
   seriesName: string;
   sportLeagueName: string;
-  /** The year the edition is branded with: the 2026 Masters. */
-  eventYear: number;
+  /** The year the edition's Season is named for: the 2026 Masters. */
+  championshipYear: number;
   /** When it went final; null for a contest completed before the time was kept. */
   completedAt: Date | null;
   /** The event's games, counted: how many, over how many rounds, and how many send their winner on. */

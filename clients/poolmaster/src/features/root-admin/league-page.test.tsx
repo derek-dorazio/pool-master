@@ -10,6 +10,7 @@ import type {
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
   SportLeaguePhaseDefinitionDto,
+  SportLeagueSeasonDto,
   SportLeaguePositionDto,
   SportLeagueSyncDto,
 } from '@/lib/api';
@@ -32,6 +33,7 @@ const {
   listSportLeagueEventOverviewsMock,
   listSportLeagueOverviewsMock,
   listSportLeagueParticipantOverviewsMock,
+  listSportLeagueSeasonsMock,
   listSportLeaguePositionsMock,
   listSportLeaguesMock,
   listSportLeagueSyncsMock,
@@ -50,6 +52,7 @@ const {
     listSportLeagueEventOverviewsMock: vi.fn(),
     listSportLeagueOverviewsMock: vi.fn(),
     listSportLeagueParticipantOverviewsMock: vi.fn(),
+    listSportLeagueSeasonsMock: vi.fn(),
     listSportLeaguePositionsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     listSportLeagueSyncsMock: vi.fn(),
@@ -68,6 +71,7 @@ bindApiMocks({
   listSportLeagueEventOverviews: listSportLeagueEventOverviewsMock,
   listSportLeagueOverviews: listSportLeagueOverviewsMock,
   listSportLeagueParticipantOverviews: listSportLeagueParticipantOverviewsMock,
+  listSportLeagueSeasons: listSportLeagueSeasonsMock,
   listSportLeaguePositions: listSportLeaguePositionsMock,
   listSportLeagues: listSportLeaguesMock,
   listSportLeagueSyncs: listSportLeagueSyncsMock,
@@ -82,7 +86,7 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-const NBA = sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', selectedProviderMapping: providerMappingFixture(), currentEventYear: 2027 });
+const NBA = sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', selectedProviderMapping: providerMappingFixture(), currentSeasonId: 's2027', timeZone: 'America/New_York' });
 const SUMMER = sportLeagueFixture({ id: 'summer', sport: 'BASKETBALL', name: 'Summer League' });
 
 function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOverviewDto {
@@ -109,6 +113,29 @@ const OVERVIEWS = [
   overview({ id: 'summer', name: 'Summer League', providerId: null, providerName: null, syncHealth: 'OFF' }),
 ];
 
+function season(id: string, year: number, overrides: Partial<SportLeagueSeasonDto> = {}): SportLeagueSeasonDto {
+  return {
+    id, name: `${year - 1}-${String(year).slice(2)}`, championshipYear: year,
+    startsAt: `${year - 1}-10-01T00:00:00.000Z`, endsAt: `${year}-06-30T00:00:00.000Z`,
+    isCurrent: false, providerMappings: [], phases: [], ...overrides,
+  };
+}
+
+const SEASONS = [
+  season('s2027', 2027, {
+    isCurrent: true,
+    providerMappings: [{ id: 'm1', providerId: 'balldontlie', providerName: 'BALLDONTLIE', providerLeagueCode: 'nba', providerSeasonId: '2026' }],
+    phases: [{
+      id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [{
+        id: 'slot-week-1', slotDefinitionId: 'def-week-1', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
+        startsAt: '2026-10-20T00:00:00.000Z', endsAt: '2026-10-26T00:00:00.000Z', status: 'SCHEDULED',
+        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null,
+      }],
+    }],
+  }),
+  season('s2026', 2026),
+];
+
 function sync(kind: SportLeagueSyncDto['kind']): SportLeagueSyncDto {
   return { kind, health: 'OK', mode: 'SCHEDULE', lastRun: null };
 }
@@ -117,7 +144,7 @@ function event(overrides: Partial<SportLeagueEventOverviewDto>): SportLeagueEven
   return {
     id: 'evt-1',
     name: 'NBA Cup 2027',
-    eventYear: 2027,
+    sportLeagueSeasonId: 's2027',
     startDate: '2027-12-01T00:00:00.000Z',
     endDate: null,
     status: 'DRAFT',
@@ -238,6 +265,7 @@ function renderLeaguePage(path: string) {
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: OVERVIEWS } });
   listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['BASKETBALL'] }] } });
   listSportLeagueSyncsMock.mockResolvedValue({ data: { syncs: [sync('EVENTS'), sync('FIELD'), sync('SCORES')] } });
+  listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons: SEASONS } });
   const queryClient = sportsQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
@@ -319,16 +347,16 @@ describe('League page', () => {
 
   it('opens the Events grid on the current season, with every column, and a row leads to its event page', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({
-      data: { events: [event({ id: 'evt-old', name: 'NBA Cup 2026', eventYear: 2026, status: 'COMPLETED', releaseMode: 'MANUAL', releaseAtKind: 'ACTUAL' }), event({})] },
+      data: { events: [event({ id: 'evt-old', name: 'NBA Cup 2026', sportLeagueSeasonId: 's2026', status: 'COMPLETED', releaseMode: 'MANUAL', releaseAtKind: 'ACTUAL' }), event({})] },
     });
     renderLeaguePage('/manage/sports/basketball/leagues/nba/events');
 
     const row = await screen.findByTestId('root-admin-league-event-evt-1');
     expect(screen.queryByTestId('root-admin-league-event-evt-old')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-league-events-filter-summary')).toHaveTextContent('Year');
+    expect(screen.getByTestId('root-admin-league-events-filter-summary')).toHaveTextContent('Season');
     expect(screen.getByTestId('root-admin-league-events-count')).toHaveTextContent('2 events');
     expect(columnHeaders('root-admin-league-events-table')).toEqual(
-      expect.arrayContaining(['Event', 'Year', 'Starts', 'Status', 'Release', 'Release date', 'Field', 'Issues', 'Last synced']),
+      expect.arrayContaining(['Event', 'Season', 'Starts', 'Status', 'Release', 'Release date', 'Field', 'Issues', 'Last synced']),
     );
     expect(within(row).getByText('Auto')).toBeInTheDocument();
 
@@ -417,6 +445,23 @@ describe('League page', () => {
 
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-slot')).not.toBeInTheDocument());
+  });
+
+  it('lists the league\'s Seasons latest first under its time zone, opens one to read with its provider ids and no Edit, and lists the current Season\'s slots', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    const seasonsTable = await screen.findByTestId('root-admin-league-structure-seasons-table');
+    expect(listSportLeagueSeasonsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'nba' } }));
+    expect(screen.getByTestId('root-admin-league-structure-seasons-facts')).toHaveTextContent('America/New_York');
+    expect(within(seasonsTable).getAllByTestId(/^root-admin-league-structure-season-\d+$/).map((row) => row.getAttribute('data-testid')))
+      .toEqual(['root-admin-league-structure-season-2027', 'root-admin-league-structure-season-2026']);
+    expect(within(screen.getByTestId('root-admin-league-structure-season-slots-table')).getByTestId('root-admin-league-structure-season-slot-slot-week-1')).toHaveTextContent('Week 1');
+
+    await userEvent.click(within(screen.getByTestId('root-admin-league-structure-season-2027')).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-structure-season');
+    expect(dialog).toHaveTextContent('BALLDONTLIE nba · 2026');
+    expect(within(dialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
   });
 
   it('shows each slot\'s match format, whether its games can end tied and its periods, in the grid and its dialog', async () => {

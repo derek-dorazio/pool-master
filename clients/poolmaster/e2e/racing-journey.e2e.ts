@@ -176,7 +176,6 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     start.setHours(17, 0, 0, 0);
     await page.goto('/manage/sports/horse-racing/events/new');
     await page.getByTestId('root-admin-sport-event-create-tour').selectOption(circuitId);
-    await page.getByTestId('root-admin-sport-event-create-event-year').fill(String(start.getFullYear()));
     await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
     await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
     // A race is one race: the form starts from the sport's own default.

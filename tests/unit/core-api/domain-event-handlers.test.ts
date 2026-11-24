@@ -32,7 +32,7 @@ const SETTLE_AT = new Date('2026-05-04T23:00:00.000Z');
 function statusChanged(from: SportEventStatus, to: SportEventStatus, overrides: Partial<SportEventStatusChanged> = {}): SportEventStatusChanged {
   return {
     type: DomainEventType.SPORT_EVENT_STATUS_CHANGED,
-    sportEvent: { id: 'sport-event-1', startDate: START, eventSeriesId: 'series-1', eventYear: 2026 },
+    sportEvent: { id: 'sport-event-1', startDate: START, eventSeriesId: 'series-1', sportLeagueSeasonId: 'season-2026' },
     from,
     to,
     settleAt: SETTLE_AT,
@@ -250,7 +250,7 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
     const jobs = await release.jobs(statusChanged(SportEventStatus.DRAFT, SportEventStatus.SCHEDULED), ctx);
 
     expect(ctx.releasedEditionContests.releasedEditionJobs).toHaveBeenCalledWith(
-      { id: 'sport-event-1', startDate: START, eventSeriesId: 'series-1', eventYear: 2026 },
+      { id: 'sport-event-1', startDate: START, eventSeriesId: 'series-1', sportLeagueSeasonId: 'season-2026' },
       ctx.queue,
     );
     expect(jobs.map((job) => job.payload)).toEqual([

@@ -55,7 +55,7 @@ async function golfLeague(): Promise<{ id: string; name: string }> {
     update: {},
   });
   return prisma.sportLeague.create({
-    data: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Findings Tour ${randomUUID().slice(0, 8)}` },
     select: { id: true, name: true },
   });
 }

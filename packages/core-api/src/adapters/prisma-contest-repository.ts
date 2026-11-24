@@ -211,7 +211,7 @@ export class PrismaContestRepository implements ContestRepository {
         squaresDraw: null,
         sportEvents: {
           none: { sportEventId: edition.id },
-          every: { sportEvent: { eventYear: edition.eventYear } },
+          every: { sportEvent: { sportLeagueSeasonId: edition.sportLeagueSeasonId } },
         },
       },
       orderBy: [{ configuration: { createdAt: 'asc' } }, { id: 'asc' }],

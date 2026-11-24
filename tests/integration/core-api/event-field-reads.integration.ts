@@ -141,6 +141,7 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_round_matches', 2],
       ['SELECT sport_event_rounds', 1],
       ['SELECT sport_events', 1],
+      ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
       // The event's sport, read through its league (#2042).
       ['SELECT sports', 1],

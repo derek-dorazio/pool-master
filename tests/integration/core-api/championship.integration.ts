@@ -33,7 +33,7 @@ async function seedLeague() {
   const contest = async (name: string, options: { status?: 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'DRAFT'; events?: number; cupWeight?: 'NORMAL' | 'NOT_COUNTED'; endsAt?: Date } = {}) => {
     const editions = [];
     for (let index = 0; index < (options.events ?? 1); index++) {
-      const edition = await freshEventEdition(prisma, { eventYear: 2026 });
+      const edition = await freshEventEdition(prisma, { championshipYear: 2026 });
       editions.push(await prisma.sportEvent.create({
         data: {
           ...edition,
@@ -179,7 +179,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId }, select: { name: true, sportLeague: { select: { name: true } } } });
     const names = new Map([[masters.id, 'Masters'], [final.id, 'Final'], [week.id, 'Week']]);
     expect(contests.map((row) => ({ name: names.get(row.id) ?? '', row })).sort((left, right) => left.name.localeCompare(right.name))
-      .map(({ name, row }) => [name, row.cupWeight, row.eventYear, row.games])).toEqual([
+      .map(({ name, row }) => [name, row.cupWeight, row.championshipYear, row.games])).toEqual([
       ['Final', CupWeight.NORMAL, 2026, { count: 2, roundCount: 2, sendingWinnerOn: 1 }],
       ['Masters', CupWeight.NOT_COUNTED, 2026, { count: 0, roundCount: 0, sendingWinnerOn: 0 }],
       ['Week', CupWeight.NORMAL, 2026, { count: 3, roundCount: 1, sendingWinnerOn: 0 }],

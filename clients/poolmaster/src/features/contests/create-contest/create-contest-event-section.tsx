@@ -200,7 +200,7 @@ export function CreateContestEventSection({
       )}
       {sportLeagueCap !== null && selectedEvent ? (
         <Text as="p" data-testid="create-contest-sport-leagues-used" variant="meta">
-          {`Sports leagues in ${selectedEvent.eventYear}: ${formatNumber(sportLeaguesUsedThisYear, locale)} of ${formatNumber(sportLeagueCap, locale)}.`}
+          {`Sports leagues in ${selectedEvent.championshipYear}: ${formatNumber(sportLeaguesUsedThisYear, locale)} of ${formatNumber(sportLeagueCap, locale)}.`}
         </Text>
       ) : null}
       {sportLeagueCap !== null && lockedEventIds.length ? (

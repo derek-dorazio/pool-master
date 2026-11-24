@@ -74,7 +74,7 @@ const BRACKET = offer('bracket', {
 const SQUARES = offer('squares', { sortOrder: 3 });
 
 function edition(sportEventId: string, startDate: string): EventPageEdition {
-  return { sportEventId, name: sportEventId, eventYear: 2027, startDate: new Date(startDate), endDate: null };
+  return { sportEventId, name: sportEventId, championshipYear: 2027, startDate: new Date(startDate), endDate: null };
 }
 
 function build(options: {

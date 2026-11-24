@@ -1,6 +1,6 @@
 import { eventRoundLabel, ParticipantStatus, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
-import { getParticipant, listEventYears, listEvents, listSportLeagueParticipants, listSportLeagues, listSports } from '@/lib/api';
+import { getParticipant, listEvents, listSportLeagueParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, SportDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { LOADING_TEXT } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
@@ -8,8 +8,7 @@ import { QueryKeys } from '@/lib/query-keys';
 
 /**
  * #236 — the Manage sport screens' reads of the shared sport catalog, in one place: a sport's
- * leagues (golf's tours), one sport league's events across every event year (plans/147 — the
- * event list filtered by sport league), and a sport league's participants (golfers, horses). Built for
+ * leagues (golf's tours), one Season's events (#2003), and a sport league's participants (golfers, horses). Built for
  * golf first; every sport's pages read through them since #623.
  */
 
@@ -85,37 +84,20 @@ export function useSportLeagueNoun(sport: Sport, sportLeagueId: string | undefin
 }
 
 /**
- * One year of a sport league's events: what the calendar shows, not every year it has had
- * (#1251). Waits while the year is still null.
+ * One Season of a sport league's events (#2003): what the calendar shows, not every Season it has
+ * had (#1251). Waits while the Season is still null.
  */
-export function useSportLeagueEventsQuery(sportLeagueId: string, eventYear: number | null) {
+export function useSportLeagueEventsQuery(sportLeagueId: string, sportLeagueSeasonId: string | null) {
   return useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.leagueEvents(sportLeagueId, eventYear),
+    queryKey: QueryKeys.rootAdmin.manageSport.leagueEvents(sportLeagueId, sportLeagueSeasonId),
     queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sportLeagueId, eventYear: eventYear ?? undefined } });
+      const response = await listEvents({ query: { sportLeagueId, sportLeagueSeasonId: sportLeagueSeasonId ?? undefined } });
       if (!response.data?.events) {
         throwApiError(response.error, 'Sport league event list response is missing data.');
       }
       return response.data.events;
     },
-    enabled: sportLeagueId !== '' && eventYear !== null,
-    retry: false,
-  });
-}
-
-/** The years a sport league has events in, newest first, for the calendar's year picker. */
-export function useSportLeagueEventYearsQuery(sportLeagueId: string) {
-  return useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.leagueEventYears(sportLeagueId),
-    queryFn: async (): Promise<number[]> => {
-      const response = await listEventYears({ query: { sportLeagueId } });
-      if (!response.data?.years) {
-        throwApiError(response.error, 'Sport league event years response is missing data.');
-      }
-      // The server lists them earliest first; the calendar's picker reads latest first.
-      return [...response.data.years].sort((left, right) => right - left);
-    },
-    enabled: sportLeagueId !== '',
+    enabled: sportLeagueId !== '' && sportLeagueSeasonId !== null,
     retry: false,
   });
 }

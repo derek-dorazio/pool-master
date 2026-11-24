@@ -47,10 +47,15 @@ export interface SportEvent extends DomainEntity {
   roundsPar?: number;
   participantCount?: number;
   metadata: Record<string, unknown>;
-  /** The event series — the recurring tournament — this is one edition of. Its only parent. */
+  /** The event series — the recurring tournament — this is one edition of. */
   eventSeriesId: string;
-  /** The year this edition is branded with ("the 2026 Masters"); not always the year it starts. */
-  eventYear: number;
+  /** The Season the event is played in (#2003). */
+  sportLeagueSeasonId: string;
+  /**
+   * The year its Season is named for (#2003): NFL 2025 for a Super Bowl played in February 2026.
+   * Read through the Season, never stored on the event.
+   */
+  championshipYear: number;
   /** The series' sport league, read through the series — never stored on the event (plans/147 decision 7). */
   sportLeagueId: string;
   /**

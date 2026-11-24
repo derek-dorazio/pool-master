@@ -147,7 +147,7 @@ interface LeagueReads {
   code: string;
   sport: Sport;
   tour: string;
-  events(dateRange?: DateRange): Promise<SportEvent[]>;
+  events(dateRange?: DateRange, season?: number): Promise<SportEvent[]>;
   participants(): Promise<ProviderParticipant[]>;
 }
 
@@ -199,29 +199,29 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     this.client = new BalldontlieClient({ ...options, providerId: this.providerId, payloads: this.payloads });
     this.connection = options.connection;
     this.logger = options.logger;
-    this.nfl = new NflReader(this.client, options.now ?? Date.now);
+    this.nfl = new NflReader(this.client);
     this.ncaaf = new NcaafReader(this.client, options.now ?? Date.now);
-    this.nba = new PlayoffsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
-    this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
-    this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.now ?? Date.now, options.logger);
-    this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
+    this.nba = new PlayoffsReader(nbaPlayoffsSource(this.client), options.logger);
+    this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.logger);
+    this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.logger);
+    this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.logger);
     this.epl = new EplReader(this.client, options.now ?? Date.now);
     this.worldCup = new WorldCupReader(this.client);
     this.ncaa = {
-      ncaab: new NcaaTournamentReader(this.client, NCAA_MEN, options.now ?? Date.now),
-      ncaaw: new NcaaTournamentReader(this.client, NCAA_WOMEN, options.now ?? Date.now),
+      ncaab: new NcaaTournamentReader(this.client, NCAA_MEN),
+      ncaaw: new NcaaTournamentReader(this.client, NCAA_WOMEN),
     };
-    const reads = (code: string, sport: Sport, tour: string, reader: { upcomingEvents(dateRange?: DateRange): Promise<SportEvent[]>; teams(): Promise<ProviderParticipant[]> }): LeagueReads => ({
+    const reads = (code: string, sport: Sport, tour: string, reader: { upcomingEvents(dateRange?: DateRange, season?: number): Promise<SportEvent[]>; teams(): Promise<ProviderParticipant[]> }): LeagueReads => ({
       code,
       sport,
       tour,
-      events: (dateRange) => reader.upcomingEvents(dateRange),
+      events: (dateRange, season) => reader.upcomingEvents(dateRange, season),
       participants: () => reader.teams(),
     });
     // The vendor's own league codes, each with its reader: the adapter's mapping of the vendor's
     // words, as its endpoint paths are. Which of them are read is the Provider's league rows.
     const readers: readonly LeagueReads[] = [
-      { code: 'pga', sport: Sport.GOLF, tour: PGA_TOUR_NAME, events: (dateRange) => this.pgaTournaments(dateRange), participants: () => this.pgaPlayers() },
+      { code: 'pga', sport: Sport.GOLF, tour: PGA_TOUR_NAME, events: (dateRange, season) => this.pgaTournaments(dateRange, season), participants: () => this.pgaPlayers() },
       reads('nfl', Sport.AMERICAN_FOOTBALL, NFL_LEAGUE_NAME, this.nfl),
       reads('ncaaf', Sport.AMERICAN_FOOTBALL, CFP_LEAGUE.tour, this.ncaaf),
       reads('ncaab', Sport.BASKETBALL, NCAA_MEN.tour, this.ncaa.ncaab),
@@ -279,8 +279,9 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   async getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]> {
     const leagues = this.leagues.get(sport) ?? [];
     const code = options?.providerLeagueCode;
+    const season = seasonOf(options?.providerSeasonId);
     if (code === undefined) {
-      return this.eachLeague(sport, leagues, 'events', async (league) => withLeagueCode(league, await league.events(dateRange)));
+      return this.eachLeague(sport, leagues, 'events', async (league) => withLeagueCode(league, await league.events(dateRange, season)));
     }
     const named = leagues.filter((league) => league.code === code);
     if (named.length === 0) {
@@ -292,7 +293,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     }
     return (await Promise.all(named.map(async (league) => {
       try {
-        return withLeagueCode(league, await league.events(dateRange));
+        return withLeagueCode(league, await league.events(dateRange, season));
       } catch (error) {
         if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.tour, error.status, { cause: error });
         throw error;
@@ -339,8 +340,8 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
    * absent). A tournament whose lifecycle the vendor marks `unknown` is left out: it cannot be
    * shown with an honest status.
    */
-  private async pgaTournaments(dateRange?: DateRange): Promise<SportEvent[]> {
-    const tournaments = await this.listTournaments(seasonsFor(dateRange));
+  private async pgaTournaments(dateRange?: DateRange, season?: number): Promise<SportEvent[]> {
+    const tournaments = await this.listTournaments(season === undefined ? seasonsFor(dateRange) : [season]);
     return tournaments
       .filter(isClassifiedTournament)
       .map((tournament) => toSportEvent(tournament))
@@ -521,6 +522,21 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
  * the calendar year, so a tournament's season is the year it starts. Empty means "read every
  * season at once": no range, or a range too wide to walk season by season.
  */
+/** A BALLDONTLIE season id: the four-digit year the season is numbered by. */
+const SEASON_ID_PATTERN = /^\d{4}$/;
+
+/**
+ * The vendor season a Season's provider id names (#2003); none when no id was given. An id that
+ * is not a vendor season number throws, since reading a guessed season would sync the wrong one.
+ */
+function seasonOf(providerSeasonId: string | undefined): number | undefined {
+  if (providerSeasonId === undefined) return undefined;
+  if (!SEASON_ID_PATTERN.test(providerSeasonId)) {
+    throw new Error(`BALLDONTLIE has no season with the id "${providerSeasonId}"`);
+  }
+  return Number(providerSeasonId);
+}
+
 function seasonsFor(dateRange?: DateRange): number[] {
   if (!dateRange) {
     return [];

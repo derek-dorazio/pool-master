@@ -144,17 +144,27 @@ Seeded by migration on `sport_leagues`:
 | `round_series_lengths` | Best-of lengths per round for series playoffs (NBA/NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`). Empty means single games. |
 | `platform_tier_profile_id`, `platform_pricing_profile_id` | The profiles the field's tiers and prices come from (§3). |
 | `auto_release_days_before_start` | The auto-release window (default 7, `null` never). |
+| `time_zone` | The IANA zone its calendar weeks break in (#2003). |
+
+And its Seasons (#2003), also by migration: one `sport_league_seasons` row per championship year
+(unique on league and year), and for each the provider's own id for it in
+`sport_league_season_provider_mappings`, keyed by the league's provider mapping. The sync never
+creates a Season. `current_season_id` is set by the nightly `currentSeasons` step
+(`currentSeasonOf`), never by hand.
 
 ### The run
 
 `SyncedEventCreationScheduler` queues one `SYNC_LEAGUE_EVENTS` job per active synced league on
 the Event list policy; a root admin's **Sync now**
 (`POST /api/v1/ingestion/sport-leagues/:id/events-sync`) queues the same job.
-`LeagueEventsSync.run` lists the provider's events for this year and next and records one
-`EVENTS` sync run. For each provider event:
+`LeagueEventsSync.run` reads the league's current Season and every later one (`seasonsToSync`),
+or the one Season a **Sync now** names (`sportLeagueSeasonId`), asks the provider for each by its
+own id for that Season, and records one `EVENTS` sync run. A Season the provider has no id for is
+not read; when the last of them lacks one, the job raises one `SEASON_MISSING` ERROR finding per
+league and provider (*Sync findings* below), since only a migration can add it. For each provider event:
 
-- **New, start in the future**: created as a `DRAFT` `sport_events` row in a find-or-create
-  `event_series`, linked by `(provider_id, external_id)` (unique) with `sync_scope = SCORES_ONLY`.
+- **New, start in the future**: created as a `DRAFT` `sport_events` row in the Season it was
+  read for, in a find-or-create `event_series`, linked by `(provider_id, external_id)` (unique) with `sync_scope = SCORES_ONLY`.
 - **New, start already passed**: never created (`ALREADY_STARTED`).
 - **Already linked**: kept current (`SportEventService.keepProviderEventsCurrent`) through
   `updateEvent`, the admin's own edit, so a moved start shifts the rounds and notifies leagues
@@ -168,8 +178,9 @@ the Event list policy; a root admin's **Sync now**
 
 On a synced event the admin's Edit details shows name, venue and dates read-only
 (`SportEventDto.providerSynced`); location, rounds, field, tiers, prices, release and result entry
-stay the admin's. The older admin routes (Year import, Create from provider event, Link score
-source under `/api/v1/events`) remain as a fallback for an event the feed lacks.
+stay the admin's. The older admin routes (Create from provider event, Link score source under
+`/api/v1/events`) remain as a fallback for an event the feed lacks; the Year import went with
+event years (#2003).
 
 ### Auto-release
 
