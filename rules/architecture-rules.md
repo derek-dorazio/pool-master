@@ -324,7 +324,10 @@ correcting a feed. The decision and its alternatives are
 
 [ADR-0012](../docs/adr/0012-season-phase-slot-model-contests-cover-slots.md) amends it: events
 sit in a Season and cover slots, their status bubbles up from the feed's Games, and a league
-with no feed stays off. This section describes today's code, and is rewritten by the slices
+with no feed stays off.
+[ADR-0013](../docs/adr/0013-templates-list-slots-results-only-from-feed.md) amends ADR-0012:
+results come only from the feed, with no manual result entry, and a correction after
+settlement is applied with Re-settle. This section describes today's code, and is rewritten by the slices
 of #1917 as they land.
 
 What the code does **today**, while the follow-up tickets of #1723 land:

@@ -493,11 +493,15 @@ table set for every variant.
     `FIELD`), read from the feed where it varies by round. A `HEAD_TO_HEAD` match has
     exactly two sides; a `FIELD` match has one per competitor. Nothing branches on the
     sport to tell them apart.
-  - **A side's number is its fixed place, not home or away.** The sync writes the away side
-    as 1 and the home side as 2; a neutral-site or `FIELD` match records `homeAway` `NONE`.
-    Code reads sides by number, never by assuming home or away.
+  - **A side's number is its fixed place, not home or away.** A Match side holds its field
+    row, its `sideNumber` and its spread (side 1 only). The sync writes the away side as 1
+    and the home side as 2 on Matches it creates, and never renumbers an existing one. Code
+    reads sides by number, never by assuming home or away.
+  - **Home/away is per Game, on the Game side result** (`homeAway` `HOME` / `AWAY` / `NONE`),
+    because it alternates within a series; a neutral-site Game or a `FIELD` match records
+    `NONE`. **The seed is on the event field row only**, never copied onto a Match side.
   - **A Game is one game played** in a Match, and each side's result in that Game is one
-    Game side result row (score, position, periods completed, status). A side's outcome in
+    Game side result row (score, position, periods completed, home/away, status). A side's outcome in
     the Match (WON / LOST / TIED / PENDING) is a rollup of its Games.
   - **Period scores are per Game side result** (a period kind `REGULAR` / `OVERTIME` /
     `SHOOTOUT`), and **player stats are per Game** (one row per Game, player and stat
