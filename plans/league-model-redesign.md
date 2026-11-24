@@ -777,6 +777,11 @@ Contest:
   from the feed or by a root admin (audited). Contests covering only that slot are cancelled
   and their entries voided; a multi-slot contest settles on the slots played; cups and the
   year close treat a cancelled slot as finished.
+- Overlapping rounds (Derek 2026-11-24, slices 16 and 26): a contest locks at its first
+  covered Game and opens once every match feeding that slot is decided. Templates list a slot
+  as a starting point (ONE_SLOT, or the first slot of ALL_LISTED / FROM_SLOT) only where that
+  holds; the NBA and NHL second round and Conference Finals are not starting points, so
+  today's Conference Finals Clutch Cards go. A contest that can't open raises a finding.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
