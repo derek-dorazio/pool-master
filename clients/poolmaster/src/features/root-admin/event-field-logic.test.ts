@@ -46,18 +46,17 @@ describe('Field grid rows', () => {
 describe('the participant dialog\'s corrections', () => {
   const both = { tierAndPrice: true, orderValues: true };
 
-  it('accepts blank for any value and refuses a rank of 0, odds of 0 and a fractional price', () => {
-    const base = { tierKey: '', price: '', ranking: '', oddsToWin: '', seedNumber: '' };
+  it('accepts blank for any value and refuses a rank of 0 and a fractional price', () => {
+    const base = { tierKey: '', price: '', ranking: '', seedNumber: '' };
     expect(participantSchema.safeParse(base).success).toBe(true);
     expect(participantSchema.safeParse({ ...base, ranking: '0' }).success).toBe(false);
-    expect(participantSchema.safeParse({ ...base, oddsToWin: '0' }).success).toBe(false);
     expect(participantSchema.safeParse({ ...base, price: '10.5' }).success).toBe(false);
     expect(EVENT_FIELD_NUMERIC_VALIDATORS.ranking('2147483648')).toBe(false);
   });
 
   it('reads the row\'s values as typed text, its price from its valuation', () => {
     const row = entry('a', { ranking: 4, oddsToWin: 12.5, seedNumber: null, valuation: valuationFixture({ sportEventTierId: 'tier-1', price: 900 }) });
-    expect(participantValuesOf(row, TIERS)).toEqual({ tierKey: 'TIER_1', price: '900', ranking: '4', oddsToWin: '12.5', seedNumber: '' });
+    expect(participantValuesOf(row, TIERS)).toEqual({ tierKey: 'TIER_1', price: '900', ranking: '4', seedNumber: '' });
     expect(eventFieldServerValue(row, 'price')).toBe(900);
   });
 
@@ -66,11 +65,11 @@ describe('the participant dialog\'s corrections', () => {
     const current = participantValuesOf(row, TIERS);
 
     expect(participantCorrection(current, current, row, both)).toBeNull();
-    expect(participantCorrection({ ...current, ranking: '', oddsToWin: '9' }, current, row, both))
-      .toEqual({ sportEventParticipantId: 'a', ranking: null, oddsToWin: 9 });
+    expect(participantCorrection({ ...current, ranking: '', seedNumber: '9' }, current, row, both))
+      .toEqual({ sportEventParticipantId: 'a', ranking: null, seedNumber: 9 });
   });
 
-  it('leaves rank, odds and seed alone where a feed sets them, and tier and price alone once released', () => {
+  it('leaves rank and seed alone where a feed sets them, and tier and price alone once released', () => {
     const row = entry('a', { ranking: 4 });
     const current = participantValuesOf(row, TIERS);
     const changed = { ...current, ranking: '1', price: '500', tierKey: 'TIER_2' };

@@ -2299,26 +2299,6 @@ export interface paths {
         patch: operations["updateEventParticipants"];
         trace?: never;
     };
-    "/api/v1/events/{eventId}/participants/seed": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Seed a sport event's field from its sport league
-         * @description Adds the sport league's active participants with derived seeds and odds; ones already on the field are skipped. Root admin only.
-         */
-        post: operations["seedEventParticipants"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/events/{eventId}/leaderboards/rebuild": {
         parameters: {
             query?: never;
@@ -13328,16 +13308,6 @@ export interface components {
             /** @description Already on the field. */
             skipped: number;
             total: number;
-        };
-        /** @description What seeding the field from the event's sport league did. */
-        SeedSportEventParticipantsResponse: {
-            added: number;
-            /** @description Already on the field. */
-            skipped: number;
-            /** @description Active affiliations considered. */
-            total: number;
-            seedNumbersDerived: number;
-            oddsDerived: number;
         };
         /** @description One save of the field grid. */
         UpdateSportEventParticipantsRequest: {
@@ -33344,73 +33314,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    seedEventParticipants: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description What seeding the field from the event's sport league did. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SeedSportEventParticipantsResponse"];
                 };
             };
             /** @description Standard API error envelope. */
