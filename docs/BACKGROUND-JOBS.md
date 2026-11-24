@@ -133,8 +133,8 @@ event's Activity tabs scoped to theirs. It opens on Started over the past day an
 for the window its Started filter covers, so widening the filter reads further back; with the
 filter cleared it reads all 30 days. Each code (kind, type, status, trigger, error type) reads as
 words mapped in `activity-labels.ts`, never derived from the enum's name. The old sync run history
-page at `/manage/sync` is gone; its links redirect to Activity, and Run event sync and Unmapped
-participants moved under `/manage/providers`.
+page at `/manage/sync` is gone; its links redirect to Activity, and Run event sync moved under
+`/manage/providers`; the old Unmapped participants page is now the Findings list there (#1999).
 
 ## Queueing
 

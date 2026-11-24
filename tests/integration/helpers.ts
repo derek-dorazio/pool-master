@@ -79,7 +79,7 @@ import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
 import { providerWebhooksModule } from '../../packages/core-api/src/modules/ingestion/provider-webhook-routes';
 import { ProviderNotificationService } from '../../packages/core-api/src/modules/ingestion/provider-notifications';
-import { ProviderCode } from '@poolmaster/shared/domain';
+import { ProviderCode, type ProviderSettings } from '@poolmaster/shared/domain';
 import { TEST_BALLDONTLIE_WEBHOOK_SECRET } from '../support/balldontlie-webhooks';
 import { createContestEmailJobs, createContestExpandedNotices, createContestNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { jobHandlers, testCurrentJobStart } from '../support/in-memory-background-jobs';
@@ -109,6 +109,7 @@ import {
   PrismaBackgroundJobRepository,
   PrismaLeagueRepository,
   PrismaParticipantProviderMappingRepository,
+  PrismaParticipantRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
@@ -120,6 +121,10 @@ import { LeagueEventsSync } from '../../packages/core-api/src/modules/events/lea
 import { EventScoreSourceService } from '../../packages/core-api/src/modules/events/event-score-source-service';
 import { createSportEventServices } from '../../packages/core-api/src/modules/events/wiring';
 import { activityModule } from '../../packages/core-api/src/modules/activity/routes';
+import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestion/findings/routes';
+import { ProviderSyncFindingService } from '../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
+import { PrismaProviderSyncFindingRepository } from '../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
+import { ParticipantService } from '../../packages/core-api/src/modules/participants/service';
 import { ActivityService } from '../../packages/core-api/src/modules/activity/activity-service';
 import { customersModule } from '../../packages/core-api/src/modules/customers/routes';
 import { CustomerService } from '../../packages/core-api/src/modules/customers/customer-service';
@@ -246,6 +251,24 @@ export async function integrationProviderSettings(prisma: PrismaClient, registry
   };
 }
 
+/**
+ * The sync findings service (#1999) as index.ts builds it, over the Provider rows the store holds;
+ * by default a fresh read of them, as a live-score write's tests pass it.
+ */
+export function integrationSyncFindings(
+  prisma: PrismaClient = getAppPrisma(),
+  providers: { all(): readonly ProviderSettings[] } = sharedProviderSettings ?? { all: () => [] },
+): ProviderSyncFindingService {
+  return new ProviderSyncFindingService({
+    repository: new PrismaProviderSyncFindingRepository(prisma),
+    providers,
+    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma)),
+  });
+}
+
+/** The shared app's Provider rows, once it is built. */
+let sharedProviderSettings: { all(): readonly ProviderSettings[] } | undefined;
+
 /** Get the shared Fastify app instance (created once per test suite). */
 export function getApp(): FastifyInstance {
   return app;
@@ -351,7 +374,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const ingestionService = new IngestionService({
     registry: providerRegistry,
     sportEvents: new PrismaSportEventRepository(prisma),
-    participantMappings: new PrismaParticipantProviderMappingRepository(prisma),
     syncRuns: new PrismaProviderSyncRunRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     providerSettings,
@@ -444,6 +466,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     activity,
     providerSettings: providerSettingsService,
   });
+  sharedProviderSettings = providerSettings;
+  testApp.register(syncFindingsModule, { prefix: '/api/v1/ingestion/sync-findings', syncFindings: integrationSyncFindings(prisma, providerSettings) });
   testApp.register(activityModule, { prefix: '/api/v1/activity', activity });
   testApp.register(customersModule, {
     prefix: '/api/v1/customers',
@@ -1007,6 +1031,7 @@ export async function cleanupTestData(): Promise<void> {
   }
 
   await prisma.providerSyncRun.deleteMany();
+  await prisma.providerSyncFinding.deleteMany();
   await prisma.backgroundJob.deleteMany();
   // Matches name field rows, rounds and each other with RESTRICT foreign keys, so the bracket goes first.
   await prisma.sportEventMatch.deleteMany();

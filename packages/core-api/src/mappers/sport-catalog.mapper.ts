@@ -96,6 +96,8 @@ export function mapSportLeagueIssueToDto(issue: SportLeagueIssue): SportLeagueIs
     target: { type: entry.target.type, id: entry.target.id },
   });
   switch (issue.type) {
+    case SportLeagueIssueType.FINDINGS:
+      return { type: issue.type, count: issue.count, items: issue.items.map((entry) => ({ severity: entry.severity, count: entry.count })) };
     case SportLeagueIssueType.SYNC:
       return { type: issue.type, count: issue.count, items: issue.items.map((entry) => ({ ...item(entry), syncKind: entry.syncKind })) };
     case SportLeagueIssueType.RELEASE:

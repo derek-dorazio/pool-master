@@ -31,6 +31,7 @@ export * from './event-pages.dto';
 export * from './history.dto';
 export * from './ingestion.dto';
 export * from './activity.dto';
+export * from './sync-findings.dto';
 export * from './customers.dto';
 export * from './profiles.dto';
 export * from './live-score.dto';

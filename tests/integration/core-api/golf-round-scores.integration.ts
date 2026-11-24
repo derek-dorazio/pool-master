@@ -11,7 +11,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   withBackgroundJobsFailing,
-  integrationBackgroundJobs, integrationSportEventServices } from '../helpers';
+  integrationBackgroundJobs, integrationSportEventServices, integrationSyncFindings } from '../helpers';
 import { Sport } from '@poolmaster/shared/domain';
 import {
   GolfScoreError,
@@ -356,7 +356,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [1, 2, 3, 4].map((round) => update('ext-rory', round)).concat(update('ext-rory', 5), update('ext-jordan', 1, 19)),
-    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents(), scoringFamilyForEvent });
+    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
     expect(result).toMatchObject({ updatesReturned: 6, updatesPersisted: 4, updatesSkipped: 2 });
     const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort((left, right) => left - right);
@@ -411,7 +411,7 @@ describe('Golf round scores — a live sync writes only what changed', () => {
         { participantExternalId: 'ext-rory', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const },
         { participantExternalId: 'ext-jordan', round: 1, strokes: 36 + jordanToPar, scoreToPar: jordanToPar, thru: 9, status: 'IN_PROGRESS' as const },
       ],
-    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents(), scoringFamilyForEvent });
+    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
     const stamps = async (): Promise<Record<string, Array<string | undefined>>> => {
       const byEntry: Record<string, Array<string | undefined>> = {};
       for (const { sep } of [rory, jordan]) {
@@ -490,7 +490,7 @@ describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () 
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [{ participantExternalId: 'ext-rory-live', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const }],
-    }, { prisma: getAppPrisma(), providerId: 'balldontlie', domainEvents: testDomainEvents({ queue: integrationBackgroundJobs().queue }), contestActivation: NO_CONTEST_ACTIVATION, scoringFamilyForEvent });
+    }, { prisma: getAppPrisma(), providerId: 'balldontlie', domainEvents: testDomainEvents({ queue: integrationBackgroundJobs().queue }), contestActivation: NO_CONTEST_ACTIVATION, scoringFamilyForEvent, findings: integrationSyncFindings() });
 
     await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
   });

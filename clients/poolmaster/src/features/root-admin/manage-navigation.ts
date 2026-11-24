@@ -74,7 +74,7 @@ export const PRICING_PATH = '/manage/pricing';
 
 /**
  * Manage's top menu, in order (#1848): Sports · Activity · Notifications · Providers · Customers ·
- * Plans · Pricing. Run event sync and Unmapped participants sit under Providers.
+ * Plans · Pricing. Run event sync and Findings sit under Providers.
  */
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'sports', title: 'Sports', to: SPORTS_PATH, paths: [SPORTS_PATH, '/manage/events', '/manage/content-configuration'] },
@@ -102,12 +102,12 @@ export const LEGACY_SYNC_PATH = '/manage/sync';
 /** A root admin's manual sync of one event's feeds. */
 export const RUN_EVENT_SYNC_PATH = `${PROVIDERS_PATH}/run-event-sync`;
 
-export const UNMAPPED_COMPETITORS_PATH = `${PROVIDERS_PATH}/unmapped-participants`;
+/** The one list of problems the sync found (#1999), under Providers. */
+export const SYNC_FINDINGS_PATH = `${PROVIDERS_PATH}/findings`;
 
-/** The page that maps one unmapped competitor; a provider's id can hold any character. */
-export function buildMapCompetitorPath(providerId: string, externalId: string) {
-  const query = new URLSearchParams({ provider: providerId, competitor: externalId });
-  return `${UNMAPPED_COMPETITORS_PATH}/map?${query.toString()}`;
+/** The page that maps an unmapped participant finding's feed id to a participant of its league. */
+export function buildSyncFindingMapParticipantPath(findingId: string) {
+  return `${SYNC_FINDINGS_PATH}/${findingId}/map-participant`;
 }
 
 function isAtOrUnder(pathname: string, path: string) {
@@ -141,8 +141,8 @@ const STATIC_BREADCRUMB_LABELS: Record<string, string> = {
   users: 'Users',
   plans: 'Plans',
   'run-event-sync': 'Run event sync',
-  'unmapped-participants': 'Unmapped participants',
-  map: 'Map competitor',
+  findings: 'Findings',
+  'map-participant': 'Map participant',
   providers: 'Providers',
   field: 'Field',
   tiers: 'Tiers',

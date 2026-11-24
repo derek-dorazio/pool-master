@@ -321,10 +321,9 @@ export const QueryKeys = {
     // Under the list's prefix, so refreshing the list refreshes an open run's details too.
     providerSyncRun: (syncRunId: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'provider-sync-runs', syncRunId] as const,
-    unmappedProviderParticipants: ['poolmaster', 'root-admin', 'unmapped-provider-participants'] as const,
-    // One competitor, under the list's prefix, so a mapping that invalidates the list refreshes it (#1251).
-    unmappedProviderParticipant: (providerId: QueryKeyId, externalId: QueryKeyId) =>
-      ['poolmaster', 'root-admin', 'unmapped-provider-participants', providerId, externalId] as const,
+    // The sync findings (#1999); one finding sits under the list's prefix, so a change refreshes both.
+    syncFindings: ['poolmaster', 'root-admin', 'sync-findings'] as const,
+    syncFinding: (findingId: QueryKeyId) => ['poolmaster', 'root-admin', 'sync-findings', findingId] as const,
     // Customers › Users (#1883): every user, which any user's edit or account action refreshes.
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },

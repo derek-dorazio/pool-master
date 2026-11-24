@@ -8,6 +8,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportsPage } from './root-admin-sports-page';
 import { sportsCountLine } from './sport-league-overview-text';
 import { pricingProfilesFixture, providerMappingFixture, providerSummaryFixture, sportLeagueFixture, STANDARD_PRICING_PROFILE_ID } from './sport-test-fixtures';
+import { buildLeagueOpenFindingsPath } from './sync-findings-links';
 
 // /manage/sports, the root admin's landing page (#1848): every sport league in one grid.
 
@@ -233,6 +234,22 @@ describe('RootAdminSportsPage', () => {
     expect(item).toHaveTextContent('NBA Cup 2026');
     expect(item).toHaveTextContent(/Should have ended .* · \d+ days late/);
     expect(item).toHaveAttribute('href', '/manage/sports/basketball/events/evt-late');
+  });
+
+  it('counts a league\'s open sync findings by severity behind its Findings chip, each linking to Findings filtered to them', async () => {
+    listSportLeagueOverviewsMock.mockResolvedValue({
+      data: { sportLeagues: [overview({ id: 'mlb', name: 'MLB', issues: [{ type: 'FINDINGS', count: 3, items: [{ severity: 'ERROR', count: 1 }, { severity: 'WARNING', count: 2 }] }] })] },
+    });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-sports-issue-mlb-FINDINGS')).toHaveTextContent('Findings 3');
+    await userEvent.click(screen.getByTestId('root-admin-sports-issue-mlb-FINDINGS-popover'));
+
+    const errors = await screen.findByTestId('root-admin-sports-issue-findings-ERROR');
+    expect(errors).toHaveTextContent('Error');
+    expect(errors).toHaveTextContent('1 open');
+    expect(errors).toHaveAttribute('href', buildLeagueOpenFindingsPath('mlb', 'ERROR'));
+    expect(screen.getByTestId('root-admin-sports-issue-findings-WARNING')).toHaveTextContent('2 open');
   });
 
   it('opens a failed sync\'s run from behind its chip, staying on the page, and closes it again', async () => {

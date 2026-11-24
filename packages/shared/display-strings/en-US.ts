@@ -237,9 +237,30 @@ export const enUS = {
       OFF: 'OFF',
     },
     SportLeagueIssueType: {
+      FINDINGS: 'Findings',
       SYNC: 'Sync',
       RELEASE: 'Release',
       OVERDUE: 'Overdue',
+    },
+    ProviderSyncFindingSeverity: {
+      ERROR: 'Error',
+      WARNING: 'Warning',
+      INFO: 'Info',
+    },
+    ProviderSyncFindingStatus: {
+      OPEN: 'Open',
+      RESOLVED: 'Resolved',
+      WAIVED: 'Waived',
+    },
+    ProviderSyncFindingKind: {
+      UNMAPPED_PARTICIPANT: 'Unmapped participant',
+      WEBHOOK_SECRET_MISSING: 'Webhook secret not set',
+    },
+    ProviderSyncFindingAction: {
+      MAP_PARTICIPANT: 'Map participant',
+      RESOLVE: 'Resolve',
+      WAIVE: 'Waive',
+      REOPEN: 'Reopen',
     },
     SportEventReleaseMode: {
       AUTO: { name: 'Automatic', short: 'Auto' },
@@ -1073,6 +1094,11 @@ export const enUS = {
     SQUARES_BOX_TAKEN: 'Someone claimed that box first. The grid has been refreshed.',
     SQUARES_CLAIMING_CLOSED: 'Boxes can no longer change: the numbers are drawn or the game has kicked off.',
     SQUARES_DRAW_CLOSED: 'The numbers can no longer be drawn: the first period\'s score is in.',
+    SYNC_FINDING_ACTION_NOT_OFFERED: 'That can’t be done to this finding now.',
+    SYNC_FINDING_NOT_FOUND: 'Finding not found.',
+    SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE: 'Choose a participant of the finding’s sport league.',
+    SYNC_FINDING_WAIVE_NOTE_REQUIRED: 'Say why you are waiving it.',
+    SYNC_FINDINGS_RATE_LIMITED: 'Too many requests. Wait a minute and try again.',
     SYNC_REQUEST_INVALID: 'This sync request is not valid.',
     SYNC_RUN_NOT_FOUND: 'Sync run not found.',
     SYSTEM_EMAIL_NOT_SENT: 'The email was not sent.',

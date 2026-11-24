@@ -61,6 +61,10 @@ export type SharedEnums = {
   AutoReleaseCheckOutcome: Enums.AutoReleaseCheckOutcome;
   SportLeagueSyncHealth: Enums.SportLeagueSyncHealth;
   SportLeagueIssueType: Enums.SportLeagueIssueType;
+  ProviderSyncFindingSeverity: Enums.ProviderSyncFindingSeverity;
+  ProviderSyncFindingStatus: Enums.ProviderSyncFindingStatus;
+  ProviderSyncFindingKind: Enums.ProviderSyncFindingKind;
+  ProviderSyncFindingAction: Enums.ProviderSyncFindingAction;
   SportEventReleaseMode: Enums.SportEventReleaseMode;
   SportEventReleaseAtKind: Enums.SportEventReleaseAtKind;
   ParticipantAddedBy: Enums.ParticipantAddedBy;

@@ -19095,6 +19095,60 @@
                     "type": {
                       "type": "string",
                       "enum": [
+                        "FINDINGS"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many OPEN sync findings the league has."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "ERROR",
+                              "WARNING",
+                              "INFO"
+                            ],
+                            "description": "ERROR, WARNING or INFO."
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many OPEN findings of that severity."
+                          }
+                        },
+                        "required": [
+                          "severity",
+                          "count"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The league's OPEN findings of one severity; the Findings list (listProviderSyncFindings) has each."
+                      },
+                      "description": "Most serious first; only severities it has."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The league's OPEN sync findings, counted by severity (#1999)."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
                         "SYNC"
                       ]
                     },
@@ -19339,7 +19393,7 @@
                 }
               ]
             },
-            "description": "Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
+            "description": "Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
           },
           "season": {
             "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.",
@@ -19452,6 +19506,60 @@
                   "items": {
                     "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
                     "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "FINDINGS"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many OPEN sync findings the league has."
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "severity": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ERROR",
+                                    "WARNING",
+                                    "INFO"
+                                  ],
+                                  "description": "ERROR, WARNING or INFO."
+                                },
+                                "count": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                  "description": "How many OPEN findings of that severity."
+                                }
+                              },
+                              "required": [
+                                "severity",
+                                "count"
+                              ],
+                              "additionalProperties": false,
+                              "description": "The league's OPEN findings of one severity; the Findings list (listProviderSyncFindings) has each."
+                            },
+                            "description": "Most serious first; only severities it has."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "count",
+                          "items"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The league's OPEN sync findings, counted by severity (#1999)."
+                      },
                       {
                         "type": "object",
                         "properties": {
@@ -19702,7 +19810,7 @@
                       }
                     ]
                   },
-                  "description": "Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
+                  "description": "Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
                 },
                 "season": {
                   "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.",
@@ -20116,6 +20224,60 @@
                     "type": {
                       "type": "string",
                       "enum": [
+                        "FINDINGS"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many OPEN sync findings the league has."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "ERROR",
+                              "WARNING",
+                              "INFO"
+                            ],
+                            "description": "ERROR, WARNING or INFO."
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many OPEN findings of that severity."
+                          }
+                        },
+                        "required": [
+                          "severity",
+                          "count"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The league's OPEN findings of one severity; the Findings list (listProviderSyncFindings) has each."
+                      },
+                      "description": "Most serious first; only severities it has."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The league's OPEN sync findings, counted by severity (#1999)."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
                         "SYNC"
                       ]
                     },
@@ -20519,6 +20681,60 @@
                   "items": {
                     "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
                     "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "FINDINGS"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many OPEN sync findings the league has."
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "severity": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ERROR",
+                                    "WARNING",
+                                    "INFO"
+                                  ],
+                                  "description": "ERROR, WARNING or INFO."
+                                },
+                                "count": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                  "description": "How many OPEN findings of that severity."
+                                }
+                              },
+                              "required": [
+                                "severity",
+                                "count"
+                              ],
+                              "additionalProperties": false,
+                              "description": "The league's OPEN findings of one severity; the Findings list (listProviderSyncFindings) has each."
+                            },
+                            "description": "Most serious first; only severities it has."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "count",
+                          "items"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The league's OPEN sync findings, counted by severity (#1999)."
+                      },
                       {
                         "type": "object",
                         "properties": {
@@ -20963,6 +21179,60 @@
             "items": {
               "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
               "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "FINDINGS"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "How many OPEN sync findings the league has."
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "ERROR",
+                              "WARNING",
+                              "INFO"
+                            ],
+                            "description": "ERROR, WARNING or INFO."
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "How many OPEN findings of that severity."
+                          }
+                        },
+                        "required": [
+                          "severity",
+                          "count"
+                        ],
+                        "additionalProperties": false,
+                        "description": "The league's OPEN findings of one severity; the Findings list (listProviderSyncFindings) has each."
+                      },
+                      "description": "Most serious first; only severities it has."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "count",
+                    "items"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The league's OPEN sync findings, counted by severity (#1999)."
+                },
                 {
                   "type": "object",
                   "properties": {
@@ -21446,6 +21716,60 @@
                 "items": {
                   "description": "One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.",
                   "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "FINDINGS"
+                          ]
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "How many OPEN sync findings the league has."
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "severity": {
+                                "type": "string",
+                                "enum": [
+                                  "ERROR",
+                                  "WARNING",
+                                  "INFO"
+                                ],
+                                "description": "ERROR, WARNING or INFO."
+                              },
+                              "count": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991,
+                                "description": "How many OPEN findings of that severity."
+                              }
+                            },
+                            "required": [
+                              "severity",
+                              "count"
+                            ],
+                            "additionalProperties": false,
+                            "description": "The league's OPEN findings of one severity; the Findings list (listProviderSyncFindings) has each."
+                          },
+                          "description": "Most serious first; only severities it has."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "count",
+                        "items"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The league's OPEN sync findings, counted by severity (#1999)."
+                    },
                     {
                       "type": "object",
                       "properties": {
@@ -70582,127 +70906,6 @@
         "additionalProperties": false,
         "description": "A root admin's Sync now on a sport league's events."
       },
-      "UnmappedProviderParticipantDto": {
-        "type": "object",
-        "properties": {
-          "providerId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The Provider that reports the competitor: what binding it to a participant names."
-          },
-          "providerName": {
-            "type": "string"
-          },
-          "externalId": {
-            "type": "string",
-            "description": "The provider's identifier for the competitor."
-          },
-          "externalName": {
-            "type": "string",
-            "description": "The competitor's name as the provider reports it."
-          },
-          "sport": {
-            "type": "string",
-            "enum": [
-              "GOLF",
-              "HORSE_RACING",
-              "AUTO_RACING",
-              "CYCLING",
-              "RUNNING",
-              "BASKETBALL",
-              "AMERICAN_FOOTBALL",
-              "HOCKEY",
-              "BASEBALL",
-              "SOCCER",
-              "TENNIS"
-            ]
-          }
-        },
-        "required": [
-          "providerId",
-          "providerName",
-          "externalId",
-          "externalName",
-          "sport"
-        ],
-        "additionalProperties": false,
-        "description": "A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is."
-      },
-      "UnmappedProviderParticipantListQuery": {
-        "type": "object",
-        "properties": {
-          "providerId": {
-            "description": "Only this Provider's competitors; the other providers are not asked.",
-            "type": "string",
-            "format": "uuid"
-          },
-          "externalId": {
-            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.",
-            "type": "string"
-          }
-        },
-        "additionalProperties": false,
-        "description": "Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors."
-      },
-      "UnmappedProviderParticipantListResponse": {
-        "type": "object",
-        "properties": {
-          "participants": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "providerId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The Provider that reports the competitor: what binding it to a participant names."
-                },
-                "providerName": {
-                  "type": "string"
-                },
-                "externalId": {
-                  "type": "string",
-                  "description": "The provider's identifier for the competitor."
-                },
-                "externalName": {
-                  "type": "string",
-                  "description": "The competitor's name as the provider reports it."
-                },
-                "sport": {
-                  "type": "string",
-                  "enum": [
-                    "GOLF",
-                    "HORSE_RACING",
-                    "AUTO_RACING",
-                    "CYCLING",
-                    "RUNNING",
-                    "BASKETBALL",
-                    "AMERICAN_FOOTBALL",
-                    "HOCKEY",
-                    "BASEBALL",
-                    "SOCCER",
-                    "TENNIS"
-                  ]
-                }
-              },
-              "required": [
-                "providerId",
-                "providerName",
-                "externalId",
-                "externalName",
-                "sport"
-              ],
-              "additionalProperties": false,
-              "description": "A competitor a provider reports that no participant is mapped to — their synced data has nowhere to land until one is."
-            }
-          }
-        },
-        "required": [
-          "participants"
-        ],
-        "additionalProperties": false,
-        "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked."
-      },
       "ProviderEventDto": {
         "type": "object",
         "properties": {
@@ -71804,6 +72007,698 @@
         ],
         "additionalProperties": false,
         "description": "One background job, as Activity shows it."
+      },
+      "ProviderSyncFindingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "UNMAPPED_PARTICIPANT",
+              "WEBHOOK_SECRET_MISSING"
+            ],
+            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "ERROR",
+              "WARNING",
+              "INFO"
+            ],
+            "description": "ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "RESOLVED",
+              "WAIVED"
+            ],
+            "description": "OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
+          },
+          "sportLeague": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "sport": {
+                "type": "string",
+                "enum": [
+                  "GOLF",
+                  "HORSE_RACING",
+                  "AUTO_RACING",
+                  "CYCLING",
+                  "RUNNING",
+                  "BASKETBALL",
+                  "AMERICAN_FOOTBALL",
+                  "HOCKEY",
+                  "BASEBALL",
+                  "SOCCER",
+                  "TENNIS"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "sport"
+            ],
+            "additionalProperties": false,
+            "description": "The sport league it is about: every finding has one."
+          },
+          "sportEvent": {
+            "description": "The event it is about; null when its kind names none.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "provider": {
+            "description": "The Provider it is about; null when its kind names none.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "providerValue": {
+            "description": "What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "providerValueName": {
+            "description": "The feed's own name for that value, when it sent one.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "waiveNote": {
+            "description": "Why it was waived; set only while WAIVED.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the sync first raised it."
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the sync last raised it."
+          },
+          "seenCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "How many sync passes have raised it."
+          },
+          "statusChangedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When its status was last set."
+          },
+          "statusChangedBy": {
+            "description": "The root admin who last set its status; null when the sync did, or that account was deleted.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "displayName": {
+                "type": "string",
+                "description": "Their name, for display."
+              }
+            },
+            "required": [
+              "id",
+              "displayName"
+            ],
+            "additionalProperties": false
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "MAP_PARTICIPANT",
+                "RESOLVE",
+                "WAIVE",
+                "REOPEN"
+              ],
+              "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
+            },
+            "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "severity",
+          "status",
+          "sportLeague",
+          "sportEvent",
+          "provider",
+          "providerValue",
+          "providerValueName",
+          "waiveNote",
+          "firstSeenAt",
+          "lastSeenAt",
+          "seenCount",
+          "statusChangedAt",
+          "statusChangedBy",
+          "actions"
+        ],
+        "additionalProperties": false,
+        "description": "One sync finding: a problem the sync found, one per kind and subject."
+      },
+      "ProviderSyncFindingListResponse": {
+        "type": "object",
+        "properties": {
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "UNMAPPED_PARTICIPANT",
+                    "WEBHOOK_SECRET_MISSING"
+                  ],
+                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "ERROR",
+                    "WARNING",
+                    "INFO"
+                  ],
+                  "description": "ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "OPEN",
+                    "RESOLVED",
+                    "WAIVED"
+                  ],
+                  "description": "OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
+                },
+                "sportLeague": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "sport": {
+                      "type": "string",
+                      "enum": [
+                        "GOLF",
+                        "HORSE_RACING",
+                        "AUTO_RACING",
+                        "CYCLING",
+                        "RUNNING",
+                        "BASKETBALL",
+                        "AMERICAN_FOOTBALL",
+                        "HOCKEY",
+                        "BASEBALL",
+                        "SOCCER",
+                        "TENNIS"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "sport"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The sport league it is about: every finding has one."
+                },
+                "sportEvent": {
+                  "description": "The event it is about; null when its kind names none.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "provider": {
+                  "description": "The Provider it is about; null when its kind names none.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "providerValue": {
+                  "description": "What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "providerValueName": {
+                  "description": "The feed's own name for that value, when it sent one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "waiveNote": {
+                  "description": "Why it was waived; set only while WAIVED.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "firstSeenAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the sync first raised it."
+                },
+                "lastSeenAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the sync last raised it."
+                },
+                "seenCount": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "How many sync passes have raised it."
+                },
+                "statusChangedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When its status was last set."
+                },
+                "statusChangedBy": {
+                  "description": "The root admin who last set its status; null when the sync did, or that account was deleted.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "description": "Their name, for display."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "displayName"
+                  ],
+                  "additionalProperties": false
+                },
+                "actions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "MAP_PARTICIPANT",
+                      "RESOLVE",
+                      "WAIVE",
+                      "REOPEN"
+                    ],
+                    "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
+                  },
+                  "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "severity",
+                "status",
+                "sportLeague",
+                "sportEvent",
+                "provider",
+                "providerValue",
+                "providerValueName",
+                "waiveNote",
+                "firstSeenAt",
+                "lastSeenAt",
+                "seenCount",
+                "statusChangedAt",
+                "statusChangedBy",
+                "actions"
+              ],
+              "additionalProperties": false,
+              "description": "One sync finding: a problem the sync found, one per kind and subject."
+            }
+          }
+        },
+        "required": [
+          "findings"
+        ],
+        "additionalProperties": false,
+        "description": "Every finding kept, most recently seen first. Nothing pages it: a resolved finding is deleted 90 days after it was resolved, and open and waived ones are kept."
+      },
+      "ProviderSyncFindingResponse": {
+        "type": "object",
+        "properties": {
+          "finding": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "UNMAPPED_PARTICIPANT",
+                  "WEBHOOK_SECRET_MISSING"
+                ],
+                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here."
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "ERROR",
+                  "WARNING",
+                  "INFO"
+                ],
+                "description": "ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "OPEN",
+                  "RESOLVED",
+                  "WAIVED"
+                ],
+                "description": "OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
+              },
+              "sportLeague": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "sport": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF",
+                      "HORSE_RACING",
+                      "AUTO_RACING",
+                      "CYCLING",
+                      "RUNNING",
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL",
+                      "HOCKEY",
+                      "BASEBALL",
+                      "SOCCER",
+                      "TENNIS"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "sport"
+                ],
+                "additionalProperties": false,
+                "description": "The sport league it is about: every finding has one."
+              },
+              "sportEvent": {
+                "description": "The event it is about; null when its kind names none.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "provider": {
+                "description": "The Provider it is about; null when its kind names none.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "providerValue": {
+                "description": "What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "providerValueName": {
+                "description": "The feed's own name for that value, when it sent one.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "waiveNote": {
+                "description": "Why it was waived; set only while WAIVED.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "firstSeenAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the sync first raised it."
+              },
+              "lastSeenAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the sync last raised it."
+              },
+              "seenCount": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "How many sync passes have raised it."
+              },
+              "statusChangedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When its status was last set."
+              },
+              "statusChangedBy": {
+                "description": "The root admin who last set its status; null when the sync did, or that account was deleted.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "displayName": {
+                    "type": "string",
+                    "description": "Their name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "displayName"
+                ],
+                "additionalProperties": false
+              },
+              "actions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "MAP_PARTICIPANT",
+                    "RESOLVE",
+                    "WAIVE",
+                    "REOPEN"
+                  ],
+                  "description": "MAP_PARTICIPANT: mapProviderSyncFindingParticipant. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus."
+                },
+                "description": "What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "severity",
+              "status",
+              "sportLeague",
+              "sportEvent",
+              "provider",
+              "providerValue",
+              "providerValueName",
+              "waiveNote",
+              "firstSeenAt",
+              "lastSeenAt",
+              "seenCount",
+              "statusChangedAt",
+              "statusChangedBy",
+              "actions"
+            ],
+            "additionalProperties": false,
+            "description": "One sync finding: a problem the sync found, one per kind and subject."
+          }
+        },
+        "required": [
+          "finding"
+        ],
+        "additionalProperties": false,
+        "description": "One sync finding."
+      },
+      "ChangeProviderSyncFindingStatusRequest": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "RESOLVE",
+              "WAIVE",
+              "REOPEN"
+            ],
+            "description": "One of the finding's offered actions: RESOLVE, WAIVE or REOPEN."
+          },
+          "waiveNote": {
+            "description": "Why it is waived: required, and not blank, for WAIVE; ignored otherwise.",
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "additionalProperties": false,
+        "description": "A root admin resolving, waiving or reopening a finding."
+      },
+      "MapProviderSyncFindingParticipantRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "A participant of the finding's sport league."
+          }
+        },
+        "required": [
+          "participantId"
+        ],
+        "additionalProperties": false,
+        "description": "Maps an UNMAPPED_PARTICIPANT finding's feed id to a participant, which resolves it."
       },
       "CustomerLeagueOwnerDto": {
         "type": "object",
@@ -88728,69 +89623,6 @@
         }
       }
     },
-    "/api/v1/ingestion/unmapped-participants": {
-      "get": {
-        "operationId": "listUnmappedProviderParticipants",
-        "summary": "List competitors a provider could not match",
-        "tags": [
-          "Ingestion"
-        ],
-        "description": "Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "query",
-            "name": "providerId",
-            "required": false,
-            "description": "Only this Provider's competitors; the other providers are not asked."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "externalId",
-            "required": false,
-            "description": "Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The unmapped competitors matching the filters, across the scheduled sports of each provider asked.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnmappedProviderParticipantListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/ingestion/providers/{providerId}/catalog-events": {
       "get": {
         "operationId": "listProviderCatalogEvents",
@@ -88899,6 +89731,360 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/sync-findings/": {
+      "get": {
+        "operationId": "listProviderSyncFindings",
+        "summary": "List sync findings",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
+        "responses": {
+          "200": {
+            "description": "Every finding kept, most recently seen first. Nothing pages it: a resolved finding is deleted 90 days after it was resolved, and open and waived ones are kept.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSyncFindingListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/sync-findings/{findingId}": {
+      "get": {
+        "operationId": "getProviderSyncFinding",
+        "summary": "Get a sync finding",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "findingId",
+            "required": true,
+            "description": "The finding (ProviderSyncFindingDto.id)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One sync finding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSyncFindingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/sync-findings/{findingId}/status": {
+      "post": {
+        "operationId": "changeProviderSyncFindingStatus",
+        "summary": "Resolve, waive or reopen a sync finding",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeProviderSyncFindingStatusRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "findingId",
+            "required": true,
+            "description": "The finding (ProviderSyncFindingDto.id)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One sync finding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSyncFindingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingestion/sync-findings/{findingId}/participant-mapping": {
+      "post": {
+        "operationId": "mapProviderSyncFindingParticipant",
+        "summary": "Map an unmapped participant finding to a participant",
+        "tags": [
+          "Ingestion"
+        ],
+        "description": "An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MapProviderSyncFindingParticipantRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "findingId",
+            "required": true,
+            "description": "The finding (ProviderSyncFindingDto.id)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One sync finding.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSyncFindingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
