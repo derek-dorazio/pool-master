@@ -787,6 +787,8 @@ Contest:
 - Play-in rounds (Derek 2026-11-24, slices 11 and 26): whole-tournament tiered, budget and quick
   pick templates list the Round of 64 (NBA first round) through the Final and leave the
   play-in out; the play-in is still synced and fills the bracket before the cutoff.
+- Clutch Card coverage (Derek 2026-11-24, slice 26): a Clutch Card template covers slots of one
+  event only (regular-season or playoffs, never both), so one field, pick list and tier set.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
