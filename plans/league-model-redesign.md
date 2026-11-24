@@ -685,7 +685,7 @@ Contest:
   definitions are never deleted while a Season slot points at them. Fallback (Derek): if the
   trophy design needs a stable identity across structure changes, revisit with a template
   phase coverage row (`ContestConfigTemplatePhase`).
-- Cups (Derek 2026-11-24, slice 20c): a cup adds up the counted contests that cover a single
+- Cups (Derek 2026-11-24, slices 20c and 20f): a cup adds up the counted contests that cover a single
   slot and rank every entry by its own choices (today tiered, budget and the Clutch Card;
   both tiered and budget count). Contests covering several slots (pick'em, survivor,
   bracket, a majors pool) crown their own winner and never count; squares and quick pick
@@ -736,14 +736,14 @@ Contest:
   consecutive Seasons. A contest whose covered slots are all `slotKind` WEEK gets none
   (replaces the `isWeekOfGames` game-count guess). A trophy shows from its first Season
   (`PERPETUAL_TROPHY_MIN_YEARS` goes).
-- Points scales (Derek 2026-11-24, slice 20c): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
+- Points scales (Derek 2026-11-24, slice 20e): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
   `CupPointsScale` enum move to `PlatformPointsProfile` (code, name, `kind` TABLE |
   FIELD_BEATEN, `points` list for TABLE, `pointsAfterTable` for STANDARD's tail), seeded by
   migration; `League.platformPointsProfileId` replaces `cupPointsScale`, and a league's own
   CUSTOM list stays on League (`cupCustomPoints`, used when set). Crowned cups freeze the
   profile's points they used. Kept in code as fixed rules: last place needs 3+ teams, medal
   by place, the championship grid's 10 places, one platform time zone for history years.
-- Championship counting (Derek 2026-11-24, slice 20c): `PlatformChampionshipProfile`
+- Championship counting (Derek 2026-11-24, slice 20e): `PlatformChampionshipProfile`
   (code, `counting` ALL_FINISHES | CUP_CONTESTS), seeded by migration with two rows ("All
   contests", "Cup contests"); `League.platformChampionshipProfileId`, default All contests,
   chosen by the commissioner in league settings. ALL_FINISHES counts every contest that
@@ -751,7 +751,7 @@ Contest:
   `countsInCups`. The profile governs the League Championship only; medals, the record book
   and the Hall of Lame count every finish. The Championship reads the current choice until
   its year closes, then freezes with the year.
-- Cup crowning (Derek 2026-11-24, slice 20c): automatic. A cup is crowned, by a job on the
+- Cup crowning (Derek 2026-11-24, slice 20f): automatic. A cup is crowned, by a job on the
   domain event handler map, once every slot it covers has finished and every counted
   contest in it is final; the API returns `isOver`. Crowning freezes its points; the
   commissioner `crownCup` route and button go. A year can't close with a cup uncrowned. A
@@ -867,15 +867,19 @@ In order:
     (`SportEventSlot.tiebreakerGameId`, C3) lands in slice 10, the guess on the entry slot row
     in 17.
 19. Offerings and notices by covered slots.
-20. History keys and Season FKs: `SportLeagueSeason.championshipYear` by migration, copied to
-    each contest; unknown feed Season is an ERROR finding; history by completed year.
-20b. `ContestSquadFinish` replaces LeagueYearFinish, written by every ranked type but squares;
-    medals read it.
-20c. Cups: `SportLeagueCupDefinition` and its slot rows seeded by migration, Cup keyed (League,
-    Season, definition), `cupWeight` and CupWeight removed; `PlatformPointsProfile` with
-    `League.platformPointsProfileId`.
-20d. Perpetual trophies keyed (League, ContestConfigTemplate), one plate per Season from the
-    first, none for all-WEEK templates; PERPETUAL_TROPHY_MIN_YEARS removed.
+20. Championship year on contests and history (§9c): `Contest.championshipYear` copied from
+    the Season, `LeagueYearReview` on it, `LeagueChampionshipYear.closedAt` and the close
+    rule, open and closed years from the API (no clock), history lists by championship year.
+20b. `ContestSquadFinish` replaces LeagueYearFinish (year rename and the settlement writer
+    land here, after 18), written by every ranked type but squares; medals in one function.
+20c. `CupWeight` removed with NOT_COUNTED: the opt-out screen, its E2E step and display keys go.
+20d. Perpetual trophies keyed (League, template, covered slot definitions), one plate per
+    Season from the first, none for all-WEEK coverage; PERPETUAL_TROPHY_MIN_YEARS removed.
+20e. `PlatformPointsProfile` and `PlatformChampionshipProfile` with their League FKs and
+    settings, crowned-cup points frozen.
+20f. Cups: `SportLeagueCupDefinition` and its slot rows seeded by migration (Clutch cups seeded
+    in 26 beside their templates), `countsInCups` on templates, Cup keyed (League, Season,
+    definition), routes by cup id, automatic crowning, `isOver` and `isShown` from the API.
 21. Rosters and player field rows (closes #1859); horse trainer column.
 22. Player stats (StatLine removed).
 23. Composites and scores.
