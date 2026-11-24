@@ -29338,7 +29338,7 @@ export type ProviderSyncFindingDto = {
      */
     severity: 'ERROR' | 'WARNING' | 'INFO';
     /**
-     * OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+     * OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
      */
     status: 'OPEN' | 'RESOLVED' | 'WAIVED';
     /**
@@ -29422,7 +29422,7 @@ export type ProviderSyncFindingListResponse = {
          */
         severity: 'ERROR' | 'WARNING' | 'INFO';
         /**
-         * OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+         * OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
          */
         status: 'OPEN' | 'RESOLVED' | 'WAIVED';
         /**
@@ -29510,7 +29510,7 @@ export type ProviderSyncFindingResponse = {
          */
         severity: 'ERROR' | 'WARNING' | 'INFO';
         /**
-         * OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+         * OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
          */
         status: 'OPEN' | 'RESOLVED' | 'WAIVED';
         /**
@@ -38351,6 +38351,10 @@ export type ListProviderSyncFindingsErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type ListProviderSyncFindingsError = ListProviderSyncFindingsErrors[keyof ListProviderSyncFindingsErrors];
@@ -38389,6 +38393,10 @@ export type GetProviderSyncFindingErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type GetProviderSyncFindingError = GetProviderSyncFindingErrors[keyof GetProviderSyncFindingErrors];
@@ -38439,6 +38447,10 @@ export type ChangeProviderSyncFindingStatusErrors = {
      * Standard API error envelope.
      */
     422: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type ChangeProviderSyncFindingStatusError = ChangeProviderSyncFindingStatusErrors[keyof ChangeProviderSyncFindingStatusErrors];
@@ -38489,6 +38501,10 @@ export type MapProviderSyncFindingParticipantErrors = {
      * Standard API error envelope.
      */
     422: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
 };
 
 export type MapProviderSyncFindingParticipantError = MapProviderSyncFindingParticipantErrors[keyof MapProviderSyncFindingParticipantErrors];

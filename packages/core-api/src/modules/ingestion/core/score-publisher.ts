@@ -172,11 +172,20 @@ export async function publishLiveScoreUpdate(
   }
   try {
     const written = await write();
-    await deps.findings.raiseUnmappedParticipants({
-      sportLeagueId: sportEvent.eventSeries.sportLeague.id,
-      providerSourceId: deps.providerId,
-      participants: (written.unmappedExternalIds ?? []).map((externalId) => ({ externalId, name: null })),
-    });
+    // The scores are saved: a finding that fails to raise is logged and the write's result stands,
+    // so the sync run is not failed or retried for a side record. The next sync raises it again.
+    try {
+      await deps.findings.raiseUnmappedParticipants({
+        sportLeagueId: sportEvent.eventSeries.sportLeague.id,
+        providerSourceId: deps.providerId,
+        participants: (written.unmappedExternalIds ?? []).map((externalId) => ({ externalId, name: null })),
+      });
+    } catch (err) {
+      deps.logger?.error(
+        { action: 'ingestion.syncFinding.raiseFailed', err, sportEventId: sportEvent.id, providerId: deps.providerId },
+        'Raising unmapped participant findings failed; the scores were written',
+      );
+    }
     return written;
   } finally {
     deps.fieldCache?.forget(sportEvent.id);

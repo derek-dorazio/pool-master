@@ -326,6 +326,20 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       expect(findings.raised).toEqual([{ sportLeagueId: 'league-1', providerSourceId: 'mock', participants: [{ externalId: 'golfer-9', name: null }] }]);
     });
 
+    it('still returns the written scores, and logs ingestion.syncFinding.raiseFailed, when raising the unmapped findings fails', async () => {
+      const logger = fakeLogger();
+      const findings = { raiseUnmappedParticipants: async () => { throw new Error('connection reset'); } };
+
+      const written = await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, findings, logger,
+        prisma: asPrismaClient({ sportEvent: buildSportEventStub() }),
+        domainEvents: testDomainEvents(), providerId: 'mock',
+        scoringFamilyForEvent: () => familyWriting(async () => ({ ...persisted, unmappedExternalIds: ['golfer-9'] })),
+      });
+
+      expect(written).toEqual({ ...persisted, unmappedExternalIds: ['golfer-9'] });
+      expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.raiseFailed' }), expect.any(String));
+    });
+
     it('forgets it too when writing the scores fails partway, since some may have been written', async () => {
       const fieldCache = await cacheHoldingTheField();
 

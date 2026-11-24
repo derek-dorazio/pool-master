@@ -10,12 +10,12 @@ export const SYNC_FINDINGS_GRID_KEY = 'findings';
  * Findings filtered to one sport league's OPEN findings of one severity (#1999): where the Sports
  * page's Findings chip sends each of its counts. The grid's own column filters, in its link.
  */
-export function buildLeagueOpenFindingsPath(sportLeagueName: string, severity: ProviderSyncFindingSeverity): string {
+export function buildLeagueOpenFindingsPath(sportLeagueId: string, severity: ProviderSyncFindingSeverity): string {
   const state = encodeGridState({
     sorting: [],
     filters: [
       { id: 'severity', value: { kind: 'enum', values: [severity], match: 'any' } },
-      { id: SYNC_FINDING_LEAGUE_COLUMN, value: { kind: 'enum', values: [sportLeagueName], match: 'any' } },
+      { id: SYNC_FINDING_LEAGUE_COLUMN, value: { kind: 'enum', values: [sportLeagueId], match: 'any' } },
       { id: 'status', value: { kind: 'enum', values: [ProviderSyncFindingStatus.OPEN], match: 'any' } },
     ],
   });

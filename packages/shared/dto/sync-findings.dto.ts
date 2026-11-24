@@ -14,7 +14,7 @@ import { DateTimeSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
 export const ProviderSyncFindingSeveritySchema = z.enum(ProviderSyncFindingSeverity).describe('ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.');
-export const ProviderSyncFindingStatusSchema = z.enum(ProviderSyncFindingStatus).describe('OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.');
+export const ProviderSyncFindingStatusSchema = z.enum(ProviderSyncFindingStatus).describe('OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.');
 export const ProviderSyncFindingKindSchema = z.enum(ProviderSyncFindingKind).describe('What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider\'s webhooks are on but its signing secret is not set here.');
 export const ProviderSyncFindingActionSchema = z.enum(ProviderSyncFindingAction).describe('MAP_PARTICIPANT: mapProviderSyncFindingParticipant. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus.');
 

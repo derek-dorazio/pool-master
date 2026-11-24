@@ -2753,7 +2753,7 @@ export const listProviderCatalogEvents = <ThrowOnError extends boolean = false>(
 /**
  * List sync findings
  *
- * Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept.
+ * Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
  */
 export const listProviderSyncFindings = <ThrowOnError extends boolean = false>(options?: Options<ListProviderSyncFindingsData, ThrowOnError>): RequestResult<ListProviderSyncFindingsResponses, ListProviderSyncFindingsErrors, ThrowOnError> => (options?.client ?? client).get<ListProviderSyncFindingsResponses, ListProviderSyncFindingsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2764,7 +2764,7 @@ export const listProviderSyncFindings = <ThrowOnError extends boolean = false>(o
 /**
  * Get a sync finding
  *
- * One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND.
+ * One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
  */
 export const getProviderSyncFinding = <ThrowOnError extends boolean = false>(options: Options<GetProviderSyncFindingData, ThrowOnError>): RequestResult<GetProviderSyncFindingResponses, GetProviderSyncFindingErrors, ThrowOnError> => (options.client ?? client).get<GetProviderSyncFindingResponses, GetProviderSyncFindingErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2775,7 +2775,7 @@ export const getProviderSyncFinding = <ThrowOnError extends boolean = false>(opt
 /**
  * Resolve, waive or reopen a sync finding
  *
- * Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note.
+ * Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
  */
 export const changeProviderSyncFindingStatus = <ThrowOnError extends boolean = false>(options: Options<ChangeProviderSyncFindingStatusData, ThrowOnError>): RequestResult<ChangeProviderSyncFindingStatusResponses, ChangeProviderSyncFindingStatusErrors, ThrowOnError> => (options.client ?? client).post<ChangeProviderSyncFindingStatusResponses, ChangeProviderSyncFindingStatusErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2790,7 +2790,7 @@ export const changeProviderSyncFindingStatus = <ThrowOnError extends boolean = f
 /**
  * Map an unmapped participant finding to a participant
  *
- * An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league.
+ * An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
  */
 export const mapProviderSyncFindingParticipant = <ThrowOnError extends boolean = false>(options: Options<MapProviderSyncFindingParticipantData, ThrowOnError>): RequestResult<MapProviderSyncFindingParticipantResponses, MapProviderSyncFindingParticipantErrors, ThrowOnError> => (options.client ?? client).post<MapProviderSyncFindingParticipantResponses, MapProviderSyncFindingParticipantErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

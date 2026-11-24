@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DataGrid, HelpTip, PageHeader, QueryState, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
-import { syncFindingColumns } from './sync-finding-columns';
+import { syncFindingColumns, syncFindingLeagueOptions } from './sync-finding-columns';
 import { SyncFindingDialog } from './sync-finding-dialog';
 import { SYNC_FINDINGS_GRID_KEY } from './sync-findings-links';
 import { useSyncFindingsQuery } from './use-sync-findings';
@@ -16,6 +16,7 @@ export function RootAdminSyncFindingsPage() {
   const [openFindingId, setOpenFindingId] = useState<string | null>(null);
   // poolmaster-allow-list-lookup: the findings list is read whole and held in the cache
   const openFinding = findingsQuery.data?.find((finding) => finding.id === openFindingId);
+  const columns = useMemo(() => syncFindingColumns(syncFindingLeagueOptions(findingsQuery.data ?? [])), [findingsQuery.data]);
 
   return (
     <section className="space-y-6" data-testid="root-admin-sync-findings-page">
@@ -26,7 +27,7 @@ export function RootAdminSyncFindingsPage() {
           <HelpTip label="About findings" testId="root-admin-sync-findings-help">
             What the sync found that needs a look: a participant the feed sent that nothing maps, a
             provider set up wrongly. Each one is raised once and updated each time the sync sees it.
-            Resolved findings are cleared after 90 days.
+            Resolved findings are cleared after a while; open and waived ones are kept.
           </HelpTip>
         )}
       />
@@ -39,7 +40,7 @@ export function RootAdminSyncFindingsPage() {
         >
           {(findings) => (
             <DataGrid
-              columns={syncFindingColumns}
+              columns={columns}
               data={findings}
               emptyMessage="The sync has found nothing that needs a look."
               filterTestIdPrefix="root-admin-sync-findings-filter"

@@ -71658,7 +71658,7 @@
               "RESOLVED",
               "WAIVED"
             ],
-            "description": "OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
+            "description": "OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
           },
           "sportLeague": {
             "type": "object",
@@ -71873,7 +71873,7 @@
                     "RESOLVED",
                     "WAIVED"
                   ],
-                  "description": "OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
+                  "description": "OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
                 },
                 "sportLeague": {
                   "type": "object",
@@ -72094,7 +72094,7 @@
                   "RESOLVED",
                   "WAIVED"
                 ],
-                "description": "OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
+                "description": "OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again."
               },
               "sportLeague": {
                 "type": "object",
@@ -89488,7 +89488,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept.",
+        "description": "Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
         "responses": {
           "200": {
             "description": "Every finding kept, most recently seen first. Nothing pages it: a resolved finding is deleted 90 days after it was resolved, and open and waived ones are kept.",
@@ -89519,6 +89519,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -89530,7 +89540,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND.",
+        "description": "One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -89583,6 +89593,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -89594,7 +89614,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note.",
+        "description": "Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
@@ -89687,6 +89707,16 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -89698,7 +89728,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league.",
+        "description": "An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.",
         "requestBody": {
           "required": true,
           "content": {
@@ -89783,6 +89813,16 @@
             }
           },
           "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

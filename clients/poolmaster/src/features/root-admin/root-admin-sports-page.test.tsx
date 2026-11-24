@@ -248,7 +248,7 @@ describe('RootAdminSportsPage', () => {
     const errors = await screen.findByTestId('root-admin-sports-issue-findings-ERROR');
     expect(errors).toHaveTextContent('Error');
     expect(errors).toHaveTextContent('1 open');
-    expect(errors).toHaveAttribute('href', buildLeagueOpenFindingsPath('MLB', 'ERROR'));
+    expect(errors).toHaveAttribute('href', buildLeagueOpenFindingsPath('mlb', 'ERROR'));
     expect(screen.getByTestId('root-admin-sports-issue-findings-WARNING')).toHaveTextContent('2 open');
   });
 

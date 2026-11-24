@@ -82,7 +82,6 @@ function inMemoryFindings(rows: ProviderSyncFinding[] = []) {
       Object.assign(row, { status: change.status, waiveNote: change.waiveNote, statusChangedAt: change.changedAt, statusChangedBy: { id: change.changedByUserId, firstName: 'Root', lastName: 'Admin', username: 'root', email: 'root@example.test' } });
       return row;
     },
-    countOpen: async () => [{ sportLeagueId: LEAGUE.id, severity: ProviderSyncFindingSeverity.ERROR, count: 1 }],
     deleteResolvedBatchBefore: async () => 0,
   };
   return { repository, rows, raised, resolved };
@@ -203,13 +202,12 @@ describe('ProviderSyncFindingService raising', () => {
 });
 
 describe('ProviderSyncFindingService reads', () => {
-  it('lists every finding, answers one by id, and counts OPEN ones per league and severity', async () => {
+  it('lists every finding and answers one by id', async () => {
     const table = inMemoryFindings([finding()]);
     const { findings } = service({ repository: table.repository });
 
     await expect(findings.list()).resolves.toEqual([finding()]);
     await expect(findings.get('finding-1')).resolves.toEqual(finding());
-    await expect(findings.countOpen()).resolves.toEqual([{ sportLeagueId: LEAGUE.id, severity: ProviderSyncFindingSeverity.ERROR, count: 1 }]);
   });
 
   it('answers 404 SYNC_FINDING_NOT_FOUND for an unknown finding', async () => {

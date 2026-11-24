@@ -37,8 +37,6 @@ export interface ProviderSyncFindingRepository {
   findById(id: string): Promise<ProviderSyncFinding | null>;
   /** Sets one finding's status as a root admin; null when there is no such finding. */
   setStatus(id: string, change: ProviderSyncFindingStatusChange): Promise<ProviderSyncFinding | null>;
-  /** Counts OPEN findings per league and severity, in one grouped query. */
-  countOpen(): Promise<ProviderSyncFindingOpenCount[]>;
   /** Deletes up to `limit` findings RESOLVED before `before`; never an OPEN or WAIVED one. */
   deleteResolvedBatchBefore(before: Date, limit: number): Promise<number>;
 }

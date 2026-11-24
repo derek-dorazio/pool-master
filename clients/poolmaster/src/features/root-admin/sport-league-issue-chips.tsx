@@ -47,18 +47,18 @@ export function SportLeagueIssueChips({
           testId={`root-admin-sports-issue-${overview.id}-${issue.type}-popover`}
           trigger="cell"
         >
-          <IssueItems issue={issue} onOpenSyncRun={onOpenSyncRun} sport={overview.sport} sportLeagueName={overview.name} />
+          <IssueItems issue={issue} onOpenSyncRun={onOpenSyncRun} sport={overview.sport} sportLeagueId={overview.id} />
         </DetailsPeek>
       ))}
     </span>
   );
 }
 
-function IssueItems({ issue, onOpenSyncRun, sport, sportLeagueName }: {
+function IssueItems({ issue, onOpenSyncRun, sport, sportLeagueId }: {
   issue: SportLeagueIssue;
   onOpenSyncRun: (syncRunId: string) => void;
   sport: Sport;
-  sportLeagueName: string;
+  sportLeagueId: string;
 }) {
   const displayPreferences = useDisplayPreferences();
   const when = (occurredAt: string) => formatDateTimeDisplay(occurredAt, displayPreferences);
@@ -72,7 +72,7 @@ function IssueItems({ issue, onOpenSyncRun, sport, sportLeagueName }: {
               key={item.severity}
               name={enumLabel('ProviderSyncFindingSeverity', item.severity)}
               testId={`root-admin-sports-issue-findings-${item.severity}`}
-              to={buildLeagueOpenFindingsPath(sportLeagueName, item.severity)}
+              to={buildLeagueOpenFindingsPath(sportLeagueId, item.severity)}
             />
           ))}
         </SectionRows>

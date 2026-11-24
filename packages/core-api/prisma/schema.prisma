@@ -575,6 +575,12 @@ enum PrismaProviderSyncRunStatus {
 }
 
 /// What a provider sync run syncs (#1819): a sport league's events, one event's field, or one event's scores.
+enum PrismaProviderSyncKind {
+  EVENTS
+  FIELD
+  SCORES
+}
+
 /// How serious a sync finding is (#1999).
 enum PrismaProviderSyncFindingSeverity {
   ERROR
@@ -593,12 +599,6 @@ enum PrismaProviderSyncFindingStatus {
 enum PrismaProviderSyncFindingKind {
   UNMAPPED_PARTICIPANT
   WEBHOOK_SECRET_MISSING
-}
-
-enum PrismaProviderSyncKind {
-  EVENTS
-  FIELD
-  SCORES
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -2537,7 +2537,7 @@ model ProviderSyncRun {
 /// A problem a sync found (#1999), one row per kind and subject: the sync raising it again
 /// updates the row's last-seen time instead of adding one. The subject is the sport league
 /// always, then the event, the Provider and the provider's own value where the kind has them;
-/// one partial NULLS NOT DISTINCT unique index in the migration keeps it to one row, which
+/// one NULLS NOT DISTINCT unique index in the migration keeps it to one row, which
 /// Prisma cannot declare. `providerValue` is the stated exception to "provider keys live only in
 /// ProviderMapping tables": it is what the feed sent that nothing maps.
 model ProviderSyncFinding {

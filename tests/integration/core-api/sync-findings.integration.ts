@@ -23,6 +23,7 @@ import {
 import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaProviderSyncFindingRepository } from '../../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
 import { ProviderSyncFindingService } from '../../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
+import { SYNC_FINDINGS_REQUESTS_PER_MINUTE } from '../../../packages/core-api/src/modules/ingestion/findings/routes';
 import { SyncFindingRetention } from '../../../packages/core-api/src/modules/ingestion/findings/sync-finding-retention';
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import { cleanupTestData, createTestUser, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
@@ -275,5 +276,19 @@ describe('the sync findings routes (contract)', () => {
       count: 3,
       items: [{ severity: ProviderSyncFindingSeverity.ERROR, count: 1 }, { severity: ProviderSyncFindingSeverity.WARNING, count: 2 }],
     });
+  });
+
+  it('answers requests up to the minute\'s limit, then 429 SYNC_FINDINGS_RATE_LIMITED for that address only', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    const read = (remoteAddress: string) => getApp().inject({ method: 'GET', url: '/api/v1/ingestion/sync-findings', headers: rootAdmin.headers, remoteAddress });
+    for (let index = 0; index < SYNC_FINDINGS_REQUESTS_PER_MINUTE; index += 1) {
+      // A request at a time, as the grid makes them.
+      expect((await read('10.2.0.9')).statusCode).toBe(200);
+    }
+
+    const over = await read('10.2.0.9');
+    expect(over.statusCode).toBe(429);
+    expect(ErrorEnvelopeSchema.parse(over.json())).toMatchObject({ error: { code: 'SYNC_FINDINGS_RATE_LIMITED' } });
+    expect((await read('10.2.0.10')).statusCode).toBe(200);
   });
 });

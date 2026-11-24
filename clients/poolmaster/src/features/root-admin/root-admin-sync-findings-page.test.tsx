@@ -52,6 +52,10 @@ const WEBHOOK = finding({
   id: 'finding-2', kind: 'WEBHOOK_SECRET_MISSING', severity: 'ERROR', sportLeague: { id: 'nfl', name: 'NFL', sport: 'AMERICAN_FOOTBALL' },
   providerValue: null, providerValueName: null, actions: ['RESOLVE', 'WAIVE'],
 });
+const NAMESAKE = finding({
+  id: 'finding-4', kind: 'WEBHOOK_SECRET_MISSING', severity: 'ERROR', sportLeague: { id: 'nfl-2', name: 'NFL', sport: 'AMERICAN_FOOTBALL' },
+  providerValue: null, providerValueName: null, actions: ['RESOLVE', 'WAIVE'],
+});
 const WAIVED = finding({
   id: 'finding-3', status: 'WAIVED', providerValue: 'golfer-88', providerValueName: 'An Amateur', waiveNote: 'Plays once a year',
   statusChangedBy: { id: 'admin-1', displayName: 'Root Admin' }, actions: ['REOPEN'],
@@ -186,7 +190,7 @@ describe('RootAdminSyncFindingsPage', () => {
   });
 
   it('shows a waived finding\'s note and who waived it, and offers only Reopen', async () => {
-    renderPage(buildLeagueOpenFindingsPath('PGA TOUR', 'WARNING').replace('OPEN', 'WAIVED'));
+    renderPage(buildLeagueOpenFindingsPath('pga', 'WARNING').replace('OPEN', 'WAIVED'));
 
     const dialog = within(await openFinding('finding-3'));
 
@@ -198,13 +202,15 @@ describe('RootAdminSyncFindingsPage', () => {
 });
 
 describe('buildLeagueOpenFindingsPath', () => {
-  it('opens Findings filtered to one league\'s OPEN findings of one severity', async () => {
-    const path = buildLeagueOpenFindingsPath('NFL', 'ERROR');
+  it('opens Findings filtered to one league\'s OPEN findings of one severity, by the league\'s id, so another league of the same name stays out', async () => {
+    const path = buildLeagueOpenFindingsPath('nfl', 'ERROR');
     expect(path.startsWith('/manage/providers/findings?')).toBe(true);
     expect(new URLSearchParams(path.split('?')[1]).get(SYNC_FINDINGS_GRID_KEY)).not.toBeNull();
 
+    mocks.listProviderSyncFindings.mockResolvedValue({ data: { findings: [finding(), WEBHOOK, NAMESAKE, WAIVED] } });
     renderPage(path);
-    expect(await screen.findByTestId('root-admin-sync-finding-finding-2')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-sync-finding-finding-2')).toHaveTextContent('NFL');
+    expect(screen.queryByTestId('root-admin-sync-finding-finding-4')).not.toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sync-finding-finding-1')).not.toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sync-finding-finding-3')).not.toBeInTheDocument();
   });

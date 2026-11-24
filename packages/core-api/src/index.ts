@@ -554,10 +554,15 @@ export function buildApp() {
 
     // A Provider's webhooks switched on with no signing secret here is an ERROR finding on each
     // league it syncs (#1999); setting the secret resolves it on the next start.
-    await syncFindings.checkWebhookSecrets({
-      syncedLeagues: await new PrismaSportLeagueRepository(prisma).findEventSynced(),
-      isMissingSecret: (provider) => providerWebhooks.isFlagWithoutSecret(provider),
-    });
+    // Not essential to starting: a failure is logged, and the schedulers below still start.
+    try {
+      await syncFindings.checkWebhookSecrets({
+        syncedLeagues: await new PrismaSportLeagueRepository(prisma).findEventSynced(),
+        isMissingSecret: (provider) => providerWebhooks.isFlagWithoutSecret(provider),
+      });
+    } catch (err) {
+      app.log.error({ action: 'ingestion.syncFinding.webhookCheckFailed', err }, 'Checking provider webhook secrets for sync findings failed');
+    }
 
     // Ingestion
     if (process.env.AUTO_START_SCHEDULER !== 'false') {

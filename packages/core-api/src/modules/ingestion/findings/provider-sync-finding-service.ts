@@ -5,7 +5,7 @@
  * a CloudWatch metric filter counts and alarms on (`infrastructure/terraform/monitoring.tf`).
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncFindingOpenCount, ProviderSyncFindingRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncFindingRepository } from '@poolmaster/shared/db';
 import {
   PROVIDER_SYNC_FINDING_STATUS_ACTIONS,
   ProviderSyncFindingAction,
@@ -146,11 +146,6 @@ export class ProviderSyncFindingService {
     const finding = await this.deps.repository.findById(findingId);
     if (finding === null) throw notFound(findingId);
     return finding;
-  }
-
-  /** Each league's OPEN findings by severity, for the Sports page. */
-  async countOpen(): Promise<ProviderSyncFindingOpenCount[]> {
-    return this.deps.repository.countOpen();
   }
 
   /**

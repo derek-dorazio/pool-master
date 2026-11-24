@@ -4,7 +4,6 @@
  */
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type {
-  ProviderSyncFindingOpenCount,
   ProviderSyncFindingRepository,
   ProviderSyncFindingResolveFilter,
 } from '@poolmaster/shared/db';
@@ -89,15 +88,6 @@ export class PrismaProviderSyncFindingRepository implements ProviderSyncFindingR
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') return null;
       throw error;
     }
-  }
-
-  async countOpen(): Promise<ProviderSyncFindingOpenCount[]> {
-    const groups = await this.prisma.providerSyncFinding.groupBy({
-      by: ['sportLeagueId', 'severity'],
-      where: { status: ProviderSyncFindingStatus.OPEN },
-      _count: { _all: true },
-    });
-    return groups.map((group) => ({ sportLeagueId: group.sportLeagueId, severity: group.severity, count: group._count._all }));
   }
 
   async deleteResolvedBatchBefore(before: Date, limit: number): Promise<number> {

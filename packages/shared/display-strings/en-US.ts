@@ -1074,6 +1074,7 @@ export const enUS = {
     SYNC_FINDING_NOT_FOUND: 'Finding not found.',
     SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE: 'Choose a participant of the finding’s sport league.',
     SYNC_FINDING_WAIVE_NOTE_REQUIRED: 'Say why you are waiving it.',
+    SYNC_FINDINGS_RATE_LIMITED: 'Too many requests. Wait a minute and try again.',
     SYNC_REQUEST_INVALID: 'This sync request is not valid.',
     SYNC_RUN_NOT_FOUND: 'Sync run not found.',
     SYSTEM_EMAIL_NOT_SENT: 'The email was not sent.',

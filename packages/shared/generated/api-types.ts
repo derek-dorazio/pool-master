@@ -3685,7 +3685,7 @@ export interface paths {
         };
         /**
          * List sync findings
-         * @description Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept.
+         * @description Every sync finding kept, most recently seen first, each with its sport league, event, Provider and the actions it offers now (#1999). Nothing pages it: a resolved finding is deleted 90 days after it was resolved; open and waived ones are kept. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
          */
         get: operations["listProviderSyncFindings"];
         put?: never;
@@ -3705,7 +3705,7 @@ export interface paths {
         };
         /**
          * Get a sync finding
-         * @description One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND.
+         * @description One sync finding, as the Findings list has it. 404 SYNC_FINDING_NOT_FOUND. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
          */
         get: operations["getProviderSyncFinding"];
         put?: never;
@@ -3727,7 +3727,7 @@ export interface paths {
         put?: never;
         /**
          * Resolve, waive or reopen a sync finding
-         * @description Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note.
+         * @description Takes one of the finding's offered actions: RESOLVE, WAIVE with a note, or REOPEN (#1999). 404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer the action now. 422 SYNC_FINDING_WAIVE_NOTE_REQUIRED for WAIVE with no note. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
          */
         post: operations["changeProviderSyncFindingStatus"];
         delete?: never;
@@ -3747,7 +3747,7 @@ export interface paths {
         put?: never;
         /**
          * Map an unmapped participant finding to a participant
-         * @description An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league.
+         * @description An OPEN UNMAPPED_PARTICIPANT finding's fix (#1999): maps the feed's participant id (providerValue) from its Provider to a participant of its sport league, with MANUAL confidence, as bindParticipantProviderMapping does, and resolves the finding. 404 SYNC_FINDING_NOT_FOUND or PARTICIPANT_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer MAP_PARTICIPANT now. 422 SYNC_FINDING_PARTICIPANT_OTHER_LEAGUE for a participant of another league. More than 60 requests a minute from one address answer 429 SYNC_FINDINGS_RATE_LIMITED.
          */
         post: operations["mapProviderSyncFindingParticipant"];
         delete?: never;
@@ -25739,7 +25739,7 @@ export interface components {
              */
             severity: "ERROR" | "WARNING" | "INFO";
             /**
-             * @description OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+             * @description OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
              * @enum {string}
              */
             status: "OPEN" | "RESOLVED" | "WAIVED";
@@ -25812,7 +25812,7 @@ export interface components {
                  */
                 severity: "ERROR" | "WARNING" | "INFO";
                 /**
-                 * @description OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+                 * @description OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
                  * @enum {string}
                  */
                 status: "OPEN" | "RESOLVED" | "WAIVED";
@@ -25887,7 +25887,7 @@ export interface components {
                  */
                 severity: "ERROR" | "WARNING" | "INFO";
                 /**
-                 * @description OPEN until it is RESOLVED (the sync stopped seeing it, or an admin fixed it) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
+                 * @description OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.
                  * @enum {string}
                  */
                 status: "OPEN" | "RESOLVED" | "WAIVED";
@@ -38355,6 +38355,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     getProviderSyncFinding: {
@@ -38398,6 +38407,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38486,6 +38504,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     mapProviderSyncFindingParticipant: {
@@ -38560,6 +38587,15 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
