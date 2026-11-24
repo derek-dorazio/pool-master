@@ -811,6 +811,20 @@ Contest:
 - Championship tab medals (Derek 2026-11-24, slice 20e): on the Championship tab the medal
   tiles and the matrix follow the Championship's counting profile; the squad page's
   all-time medals count every finish and are labelled "All contests". The API returns both.
+- Manual result entry (Derek 2026-11-24, slices 7 and 8): results come only from the feed,
+  and test events get theirs from the test data loader (last season's box scores). The
+  manual score, bracket, golf-round and race-order panels and the CSV uploads are deleted,
+  not rebuilt on Game side results. A feed failure raises a finding.
+- Obvious calls from the final review (2026-11-24, taken as recommended): a voided survivor
+  pick survives the week ("Voided · game postponed"); a league's custom cup points are a
+  points profile row the league owns; a finding requires its league, links the rest by
+  optional composite FKs and carries one providerValue column (NULLS NOT DISTINCT unique);
+  WEEK slot definitions are seeded to the longest season and each Season makes only its
+  weeks; event page copy stays in the web keyed by page and template; Sport.urlSegment is
+  seeded with today's value (american-football); a Season may hold several labelled test
+  slots per definition, unique on (Season, definition, label); unmapped participants become
+  a finding kind whose action is the existing map page, and the Sports Issues column counts
+  open findings by severity.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
