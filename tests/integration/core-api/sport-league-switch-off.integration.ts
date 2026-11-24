@@ -78,7 +78,10 @@ const FEEDLESS_SWITCHED_OFF: Record<string, string> = {
   '89753830-f4b5-4c3e-8f30-8dac2465061b': 'WTA',
   '5e1930aa-989b-4b92-85f0-a3d604f4a546': 'UEFA Champions League',
 };
-/** Formula 1, active with no feed yet only because its feed is being built (slice 10d). */
+/**
+ * Formula 1, active with no feed yet only because slice 10d (#2045) builds its feed. If 10d has not
+ * landed before QA is rebuilt (slice 29), Formula 1 is switched off too and this exception goes.
+ */
 const FORMULA_1_ID = '7ec9d58e-cfa0-4f8e-b7b5-1986cce18d37';
 
 describe('Active sport leagues with no feed', () => {
