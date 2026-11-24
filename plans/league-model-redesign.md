@@ -778,7 +778,9 @@ Contest:
   and their entries voided; a multi-slot contest settles on the slots played; cups and the
   year close treat a cancelled slot as finished.
 - Overlapping rounds (Derek 2026-11-24, slices 16 and 26): a contest locks at its first
-  covered Game and opens once every match feeding that slot is decided. Templates list a slot
+  covered Game and, when it picks from a field (tiered, budget, quick pick, Clutch Card),
+  opens once every match feeding that slot is decided; brackets and pick'em pick sides, which
+  can be "winner of", so they open earlier. Templates list a slot
   as a starting point (ONE_SLOT, or the first slot of ALL_LISTED / FROM_SLOT) only where that
   holds; the NBA and NHL second round and Conference Finals are not starting points, so
   today's Conference Finals Clutch Cards go. A contest that can't open raises a finding.
