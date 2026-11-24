@@ -733,15 +733,16 @@ Contest:
   contest (its Masters finishes by Season) reads the same rows through the covered slot; its
   team-page screen is #1996.
   Hall of Lame and the record book are unchanged apart from the year rename.
-- Perpetual trophies (Derek 2026-11-24, slice 20d): one per (League, `ContestConfigTemplate`,
-  the slot definitions the contest covers) (Derek 2026-11-24: the Masters tiered trophy and
-  the Memorial tiered trophy are separate), stored as `PerpetualTrophy` (League FK, template
-  FK) with `PerpetualTrophySlotDefinition` child rows, replacing the event-series +
-  selection-type key string (no built id string); a contest without a template gets none; named from the template
-  and sport league; one plate per Season with that Season's winners; "repeat winner" means
-  consecutive Seasons. A contest whose covered slots are all `slotKind` WEEK gets none
-  (replaces the `isWeekOfGames` game-count guess). A trophy shows from its first Season
-  (`PERPETUAL_TROPHY_MIN_YEARS` goes).
+- Perpetual trophies (Derek 2026-11-24, slice 20d): `PerpetualTrophy` (League FK, template
+  FK, slot definition FK set only for ONE_SLOT templates), replacing the event-series +
+  selection-type key string (no built id string). ONE_SLOT: template plus its slot (the
+  Masters tiered and Memorial tiered trophies are separate). ALL_LISTED and FROM_SLOT: the
+  template alone (a season-long pick'em keeps one trophy whatever week it starts). A ONE_SLOT
+  contest on a single WEEK slot gets none (replaces `isWeekOfGames`); a contest without a
+  template gets none. Named from the template, sport league and slot by the API; one plate per
+  Season with that Season's winners; "repeat winner" means consecutive Seasons. A trophy shows
+  from its first Season (`PERPETUAL_TROPHY_MIN_YEARS` goes). Templates have no versions and
+  are edited in place, so a trophy's history survives setup changes.
 - Points scales (Derek 2026-11-24, slice 20e): `STANDARD_POINTS`, `TOP_TEN_POINTS` and the
   `CupPointsScale` enum move to `PlatformPointsProfile` (code, name, `kind` TABLE |
   FIELD_BEATEN, `points` list for TABLE, `pointsAfterTable` for STANDARD's tail), seeded by
