@@ -825,6 +825,10 @@ Contest:
   slots per definition, unique on (Season, definition, label); unmapped participants become
   a finding kind whose action is the existing map page, and the Sports Issues column counts
   open findings by severity.
+- League structure tab (Derek 2026-11-24, slices 2, 3 and 25): the League page gets a
+  read-only Structure tab listing phases, slot definitions with their provider mappings,
+  Seasons and their slots, positions, conferences and divisions. Rows open a view-only
+  dialog with no Edit, because migrations own these rows.
 - History review (2026-11-24, model, behaviour and tickets reviewers; reports in the design
   folder). Fixes that follow from decisions already made:
   - Copies agree by composite FKs: Season, Contest and finish `championshipYear` cannot
