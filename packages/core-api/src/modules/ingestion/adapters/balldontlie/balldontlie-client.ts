@@ -13,7 +13,7 @@ import { errorMessage } from '../../../../core/error-message';
 import type { ProviderPayloadRecorder } from '../provider-payload-recorder';
 import { JobErrorType } from '@poolmaster/shared/domain';
 import { jobErrorTypeOf, jobErrorTypeOfStatus } from '../../../background-jobs/job-error-type';
-import { ProviderCallPolicy, ProviderFailureKind, type ProviderCallFailure } from '../../core/provider-call-policy';
+import { ProviderCallPolicy, ProviderFailureKind, type ProviderCallFailure, type ProviderRateLimitObserver } from '../../core/provider-call-policy';
 
 /** A query value: arrays are sent once per item, under the key exactly as given (`tournament_ids[]`). */
 export type BalldontlieQueryValue = string | number | boolean | readonly (string | number)[];
@@ -53,6 +53,8 @@ export interface BalldontlieClientOptions {
   /** Clock and wait, injectable so the pacing is testable without real time. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
+  /** Told how each call ends, for the Provider's rate-limit finding. */
+  rateLimits?: ProviderRateLimitObserver;
 }
 
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -122,6 +124,7 @@ export class BalldontlieClient {
       maxTasks: options.maxTasks ?? 1,
       ...(options.now && { now: options.now }),
       ...(options.sleep && { sleep: options.sleep }),
+      ...(options.rateLimits && { rateLimits: options.rateLimits }),
     });
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
