@@ -17,7 +17,7 @@ export type LeaguePageTab = (typeof LEAGUE_PAGE_TABS)[number]['segment'];
 export type LeaguePageContext = {
   sportLeague: SportLeagueDto;
   overview: SportLeagueOverviewDto | undefined;
-  /** Whether a provider syncs the league's events: its own, or a Clutch Card's parent's. */
+  /** Whether a provider syncs the league's events. */
   isSynced: boolean;
   /** The league's jobs, read once for the Activity tab's grid and the failed count on its tab. */
   activity: ActivityState;

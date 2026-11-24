@@ -11,7 +11,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { EventScoreSourceError } from '../../../packages/core-api/src/modules/events/event-score-source-service';
-import { CLUTCH_CARD_SYNC_DELAY_MS, LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
+import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import type { ProviderEventDetailsChange, ProviderEventYearImport } from '../../../packages/core-api/src/modules/events/service';
 import { buildProviderMapping, buildSportLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
@@ -107,16 +107,14 @@ describe('LeagueEventsSync', () => {
       ]);
     });
 
-    it('makes each Clutch Card league\'s job due after the season leagues\' jobs, so a new season event is there for its rounds to link to', async () => {
-      const worldSeries = syncedLeague({ name: 'League Championship Series', scoringFamily: 'COMPOSITE' });
+    it('makes every league\'s scheduled job due now, with no league held back behind another', async () => {
+      const nba = syncedLeague({ name: 'NBA' });
       const mlb = syncedLeague({ name: 'MLB' });
-      const { sync, jobs } = build({ leagues: [worldSeries, mlb], wakes: false });
+      const { sync, jobs } = build({ leagues: [nba, mlb], wakes: false });
 
       await sync.queueScheduled();
 
-      const runAtOf = (id: string) => jobs.rows.find((job) => job.sportLeagueId === id)?.runAt;
-      expect(runAtOf(mlb.id)).toEqual(NOW);
-      expect(runAtOf(worldSeries.id)).toEqual(new Date(NOW.getTime() + CLUTCH_CARD_SYNC_DELAY_MS));
+      expect(jobs.rows.map((job) => job.runAt)).toEqual([NOW, NOW]);
     });
 
     it('queues nothing more for a league whose sync is still waiting to run', async () => {

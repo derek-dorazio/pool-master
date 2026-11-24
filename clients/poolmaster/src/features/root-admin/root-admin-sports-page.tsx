@@ -12,7 +12,7 @@ import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
 
 /**
  * /manage/sports, the root admin's landing page (#1848): one grid of every sport league, grouped
- * by sport with each Clutch Card under its parent, showing what is healthy, what needs attention
+ * by sport, showing what is healthy, what needs attention
  * and when it plays. A row opens the sport league; its ⚙ opens the league's settings here, and an
  * Issues chip's sync run opens here too.
  */
@@ -25,15 +25,13 @@ export function RootAdminSportsPage() {
   const overviews = overviewsQuery.data;
   const providers = providersQuery.data;
   const columns = useMemo(() => {
-    const leagueNames = new Map((overviews ?? []).map((overview) => [overview.id, overview.name]));
     const providerNames = new Map((providers ?? []).map((provider) => [provider.providerId, provider.providerName]));
     return sportLeagueOverviewColumns({
-      nameOfLeague: (sportLeagueId) => leagueNames.get(sportLeagueId),
       nameOfProvider: (providerId) => providerNames.get(providerId) ?? providerId,
       onOpenSettings: setSettingsLeagueId,
       onOpenSyncRun: setOpenSyncRunId,
     });
-  }, [overviews, providers]);
+  }, [providers]);
 
   return (
     <section className="space-y-6" data-testid="root-admin-sports-page">

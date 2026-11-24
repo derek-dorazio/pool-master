@@ -648,34 +648,6 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-format-BRACKET')).toBeInTheDocument();
   });
 
-  it('offers an NBA Finals stat pool only the roster formats and says how its players score, where basketball also offers brackets', async () => {
-    primeBasketballMocks([basketballEvent({
-      id: 'nba-finals', name: 'NBA Finals', rounds: 7, sportLeagueId: 'nba-finals', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE',
-    })]);
-    renderCreateContestPage();
-    await waitForStartingChoices();
-
-    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
-
-    expect(await screen.findByTestId('create-contest-stat-pool-scoring'))
-      .toHaveTextContent('Each star scores Triple Threat: points + rebounds + assists, each game.');
-    expect(screen.getByTestId('contest-format-TIERED')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-format-BRACKET')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-format-PICK_EM')).not.toBeInTheDocument();
-  });
-
-  it('names an NBA Finals Clutch Card "NBA Finals Stars", not after its format as a tiered pool is named', async () => {
-    primeBasketballMocks([basketballEvent({
-      id: 'nba-finals', name: 'NBA Finals', rounds: 7, sportLeagueId: 'nba-finals', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE',
-    })]);
-    renderCreateContestPage();
-    await waitForStartingChoices();
-
-    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
-
-    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('NBA Finals Stars'));
-  });
-
   it('leads the "Members will see" preview with the chosen format\'s picture, and swaps it when the format changes', async () => {
     primeBasketballMocks([basketballEvent({ id: 'week-1', name: 'Week 1', rounds: 1 })]);
     renderCreateContestPage();

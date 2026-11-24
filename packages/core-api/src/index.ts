@@ -76,7 +76,6 @@ import {
   PrismaUserRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
-  PrismaSportEventParticipantStatLineRepository,
   PrismaBackgroundJobRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
@@ -230,7 +229,6 @@ export function buildApp() {
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
-    statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
     eventLifecycleService,
     jobLock,
     logger: app.log,

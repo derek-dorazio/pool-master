@@ -19,7 +19,7 @@ export const SPORT_TIER_PROFILE_NAME: Record<Sport, string> = {
   [Sport.RUNNING]: '4 tiers of 6',
 };
 
-/** The championship stat pools' layout, which every Clutch Card league names. */
+/** The six-of-five layout the migration made from the old stat pools' tiers; a platform profile no seeded league names. */
 export const STAT_POOL_TIER_PROFILE_NAME = '6 tiers of 5';
 
 /** The profile ids a test sport league names: a tier profile by name (golf's by default) and Standard pricing. */

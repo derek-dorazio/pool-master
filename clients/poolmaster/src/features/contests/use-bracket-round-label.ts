@@ -27,8 +27,7 @@ export function sportLeagueQueryOptions(sportLeagueId: string) {
 
 /**
  * How a sport league's bracket rounds are named (#706): by the league's own round names where it
- * has them (the NBA's "Conference Finals"), otherwise by its definition's (a stat pool league's
- * games). An empty `sportLeagueId`
+ * has them (the NBA's "Conference Finals"), otherwise by its definition's. An empty `sportLeagueId`
  * reads nothing. Until the league loads, and if its read fails, the rounds take the sport's
  * names, which are still correct, only less specific.
  */

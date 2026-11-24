@@ -37,3 +37,23 @@ function isClassified(error: Error): error is Error & ClassifiedJobError {
   const kind = (error as Partial<ClassifiedJobError>).jobErrorType;
   return typeof kind === 'string' && kind in JobErrorType;
 }
+
+/**
+ * An error that says its job should simply run again later (league model slice 1c), such as a
+ * provider rate limiting the call: the job is queued again for `deferUntil`, and the try does not
+ * count toward its attempts.
+ */
+export interface DeferredJobError {
+  readonly deferUntil: Date;
+}
+
+/** When the error, or an error in its cause chain, asks for its job to run again; null if none does. */
+export function jobDeferredUntilOf(error: unknown): Date | null {
+  let current: unknown = error;
+  for (let depth = 0; depth < MAX_CAUSE_DEPTH && current instanceof Error; depth += 1) {
+    const deferUntil = (current as Partial<DeferredJobError>).deferUntil;
+    if (deferUntil instanceof Date) return deferUntil;
+    current = current.cause;
+  }
+  return null;
+}

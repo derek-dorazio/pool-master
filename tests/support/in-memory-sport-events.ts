@@ -9,7 +9,6 @@
  */
 
 import type {
-  SportEventParticipantStatLineRepository,
   GolfRoundWrite,
   GolfStandingWrite,
   EventSeriesRepository,
@@ -39,11 +38,10 @@ import type {
   TierProfileRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, isClutchCardLeague, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
-  SportEventParticipantStatLine,
   GolfRoundResult,
   GolfStandingResult,
   Participant,
@@ -111,7 +109,6 @@ export class InMemorySportEvents {
   golfRoundRows: SportEventParticipantGolfRound[] = [];
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
   raceResultRows: SportEventParticipantRaceResult[] = [];
-  statLineRows: SportEventParticipantStatLine[] = [];
   matchRows: SportEventMatch[] = [];
   /** Each provider notification recorded against events (#1499). */
   readonly providerNotifications: ProviderNotificationReceipt[] = [];
@@ -134,7 +131,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -219,13 +216,8 @@ export class InMemorySportEvents {
       )),
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
-      findEventSyncedWithClutchCards: async () => {
-        const synced = this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null);
-        const syncedIds = new Set(synced.map((row) => row.id));
-        return [...synced, ...this.sportLeagues.filter((row) => row.isActive && isClutchCardLeague(row) && row.parentSportLeagueId !== null && syncedIds.has(row.parentSportLeagueId))];
-      },
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, parentSportLeagueId: null, parentRoundNumbers: [], currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },
@@ -343,10 +335,7 @@ export class InMemorySportEvents {
         }
         return inputs.map((input) => {
           const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
-          const { parentEvent, ...event } = input;
-          // The parent's name is read back with the event, as the database's join reads it.
-          const parent = parentEvent && { ...parentEvent, name: this.events.find((row) => row.id === parentEvent.id)?.name ?? '' };
-          return this.addEvent({ ...event, ...(parent && { parentEvent: parent }), sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
+          return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
         });
       },
       update: async (id, updates: SportEventUpdate, options) => {
@@ -393,7 +382,6 @@ export class InMemorySportEvents {
         .sort((left, right) => left.tierNumber - right.tierNumber)
         .map((tier) => tier.label)])),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
-      countClutchCardEvents: async (ids) => count(ids, (id) => this.events.filter((row) => row.parentEvent?.id === id).length),
       countBySportLeagues: async (ids, filters = {}) => count(ids, (id) => this.events.filter((row) => (
         row.sportLeagueId === id && (filters.eventYear === undefined || row.eventYear === filters.eventYear)
       )).length),
@@ -727,7 +715,6 @@ export class InMemorySportEvents {
           return {
             round,
             golf: golf ? { ...golf } : null,
-            statLines: this.statLineRows.filter((row) => row.participantRoundId === round.id).map((row) => ({ ...row })),
           };
         }),
       raceResult: raceResult ? { ...raceResult } : null,
@@ -919,48 +906,6 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(jobs ?? []));
         const row = requireRow(sportEventMatchId);
         row.periodScores = row.periodScores.filter((other) => other.periodNumber !== periodNumber);
-      },
-    };
-  }
-
-  statLineRepo(): SportEventParticipantStatLineRepository {
-    return {
-      findSportEventsWithLiveLines: async (sportEventIds) => [...new Set(this.participantRoundRows
-        .filter((row) => row.status === 'IN_PROGRESS' && this.statLineRows.some((line) => line.participantRoundId === row.id))
-        .map((row) => this.roundRows.find((round) => round.id === row.sportEventRoundId)?.sportEventId)
-        .filter((sportEventId): sportEventId is string => sportEventId !== undefined && sportEventIds.includes(sportEventId)))],
-      replaceGameLines: async (writes, jobs) => {
-        if (writes.length === 0) return [];
-        this.backgroundJobs.push(...(jobs ?? []));
-        return writes.map(({ sportEventParticipantId, sportEventRoundId, stats, ...asWritten }) => {
-          const key = { sportEventParticipantId, sportEventRoundId };
-          let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === sportEventParticipantId && row.sportEventRoundId === sportEventRoundId);
-          // As the Prisma adapter does: a completed line is never reopened.
-          const { status, completedAt } = core?.status === 'COMPLETED' && asWritten.status === 'IN_PROGRESS' ? { status: 'COMPLETED' as const, completedAt: core.completedAt ?? asWritten.completedAt } : asWritten;
-          const storedLines = core ? this.statLineRows.filter((row) => row.participantRoundId === core?.id) : [];
-          if (core && core.status === status && stats.length > 0 && storedLines.length === stats.length
-            && stats.every(({ stat, value }) => storedLines.some((row) => row.stat === stat && row.value === value))) {
-            return { ...key, disposition: 'UNCHANGED' as const };
-          }
-          if (core) {
-            const roundId = core.id;
-            this.statLineRows = this.statLineRows.filter((row) => row.participantRoundId !== roundId);
-          }
-          if (stats.length === 0) {
-            if (!core) return { ...key, disposition: 'UNCHANGED' as const };
-            this.participantRoundRows = this.participantRoundRows.filter((row) => row !== core);
-            return { ...key, disposition: 'DELETED' as const };
-          }
-          const disposition = core ? 'UPDATED' as const : 'CREATED' as const;
-          if (!core) {
-            core = stamp({ id: this.id('participant-round'), sportEventParticipantId, sportEventRoundId, status, completedAt });
-            this.participantRoundRows.push(core);
-          }
-          Object.assign(core, { status, completedAt });
-          const roundId = core.id;
-          this.statLineRows.push(...stats.map(({ stat, value }) => stamp({ id: this.id('stat-line'), participantRoundId: roundId, stat, value })));
-          return { ...key, disposition };
-        });
       },
     };
   }

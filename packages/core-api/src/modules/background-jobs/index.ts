@@ -15,6 +15,7 @@ export {
   BackgroundJobRunner,
   DISCARD_BACKGROUND_JOB,
   PermanentBackgroundJobError,
+  readBackgroundJobMaxTasks,
   readBackgroundJobPollMs,
   type BackgroundJobAnswer,
   type BackgroundJobContext,

@@ -26,7 +26,6 @@ import {
   type JobStart,
   type Sport,
   SportEventSyncScope,
-  isClutchCardLeague,
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
   type ProviderSettings,
@@ -52,6 +51,7 @@ import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
 import { syncChangedRows } from './core/sync-write-diagnostics';
 import type { ProviderSettingsStore } from './provider-settings-store';
 import type { ProviderWebhookSwitch } from './provider-webhook-switch';
+import { jobDeferredUntilOf } from '../background-jobs/job-error-type';
 
 /** The window the provider list counts rate-limited jobs over (#1881). */
 const DAY_MS = 24 * 3_600_000;
@@ -172,7 +172,7 @@ export interface IngestionServiceDependencies {
   participantMappings: ParticipantProviderMappingRepository;
   syncRuns: ProviderSyncRunRepository;
   /** The synced sport leagues, counted per provider on the provider list. */
-  sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
+  sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   /** The Provider rows (#1997). */
   providerSettings: Pick<ProviderSettingsStore, 'all'>;
   /** Whether each provider's webhooks are on, and its secret set. */
@@ -193,7 +193,7 @@ export class IngestionService {
   private readonly sportEvents: SportEventRepository;
   private readonly participantMappings: ParticipantProviderMappingRepository;
   private readonly syncRuns: ProviderSyncRunRepository;
-  private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSyncedWithClutchCards'>;
+  private readonly sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   private readonly providerSettings: Pick<ProviderSettingsStore, 'all'>;
   private readonly webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
@@ -305,7 +305,7 @@ export class IngestionService {
     const providerIds = [...new Set([...providers.map((provider) => provider.providerId), ...rows.map((row) => providerSourceIdOf(row.code))])];
     const [eventSummaries, syncedLeagues, rateLimited] = await Promise.all([
       this.sportEvents.summarizeByProviders(providerIds),
-      this.sportLeagues.findEventSyncedWithClutchCards(),
+      this.sportLeagues.findEventSynced(),
       this.jobHistory.countByScope({ errorType: JobErrorType.RATE_LIMITED, since: new Date(this.now().getTime() - DAY_MS) }),
     ]);
     const syncedLeagueCounts = new Map<string, number>();
@@ -315,14 +315,6 @@ export class IngestionService {
       if (providerId !== undefined) {
         syncedLeagueCounts.set(providerId, (syncedLeagueCounts.get(providerId) ?? 0) + 1);
         leagueProviders.set(league.id, providerId);
-      }
-    }
-    // A Clutch Card league's jobs belong to its parent's provider, whose sync creates its events;
-    // it is not a synced league of its own.
-    for (const league of syncedLeagues) {
-      const parentProviderId = league.parentSportLeagueId === null ? undefined : leagueProviders.get(league.parentSportLeagueId);
-      if (league.selectedProviderMapping === null && isClutchCardLeague(league) && parentProviderId) {
-        leagueProviders.set(league.id, parentProviderId);
       }
     }
     const rateLimitedCounts = await this.countPerProvider(rateLimited, leagueProviders);
@@ -356,7 +348,7 @@ export class IngestionService {
 
   /**
    * Job counts per provider (#1881): a sport league's own jobs belong to the provider that syncs
-   * the league (a Clutch Card's, its parent's), and an event's jobs to the provider the event is
+   * the league, and an event's jobs to the provider the event is
    * linked to, read in one more query for all such events. A job on neither, on an unsynced
    * league or on an event no longer there counts for none.
    */
@@ -547,6 +539,10 @@ export class IngestionService {
         );
         changedCount += syncChangedRows(record.writeDiagnostics);
       } catch (error) {
+        // The provider turned the feed away for now (league model 1c): its run is marked FAILED
+        // as rate limited, and the job is queued again for when the provider will answer, so the
+        // runs still SUBMITTED run then rather than be refused one after another now.
+        if (jobDeferredUntilOf(error) !== null) throw error;
         if (error instanceof SyncRunOutcomeUnrecordedError) {
           unrecorded.push(syncRun.id);
           this.logger?.error({ ...scope, syncRunId: syncRun.id, requestedFeed, error }, 'Manual event sync feed failed and its run could not be marked FAILED; the job will be retried');

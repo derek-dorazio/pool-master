@@ -71,7 +71,6 @@ const pick: ScoredContestEntryPickDto = {
   golf: null,
   race: { points: 5 },
   knockout: null,
-  composite: null,
 };
 
 const entry: ContestEntryStandingDto = {

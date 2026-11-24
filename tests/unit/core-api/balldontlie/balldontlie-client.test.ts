@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { expect } from '@jest/globals';
+import { JobErrorType } from '@poolmaster/shared/domain';
+import { ProviderRateLimitedError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import {
   BalldontlieClient,
   BalldontlieContractError,
@@ -9,6 +11,7 @@ import {
 import { ProviderPayloadRecorder } from '../../../../packages/core-api/src/modules/ingestion/adapters/provider-payload-recorder';
 import { pgaTournamentListSchema } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-contract';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
+import { BALLDONTLIE_PROVIDER_ID } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-mapping';
 
 const BASE_URL = 'https://api.balldontlie.example';
 const rowsSchema = z.object({
@@ -54,6 +57,7 @@ function setup(
   }) as typeof fetch;
   const payloads = new ProviderPayloadRecorder('balldontlie.request');
   const client = new BalldontlieClient({
+    providerId: BALLDONTLIE_PROVIDER_ID,
     connection: () => ({ baseUrl: `${BASE_URL}/`, requestsPerMinute }),
     apiKey: 'test-key',
     payloads,
@@ -107,6 +111,7 @@ describe('BalldontlieClient', () => {
     restore = harness.restore;
     const waits: number[] = [];
     const client = new BalldontlieClient({
+      providerId: BALLDONTLIE_PROVIDER_ID,
       connection: () => ({ baseUrl: BASE_URL, requestsPerMinute: 60 }),
       apiKey: 'k',
       payloads: harness.payloads,
@@ -129,15 +134,13 @@ describe('BalldontlieClient', () => {
     expect(harness.sent[1].at - harness.sent[0].at).toBe(12_000);
   });
 
-  it('refuses a request at a rate limit that is not a whole number of at least one, sending nothing', async () => {
-    const harness = setup([], { requestsPerMinute: 0 });
-    restore = harness.restore;
-
-    await expect(harness.client.get('/a', {}, rowsSchema)).rejects.toThrow('BALLDONTLIE requestsPerMinute must be a whole number of at least 1, not 0.');
-    const fractional = setup([], { requestsPerMinute: 2.5 });
-    await expect(fractional.client.get('/a', {}, rowsSchema)).rejects.toThrow('not 2.5');
-    fractional.restore();
-    expect(harness.sent).toEqual([]);
+  it('refuses a rate limit that is not a whole number of at least one', () => {
+    const payloads = new ProviderPayloadRecorder('balldontlie.request');
+    const connection = (requestsPerMinute: number) => () => ({ baseUrl: BASE_URL, requestsPerMinute });
+    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, connection: connection(0), apiKey: 'k', payloads }))
+      .toThrow('balldontlie requestsPerMinute must be a whole number of at least 1, not 0.');
+    expect(() => new BalldontlieClient({ providerId: BALLDONTLIE_PROVIDER_ID, connection: connection(2.5), apiKey: 'k', payloads }))
+      .toThrow('not 2.5');
   });
 
   it('reads the Provider row\'s base URL and rate for each request, so a Providers page edit reaches the next one', async () => {
@@ -145,6 +148,7 @@ describe('BalldontlieClient', () => {
     restore = harness.restore;
     let connection = { baseUrl: BASE_URL, requestsPerMinute: 60 };
     const client = new BalldontlieClient({
+      providerId: BALLDONTLIE_PROVIDER_ID,
       connection: () => connection,
       apiKey: 'k',
       payloads: harness.payloads,
@@ -161,68 +165,105 @@ describe('BalldontlieClient', () => {
     expect(harness.sent[1].at - harness.sent[0].at).toBe(1_000);
   });
 
-  it('retries a 429 after the Retry-After seconds it names, then returns the parsed body', async () => {
-    const harness = setup([
-      new Response('{"error":"Too many requests"}', { status: 429, headers: { 'retry-after': '7' } }),
-      Response.json({ data: [{ id: 1 }] }),
-    ]);
-    restore = harness.restore;
-
-    const result = await harness.client.get('/a', {}, rowsSchema);
-
-    expect(result.data).toEqual([{ id: 1 }]);
-    expect(harness.clock.waits).toContain(7_000);
-    expect(harness.sent).toHaveLength(2);
-  });
-
-  it('releases a retryable reply\'s unread body before waiting to retry, so the connection is not held through the back-off', async () => {
-    const throttled = new Response('{"error":"Too many requests"}', { status: 429 });
-    const harness = setup([throttled, Response.json({ data: [] })]);
+  it('takes this task\'s even share of the plan\'s limit: at 60 a minute over two tasks, a request every 2 seconds', async () => {
+    const harness = setup([Response.json({ data: [] }), Response.json({ data: [] })], { maxTasks: 2 });
     restore = harness.restore;
 
     await harness.client.get('/a', {}, rowsSchema);
+    await harness.client.get('/b', {}, rowsSchema);
 
-    await expect(throttled.text()).rejects.toThrow();
+    expect(harness.sent[1].at - harness.sent[0].at).toBe(2_000);
   });
 
-  it('retries a 5xx with doubling back-off (1 s, 2 s, 4 s) and fails with the vendor\'s error message once retries run out', async () => {
-    const harness = setup([
-      new Response('{"error":"boom"}', { status: 503 }),
-      new Response('{"error":"boom"}', { status: 503 }),
-      new Response('{"error":"boom"}', { status: 503 }),
-      new Response('{"error":"still down"}', { status: 503, statusText: 'Service Unavailable' }),
-    ], { requestsPerMinute: 600 });
-    restore = harness.restore;
+  describe('retries, by the provider call policy', () => {
+    beforeEach(() => { jest.useFakeTimers({ now: 1_000_000 }); });
+    afterEach(() => { jest.useRealTimers(); });
 
-    const failure = harness.client.get('/a', {}, rowsSchema);
+    /** Runs the fake clock until the call settles. */
+    async function settle<T>(promise: Promise<T>): Promise<{ value?: T; error?: unknown }> {
+      let outcome: { value?: T; error?: unknown } | undefined;
+      promise.then((value) => { outcome = { value }; }, (error: unknown) => { outcome = { error }; });
+      for (let step = 0; step < 1_000 && outcome === undefined; step += 1) await jest.advanceTimersByTimeAsync(1_000);
+      return outcome ?? {};
+    }
 
-    await expect(failure).rejects.toThrow(new BalldontlieRequestError('/a', 503, '503 still down'));
-    await expect(failure).rejects.toMatchObject({ status: 503, path: '/a' });
-    expect(harness.clock.waits.filter((ms) => ms >= 1_000)).toEqual([1_000, 2_000, 4_000]);
-    expect(harness.sent).toHaveLength(4);
-  });
+    it('retries a 429 after the Retry-After seconds it names, then returns the parsed body', async () => {
+      const harness = setup([
+        new Response('{"error":"Too many requests"}', { status: 429, headers: { 'retry-after': '7' } }),
+        Response.json({ data: [{ id: 1 }] }),
+      ]);
+      restore = harness.restore;
+      const sentAt: number[] = [];
+      const fetchOnce = global.fetch;
+      global.fetch = ((...args: Parameters<typeof fetch>) => { sentAt.push(Date.now()); return fetchOnce(...args); });
 
-  it('retries a 429 whose Retry-After is an HTTP date with the ordinary back-off', async () => {
-    const harness = setup([
-      new Response('', { status: 429, headers: { 'retry-after': 'Wed, 11 Nov 2026 07:28:00 GMT' } }),
-      Response.json({ data: [] }),
-    ], { requestsPerMinute: 600 });
-    restore = harness.restore;
+      const { value } = await settle(harness.client.get('/a', {}, rowsSchema));
 
-    await harness.client.get('/a', {}, rowsSchema);
+      expect(value?.data).toEqual([{ id: 1 }]);
+      expect(sentAt[1] - sentAt[0]).toBe(7_000);
+    });
 
-    expect(harness.clock.waits.filter((ms) => ms >= 1_000)).toEqual([1_000]);
-  });
+    it('releases a retryable reply\'s unread body before waiting to retry, so the connection is not held through the back-off', async () => {
+      const throttled = new Response('{"error":"Too many requests"}', { status: 429 });
+      const harness = setup([throttled, Response.json({ data: [] })]);
+      restore = harness.restore;
 
-  it('retries a request that timed out or never connected, and names the attempts when every one fails', async () => {
-    const timeout = Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' });
-    const harness = setup([timeout, timeout], { maxRetries: 1 });
-    restore = harness.restore;
+      await settle(harness.client.get('/a', {}, rowsSchema));
 
-    const failure = harness.client.get('/a', {}, rowsSchema);
+      await expect(throttled.text()).rejects.toThrow();
+    });
 
-    await expect(failure).rejects.toThrow('BALLDONTLIE request /a failed: no response after 2 attempts');
-    await expect(failure).rejects.toMatchObject({ status: null, cause: timeout });
+    it('retries a 5xx three times and fails with the vendor\'s error message once retries run out', async () => {
+      const harness = setup([
+        new Response('{"error":"boom"}', { status: 503 }),
+        new Response('{"error":"boom"}', { status: 503 }),
+        new Response('{"error":"boom"}', { status: 503 }),
+        new Response('{"error":"still down"}', { status: 503, statusText: 'Service Unavailable' }),
+      ], { requestsPerMinute: 600 });
+      restore = harness.restore;
+
+      const { error } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(error).toEqual(new BalldontlieRequestError('/a', 503, '503 still down'));
+      expect(error).toMatchObject({ status: 503, path: '/a', jobErrorType: JobErrorType.PROVIDER_ERROR });
+      expect(harness.sent).toHaveLength(4);
+    });
+
+    it('ends a request still 429 after every retry as rate limited, so its job is queued again rather than failed', async () => {
+      const harness = setup(Array.from({ length: 4 }, () => new Response('', { status: 429, headers: { 'retry-after': '1' } })));
+      restore = harness.restore;
+
+      const { error } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(error).toBeInstanceOf(ProviderRateLimitedError);
+      expect(error).toMatchObject({ providerId: BALLDONTLIE_PROVIDER_ID, jobErrorType: JobErrorType.RATE_LIMITED, cause: expect.objectContaining({ status: 429 }) });
+      expect(harness.sent).toHaveLength(4);
+    });
+
+    it('retries a 429 whose Retry-After is an HTTP date with the ordinary back-off', async () => {
+      const harness = setup([
+        new Response('', { status: 429, headers: { 'retry-after': 'Wed, 11 Nov 2026 07:28:00 GMT' } }),
+        Response.json({ data: [] }),
+      ], { requestsPerMinute: 600 });
+      restore = harness.restore;
+
+      const { value } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(value).toEqual({ data: [] });
+      expect(harness.sent).toHaveLength(2);
+    });
+
+    it('retries a request that timed out or never connected, and names the timeout when every try fails', async () => {
+      const timeout = Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' });
+      const harness = setup([timeout, timeout, timeout, timeout]);
+      restore = harness.restore;
+
+      const { error } = await settle(harness.client.get('/a', {}, rowsSchema));
+
+      expect(error).toMatchObject({ status: null, cause: timeout, jobErrorType: JobErrorType.TIMEOUT });
+      expect((error as Error).message).toBe('BALLDONTLIE request /a failed: no response: The operation was aborted due to timeout');
+      expect(harness.sent).toHaveLength(4);
+    });
   });
 
   it('fails a 401 at once, without retrying, naming the status and the vendor\'s message', async () => {
@@ -333,6 +374,7 @@ describe('BalldontlieClient', () => {
     }) as typeof fetch;
     restore = () => { global.fetch = originalFetch; };
     const client = new BalldontlieClient({
+      providerId: BALLDONTLIE_PROVIDER_ID,
       connection: () => ({ baseUrl: BASE_URL, requestsPerMinute: 6_000 }),
       apiKey: 'k',
       payloads: new ProviderPayloadRecorder('balldontlie.request'),

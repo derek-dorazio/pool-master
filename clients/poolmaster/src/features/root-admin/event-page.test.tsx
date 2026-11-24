@@ -150,8 +150,6 @@ function leagueOverview(overrides: Partial<SportLeagueOverviewDto> = {}): SportL
     id: 'league-1',
     sport: 'GOLF',
     name: 'PGA Tour',
-    parentSportLeagueId: null,
-    kind: 'REAL',
     providerId: null,
     isActive: true,
     syncHealth: 'OFF',

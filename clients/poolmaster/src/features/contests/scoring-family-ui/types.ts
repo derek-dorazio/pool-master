@@ -41,7 +41,7 @@ export interface LeaderboardDetailCell {
    */
   unplayed?: { ariaLabel: string };
   /**
-   * What the cell's score was made of (a stat pool player's line in that game), shown in a small
+   * What the cell's score was made of (a team's games in the round), shown in a small
    * popover when the score is hovered, tapped or pressed. Absent where the cell has none.
    */
   peek?: { title: string; facts: Array<{ label: string; value: string }> };
@@ -61,9 +61,8 @@ export interface LeaderboardPickDetail {
   total: string | null;
   detailCells: LeaderboardDetailCell[];
   /**
-   * A line under the participant's name, shown while the entry's Stats switch is on: a stat pool
-   * player's line in the current or latest game. Absent for a family whose cells are not made
-   * of stats, and before the player's event has any.
+   * A line under the participant's name, shown while the entry's Stats switch is on: a team's
+   * latest result. Absent for a family that has none, and before the event has any.
    */
   statLine?: string;
 }

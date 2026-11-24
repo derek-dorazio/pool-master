@@ -14,7 +14,7 @@ import type {
   SportLeaguePageRun,
   SportLeagueSyncFacts,
 } from '@poolmaster/shared/db';
-import { isClutchCardLeague, ProviderSyncKind, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { outcomeSummary } from './prisma-sport-league-overview-reader';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
@@ -31,18 +31,14 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   async readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null> {
     const league = await this.league(sportLeagueId);
     if (league === null) return null;
-    // A Clutch Card's events come from its parent's event list sync, so that run stands for its own.
-    const scopes = isClutchCardLeague(league) && league.parentSportLeagueId !== null
-      ? [{ sportLeagueId, kind: { not: ProviderSyncKind.EVENTS } }, { sportLeagueId: league.parentSportLeagueId, kind: ProviderSyncKind.EVENTS }]
-      : [{ sportLeagueId }];
     const latest = await this.prisma.providerSyncRun.groupBy({
-      by: ['sportLeagueId', 'kind'],
-      where: { OR: scopes },
+      by: ['kind'],
+      where: { sportLeagueId },
       _max: { createdAt: true },
     });
-    const keys = latest.flatMap((group) => (group.sportLeagueId === null || group._max.createdAt === null
+    const keys = latest.flatMap((group) => (group._max.createdAt === null
       ? []
-      : [{ sportLeagueId: group.sportLeagueId, kind: group.kind, createdAt: group._max.createdAt }]));
+      : [{ sportLeagueId, kind: group.kind, createdAt: group._max.createdAt }]));
     const rows = keys.length === 0 ? [] : await this.prisma.providerSyncRun.findMany({
       where: { OR: keys },
       select: RUN_SELECT,
@@ -184,19 +180,13 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const row = await this.prisma.sportLeague.findUnique({
       where: { id: sportLeagueId },
       select: {
-        id: true, isActive: true, parentSportLeagueId: true, scoringFamily: true, ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true,
+        id: true, isActive: true, ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true,
         sport: { select: { sport: true } },
-        parentSportLeague: { select: { isActive: true, ...SYNC_PROVIDER_SELECT } },
       },
     });
     if (row === null) return null;
-    const { sport, parentSportLeague, selectedProviderMapping, ...league } = row;
-    return {
-      ...league,
-      sport: sport.sport,
-      syncProviderId: syncProviderIdOf({ selectedProviderMapping }),
-      parent: parentSportLeague === null ? null : { isActive: parentSportLeague.isActive, syncProviderId: syncProviderIdOf(parentSportLeague) },
-    };
+    const { sport, selectedProviderMapping, ...league } = row;
+    return { ...league, sport: sport.sport, syncProviderId: syncProviderIdOf({ selectedProviderMapping }) };
   }
 }
 

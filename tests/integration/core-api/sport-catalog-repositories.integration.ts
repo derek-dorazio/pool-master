@@ -178,7 +178,7 @@ describe('Sport and SportLeague repositories', () => {
     await expect(sportLeagues.findByIds([])).resolves.toEqual([]);
   });
 
-  it('reads the event-synced sport leagues with the active Clutch Cards under them, leaving out an inactive Clutch Card, one under an unsynced league and a child league that is no Clutch Card (#1881)', async () => {
+  it('reads the active event-synced sport leagues, leaving out an unsynced league and an inactive synced one', async () => {
     const sport = await golfSport();
     const prisma = getPrisma();
     const tag = randomUUID().slice(0, 8);
@@ -186,17 +186,17 @@ describe('Sport and SportLeague repositories', () => {
       data: { ...(await leagueProfiles(prisma)), sportId: sport.id, name: `${tag} ${name}`, ...data },
     });
     const pgaTour = await prisma.providerLeague.findFirstOrThrow({ where: { code: 'pga' }, select: { id: true } });
+    const repository = new PrismaSportLeagueRepository(getAppPrisma());
     const synced = await league('Synced');
-    await new PrismaSportLeagueRepository(getAppPrisma()).update(synced.id, { syncProviderLeagueId: pgaTour.id });
-    const unsynced = await league('Unsynced');
-    await league('Synced Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: synced.id });
-    await league('Inactive Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: synced.id, isActive: false });
-    await league('Unsynced Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: unsynced.id });
-    await league('Plain child', { parentSportLeagueId: synced.id });
+    await repository.update(synced.id, { syncProviderLeagueId: pgaTour.id });
+    await league('Unsynced');
+    const inactive = await league('Inactive Synced');
+    await repository.update(inactive.id, { syncProviderLeagueId: pgaTour.id });
+    await prisma.sportLeague.update({ where: { id: inactive.id }, data: { isActive: false } });
 
-    const rows = await new PrismaSportLeagueRepository(getAppPrisma()).findEventSyncedWithClutchCards();
+    const rows = await new PrismaSportLeagueRepository(getAppPrisma()).findEventSynced();
 
-    expect(rows.filter((row) => row.name.startsWith(tag)).map((row) => row.name)).toEqual([`${tag} Synced`, `${tag} Synced Clutch Card`]);
+    expect(rows.filter((row) => row.name.startsWith(tag)).map((row) => row.name)).toEqual([`${tag} Synced`]);
   });
 
   it('maps a league to the provider league it is set to sync from and selects it, then keeps the mapping when sync is turned off (#1997)', async () => {

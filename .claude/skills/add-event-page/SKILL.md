@@ -21,7 +21,7 @@ Write this table in the ticket, each open point a question with a recommendation
 | Event | The event a fan would name, and which sport it is under |
 | Slug | Lower case words joined by single dashes (`super-bowl`). Permanent: it lives in emails, ads and chats |
 | Offers | For each way to play: the sport league, the series its editions are loaded as, the template key, and a bracket starting round if it starts later than the template's |
-| Primary | The one offer whose edition dates the page, usually the stat pool or the one that opens first |
+| Primary | The one offer whose edition dates the page, usually the one that opens first |
 | Order | `display_order` among the sport's pages: the calendar order of their events |
 | Copy | Name, eyebrow, hook line, when picks close, the league in the footer, and each offer's card |
 
@@ -32,12 +32,10 @@ Check each offer before writing anything:
   so a template with no league seeds no offer.
 - The series name is exactly what the sport league's data files load its editions as. An offer
   on a series with no upcoming edition is simply not shown, so a typo fails silently.
-- The page's hero is its sport's photo (`rules/ux-rules.md` §13 *Event Pages* item 7), already
+- The page's hero is its sport's photo (`rules/ux-rules.md` §13 *Event Pages* item 6), already
   in `clients/poolmaster/public/email/sports/`. A sport without one shows its drawn How to Play
   scene; a better photo is a separate change, with its source note beside it, and can show the
   old one for up to a day while caches expire.
-- A stat pool offer covers one round (`rules/ux-rules.md` §13 *Event Pages* item 3). An event
-  whose stat pool league does not exist yet needs that league first (the `add-clutch-card-league` skill).
 
 ## Step 2 — the migration
 
@@ -66,11 +64,11 @@ Add the page to `EVENT_PAGE_COPY` in `clients/poolmaster/src/features/event-page
 under its sport and slug, with every offer's card keyed by its template key. Write the cards in
 the offers' `sort_order`: the preview image's chips follow the copy's order, so the image and
 the page then agree. Follow
-`rules/ux-rules.md` §13 *Event Pages* items 4 and 5 for what the words may say. Read the
+`rules/ux-rules.md` §13 *Event Pages* items 3 and 4 for what the words may say. Read the
 page on a local build with the API running to see the cards in order.
 
 Every event page renders through the one event page component, so a new page is copy and seed
-data only. A page that needs a layout of its own, as the Clutch Card page does, is built from
+data only. A page that needs a layout of its own is built from
 the kit in `clients/poolmaster/src/features/event-pages/components` (start button, section,
 photo hero, sticky start bar, next-up card, disclaimer) and the shared `NumberedSteps`,
 `FaqList`, `ExpandableTile` and `Countdown`. It is never copied from another page.

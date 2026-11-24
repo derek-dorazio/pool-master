@@ -31,7 +31,6 @@ function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: 
   const isOpen = offer.state === EventPageOfferState.OPEN;
   return (
     <Tile className={cn('flex flex-col gap-3', offer.isPrimary ? 'border-primary' : null)} data-testid={testId} padding="md" radius="panel">
-      {offerCopy.isNew ? <Chip className="self-start" tone="active">New</Chip> : null}
       <Heading level={3} variant="card" size="xl">{offerCopy.contestType}</Heading>
       <p className="text-sm font-semibold text-foreground">{`Starts as: ${offer.template.name}`}</p>
       <p className="text-sm text-muted-foreground">{offerCopy.line}</p>
@@ -129,7 +128,8 @@ function EventPageContent({ page }: { page: EventPageDto }) {
   );
 }
 
-function MovedPage() {
+/** A page that ended, an address with no page, or the Clutch Card's address until it returns (#2054). */
+export function MovedPage() {
   return (
     <EmptyState
       action={<LinkButton to="/how-to-play">{EVENT_PAGE_ACTIONS.seeEveryWayToPlay}</LinkButton>}

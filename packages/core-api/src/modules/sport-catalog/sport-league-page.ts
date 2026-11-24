@@ -15,7 +15,6 @@ import {
   AutoReleaseCheckOutcome,
   compareByEnumOrder,
   fieldOrderDecision,
-  isClutchCardLeague,
   isProviderSyncedEvent,
   ParticipantAddedBy,
   ProviderSyncKind,
@@ -85,10 +84,6 @@ export class SportLeaguePageService {
   }
 }
 
-/** The provider that syncs the league's events: a Clutch Card's parent's, whose event list sync creates them. */
-function providerOf(league: SportLeaguePageLeague): string | null {
-  return isClutchCardLeague(league) && league.parent !== null ? league.parent.syncProviderId : league.syncProviderId;
-}
 
 /**
  * One row per sync kind, in kind order: its health by the overview's rule from its latest run,
@@ -101,7 +96,7 @@ export function buildSportLeagueSyncs(
   latestRuns: readonly SportLeaguePageRun[],
   context: { webhookProviderIds: readonly string[] },
 ): SportLeagueSync[] {
-  const providerId = providerOf(league);
+  const providerId = league.syncProviderId;
   return Object.values(ProviderSyncKind)
     .sort(compareByEnumOrder(ProviderSyncKindOrder))
     .map((kind): SportLeagueSync => {
@@ -192,7 +187,7 @@ export function buildSportEventOverview(
   const { league, event, latestRuns } = facts;
   const synced = isProviderSyncedEvent({ providerId: event.providerId, syncScope: event.syncScope, syncProviderId: league.syncProviderId ?? undefined });
   // An event no provider syncs reads as a league no provider syncs: every row OFF, nothing scheduled.
-  const syncLeague = synced ? league : { ...league, syncProviderId: null, parent: null };
+  const syncLeague = synced ? league : { ...league, syncProviderId: null };
   const eventRuns = latestRuns.filter((run) => EVENT_SYNC_KINDS.includes(run.kind));
   const syncs = buildSportLeagueSyncs(syncLeague, eventRuns, context).filter((sync) => EVENT_SYNC_KINDS.includes(sync.kind));
   const failedRuns = eventRuns.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
@@ -205,7 +200,7 @@ export function buildSportEventOverview(
   return {
     syncHealth: syncHealthOf({
       isActive: syncLeague.isActive,
-      providerId: synced ? providerOf(league) : null,
+      providerId: synced ? league.syncProviderId : null,
       runCount: eventRuns.length,
       failedRunCount: failedRuns.length,
     }),

@@ -6,7 +6,7 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { ProviderCode, SportStat, BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
 
 /**
@@ -94,25 +94,12 @@ export interface SportLeague extends DomainEntity {
    */
   displayOrder: number | null;
   /**
-   * Who competes and how its events are scored, when not as its sport (#934: the World Series
-   * stat pool's players, scored by the composite family); null takes the sport's. Read through
+   * Who competes and how its events are scored, when not as its sport (#934); null takes the
+   * sport's. Read through
    * `sportLeagueDefinitionOf`. Reference data, set where the league is seeded.
    */
   participantType: ParticipantType | null;
   scoringFamily: ScoringFamily | null;
-  /**
-   * The season league a playoff round's sport league belongs to (#1701: the Stanley Cup Final
-   * is the NHL's), so pages list each round under its league; null for a league that is no
-   * other's round. Reference data, set where the round league is seeded.
-   */
-  parentSportLeagueId: string | null;
-  /**
-   * The rounds of its parent league's season event each of its events covers (#1820: the World
-   * Series is round 4 of the MLB Postseason); set on every Clutch Card league and empty on any
-   * other. Copied onto each event it creates, with the parent event found for it. Reference data,
-   * set where the round league is seeded.
-   */
-  parentRoundNumbers: readonly number[];
 }
 
 /** A scheduled sub-period of an event — a golf round, a match day. */
@@ -187,16 +174,6 @@ export interface SportEventParticipantGolfRound extends DomainEntity {
   strokes: number;
   scoreToPar: number;
   thru: number | null;
-}
-
-/**
- * One component stat of a player's game, in a stat pool (#934): the composite family's extension
- * of a SportEventParticipantRound. A round's lines make its composite; a stat with no line is 0.
- */
-export interface SportEventParticipantStatLine extends DomainEntity {
-  participantRoundId: string;
-  stat: SportStat;
-  value: number;
 }
 
 /** The running event totals one golfer's standing was ranked from. Extends a SportEventParticipantStanding. */

@@ -2,7 +2,7 @@ import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { mlbGameListSchema, mlbTeamListSchema, type MlbGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-contract';
 import { isMlbClub, MLB_POSTSEASON, toMlbPlayoffGame, toMlbPlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-mapping';
-import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-rounds';
+import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
 import { toPlayoffsEvent } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 

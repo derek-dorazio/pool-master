@@ -1,6 +1,6 @@
 /**
  * The root admin's League page reads (#1865) against real Postgres, over HTTP: a sport league's
- * syncs (a Clutch Card's event list being its parent's), its events with their release, field,
+ * syncs, its events with their release, field,
  * issues and last sync, and its participants with their feed id and when a sync last saw them.
  * No mocks.
  */
@@ -48,7 +48,7 @@ async function golfSportId(): Promise<string> {
 }
 
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
-async function sportLeague(name: string, { synced = false, ...extra }: { scoringFamily?: 'COMPOSITE'; parentSportLeagueId?: string; parentRoundNumbers?: number[]; synced?: boolean; autoReleaseDaysBeforeStart?: number } = {}) {
+async function sportLeague(name: string, { synced = false, ...extra }: { synced?: boolean; autoReleaseDaysBeforeStart?: number } = {}) {
   const league = await getPrisma().sportLeague.create({
     data: { ...(await leagueProfiles(getPrisma())), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}`, ...extra },
   });
@@ -56,7 +56,7 @@ async function sportLeague(name: string, { synced = false, ...extra }: { scoring
   return league;
 }
 
-async function event(sportLeagueId: string, input: { startDate: Date; status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'; parentEventId?: string; parentRoundNumbers?: number[] }) {
+async function event(sportLeagueId: string, input: { startDate: Date; status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' }) {
   const prisma = getPrisma();
   const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   return prisma.sportEvent.create({
@@ -70,9 +70,9 @@ async function get(url: string) {
 }
 
 describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
-  it('reports a Clutch Card\'s event list by its parent\'s latest EVENTS run and its other syncs by its own runs, in kind order', async () => {
+  it('reports each sync by the league\'s own latest run of its kind, in kind order, a kind with no run not run yet', async () => {
     const tour = await sportLeague('Page Tour', { synced: true });
-    const clutch = await sportLeague('Page Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: tour.id, parentRoundNumbers: [2] });
+    const other = await sportLeague('Page Other Tour', { synced: true });
     const run = (sportLeagueId: string, kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date) => ({
       kind, trigger: 'SCHEDULE' as const, providerId: 'balldontlie', sport: Sport.GOLF, sportLeagueId, status, createdAt,
       payloadJson: { stats: { writeCreated: 2, writeUpdated: 3 } },
@@ -81,13 +81,13 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/syncs', () => {
       data: [
         run(tour.id, 'EVENTS', 'COMPLETED', fromNow(-2 * HOUR_MS)),
         run(tour.id, 'EVENTS', 'FAILED', fromNow(-HOUR_MS)),
-        // The Clutch Card's own EVENTS run never stands for its event list.
-        run(clutch.id, 'EVENTS', 'COMPLETED', fromNow(-HOUR_MS / 2)),
-        run(clutch.id, 'FIELD', 'COMPLETED', fromNow(-HOUR_MS)),
+        run(tour.id, 'FIELD', 'COMPLETED', fromNow(-HOUR_MS)),
+        // Another league's later run never stands for this league's.
+        run(other.id, 'EVENTS', 'COMPLETED', fromNow(-HOUR_MS / 2)),
       ],
     });
 
-    const response = await get(`/api/v1/sport-leagues/${clutch.id}/syncs`);
+    const response = await get(`/api/v1/sport-leagues/${tour.id}/syncs`);
 
     expect(response.statusCode).toBe(200);
     const { syncs } = SportLeagueSyncListResponseSchema.parse(response.json());
@@ -134,28 +134,25 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
     });
   });
 
-  it('marks a Clutch Card event overdue by its parent\'s covered round, ended more than 4 hours ago, and not one whose round ended within 4 hours', async () => {
+  it('marks an event overdue once its last round ended more than 4 hours ago, and not one whose last round ended within 4 hours', async () => {
     const tour = await sportLeague('Overdue Page Tour', { synced: true });
-    const clutch = await sportLeague('Overdue Page Clutch Card', { scoringFamily: 'COMPOSITE', parentSportLeagueId: tour.id, parentRoundNumbers: [2] });
-    const parent = await event(tour.id, { startDate: fromNow(-3 * DAY_MS), status: 'IN_PROGRESS' });
+    const late = await event(tour.id, { startDate: fromNow(-3 * DAY_MS), status: 'IN_PROGRESS' });
+    const recent = await event(tour.id, { startDate: fromNow(-2 * DAY_MS), status: 'IN_PROGRESS' });
     const roundEnd = fromNow(-5 * HOUR_MS);
     await getPrisma().sportEventRound.createMany({
       data: [
-        { sportEventId: parent.id, roundNumber: 1, scheduledDate: fromNow(-3 * DAY_MS), scheduledEndAt: fromNow(-2 * DAY_MS) },
-        { sportEventId: parent.id, roundNumber: 2, scheduledDate: fromNow(-DAY_MS), scheduledEndAt: roundEnd },
-        // A later round the Clutch Card does not cover, ending within the 4 hours.
-        { sportEventId: parent.id, roundNumber: 3, scheduledDate: fromNow(-4 * HOUR_MS), scheduledEndAt: fromNow(-HOUR_MS) },
+        { sportEventId: late.id, roundNumber: 1, scheduledDate: fromNow(-3 * DAY_MS), scheduledEndAt: fromNow(-2 * DAY_MS) },
+        { sportEventId: late.id, roundNumber: 2, scheduledDate: fromNow(-DAY_MS), scheduledEndAt: roundEnd },
+        { sportEventId: recent.id, roundNumber: 1, scheduledDate: fromNow(-2 * DAY_MS), scheduledEndAt: fromNow(-DAY_MS) },
+        { sportEventId: recent.id, roundNumber: 2, scheduledDate: fromNow(-4 * HOUR_MS), scheduledEndAt: fromNow(-HOUR_MS) },
       ],
     });
-    const card = await event(clutch.id, { startDate: fromNow(-DAY_MS), status: 'IN_PROGRESS', parentEventId: parent.id, parentRoundNumbers: [2] });
 
-    const [clutchResponse, tourResponse] = [await get(`/api/v1/sport-leagues/${clutch.id}/events/overview`), await get(`/api/v1/sport-leagues/${tour.id}/events/overview`)];
+    const response = await get(`/api/v1/sport-leagues/${tour.id}/events/overview`);
 
-    const [cardRow] = SportLeagueEventOverviewListResponseSchema.parse(clutchResponse.json()).events;
-    expect(cardRow.id).toBe(card.id);
-    expect(cardRow.issues).toEqual([{ type: SportLeagueIssueType.OVERDUE, count: 1, items: [expect.objectContaining({ label: card.name, occurredAt: roundEnd.toISOString() })] }]);
-    const [parentRow] = SportLeagueEventOverviewListResponseSchema.parse(tourResponse.json()).events;
-    expect(parentRow.issues).toEqual([]);
+    const rows = SportLeagueEventOverviewListResponseSchema.parse(response.json()).events;
+    expect(rows.find((row) => row.id === late.id)?.issues).toEqual([{ type: SportLeagueIssueType.OVERDUE, count: 1, items: [expect.objectContaining({ label: late.name, occurredAt: roundEnd.toISOString() })] }]);
+    expect(rows.find((row) => row.id === recent.id)?.issues).toEqual([]);
   });
 
   it('answers 404 for a sport league that does not exist', async () => {

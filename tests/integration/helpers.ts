@@ -854,15 +854,6 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
-  await database.sportEventParticipantStatLine.deleteMany({
-    where: {
-      participantRound: {
-        sportEventParticipantId: {
-          in: sportEventParticipantIds,
-        },
-      },
-    },
-  });
   await database.sportEventParticipantRound.deleteMany({
     where: {
       sportEventParticipantId: {
@@ -1020,7 +1011,6 @@ export async function cleanupTestData(): Promise<void> {
   // Matches name field rows, rounds and each other with RESTRICT foreign keys, so the bracket goes first.
   await prisma.sportEventMatch.deleteMany();
   await prisma.sportEventParticipantGolfRound.deleteMany();
-  await prisma.sportEventParticipantStatLine.deleteMany();
   await prisma.sportEventParticipantRound.deleteMany();
   // Keep standing cleanup before SportEventParticipant because the standing
   // tables intentionally use explicit child rows rather than FK cascade.

@@ -22,7 +22,6 @@ export const MLB_POSTSEASON: PlayoffsLeague = {
   sport: Sport.BASEBALL,
   eventName: 'MLB Postseason',
   // The four top seeds' byes are no series, so a seed's first series is the Division Series.
-  // Each round's name is the tour a future MLB Clutch Card league on that round would match.
   rounds: [
     { name: 'MLB Wild Card Series', seriesLength: 3, seriesCount: 4 },
     { name: 'MLB Division Series', seriesLength: 5, seriesCount: 4 },

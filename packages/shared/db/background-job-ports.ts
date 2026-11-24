@@ -60,6 +60,12 @@ export interface BackgroundJobRepository {
   /** Back to QUEUED, due at `runAt`, keeping the error of the try that failed and its type (#1861). */
   markRetry(claim: BackgroundJobClaim, retry: { runAt: Date; error: string; errorType: JobErrorType }): Promise<boolean>;
   /**
+   * Back to QUEUED, due at `runAt`, with the try handed back (league model slice 1c): the attempt
+   * the claim counted is taken off again, so a try a provider's rate limit ended never counts
+   * toward the job's attempts. Keeps the try's error and its type.
+   */
+  markDeferred(claim: BackgroundJobClaim, deferred: { runAt: Date; error: string; errorType: JobErrorType }): Promise<boolean>;
+  /**
    * Deletes the job its try ran, leaving no row (#1865): for a try that did nothing worth showing
    * in Activity, such as a release check that held an event for the same reason as before.
    */

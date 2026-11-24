@@ -15,7 +15,6 @@ import {
   PrismaParticipantRepository,
   PrismaPricingProfileRepository,
   PrismaSportEventParticipantGolfRoundRepository,
-  PrismaSportEventParticipantStatLineRepository,
   PrismaSportEventParticipantGolfStandingRepository,
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRaceResultRepository,
@@ -31,8 +30,6 @@ import {
 import { GolfScoreService } from '../golf/golf-score-service';
 import type { GameScoreWriterDeps } from '../scoring-families/head-to-head/game-score-writer';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
-import { StatLineService } from '../scoring-families/composite/stat-line-service';
-import type { StatLineWriterDeps } from '../scoring-families/composite/stat-line-writer';
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { eventStoresRaceResults } from '../scoring-families/race-results';
@@ -84,38 +81,6 @@ export function createGolfScoreService(
   });
 }
 
-/** Each game's box score lines for a stat pool event (#935). */
-export function createStatLineService(
-  prisma: PrismaClient,
-  domainEvents: Pick<DomainEvents, 'collect'>,
-  logger?: FastifyBaseLogger,
-): StatLineService {
-  return new StatLineService({
-    events: new PrismaSportEventRepository(prisma),
-    rounds: new PrismaSportEventRoundRepository(prisma),
-    field: new PrismaSportEventParticipantRepository(prisma),
-    statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
-    domainEvents,
-    logger,
-  });
-}
-
-/** What the composite family's writer needs to store a provider's box scores (#1497). */
-export function createStatLineWriterDeps(
-  prisma: PrismaClient,
-  providerId: string,
-  domainEvents: Pick<DomainEvents, 'collect'>,
-  logger?: FastifyBaseLogger,
-): StatLineWriterDeps {
-  return {
-    providerId,
-    field: new PrismaSportEventParticipantRepository(prisma),
-    mappings: new PrismaParticipantProviderMappingRepository(prisma),
-    statLines: createStatLineService(prisma, domainEvents, logger),
-    logger,
-  };
-}
-
 /** The admin finishing order for a finish-position event (#622). */
 export function createRaceResultService(
   prisma: PrismaClient,
@@ -163,7 +128,6 @@ export interface SportEventServices {
   field: SportEventParticipantService;
   golfScores: GolfScoreService;
   raceResults: RaceResultService;
-  statLines: StatLineService;
   matchResults: MatchResultService;
   sportLeagues: SportLeagueService;
   /** A synced league's event's games from its provider (#1728). */
@@ -301,7 +265,6 @@ export function createSportEventServices(
     }),
     golfScores: createGolfScoreService(prisma, domainEvents, logger),
     raceResults: createRaceResultService(prisma, domainEvents, logger),
-    statLines: createStatLineService(prisma, domainEvents, logger),
     matchResults: createMatchResultService(prisma, domainEvents, lifecycle, logger),
     sportLeagues: createSportLeagueService(prisma, logger, providers),
   };

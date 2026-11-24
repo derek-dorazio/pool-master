@@ -25,7 +25,6 @@ import {
   SportEventStatus,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
-  SportLeagueKind,
   SportLeagueNoun,
   SportLeagueSyncHealth,
   SportLeagueSyncMode,
@@ -86,11 +85,9 @@ export const SportLeagueDtoSchema = z.object({
   squaresFromRound: z.number().int().min(1).nullable().describe('The first round whose matches are single games a squares contest can be played on, when not every round\'s are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round\'s matches can take one. Set with the league\'s reference data, never by a request.'),
   noun: z.enum(SportLeagueNoun).nullable().describe('What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport\'s noun. Set with the league\'s reference data, never by a request.'),
   displayName: z.string().nullable().describe('What screens call the sport league away from its sport\'s own pages, when its name alone does not say the sport: "NCAA Men\'s Basketball" for basketball\'s NCAA Division I Men. Null shows the name. Set with the league\'s reference data, never by a request.'),
-  participantType: z.enum(ParticipantType).nullable().describe('Who competes in the sport league\'s events, when not its sport\'s: INDIVIDUAL for a championship stat pool (the World Series\' players, where baseball\'s are teams). Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
-  scoringFamily: z.enum(ScoringFamily).nullable().describe('How the sport league\'s events are scored, when not as its sport\'s: COMPOSITE for a championship stat pool, each game a player\'s sport composite. Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
+  participantType: z.enum(ParticipantType).nullable().describe('Who competes in the sport league\'s events, when not its sport\'s. Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
+  scoringFamily: z.enum(ScoringFamily).nullable().describe('How the sport league\'s events are scored, when not as its sport\'s. Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
   displayOrder: z.number().int().nullable().describe('Where the sport league sits among its sport\'s leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA\'s. Lower comes first; null comes after every ordered league, by name. Set with the league\'s reference data, never by a request.'),
-  parentSportLeagueId: z.uuid().nullable().describe('The season league this sport league is a playoff round of, so pages list it under that league: the NHL for the Stanley Cup Final, NCAA Division I Men for the Men\'s Frozen Four. Null for a league that is no other\'s round. Set with the league\'s reference data, never by a request.'),
-  parentRoundNumbers: z.array(z.number().int()).describe('The rounds of its parent league\'s season event each of its events covers, first to last: 4 for the World Series, round 4 of the MLB Postseason. Set on every Clutch Card league; empty for any other. Set with the league\'s reference data, never by a request.'),
   participantCount: z.number().int().describe('The sport league\'s participants.'),
   sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
   createdAt: DateTimeSchema,
@@ -194,7 +191,7 @@ export const SportLeagueSyncIssueDtoSchema = z.object({
   count: z.number().int().min(1).describe('How many of its syncs\' latest runs failed.'),
   items: z.array(z.object({
     ...issueItemFields,
-    syncKind: z.enum(ProviderSyncKind).describe('Which sync failed: the event list (EVENTS, a Clutch Card\'s parent\'s), the field (FIELD) or live scores and results (SCORES).'),
+    syncKind: z.enum(ProviderSyncKind).describe('Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).'),
   }).describe('A sync whose latest run failed; its target is that run.')).describe('Event list, then field, then scores.'),
 }).describe('Syncs whose latest run failed.');
 
@@ -226,30 +223,28 @@ export const SportLeagueOverviewDtoSchema = z.object({
   id: z.uuid(),
   sport: z.enum(Sport),
   name: z.string(),
-  parentSportLeagueId: z.uuid().nullable().describe('The season league it is a round of: a Clutch Card\'s parent league, the NHL for the Stanley Cup Final. Null for a league that is no other\'s round.'),
-  kind: z.enum(SportLeagueKind).describe('REAL for a league, tour or championship; CLUTCH_CARD for a Clutch Card\'s stat pool league, whose events are rounds of its parent league\'s season event.'),
-  providerId: z.string().nullable().describe('The provider that syncs its events; a Clutch Card\'s parent league\'s, since its parent\'s event list sync creates its events. Null when none does.'),
+  providerId: z.string().nullable().describe('The provider that syncs its events. Null when none does.'),
   isActive: z.boolean().describe('On: offered to customers and synced. Off: hidden and not synced.'),
   syncHealth: z.enum(SportLeagueSyncHealth).describe('From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.'),
   issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order SYNC, RELEASE, OVERDUE. Empty when nothing needs attention.'),
   season: z.object({
     start: DateTimeSchema.describe('The start of its first event.'),
     end: DateTimeSchema.describe('The end of its last event, or its start when it has no end.'),
-  }).nullable().describe('The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. A Clutch Card\'s spans the parent event rounds its events cover. Cancelled events are left out. Null while it has no events.'),
+  }).nullable().describe('The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.'),
   nextEventStartsAt: DateTimeSchema.nullable().describe('The start of its next event that has not started, cancelled ones aside. Null when none, as while a season-long event is under way.'),
   eventCount: z.number().int().min(0).describe('Its events, past and upcoming, cancelled ones included.'),
 }).describe('One sport league on the root admin\'s Sports page: what it is, how its syncs are doing, what needs attention, and when it plays. No contest counts.');
 export type SportLeagueOverviewDto = z.infer<typeof SportLeagueOverviewDtoSchema>;
 
 export const SportLeagueOverviewListResponseSchema = z.object({
-  sportLeagues: z.array(SportLeagueOverviewDtoSchema).describe('Every sport league, on or off, never paged: by sport, most popular first, then by name, each Clutch Card straight after its parent league.'),
+  sportLeagues: z.array(SportLeagueOverviewDtoSchema).describe('Every sport league, on or off, never paged: by sport, most popular first, then by name.'),
 }).describe('The root admin\'s Sports page.');
 export type SportLeagueOverviewListResponse = z.infer<typeof SportLeagueOverviewListResponseSchema>;
 
 // --- League page: one sport league's syncs, events and participants (#1865) ------
 
 export const SportLeagueSyncDtoSchema = z.object({
-  kind: z.enum(ProviderSyncKind).describe('The event list (EVENTS, a Clutch Card\'s parent\'s, which creates its events), the fields (FIELD) or live scores and results (SCORES).'),
+  kind: z.enum(ProviderSyncKind).describe('The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).'),
   health: z.enum(SportLeagueSyncHealth).describe('By the Sports page\'s rule, from this sync\'s latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.'),
   mode: z.enum(SportLeagueSyncMode).describe('SCHEDULE: the ingestion schedule runs it. WEBHOOK: the provider\'s webhook drives it, with a poll only while an event is in play (live scores of a provider whose webhook is set).'),
   lastRun: z.object({

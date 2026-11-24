@@ -5,8 +5,7 @@ import type { SportNoun } from './sport-definition';
 /**
  * What a sport's audience calls things (#1960), read from the display strings in the reader's
  * language: `sport.<SPORT>.<role>`, else the generic `word.<role>`. Shared screens read these
- * instead of saying "golfer". The registry keeps no words; a definition only names the roles it
- * reads elsewhere (`SportDefinition.wordOverrides`).
+ * instead of saying "golfer". The registry keeps no words.
  */
 export interface SportVocabulary {
   /** One competitor: "golfer" / "golfers". */
@@ -15,7 +14,7 @@ export interface SportVocabulary {
   event: SportNoun;
   /** One sport league, the organiser whose events recur each year: "tour" for golf (the PGA Tour). */
   sportLeague: SportNoun;
-  /** One scheduled stage of an event: "round", "race" for racing, "game" for a stat pool. */
+  /** One scheduled stage of an event: "round", "race" for racing. */
   round: SportNoun;
   /** One head-to-head match of a bracket: "game" for basketball, "series" for baseball, else "match". */
   match: SportNoun;
@@ -49,8 +48,7 @@ export function sportNoun(source: SportWordSource, role: SportNounRole, locale?:
 }
 
 /**
- * Every sport word of a sport, or of a sport league definition with its overrides (a stat pool
- * reads players and games), in the reader's language.
+ * Every sport word of a sport, or of a sport league definition, in the reader's language.
  */
 export function sportVocabulary(source: SportWordSource, locale?: string | null): SportVocabulary {
   const word = { locale };

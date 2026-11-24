@@ -181,7 +181,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       description:
         'An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. '
         + 'The series is found or created in the sport league by the event\'s name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. '
-        + 'The sport comes from the sport league. A Clutch Card league\'s event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.',
+        + 'The sport comes from the sport league. Root admin only.',
       operationId: 'createEvent',
       body: schemaRef('CreateSportEventRequest'),
       response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },
@@ -197,7 +197,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       description:
         'Re-creates each of a sport league\'s events in one event year as a fresh event in another (default: the next), '
         + 'dates shifted by the year difference and in the same series (plans/124 §4.2a, plans/147). Fields, tiers, prices, scores and provider links are never copied, '
-        + 'and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. A Clutch Card league\'s event names its season event of the target year (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.',
+        + 'and the current event year does not change. 422 EVENT_YEAR_HAS_NO_EVENTS for an empty source year; 409 EVENT_YEAR_NOT_EMPTY when the target year already has events. Root admin only.',
       operationId: 'cloneEventYear',
       body: schemaRef('CloneSportEventYearRequest'),
       response: { 201: schemaRef('SportEventListResponse'), ...errors(401, 403, 404, 409, 422) },
@@ -213,7 +213,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       description:
         'Creates each provider event for the sport league\'s tour starting in eventYear that PoolMaster does not have yet, each linked to it for scores (SCORES_ONLY) '
         + 'exactly as createEventFromProviderEvent would (#385). A provider event belongs to the tour when it is of the provider league the sport league\'s selected provider mapping names (#1997). '
-        + 'Events already linked, events whose start has passed, series that already have an edition that year, and Clutch Card events whose season event is not on the site (NO_PARENT_EVENT, #1820) are skipped and reported, so the import can be re-run. Fields are not loaded. '
+        + 'Events already linked, events whose start has passed, and series that already have an edition that year are skipped and reported, so the import can be re-run. Fields are not loaded. '
         + '404 PROVIDER_NOT_FOUND or SPORT_LEAGUE_NOT_FOUND; 422 SPORT_LEAGUE_NOT_SYNCED when the league has no selected mapping to the provider; 422 PROVIDER_LEAGUE_REFUSED when the provider\'s plan '
         + 'does not include the tour\'s league (#1797). Root admin only.',
       operationId: 'importEventYearFromProvider',
@@ -231,7 +231,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       description:
         'An event named and dated by a browsed provider event, linked to it for scores (SCORES_ONLY). The field is not loaded; '
         + 'refreshEventParticipants does that. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity, '
-        + 'EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event\'s start has passed. A Clutch Card league\'s event names its season event (#1820): 422 PARENT_EVENT_NOT_FOUND, PARENT_EVENT_AMBIGUOUS or CLUTCH_CARD_PARENT_NOT_CONFIGURED when it cannot be found. Root admin only.',
+        + 'EVENT_EDITION_ALREADY_EXISTS when the series already has an edition that year, SPORT_EVENT_ALREADY_STARTED when the provider event\'s start has passed. Root admin only.',
       operationId: 'createEventFromProviderEvent',
       body: schemaRef('CreateSportEventFromProviderEventRequest'),
       response: { 201: schemaRef('SportEventResponse'), ...errors(401, 403, 404, 409, 422) },
@@ -259,7 +259,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Delete a sport event',
-      description: 'Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it, EVENT_HAS_CLUTCH_CARD_EVENTS while a Clutch Card event names it as its season event. Root admin only.',
+      description: 'Deletes the event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. Root admin only.',
       operationId: 'deleteEvent',
       params: EVENT_PARAMS,
       response: { ...NO_CONTENT, ...errors(401, 403, 404, 409) },
@@ -708,25 +708,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 422) },
     },
     handler: handler.applyRaceResults,
-  });
-
-  // --- Stat lines: a stat pool game's box score, which writes composite extension rows (#935) ---
-
-  fastify.put('/:eventId/rounds/:roundNumber/stat-lines', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Apply a game\'s stat lines',
-      description: 'Stores each player\'s line for the game (the round) exactly as sent, all or none; each row replaces the player\'s stored line, an empty one clears it, and players not named keep theirs. '
-        + 'Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. '
-        + '422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport\'s composite counts, is given twice, or is below 0 when it is not yards. '
-        + '422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.',
-      operationId: 'applyEventGameStatLines',
-      params: ROUND_PARAMS,
-      body: schemaRef('GameStatLineUploadRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 422) },
-    },
-    handler: handler.applyGameStatLines,
   });
 
   // --- Bracket: an event's matches, for a sport that plays a bracket (#698) ---------------

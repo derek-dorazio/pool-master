@@ -3,8 +3,7 @@
  * overview and the League page's events read alike: every released event neither completed nor
  * cancelled that started long enough ago to be overdue, with its rounds and each round's latest match
  * start, and its sport league's typical game length from the league's selected provider league
- * (#1997). A Clutch Card event plays no rounds of its own, so it takes the rounds of its parent
- * event it covers (#1820). At most five grouped reads, however many events.
+ * (#1997). At most four grouped reads, however many events.
  */
 import type { PrismaClient } from '@prisma/client';
 import {
@@ -36,17 +35,17 @@ export async function readOverdueCandidates(
       ...(eventIds !== undefined && { id: { in: [...eventIds] } }),
     },
     select: {
-      id: true, name: true, sport: true, status: true, startDate: true, endDate: true, eventSeriesId: true, parentEventId: true, parentRoundNumbers: true,
+      id: true, name: true, sport: true, status: true, startDate: true, endDate: true, eventSeriesId: true,
     },
   });
   if (events.length === 0) return [];
 
-  const roundEventIds = [...new Set(events.map((event) => event.parentEventId ?? event.id))];
+  const roundEventIds = events.map((event) => event.id);
   const seriesIds = [...new Set(events.map((event) => event.eventSeriesId))];
   const [rounds, matchStarts, series, mappings] = await Promise.all([
     prisma.sportEventRound.findMany({
       where: { sportEventId: { in: roundEventIds } },
-      select: { id: true, sportEventId: true, roundNumber: true, scheduledDate: true, scheduledEndAt: true },
+      select: { id: true, sportEventId: true, scheduledDate: true, scheduledEndAt: true },
     }),
     prisma.sportEventMatch.groupBy({
       by: ['sportEventRoundId'],
@@ -62,10 +61,9 @@ export async function readOverdueCandidates(
   const leagueOfSeries = new Map(series.map((each) => [each.id, each.sportLeagueId]));
   const minutesByLeague = new Map(mappings.flatMap((league) => league.sportLeagues.map((mapping) => [mapping.sportLeagueId, league.typicalGameMinutes] as const)));
   const latestMatchStartByRound = new Map(matchStarts.map((group) => [group.sportEventRoundId, group._max.scheduledDate]));
-  const roundsByEvent = new Map<string, (OverdueRoundFacts & { roundNumber: number })[]>();
+  const roundsByEvent = new Map<string, OverdueRoundFacts[]>();
   for (const round of rounds) {
     const facts = {
-      roundNumber: round.roundNumber,
       scheduledDate: round.scheduledDate,
       scheduledEndAt: round.scheduledEndAt,
       latestMatchStart: latestMatchStartByRound.get(round.id) ?? null,
@@ -76,8 +74,7 @@ export async function readOverdueCandidates(
   }
 
   return events.map((event) => {
-    const own = roundsByEvent.get(event.parentEventId ?? event.id) ?? [];
-    const covered = event.parentEventId === null ? own : own.filter((round) => event.parentRoundNumbers.includes(round.roundNumber));
+    const scheduled = roundsByEvent.get(event.id) ?? [];
     return {
       id: event.id,
       name: event.name,
@@ -87,7 +84,7 @@ export async function readOverdueCandidates(
       endDate: event.endDate,
       eventSeriesId: event.eventSeriesId,
       typicalGameMinutes: minutesByLeague.get(leagueOfSeries.get(event.eventSeriesId) ?? '') ?? null,
-      rounds: covered.map((round) => ({ scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt, latestMatchStart: round.latestMatchStart })),
+      rounds: scheduled.map((round) => ({ scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt, latestMatchStart: round.latestMatchStart })),
     };
   });
 }

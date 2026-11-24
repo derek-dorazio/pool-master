@@ -20,20 +20,17 @@ import type {
   ProviderSyncRunStatus,
   ReleaseCheckKey,
   RoundResultFacts,
-  ScoringFamily,
   Sport,
   SportConfig,
   SportEvent,
   SportEventContest,
   SportEventMatch,
-  SportEventParent,
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
   SportEventParticipantRaceResult,
   SportEventParticipantRound,
   SportEventParticipantStanding,
-  SportEventParticipantStatLine,
   SportEventParticipantValuation,
   SportEventRound,
   SportEventStatus,
@@ -77,8 +74,6 @@ export interface SportLeagueUses {
   eventPageOfferCount: number;
   /** Leagues' season cups for it. */
   cupCount: number;
-  /** Playoff round sport leagues that name it as their season league (#1701). */
-  roundCount: number;
   /** Its participants (#1853): each belongs to it alone, so they go first. */
   participantCount: number;
 }
@@ -92,11 +87,6 @@ export interface SportLeagueRepository {
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
   /** The active sport leagues whose events a provider's sync creates (ADR 0011, #1725), by name. */
   findEventSynced(): Promise<SportLeague[]>;
-  /**
-   * The event-synced leagues, as `findEventSynced` reads them, and each active Clutch Card league
-   * whose parent is one of them (#1881), whose events its parent's sync creates. In one query.
-   */
-  findEventSyncedWithClutchCards(): Promise<SportLeague[]>;
   create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague>;
   update(id: string, updates: SportLeagueUpdate): Promise<SportLeague>;
   /**
@@ -137,10 +127,7 @@ export interface SportEventFilters {
 }
 
 /** The sport league comes from the series, so it is not supplied. */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'tierConfig' | 'parentEvent'> & {
-  /** A Clutch Card event's parent and its rounds of it (#1820); the name is read back, not written. */
-  parentEvent?: Omit<SportEventParent, 'name'>;
-};
+export type SportEventCreate = Omit<SportEvent, 'id' | 'createdAt' | 'updatedAt' | 'metadata' | 'participantCount' | 'sportLeagueId' | 'pricingConfig' | 'tierConfig'>;
 
 /** undefined leaves a field alone; null clears a nullable one. */
 export interface SportEventUpdate {
@@ -307,8 +294,6 @@ export interface SportEventRepository {
   findAutoReleaseCheck(sportEventId: string): Promise<AutoReleaseCheck | null>;
   /** Contests run on each event, for each id asked about (0 where none). */
   countContests(sportEventIds: readonly string[]): Promise<Map<string, number>>;
-  /** Clutch Card events that name each event as their parent (#1820), for each id asked about (0 where none). */
-  countClutchCardEvents(parentEventIds: readonly string[]): Promise<Map<string, number>>;
   /** Events per sport league, through their series, for each id asked about (0 where none). */
   countBySportLeagues(sportLeagueIds: readonly string[], filters?: { eventYear?: number }): Promise<Map<string, number>>;
   /**
@@ -393,8 +378,6 @@ export interface SportEventParticipantFieldUpdate {
 export interface ParticipantRoundView {
   round: SportEventParticipantRound;
   golf: SportEventParticipantGolfRound | null;
-  /** The composite family's extension (#934): a stat pool player's stats in the game, empty for any other family. */
-  statLines: SportEventParticipantStatLine[];
 }
 
 /** A standing row with its sport extension. */
@@ -560,9 +543,6 @@ export interface SportLeagueOverviewLeague {
   id: string;
   sport: Sport;
   name: string;
-  parentSportLeagueId: string | null;
-  /** Null: its sport's family. A Clutch Card's is COMPOSITE. */
-  scoringFamily: ScoringFamily | null;
   syncProviderId: string | null;
   isActive: boolean;
 }
@@ -597,15 +577,6 @@ export interface SportLeagueEventYearSpan {
   lastEnd: Date | null;
 }
 
-/** A Clutch Card event (#1820) with its parent event's rounds, every one of them. */
-export interface SportLeagueClutchCardEvent {
-  sportLeagueId: string;
-  eventYear: number;
-  /** The parent event's rounds this event covers. */
-  parentRoundNumbers: number[];
-  parentRounds: { roundNumber: number; scheduledDate: Date; scheduledEndAt: Date | null }[];
-}
-
 /** Everything the overview is computed from, read in a fixed number of grouped queries. */
 export interface SportLeagueOverviewFacts {
   leagues: SportLeagueOverviewLeague[];
@@ -616,7 +587,6 @@ export interface SportLeagueOverviewFacts {
   eventYearSpans: SportLeagueEventYearSpan[];
   /** The earliest start after `now` among each sport league's events not cancelled; absent when none. */
   nextEventStarts: Map<string, Date>;
-  clutchCardEvents: SportLeagueClutchCardEvent[];
   /** Every event that may be overdue (#1865): released, neither completed nor cancelled, started long enough ago. */
   overdueCandidates: SportLeagueOverdueCandidate[];
 }
@@ -636,12 +606,8 @@ export interface SportLeaguePageLeague {
   id: string;
   sport: Sport;
   isActive: boolean;
-  parentSportLeagueId: string | null;
-  scoringFamily: ScoringFamily | null;
   syncProviderId: string | null;
   autoReleaseDaysBeforeStart: number | null;
-  /** A Clutch Card's parent league, whose event list sync creates its events; null for any other league. */
-  parent: { isActive: boolean; syncProviderId: string | null } | null;
 }
 
 /** A sync run as the League page reads it. */
@@ -658,7 +624,7 @@ export interface SportLeaguePageRun {
 /** What the Syncs card is computed from. */
 export interface SportLeagueSyncFacts {
   league: SportLeaguePageLeague;
-  /** The league's latest run of each kind, and for a Clutch Card its parent's latest EVENTS run in place of its own. */
+  /** The league's latest run of each kind. */
   latestRuns: SportLeaguePageRun[];
 }
 

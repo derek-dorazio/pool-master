@@ -92,8 +92,8 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     schema: {
       tags: TAGS,
       summary: 'List every sport league with its health, issues and season',
-      description: 'The root admin\'s Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name, '
-        + 'each Clutch Card straight after its parent league. Each row carries its kind, provider, sync health from the latest run of each of its syncs, '
+      description: 'The root admin\'s Sports page (#1847): every sport league, on or off, never paged, by sport (most popular first) then name. '
+        + 'Each row carries its provider, sync health from the latest run of each of its syncs, '
         + 'its issues (failed syncs, draft events held by the automatic release), its season, its next event and its event count. '
         + 'No contest counts. Read from a fixed number of grouped queries, however many leagues. Root admin only.',
       operationId: 'listSportLeagueOverviews',
@@ -153,7 +153,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       tags: TAGS,
       summary: 'Delete a sport league',
       description: 'Deletes a sport league nothing uses any more, with its event series that have no events, and takes it out of every league\'s muted sport leagues. '
-        + '409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league\'s cup or a playoff round naming it as its season league: '
+        + '409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an event in any year, a contest setup, an event page offer, a league\'s cup or a participant: '
         + 'delete its events first; the others are reference data or league history, and the sport league stays. Root admin only.',
       operationId: 'deleteSportLeague',
       params: SPORT_LEAGUE_PARAMS,
@@ -168,7 +168,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       tags: TAGS,
       summary: 'List a sport league\'s syncs with their health, latest run and what drives them',
       description: 'The League page\'s Syncs card (#1865): one row per sync kind (event list, fields, live scores and results), always all three. '
-        + 'A Clutch Card reports its parent league\'s event list sync, which creates its events. Health follows the Sports page\'s rule from that sync\'s latest run; '
+        + 'Health follows the Sports page\'s rule from that sync\'s latest run; '
         + 'live scores follow the webhook while the provider\'s webhooks are on, and every other sync runs on the one ingestion schedule. Root admin only.',
       operationId: 'listSportLeagueSyncs',
       params: SPORT_LEAGUE_PARAMS,

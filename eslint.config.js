@@ -349,7 +349,6 @@ export default tseslint.config(
       '**/*.spec.tsx',
       '**/*.stories.tsx',
       'clients/poolmaster/src/features/event-pages/components/photo-hero.tsx',
-      'clients/poolmaster/src/features/event-pages/clutch-card-page.tsx',
       'clients/poolmaster/src/features/event-pages/start-page.tsx',
       'clients/poolmaster/src/features/event-pages/event-page.tsx',
       'clients/poolmaster/src/features/event-pages/components/next-up-card.tsx',

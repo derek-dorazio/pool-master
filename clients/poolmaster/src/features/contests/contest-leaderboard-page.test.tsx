@@ -370,131 +370,6 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.queryByTestId('contest-leaderboard-pending-header-tabs')).not.toBeInTheDocument();
   });
 
-  function statPoolBoard(sport: 'BASEBALL' | 'AMERICAN_FOOTBALL') {
-    const base = leaderboardResponse().data;
-    const ohtani = {
-      ...participant({ id: 'sep-1', name: 'Shohei Ohtani' }),
-      standing: null,
-      rounds: [1, 2].map((roundNumber) => ({
-        id: `round-sep-1-${String(roundNumber)}`, sportEventRoundId: `event-round-${String(roundNumber)}`, roundNumber, status: 'COMPLETED', completedAt: null, golf: null,
-        statLines: roundNumber === 1
-          ? [{ stat: 'TOTAL_BASES', value: 4 }, { stat: 'RUNS', value: 1 }]
-          : [{ stat: 'TOTAL_BASES', value: 2 }, { stat: 'WALKS', value: 1 }],
-      })),
-    };
-    const rival = { ...base.entries[0], entryId: 'entry-2', entryName: 'Rival', squadId: 'squad-rival', squadName: 'Rival', position: 2, displayPosition: '2' };
-    const scoredPick = { ...base.entries[0].picks[0], golf: null, composite: { points: 8, games: [{ roundNumber: 1, score: 5 }, { roundNumber: 2, score: 3 }] } };
-    return {
-      ...base,
-      sport,
-      participantType: 'INDIVIDUAL',
-      scoringFamily: 'COMPOSITE',
-      scoringDefinitionId: 'COMPOSITE_TOTAL',
-      participants: [ohtani],
-      entries: [
-        { ...base.entries[0], totalScore: 8, picks: [scoredPick] },
-        { ...rival, totalScore: 8, picks: [{ ...scoredPick, pickId: 'pick-9' }] },
-      ],
-    };
-  }
-
-  it('shows a stat pool series with one column of scores per game, and a game\'s score opens that game\'s stats', async () => {
-    primeMocks({ leaderboard: statPoolBoard('BASEBALL') });
-
-    renderLeaderboard();
-
-    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent('PosPlayerTotG1G2');
-    expect(screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-1')).toHaveTextContent('5');
-    expect(screen.queryByTestId('contest-leaderboard-pick-round-entry-1-pick-1-1-peek-callout')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-1-peek'));
-
-    const callout = screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-1-peek-callout');
-    expect(callout).toHaveTextContent('G1 · Shohei Ohtani');
-    expect(callout).toHaveTextContent('Total bases4');
-    expect(callout).toHaveTextContent('Runs1');
-  });
-
-  it('marks the column of the game being played as Live', async () => {
-    const board = statPoolBoard('BASEBALL');
-    const [ohtani] = board.participants;
-    primeMocks({ leaderboard: { ...board, participants: [{ ...ohtani, rounds: ohtani.rounds.map((round) => (round.roundNumber === 2 ? { ...round, status: 'IN_PROGRESS' } : round)) }] } });
-
-    renderLeaderboard();
-
-    expect(await screen.findByTestId('contest-leaderboard-round-header-2-live')).toHaveTextContent('Live');
-    expect(screen.queryByTestId('contest-leaderboard-round-header-1-live')).not.toBeInTheDocument();
-  });
-
-  it('shows a single-game stat pool\'s total with no game columns', async () => {
-    primeMocks({ leaderboard: statPoolBoard('AMERICAN_FOOTBALL') });
-
-    renderLeaderboard();
-
-    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    expect(screen.getByTestId('contest-leaderboard-column-headers')).toHaveTextContent(/^PosPlayerTot$/);
-  });
-
-  it('puts one Stats switch on each entry, on for the viewer\'s own, that shows every pick\'s latest game under its name', async () => {
-    primeMocks({ leaderboard: statPoolBoard('BASEBALL') });
-
-    renderLeaderboard();
-
-    expect(await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('G2: 2 TB · 1 walk');
-    expect(screen.getByTestId('contest-leaderboard-stats-entry-1')).toBeChecked();
-
-    fireEvent.click(screen.getByTestId('contest-leaderboard-stats-entry-1'));
-
-    expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).not.toBeInTheDocument();
-    // The picks stay listed with their scores: the switch hides the stats, not the entry.
-    expect(screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-2')).toHaveTextContent('3');
-  });
-
-  it('opens a closed entry when its Stats switch is turned on, so its stats show', async () => {
-    primeMocks({ leaderboard: statPoolBoard('BASEBALL') });
-
-    renderLeaderboard();
-
-    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    expect(screen.queryByTestId('contest-leaderboard-pick-entry-2-pick-9')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('contest-leaderboard-stats-entry-2'));
-
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-pick-9-stats')).toHaveTextContent('G2: 2 TB · 1 walk');
-  });
-
-  it('turns on every opened entry\'s stats from Show all stats, then off again from Hide all stats', async () => {
-    primeMocks({ leaderboard: statPoolBoard('BASEBALL') });
-
-    renderLeaderboard();
-
-    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-all'));
-    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-all-stats'));
-
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-pick-9-stats')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-leaderboard-toggle-all-stats')).toHaveTextContent('Hide all stats');
-
-    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-all-stats'));
-
-    expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('contest-leaderboard-pick-entry-2-pick-9-stats')).not.toBeInTheDocument();
-  });
-
-  it('strikes through a non-counting pick\'s stat line along with its name', async () => {
-    const board = statPoolBoard('BASEBALL');
-    primeMocks({ leaderboard: { ...board, entries: board.entries.map((entry) => ({ ...entry, picks: entry.picks.map((pick) => ({ ...pick, isCounting: false, isDropped: true })) })) } });
-
-    renderLeaderboard();
-
-    const statLine = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats');
-    // The line sits inside the struck-through name cell, so the strike and slant carry over to it.
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toContainElement(statLine);
-    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('italic', 'line-through');
-  });
-
   it('gives a board without stat lines, such as golf, no Stats switches and no Show all stats', async () => {
     primeMocks();
 
@@ -557,6 +432,77 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-2')).toHaveTextContent('+3');
     expect(screen.getByTestId('contest-leaderboard-pick-upset-bonus-entry-1-pick-1')).toHaveTextContent('—');
     expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona 70–\u206074');
+  });
+
+  /** The team-picks board with a second entry, Rival, holding the same picks. */
+  function teamPicksBoardWithRival() {
+    const board = teamPicksBoard();
+    const [mine] = board.entries;
+    const rival = { ...mine, entryId: 'entry-2', entryName: 'Rival', squadId: 'squad-rival', squadName: 'Rival', position: 2, displayPosition: '2', picks: mine.picks.map((pick) => ({ ...pick, pickId: `rival-${pick.pickId}` })) };
+    return { ...board, entries: [mine, rival] };
+  }
+
+  it('puts one Stats switch on each entry, on for the viewer\'s own, that shows every pick\'s latest game under its name', async () => {
+    primeMocks({ leaderboard: teamPicksBoardWithRival() });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    expect(await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona');
+    expect(screen.getByTestId('contest-leaderboard-stats-entry-1')).toBeChecked();
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-stats-entry-1'));
+
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).not.toBeInTheDocument();
+    // The picks stay listed with their scores: the switch hides the stats, not the entry.
+    expect(screen.getByTestId('contest-leaderboard-pick-status-entry-1-pick-2')).toHaveTextContent('In');
+  });
+
+  it('opens a closed entry when its Stats switch is turned on, so its stats show', async () => {
+    primeMocks({ leaderboard: teamPicksBoardWithRival() });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats');
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-2-rival-pick-1')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-stats-entry-2'));
+
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-rival-pick-1-stats')).toHaveTextContent('Second Round: lost to Arizona');
+  });
+
+  it('turns on every opened entry\'s stats from Show all stats, then off again from Hide all stats', async () => {
+    primeMocks({ leaderboard: teamPicksBoardWithRival() });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats');
+    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-all'));
+    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-all-stats'));
+
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-2-rival-pick-1-stats')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-toggle-all-stats')).toHaveTextContent('Hide all stats');
+
+    fireEvent.click(screen.getByTestId('contest-leaderboard-toggle-all-stats'));
+
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-1-pick-1-stats')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-leaderboard-pick-entry-2-rival-pick-1-stats')).not.toBeInTheDocument();
+  });
+
+  it('strikes through a non-counting pick\'s stat line along with its name', async () => {
+    const board = teamPicksBoard();
+    primeMocks({ leaderboard: { ...board, entries: board.entries.map((entry) => ({ ...entry, picks: entry.picks.map((pick) => ({ ...pick, isCounting: false, isDropped: true })) })) } });
+    primeTeamPicksGames();
+
+    renderLeaderboard();
+
+    const statLine = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1-stats');
+    // The line sits inside the struck-through name cell, so the strike and slant carry over to it.
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toContainElement(statLine);
+    expect(screen.getByTestId('contest-leaderboard-pick-entry-1-pick-1-name')).toHaveClass('italic', 'line-through');
   });
 
   it('opens a team\'s Wins to every game it played', async () => {

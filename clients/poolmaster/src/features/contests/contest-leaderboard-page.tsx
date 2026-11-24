@@ -103,7 +103,7 @@ function matchesSearch(entry: LeaderboardEntryRow, search: string) {
 /**
  * Position, name and total take fixed tracks (the name takes the slack); the family's columns
  * follow. Every track keeps a real minimum, the name's too: where the row is narrower than the
- * minimums (a phone, a stat pool with five games), the board scrolls sideways instead of
+ * minimums (a phone, a bracket of six rounds), the board scrolls sideways instead of
  * squeezing the name to nothing.
  */
 function leaderboardGridColumns(view: LeaderboardView) {
@@ -134,9 +134,9 @@ const PINNED_CELL_SURFACE =
   'bg-background group-hover/pick:[background-image:linear-gradient(var(--table-row-hover-surface),var(--table-row-hover-surface))]';
 
 /**
- * One participant under an entry. Where the family's cells are made of stats (a stat pool
- * player's games), the entry's Stats switch adds a line of them under the name (#1747), and each
- * game's score opens that game's stats in a popover.
+ * One participant under an entry. Where the family has a stat line (a team's latest result), the
+ * entry's Stats switch adds it under the name (#1747), and a cell with a peek opens it in a
+ * popover.
  */
 function PickRow({
   entryId,

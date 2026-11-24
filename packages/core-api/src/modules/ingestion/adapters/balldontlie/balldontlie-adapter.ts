@@ -28,9 +28,6 @@
  * GAME category, from which the GAME writer counts each best-of-seven series' wins (#1545).
  * Basketball's events and teams are the NCAA tournaments', the NBA's and the WNBA's, each read on
  * its own.
- * Each playoff round is an event too (#1497, `series-playoff-rounds.ts`): a Clutch Card's
- * (`nba-2025-postseason-round-4`, the NBA Finals), its teams' active players, and its games' box
- * scores in the STAT_LINE category.
  *
  * NHL (#1496, `nhl-mapping.ts` through the same shared reader): each season's playoffs as an
  * event (`nhl-2025-postseason`), its teams, and every playoff game's score in the GAME category,
@@ -79,9 +76,8 @@ import { MLB_POSTSEASON, mlbPostseasonSource } from './mlb-mapping';
 import { NBA_PLAYOFFS, nbaPlayoffsSource } from './nba-mapping';
 import { WNBA_PLAYOFFS, wnbaPlayoffsSource } from './wnba-mapping';
 import { NHL_PLAYOFFS, nhlPlayoffsSource } from './nhl-mapping';
-import { parsePlayoffRoundScope } from './series-playoff-rounds';
 import { parsePlayoffsScope } from './series-playoffs';
-import { PlayoffRoundsReader, PlayoffsReader } from './series-playoffs-reader';
+import { PlayoffsReader } from './series-playoffs-reader';
 import { EPL_TOUR, parseEplScope } from './epl-mapping';
 import { EplReader } from './epl-reader';
 import { FIFA_WC_TOUR, parseWorldCupScope } from './fifa-world-cup-mapping';
@@ -91,6 +87,7 @@ import { NflReader } from './nfl-reader';
 import { CFP_LEAGUE, parseCfpScope } from './ncaaf-mapping';
 import { NcaafReader } from './ncaaf-reader';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieClient, BalldontlieRequestError, type BalldontlieConnection, type BalldontlieQuery } from './balldontlie-client';
+import { jobDeferredUntilOf } from '../../../background-jobs/job-error-type';
 import {
   PgaCompetitorType,
   pgaPlayerListSchema,
@@ -120,6 +117,8 @@ export interface BalldontlieAdapterOptions {
    * ones the adapter covers.
    */
   leagues: readonly Pick<ProviderLeagueSettings, 'code' | 'sport'>[];
+  /** The most tasks that run background work at once, each taking an even share of the limit; 1 when unset. */
+  maxTasks?: number;
   /** For tests: the client's clock and wait. */
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
@@ -181,7 +180,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly client: BalldontlieClient;
   private readonly nfl: NflReader;
   private readonly ncaaf: NcaafReader;
-  private readonly nba: PlayoffRoundsReader;
+  private readonly nba: PlayoffsReader;
   private readonly nhl: PlayoffsReader;
   private readonly mlb: PlayoffsReader;
   private readonly wnba: PlayoffsReader;
@@ -195,12 +194,12 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   private readonly connection: () => BalldontlieConnection;
 
   constructor(options: BalldontlieAdapterOptions) {
-    this.client = new BalldontlieClient({ ...options, payloads: this.payloads });
+    this.client = new BalldontlieClient({ ...options, providerId: this.providerId, payloads: this.payloads });
     this.connection = options.connection;
     this.logger = options.logger;
     this.nfl = new NflReader(this.client, options.now ?? Date.now);
     this.ncaaf = new NcaafReader(this.client, options.now ?? Date.now);
-    this.nba = new PlayoffRoundsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
+    this.nba = new PlayoffsReader(nbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
     this.nhl = new PlayoffsReader(nhlPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
     this.mlb = new PlayoffsReader(mlbPostseasonSource(this.client), options.now ?? Date.now, options.logger);
     this.wnba = new PlayoffsReader(wnbaPlayoffsSource(this.client), options.now ?? Date.now, options.logger);
@@ -296,12 +295,17 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
    * Each of a sport's leagues read on its own, their lists together. A league whose read is
    * refused or fails is left out and logged (`balldontlie.league.unavailable`), so one league's
    * plan or outage never empties its neighbours' lists; when every league fails, the first
-   * failure is thrown, as a one-league sport's always is.
+   * failure is thrown, as a one-league sport's always is. A league the provider rate limits is
+   * never left out: its refusal is thrown, so the job is deferred rather than syncing a partial list.
    */
   private async eachLeague<Item>(sport: Sport, leagues: readonly LeagueReads[], what: 'events' | 'participants', read: (league: LeagueReads) => Promise<Item[]>): Promise<Item[]> {
     const results = await Promise.allSettled(leagues.map(read));
     const failures = results.flatMap((result, index) => (result.status === 'rejected' ? [{ league: leagues[index], reason: result.reason as unknown }] : []));
     if (failures.length > 0 && failures.length === results.length) throw failures[0].reason;
+    // A rate-limited league is not missing from the feed: leaving it out would sync a partial list
+    // as if it were whole. Its refusal ends the read, and the job runs again when the provider answers.
+    const rateLimited = failures.find(({ reason }) => jobDeferredUntilOf(reason) !== null);
+    if (rateLimited) throw rateLimited.reason;
     for (const { league, reason } of failures) {
       this.logger?.warn(
         {
@@ -348,10 +352,6 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const ncaaScope = parseNcaaTournamentScope(eventId);
     if (ncaaScope) {
       return this.ncaa[ncaaScope.league.key].eventDetails(ncaaScope.season);
-    }
-    const nbaRound = parsePlayoffRoundScope(NBA_PLAYOFFS, eventId);
-    if (nbaRound !== null) {
-      return this.nba.roundEventDetails(nbaRound.season, nbaRound.round);
     }
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {
@@ -422,10 +422,6 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     const ncaaScope = parseNcaaTournamentScope(eventId);
     if (ncaaScope) {
       return this.ncaa[ncaaScope.league.key].liveScores(ncaaScope.season);
-    }
-    const nbaRound = parsePlayoffRoundScope(NBA_PLAYOFFS, eventId);
-    if (nbaRound !== null) {
-      return this.nba.roundLiveScores(nbaRound.season, nbaRound.round);
     }
     const nbaSeason = parsePlayoffsScope(NBA_PLAYOFFS, eventId);
     if (nbaSeason !== null) {

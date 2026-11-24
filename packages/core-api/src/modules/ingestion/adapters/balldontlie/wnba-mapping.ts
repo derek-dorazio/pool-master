@@ -23,7 +23,6 @@ export const WNBA_PLAYOFFS: PlayoffsLeague = {
   tour: 'WNBA',
   sport: Sport.BASKETBALL,
   eventName: 'WNBA Playoffs',
-  // Each round's name is the tour a future WNBA Clutch Card league on that round would match.
   rounds: [
     { name: 'WNBA First Round', seriesLength: 3, seriesCount: 4 },
     { name: 'WNBA Semifinals', seriesLength: 5, seriesCount: 2 },

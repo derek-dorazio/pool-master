@@ -4,8 +4,6 @@ import {
   getSportDefinition,
   SportLeagueIssueTypeOrder,
   type SportLeagueIssueType,
-  SportLeagueKind,
-  SportLeagueKindOrder,
   SportLeagueSyncHealthOrder,
   type SportLeagueSyncHealth,
   SportOrder,
@@ -27,16 +25,11 @@ const LEAGUE_STATUS_OPTIONS = [
   { value: LEAGUE_STATUS.OFF, label: 'Off' },
 ];
 
-/** The words a sport league's Provider cell shows: its provider, its parent's for a Clutch Card, or none. */
+/** The words a sport league's Provider cell shows: its provider, or none. */
 export function providerText(
-  overview: Pick<SportLeagueOverviewDto, 'kind' | 'parentSportLeagueId' | 'providerId'>,
-  nameOfLeague: (sportLeagueId: string) => string | undefined,
+  overview: Pick<SportLeagueOverviewDto, 'providerId'>,
   nameOfProvider: (providerId: string) => string,
 ): string {
-  if (overview.kind === SportLeagueKind.CLUTCH_CARD && overview.parentSportLeagueId !== null) {
-    const parentName = nameOfLeague(overview.parentSportLeagueId);
-    if (parentName !== undefined) return `via ${parentName}`;
-  }
   return overview.providerId === null ? 'No provider' : nameOfProvider(overview.providerId);
 }
 
@@ -71,12 +64,10 @@ const byTotalIssues: SortingFn<SportLeagueOverviewDto> = (left, right) => totalI
  * from its header, and every one explained behind its (i), in domain words.
  */
 export function sportLeagueOverviewColumns({
-  nameOfLeague,
   nameOfProvider,
   onOpenSettings,
   onOpenSyncRun,
 }: {
-  nameOfLeague: (sportLeagueId: string) => string | undefined;
   nameOfProvider: (providerId: string) => string;
   onOpenSettings: (sportLeagueId: string) => void;
   onOpenSyncRun: (syncRunId: string) => void;
@@ -95,12 +86,11 @@ export function sportLeagueOverviewColumns({
     columnHelper.accessor('name', {
       header: 'Sport league',
       meta: {
-        info: 'The real-world league or tour. A Clutch Card league sits indented under the league it draws from. ⚙ opens its settings.',
+        info: 'The real-world league or tour. ⚙ opens its settings.',
         type: { kind: 'text' },
       },
       cell: ({ row }) => (
-        <span className={row.original.parentSportLeagueId === null ? 'inline-flex items-center gap-2' : 'inline-flex items-center gap-2 pl-6'}>
-          {row.original.parentSportLeagueId === null ? null : <Text aria-hidden tone="muted">└</Text>}
+        <span className="inline-flex items-center gap-2">
           <Text variant="strong">{row.original.name}</Text>
           <Button
             aria-label={`${row.original.name} settings`}
@@ -114,19 +104,11 @@ export function sportLeagueOverviewColumns({
         </span>
       ),
     }),
-    columnHelper.accessor('kind', {
-      header: 'Kind',
-      meta: {
-        info: "Real: a sport league with its own feed. Clutch Card: a stat-pool league built from its parent league's rounds.",
-        type: { kind: 'enum', order: SportLeagueKindOrder, label: (kind) => enumLabel('SportLeagueKind', kind as SportLeagueKind) },
-      },
-      cell: ({ getValue }) => enumLabel('SportLeagueKind', getValue()),
-    }),
-    columnHelper.accessor((overview) => providerText(overview, nameOfLeague, nameOfProvider), {
+    columnHelper.accessor((overview) => providerText(overview, nameOfProvider), {
       id: 'provider',
       header: 'Provider',
       meta: {
-        info: 'Where this sport league\'s data comes from. "via MLB" means it reads the parent league\'s feed.',
+        info: 'Where this sport league\'s data comes from.',
         type: { kind: 'enum' },
       },
     }),
@@ -157,7 +139,7 @@ export function sportLeagueOverviewColumns({
       id: 'season',
       header: 'Season',
       meta: {
-        info: 'First to last event of the current season, or the next season between seasons. A Clutch Card uses its parent league\'s rounds. Filters by overlap: "active in April" finds every season running in April.',
+        info: 'First to last event of the current season, or the next season between seasons. Filters by overlap: "active in April" finds every season running in April.',
         type: { kind: 'dateRange', direction: 'both' },
       },
     }),

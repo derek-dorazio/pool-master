@@ -59,7 +59,7 @@ function offer(id: string, overrides: Partial<EventPageOffer>): EventPageOffer {
   };
 }
 
-const CLUTCH_CARD = offer('clutch-card', {
+const TIERED = offer('tiered', {
   sportLeagueId: 'cw',
   sportLeagueName: 'Championship Weekend',
   eventSeriesName: 'Conference Championships',
@@ -85,7 +85,7 @@ function build(options: {
   closesAt?: Record<string, Date>;
 }) {
   const pages = options.pages ?? [PAGE];
-  const offers = options.offers ?? [CLUTCH_CARD, BRACKET, SQUARES];
+  const offers = options.offers ?? [TIERED, BRACKET, SQUARES];
   const repo: EventPageRepository = {
     findBySportSlug: (sport, slug) => Promise.resolve(pages.find((page) => page.sport === sport && page.slug === slug) ?? null),
     findActive: (sport) => Promise.resolve(pages.filter((page) => page.isActive && (sport === undefined || page.sport === sport))),
@@ -117,7 +117,7 @@ describe('EventPageService', () => {
     const second = { ...PAGE, id: 'page-2', slug: 'wild-card-weekend', displayOrder: 2 };
     const { service, reads, asked } = build({
       pages: [PAGE, second],
-      offers: [CLUTCH_CARD, { ...BRACKET, eventPageId: second.id }, SQUARES],
+      offers: [TIERED, { ...BRACKET, eventPageId: second.id }, SQUARES],
       editions: {
         'cw/Conference Championships': [edition('cw-2027', '2027-01-24T20:00:00.000Z')],
         'nfl/NFL Playoffs': [edition('playoffs-2027', '2027-01-09T18:00:00.000Z')],
@@ -127,7 +127,7 @@ describe('EventPageService', () => {
     const views = await service.listPages(Sport.AMERICAN_FOOTBALL);
 
     expect(views.map((view) => [view.page.id, view.offers.map((each) => each.offer.id)])).toEqual([
-      [PAGE.id, ['clutch-card', 'squares']],
+      [PAGE.id, ['tiered', 'squares']],
       [second.id, ['bracket']],
     ]);
     expect(reads).toEqual({ editions: 1, openings: 1 });
@@ -146,7 +146,7 @@ describe('EventPageService', () => {
     const view = await service.getPage(Sport.AMERICAN_FOOTBALL, 'championship-weekend');
 
     expect(view.offers.map((each) => [each.offer.id, each.edition.sportEventId, each.state])).toEqual([
-      ['clutch-card', 'cw-2027', EventPageOfferState.NOT_YET],
+      ['tiered', 'cw-2027', EventPageOfferState.NOT_YET],
       ['bracket', 'playoffs-2027', EventPageOfferState.OPEN],
       ['squares', 'playoffs-2027', EventPageOfferState.OPEN],
     ]);
@@ -203,7 +203,7 @@ describe('EventPageService', () => {
     const view = await service.getPage(Sport.AMERICAN_FOOTBALL, 'championship-weekend');
 
     expect(view.offers.map((each) => [each.offer.id, each.edition.sportEventId, each.state])).toEqual([
-      ['clutch-card', 'cw-2028', EventPageOfferState.NOT_YET],
+      ['tiered', 'cw-2028', EventPageOfferState.NOT_YET],
     ]);
   });
 
@@ -252,11 +252,11 @@ describe('EventPageService', () => {
     const { service } = build({
       pages: [superBowl, PAGE, proBowl, between],
       offers: [
-        { ...CLUTCH_CARD, id: 'sb-card', eventPageId: superBowl.id, eventSeriesName: 'Super Bowl' },
-        CLUTCH_CARD,
+        { ...TIERED, id: 'sb-card', eventPageId: superBowl.id, eventSeriesName: 'Super Bowl' },
+        TIERED,
         // The Pro Bowl's only showing offer is not its primary one, so it has no edition heading it.
         { ...SQUARES, id: 'pb-squares', eventPageId: proBowl.id },
-        { ...CLUTCH_CARD, id: 'between-card', eventPageId: between.id, eventSeriesName: 'Nothing scheduled' },
+        { ...TIERED, id: 'between-card', eventPageId: between.id, eventSeriesName: 'Nothing scheduled' },
       ],
       editions: {
         'cw/Super Bowl': [edition('sb-2027', '2027-02-07T23:30:00.000Z')],
@@ -275,7 +275,7 @@ describe('EventPageService', () => {
     const LATER: EventPage = { ...PAGE, id: 'page-later', slug: 'playoffs', displayOrder: 40 };
     const { service } = build({
       pages: [PAGE, LATER, { ...RETIRED, isActive: false }],
-      offers: [CLUTCH_CARD, SQUARES, { ...SQUARES, id: 'later-squares', eventPageId: LATER.id }, { ...SQUARES, id: 'retired-squares', eventPageId: RETIRED.id }],
+      offers: [TIERED, SQUARES, { ...SQUARES, id: 'later-squares', eventPageId: LATER.id }, { ...SQUARES, id: 'retired-squares', eventPageId: RETIRED.id }],
       editions: {
         'cw/Conference Championships': [edition('cw-2027', '2027-01-24T20:00:00.000Z')],
         'nfl/NFL Playoffs': [edition('playoffs-2027', '2027-01-09T18:00:00.000Z'), edition('playoffs-2028', '2028-01-08T18:00:00.000Z')],

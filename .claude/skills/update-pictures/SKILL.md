@@ -16,7 +16,7 @@ Three kinds of picture, each made a different way and each committed as a file:
 | Link preview image | `clients/poolmaster/public/og/<sport>-<slug>.jpg`, 1200 by 630 | `scripts/render-link-preview-images.mjs` draws each event page's tile from its copy | `link-preview.test.ts`: every event page with copy has an image |
 
 What a picture may show is `rules/ux-rules.md` §14 *System Email* item 5 (*Pictures are ours or
-generic*); where the photo appears is `rules/ux-rules.md` §13 *Event Pages* item 7 (*The hero
+generic*); where the photo appears is `rules/ux-rules.md` §13 *Event Pages* item 6 (*The hero
 shows the sport's photo*) and the link preview is item 6 (*Every page with copy has its link
 preview*). Read the item for the picture you are changing first. One photo per sport serves the
 email header and the event page hero through `sportHeaderImagePath`, so changing it changes both.

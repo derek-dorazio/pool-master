@@ -27,7 +27,7 @@ export function CreateContestAction({ layout = 'inline', leagues, template, test
   leagues: readonly LeagueDto[];
   template: ContestConfigTemplateDto | undefined;
   testId: string;
-  /** The way to play, for the compact button's name: "Tiered", "Clutch Card". */
+  /** The way to play, for the compact button's name: "Tiered", "Survivor". */
   typeName: string;
 }) {
   if (!template || leagues.length === 0) {

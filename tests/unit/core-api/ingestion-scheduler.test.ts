@@ -29,6 +29,7 @@ import type {
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { JobTrigger, Sport } from '@poolmaster/shared/domain';
+import { ProviderRateLimitedError } from '../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
@@ -1376,8 +1377,7 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
   const now = new Date('2026-11-12T18:00:00.000Z');
   const notified = { sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'live-event' };
 
-  function schedulerFor(config: ReturnType<typeof createEnabledScheduleConfig>) {
-    const provider = fakeSportDataProvider();
+  function schedulerFor(config: ReturnType<typeof createEnabledScheduleConfig>, provider = fakeSportDataProvider()) {
     const syncRun = {
       id: 'webhook-sync-run-1',
       providerId: 'mock-provider',
@@ -1422,6 +1422,21 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
         scope: expect.objectContaining({ sport: Sport.GOLF, eventId: 'live-event', feeds: ['EVENTLIVESCORES'] }),
       }),
     }));
+  });
+
+  it('throws a provider\'s rate-limit refusal out of the sync, so its job is queued again for when the provider answers', async () => {
+    const refusal = new ProviderRateLimitedError('mock-provider', new Date(now.getTime() + 60_000), 'its circuit is open');
+    const { scheduler } = schedulerFor(createEnabledScheduleConfig(), fakeSportDataProvider({ getLiveScores: jest.fn().mockRejectedValue(refusal) }));
+
+    await expect(scheduler.runNotifiedEventSync(notified, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK })).rejects.toBe(refusal);
+  });
+
+  it('keeps any other provider failure as the run\'s FAILED outcome, as before', async () => {
+    const { scheduler } = schedulerFor(createEnabledScheduleConfig(), fakeSportDataProvider({ getLiveScores: jest.fn().mockRejectedValue(new Error('503 down')) }));
+
+    const job = await scheduler.runNotifiedEventSync(notified, { jobId: 'job-1', trigger: JobTrigger.WEBHOOK });
+
+    expect(job?.status).toBe('FAILED');
   });
 
   it('syncs nothing while live score syncs are switched off for the sport', async () => {

@@ -48,7 +48,7 @@ describe('failedJobCount', () => {
 });
 
 describe('isSyncedLeague', () => {
-  it('takes the overview\'s provider once read, so a Clutch Card counts as synced through its parent, and the league\'s own setting before', () => {
+  it('takes the overview\'s provider once read, and the league\'s own setting before', () => {
     expect(isSyncedLeague({ selectedProviderMapping: null }, { providerId: 'balldontlie' })).toBe(true);
     expect(isSyncedLeague({ selectedProviderMapping: providerMappingFixture() }, { providerId: null })).toBe(false);
     expect(isSyncedLeague({ selectedProviderMapping: providerMappingFixture() }, undefined)).toBe(true);
@@ -71,22 +71,22 @@ describe('defaultEventYear', () => {
 });
 
 describe('leagueParticipantColumnIds', () => {
-  it('gives individual players Country and teams Short name, never Team or Position off a Clutch Card', () => {
-    const golfers = [participant({ nationality: 'USA', ranking: 1, feedId: 'bdl-1', lastInFeedAt: '2027-01-02T00:00:00.000Z', teamAffiliation: 'None', role: 'G' })];
-    expect(leagueParticipantColumnIds(golfers, { isClutchCard: false })).toEqual(['ranking', 'nationality', 'feedId', 'lastInFeedAt']);
+  it('gives individual players Country and teams Short name', () => {
+    const golfers = [participant({ nationality: 'USA', ranking: 1, feedId: 'bdl-1', lastInFeedAt: '2027-01-02T00:00:00.000Z' })];
+    expect(leagueParticipantColumnIds(golfers)).toEqual(['ranking', 'nationality', 'feedId', 'lastInFeedAt']);
 
     const teams = [participant({ participantType: 'TEAM', name: 'Boston Celtics', shortName: 'BOS', nationality: 'USA' })];
-    expect(leagueParticipantColumnIds(teams, { isClutchCard: false })).toEqual(['shortName']);
+    expect(leagueParticipantColumnIds(teams)).toEqual(['shortName']);
   });
 
-  it('gives a Clutch Card\'s players Team and Position, and no Country', () => {
+  it('gives players with a team and position the Team and Position columns', () => {
     const players = [participant({ teamAffiliation: 'Dodgers', role: 'SS', nationality: 'USA' })];
-    expect(leagueParticipantColumnIds(players, { isClutchCard: true })).toEqual(['teamAffiliation', 'role']);
+    expect(leagueParticipantColumnIds(players)).toEqual(['nationality', 'teamAffiliation', 'role']);
   });
 
   it('leaves out a column no participant has a value for, so none is blank for the whole league', () => {
-    expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2' })], { isClutchCard: false })).toEqual([]);
-    expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2', ranking: 4 })], { isClutchCard: false })).toEqual(['ranking']);
+    expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2' })])).toEqual([]);
+    expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2', ranking: 4 })])).toEqual(['ranking']);
   });
 });
 

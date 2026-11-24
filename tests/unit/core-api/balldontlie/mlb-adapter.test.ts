@@ -68,7 +68,7 @@ describe('BalldontlieAdapter (MLB)', () => {
   });
 
   describe('getUpcomingEvents', () => {
-    it('lists each postseason starting in the range, reading the seasons of the years it covers, and no round of it, since no MLB round is a Clutch Card yet', async () => {
+    it('lists each postseason starting in the range, reading the seasons of the years it covers, and no event per round of it', async () => {
       const harness = setup();
       restore = harness.restore;
 

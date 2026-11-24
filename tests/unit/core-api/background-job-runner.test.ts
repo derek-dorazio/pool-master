@@ -5,6 +5,7 @@ import {
   BackgroundJobRunner,
   DISCARD_BACKGROUND_JOB,
   PermanentBackgroundJobError,
+  readBackgroundJobMaxTasks,
   readBackgroundJobPollMs,
   type BackgroundJobAnswer,
   type BackgroundJobContext,
@@ -12,6 +13,7 @@ import {
   type BackgroundJobPayload,
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
+import { ProviderRateLimitedError } from '../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import { inMemoryBackgroundJobs, jobHandlers, TEST_JOB_START, type InMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 const START = new Date('2026-11-07T12:00:00.000Z').getTime();
@@ -213,6 +215,67 @@ describe('background job runner (#1440)', () => {
     expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 1 });
     expect(only(jobs).lastError).toContain('PROVIDER_LEAGUE_REFUSED');
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.failed' }), expect.any(String));
+  });
+
+  it('queues a job a provider\'s rate limit turned away again for the time the provider will answer, without counting the try', async () => {
+    let calls = 0;
+    let now = () => new Date(START);
+    const { jobs, runner, queue, logger, handler, time } = setup({
+      handler: () => {
+        calls += 1;
+        if (calls <= 5) {
+          const deferUntil = new Date(now().getTime() + 2 * MINUTE);
+          return Promise.reject(new Error('feed failed', { cause: new ProviderRateLimitedError('test-provider', deferUntil, 'its circuit is open') }));
+        }
+        return Promise.resolve({ changedCount: 1 });
+      },
+    });
+    now = time.now;
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.QUEUED, runAt: new Date(START + 2 * MINUTE), attempts: 0, errorType: JobErrorType.RATE_LIMITED });
+    expect(only(jobs).lastError).toContain('test-provider is rate limiting PoolMaster');
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.deferred' }), expect.any(String));
+
+    // Turned away more times than the job's attempts allow, it still runs once the provider answers.
+    for (let turn = 0; turn < 4; turn += 1) {
+      time.advance(2 * MINUTE);
+      await runner.drain();
+      expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.QUEUED, attempts: 0 });
+    }
+    time.advance(2 * MINUTE);
+    await runner.drain();
+
+    expect(handler).toHaveBeenCalledTimes(6);
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.SUCCEEDED, attempts: 1 });
+    expect(handler).toHaveBeenLastCalledWith(syncPayload(), expect.objectContaining({ attempt: 1 }));
+  });
+
+  it('fails a permanent failure for good even when its cause was a rate limit, so a refused league is never deferred forever', async () => {
+    const cause = new ProviderRateLimitedError('test-provider', new Date(START + MINUTE), 'still 429 after every retry');
+    const { jobs, runner, queue } = setup({ handler: () => Promise.reject(new PermanentBackgroundJobError('gone', { cause })) });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.FAILED, attempts: 1 });
+  });
+
+  it('records nothing from a deferred try that outran its lease and was claimed again', async () => {
+    const { jobs, runner, queue, logger } = setup({
+      handler: () => {
+        jobs.rows[0].attempts += 1;
+        return Promise.reject(new ProviderRateLimitedError('test-provider', new Date(START + MINUTE), 'its circuit is open'));
+      },
+    });
+    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload());
+
+    await runner.drain();
+
+    expect(only(jobs)).toMatchObject({ status: BackgroundJobStatus.RUNNING, attempts: 2 });
+    expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'backgroundJobs.claimLost' }), expect.any(String));
   });
 
   it('leaves a job queued for later untouched until its run time comes', async () => {
@@ -522,5 +585,17 @@ describe('background job poll interval (#1440)', () => {
 
   it.each(['0', '-5', '1.5', 'soon'])('refuses to start when BACKGROUND_JOB_POLL_MS is "%s"', (raw) => {
     expect(() => readBackgroundJobPollMs({ BACKGROUND_JOB_POLL_MS: raw })).toThrow(/BACKGROUND_JOB_POLL_MS must be a whole number/);
+  });
+});
+
+describe('background job task pool size (league model 1c)', () => {
+  it('is 1 unless BACKGROUND_JOB_MAX_TASKS sets a whole number above 0', () => {
+    expect(readBackgroundJobMaxTasks({})).toBe(1);
+    expect(readBackgroundJobMaxTasks({ BACKGROUND_JOB_MAX_TASKS: '' })).toBe(1);
+    expect(readBackgroundJobMaxTasks({ BACKGROUND_JOB_MAX_TASKS: '3' })).toBe(3);
+  });
+
+  it.each(['0', '-1', '2.5', 'many'])('refuses to start when BACKGROUND_JOB_MAX_TASKS is "%s"', (raw) => {
+    expect(() => readBackgroundJobMaxTasks({ BACKGROUND_JOB_MAX_TASKS: raw })).toThrow(/BACKGROUND_JOB_MAX_TASKS must be a whole number above 0/);
   });
 });

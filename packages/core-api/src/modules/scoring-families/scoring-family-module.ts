@@ -11,8 +11,6 @@
  * - **Head to head** (basketball's bracket, #698): points per match won, by the round's value
  *   plus a seed upset bonus (#699). It reads the event's matches (who beat whom) as its own field
  *   read; the methods below take what it needs from the field.
- * - **Composite** (championship stat pools, #934): each game a player's sport composite of their
- *   stat lines, summed; a game not played scores 0. A sport league names it, not a sport.
  *
  * Each method is here because golf already does it and a second family does it differently.
  */

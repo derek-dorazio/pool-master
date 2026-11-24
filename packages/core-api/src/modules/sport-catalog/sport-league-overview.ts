@@ -4,24 +4,19 @@
  * every league's facts in a fixed number of grouped reads; everything here is computed from them.
  */
 import type {
-  SportLeagueClutchCardEvent,
   SportLeagueOverdueCandidate,
   SportLeagueEventYearSpan,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
-  SportLeagueOverviewLeague,
   SportLeagueOverviewReader,
 } from '@poolmaster/shared/db';
 import {
   compareByEnumOrder,
-  isClutchCardLeague,
   overdueExpectedEnd,
-  ProviderSyncKind,
   ProviderSyncKindOrder,
   ProviderSyncRunStatus,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
-  SportLeagueKind,
   SportLeagueSyncHealth,
   SportOrder,
   type OverdueEventFacts,
@@ -41,57 +36,31 @@ export class SportLeagueOverviewService {
   }
 }
 
-/**
- * Every sport league's overview, by sport (most popular first), then by name, each Clutch Card
- * straight after its parent league.
- */
+/** Every sport league's overview, by sport (most popular first), then by name. */
 export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: Date): SportLeagueOverview[] {
-  const leagueById = new Map(facts.leagues.map((league) => [league.id, league]));
   const runsByLeague = groupBy(facts.latestSyncRuns, (run) => run.sportLeagueId);
   const heldByLeague = groupBy(facts.heldEvents, (event) => event.sportLeagueId);
   const spansByLeague = groupBy(facts.eventYearSpans, (span) => span.sportLeagueId);
-  const clutchByLeague = groupBy(facts.clutchCardEvents, (event) => event.sportLeagueId);
   const overdueByLeague = groupBy<SportLeagueOverdueCandidate>(facts.overdueCandidates, (event) => event.sportLeagueId);
 
   const overviews = facts.leagues.map((league): SportLeagueOverview => {
-    const clutchCard = isClutchCardLeague(league);
-    const parent = league.parentSportLeagueId === null ? undefined : leagueById.get(league.parentSportLeagueId);
-    const providerId = clutchCard ? parent?.syncProviderId ?? null : league.syncProviderId;
-    const runs = syncRunsOf(league, clutchCard, runsByLeague);
+    const providerId = league.syncProviderId;
+    const runs = runsByLeague.get(league.id) ?? [];
     const failedRuns = runs.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
     return {
       id: league.id,
       sport: league.sport,
       name: league.name,
-      parentSportLeagueId: league.parentSportLeagueId,
-      kind: clutchCard ? SportLeagueKind.CLUTCH_CARD : SportLeagueKind.REAL,
       providerId,
       isActive: league.isActive,
       syncHealth: syncHealthOf({ isActive: league.isActive, providerId, runCount: runs.length, failedRunCount: failedRuns.length }),
       issues: issuesOf(failedRuns, heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
-      season: clutchCard
-        ? seasonOf(clutchCardSpans(clutchByLeague.get(league.id) ?? []), now)
-        : seasonOf((spansByLeague.get(league.id) ?? []).map(yearSpan), now),
+      season: seasonOf((spansByLeague.get(league.id) ?? []).map(yearSpan), now),
       nextEventStartsAt: facts.nextEventStarts.get(league.id) ?? null,
       eventCount: facts.eventCounts.get(league.id) ?? 0,
     };
   });
-  return overviews.sort(compareOverviews(leagueById));
-}
-
-/**
- * The latest run of each of the league's syncs: its own field and scores runs, and its event list
- * run, a Clutch Card's from its parent league, whose event list sync creates its events.
- */
-function syncRunsOf(
-  league: SportLeagueOverviewLeague,
-  clutchCard: boolean,
-  runsByLeague: ReadonlyMap<string, SportLeagueLatestSyncRun[]>,
-): SportLeagueLatestSyncRun[] {
-  const own = runsByLeague.get(league.id) ?? [];
-  if (!clutchCard || league.parentSportLeagueId === null) return own;
-  const parentEventsRun = (runsByLeague.get(league.parentSportLeagueId) ?? []).filter((run) => run.kind === ProviderSyncKind.EVENTS);
-  return [...own.filter((run) => run.kind !== ProviderSyncKind.EVENTS), ...parentEventsRun];
+  return overviews.sort(compareOverviews);
 }
 
 /**
@@ -163,26 +132,6 @@ function yearSpan(span: SportLeagueEventYearSpan): SeasonSpan & { eventYear: num
 }
 
 /**
- * A Clutch Card league's seasons (#1820): each event covers rounds of its parent event, so each
- * event year spans the first to the last day of those rounds. An event whose parent has none of
- * them scheduled adds nothing.
- */
-function clutchCardSpans(events: readonly SportLeagueClutchCardEvent[]): (SeasonSpan & { eventYear: number })[] {
-  const byYear = new Map<number, SeasonSpan>();
-  for (const event of events) {
-    const covered = event.parentRounds.filter((round) => event.parentRoundNumbers.includes(round.roundNumber));
-    for (const round of covered) {
-      const end = round.scheduledEndAt !== null && round.scheduledEndAt > round.scheduledDate ? round.scheduledEndAt : round.scheduledDate;
-      const known = byYear.get(event.eventYear);
-      byYear.set(event.eventYear, known === undefined
-        ? { start: round.scheduledDate, end }
-        : { start: round.scheduledDate < known.start ? round.scheduledDate : known.start, end: end > known.end ? end : known.end });
-    }
-  }
-  return [...byYear].map(([eventYear, span]) => ({ eventYear, ...span }));
-}
-
-/**
  * The season to show: the event year under way now; between seasons the next one to start; with
  * no next one known, the latest that ended. Null when the league has no events yet.
  */
@@ -194,18 +143,10 @@ export function seasonOf(spans: readonly (SeasonSpan & { eventYear: number })[],
   return chosen === undefined ? null : { start: chosen.start, end: chosen.end };
 }
 
-function compareOverviews(leagueById: ReadonlyMap<string, SportLeagueOverviewLeague>) {
-  const compareSport = compareByEnumOrder(SportOrder);
-  // A Clutch Card sorts under its parent: by the parent's name, after it.
-  const parentOf = (overview: SportLeagueOverview) => (overview.kind === SportLeagueKind.CLUTCH_CARD && overview.parentSportLeagueId !== null
-    ? leagueById.get(overview.parentSportLeagueId)
-    : undefined);
-  const familyName = (overview: SportLeagueOverview) => parentOf(overview)?.name ?? overview.name;
-  const isChild = (overview: SportLeagueOverview) => (parentOf(overview) === undefined ? 0 : 1);
-  return (left: SportLeagueOverview, right: SportLeagueOverview): number => compareSport(left.sport, right.sport)
-    || familyName(left).localeCompare(familyName(right))
-    || isChild(left) - isChild(right)
-    || left.name.localeCompare(right.name);
+const compareSport = compareByEnumOrder(SportOrder);
+
+function compareOverviews(left: SportLeagueOverview, right: SportLeagueOverview): number {
+  return compareSport(left.sport, right.sport) || left.name.localeCompare(right.name);
 }
 
 function groupBy<T>(items: readonly T[], key: (item: T) => string): Map<string, T[]> {

@@ -3,38 +3,38 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataGrid } from "./data-grid";
 import { optionsFromLabels } from "./data-grid-filters";
 
-type Sport = { id: string; name: string; leagueKind: string };
+type Team = { id: string; name: string; conference: string };
 
-const KINDS = { REAL: "Real", CLUTCH_CARD: "Clutch Card" };
-const LEAGUES: Sport[] = [
-  { id: "1", name: "MLB", leagueKind: "REAL" },
-  { id: "2", name: "World Series", leagueKind: "CLUTCH_CARD" },
-  { id: "3", name: "NBA", leagueKind: "REAL" },
+const CONFERENCES = { EAST: "East", WEST: "West" };
+const TEAMS: Team[] = [
+  { id: "1", name: "Boston Celtics", conference: "EAST" },
+  { id: "2", name: "Denver Nuggets", conference: "WEST" },
+  { id: "3", name: "New York Knicks", conference: "EAST" },
 ];
-const COLUMNS: ColumnDef<Sport>[] = [
-  { accessorKey: "name", header: "Sport league", meta: { type: { kind: "text" } } },
+const COLUMNS: ColumnDef<Team>[] = [
+  { accessorKey: "name", header: "Team", meta: { type: { kind: "text" } } },
   {
-    accessorKey: "leagueKind",
-    header: "Kind",
-    meta: { type: { kind: "enum", values: optionsFromLabels(KINDS) } },
-    cell: ({ getValue }) => KINDS[getValue<keyof typeof KINDS>()],
+    accessorKey: "conference",
+    header: "Conference",
+    meta: { type: { kind: "enum", values: optionsFromLabels(CONFERENCES) } },
+    cell: ({ getValue }) => CONFERENCES[getValue<keyof typeof CONFERENCES>()],
   },
 ];
 
-function KindFilter() {
-  return <DataGrid columns={COLUMNS} data={LEAGUES} emptyMessage="No sport leagues match." getRowId={(league) => league.id} />;
+function ConferenceFilter() {
+  return <DataGrid columns={COLUMNS} data={TEAMS} emptyMessage="No teams match." getRowId={(team) => team.id} />;
 }
 
 const meta = {
   title: "Tables/DataGridColumnFilter",
-  component: KindFilter,
-} satisfies Meta<typeof KindFilter>;
+  component: ConferenceFilter,
+} satisfies Meta<typeof ConferenceFilter>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * A `DataGrid` column's filter, drawn by its header's funnel: Kind is an enum column (a checkbox
- * per value), Sport league a text column (contains).
+ * A `DataGrid` column's filter, drawn by its header's funnel: Conference is an enum column (a checkbox
+ * per value), Team a text column (contains).
  */
 export const EnumAndText: Story = {};

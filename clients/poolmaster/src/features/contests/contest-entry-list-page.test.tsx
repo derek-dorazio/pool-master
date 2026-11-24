@@ -527,7 +527,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     expect(listEventTiersMock).not.toHaveBeenCalled();
   });
 
-  it('shows a Clutch Card pick with its team and playing role beside its name', async () => {
+  it('shows a player pick with its team and playing role beside its name', async () => {
     const player = { pickId: 'pick-9', sportEventParticipantId: 'sep-9', sportEventId: 'event-1', participantId: 'participant-9', participantName: 'Patrick Mahomes', pickedAt: '2026-04-01T00:00:00.000Z', teamAffiliation: 'KC', role: 'QB' };
     primeMocks({ entries: [buildEntry({ id: 'entry-1', name: 'Birdie Hunters 1', picksCount: 1, participants: [player] })], field: { 'sep-9': { tierId: 'tier-a' } }, tiers: { 'tier-a': 1 } });
 

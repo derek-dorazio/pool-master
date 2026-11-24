@@ -6,9 +6,8 @@ import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type { EntryTiebreakerUi } from './scoring-family-ui/types';
 
 /**
- * The definition a contest plays (#936): its events' sport league's, so a World Series stat pool
- * plays baseball's composite with players, not its bracket. A contest covers one sport league, so
- * its first event's overrides are every event's. Null for a contest with no sport.
+ * The definition a contest plays (#936): its events' sport league's. A contest covers one sport
+ * league, so its first event's overrides are every event's. Null for a contest with no sport.
  */
 export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportDefinition | null {
   if (!contest.sport) {
@@ -19,7 +18,7 @@ export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'spor
 }
 
 /**
- * "player" in a stat pool, "golfer" in golf: what a roster contest's screens call one pick. A
+ * "team" in basketball, "golfer" in golf: what a roster contest's screens call one pick. A
  * contest with no sport reads the generic word: every contest created today runs on an event and
  * so has a sport; this is the reading of the `sport: null` the contest contract still allows.
  */
@@ -60,7 +59,7 @@ export function contestTieLabel(sport: Sport | null | undefined): string {
 
 /**
  * The tiebreaker a contest's entries predict, from its scoring family: a golf entry's winning
- * score against par, none for a race or a stat pool. A contest with no sport asks for none.
+ * score against par, none for a race. A contest with no sport asks for none.
  */
 export function contestEntryTiebreaker(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): EntryTiebreakerUi | null {
   const definition = contestSportDefinition(contest);
@@ -84,8 +83,7 @@ export function selectionParticipantLabel(participant: Pick<SelectionParticipant
 
 /**
  * Who a participant plays for, with their position when it is known, as a roster row's second
- * line: "Los Angeles Dodgers · SS" for a stat pool player (#936). Null for a participant with no
- * team, such as a golfer.
+ * line: "Los Angeles Dodgers · SS". Null for a participant with no team, such as a golfer.
  */
 export function participantAffiliation(participant: Pick<SelectionParticipant, 'team' | 'role'>): string | null {
   if (!participant.team) {

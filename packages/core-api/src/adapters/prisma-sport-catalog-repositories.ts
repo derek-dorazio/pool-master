@@ -4,7 +4,7 @@
  * SportEventRound, SportEventParticipant, SportEventTier,
  * and SportEventParticipantValuation.
  *
- * Sport extension rows (golf rounds and standings, stat lines, race results, matches) have
+ * Sport extension rows (golf rounds and standings, race results, matches) have
  * their own adapters. The one exception is the field read (#1163): a field row comes with
  * every extension at once, mapped by those adapters' own mappers.
  */
@@ -66,14 +66,13 @@ import type {
   SportLeague,
   SportLeagueProviderMapping,
 } from '@poolmaster/shared/domain';
-import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, providerSourceIdOf, ScoringFamily, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
+import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, MatchSide, SportOrder, ParticipantInactiveReason, ParticipantStatus, providerSourceIdOf, SportEventStatus, SportEventSyncScope, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
 import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
-import { toStatLine } from './prisma-stat-line-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 
 type Db = PrismaClient;
@@ -174,20 +173,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return rows.map(toSportLeague);
   }
 
-  async findEventSyncedWithClutchCards(): Promise<SportLeague[]> {
-    const rows = await this.prisma.sportLeague.findMany({
-      where: {
-        OR: [
-          EVENT_SYNCED_LEAGUE,
-          { isActive: true, scoringFamily: ScoringFamily.COMPOSITE, parentSportLeague: EVENT_SYNCED_LEAGUE },
-        ],
-      },
-      include: SELECTED_PROVIDER_MAPPING_INCLUDE,
-      orderBy: { name: 'asc' },
-    });
-    return rows.map(toSportLeague);
-  }
-
   async create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague> {
     return toSportLeague(await this.prisma.sportLeague.create({
       data: {
@@ -251,8 +236,6 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         contestTemplateCount: await tx.contestConfigTemplate.count({ where: { sportLeagueId: id } }),
         eventPageOfferCount: await tx.eventPageOffer.count({ where: { sportLeagueId: id } }),
         cupCount: await tx.cup.count({ where: { sportLeagueId: id } }),
-        // A round inserted meanwhile takes FOR KEY SHARE on this row too, so it is counted or fails.
-        roundCount: await tx.sportLeague.count({ where: { parentSportLeagueId: id } }),
         participantCount: await tx.participant.count({ where: { sportLeagueId: id } }),
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
@@ -369,8 +352,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
         eventYear: input.eventYear,
         syncScope: input.syncScope,
         autoLifecycleEnabled: input.autoLifecycleEnabled,
-        parentEventId: input.parentEvent?.id ?? null,
-        parentRoundNumbers: [...(input.parentEvent?.roundNumbers ?? [])],
       })),
       include: SPORT_EVENT_INCLUDE,
     });
@@ -437,7 +418,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
       // The bracket first: its matches name field rows and rounds.
       this.prisma.sportEventMatch.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
-      this.prisma.sportEventParticipantStatLine.deleteMany({ where: { participantRound: field } }),
       this.prisma.sportEventParticipantRound.deleteMany({ where: field }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: field }),
@@ -574,15 +554,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
       _count: { _all: true },
     });
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
-  }
-
-  async countClutchCardEvents(parentEventIds: readonly string[]): Promise<Map<string, number>> {
-    const groups = await this.prisma.sportEvent.groupBy({
-      by: ['parentEventId'],
-      where: { parentEventId: { in: [...parentEventIds] } },
-      _count: { _all: true },
-    });
-    return countMap(parentEventIds, groups.flatMap((group) => (group.parentEventId === null ? [] : [[group.parentEventId, group._count._all] as const])));
   }
 
   async countBySportLeagues(
@@ -822,7 +793,7 @@ function fieldRowInclude() {
     valuation: true,
     standing: { include: { golf: true } },
     rounds: {
-      include: { sportEventRound: { select: { roundNumber: true } }, golf: true, statLines: { orderBy: { stat: 'asc' } } },
+      include: { sportEventRound: { select: { roundNumber: true } }, golf: true },
       orderBy: { sportEventRound: { roundNumber: 'asc' } },
     },
     raceResult: true,
@@ -868,7 +839,6 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
         updatedAt: round.updatedAt,
       },
       golf: round.golf ? toGolfRound(round.golf) : null,
-      statLines: round.statLines.map(toStatLine),
     })),
     raceResult: raceResult ? toRaceResult(raceResult) : null,
     matches: [...homeMatches, ...awayMatches]
@@ -991,7 +961,6 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     const own = { sportEventParticipantId: id };
     await this.prisma.$transaction([
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: own } }),
-      this.prisma.sportEventParticipantStatLine.deleteMany({ where: { participantRound: own } }),
       this.prisma.sportEventParticipantRound.deleteMany({ where: own }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: own } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: own }),
@@ -1270,8 +1239,6 @@ function toSportLeague(row: SportLeagueRow): SportLeague {
     displayOrder: row.displayOrder,
     participantType: row.participantType,
     scoringFamily: row.scoringFamily,
-    parentSportLeagueId: row.parentSportLeagueId,
-    parentRoundNumbers: row.parentRoundNumbers,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -1289,8 +1256,6 @@ const SPORT_EVENT_INCLUDE = {
       sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true, ...SYNC_PROVIDER_SELECT } },
     },
   },
-  // A Clutch Card event's parent's name (#1820); null on every other event.
-  parentEvent: { select: { name: true } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1322,9 +1287,6 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
     ...(row.tierConfig !== null && { tierConfig: EventTierConfigSchema.parse(row.tierConfig) }),
-    ...(row.parentEventId !== null && row.parentEvent !== null && {
-      parentEvent: { id: row.parentEventId, name: row.parentEvent.name, roundNumbers: row.parentRoundNumbers },
-    }),
     ...(row.autoReleaseCheckedAt !== null && row.autoReleaseOutcome !== null && {
       autoReleaseCheck: { checkedAt: row.autoReleaseCheckedAt, outcome: row.autoReleaseOutcome, failedChecks: row.autoReleaseFailedChecks },
     }),

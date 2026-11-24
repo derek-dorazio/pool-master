@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { ProviderLeagueRefusedError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { ProviderRateLimitedError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 import { fakeLogger } from '../../../support/fake-logger';
@@ -23,6 +24,8 @@ const YEAR_2026 = { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-1
 
 const refused: FakeRoute = () => ({ status: 401, body: { error: 'Unauthorized' } });
 const failing: FakeRoute = () => ({ status: 400, body: { error: 'Bad request' } });
+/** A 429 asking for a minute, longer than one call waits, so the call ends rate limited at once. */
+const rateLimited: FakeRoute = () => ({ status: 429, body: { error: 'Too many requests' }, headers: { 'retry-after': '60' } });
 
 const nflRoutes: Record<string, FakeRoute> = {
   '/nfl/v1/games': pagedRoute(z.object({ data: z.array(z.looseObject({ id: z.number() })) }).parse(readBalldontlieFixture('nfl', 'games-2026-week-12.json')).data),
@@ -96,6 +99,19 @@ describe('BalldontlieAdapter reads each league of a sport on its own', () => {
 
     await expect(harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026)).resolves.toHaveLength(1);
     expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ league: 'CFP', refused: false, status: 400 }), expect.any(String));
+  });
+
+  it.each(['events', 'participants'] as const)('fails the sport\'s %s as rate limited when one league\'s read is rate limited, rather than syncing a partial list', async (read) => {
+    const logger = fakeLogger();
+    const harness = setup({ ...nflRoutes, '/ncaaf/v1/games': rateLimited, '/ncaaf/v1/teams': rateLimited }, logger);
+    restore = harness.restore;
+
+    const listing = read === 'events'
+      ? harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, YEAR_2026)
+      : harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
+
+    await expect(listing).rejects.toBeInstanceOf(ProviderRateLimitedError);
+    expect(logger.warn).not.toHaveBeenCalledWith(expect.objectContaining({ action: 'balldontlie.league.unavailable' }), expect.any(String));
   });
 
   it('fails the sport\'s list as before when every one of its leagues is refused', async () => {

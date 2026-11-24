@@ -15,6 +15,7 @@ import type { ProviderRegistry } from './provider-registry';
 import { BalldontlieAdapter, MockContestFeedAdapter } from '../adapters';
 import { AppEnvironment, isDeployedEnvironment, readAppEnv } from '../../../core/config';
 import { errorMessage } from '../../../core/error-message';
+import { readBackgroundJobMaxTasks } from '../../background-jobs/background-job-runner';
 
 const MOCK_PROVIDER_ID = 'mock-contest-feed';
 
@@ -60,6 +61,7 @@ const rowFactories: Readonly<Record<ProviderCode, RowFactory>> = {
       },
       apiKey,
       leagues: rows.enabledLeagues(row.code),
+      maxTasks: readBackgroundJobMaxTasks(env),
       ...(logger && { logger }),
     });
   },

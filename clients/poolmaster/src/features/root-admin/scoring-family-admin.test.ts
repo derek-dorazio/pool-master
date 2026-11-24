@@ -2,7 +2,6 @@ import { SUPPORTED_SPORTS, ScoringFamily, Sport, getSportDefinition } from '@poo
 import { describe, expect, it } from 'vitest';
 import { GolfRoundScoresPanel } from './golf-round-scores-panel';
 import { RaceFinishingOrderPanel } from './race-finishing-order-panel';
-import { StatLinesPanel } from './stat-lines-panel';
 import { SCORING_FAMILY_ADMIN_UI, getScoringFamilyAdminUi } from './scoring-family-admin';
 
 describe('Scoring family admin registry (plans/racing-sports.md Q9.6)', () => {
@@ -20,14 +19,6 @@ describe('Scoring family admin registry (plans/racing-sports.md Q9.6)', () => {
     expect(ui.ResultsPanel).toBe(RaceFinishingOrderPanel);
     expect(ui.resultsLabel).toBe('Results');
     expect(ui.scoresUnplayedRoundsAgainstPar).toBe(false);
-  });
-
-  it('gives a stat pool event of a team sport the stat grid, named Stats, where its sport\'s own events keep the bracket', () => {
-    const ui = getScoringFamilyAdminUi({ sport: Sport.BASEBALL, participantType: 'INDIVIDUAL', scoringFamily: ScoringFamily.COMPOSITE });
-
-    expect(ui.ResultsPanel).toBe(StatLinesPanel);
-    expect(ui.resultsLabel).toBe('Stats');
-    expect(getScoringFamilyAdminUi({ sport: Sport.BASEBALL, participantType: null, scoringFamily: null }).resultsLabel).toBe('Bracket');
   });
 
   it('reaches every supported sport\'s results through its scoring family, never by sport', () => {

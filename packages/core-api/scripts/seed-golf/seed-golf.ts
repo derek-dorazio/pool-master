@@ -43,11 +43,10 @@
  * instead, because removing it would break that entry.
  */
 
-import { eventPlaysMatches, findSportRow, getSportDefinition, MatchSide, MatchStatus, ScoringFamily, type Sport, type SportDefinition, SportEventStatus, sportLeagueDefinitionOf, sportPlaysMatches, type SportStat } from '@poolmaster/shared/domain';
+import { eventPlaysMatches, findSportRow, getSportDefinition, MatchSide, MatchStatus, ScoringFamily, type Sport, type SportDefinition, SportEventStatus, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
-  GameStatLineUploadRequest,
   LoadSportEventBracketRequest,
   SportEventBracketResponse,
   SportEventListResponse,
@@ -58,7 +57,6 @@ import type {
 } from '@poolmaster/shared/generated/hey-api';
 import {
   addEventParticipants,
-  applyEventGameStatLines,
   applyEventGolfRoundScores,
   applyEventRaceResults,
   bindParticipantProviderMapping,
@@ -101,7 +99,6 @@ import {
   type StoredTestEvent,
   testEventTransitions,
   testSeedEventNameOf,
-  testSeedParentEventId,
   type TestSeedSelection,
 } from './seed-golf-data';
 import {
@@ -111,7 +108,6 @@ import {
   type SportDataEvent,
   type SportDataFieldEntry,
   type SportDataFile,
-  type SportDataGame,
   type SportDataLeague,
   type SportDataMatch,
   type SportDataPlayer,
@@ -145,7 +141,6 @@ type StoredEvent = SportEventListResponse['events'][number];
 type StoredFieldRow = SportEventParticipantResponse['participant'];
 type FieldPatch = UpdateSportEventParticipantsRequest['participants'][number];
 type StoredMatch = SportEventBracketResponse['matches'][number];
-type StatLineRow = GameStatLineUploadRequest['rows'][number];
 type BracketMatchWrite = LoadSportEventBracketRequest['matches'][number];
 /** What a field is written from: a file event's field, or a test slate's players. */
 type FieldSource = Pick<SportDataEvent, 'name' | 'field'>;
@@ -323,64 +318,10 @@ function bracketChanges(
   return { changes: changes.length > 0 ? [...changes, 'bracket loaded whole again'] : [], conflicts: [], edits: [] };
 }
 
-/** A line's stats as sent: each stat the file gives. */
-function lineStats(stats: SportDataGame['lines'][number]['stats']): StatLineRow['stats'] {
-  return Object.entries(stats).map(([stat, value]) => ({ stat: stat as SportStat, value }));
-}
-
-/** A line as one comparable string, its stats in a fixed order. */
-function lineKey(stats: StatLineRow['stats']): string {
-  return stats.map(({ stat, value }) => `${stat}=${value}`).sort().join(',');
-}
-
-/**
- * The lines each game's box score would change: for every game the file gives, the players whose
- * stored line differs from the file's, and an empty line for a player the stored game has who is
- * not in the file's (they did not play it). A dry run's new player, with no id yet, has no stored
- * line and counts as a change.
- */
-function statChanges(
-  event: SportDataEvent,
-  participantIds: ReadonlyMap<string, string | null>,
-  storedField: readonly StoredFieldRow[],
-): { games: Array<{ gameNumber: number; rows: StatLineRow[]; dryRunAdds: number }>; changes: string[] } {
-  const byParticipant = new Map(storedField.map((row) => [row.participantId, row]));
-  const games = (event.games ?? []).map((game) => {
-    const storedLine = (participantId: string): string => {
-      const round = byParticipant.get(participantId)?.rounds.find((candidate) => candidate.roundNumber === game.gameNumber);
-      return lineKey(round?.statLines ?? []);
-    };
-    const listed = new Set<string>();
-    const rows: StatLineRow[] = [];
-    let dryRunAdds = 0;
-    for (const line of game.lines) {
-      const participantId = found(participantIds.get(line.player), `${event.name}: the participant id for ${line.player}`);
-      const stats = lineStats(line.stats);
-      if (participantId === null) {
-        dryRunAdds += 1;
-        continue;
-      }
-      listed.add(participantId);
-      if (storedLine(participantId) !== lineKey(stats)) rows.push({ participantId, stats });
-    }
-    for (const row of storedField) {
-      if (!listed.has(row.participantId) && storedLine(row.participantId) !== '') rows.push({ participantId: row.participantId, stats: [] });
-    }
-    return { gameNumber: game.gameNumber, rows, dryRunAdds };
-  });
-  const changes = games.flatMap(({ gameNumber, rows, dryRunAdds }) => {
-    const count = rows.length + dryRunAdds;
-    return count === 0 ? [] : [`game ${gameNumber}: ${count} line${count === 1 ? '' : 's'}`];
-  });
-  return { games, changes };
-}
-
 class Loader {
   readonly rows: LoadRow[] = [];
   /** Each sport league's definition on the site, by name: its sport's, with what the league overrides. */
   private readonly leagueDefinitions = new Map<string, SportDefinition>();
-  /** Each Clutch Card league's parent league and the rounds of it the league covers, by name (#1820). */
-  private readonly leagueParents = new Map<string, { parentSportLeagueId: string; parentRoundNumbers: readonly number[] }>();
   private readonly apply: boolean;
   private readonly contents: ReadonlySet<SportDataContent>;
   private readonly offsetDays: number;
@@ -443,14 +384,7 @@ class Loader {
     const { name, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
     const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
-    // A stat pool league is reference data (its overrides come with its migration), never made here.
-    if (this.contents.has(SportDataContent.STATS) && existing?.scoringFamily !== ScoringFamily.COMPOSITE) {
-      throw new Error(`${name} is not a stat pool sport league on the site; box scores load only onto one.`);
-    }
     this.leagueDefinitions.set(name, existing ? sportLeagueDefinitionOf(this.sport, existing) : getSportDefinition(this.sport));
-    if (existing?.parentSportLeagueId && existing.parentRoundNumbers.length > 0) {
-      this.leagueParents.set(name, { parentSportLeagueId: existing.parentSportLeagueId, parentRoundNumbers: existing.parentRoundNumbers });
-    }
     if (existing) {
       const changed = bracketAdvancement !== undefined && existing.bracketAdvancement !== bracketAdvancement;
       const change = `bracket advancement ${existing.bracketAdvancement} -> ${bracketAdvancement}`;
@@ -474,9 +408,8 @@ class Loader {
     }
     this.report({ sportLeague: name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.ADD, name, detail: null });
     if (!this.apply) return null;
-    // A new league tiers as the sport's own leagues do (not a stat pool round's) and prices with
-    // Standard (#1844).
-    const sibling = sportLeagues.find((row) => row.scoringFamily === null) ?? sportLeagues[0];
+    // A new league tiers as the sport's own leagues do and prices with Standard (#1844).
+    const sibling = sportLeagues[0];
     const { tierProfileId } = found(sibling, `Another ${this.sport} sport league, whose tier profile a new one names`);
     const { pricingProfileId } = await this.standardPricing(client);
     const created = await must(createSportLeague({
@@ -526,8 +459,6 @@ class Loader {
               externalId: player.key,
               nationality: player.countryCode,
               ...splitName(player.name),
-              ...(player.position && { role: player.position }),
-              ...(player.team && { teamAffiliation: player.team }),
             },
           }), `Create player ${player.name}`);
           id = created.participant.id;
@@ -565,17 +496,6 @@ class Loader {
       for (const mapping of providerMappings) byFeedId.set(feedKey(mapping.providerId, mapping.externalId), mapping.participantId);
     }
     return byFeedId;
-  }
-
-  /**
-   * For a test seed's event of a Clutch Card league, the test season event it names as its parent
-   * (`testSeedParentEventId`), or null when none is on the site; undefined for any other league.
-   */
-  private async testSeedParentEventId(client: Client, league: SportDataLeague): Promise<string | null | undefined> {
-    const parent = this.leagueParents.get(league.name);
-    if (!parent) return undefined;
-    const { events } = await must(listEvents({ client, query: { sportLeagueId: parent.parentSportLeagueId } }), `List ${league.name}'s season events`);
-    return testSeedParentEventId(events, parent.parentRoundNumbers);
   }
 
   private async loadLeague(league: SportDataLeague): Promise<void> {
@@ -767,19 +687,11 @@ class Loader {
     // Likewise an event with no matches has no bracket in the file yet.
     const matches = event.matches ?? [];
     const loadsBracket = this.contents.has(SportDataContent.BRACKET) && matches.length > 0;
-    // And one with no games has no box score in it yet.
-    const loadsStats = this.contents.has(SportDataContent.STATS) && (event.games ?? []).length > 0;
     const { stored } = input;
 
     if (!stored) {
       if (!loadsSchedule) {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not on the site, and this file does not carry the schedule' });
-        return;
-      }
-      // A test Clutch Card event names its season event itself: its moved dates no longer fall in it.
-      const parentEventId = this.testSeed ? await this.testSeedParentEventId(client, league) : undefined;
-      if (parentEventId === null) {
-        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not added: no test season event of its parent league is on the site yet, so load that league\'s test data first' });
         return;
       }
       this.report({
@@ -793,7 +705,6 @@ class Loader {
         this.report({ ...at, subject: LoadSubject.FIELD, action: LoadAction.ADD, detail: `${plan.add.length} players` });
       }
       if (loadsBracket) this.report({ ...at, subject: LoadSubject.BRACKET, action: LoadAction.ADD, detail: `${matches.length} matches` });
-      if (loadsStats) this.report({ ...at, subject: LoadSubject.STATS, action: LoadAction.ADD, detail: statChanges(event, participantIds, []).changes.join('; ') });
       if (!this.apply) return;
       const created = await must(createEvent({
         client,
@@ -806,7 +717,6 @@ class Loader {
           ...shiftedEventDates(event, this.offsetDays),
           rounds: event.rounds,
           autoLifecycleEnabled: false,
-          ...(parentEventId !== undefined && { parentEventId }),
         },
       }), `Create ${event.name}`);
       if (event.roundsPar !== null) {
@@ -822,7 +732,7 @@ class Loader {
     // Release locks a bracket event's pairings, seeds and play-in places with its field.
     const bracketLocked = eventPlaysMatches(stored) && stored.status !== SportEventStatus.DRAFT;
     const eventPlan = loadsSchedule ? this.eventChanges(event, stored) : { body: {}, changes: [] };
-    const storedField = loadsField || loadsBracket || loadsStats
+    const storedField = loadsField || loadsBracket
       ? (await must(listEventParticipants({ client, path: { eventId: stored.id } }), `Read the field of ${event.name}`)).participants
       : [];
     const storedBracket = loadsBracket || (loadsField && bracketLocked)
@@ -832,9 +742,6 @@ class Loader {
     const fieldPlan = loadsField ? this.fieldChanges(league, event, participantIds, storedField, filled) : null;
     const bracketPlan = loadsBracket ? bracketChanges(matches, participantIds, storedField, storedBracket, { locked: bracketLocked, filled }) : null;
     const finishesDraft = stored.status === SportEventStatus.DRAFT;
-    // Box scores go in while the series is played and after, whatever the event's status; a
-    // draft test event's go in as it is finished.
-    const statsPlan = loadsStats && !finishesDraft ? statChanges(event, participantIds, storedField) : null;
 
     if (!editable) {
       const differences = [...eventPlan.changes, ...(fieldPlan?.changes ?? [])];
@@ -844,7 +751,6 @@ class Loader {
         action: differences.length > 0 ? LoadAction.CONFLICT : LoadAction.SKIP,
         detail: differences.length > 0 ? `${stored.status}, so not changed: ${differences.join('; ')}` : null,
       });
-      if (statsPlan) await this.loadStats(client, stored.id, event, statsPlan);
       return;
     }
 
@@ -884,7 +790,6 @@ class Loader {
         await this.writeBracket(client, stored.id, event, participantIds, storedBracket);
       }
     }
-    if (statsPlan) await this.loadStats(client, stored.id, event, statsPlan);
     if (finishesDraft) await this.finishTestEvent(client, stored.id, event, participantIds);
   }
 
@@ -897,26 +802,6 @@ class Loader {
   /** The Standard pricing values, which every seeded event is priced with. */
   private async defaultPricing(client: Client): Promise<AutoAssignSportEventPricesRequest> {
     return (await this.standardPricing(client)).request;
-  }
-
-  /** Reports a stat pool event's box score changes, and in an apply writes them. */
-  private async loadStats(client: Client, eventId: string, event: SportDataEvent, plan: ReturnType<typeof statChanges>): Promise<void> {
-    this.report({
-      sportLeague: this.file.sportLeagues.find((league) => league.events.includes(event))?.name ?? '',
-      subject: LoadSubject.STATS,
-      name: event.name,
-      action: plan.changes.length > 0 ? LoadAction.UPDATE : LoadAction.SKIP,
-      detail: plan.changes.join('; ') || null,
-    });
-    if (this.apply) await this.writeStats(client, eventId, event, plan);
-  }
-
-  /** Writes each game's changed lines, a game at a time. */
-  private async writeStats(client: Client, eventId: string, event: SportDataEvent, plan: ReturnType<typeof statChanges>): Promise<void> {
-    for (const { gameNumber, rows } of plan.games) {
-      if (rows.length === 0) continue;
-      await must(applyEventGameStatLines({ client, path: { eventId, roundNumber: gameNumber }, body: { rows } }), `Store game ${gameNumber} of ${event.name}`);
-    }
   }
 
   /**
@@ -1028,18 +913,9 @@ class Loader {
     const release = async (): Promise<void> => {
       if (this.releaseTestEvents) await must(releaseEvent({ client, path }), `Release ${event.name}`);
     };
-    const statPool = this.contents.has(SportDataContent.STATS);
-    // Tiers and prices follow the field's one order (#1807): a stat pool's field has only its
-    // ranking, the regular season's composite, so it is tiered by that; any other by its odds.
+    // Tiers and prices follow the field's one order (#1807).
     await must(autoAssignEventTiers({ client, path, body: {} }), `Assign tiers for ${event.name}`);
     await must(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${event.name}`);
-    if (statPool) {
-      // Box scores before release, so a run that dies between them leaves a draft the rerun finishes.
-      const { participants: storedField } = await must(listEventParticipants({ client, path }), `Read the field of ${event.name}`);
-      await this.writeStats(client, eventId, event, statChanges(event, participantIds, storedField));
-      await release();
-      return;
-    }
     if (sportPlaysMatches(this.sport)) {
       if (!this.releaseTestEvents) return;
       await release();

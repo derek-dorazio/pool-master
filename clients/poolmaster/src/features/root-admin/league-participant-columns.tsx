@@ -14,12 +14,11 @@ export type ParticipantColumnId = 'ranking' | 'feedId' | 'lastInFeedAt' | 'natio
 /**
  * Which columns a league's Participants grid shows (the League page spec): Rank, Feed id and Last
  * in feed on every league, Country for individual players, Short name for teams, Team and
- * Position on a Clutch Card. A column no participant has a value for is left out, so none is
+ * Position for players who have them. A column no participant has a value for is left out, so none is
  * ever blank for the whole league.
  */
 export function leagueParticipantColumnIds(
   participants: readonly ParticipantRow[],
-  { isClutchCard }: { isClutchCard: boolean },
 ): ParticipantColumnId[] {
   const hasValue = (key: ParticipantColumnId, of: (participant: ParticipantRow) => boolean = () => true) =>
     participants.some((participant) => of(participant) && participant[key] !== null);
@@ -27,10 +26,10 @@ export function leagueParticipantColumnIds(
   const isTeam = (participant: ParticipantRow) => participant.participantType === ParticipantType.TEAM;
   const wanted: [ParticipantColumnId, boolean][] = [
     ['ranking', hasValue('ranking')],
-    ['nationality', !isClutchCard && hasValue('nationality', isIndividual)],
+    ['nationality', hasValue('nationality', isIndividual)],
     ['shortName', hasValue('shortName', isTeam)],
-    ['teamAffiliation', isClutchCard && hasValue('teamAffiliation')],
-    ['role', isClutchCard && hasValue('role')],
+    ['teamAffiliation', hasValue('teamAffiliation')],
+    ['role', hasValue('role')],
     ['feedId', hasValue('feedId')],
     ['lastInFeedAt', hasValue('lastInFeedAt')],
   ];

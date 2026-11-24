@@ -8,12 +8,10 @@ import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
   ReleaseCheckKey,
-  ScoringFamily,
   Sport,
   SportEventStatus,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
-  SportLeagueKind,
   SportLeagueSyncHealth,
 } from '@poolmaster/shared/domain';
 import type { SportLeagueLatestSyncRun, SportLeagueOverviewFacts, SportLeagueOverviewLeague } from '@poolmaster/shared/db';
@@ -31,7 +29,7 @@ const at = (iso: string) => new Date(iso);
 
 function league(overrides: Partial<SportLeagueOverviewLeague> = {}): SportLeagueOverviewLeague {
   return {
-    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', parentSportLeagueId: null, scoringFamily: null, syncProviderId: 'balldontlie', isActive: true,
+    id: 'mlb', sport: Sport.BASEBALL, name: 'MLB', syncProviderId: 'balldontlie', isActive: true,
     ...overrides,
   };
 }
@@ -44,7 +42,6 @@ function facts(overrides: Partial<SportLeagueOverviewFacts> = {}): SportLeagueOv
     eventCounts: new Map(),
     eventYearSpans: [],
     nextEventStarts: new Map(),
-    clutchCardEvents: [],
     overdueCandidates: [],
     ...overrides,
   };
@@ -188,77 +185,18 @@ describe('sport league season', () => {
   });
 });
 
-describe('a Clutch Card sport league', () => {
-  const worldSeries = league({ id: 'ws', name: 'World Series', parentSportLeagueId: 'mlb', scoringFamily: ScoringFamily.COMPOSITE, syncProviderId: null });
-
-  it('is CLUTCH_CARD, takes its parent\'s provider and its parent\'s event list run, and keeps its own field and scores runs', () => {
-    const rows = buildSportLeagueOverviews(facts({
-      leagues: [worldSeries, league()],
-      latestSyncRuns: [
-        run(ProviderSyncKind.EVENTS, ProviderSyncRunStatus.FAILED, { id: 'mlb-events' }),
-        run(ProviderSyncKind.FIELD, ProviderSyncRunStatus.COMPLETED, { id: 'mlb-field' }),
-        run(ProviderSyncKind.EVENTS, ProviderSyncRunStatus.COMPLETED, { id: 'ws-own-events', sportLeagueId: 'ws' }),
-        run(ProviderSyncKind.SCORES, ProviderSyncRunStatus.COMPLETED, { id: 'ws-scores', sportLeagueId: 'ws' }),
-      ],
-    }), NOW);
-    const clutch = rows.find((row) => row.id === 'ws');
-
-    expect(clutch).toMatchObject({ kind: SportLeagueKind.CLUTCH_CARD, providerId: 'balldontlie', parentSportLeagueId: 'mlb', syncHealth: SportLeagueSyncHealth.ERROR });
-    expect(clutch?.issues).toEqual([expect.objectContaining({ type: SportLeagueIssueType.SYNC, items: [expect.objectContaining({ target: { type: SportLeagueIssueTargetType.SYNC_RUN, id: 'mlb-events' } })] })]);
-    expect(rows.find((row) => row.id === 'mlb')?.kind).toBe(SportLeagueKind.REAL);
-  });
-
-  it('spans its season over the parent event rounds its events cover, ignoring the parent\'s other rounds', () => {
-    const row = buildSportLeagueOverviews(facts({
-      leagues: [league(), worldSeries],
-      clutchCardEvents: [{
-        sportLeagueId: 'ws',
-        eventYear: 2026,
-        parentRoundNumbers: [4],
-        parentRounds: [
-          { roundNumber: 3, scheduledDate: at('2026-10-10T00:00:00.000Z'), scheduledEndAt: at('2026-10-20T00:00:00.000Z') },
-          { roundNumber: 4, scheduledDate: at('2026-10-24T00:00:00.000Z'), scheduledEndAt: at('2026-11-01T00:00:00.000Z') },
-        ],
-      }, {
-        sportLeagueId: 'ws',
-        eventYear: 2027,
-        parentRoundNumbers: [4, 5],
-        parentRounds: [
-          { roundNumber: 4, scheduledDate: at('2027-10-23T00:00:00.000Z'), scheduledEndAt: null },
-          { roundNumber: 5, scheduledDate: at('2027-10-25T00:00:00.000Z'), scheduledEndAt: at('2027-10-31T00:00:00.000Z') },
-        ],
-      }, {
-        sportLeagueId: 'ws',
-        eventYear: 2028,
-        parentRoundNumbers: [4],
-        parentRounds: [],
-      }],
-    }), NOW).find((overview) => overview.id === 'ws');
-
-    expect(row?.season).toEqual({ start: at('2027-10-23T00:00:00.000Z'), end: at('2027-10-31T00:00:00.000Z') });
-  });
-
-  it('is OFF while its parent league has no provider', () => {
-    const rows = buildSportLeagueOverviews(facts({ leagues: [league({ syncProviderId: null }), worldSeries] }), NOW);
-
-    expect(rows.find((row) => row.id === 'ws')).toMatchObject({ providerId: null, syncHealth: SportLeagueSyncHealth.OFF });
-  });
-});
-
 describe('sport league overview order', () => {
-  it('lists by sport, most popular first, then by name, each Clutch Card straight after its parent', () => {
+  it('lists by sport, most popular first, then by name', () => {
     const rows = buildSportLeagueOverviews(facts({
       leagues: [
         league({ id: 'pga', sport: Sport.GOLF, name: 'PGA Tour' }),
-        league({ id: 'ws', name: 'World Series', parentSportLeagueId: 'mlb', scoringFamily: ScoringFamily.COMPOSITE }),
         league({ id: 'ncaa', name: 'NCAA Baseball' }),
-        league({ id: 'alcs', name: 'ALCS', parentSportLeagueId: 'mlb', scoringFamily: ScoringFamily.COMPOSITE }),
         league(),
         league({ id: 'nfl', sport: Sport.AMERICAN_FOOTBALL, name: 'NFL' }),
       ],
     }), NOW);
 
-    expect(rows.map((row) => row.id)).toEqual(['nfl', 'mlb', 'alcs', 'ws', 'ncaa', 'pga']);
+    expect(rows.map((row) => row.id)).toEqual(['nfl', 'mlb', 'ncaa', 'pga']);
   });
 });
 

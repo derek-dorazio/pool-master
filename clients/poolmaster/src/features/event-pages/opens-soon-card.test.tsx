@@ -21,7 +21,7 @@ function renderCard(entry: string) {
   );
 }
 
-const CLUTCH_CARD = '/league/OFFICE?sport=american-football&page=championship-weekend&template=template-championship-weekend-tiered-redzone';
+const BRACKET = '/league/OFFICE?sport=american-football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
 
 afterEach(() => getEventPageMock.mockReset());
 
@@ -29,24 +29,24 @@ describe('Opens soon card', () => {
   it('tells a commissioner sent home before the contest opens when it will, and that an email follows', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
 
-    renderCard(CLUTCH_CARD);
+    renderCard(BRACKET);
 
     const card = await screen.findByTestId('league-opens-soon');
     expect(card).toHaveTextContent('Championship Weekend opens for contests when the four teams are set');
-    expect(card).toHaveTextContent('We\'ll email you when your Clutch Card can be set up.');
+    expect(card).toHaveTextContent('We\'ll email you when your Bracket can be set up.');
   });
 
   it('offers the setup once the contest has opened', async () => {
     const page = championshipWeekendFixture();
     getEventPageMock.mockResolvedValue({
-      data: { eventPage: { ...page, offers: [offerFixture('championship-weekend-tiered-redzone', { isPrimary: true })] } },
+      data: { eventPage: { ...page, offers: [offerFixture('nfl-bracket-second-chance-doubling', { isPrimary: true })] } },
     });
 
-    renderCard(CLUTCH_CARD);
+    renderCard(BRACKET);
 
     expect(await screen.findByTestId('league-opens-soon-set-up')).toHaveAttribute(
       'href',
-      '/league/OFFICE/admin/contests/new?template=template-championship-weekend-tiered-redzone&event=event-championship-weekend-tiered-redzone',
+      '/league/OFFICE/admin/contests/new?template=template-nfl-bracket-second-chance-doubling&event=event-nfl-bracket-second-chance-doubling',
     );
   });
 

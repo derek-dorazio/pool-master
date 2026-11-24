@@ -31,6 +31,3 @@ export function buildHowToPlayFormatPath(sport: Sport | null, selectionType: Sel
 export function howToPlayFormatAnchor(selectionType: SelectionType): string {
   return `how-to-play-${selectionType.toLowerCase().replaceAll('_', '-')}`;
 }
-
-/** The Clutch Card's own landing page (#1066), where How to Play's Clutch Card links for more. */
-export const CLUTCH_CARD_PAGE_PATH = '/play/clutch-card';

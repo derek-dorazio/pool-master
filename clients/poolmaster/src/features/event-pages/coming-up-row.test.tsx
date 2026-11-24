@@ -40,7 +40,7 @@ describe('Coming up row', () => {
     const cards = within(row).getAllByRole('link');
     expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/play/american-football/championship-weekend', '/play/american-football/super-bowl']);
     expect(cards[0]).toHaveTextContent('Championship Weekend');
-    expect(cards[0]).toHaveTextContent('Clutch Card · Bracket · Squares');
+    expect(cards[0]).toHaveTextContent('Bracket · Squares');
     expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL', upcoming: 'true' } }));
   });
 

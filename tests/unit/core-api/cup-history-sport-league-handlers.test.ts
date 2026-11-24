@@ -218,7 +218,7 @@ describe('history handlers', () => {
 
 describe('sport league handlers', () => {
   const AT = new Date('2026-01-01T00:00:00.000Z');
-  const sportLeague = { id: 'sl1', roundNames: [], parentRoundNumbers: [], createdAt: AT, updatedAt: AT };
+  const sportLeague = { id: 'sl1', roundNames: [], createdAt: AT, updatedAt: AT };
   const participant = {
     id: 'p1', sportLeagueId: 'sl1', ranking: 1, name: 'One', participantType: 'INDIVIDUAL', status: 'ACTIVE', externalIds: {},
     injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT,
@@ -237,20 +237,19 @@ describe('sport league handlers', () => {
   const overviews = new SportLeagueOverviewService({
     reader: {
       readFacts: async () => ({
-        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', parentSportLeagueId: null, scoringFamily: null, syncProviderId: 'balldontlie', isActive: true }],
+        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', syncProviderId: 'balldontlie', isActive: true }],
         latestSyncRuns: [],
         heldEvents: [],
         eventCounts: new Map([['sl1', 2]]),
         eventYearSpans: [],
         nextEventStarts: new Map(),
-        clutchCardEvents: [],
         overdueCandidates: [],
       }),
     },
     now: () => AT,
   });
   const pageLeague = {
-    id: 'sl1', sport: Sport.GOLF, isActive: true, parentSportLeagueId: null, scoringFamily: null, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null, parent: null,
+    id: 'sl1', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null,
   };
   const known = <T>(sportLeagueId: string, facts: T) => Promise.resolve(sportLeagueId === 'sl1' ? facts : null);
   const page = new SportLeaguePageService({
@@ -282,7 +281,7 @@ describe('sport league handlers', () => {
 
     expect(listed.body).toEqual({
       sportLeagues: [{
-        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', parentSportLeagueId: null, kind: 'REAL', providerId: 'balldontlie', isActive: true,
+        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', providerId: 'balldontlie', isActive: true,
         syncHealth: 'NOT_RUN_YET', issues: [], season: null, nextEventStartsAt: null, eventCount: 2,
       }],
     });

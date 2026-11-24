@@ -18,7 +18,7 @@ export type EventPageContext = {
   event: SportEventDto;
   overview: SportEventOverviewDto | undefined;
   sportLeague: SportLeagueDto | undefined;
-  /** Whether a provider syncs the event's league: its own, or a Clutch Card's parent's. */
+  /** Whether a provider syncs the event's league. */
   isSynced: boolean;
   /** The event's jobs, read once for the Activity tab's grid and the failed count on its tab. */
   activity: ActivityState;

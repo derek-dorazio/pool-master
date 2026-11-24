@@ -414,7 +414,6 @@ function buildGolfFieldView(input: {
     rounds: (input.rounds ?? []).map((round) => ({
       round: { status: round.status, roundNumber: round.round },
       golf: { strokes: round.strokes, scoreToPar: round.scoreToPar, thru: round.thru },
-      statLines: [],
     })),
     raceResult: null,
     matches: [],

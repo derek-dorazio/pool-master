@@ -20,8 +20,7 @@ export const NHL_PLAYOFFS: PlayoffsLeague = {
   tour: 'NHL',
   sport: Sport.HOCKEY,
   eventName: 'NHL Playoffs',
-  // Sixteen teams, every series best of seven. Each round's name is the tour a future NHL Clutch
-  // Card league on that round would match, as the NBA's are.
+  // Sixteen teams, every series best of seven.
   rounds: [
     { name: 'NHL First Round', seriesLength: 7, seriesCount: 8 },
     { name: 'NHL Second Round', seriesLength: 7, seriesCount: 4 },

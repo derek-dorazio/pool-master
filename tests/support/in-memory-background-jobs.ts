@@ -86,6 +86,8 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
     renewLease: (claim, leaseUntil) => Promise.resolve(markClaimed(claim, { leaseUntil })),
     markRetry: (claim, { runAt, error, errorType }) =>
       Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.QUEUED, runAt, lastError: error, errorType, leaseUntil: undefined })),
+    markDeferred: (claim, { runAt, error, errorType }) =>
+      Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.QUEUED, runAt, attempts: claim.attempts - 1, lastError: error, errorType, leaseUntil: undefined })),
     markFailed: (claim, { error, errorType, completedAt }) =>
       Promise.resolve(markClaimed(claim, { status: BackgroundJobStatus.FAILED, lastError: error, errorType, completedAt, leaseUntil: undefined })),
     deleteClaimed: (claim) => {

@@ -74,7 +74,6 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 const NBA = sportLeagueFixture({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', selectedProviderMapping: providerMappingFixture(), currentEventYear: 2027 });
-const FINALS = sportLeagueFixture({ id: 'finals', sport: 'BASKETBALL', name: 'NBA Finals Clutch Card', parentSportLeagueId: 'nba', parentRoundNumbers: [4] });
 const SUMMER = sportLeagueFixture({ id: 'summer', sport: 'BASKETBALL', name: 'Summer League' });
 
 function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOverviewDto {
@@ -82,8 +81,6 @@ function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOvervi
     id: 'nba',
     sport: 'BASKETBALL',
     name: 'NBA',
-    parentSportLeagueId: null,
-    kind: 'REAL',
     providerId: 'balldontlie',
     isActive: true,
     syncHealth: 'OK',
@@ -97,7 +94,6 @@ function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOvervi
 
 const OVERVIEWS = [
   overview({}),
-  overview({ id: 'finals', name: 'NBA Finals Clutch Card', parentSportLeagueId: 'nba', kind: 'CLUTCH_CARD' }),
   overview({ id: 'summer', name: 'Summer League', providerId: null, syncHealth: 'OFF' }),
 ];
 
@@ -195,7 +191,7 @@ function LocationProbe() {
 }
 
 function renderLeaguePage(path: string) {
-  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [NBA, FINALS, SUMMER] } });
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [NBA, SUMMER] } });
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: OVERVIEWS } });
   listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['BASKETBALL'] }] } });
   listSportLeagueSyncsMock.mockResolvedValue({ data: { syncs: [sync('EVENTS'), sync('FIELD'), sync('SCORES')] } });
@@ -233,7 +229,7 @@ describe('League page', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('heads a synced league with its name, On, sync health, provider and Clutch Card, opens on Events, and leaves out the Tools tab', async () => {
+  it('heads a synced league with its name, On, sync health and provider, opens on Events, and leaves out the Tools tab', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba');
 
@@ -242,7 +238,6 @@ describe('League page', () => {
     const facts = await screen.findByTestId('root-admin-league-facts');
     expect(within(facts).getByText('OK')).toBeInTheDocument();
     expect(within(facts).getByText('BALLDONTLIE')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-league-clutch-card-finals')).toHaveAttribute('href', '/manage/sports/basketball/leagues/finals');
     expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates']);
     // The league's bare address opens its Events tab.
     await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-events')).toHaveAttribute('aria-current', 'page'));
@@ -326,11 +321,11 @@ describe('League page', () => {
     })));
   });
 
-  it('gives a Clutch Card\'s Participants grid Team and Position', async () => {
+  it('gives a league\'s Participants grid Team and Position when a participant has them', async () => {
     listSportLeagueParticipantOverviewsMock.mockResolvedValue({
       data: { participants: [participant({ id: 'p-jt', name: 'Jayson Tatum', participantType: 'INDIVIDUAL', shortName: null, teamAffiliation: 'Celtics', role: 'F' })] },
     });
-    renderLeaguePage('/manage/sports/basketball/leagues/finals/participants');
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/participants');
 
     await screen.findByTestId('root-admin-league-participant-p-jt');
     expect(columnHeaders('root-admin-league-participants-table')).toEqual(expect.arrayContaining(['Team', 'Position']));
