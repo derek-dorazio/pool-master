@@ -10,7 +10,7 @@ import type {
   ContestEntryRepository,
   ContestEntrySeasonPrediction,
   ContestEntryWithSquad,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -23,7 +23,7 @@ import {
   type Contest,
   type ContestEntry,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type TeamChoice,
   hasSportEventStarted,
   isSportEventStatusFinished,
@@ -35,7 +35,7 @@ export interface SurvivorStandingsReadDeps {
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
   entries: Pick<ContestEntryRepository, 'findByContestWithSquad'>;
   predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvents'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvents'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvents'>;
 }
 
 /**
@@ -58,7 +58,7 @@ export interface SurvivorSeasonWeek {
   started: boolean;
   /** A cancelled week counts for nothing (#743): nobody is out for it. */
   cancelled: boolean;
-  games: SportEventMatch[];
+  games: SportEventRoundMatch[];
 }
 
 export interface SurvivorEntryStanding {
@@ -95,7 +95,7 @@ export async function loadSurvivorWeeks(
   deps: Pick<SurvivorStandingsReadDeps, 'sportEvents' | 'matches'>,
   contest: Pick<Contest, 'sportEventIds'>,
   now: Date,
-  loaded?: { sportEvent: SportEvent; matches: readonly SportEventMatch[] },
+  loaded?: { sportEvent: SportEvent; matches: readonly SportEventRoundMatch[] },
 ): Promise<SurvivorSeasonWeek[]> {
   const otherIds = contest.sportEventIds.filter((id) => id !== loaded?.sportEvent.id);
   const [otherEvents, otherMatches] = otherIds.length === 0
@@ -162,7 +162,7 @@ export function survivorPicksByEntry(
   const weekOfGame = new Map(weeks.flatMap((week) => week.games.map((game) => [game.id, survivorWeekKey({ sportEventId: week.event.id, roundNumber: week.roundNumber })] as const)));
   const byEntry = new Map<string, Map<string, SurvivorSeasonPick>>();
   for (const prediction of predictions.filter(isTeamChoice)) {
-    const key = weekOfGame.get(prediction.sportEventMatchId);
+    const key = weekOfGame.get(prediction.sportEventRoundMatchId);
     if (key === undefined) continue;
     const picks = byEntry.get(prediction.contestEntryId) ?? new Map<string, SurvivorSeasonPick>();
     picks.set(key, prediction);

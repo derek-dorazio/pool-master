@@ -37,7 +37,7 @@ const chiefs = { sportEventParticipantId: 'sep-chiefs', participantId: 'p-chiefs
 
 function previewGame(matchNumber: number, pick: PreviewGame['pick'] = null): PreviewGame {
   return {
-    sportEventMatchId: `match-${matchNumber}`,
+    sportEventRoundMatchId: `match-${matchNumber}`,
     matchNumber,
     roundNumber: 1,
     kickoff: '2099-09-13T17:00:00.000Z',
@@ -155,8 +155,8 @@ describe('trial game picks', () => {
     const week = toPreviewWeek(preview({ games: [previewGame(1, teamPickOf(bills)), previewGame(2, teamPickOf(chiefs))] }), null);
 
     expect(previewTeamPick(week, week.games[0], chiefs)).toEqual([
-      { sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
-      { sportEventMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
+      { sportEventRoundMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
+      { sportEventRoundMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
     ]);
   });
 
@@ -165,7 +165,7 @@ describe('trial game picks', () => {
     const week = toPreviewWeek(preview({ selectionType: 'BRACKET', mode: null, games: [previewGame(1, teamPickOf(bills)), previewGame(2)] }), null);
 
     expect(previewTeamPick(week, week.games[0], chiefs)).toEqual([
-      { sportEventMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
+      { sportEventRoundMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
     ]);
   });
 
@@ -173,7 +173,7 @@ describe('trial game picks', () => {
     const week = toPreviewWeek(preview({ selectionType: 'SURVIVOR', mode: null, games: [previewGame(1, teamPickOf(bills)), previewGame(2)] }), null);
 
     expect(previewTeamPick(week, week.games[1], chiefs)).toEqual([
-      { sportEventMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
+      { sportEventRoundMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
     ]);
   });
 
@@ -185,11 +185,11 @@ describe('trial game picks', () => {
     }), null);
 
     expect(previewTiePick(week, week.games[0])).toContainEqual(
-      { sportEventMatchId: 'match-1', predictedResult: 'TIE', sportEventParticipantId: null, confidence: 2 },
+      { sportEventRoundMatchId: 'match-1', predictedResult: 'TIE', sportEventParticipantId: null, confidence: 2 },
     );
     expect(previewConfidence(week, week.games[0], 1)).toEqual([
-      { sportEventMatchId: 'match-1', ...teamPickOf(bills, 1) },
-      { sportEventMatchId: 'match-2', ...teamPickOf(chiefs, 2) },
+      { sportEventRoundMatchId: 'match-1', ...teamPickOf(bills, 1) },
+      { sportEventRoundMatchId: 'match-2', ...teamPickOf(chiefs, 2) },
     ]);
   });
 });

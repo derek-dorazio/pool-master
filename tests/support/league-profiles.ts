@@ -2,31 +2,34 @@ import type { PrismaClient } from '@prisma/client';
 import { Sport } from '@poolmaster/shared/domain';
 
 /**
- * The tier profile the migration points each sport's leagues at (#1844): each sport's former code
- * layout. A test league names the one its sport's leagues name, so it tiers as they do.
+ * The tier profile the migration points each sport's leagues at (#1844), by its code: each sport's
+ * former code layout. A test league names the one its sport's leagues name, so it tiers as they do.
  */
-export const SPORT_TIER_PROFILE_NAME: Record<Sport, string> = {
-  [Sport.GOLF]: '6 tiers of 10',
-  [Sport.TENNIS]: '6 tiers of 8',
-  [Sport.BASKETBALL]: '4 tiers of 16',
-  [Sport.AMERICAN_FOOTBALL]: '7 tiers of 2',
-  [Sport.BASEBALL]: '4 tiers of 3',
-  [Sport.HOCKEY]: '4 tiers of 4',
-  [Sport.SOCCER]: '4 tiers of 4',
-  [Sport.AUTO_RACING]: '5 tiers of 8',
-  [Sport.HORSE_RACING]: '3 tiers of 3',
-  [Sport.CYCLING]: '5 tiers of 10',
-  [Sport.RUNNING]: '4 tiers of 6',
+export const SPORT_PLATFORM_TIER_PROFILE_CODE: Record<Sport, string> = {
+  [Sport.GOLF]: 'TIERS_6_OF_10',
+  [Sport.TENNIS]: 'TIERS_6_OF_8',
+  [Sport.BASKETBALL]: 'TIERS_4_OF_16',
+  [Sport.AMERICAN_FOOTBALL]: 'TIERS_7_OF_2',
+  [Sport.BASEBALL]: 'TIERS_4_OF_3',
+  [Sport.HOCKEY]: 'TIERS_4_OF_4',
+  [Sport.SOCCER]: 'TIERS_4_OF_4',
+  [Sport.AUTO_RACING]: 'TIERS_5_OF_8',
+  [Sport.HORSE_RACING]: 'TIERS_3_OF_3',
+  [Sport.CYCLING]: 'TIERS_5_OF_10',
+  [Sport.RUNNING]: 'TIERS_4_OF_6',
 };
 
-/** The profile ids a test sport league names: a tier profile by name (golf's by default) and Standard pricing. */
+/** The pricing profile every seeded sport league names, by its code. */
+export const STANDARD_PLATFORM_PRICING_PROFILE_CODE = 'STANDARD';
+
+/** The profile ids a test sport league names: a tier profile by code (golf's by default) and Standard pricing. */
 export async function leagueProfiles(
-  prisma: Pick<PrismaClient, 'tierProfile' | 'pricingProfile'>,
-  tierProfileName: string = SPORT_TIER_PROFILE_NAME[Sport.GOLF],
-): Promise<{ tierProfileId: string; pricingProfileId: string }> {
-  const [tierProfile, pricingProfile] = await Promise.all([
-    prisma.tierProfile.findUniqueOrThrow({ where: { name: tierProfileName }, select: { id: true } }),
-    prisma.pricingProfile.findUniqueOrThrow({ where: { name: 'Standard' }, select: { id: true } }),
+  prisma: Pick<PrismaClient, 'platformTierProfile' | 'platformPricingProfile'>,
+  platformTierProfileCode: string = SPORT_PLATFORM_TIER_PROFILE_CODE[Sport.GOLF],
+): Promise<{ platformTierProfileId: string; platformPricingProfileId: string }> {
+  const [platformTierProfile, platformPricingProfile] = await Promise.all([
+    prisma.platformTierProfile.findUniqueOrThrow({ where: { code: platformTierProfileCode }, select: { id: true } }),
+    prisma.platformPricingProfile.findUniqueOrThrow({ where: { code: STANDARD_PLATFORM_PRICING_PROFILE_CODE }, select: { id: true } }),
   ]);
-  return { tierProfileId: tierProfile.id, pricingProfileId: pricingProfile.id };
+  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id };
 }

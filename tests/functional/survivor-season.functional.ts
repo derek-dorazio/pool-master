@@ -82,9 +82,9 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
-    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventMatch: { sportEventId: { in: eventIds } } } });
+    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -153,7 +153,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   const game = (matchNumber: number) => expectDefined(games.find((match) => match.matchNumber === matchNumber), `game ${matchNumber}`);
   /** A pick of game `matchNumber`'s home or away team. */
   const pick = (matchNumber: number, side: Side) => ({
-    sportEventMatchId: game(matchNumber).id,
+    sportEventRoundMatchId: game(matchNumber).id,
     predictedResult: PredictedResult.TEAM,
     sportEventParticipantId: expectDefined(side === 'home' ? game(matchNumber).homeSportEventParticipantId : game(matchNumber).awaySportEventParticipantId),
   });
@@ -255,7 +255,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
       selectionType: SelectionType.SURVIVOR, mode: null, pickedCount: 1, tiebreakerMatchId: null, canSubmit: true,
       survivor: { eliminatedInWeek: null, usedTeams: [] },
     });
-    expect(aliceWeek1.games.flatMap((game) => (game.pick ? [game.sportEventMatchId] : []))).toEqual([week1.gameId(1)]);
+    expect(aliceWeek1.games.flatMap((game) => (game.pick ? [game.sportEventRoundMatchId] : []))).toEqual([week1.gameId(1)]);
     for (const [client, entryId, pick] of [
       [alice.client, entries.alice, week1.pick(1, 'home')],
       [bob.client, entries.bob, week1.pick(1, 'away')],
@@ -381,7 +381,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     // The games listed leave out the cancelled one, so this shows the new pick, not that the old one
     // was cleared: the leaderboard below proves that.
     const picks = expectMatchesSchema(GamePicksResponseSchema, moved.data);
-    expect([picks.status, picks.games.flatMap((game) => (game.pick ? [game.sportEventMatchId] : []))])
+    expect([picks.status, picks.games.flatMap((game) => (game.pick ? [game.sportEventRoundMatchId] : []))])
       .toEqual([ContestEntryStatus.SUBMITTED, [week.gameId(4)]]);
 
     // Baylor loses: the moved pick, not the cancelled one (which would survive), decides the week, so

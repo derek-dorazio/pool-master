@@ -15,7 +15,7 @@
  * covers the changes no write signals.
  */
 import type { ContestLeaderboardSnapshot } from '@poolmaster/shared/db';
-import { SelectionType, type Contest, type SportEvent, type SportEventMatch } from '@poolmaster/shared/domain';
+import { SelectionType, type Contest, type SportEvent, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import { readMillisecondsSetting } from '../../core/read-cache';
 
 /** Which leaderboard a stored board is: each contest has one, by how its entries pick. */
@@ -54,7 +54,7 @@ export function leaderboardKindOf(contest: Pick<Contest, 'selectionType'>): Lead
 export function nextKickoffAfter(
   now: Date,
   events: readonly Pick<SportEvent, 'startDate'>[],
-  games: readonly Pick<SportEventMatch, 'scheduledDate'>[],
+  games: readonly Pick<SportEventRoundMatch, 'scheduledDate'>[],
 ): Date | null {
   const starts = [...events.map((event) => event.startDate), ...games.flatMap((game) => (game.scheduledDate ? [game.scheduledDate] : []))];
   return starts.reduce<Date | null>((soonest, start) => (start > now && (soonest === null || start < soonest) ? start : soonest), null);
@@ -72,7 +72,7 @@ export const DEFAULT_SHOWN_EVENT = '';
  * BUMP THIS whenever any leaderboard response shape changes (the roster, bracket, pick'em or
  * survivor board, or a row or week on one), in the same change.
  */
-export const LEADERBOARD_BOARD_FORMAT = 7;
+export const LEADERBOARD_BOARD_FORMAT = 8;
 
 /**
  * How old a stored board may be before a read computes it again: the bound on the changes no

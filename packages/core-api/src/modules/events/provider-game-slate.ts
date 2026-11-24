@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantProviderMappingRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
@@ -11,7 +11,7 @@ import {
   isMatchUnplayed,
   SportEventStatus,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
@@ -28,7 +28,7 @@ export type ProviderGameSlateOutcome =
 
 export interface ProviderGameSlateDeps {
   sportEvents: Pick<SportEventRepository, 'findByProviderRef'>;
-  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   mappings: Pick<ParticipantProviderMappingRepository, 'findByProviderExternalIds'>;
   bracket: Pick<SportEventBracketService, 'loadBracket' | 'updateMatch' | 'proposeRoundMatchups' | 'setRoundMatchups'>;
@@ -200,7 +200,7 @@ export class ProviderGameSlateService {
    * provider lists with both teams, once the round before is played: the server's reseed proposes
    * the pairing, and it is set when the provider pairs the same teams. Returns the matches placed.
    */
-  private async placeReseededRounds(event: SportEvent, stored: readonly SportEventMatch[], slate: readonly BracketMatchInput[]): Promise<number[]> {
+  private async placeReseededRounds(event: SportEvent, stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): Promise<number[]> {
     const placed: number[] = [];
     for (const roundNumber of [...reseededRounds(stored)].sort((left, right) => left - right)) {
       const round = stored.filter((match) => match.roundNumber === roundNumber);
@@ -230,7 +230,7 @@ export class ProviderGameSlateService {
   private async updateMatches(
     event: SportEvent,
     draft: boolean,
-    stored: readonly SportEventMatch[],
+    stored: readonly SportEventRoundMatch[],
     slate: readonly BracketMatchInput[],
     placed: readonly number[],
   ): Promise<ProviderGameSlateOutcome> {
@@ -344,7 +344,7 @@ function sameTime(left: Date | null, right: Date | null): boolean {
 }
 
 /** Whether the stored bracket has the provider's shape and teams, match by match, kickoffs aside. */
-function sameBracket(stored: readonly SportEventMatch[], bracket: readonly BracketMatchInput[]): boolean {
+function sameBracket(stored: readonly SportEventRoundMatch[], bracket: readonly BracketMatchInput[]): boolean {
   if (stored.length !== bracket.length) return false;
   const numberById = new Map(stored.map((match) => [match.id, match.matchNumber]));
   const storedByNumber = new Map(stored.map((match) => [match.matchNumber, match]));
@@ -362,7 +362,7 @@ function sameBracket(stored: readonly SportEventMatch[], bracket: readonly Brack
 }
 
 /** Whether the stored matches pair the same teams as the provider's games, kickoffs and sides aside. */
-function samePairings(stored: readonly SportEventMatch[], slate: readonly BracketMatchInput[]): boolean {
+function samePairings(stored: readonly SportEventRoundMatch[], slate: readonly BracketMatchInput[]): boolean {
   if (stored.length !== slate.length) return false;
   const storedPairs = new Set(stored.map(pairKey));
   return slate.every((match) => storedPairs.has(pairKey(match)));

@@ -139,7 +139,7 @@ describe('Creating one event (#1253)', () => {
     // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
     expect(statementCounts(statements)).toEqual([
       ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
-      ['SELECT event_series', 2], ['SELECT sport_leagues', 2], ['SELECT sports', 1], ['SELECT tier_profiles', 1],
+      ['SELECT event_series', 2], ['SELECT sport_leagues', 2], ['SELECT sports', 1], ['SELECT platform_tier_profiles', 1],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);

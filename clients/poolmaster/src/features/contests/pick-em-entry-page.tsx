@@ -186,7 +186,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     : entryStatusLine({ closes, isOpen: canChange, locks, status: gamePicks.status });
 
   // The Name and submit card: the name, the tiebreaker while its game is open, and one button.
-  const tiebreakerGameOpen = canChange && gamePicks.games.some((game) => game.sportEventMatchId === gamePicks.tiebreakerMatchId && !game.locked);
+  const tiebreakerGameOpen = canChange && gamePicks.games.some((game) => game.sportEventRoundMatchId === gamePicks.tiebreakerMatchId && !game.locked);
   const tiebreakerFieldLabel = tiebreakerGameOpen ? tiebreakerLabel(gamePicks, contestScoreUnit(contest.sport)) : null;
   const submits = canChange && !isSubmitted;
   const {

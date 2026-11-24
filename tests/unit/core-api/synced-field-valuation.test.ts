@@ -20,7 +20,7 @@ function tierDefinitions(count: number) {
 /** A synced draft of `fieldSize` with `tierCount` tiers, in a league naming Standard pricing or `pricing`. */
 async function setup(options: { status?: SportEventStatus; fieldSize?: number; tierCount?: number; pricing?: BudgetPricingProfile } = {}) {
   const store = new InMemorySportEvents();
-  const league = options.pricing && store.addLeagueWithPricingProfile(options.pricing);
+  const league = options.pricing && store.addLeagueWithPlatformPricingProfile(options.pricing);
   const event = store.addEvent({ status: options.status ?? SportEventStatus.DRAFT, ...SYNCED, ...(league && { sportLeagueId: league.id }) });
   await store.addTiers(event.id, tierDefinitions(options.tierCount ?? 2));
   for (let index = 1; index <= (options.fieldSize ?? 4); index++) {
@@ -33,8 +33,8 @@ async function setup(options: { status?: SportEventStatus; fieldSize?: number; t
     valuations: store.valuationRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
-    tierProfiles: store.tierProfileRepo(),
-    pricingProfiles: store.pricingProfileRepo(),
+    platformTierProfiles: store.platformTierProfileRepo(),
+    platformPricingProfiles: store.platformPricingProfileRepo(),
   });
   const valuation = new SyncedFieldValuationService({ sportEvents: store.sportEventRepo(), tiers });
   return { store, event, tiers, valuation };
@@ -89,8 +89,8 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
       valuations,
       field: store.fieldRepo(),
       participants: store.participantRepo(),
-      tierProfiles: store.tierProfileRepo(),
-      pricingProfiles: store.pricingProfileRepo(),
+      platformTierProfiles: store.platformTierProfileRepo(),
+      platformPricingProfiles: store.platformPricingProfileRepo(),
     });
 
     const outcome = await watched.valueSyncedField(expectDefined(await store.sportEventRepo().findById(event.id)));
@@ -220,7 +220,7 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
 
   it('answers a bad pricing profile as a failure, writing no tier or price, instead of throwing, so the field sync that wrote the field still completes', async () => {
     const { store, valuation } = await setup();
-    Object.assign(expectDefined(store.pricingProfiles[0]), { floorSharePercent: 90 });
+    Object.assign(expectDefined(store.platformPricingProfiles[0]), { floorSharePercent: 90 });
 
     const outcome = await valuation.afterFieldLoad(SYNCED);
 

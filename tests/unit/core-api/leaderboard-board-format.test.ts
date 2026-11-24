@@ -26,6 +26,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   6: 'e4195bfd7a7880779571958590df34a806cb9cf92a95c8b3d0d211a2133bf29b',
   // The old Clutch Card leagues removed: a pick carries no composite block.
   7: 'f2763f53932748563e612cd03bf7c36a7a7253c809fe7f74758b143a61f47f99',
+  // League model 3 (#2000): SportEventMatchDto renamed SportEventRoundMatchDto; the fields are the same.
+  8: '2635302c43a4f87735ebcfea92e9ea5025baeff26a2dfbc04f6c79867ad40763',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

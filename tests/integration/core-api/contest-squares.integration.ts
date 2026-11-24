@@ -77,7 +77,7 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   const round = await prisma.sportEventRound.create({
     data: { sportEventId: sportEvent.id, roundNumber: 1, scheduledDate: sportEvent.startDate },
   });
-  const game = await prisma.sportEventMatch.create({
+  const game = await prisma.sportEventRoundMatch.create({
     data: {
       sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 1, isNeutralSite: true,
       homeSportEventParticipantId: home.id, awaySportEventParticipantId: away.id,
@@ -88,7 +88,7 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
       leagueId: league.id,
       seasonYear: 2026,
       sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
-      squaresGame: { create: { sportEventMatchId: game.id } },
+      squaresGame: { create: { sportEventRoundMatchId: game.id } },
       name: `Squares Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: 'SQUARES',
@@ -261,7 +261,7 @@ describe('PrismaSquaresRepository finding the boards the automatic draw is due o
   it('follows the game\'s own kickoff over its event\'s start, so a moved game is found at its new time', async () => {
     const fixture = await seedSquaresContest();
     const moved = new Date(KICKOFF.getTime() + 2 * 60 * 60 * 1000);
-    await getPrisma().sportEventMatch.update({ where: { id: fixture.gameId }, data: { scheduledDate: moved } });
+    await getPrisma().sportEventRoundMatch.update({ where: { id: fixture.gameId }, data: { scheduledDate: moved } });
     const squares = new PrismaSquaresRepository(getAppPrisma());
 
     expect(await squares.findDueForAutoDraw(KICKOFF)).not.toContain(fixture.contestId);
@@ -271,9 +271,9 @@ describe('PrismaSquaresRepository finding the boards the automatic draw is due o
   it('finds a board whose game is under way before its time, and none whose game is over or cancelled', async () => {
     const [underWay, over, cancelled] = await Promise.all([seedSquaresContest(), seedSquaresContest(), seedSquaresContest()]);
     const prisma = getPrisma();
-    await prisma.sportEventMatch.update({ where: { id: underWay.gameId }, data: { status: 'IN_PROGRESS' } });
-    await prisma.sportEventMatch.update({ where: { id: over.gameId }, data: { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 21, awayScore: 17 } });
-    await prisma.sportEventMatch.update({ where: { id: cancelled.gameId }, data: { status: 'CANCELLED' } });
+    await prisma.sportEventRoundMatch.update({ where: { id: underWay.gameId }, data: { status: 'IN_PROGRESS' } });
+    await prisma.sportEventRoundMatch.update({ where: { id: over.gameId }, data: { status: 'COMPLETED', winnerSide: 'HOME', homeScore: 21, awayScore: 17 } });
+    await prisma.sportEventRoundMatch.update({ where: { id: cancelled.gameId }, data: { status: 'CANCELLED' } });
 
     const due = await new PrismaSquaresRepository(getAppPrisma()).findDueForAutoDraw(KICKOFF);
 

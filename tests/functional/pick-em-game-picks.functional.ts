@@ -71,9 +71,9 @@ async function cleanup(): Promise<void> {
   if (eventIds.length) {
     const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
       .map((event) => event.eventSeriesId);
-    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventMatch: { sportEventId: { in: eventIds } } } });
+    await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
-    await db.sportEventMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -155,8 +155,8 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     expect(loaded.response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     // The final is called off, so it is not one of the week's games.
-    await db.sportEventMatch.updateMany({ where: { sportEventId: eventId, matchNumber: 3 }, data: { status: MatchStatus.CANCELLED } });
-    const games = await db.sportEventMatch.findMany({ where: { sportEventId: eventId }, orderBy: { matchNumber: 'asc' } });
+    await db.sportEventRoundMatch.updateMany({ where: { sportEventId: eventId, matchNumber: 3 }, data: { status: MatchStatus.CANCELLED } });
+    const games = await db.sportEventRoundMatch.findMany({ where: { sportEventId: eventId }, orderBy: { matchNumber: 'asc' } });
     const [game1, game2] = [expectDefined(games[0]), expectDefined(games[1])];
 
     // --- A confidence pick'em contest, opened and entered by two teams -------------------------
@@ -192,7 +192,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     const memberEntryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     const week = { contestId, entryId, sportEventId: eventId };
     const pick = (game: typeof game1, side: 'home' | 'away', confidence: number) => ({
-      sportEventMatchId: game.id,
+      sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
       confidence,
@@ -205,7 +205,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     // tie at once is malformed.
     expect(empty.tiePicksOffered).toBe(false);
     expectFunctionalError(
-      await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [{ sportEventMatchId: game1.id, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: 1 }] } }),
+      await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [{ sportEventRoundMatchId: game1.id, predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: 1 }] } }),
       { status: 422, code: 'PREDICTION_TIE_NOT_OFFERED' },
     );
     expectFunctionalError(
@@ -246,7 +246,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     // --- The first game kicks off ---------------------------------------------------------------
     const kickedOff = new Date(Date.now() - 60 * 60 * 1000);
     await db.sportEvent.update({ where: { id: eventId }, data: { startDate: kickedOff } });
-    await db.sportEventMatch.update({ where: { id: game1.id }, data: { scheduledDate: kickedOff } });
+    await db.sportEventRoundMatch.update({ where: { id: game1.id }, data: { scheduledDate: kickedOff } });
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
 
     const own = expectDefined((await getGamePicks({ client: commissioner.client, path: week })).data);
@@ -264,7 +264,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       { status: 409, code: 'PREDICTION_GAME_STARTED' },
     );
     expectFunctionalError(
-      await clearGamePick({ client: commissioner.client, path: { ...week, sportEventMatchId: game2.id } }),
+      await clearGamePick({ client: commissioner.client, path: { ...week, sportEventRoundMatchId: game2.id } }),
       { status: 409, code: 'PREDICTION_CLEAR_AFTER_FIRST_KICKOFF' },
     );
     const swapped = expectDefined((await saveGamePicks({ client: commissioner.client, path: week, body: { picks: [pick(game2, 'home', 1)] } })).data);

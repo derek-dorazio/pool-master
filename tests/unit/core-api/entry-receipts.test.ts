@@ -10,7 +10,7 @@ import {
   SelectionType,
   Sport,
   type ContestEntryMatchPrediction,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
@@ -53,7 +53,7 @@ function game(options: {
       homeSpread: options.homeSpread ?? null,
       roundNumber: options.roundNumber ?? 1,
       matchNumber: options.matchNumber ?? 1,
-    } as SportEventMatch,
+    } as SportEventRoundMatch,
     kickoff: options.kickoff ?? KICKOFF,
     home,
     away,
@@ -64,7 +64,7 @@ function game(options: {
     pick: options.picked === undefined
       ? null
       : {
-        sportEventMatchId: options.id,
+        sportEventRoundMatchId: options.id,
         sportEventParticipantId: options.picked === null ? null : `sep-${options.picked}`,
         confidence: options.confidence ?? null,
       } as ContestEntryMatchPrediction,

@@ -1,4 +1,4 @@
-import { ProviderGameState, type SportEventMatch, type SportEventParticipant } from '@poolmaster/shared/domain';
+import { ProviderGameState, type SportEventRoundMatch, type SportEventParticipant } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import { fillPlayInPlaces, type PlayInFillDeps } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/play-in-fill';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
@@ -29,7 +29,7 @@ function row(id: string, isPlayInPlace = false): SportEventParticipant {
 
 const FIELD = [row('sep-HOU'), row('sep-PLAYIN16', true), row('sep-DUKE'), row('sep-MSM'), row('sep-AUB'), row('sep-PLAYIN16S', true)];
 
-function bracket(): SportEventMatch[] {
+function bracket(): SportEventRoundMatch[] {
   return bracketMatches(EVENT_ID, [
     { matchNumber: 1, round: 1, home: 'sep-HOU', away: 'sep-PLAYIN16', region: 'Midwest' },
     { matchNumber: 2, round: 1, home: 'sep-DUKE', away: 'sep-MSM', region: 'East' },

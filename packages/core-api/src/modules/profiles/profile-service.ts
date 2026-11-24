@@ -7,14 +7,12 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProfileRepository } from '@poolmaster/shared/db';
+import type { PlatformPricingProfileWrite, PlatformTierProfileWrite, ProfileRepository, ProfileTaken } from '@poolmaster/shared/db';
 import {
   findBudgetPricingProblem,
   findTierLayoutProblem,
-  type BudgetPricingProfile,
-  type PricingProfile,
-  type TierLayoutValues,
-  type TierProfile,
+  type PlatformPricingProfile,
+  type PlatformTierProfile,
 } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -33,20 +31,20 @@ export class ProfileError extends Error {
 export interface ProfileKind<TWrite> {
   /** As a sentence names it: "Tier profile". */
   label: string;
-  codes: { notFound: ApiErrorCode; nameTaken: ApiErrorCode; inUse: ApiErrorCode; invalid: ApiErrorCode };
+  codes: { notFound: ApiErrorCode; codeTaken: ApiErrorCode; nameTaken: ApiErrorCode; inUse: ApiErrorCode; invalid: ApiErrorCode };
   /** Why the values can't be used, or null when they can. */
   findProblem: (values: TWrite) => string | null;
 }
 
-export const TIER_PROFILE_KIND: ProfileKind<Pick<TierProfile, 'name'> & TierLayoutValues> = {
+export const PLATFORM_TIER_PROFILE_KIND: ProfileKind<PlatformTierProfileWrite> = {
   label: 'Tier profile',
-  codes: { notFound: 'TIER_PROFILE_NOT_FOUND', nameTaken: 'TIER_PROFILE_NAME_TAKEN', inUse: 'TIER_PROFILE_IN_USE', invalid: 'TIER_PROFILE_INVALID' },
+  codes: { notFound: 'PLATFORM_TIER_PROFILE_NOT_FOUND', codeTaken: 'PLATFORM_TIER_PROFILE_CODE_TAKEN', nameTaken: 'PLATFORM_TIER_PROFILE_NAME_TAKEN', inUse: 'PLATFORM_TIER_PROFILE_IN_USE', invalid: 'PLATFORM_TIER_PROFILE_INVALID' },
   findProblem: findTierLayoutProblem,
 };
 
-export const PRICING_PROFILE_KIND: ProfileKind<BudgetPricingProfile> = {
+export const PLATFORM_PRICING_PROFILE_KIND: ProfileKind<PlatformPricingProfileWrite> = {
   label: 'Pricing profile',
-  codes: { notFound: 'PRICING_PROFILE_NOT_FOUND', nameTaken: 'PRICING_PROFILE_NAME_TAKEN', inUse: 'PRICING_PROFILE_IN_USE', invalid: 'PRICING_PROFILE_INVALID' },
+  codes: { notFound: 'PLATFORM_PRICING_PROFILE_NOT_FOUND', codeTaken: 'PLATFORM_PRICING_PROFILE_CODE_TAKEN', nameTaken: 'PLATFORM_PRICING_PROFILE_NAME_TAKEN', inUse: 'PLATFORM_PRICING_PROFILE_IN_USE', invalid: 'PLATFORM_PRICING_PROFILE_INVALID' },
   findProblem: findBudgetPricingProblem,
 };
 
@@ -62,7 +60,7 @@ export interface ProfileServiceDeps<TProfile, TWrite> {
   logger?: FastifyBaseLogger;
 }
 
-export class ProfileService<TProfile extends { id: string; name: string }, TWrite extends { name: string }> {
+export class ProfileService<TProfile extends { id: string; code: string; name: string }, TWrite extends { code: string; name: string }> {
   constructor(private readonly deps: ProfileServiceDeps<TProfile, TWrite>) {}
 
   /** Every profile, by name, each with its sport league count: two reads, however many. */
@@ -78,25 +76,25 @@ export class ProfileService<TProfile extends { id: string; name: string }, TWrit
     return { profile, sportLeagueCount };
   }
 
-  /** 422 when the values contradict each other; 409 when another profile of the kind has the name. */
+  /** 422 when the values contradict each other; 409 when another profile of the kind has the code or the name. */
   async create(input: TWrite): Promise<ProfileUse<TProfile>> {
     this.assertValid(input);
     const profile = await this.deps.profiles.create(input);
-    if (profile === 'nameTaken') throw this.nameTaken(input.name);
-    this.deps.logger?.info({ profileId: profile.id, name: profile.name, kind: this.deps.kind.label }, 'Created profile');
+    if (profile === 'codeTaken' || profile === 'nameTaken') throw this.taken(profile, input);
+    this.deps.logger?.info({ profileId: profile.id, code: profile.code, name: profile.name, kind: this.deps.kind.label }, 'Created profile');
     return { profile, sportLeagueCount: 0 };
   }
 
   /**
-   * Replaces the profile's name and values. 404 when no such profile exists, 422 when the values
-   * contradict each other, 409 when another profile of the kind has the name.
+   * Replaces the profile's code, name and values. 404 when no such profile exists, 422 when the values
+   * contradict each other, 409 when another profile of the kind has the code or the name.
    */
   async update(id: string, input: TWrite): Promise<ProfileUse<TProfile>> {
     if (!(await this.deps.profiles.findById(id))) throw this.notFound(id);
     this.assertValid(input);
     const profile = await this.deps.profiles.update(id, input);
-    if (profile === 'nameTaken') throw this.nameTaken(input.name);
-    this.deps.logger?.info({ profileId: id, name: profile.name, kind: this.deps.kind.label }, 'Updated profile');
+    if (profile === 'codeTaken' || profile === 'nameTaken') throw this.taken(profile, input);
+    this.deps.logger?.info({ profileId: id, code: profile.code, name: profile.name, kind: this.deps.kind.label }, 'Updated profile');
     return this.get(id);
   }
 
@@ -120,9 +118,12 @@ export class ProfileService<TProfile extends { id: string; name: string }, TWrit
     if (problem) throw new ProfileError(problem, this.deps.kind.codes.invalid, 422);
   }
 
-  /** The name's unique index decides, so two writes racing for one name get 409, not a 500. */
-  private nameTaken(name: string): ProfileError {
-    return new ProfileError(`Another ${this.deps.kind.label.toLowerCase()} is already named "${name}".`, this.deps.kind.codes.nameTaken, 409);
+  /** The code's and the name's unique indexes decide, so two writes racing for one get 409, not a 500. */
+  private taken(taken: ProfileTaken, input: TWrite): ProfileError {
+    const kind = this.deps.kind.label.toLowerCase();
+    return taken === 'codeTaken'
+      ? new ProfileError(`Another ${kind} already has the code "${input.code}".`, this.deps.kind.codes.codeTaken, 409)
+      : new ProfileError(`Another ${kind} is already named "${input.name}".`, this.deps.kind.codes.nameTaken, 409);
   }
 
   private notFound(id: string): ProfileError {
@@ -130,5 +131,5 @@ export class ProfileService<TProfile extends { id: string; name: string }, TWrit
   }
 }
 
-export type TierProfileService = ProfileService<TierProfile, Pick<TierProfile, 'name'> & TierLayoutValues>;
-export type PricingProfileService = ProfileService<PricingProfile, BudgetPricingProfile>;
+export type PlatformTierProfileService = ProfileService<PlatformTierProfile, PlatformTierProfileWrite>;
+export type PlatformPricingProfileService = ProfileService<PlatformPricingProfile, PlatformPricingProfileWrite>;

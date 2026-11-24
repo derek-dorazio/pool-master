@@ -160,7 +160,7 @@ describe('GolfRoundScoreUploadCard', () => {
       },
     });
     applyEventGolfRoundScoresMock.mockResolvedValue({
-      error: { error: { code: 'SPORT_EVENT_MATCH_RESULT_LOCKED', message: 'Scores of a completed tournament cannot change.' } },
+      error: { error: { code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', message: 'Scores of a completed tournament cannot change.' } },
       response: { status: 409 },
     });
     renderCard();

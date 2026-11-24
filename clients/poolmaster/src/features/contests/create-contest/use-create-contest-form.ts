@@ -70,13 +70,13 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
       selectionType: SelectionType.TIERED,
       sport: SUPPORTED_SPORTS[0],
       sportEventId: '',
-      sportEventMatchId: '',
+      sportEventRoundMatchId: '',
       ...DEFAULT_CONTEST_RULES,
       ...EMPTY_SCORING_SETTINGS_VALUES,
     },
   });
   const values = form.watch();
-  const { scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId, sportEventMatchId } = values;
+  const { scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId, sportEventRoundMatchId } = values;
   const scoringSettingsUi = scoringSettingsUiFor(selectionType, scoringDefinitionId);
   const [isNameEdited, setIsNameEdited] = useState(false);
   // The sport, sport league and kind of event whose default preset was applied last: their default
@@ -163,7 +163,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const [now] = useState(() => new Date());
   const squaresGames = useSquaresGameChoices(selectionType === SelectionType.SQUARES ? selectedEvent : null, now);
   const isSquaresGameMissing = selectionType === SelectionType.SQUARES
-    && !squaresGames.games.some((game) => game.id === sportEventMatchId);
+    && !squaresGames.games.some((game) => game.id === sportEventRoundMatchId);
   // The chosen event's sport league: only its own presets are offered, so the presets wait for an
   // event.
   const sportLeagueId = selectedEvent?.sportLeagueId;
@@ -286,7 +286,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const firstSquaresGameId = squaresGames.games.at(0)?.id;
   useEffect(() => {
     if (firstSquaresGameId && isSquaresGameMissing) {
-      setFormValues({ sportEventMatchId: firstSquaresGameId });
+      setFormValues({ sportEventRoundMatchId: firstSquaresGameId });
     }
   }, [firstSquaresGameId, isSquaresGameMissing, setFormValues]);
 

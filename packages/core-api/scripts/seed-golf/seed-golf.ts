@@ -51,7 +51,7 @@ import type {
   SportEventBracketResponse,
   SportEventListResponse,
   SportEventParticipantResponse,
-  UpdateSportEventMatchRequest,
+  UpdateSportEventRoundMatchRequest,
   UpdateSportEventParticipantsRequest,
   UpdateSportEventRequest,
 } from '@poolmaster/shared/generated/hey-api';
@@ -70,7 +70,7 @@ import {
   listEventParticipants,
   listEvents,
   listParticipants,
-  listPricingProfiles,
+  listPlatformPricingProfiles,
   listSportLeagues,
   listSportLeagueProviderMappings,
   listSports,
@@ -188,15 +188,15 @@ function names(list: readonly string[]): string {
   return list.length <= 5 ? list.join(', ') : `${list.slice(0, 5).join(', ')} and ${list.length - 5} more`;
 }
 
-/** The pricing profile every sport league names unless a root admin moves it (#1844). */
-const STANDARD_PRICING_PROFILE = 'Standard';
+/** The pricing profile every sport league names unless a root admin moves it (#1844), by its code. */
+const STANDARD_PLATFORM_PRICING_PROFILE_CODE = 'STANDARD';
 
 /** The Standard pricing profile: its id, and its values as an event's price assignment sends them. */
-async function standardPricing(client: Client): Promise<{ pricingProfileId: string; request: AutoAssignSportEventPricesRequest }> {
-  const { pricingProfiles } = await must(listPricingProfiles({ client }), 'List pricing profiles');
-  const { id, name, ...values } = found(pricingProfiles.find((profile) => profile.name === STANDARD_PRICING_PROFILE), 'The Standard pricing profile');
+async function standardPricing(client: Client): Promise<{ platformPricingProfileId: string; request: AutoAssignSportEventPricesRequest }> {
+  const { platformPricingProfiles } = await must(listPlatformPricingProfiles({ client }), 'List pricing profiles');
+  const { id, name, ...values } = found(platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE), 'The Standard pricing profile');
   const { salaryCap, unit, topSharePercent, floorSharePercent, steepness } = values;
-  return { pricingProfileId: id, request: { profileName: name, salaryCap, unit, topSharePercent, floorSharePercent, steepness } };
+  return { platformPricingProfileId: id, request: { profileName: name, salaryCap, unit, topSharePercent, floorSharePercent, steepness } };
 }
 
 /** "matches 3, 7": match numbers as a run's detail names them. */
@@ -255,7 +255,7 @@ function bracketChanges(
   storedField: readonly StoredFieldRow[],
   storedBracket: readonly StoredMatch[],
   { locked, filled }: { locked: boolean; filled: ReadonlyMap<string, StoredFieldRow> },
-): { changes: string[]; conflicts: string[]; edits: Array<{ matchNumber: number; edit: UpdateSportEventMatchRequest }> } {
+): { changes: string[]; conflicts: string[]; edits: Array<{ matchNumber: number; edit: UpdateSportEventRoundMatchRequest }> } {
   const byNumber = new Map(storedBracket.map((match) => [match.matchNumber, match]));
   const numberById = new Map(storedBracket.map((match) => [match.id, match.matchNumber]));
   const participantOfRow = new Map(storedField.map((row) => [row.id, row.participantId]));
@@ -291,7 +291,7 @@ function bracketChanges(
     const edits = matches.flatMap((match) => {
       const stored = byNumber.get(match.matchNumber);
       if (!stored) return [];
-      const edit: UpdateSportEventMatchRequest = {};
+      const edit: UpdateSportEventRoundMatchRequest = {};
       if (stored.isNeutralSite !== match.isNeutralSite) edit.isNeutralSite = match.isNeutralSite;
       if (match.scheduledAt !== undefined && timeMoved(match, stored)) edit.scheduledDate = new Date(match.scheduledAt).toISOString();
       return Object.keys(edit).length > 0 ? [{ matchNumber: match.matchNumber, edit }] : [];
@@ -410,11 +410,11 @@ class Loader {
     if (!this.apply) return null;
     // A new league tiers as the sport's own leagues do and prices with Standard (#1844).
     const sibling = sportLeagues[0];
-    const { tierProfileId } = found(sibling, `Another ${this.sport} sport league, whose tier profile a new one names`);
-    const { pricingProfileId } = await this.standardPricing(client);
+    const { platformTierProfileId } = found(sibling, `Another ${this.sport} sport league, whose tier profile a new one names`);
+    const { platformPricingProfileId } = await this.standardPricing(client);
     const created = await must(createSportLeague({
       client,
-      body: { sport: this.sport, name, tierProfileId, pricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
+      body: { sport: this.sport, name, platformTierProfileId, platformPricingProfileId, ...(bracketAdvancement && { bracketAdvancement }) },
     }), `Create sport league ${name}`);
     return created.sportLeague.id;
   }

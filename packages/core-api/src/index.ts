@@ -41,7 +41,7 @@ import { contestConfigTemplatesModule } from './modules/contest-config-templates
 import { eventsModule } from './modules/events/routes';
 import { sportsModule } from './modules/sports/routes';
 import { sportLeaguesModule } from './modules/sport-leagues/routes';
-import { pricingProfilesModule, tierProfilesModule } from './modules/profiles/routes';
+import { platformPricingProfilesModule, platformTierProfilesModule } from './modules/profiles/routes';
 import { createProfileServices } from './modules/profiles/wiring';
 import { eventPagesModule } from './modules/event-pages/routes';
 import { participantsModule } from './modules/participants/routes';
@@ -460,8 +460,8 @@ export function buildApp() {
     webhookProviderIds,
   });
   const profiles = createProfileServices(prisma, app.log);
-  app.register(tierProfilesModule, { prefix: '/api/v1/tier-profiles', tierProfiles: profiles.tierProfiles });
-  app.register(pricingProfilesModule, { prefix: '/api/v1/pricing-profiles', pricingProfiles: profiles.pricingProfiles });
+  app.register(platformTierProfilesModule, { prefix: '/api/v1/tier-profiles', platformTierProfiles: profiles.platformTierProfiles });
+  app.register(platformPricingProfilesModule, { prefix: '/api/v1/pricing-profiles', platformPricingProfiles: profiles.platformPricingProfiles });
   app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });

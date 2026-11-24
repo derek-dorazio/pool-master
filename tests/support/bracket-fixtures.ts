@@ -1,5 +1,5 @@
 /**
- * Knockout brackets as `SportEventMatch` rows, for the bracket-pool tests (#721).
+ * Knockout brackets as `SportEventRoundMatch` rows, for the bracket-pool tests (#721).
  *
  * Field row ids name the team so a test reads as a bracket: `T1`..`T8` are seeds 1 to 8, and in
  * the NFL-shaped playoff `AFC-1` is the AFC's 1 seed. Match ids are `m<matchNumber>`.
@@ -14,7 +14,7 @@ import {
   parseContestScoringSettings,
   type KnockoutRoundPointsSettings,
   type ParticipantContestScoringRule,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type TeamChoice,
 } from '@poolmaster/shared/domain';
 
@@ -29,7 +29,7 @@ export interface BracketMatchSpec {
   advancesTo?: { matchNumber: number; side: MatchSide };
 }
 
-export function bracketMatches(sportEventId: string, specs: readonly BracketMatchSpec[]): SportEventMatch[] {
+export function bracketMatches(sportEventId: string, specs: readonly BracketMatchSpec[]): SportEventRoundMatch[] {
   return specs.map((spec) => ({
     id: `m${spec.matchNumber}`,
     sportEventId,
@@ -64,7 +64,7 @@ const { HOME, AWAY } = MatchSide;
  * Eight seeded teams over three rounds, every game linked to the next: 1v8 and 4v5 feed game 5,
  * 2v7 and 3v6 feed game 6, and games 5 and 6 feed the final, game 7.
  */
-export function eightTeamBracket(sportEventId = 'event-bracket'): SportEventMatch[] {
+export function eightTeamBracket(sportEventId = 'event-bracket'): SportEventRoundMatch[] {
   return bracketMatches(sportEventId, [
     { matchNumber: 1, round: 1, home: 'T1', away: 'T8', advancesTo: { matchNumber: 5, side: HOME } },
     { matchNumber: 2, round: 1, home: 'T4', away: 'T5', advancesTo: { matchNumber: 5, side: AWAY } },
@@ -80,7 +80,7 @@ export function eightTeamBracket(sportEventId = 'event-bracket'): SportEventMatc
  * Six teams over three rounds, the top two seeds on a bye: 4v5 and 3v6 play first, and their
  * winners visit T1 (game 3) and T2 (game 4), who are placed straight into round 2.
  */
-export function sixTeamByeBracket(sportEventId = 'event-bye'): SportEventMatch[] {
+export function sixTeamByeBracket(sportEventId = 'event-bye'): SportEventRoundMatch[] {
   return bracketMatches(sportEventId, [
     { matchNumber: 1, round: 1, home: 'T4', away: 'T5', advancesTo: { matchNumber: 3, side: AWAY } },
     { matchNumber: 2, round: 1, home: 'T3', away: 'T6', advancesTo: { matchNumber: 4, side: AWAY } },
@@ -108,7 +108,7 @@ export const NFL_SEEDS: ReadonlyMap<string, number | null> = new Map(
  * link nowhere (so the Divisional round is reseeded), and conference championships and a Super
  * Bowl fed by links.
  */
-export function nflPlayoff(sportEventId = 'event-nfl'): SportEventMatch[] {
+export function nflPlayoff(sportEventId = 'event-nfl'): SportEventRoundMatch[] {
   return bracketMatches(sportEventId, [
     { matchNumber: 1, round: 1, home: 'AFC-2', away: 'AFC-7', region: 'AFC' },
     { matchNumber: 2, round: 1, home: 'AFC-3', away: 'AFC-6', region: 'AFC' },
@@ -137,7 +137,7 @@ export interface GameResult {
 }
 
 /** The bracket with these games played, by match number; the others are left as they are. */
-export function withResults(bracket: readonly SportEventMatch[], results: ReadonlyMap<number, GameResult>): SportEventMatch[] {
+export function withResults(bracket: readonly SportEventRoundMatch[], results: ReadonlyMap<number, GameResult>): SportEventRoundMatch[] {
   return bracket.map((match) => {
     const result = results.get(match.matchNumber);
     if (result === undefined) return match;
@@ -154,8 +154,8 @@ export function withResults(bracket: readonly SportEventMatch[], results: Readon
 }
 
 /** One bracket pick: the team (field row id) an entry says wins game `m<matchNumber>`. */
-export function bracketPick(matchNumber: number, team: string): { sportEventMatchId: string } & TeamChoice {
-  return { sportEventMatchId: `m${matchNumber}`, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team };
+export function bracketPick(matchNumber: number, team: string): { sportEventRoundMatchId: string } & TeamChoice {
+  return { sportEventRoundMatchId: `m${matchNumber}`, predictedResult: PredictedResult.TEAM, sportEventParticipantId: team };
 }
 
 /** A contest configuration's knockout round-points rule, read back as the adapter reads it. */

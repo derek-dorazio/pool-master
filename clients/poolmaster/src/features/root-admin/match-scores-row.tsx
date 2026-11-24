@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MatchEnding, MatchSide, MatchStatus, type SportMatchPeriods } from '@poolmaster/shared/domain';
 import { clearEventMatchPeriodScore, recordEventMatchPeriodScore, recordEventMatchResult } from '@/lib/api';
-import type { SportEventMatchDto } from '@/lib/api';
+import type { SportEventRoundMatchDto } from '@/lib/api';
 import { Button, InlineError, Input, TableCell } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -31,7 +31,7 @@ export function MatchScoresRow({
   context,
   columns,
 }: {
-  match: SportEventMatchDto;
+  match: SportEventRoundMatchDto;
   periods: SportMatchPeriods;
   context: BracketContext;
   columns: number;
@@ -106,7 +106,7 @@ function ScoreMoment({
   empty,
   context,
 }: {
-  match: SportEventMatchDto;
+  match: SportEventRoundMatchDto;
   moment: number | 'final';
   label: string;
   home: string;

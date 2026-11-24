@@ -21,7 +21,7 @@ export const SportEventMatchPeriodScoreDtoSchema = z.object({
 }).describe('Both sides\' score at the end of one period of a game (#772).');
 export type SportEventMatchPeriodScoreDto = z.infer<typeof SportEventMatchPeriodScoreDtoSchema>;
 
-export const SportEventMatchDtoSchema = z.object({
+export const SportEventRoundMatchDtoSchema = z.object({
   id: z.uuid(),
   sportEventId: z.uuid(),
   roundNumber: z.number().int().describe('The round the match is played in; its label comes from the sport definition\'s round labels.'),
@@ -45,17 +45,17 @@ export const SportEventMatchDtoSchema = z.object({
   homeSpread: z.number().nullable().describe('The points spread from the home team\'s side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick\'em contest scored against the spread reads it.'),
   periodScores: z.array(SportEventMatchPeriodScoreDtoSchema).describe('The score at the end of each period entered so far, in period order; empty for a sport whose games keep no score by period. The final score is homeScore and awayScore.'),
 }).describe('One game or match of an event, which in a bracket is also a slot naming where its winner goes.');
-export type SportEventMatchDto = z.infer<typeof SportEventMatchDtoSchema>;
+export type SportEventRoundMatchDto = z.infer<typeof SportEventRoundMatchDtoSchema>;
 
 export const SportEventBracketResponseSchema = z.object({
-  matches: z.array(SportEventMatchDtoSchema).describe('Every match of the event in match-number order; empty until the bracket is loaded.'),
+  matches: z.array(SportEventRoundMatchDtoSchema).describe('Every match of the event in match-number order; empty until the bracket is loaded.'),
 }).describe('An event\'s bracket.');
 export type SportEventBracketResponse = z.infer<typeof SportEventBracketResponseSchema>;
 
-export const SportEventMatchResponseSchema = z.object({
-  match: SportEventMatchDtoSchema,
+export const SportEventRoundMatchResponseSchema = z.object({
+  match: SportEventRoundMatchDtoSchema,
 }).describe('One match of an event\'s bracket.');
-export type SportEventMatchResponse = z.infer<typeof SportEventMatchResponseSchema>;
+export type SportEventRoundMatchResponse = z.infer<typeof SportEventRoundMatchResponseSchema>;
 
 export const LoadSportEventBracketMatchSchema = z.object({
   matchNumber: z.number().int().min(1).describe('Unique within the bracket: the slot and the display order.'),
@@ -76,7 +76,7 @@ export const LoadSportEventBracketRequestSchema = z.object({
 }).describe('The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side.');
 export type LoadSportEventBracketRequest = z.infer<typeof LoadSportEventBracketRequestSchema>;
 
-export const UpdateSportEventMatchRequestSchema = z.object({
+export const UpdateSportEventRoundMatchRequestSchema = z.object({
   homeSportEventParticipantId: z.uuid().nullable().optional().describe('Omitted keeps it; null empties the side. Only until the event is released.'),
   awaySportEventParticipantId: z.uuid().nullable().optional().describe('Omitted keeps it; null empties the side. Only until the event is released.'),
   isNeutralSite: z.boolean().optional(),
@@ -84,7 +84,7 @@ export const UpdateSportEventMatchRequestSchema = z.object({
   homeSpread: z.number().min(-99.5).max(99.5).multipleOf(0.5).nullable().optional()
     .describe('The points spread from the home team\'s side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.'),
 }).describe('One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.');
-export type UpdateSportEventMatchRequest = z.infer<typeof UpdateSportEventMatchRequestSchema>;
+export type UpdateSportEventRoundMatchRequest = z.infer<typeof UpdateSportEventRoundMatchRequestSchema>;
 
 export const FillPlayInSlotRequestSchema = z.object({
   participantId: z.uuid().describe('The team that won the play-in game: an active participant of the event\'s sport not yet on the field.'),
@@ -96,7 +96,7 @@ export const ReplaceWithdrawnParticipantRequestSchema = z.object({
 }).describe('A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row\'s bracket place, unseeded, last in the event\'s last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss.');
 export type ReplaceWithdrawnParticipantRequest = z.infer<typeof ReplaceWithdrawnParticipantRequestSchema>;
 
-export const RecordSportEventMatchResultRequestSchema = z.object({
+export const RecordSportEventRoundMatchResultRequestSchema = z.object({
   winnerSide: MatchSideDtoSchema.nullable().describe('The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.'),
   homeScore: z.number().int().min(0).nullable().describe('The home side\'s score (games won, for a series), or null with the away score null too.'),
   awayScore: z.number().int().min(0).nullable().describe('The away side\'s score, or null with the home score null too.'),
@@ -104,7 +104,7 @@ export const RecordSportEventMatchResultRequestSchema = z.object({
   awayShootoutScore: z.number().int().min(0).nullable().optional().describe('The away side\'s kicks scored in a shoot-out; omitted or null with the home side\'s.'),
   ending: MatchEndingDtoSchema.optional().describe('How the match ended; omitted is PLAYED. A RETIREMENT or DEFAULT takes both scores or neither, and the winner\'s may be the lower (where it stopped); a WALKOVER takes no scores. Neither a tie nor a shoot-out ends early.'),
 }).describe('A match\'s result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner\'s score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner\'s shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores.');
-export type RecordSportEventMatchResultRequest = z.infer<typeof RecordSportEventMatchResultRequestSchema>;
+export type RecordSportEventRoundMatchResultRequest = z.infer<typeof RecordSportEventRoundMatchResultRequestSchema>;
 
 export const RecordSportEventMatchPeriodScoreRequestSchema = z.object({
   homeScore: z.number().int().min(0).describe('The home side\'s score at the end of the period, earlier periods included.'),
@@ -134,14 +134,14 @@ registerSchema('MatchStatusDto', MatchStatusDtoSchema);
 registerSchema('MatchSideDto', MatchSideDtoSchema);
 registerSchema('MatchEndingDto', MatchEndingDtoSchema);
 registerSchema('SportEventMatchPeriodScoreDto', SportEventMatchPeriodScoreDtoSchema);
-registerSchema('SportEventMatchDto', SportEventMatchDtoSchema);
+registerSchema('SportEventRoundMatchDto', SportEventRoundMatchDtoSchema);
 registerSchema('SportEventBracketResponse', SportEventBracketResponseSchema);
-registerSchema('SportEventMatchResponse', SportEventMatchResponseSchema);
+registerSchema('SportEventRoundMatchResponse', SportEventRoundMatchResponseSchema);
 registerSchema('LoadSportEventBracketRequest', LoadSportEventBracketRequestSchema);
-registerSchema('UpdateSportEventMatchRequest', UpdateSportEventMatchRequestSchema);
+registerSchema('UpdateSportEventRoundMatchRequest', UpdateSportEventRoundMatchRequestSchema);
 registerSchema('FillPlayInSlotRequest', FillPlayInSlotRequestSchema);
 registerSchema('ReplaceWithdrawnParticipantRequest', ReplaceWithdrawnParticipantRequestSchema);
-registerSchema('RecordSportEventMatchResultRequest', RecordSportEventMatchResultRequestSchema);
+registerSchema('RecordSportEventRoundMatchResultRequest', RecordSportEventRoundMatchResultRequestSchema);
 registerSchema('RecordSportEventMatchPeriodScoreRequest', RecordSportEventMatchPeriodScoreRequestSchema);
 registerSchema('RoundMatchupDto', RoundMatchupDtoSchema);
 registerSchema('SportEventRoundMatchupsResponse', SportEventRoundMatchupsResponseSchema);

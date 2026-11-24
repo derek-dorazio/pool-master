@@ -305,12 +305,12 @@ describe('selection handlers', () => {
 
     await callHandler(handlers.getGamePicks, stubRequest({ params: entryEvent, authUser: authUser() }));
     await callHandler(handlers.saveGamePicks, stubRequest({ params: entryEvent, body: { picks: [], tiebreakerValue: 41 }, authUser: authUser() }));
-    await callHandler(handlers.clearGamePick, stubRequest({ params: { ...entryEvent, sportEventMatchId: 'm1' }, authUser: authUser() }));
+    await callHandler(handlers.clearGamePick, stubRequest({ params: { ...entryEvent, sportEventRoundMatchId: 'm1' }, authUser: authUser() }));
     const submitted = await callHandler(handlers.submitGamePicks, stubRequest({ params: entryEvent }));
 
     expect(predictions.getGamePicks).toHaveBeenCalledWith(actor);
     expect(predictions.saveGamePicks).toHaveBeenCalledWith({ ...actor, picks: [], tiebreakerValue: 41 });
-    expect(predictions.clearGamePick).toHaveBeenCalledWith({ ...actor, sportEventMatchId: 'm1' });
+    expect(predictions.clearGamePick).toHaveBeenCalledWith({ ...actor, sportEventRoundMatchId: 'm1' });
     expect(predictions.submitGamePicks).toHaveBeenCalledWith({ ...entryEvent, actorUserId: undefined });
     expect(submitted.body).toMatchObject({ submittedAt: null, games: [] });
   });

@@ -7,17 +7,17 @@ import type { SportLeagueOverviewDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportsPage } from './root-admin-sports-page';
 import { sportsCountLine } from './sport-league-overview-text';
-import { pricingProfilesFixture, providerMappingFixture, providerSummaryFixture, sportLeagueFixture, STANDARD_PRICING_PROFILE_ID } from './sport-test-fixtures';
+import { platformPricingProfilesFixture, providerMappingFixture, providerSummaryFixture, sportLeagueFixture, STANDARD_PLATFORM_PRICING_PROFILE_ID } from './sport-test-fixtures';
 
 // /manage/sports, the root admin's landing page (#1848): every sport league in one grid.
 
 const {
   getProviderSyncRunMock,
   getSportLeagueMock,
-  listPricingProfilesMock,
+  listPlatformPricingProfilesMock,
   listProvidersMock,
   listSportLeagueOverviewsMock,
-  listTierProfilesMock,
+  listPlatformTierProfilesMock,
   mockLogger,
   updateSportLeagueMock,
 } = vi.hoisted(() => {
@@ -26,10 +26,10 @@ const {
   return {
     getProviderSyncRunMock: vi.fn(),
     getSportLeagueMock: vi.fn(),
-    listPricingProfilesMock: vi.fn(),
+    listPlatformPricingProfilesMock: vi.fn(),
     listProvidersMock: vi.fn(),
     listSportLeagueOverviewsMock: vi.fn(),
-    listTierProfilesMock: vi.fn(),
+    listPlatformTierProfilesMock: vi.fn(),
     mockLogger: logger,
     updateSportLeagueMock: vi.fn(),
   };
@@ -38,10 +38,10 @@ const {
 bindApiMocks({
   getProviderSyncRun: getProviderSyncRunMock,
   getSportLeague: getSportLeagueMock,
-  listPricingProfiles: listPricingProfilesMock,
+  listPlatformPricingProfiles: listPlatformPricingProfilesMock,
   listProviders: listProvidersMock,
   listSportLeagueOverviews: listSportLeagueOverviewsMock,
-  listTierProfiles: listTierProfilesMock,
+  listPlatformTierProfiles: listPlatformTierProfilesMock,
   updateSportLeague: updateSportLeagueMock,
 });
 
@@ -51,8 +51,8 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
-const TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
-const OTHER_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a2';
+const PLATFORM_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
+const OTHER_PLATFORM_TIER_PROFILE_ID = '00000000-0000-4000-8000-0000000000a2';
 
 function overview(overrides: Partial<SportLeagueOverviewDto> = {}): SportLeagueOverviewDto {
   return {
@@ -270,8 +270,8 @@ describe('RootAdminSportsPage', () => {
   it('opens a sport league\'s settings from its ⚙ without leaving the grid, showing them before Edit, and closes back to the grid', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() }) } });
-    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
-    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
+    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PLATFORM_TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_PLATFORM_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
@@ -292,9 +292,9 @@ describe('RootAdminSportsPage', () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: mlb } });
-    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
-    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
-    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...mlb, tierProfileId: OTHER_TIER_PROFILE_ID, autoReleaseDaysBeforeStart: null } } });
+    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PLATFORM_TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_PLATFORM_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...mlb, platformTierProfileId: OTHER_PLATFORM_TIER_PROFILE_ID, autoReleaseDaysBeforeStart: null } } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
@@ -306,7 +306,7 @@ describe('RootAdminSportsPage', () => {
 
     await waitFor(() => expect(updateSportLeagueMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { sportLeagueId: 'mlb' },
-      body: { autoReleaseDaysBeforeStart: null, tierProfileId: OTHER_TIER_PROFILE_ID },
+      body: { autoReleaseDaysBeforeStart: null, platformTierProfileId: OTHER_PLATFORM_TIER_PROFILE_ID },
     })));
     expect(await screen.findByTestId('root-admin-sport-league-settings-edit')).toBeInTheDocument();
   });
@@ -315,9 +315,9 @@ describe('RootAdminSportsPage', () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     const mlb = sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', selectedProviderMapping: providerMappingFixture() });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: mlb } });
-    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [{ id: TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
-    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: pricingProfilesFixture() } });
-    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...mlb, tierProfileId: OTHER_TIER_PROFILE_ID } } });
+    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PLATFORM_TIER_PROFILE_ID, name: '4 tiers of 3' }, { id: OTHER_PLATFORM_TIER_PROFILE_ID, name: '6 tiers of 5' }] } });
+    listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
+    updateSportLeagueMock.mockResolvedValue({ data: { sportLeague: { ...mlb, platformTierProfileId: OTHER_PLATFORM_TIER_PROFILE_ID } } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
@@ -333,9 +333,9 @@ describe('RootAdminSportsPage', () => {
 
   it('keeps Save off for an auto release outside 1 to 30 days, and Cancel goes back to the settings unsaved', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', pricingProfileId: STANDARD_PRICING_PROFILE_ID }) } });
-    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [] } });
-    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: [] } });
+    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB', platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID }) } });
+    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [] } });
+    listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: [] } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sports-settings-mlb'));
@@ -354,8 +354,8 @@ describe('RootAdminSportsPage', () => {
   it('keeps the form open with the server\'s reason when the settings are refused', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB' }) } });
-    listTierProfilesMock.mockResolvedValue({ data: { tierProfiles: [] } });
-    listPricingProfilesMock.mockResolvedValue({ data: { pricingProfiles: [] } });
+    listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [] } });
+    listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: [] } });
     updateSportLeagueMock.mockResolvedValue({
       error: { error: { code: 'PROVIDER_NOT_FOUND', message: 'BALLDONTLIE\'s mlb is switched off or not running.' } },
       response: { status: 422 },

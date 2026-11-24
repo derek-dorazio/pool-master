@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MatchStatus } from '@poolmaster/shared/domain';
 import { recordEventMatchResult } from '@/lib/api';
-import type { SportEventMatchDto } from '@/lib/api';
+import type { SportEventRoundMatchDto } from '@/lib/api';
 import { Button, InlineError, Input, Text } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { bracketErrors } from './bracket-copy';
@@ -11,7 +11,7 @@ import { type BracketContext, useMatchWrite } from './bracket-match-write';
  * A game of a week that ended level (#792), called by the sport's word ("Draw" in soccer): a tie
  * needs its score, the same for both sides, so the button asks for it before saving.
  */
-export function TieResult({ match, context }: { match: SportEventMatchDto; context: BracketContext }) {
+export function TieResult({ match, context }: { match: SportEventRoundMatchDto; context: BracketContext }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
   const word = context.vocabulary.tie;

@@ -68,7 +68,7 @@ describe('head to head', () => {
     const findMany = jest.fn().mockResolvedValue([]);
 
     const result = await writer.persist(
-      { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportEventMatch: { findMany } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
+      { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportEventRoundMatch: { findMany } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
       { id: 'event-1', rounds: null, roundSeriesLengths: [] },
       { category: 'GAME', externalEventId: 'scope-1', games: [] },
     );

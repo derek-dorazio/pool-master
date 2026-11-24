@@ -2681,13 +2681,13 @@ export interface paths {
         get?: never;
         /**
          * Enter a match's result
-         * @description Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         * @description Completes the match with its winner and scores, puts the winner on the side of the match it advances to, and rewrites every team's event standing from the bracket (the champion 1, a team that lost ELIMINATED). A week of games that forms no bracket ranks no team: a team is COMPLETE once its game is played or cancelled. A game of such a week can end in a tie (#792): a null winnerSide with both scores level. Re-sending a match's result changes it. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 422 MATCH_SIDES_NOT_SET while a side waits for an earlier winner. A bracket match level after extra time, in a sport settled by shoot-out, takes both shoot-out scores and the winner's is the higher; they are kept apart from the match score. A match that ended early says how (ending): after a RETIREMENT or DEFAULT the winner's score may be the lower, and a WALKOVER has no scores; its winner wins in full. 422 MATCH_RESULT_INVALID for one score without the other, a winner without the higher score in a match played to its end, a tie without level scores, a tie in a bracket match, shoot-out scores on a match that is not a level bracket match of such a sport, a tie or shoot-out that ended early, or a walkover with scores or period scores. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         put: operations["recordEventMatchResult"];
         post?: never;
         /**
          * Clear a match's result
-         * @description The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 SPORT_EVENT_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
+         * @description The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
          */
         delete: operations["clearEventMatchResult"];
         options?: never;
@@ -3079,13 +3079,13 @@ export interface paths {
          * List tier profiles
          * @description Every tier profile, by name, each with how many sport leagues name it. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        get: operations["listTierProfiles"];
+        get: operations["listPlatformTierProfiles"];
         put?: never;
         /**
          * Create a tier profile
-         * @description 409 TIER_PROFILE_NAME_TAKEN when another tier profile has the name; 422 TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description 409 PLATFORM_TIER_PROFILE_CODE_TAKEN or PLATFORM_TIER_PROFILE_NAME_TAKEN when another tier profile has the code or the name; 422 PLATFORM_TIER_PROFILE_INVALID when lastTierMax is not set exactly for a CAPPED last tier. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        post: operations["createTierProfile"];
+        post: operations["createPlatformTierProfile"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3101,20 +3101,20 @@ export interface paths {
         };
         /**
          * Get a tier profile
-         * @description 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description 404 PLATFORM_TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        get: operations["getTierProfile"];
+        get: operations["getPlatformTierProfile"];
         /**
          * Update a tier profile
-         * @description Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 TIER_PROFILE_NOT_FOUND, 409 TIER_PROFILE_NAME_TAKEN, 422 TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description Replaces the profile's name and layout. Every sport league naming it uses the new layout from then on: a new event starts with its tier count, and the next auto-tiering of a draft event uses it. An event already made keeps its tiers. 404 PLATFORM_TIER_PROFILE_NOT_FOUND, 409 PLATFORM_TIER_PROFILE_CODE_TAKEN, 409 PLATFORM_TIER_PROFILE_NAME_TAKEN, 422 PLATFORM_TIER_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        put: operations["updateTierProfile"];
+        put: operations["updatePlatformTierProfile"];
         post?: never;
         /**
          * Delete a tier profile
-         * @description 409 TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description 409 PLATFORM_TIER_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        delete: operations["deleteTierProfile"];
+        delete: operations["deletePlatformTierProfile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3131,13 +3131,13 @@ export interface paths {
          * List pricing profiles
          * @description Every pricing profile, by name, each with how many sport leagues name it. The price dialog on an event's Tiers page offers them. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        get: operations["listPricingProfiles"];
+        get: operations["listPlatformPricingProfiles"];
         put?: never;
         /**
          * Create a pricing profile
-         * @description 409 PRICING_PROFILE_NAME_TAKEN when another pricing profile has the name; 422 PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN or PLATFORM_PRICING_PROFILE_NAME_TAKEN when another pricing profile has the code or the name; 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other (a floor share above the top share, or a unit larger than the worst price). Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        post: operations["createPricingProfile"];
+        post: operations["createPlatformPricingProfile"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3153,20 +3153,20 @@ export interface paths {
         };
         /**
          * Get a pricing profile
-         * @description 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        get: operations["getPricingProfile"];
+        get: operations["getPlatformPricingProfile"];
         /**
          * Update a pricing profile
-         * @description Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PRICING_PROFILE_NOT_FOUND, 409 PRICING_PROFILE_NAME_TAKEN, 422 PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description Replaces the profile's name and values. A synced field never priced, of any sport league naming it, is priced with the new values; a field already priced keeps the values it was priced with. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, 409 PLATFORM_PRICING_PROFILE_CODE_TAKEN, 409 PLATFORM_PRICING_PROFILE_NAME_TAKEN, 422 PLATFORM_PRICING_PROFILE_INVALID as for create. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        put: operations["updatePricingProfile"];
+        put: operations["updatePlatformPricingProfile"];
         post?: never;
         /**
          * Delete a pricing profile
-         * @description 409 PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
+         * @description 409 PLATFORM_PRICING_PROFILE_IN_USE while any sport league names it: point those leagues at another profile first. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for an unknown profile. Root admin only. More than 120 requests a minute from one address answer 429 PROFILE_RATE_LIMITED.
          */
-        delete: operations["deletePricingProfile"];
+        delete: operations["deletePlatformPricingProfile"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3924,7 +3924,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventMatchId}": {
+    "/api/v1/selections/{contestId}/entries/{entryId}/events/{sportEventId}/game-picks/{sportEventRoundMatchId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -9752,14 +9752,14 @@ export interface components {
             autoReleaseDaysBeforeStart: number | null;
             /**
              * Format: uuid
-             * @description The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+             * @description The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
              */
-            tierProfileId: string;
+            platformTierProfileId: string;
             /**
              * Format: uuid
-             * @description The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+             * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
              */
-            pricingProfileId: string;
+            platformPricingProfileId: string;
             /**
              * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
              * @enum {string}
@@ -9873,14 +9873,14 @@ export interface components {
                 autoReleaseDaysBeforeStart: number | null;
                 /**
                  * Format: uuid
-                 * @description The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+                 * @description The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
                  */
-                tierProfileId: string;
+                platformTierProfileId: string;
                 /**
                  * Format: uuid
-                 * @description The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+                 * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
                  */
-                pricingProfileId: string;
+                platformPricingProfileId: string;
                 /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
@@ -9985,14 +9985,14 @@ export interface components {
                 autoReleaseDaysBeforeStart: number | null;
                 /**
                  * Format: uuid
-                 * @description The tier profile the sport league names (TierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
+                 * @description The tier profile the sport league names (PlatformTierProfileDto): a new event of the league starts with its tiers, and its field is auto-tiered by it.
                  */
-                tierProfileId: string;
+                platformTierProfileId: string;
                 /**
                  * Format: uuid
-                 * @description The pricing profile the sport league names (PricingProfileDto): a synced field of the league never priced before is priced with its values.
+                 * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
                  */
-                pricingProfileId: string;
+                platformPricingProfileId: string;
                 /**
                  * @description How the sport league's bracket winners reach their next match: FIXED by each match's link, or RESEED_BY_SEED, where after a round whose matches link nowhere the admin places the teams left in each region, the best seed hosting the worst (the NFL). FIXED for a sport not played as a bracket.
                  * @enum {string}
@@ -10058,14 +10058,14 @@ export interface components {
             bracketAdvancement?: "FIXED" | "RESEED_BY_SEED";
             /**
              * Format: uuid
-             * @description The tier profile the sport league names. 404 TIER_PROFILE_NOT_FOUND for one that does not exist.
+             * @description The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.
              */
-            tierProfileId: string;
+            platformTierProfileId: string;
             /**
              * Format: uuid
-             * @description The pricing profile the sport league names. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist.
+             * @description The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.
              */
-            pricingProfileId: string;
+            platformPricingProfileId: string;
         };
         /** @description Changes to a sport league; omitted fields are left alone. */
         UpdateSportLeagueRequest: {
@@ -10082,14 +10082,14 @@ export interface components {
             currentEventYear?: number;
             /**
              * Format: uuid
-             * @description Names another tier profile. 404 TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.
+             * @description Names another tier profile. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist. An event already made keeps its tiers; its next auto-tiering uses the new profile.
              */
-            tierProfileId?: string;
+            platformTierProfileId?: string;
             /**
              * Format: uuid
-             * @description Names another pricing profile. 404 PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.
+             * @description Names another pricing profile. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist. A field already priced keeps its values; a field never priced is priced with the new profile.
              */
-            pricingProfileId?: string;
+            platformPricingProfileId?: string;
             /**
              * @description RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise. A change is refused with 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED while any event of the sport league has its bracket loaded; the value it already has is accepted.
              * @enum {string}
@@ -13878,7 +13878,7 @@ export interface components {
              * Format: uuid
              * @description A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.
              */
-            sportEventMatchId?: string;
+            sportEventRoundMatchId?: string;
         };
         /** @description Patch payload for updating editable contest metadata. */
         UpdateContestRequest: {
@@ -15247,7 +15247,7 @@ export interface components {
                  * Format: uuid
                  * @description The game picked: one of the event's games.
                  */
-                sportEventMatchId: string;
+                sportEventRoundMatchId: string;
                 /**
                  * @description What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.
                  * @enum {string}
@@ -15439,7 +15439,7 @@ export interface components {
                 /** @description The entry's picks on the current week's games, in game order: only games that have kicked off, so no entry sees a pick it could still copy. */
                 currentWeekPicks: {
                     /** Format: uuid */
-                    sportEventMatchId: string;
+                    sportEventRoundMatchId: string;
                     /**
                      * Format: uuid
                      * @description The field row of the team picked; null for a tie pick.
@@ -15572,7 +15572,7 @@ export interface components {
             /** @description The event's games in game-number order. Cancelled games are left out: they are not picked. */
             games: {
                 /** Format: uuid */
-                sportEventMatchId: string;
+                sportEventRoundMatchId: string;
                 matchNumber: number;
                 roundNumber: number;
                 /**
@@ -15792,7 +15792,7 @@ export interface components {
                  * Format: uuid
                  * @description The game picked: one of the event's games.
                  */
-                sportEventMatchId: string;
+                sportEventRoundMatchId: string;
                 /**
                  * @description What the pick says happens: TEAM, the team named wins; TIE, the game ends level (#792). Only a pick'em pool whose sport offers tie picks (`tiePicksOffered`) takes a TIE.
                  * @enum {string}
@@ -15833,7 +15833,7 @@ export interface components {
             /** @description The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round. */
             games: {
                 /** Format: uuid */
-                sportEventMatchId: string;
+                sportEventRoundMatchId: string;
                 matchNumber: number;
                 roundNumber: number;
                 /**
@@ -19554,7 +19554,7 @@ export interface components {
             awayScore: number;
         };
         /** @description One game or match of an event, which in a bracket is also a slot naming where its winner goes. */
-        SportEventMatchDto: {
+        SportEventRoundMatchDto: {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
@@ -19725,7 +19725,7 @@ export interface components {
             }[];
         };
         /** @description One match of an event's bracket. */
-        SportEventMatchResponse: {
+        SportEventRoundMatchResponse: {
             /** @description One game or match of an event, which in a bracket is also a slot naming where its winner goes. */
             match: {
                 /** Format: uuid */
@@ -19846,7 +19846,7 @@ export interface components {
             }[];
         };
         /** @description One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game. */
-        UpdateSportEventMatchRequest: {
+        UpdateSportEventRoundMatchRequest: {
             /**
              * Format: uuid
              * @description Omitted keeps it; null empties the side. Only until the event is released.
@@ -19883,7 +19883,7 @@ export interface components {
             participantId: string;
         };
         /** @description A match's result: who won, or a tie, and both scores or neither. A match that ended early says how (ending). The winner's score must be the higher, except in a bracket match of a sport settled by shoot-out, where a level score takes both shoot-out scores and the winner's shoot-out score is the higher. Shoot-out scores are refused anywhere else. A tie, only in a game of a week, has level scores. */
-        RecordSportEventMatchResultRequest: {
+        RecordSportEventRoundMatchResultRequest: {
             /**
              * @description The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.
              * @enum {string|null}
@@ -25757,8 +25757,8 @@ export interface components {
                 lastSignInAt: string | null;
             }[];
         };
-        /** @description A tier profile's name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 TIER_PROFILE_INVALID otherwise. */
-        TierProfileWriteRequest: {
+        /** @description A tier profile's code, name and layout, the whole of it. lastTierMax is set exactly when lastTier is CAPPED: 422 PLATFORM_TIER_PROFILE_INVALID otherwise. */
+        PlatformTierProfileWriteRequest: {
             /** @description How many tiers a new event starts with. */
             tierCount: number;
             /** @description How many participants auto-tiering puts in each tier before the last. */
@@ -25770,11 +25770,13 @@ export interface components {
             lastTier: "ALL_REMAINING" | "CAPPED";
             /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
             lastTierMax: number | null;
+            /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+            code: string;
             /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
             name: string;
         };
         /** @description A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers. */
-        TierProfileDto: {
+        PlatformTierProfileDto: {
             /** @description How many tiers a new event starts with. */
             tierCount: number;
             /** @description How many participants auto-tiering puts in each tier before the last. */
@@ -25786,6 +25788,8 @@ export interface components {
             lastTier: "ALL_REMAINING" | "CAPPED";
             /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
             lastTierMax: number | null;
+            /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+            code: string;
             /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
             name: string;
             /** Format: uuid */
@@ -25804,9 +25808,9 @@ export interface components {
             updatedAt: string;
         };
         /** @description Every tier profile. */
-        TierProfileListResponse: {
+        PlatformTierProfileListResponse: {
             /** @description Every tier profile, by name. */
-            tierProfiles: {
+            platformTierProfiles: {
                 /** @description How many tiers a new event starts with. */
                 tierCount: number;
                 /** @description How many participants auto-tiering puts in each tier before the last. */
@@ -25818,6 +25822,8 @@ export interface components {
                 lastTier: "ALL_REMAINING" | "CAPPED";
                 /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                 lastTierMax: number | null;
+                /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+                code: string;
                 /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
                 name: string;
                 /** Format: uuid */
@@ -25837,9 +25843,9 @@ export interface components {
             }[];
         };
         /** @description One tier profile. */
-        TierProfileResponse: {
+        PlatformTierProfileResponse: {
             /** @description A tier layout each sport league can name: a new event of the league starts with tierCount tiers, and auto-tiering fills each tier but the last with tierSize participants in the field's order. A field too small to reach the last tier is split evenly over the tiers. */
-            tierProfile: {
+            platformTierProfile: {
                 /** @description How many tiers a new event starts with. */
                 tierCount: number;
                 /** @description How many participants auto-tiering puts in each tier before the last. */
@@ -25851,6 +25857,8 @@ export interface components {
                 lastTier: "ALL_REMAINING" | "CAPPED";
                 /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                 lastTierMax: number | null;
+                /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+                code: string;
                 /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
                 name: string;
                 /** Format: uuid */
@@ -25869,8 +25877,8 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description A pricing profile's name and values, the whole of it. 422 PRICING_PROFILE_INVALID when the values contradict each other. */
-        PricingProfileWriteRequest: {
+        /** @description A pricing profile's code, name and values, the whole of it. 422 PLATFORM_PRICING_PROFILE_INVALID when the values contradict each other. */
+        PlatformPricingProfileWriteRequest: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
             /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
@@ -25883,9 +25891,11 @@ export interface components {
             steepness: number;
             /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
             name: string;
+            /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+            code: string;
         };
         /** @description A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them. */
-        PricingProfileDto: {
+        PlatformPricingProfileDto: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
             /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
@@ -25898,6 +25908,8 @@ export interface components {
             steepness: number;
             /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
             name: string;
+            /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+            code: string;
             /** Format: uuid */
             id: string;
             /** @description How many sport leagues name the profile. One any league names can't be deleted. */
@@ -25914,9 +25926,9 @@ export interface components {
             updatedAt: string;
         };
         /** @description Every pricing profile. */
-        PricingProfileListResponse: {
+        PlatformPricingProfileListResponse: {
             /** @description Every pricing profile, by name. */
-            pricingProfiles: {
+            platformPricingProfiles: {
                 /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                 salaryCap: number;
                 /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
@@ -25929,6 +25941,8 @@ export interface components {
                 steepness: number;
                 /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
                 name: string;
+                /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+                code: string;
                 /** Format: uuid */
                 id: string;
                 /** @description How many sport leagues name the profile. One any league names can't be deleted. */
@@ -25946,9 +25960,9 @@ export interface components {
             }[];
         };
         /** @description One pricing profile. */
-        PricingProfileResponse: {
+        PlatformPricingProfileResponse: {
             /** @description A set of budget pricing values each sport league can name: a synced field of the league never priced before is priced with them, and the price dialog offers them. */
-            pricingProfile: {
+            platformPricingProfile: {
                 /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                 salaryCap: number;
                 /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
@@ -25961,6 +25975,8 @@ export interface components {
                 steepness: number;
                 /** @description The profile's name, unique among its kind: "6 tiers of 10", "Standard". */
                 name: string;
+                /** @description The profile's key, unique among its kind: TIERS_6_OF_10, STANDARD. Capital letters, digits and underscores, starting with a letter. Migrations, seed scripts and test data find a profile by it, never by its name. */
+                code: string;
                 /** Format: uuid */
                 id: string;
                 /** @description How many sport leagues name the profile. One any league names can't be deleted. */
@@ -34402,7 +34418,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateSportEventMatchRequest"];
+                "application/json": components["schemas"]["UpdateSportEventRoundMatchRequest"];
             };
         };
         responses: {
@@ -34412,7 +34428,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SportEventMatchResponse"];
+                    "application/json": components["schemas"]["SportEventRoundMatchResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -34483,7 +34499,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RecordSportEventMatchResultRequest"];
+                "application/json": components["schemas"]["RecordSportEventRoundMatchResultRequest"];
             };
         };
         responses: {
@@ -35820,7 +35836,7 @@ export interface operations {
             };
         };
     };
-    listTierProfiles: {
+    listPlatformTierProfiles: {
         parameters: {
             query?: never;
             header?: never;
@@ -35835,7 +35851,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TierProfileListResponse"];
+                    "application/json": components["schemas"]["PlatformTierProfileListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -35867,7 +35883,7 @@ export interface operations {
             };
         };
     };
-    createTierProfile: {
+    createPlatformTierProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -35876,7 +35892,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TierProfileWriteRequest"];
+                "application/json": components["schemas"]["PlatformTierProfileWriteRequest"];
             };
         };
         responses: {
@@ -35886,7 +35902,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TierProfileResponse"];
+                    "application/json": components["schemas"]["PlatformTierProfileResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -35945,7 +35961,7 @@ export interface operations {
             };
         };
     };
-    getTierProfile: {
+    getPlatformTierProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -35962,7 +35978,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TierProfileResponse"];
+                    "application/json": components["schemas"]["PlatformTierProfileResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -36003,7 +36019,7 @@ export interface operations {
             };
         };
     };
-    updateTierProfile: {
+    updatePlatformTierProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -36014,7 +36030,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TierProfileWriteRequest"];
+                "application/json": components["schemas"]["PlatformTierProfileWriteRequest"];
             };
         };
         responses: {
@@ -36024,7 +36040,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TierProfileResponse"];
+                    "application/json": components["schemas"]["PlatformTierProfileResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -36092,7 +36108,7 @@ export interface operations {
             };
         };
     };
-    deleteTierProfile: {
+    deletePlatformTierProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -36157,7 +36173,7 @@ export interface operations {
             };
         };
     };
-    listPricingProfiles: {
+    listPlatformPricingProfiles: {
         parameters: {
             query?: never;
             header?: never;
@@ -36172,7 +36188,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PricingProfileListResponse"];
+                    "application/json": components["schemas"]["PlatformPricingProfileListResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -36204,7 +36220,7 @@ export interface operations {
             };
         };
     };
-    createPricingProfile: {
+    createPlatformPricingProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -36213,7 +36229,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PricingProfileWriteRequest"];
+                "application/json": components["schemas"]["PlatformPricingProfileWriteRequest"];
             };
         };
         responses: {
@@ -36223,7 +36239,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PricingProfileResponse"];
+                    "application/json": components["schemas"]["PlatformPricingProfileResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -36282,7 +36298,7 @@ export interface operations {
             };
         };
     };
-    getPricingProfile: {
+    getPlatformPricingProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -36299,7 +36315,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PricingProfileResponse"];
+                    "application/json": components["schemas"]["PlatformPricingProfileResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -36340,7 +36356,7 @@ export interface operations {
             };
         };
     };
-    updatePricingProfile: {
+    updatePlatformPricingProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -36351,7 +36367,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PricingProfileWriteRequest"];
+                "application/json": components["schemas"]["PlatformPricingProfileWriteRequest"];
             };
         };
         responses: {
@@ -36361,7 +36377,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PricingProfileResponse"];
+                    "application/json": components["schemas"]["PlatformPricingProfileResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -36429,7 +36445,7 @@ export interface operations {
             };
         };
     };
-    deletePricingProfile: {
+    deletePlatformPricingProfile: {
         parameters: {
             query?: never;
             header?: never;
@@ -38751,7 +38767,7 @@ export interface operations {
                 contestId: string;
                 entryId: string;
                 sportEventId: string;
-                sportEventMatchId: string;
+                sportEventRoundMatchId: string;
             };
             cookie?: never;
         };

@@ -8,7 +8,7 @@ import {
   SportEventStatus,
   type Contest,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import {
   EventLifecycleError,
@@ -632,7 +632,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
     contests.matches = {
       findBySportEvent: jest.fn().mockResolvedValue([
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff } as SportEventMatch,
+        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: kickoff } as SportEventRoundMatch,
       ]),
     };
     contests.contests.transitionStatuses = guardedMove(written, (ids, transition) => {
@@ -708,7 +708,7 @@ describe('EventLifecycleService settling a decided game\'s squares contests in a
     const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS });
     const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement);
     const decidedAt = new Date('2026-05-02T23:30:00.000Z');
-    const payload = { sportEventId: 'sport-event-1', sportEventMatchId: 'game-1', completedAt: decidedAt.toISOString() };
+    const payload = { sportEventId: 'sport-event-1', sportEventRoundMatchId: 'game-1', completedAt: decidedAt.toISOString() };
 
     await service.settleFinishedGameContests(payload);
     expect(settlement.settleFinishedGame).toHaveBeenCalledWith('sport-event-1', 'game-1', { completedAt: decidedAt });
@@ -968,7 +968,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     return store.sportEventRepo();
   }
 
-  function liveContests(contests: readonly Contest[], options: { games?: SportEventMatch[]; configurations?: Array<{ contestId: string; configJson: unknown }> } = {}) {
+  function liveContests(contests: readonly Contest[], options: { games?: SportEventRoundMatch[]; configurations?: Array<{ contestId: string; configJson: unknown }> } = {}) {
     const deps = contestDeps();
     deps.contests.findBySportEvent = jest.fn().mockResolvedValue(contests);
     deps.configurations = fakeContestConfigurationRepo({ findByContests: jest.fn().mockResolvedValue(options.configurations ?? []) });
@@ -1085,7 +1085,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
 
   it('keeps every contest live when a game of the event was already under way before the postponement', async () => {
     const deps = liveContests([LIVE], {
-      games: [{ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START } as SportEventMatch],
+      games: [{ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.IN_PROGRESS, scheduledDate: NEW_START } as SportEventRoundMatch],
     });
 
     await follow(deps, postponedEvents(NEW_START));
@@ -1096,8 +1096,8 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
   it('still reopens when the event\'s games are scheduled or postponed themselves, none of them begun', async () => {
     const deps = liveContests([LIVE], {
       games: [
-        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: NEW_START } as SportEventMatch,
-        { id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.POSTPONED, scheduledDate: NEW_START } as SportEventMatch,
+        { id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: NEW_START } as SportEventRoundMatch,
+        { id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 1, status: MatchStatus.POSTPONED, scheduledDate: NEW_START } as SportEventRoundMatch,
       ],
     });
 

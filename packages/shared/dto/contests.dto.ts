@@ -41,7 +41,7 @@ export const CreateContestRequestSchema = z.object({
   ),
   templateId: z.uuid().optional().describe('Template whose configuration seeds the contest. Optional: the first step of creation, not a second way to create.'),
   configuration: ContestConfigurationRequestSchema.optional().describe('The contest configuration. With a template, replaces the template\'s configuration; without one, is the configuration.'),
-  sportEventMatchId: z.uuid().optional().describe('A squares contest\'s game (#711): one of its event\'s games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.'),
+  sportEventRoundMatchId: z.uuid().optional().describe('A squares contest\'s game (#711): one of its event\'s games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.'),
 }).refine(
   (request) => request.templateId !== undefined || request.configuration !== undefined,
   { message: 'Name a template, supply a configuration, or both.', params: { code: CONTEST_CONFIGURATION_REQUIRED } },

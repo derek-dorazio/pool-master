@@ -4,18 +4,18 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
-import { PrismaPricingProfileRepository, PrismaTierProfileRepository } from '../../adapters';
+import { PrismaPlatformPricingProfileRepository, PrismaPlatformTierProfileRepository } from '../../adapters';
 import {
-  PRICING_PROFILE_KIND,
+  PLATFORM_PRICING_PROFILE_KIND,
   ProfileService,
-  TIER_PROFILE_KIND,
-  type PricingProfileService,
-  type TierProfileService,
+  PLATFORM_TIER_PROFILE_KIND,
+  type PlatformPricingProfileService,
+  type PlatformTierProfileService,
 } from './profile-service';
 
-export function createProfileServices(prisma: PrismaClient, logger?: FastifyBaseLogger): { tierProfiles: TierProfileService; pricingProfiles: PricingProfileService } {
+export function createProfileServices(prisma: PrismaClient, logger?: FastifyBaseLogger): { platformTierProfiles: PlatformTierProfileService; platformPricingProfiles: PlatformPricingProfileService } {
   return {
-    tierProfiles: new ProfileService({ profiles: new PrismaTierProfileRepository(prisma), kind: TIER_PROFILE_KIND, logger }),
-    pricingProfiles: new ProfileService({ profiles: new PrismaPricingProfileRepository(prisma), kind: PRICING_PROFILE_KIND, logger }),
+    platformTierProfiles: new ProfileService({ profiles: new PrismaPlatformTierProfileRepository(prisma), kind: PLATFORM_TIER_PROFILE_KIND, logger }),
+    platformPricingProfiles: new ProfileService({ profiles: new PrismaPlatformPricingProfileRepository(prisma), kind: PLATFORM_PRICING_PROFILE_KIND, logger }),
   };
 }

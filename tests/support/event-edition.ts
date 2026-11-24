@@ -21,7 +21,7 @@ const FIXTURE_SERIES_PREFIX = 'Fixture edition: ';
 const LINKED_EVENT_ROUNDS = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'eventSeries' | 'tierProfile' | 'pricingProfile'>;
+type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'eventSeries' | 'platformTierProfile' | 'platformPricingProfile'>;
 
 export interface EventEdition {
   eventSeriesId: string;

@@ -5,19 +5,21 @@
 
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type {
-  PricingProfileRepository,
-  PricingProfileWrite,
-  TierProfileRepository,
-  TierProfileWrite,
+  PlatformPricingProfileRepository,
+  PlatformPricingProfileWrite,
+  PlatformTierProfileRepository,
+  PlatformTierProfileWrite,
+  ProfileTaken,
 } from '@poolmaster/shared/db';
-import type { PricingProfile, TierProfile } from '@poolmaster/shared/domain';
+import type { PlatformPricingProfile, PlatformTierProfile } from '@poolmaster/shared/domain';
 
-type TierProfileRow = Prisma.TierProfileGetPayload<object>;
-type PricingProfileRow = Prisma.PricingProfileGetPayload<object>;
+type PlatformTierProfileRow = Prisma.PlatformTierProfileGetPayload<object>;
+type PlatformPricingProfileRow = Prisma.PlatformPricingProfileGetPayload<object>;
 
-function toTierProfile(row: TierProfileRow): TierProfile {
+function toPlatformTierProfile(row: PlatformTierProfileRow): PlatformTierProfile {
   return {
     id: row.id,
+    code: row.code,
     name: row.name,
     tierCount: row.tierCount,
     tierSize: row.tierSize,
@@ -28,9 +30,10 @@ function toTierProfile(row: TierProfileRow): TierProfile {
   };
 }
 
-function toPricingProfile(row: PricingProfileRow): PricingProfile {
+function toPlatformPricingProfile(row: PlatformPricingProfileRow): PlatformPricingProfile {
   return {
     id: row.id,
+    code: row.code,
     name: row.name,
     salaryCap: row.salaryCap,
     unit: row.unit,
@@ -61,104 +64,114 @@ async function deleteUnlessUsed(remove: () => Promise<unknown>, countUses: () =>
 }
 
 /**
- * Runs a create or update, answering `'nameTaken'` when the name's unique index (P2002) refuses it:
- * two writes racing for one name both pass a read-first check, so the index decides.
+ * Runs a create or update, answering which unique index (P2002) refused it: `'codeTaken'` for the
+ * code's, `'nameTaken'` for the name's. Two writes racing for one code or name both pass a
+ * read-first check, so the index decides.
  */
-async function unlessNameTaken<T>(write: () => Promise<T>): Promise<T | 'nameTaken'> {
+async function unlessTaken<T>(write: () => Promise<T>): Promise<T | ProfileTaken> {
   try {
     return await write();
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'nameTaken';
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return uniqueTargetNames(error.meta?.['target']).includes('code') ? 'codeTaken' : 'nameTaken';
+    }
     throw error;
   }
 }
 
-export class PrismaTierProfileRepository implements TierProfileRepository {
+/** The columns (or the index name) a P2002 names, as Prisma reports them. */
+function uniqueTargetNames(target: unknown): string[] {
+  if (Array.isArray(target)) return target.map(String);
+  return typeof target === 'string' ? target.split('_') : [];
+}
+
+export class PrismaPlatformTierProfileRepository implements PlatformTierProfileRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findAll(): Promise<TierProfile[]> {
-    return (await this.prisma.tierProfile.findMany({ orderBy: { name: 'asc' } })).map(toTierProfile);
+  async findAll(): Promise<PlatformTierProfile[]> {
+    return (await this.prisma.platformTierProfile.findMany({ orderBy: { name: 'asc' } })).map(toPlatformTierProfile);
   }
 
-  async findById(id: string): Promise<TierProfile | null> {
-    const row = await this.prisma.tierProfile.findUnique({ where: { id } });
-    return row ? toTierProfile(row) : null;
+  async findById(id: string): Promise<PlatformTierProfile | null> {
+    const row = await this.prisma.platformTierProfile.findUnique({ where: { id } });
+    return row ? toPlatformTierProfile(row) : null;
   }
 
-  async findBySportLeague(sportLeagueId: string): Promise<TierProfile | null> {
-    const row = await this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { tierProfile: true } });
-    return row ? toTierProfile(row.tierProfile) : null;
+  async findBySportLeague(sportLeagueId: string): Promise<PlatformTierProfile | null> {
+    const row = await this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { platformTierProfile: true } });
+    return row ? toPlatformTierProfile(row.platformTierProfile) : null;
   }
 
   async countSportLeagues(): Promise<Map<string, number>> {
-    const groups = await this.prisma.sportLeague.groupBy({ by: ['tierProfileId'], _count: { _all: true } });
-    return new Map(groups.map((group) => [group.tierProfileId, group._count._all]));
+    const groups = await this.prisma.sportLeague.groupBy({ by: ['platformTierProfileId'], _count: { _all: true } });
+    return new Map(groups.map((group) => [group.platformTierProfileId, group._count._all]));
   }
 
   async countSportLeaguesNaming(id: string): Promise<number> {
-    return this.prisma.sportLeague.count({ where: { tierProfileId: id } });
+    return this.prisma.sportLeague.count({ where: { platformTierProfileId: id } });
   }
 
-  async create(input: TierProfileWrite): Promise<TierProfile | 'nameTaken'> {
-    return unlessNameTaken(async () => toTierProfile(await this.prisma.tierProfile.create({ data: tierProfileData(input) })));
+  async create(input: PlatformTierProfileWrite): Promise<PlatformTierProfile | ProfileTaken> {
+    return unlessTaken(async () => toPlatformTierProfile(await this.prisma.platformTierProfile.create({ data: platformTierProfileData(input) })));
   }
 
-  async update(id: string, input: TierProfileWrite): Promise<TierProfile | 'nameTaken'> {
-    return unlessNameTaken(async () => toTierProfile(await this.prisma.tierProfile.update({ where: { id }, data: tierProfileData(input) })));
+  async update(id: string, input: PlatformTierProfileWrite): Promise<PlatformTierProfile | ProfileTaken> {
+    return unlessTaken(async () => toPlatformTierProfile(await this.prisma.platformTierProfile.update({ where: { id }, data: platformTierProfileData(input) })));
   }
 
   async deleteUnlessUsed(id: string): Promise<number | null> {
     return deleteUnlessUsed(
-      () => this.prisma.tierProfile.delete({ where: { id }, select: { id: true } }),
+      () => this.prisma.platformTierProfile.delete({ where: { id }, select: { id: true } }),
       () => this.countSportLeaguesNaming(id),
     );
   }
 }
 
-export class PrismaPricingProfileRepository implements PricingProfileRepository {
+export class PrismaPlatformPricingProfileRepository implements PlatformPricingProfileRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findAll(): Promise<PricingProfile[]> {
-    return (await this.prisma.pricingProfile.findMany({ orderBy: { name: 'asc' } })).map(toPricingProfile);
+  async findAll(): Promise<PlatformPricingProfile[]> {
+    return (await this.prisma.platformPricingProfile.findMany({ orderBy: { name: 'asc' } })).map(toPlatformPricingProfile);
   }
 
-  async findById(id: string): Promise<PricingProfile | null> {
-    const row = await this.prisma.pricingProfile.findUnique({ where: { id } });
-    return row ? toPricingProfile(row) : null;
+  async findById(id: string): Promise<PlatformPricingProfile | null> {
+    const row = await this.prisma.platformPricingProfile.findUnique({ where: { id } });
+    return row ? toPlatformPricingProfile(row) : null;
   }
 
-  async findBySportLeague(sportLeagueId: string): Promise<PricingProfile | null> {
-    const row = await this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { pricingProfile: true } });
-    return row ? toPricingProfile(row.pricingProfile) : null;
+  async findBySportLeague(sportLeagueId: string): Promise<PlatformPricingProfile | null> {
+    const row = await this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { platformPricingProfile: true } });
+    return row ? toPlatformPricingProfile(row.platformPricingProfile) : null;
   }
 
   async countSportLeagues(): Promise<Map<string, number>> {
-    const groups = await this.prisma.sportLeague.groupBy({ by: ['pricingProfileId'], _count: { _all: true } });
-    return new Map(groups.map((group) => [group.pricingProfileId, group._count._all]));
+    const groups = await this.prisma.sportLeague.groupBy({ by: ['platformPricingProfileId'], _count: { _all: true } });
+    return new Map(groups.map((group) => [group.platformPricingProfileId, group._count._all]));
   }
 
   async countSportLeaguesNaming(id: string): Promise<number> {
-    return this.prisma.sportLeague.count({ where: { pricingProfileId: id } });
+    return this.prisma.sportLeague.count({ where: { platformPricingProfileId: id } });
   }
 
-  async create(input: PricingProfileWrite): Promise<PricingProfile | 'nameTaken'> {
-    return unlessNameTaken(async () => toPricingProfile(await this.prisma.pricingProfile.create({ data: pricingProfileData(input) })));
+  async create(input: PlatformPricingProfileWrite): Promise<PlatformPricingProfile | ProfileTaken> {
+    return unlessTaken(async () => toPlatformPricingProfile(await this.prisma.platformPricingProfile.create({ data: platformPricingProfileData(input) })));
   }
 
-  async update(id: string, input: PricingProfileWrite): Promise<PricingProfile | 'nameTaken'> {
-    return unlessNameTaken(async () => toPricingProfile(await this.prisma.pricingProfile.update({ where: { id }, data: pricingProfileData(input) })));
+  async update(id: string, input: PlatformPricingProfileWrite): Promise<PlatformPricingProfile | ProfileTaken> {
+    return unlessTaken(async () => toPlatformPricingProfile(await this.prisma.platformPricingProfile.update({ where: { id }, data: platformPricingProfileData(input) })));
   }
 
   async deleteUnlessUsed(id: string): Promise<number | null> {
     return deleteUnlessUsed(
-      () => this.prisma.pricingProfile.delete({ where: { id }, select: { id: true } }),
+      () => this.prisma.platformPricingProfile.delete({ where: { id }, select: { id: true } }),
       () => this.countSportLeaguesNaming(id),
     );
   }
 }
 
-function tierProfileData(input: TierProfileWrite): Prisma.TierProfileUncheckedCreateInput {
+function platformTierProfileData(input: PlatformTierProfileWrite): Prisma.PlatformTierProfileUncheckedCreateInput {
   return {
+    code: input.code,
     name: input.name,
     tierCount: input.tierCount,
     tierSize: input.tierSize,
@@ -167,8 +180,9 @@ function tierProfileData(input: TierProfileWrite): Prisma.TierProfileUncheckedCr
   };
 }
 
-function pricingProfileData(input: PricingProfileWrite): Prisma.PricingProfileUncheckedCreateInput {
+function platformPricingProfileData(input: PlatformPricingProfileWrite): Prisma.PlatformPricingProfileUncheckedCreateInput {
   return {
+    code: input.code,
     name: input.name,
     salaryCap: input.salaryCap,
     unit: input.unit,

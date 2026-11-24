@@ -1,6 +1,6 @@
 import { MatchStatus } from './enums';
 import { SQUARES_GRID_SIZE } from './contest-rules';
-import type { SportEventMatch } from './sport-catalog-types';
+import type { SportEventRoundMatch } from './sport-catalog-types';
 
 /**
  * Squares pools (#711, plans/super-bowl-squares.md): a 10x10 grid on one game. A box is a grid
@@ -60,7 +60,7 @@ export interface ContestSquaresWinner extends SquaresWinner {
  * it, then the final score once the game is completed. Nothing is added up (design Q3.1).
  */
 export function squaresScoringMoments(
-  game: Pick<SportEventMatch, 'status' | 'homeScore' | 'awayScore' | 'periodScores'>,
+  game: Pick<SportEventRoundMatch, 'status' | 'homeScore' | 'awayScore' | 'periodScores'>,
   periodCount: number,
 ): SquaresScoringMoment[] {
   const moments: SquaresScoringMoment[] = game.periodScores

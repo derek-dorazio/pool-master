@@ -96,7 +96,7 @@ export const createContestFormSchema = z.object({
   sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
   /** The game a squares contest is played on (#711); empty for every other format. */
-  sportEventMatchId: z.string(),
+  sportEventRoundMatchId: z.string(),
   upsetBonusMultiplier: z.string(),
   upsetBonusRule: z.enum([UpsetBonusRule.NONE, UpsetBonusRule.SEED_DIFFERENCE]),
 });

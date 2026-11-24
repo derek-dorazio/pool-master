@@ -17,12 +17,12 @@ import {
   type SportDefinition,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
-import type { ScoredContestEntryPickDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { ScoredContestEntryPickDto, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import type { LeaderboardContext, LeaderboardDetailCell, LeaderboardDetailColumn, ScoringFamilyUi } from './types';
 
 /** A team's games, from its own side: who it played, whether it won, and the score its way round. */
 interface TeamGame {
-  match: SportEventMatchDto;
+  match: SportEventRoundMatchDto;
   opponentId: string | null;
   won: boolean;
   /**
@@ -32,7 +32,7 @@ interface TeamGame {
   score: string | null;
 }
 
-function teamGames(games: readonly SportEventMatchDto[], teamId: string): TeamGame[] {
+function teamGames(games: readonly SportEventRoundMatchDto[], teamId: string): TeamGame[] {
   return games
     .filter((match) => match.homeSportEventParticipantId === teamId || match.awaySportEventParticipantId === teamId)
     .map((match) => {

@@ -16,7 +16,7 @@ import {
 const GOLF = { id: 'sport-golf', sport: Sport.GOLF } as never;
 const BASKETBALL = { id: 'sport-basketball', sport: Sport.BASKETBALL } as never;
 /** The profiles a new sport league names (#1844). */
-const PROFILES = { tierProfileId: 'tier-profile-1', pricingProfileId: 'pricing-profile-1' };
+const PROFILES = { platformTierProfileId: 'tier-profile-1', platformPricingProfileId: 'pricing-profile-1' };
 
 function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
   return {
@@ -25,8 +25,8 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     name: 'PGA Tour',
     bracketAdvancement: BracketAdvancement.FIXED,
     roundNames: [],
-    tierProfileId: 'tier-profile-1',
-    pricingProfileId: 'pricing-profile-1',
+    platformTierProfileId: 'tier-profile-1',
+    platformPricingProfileId: 'pricing-profile-1',
     matchPeriodLayout: null,
     squaresFromRound: null,
     participantType: null,
@@ -84,8 +84,8 @@ function buildService(overrides: {
   sportEvents?: Parameters<typeof fakeSportEventRepo>[0];
   participants?: Parameters<typeof fakeParticipantRepo>[0];
   providers?: SportDataProviderLookup;
-  tierProfiles?: { findById: jest.Mock };
-  pricingProfiles?: { findById: jest.Mock };
+  platformTierProfiles?: { findById: jest.Mock };
+  platformPricingProfiles?: { findById: jest.Mock };
 } = {}) {
   const deps = {
     sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), findAll: jest.fn().mockResolvedValue([GOLF, BASKETBALL]), ...overrides.sports }),
@@ -98,8 +98,8 @@ function buildService(overrides: {
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     participants: fakeParticipantRepo(overrides.participants),
     providers: overrides.providers ?? registeredProviders({}),
-    tierProfiles: overrides.tierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
-    pricingProfiles: overrides.pricingProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: 'Standard' })) },
+    platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
+    platformPricingProfiles: overrides.platformPricingProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: 'Standard' })) },
   };
   return { service: new SportLeagueService(deps), deps };
 }
@@ -151,27 +151,27 @@ describe('SportLeagueService — tier and pricing profiles', () => {
     expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining(PROFILES));
   });
 
-  it('refuses a new sport league naming an unknown tier profile with 404 TIER_PROFILE_NOT_FOUND, creating nothing', async () => {
-    const { service, deps } = buildService({ tierProfiles: { findById: jest.fn().mockResolvedValue(null) } });
+  it('refuses a new sport league naming an unknown tier profile with 404 PLATFORM_TIER_PROFILE_NOT_FOUND, creating nothing', async () => {
+    const { service, deps } = buildService({ platformTierProfiles: { findById: jest.fn().mockResolvedValue(null) } });
 
     await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, name: 'Champions Tour' }))
-      .rejects.toMatchObject({ code: 'TIER_PROFILE_NOT_FOUND', statusCode: 404 });
+      .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NOT_FOUND', statusCode: 404 });
     expect(deps.sportLeagues.create).not.toHaveBeenCalled();
   });
 
-  it('refuses a move to an unknown pricing profile with 404 PRICING_PROFILE_NOT_FOUND, updating nothing', async () => {
-    const { service, deps } = buildService({ pricingProfiles: { findById: jest.fn().mockResolvedValue(null) } });
+  it('refuses a move to an unknown pricing profile with 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, updating nothing', async () => {
+    const { service, deps } = buildService({ platformPricingProfiles: { findById: jest.fn().mockResolvedValue(null) } });
 
-    await expect(service.updateSportLeague('sl-pga', { pricingProfileId: 'pricing-profile-gone' }))
-      .rejects.toMatchObject({ code: 'PRICING_PROFILE_NOT_FOUND', statusCode: 404 });
+    await expect(service.updateSportLeague('sl-pga', { platformPricingProfileId: 'pricing-profile-gone' }))
+      .rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_NOT_FOUND', statusCode: 404 });
     expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });
 
   it('moves a sport league to another tier profile without looking up a pricing profile it was not sent', async () => {
     const { service, deps } = buildService();
 
-    await expect(service.updateSportLeague('sl-pga', { tierProfileId: 'tier-profile-2' })).resolves.toMatchObject({ tierProfileId: 'tier-profile-2' });
-    expect(deps.pricingProfiles.findById).not.toHaveBeenCalled();
+    await expect(service.updateSportLeague('sl-pga', { platformTierProfileId: 'tier-profile-2' })).resolves.toMatchObject({ platformTierProfileId: 'tier-profile-2' });
+    expect(deps.platformPricingProfiles.findById).not.toHaveBeenCalled();
   });
 });
 

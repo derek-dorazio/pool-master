@@ -33,7 +33,7 @@ const CONTEST_INCLUDE = {
     orderBy: { sequence: 'asc' },
   },
   draw: { select: { drawnAt: true } },
-  squaresGame: { select: { sportEventMatchId: true } },
+  squaresGame: { select: { sportEventRoundMatchId: true } },
   squaresDraw: { select: { drawnAt: true } },
 } as const;
 
@@ -145,7 +145,7 @@ export class PrismaContestRepository implements ContestRepository {
             create: contest.sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })),
           },
           ...(contest.squaresGameMatchId !== undefined && {
-            squaresGame: { create: { sportEventMatchId: contest.squaresGameMatchId } },
+            squaresGame: { create: { sportEventRoundMatchId: contest.squaresGameMatchId } },
           }),
         },
         include: CONTEST_INCLUDE,
@@ -363,7 +363,7 @@ export class PrismaContestRepository implements ContestRepository {
           where: { entry: { contestId: id }, sportEventParticipant: { sportEventId: { in: removed } } },
         });
         await tx.contestEntryMatchPrediction.deleteMany({
-          where: { contestEntry: { contestId: id }, sportEventMatch: { sportEventId: { in: removed } } },
+          where: { contestEntry: { contestId: id }, sportEventRoundMatch: { sportEventId: { in: removed } } },
         });
         await tx.contestEntryEvent.deleteMany({
           where: { contestEntry: { contestId: id }, sportEventId: { in: removed } },
@@ -445,7 +445,7 @@ function mapToContest(row: {
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   draw?: { drawnAt: Date } | null;
-  squaresGame?: { sportEventMatchId: string } | null;
+  squaresGame?: { sportEventRoundMatchId: string } | null;
   squaresDraw?: { drawnAt: Date } | null;
   openedAt: Date | null;
   startsAt: Date | null;
@@ -470,7 +470,7 @@ function mapToContest(row: {
     endsAt: row.endsAt ?? undefined,
     // A contest has at most one of the two draws: a random draw's deal or squares' digits.
     drawnAt: row.draw?.drawnAt ?? row.squaresDraw?.drawnAt ?? undefined,
-    squaresGameMatchId: row.squaresGame?.sportEventMatchId ?? undefined,
+    squaresGameMatchId: row.squaresGame?.sportEventRoundMatchId ?? undefined,
     seasonYear: row.seasonYear,
     cupWeight: row.cupWeight,
     createdAt: row.createdAt,

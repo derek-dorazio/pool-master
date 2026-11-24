@@ -26,7 +26,7 @@ import {
   PickEmMode,
   SelectionType,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   type SportLeague,
   sportVocabulary,
   type User,
@@ -310,7 +310,7 @@ function describePick(game: GamePickGame, againstTheSpread: boolean, tieWord: st
 }
 
 /** The spread the team plays the game at: the home spread for the home team, its opposite for the away team. */
-function teamSpread(match: SportEventMatch, team: GamePickTeam): number | null {
+function teamSpread(match: SportEventRoundMatch, team: GamePickTeam): number | null {
   if (match.homeSpread === null) return null;
   return team.sportEventParticipantId === match.homeSportEventParticipantId ? match.homeSpread : -match.homeSpread;
 }

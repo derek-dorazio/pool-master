@@ -149,7 +149,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
     };
     const [home, away] = await Promise.all([team('Home'), team('Away')]);
     const final = matchNumber <= played;
-    matches.push(await prisma.sportEventMatch.create({
+    matches.push(await prisma.sportEventRoundMatch.create({
       data: {
         sportEventId: event.id,
         sportEventRoundId: round.id,

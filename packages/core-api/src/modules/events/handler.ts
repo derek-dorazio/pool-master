@@ -45,13 +45,13 @@ import type {
   FillPlayInSlotRequest,
   LoadSportEventBracketRequest,
   RecordSportEventMatchPeriodScoreRequest,
-  RecordSportEventMatchResultRequest,
+  RecordSportEventRoundMatchResultRequest,
   ReplaceWithdrawnParticipantRequest,
   SetSportEventRoundMatchupsRequest,
   SportEventBracketResponse,
-  SportEventMatchResponse,
+  SportEventRoundMatchResponse,
   SportEventRoundMatchupsResponse,
-  UpdateSportEventMatchRequest,
+  UpdateSportEventRoundMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
 import { MatchResultSource, OFFERABLE_SPORT_EVENT_STATUSES, SportEventSyncScope } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
@@ -61,7 +61,7 @@ import {
   mapLiveSimulationToResponse,
   mapRaceResultPreviewToDto,
   mapProviderEventYearImportToResponse,
-  mapSportEventMatchToDto,
+  mapSportEventRoundMatchToDto,
   mapSportEventParticipantToDto,
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
@@ -461,7 +461,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     getEventBracket: async (request: FastifyRequest<EventParams>): Promise<SportEventBracketResponse> => {
       // As in getEvent: a draft's bracket is a 404 to anyone but a root admin.
       await sportEvents.requireEvent(request.params.eventId, { releasedOnly: !isRootAdmin(request) });
-      return { matches: (await bracket.listBracket(request.params.eventId)).map(mapSportEventMatchToDto) };
+      return { matches: (await bracket.listBracket(request.params.eventId)).map(mapSportEventRoundMatchToDto) };
     },
 
     loadEventBracket: async (
@@ -471,32 +471,32 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
         ...match,
         scheduledDate: match.scheduledDate === null ? null : new Date(match.scheduledDate),
       })));
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     updateEventBracketMatch: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: UpdateSportEventMatchRequest }>,
-    ): Promise<SportEventMatchResponse> => {
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: UpdateSportEventRoundMatchRequest }>,
+    ): Promise<SportEventRoundMatchResponse> => {
       const { scheduledDate, ...edit } = request.body;
       const match = await bracket.updateMatch(request.params.eventId, request.params.matchNumber, {
         ...edit,
         ...(scheduledDate !== undefined && { scheduledDate: scheduledDate === null ? null : new Date(scheduledDate) }),
       });
-      return { match: mapSportEventMatchToDto(match) };
+      return { match: mapSportEventRoundMatchToDto(match) };
     },
 
     recordEventMatchResult: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: RecordSportEventMatchResultRequest }>,
+      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: RecordSportEventRoundMatchResultRequest }>,
     ): Promise<SportEventBracketResponse> => {
       const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body, MatchResultSource.ADMIN);
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     clearEventMatchResult: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
     ): Promise<SportEventBracketResponse> => {
       const matches = await matchResults.clearResult(request.params.eventId, request.params.matchNumber);
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     recordEventMatchPeriodScore: async (
@@ -504,7 +504,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     ): Promise<SportEventBracketResponse> => {
       const { eventId, matchNumber, periodNumber } = request.params;
       const matches = await matchResults.recordPeriodScore(eventId, matchNumber, periodNumber, request.body);
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     clearEventMatchPeriodScore: async (
@@ -512,21 +512,21 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     ): Promise<SportEventBracketResponse> => {
       const { eventId, matchNumber, periodNumber } = request.params;
       const matches = await matchResults.clearPeriodScore(eventId, matchNumber, periodNumber);
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     cancelEventMatch: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
     ): Promise<SportEventBracketResponse> => {
       const matches = await matchResults.cancelMatch(request.params.eventId, request.params.matchNumber);
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     postponeEventMatch: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
     ): Promise<SportEventBracketResponse> => {
       const matches = await matchResults.postponeMatch(request.params.eventId, request.params.matchNumber);
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     proposeEventRoundMatchups: async (
@@ -539,7 +539,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number }; Body: SetSportEventRoundMatchupsRequest }>,
     ): Promise<SportEventBracketResponse> => {
       const matches = await bracket.setRoundMatchups(request.params.eventId, request.params.roundNumber, request.body.matches);
-      return { matches: matches.map(mapSportEventMatchToDto) };
+      return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     setEventPlayInWinner: async (

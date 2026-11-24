@@ -1,5 +1,5 @@
 import { MatchSide, MatchStatus } from '@poolmaster/shared/domain';
-import type { PickEmLeaderboardResponse, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { PickEmLeaderboardResponse, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { formatOrdinal, type PeekFact } from '@/features/shared/ui';
 import { logger } from '@/lib/logger';
 
@@ -86,7 +86,7 @@ export interface PickEmBoardGame {
  * game is not one of the week's games.
  */
 export function pickEmBoardGames(
-  matches: readonly SportEventMatchDto[],
+  matches: readonly SportEventRoundMatchDto[],
   teamName: (fieldRowId: string | null) => string,
   formatKickoff: (startsAt: string) => string,
 ): PickEmBoardGame[] {
@@ -100,7 +100,7 @@ export function pickEmBoardGames(
     });
 }
 
-function gameProgress(match: SportEventMatchDto, home: string, away: string, formatKickoff: (startsAt: string) => string): string {
+function gameProgress(match: SportEventRoundMatchDto, home: string, away: string, formatKickoff: (startsAt: string) => string): string {
   if (match.status === MatchStatus.COMPLETED && match.homeScore !== null && match.awayScore !== null) {
     if (match.winnerSide === null) {
       return `Tie ${String(match.homeScore)}${SCORE_DASH}${String(match.awayScore)}`;

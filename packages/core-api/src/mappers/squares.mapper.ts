@@ -4,7 +4,7 @@
 
 import type { SquaresBoardResponse } from '@poolmaster/shared/dto/squares.dto';
 import type { SquaresBoard } from '../modules/selections/squares-service';
-import { mapSportEventMatchToDto } from './sport-event-matches.mapper';
+import { mapSportEventRoundMatchToDto } from './sport-event-matches.mapper';
 
 export function toSquaresBoardResponse(board: SquaresBoard): SquaresBoardResponse {
   return {
@@ -12,7 +12,7 @@ export function toSquaresBoardResponse(board: SquaresBoard): SquaresBoardRespons
     contestStatus: board.contest.status,
     maxSquaresPerEntry: board.maxSquaresPerEntry,
     periodLayout: board.periodLayout,
-    game: mapSportEventMatchToDto(board.game),
+    game: mapSportEventRoundMatchToDto(board.game),
     homeTeamName: board.homeTeamName,
     awayTeamName: board.awayTeamName,
     claimsOpen: board.claimsOpen,

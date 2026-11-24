@@ -30,7 +30,7 @@ import {
   PickOutcome,
   PredictedResult,
   type PredictedChoice,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import type { BracketScore, ScoredBracketPick } from './bracket-picks';
 
@@ -39,7 +39,7 @@ import type { BracketScore, ScoredBracketPick } from './bracket-picks';
  * value in a confidence pool.
  */
 export type GamePick = PredictedChoice & {
-  sportEventMatchId: string;
+  sportEventRoundMatchId: string;
   confidence: number | null;
 };
 
@@ -47,7 +47,7 @@ export type GamePick = PredictedChoice & {
  * Whether a completed game's result is what the pick says: its team won, or for a tie pick, the
  * game ended level. Its one caller asks only of a completed game.
  */
-function pickCameTrue(game: SportEventMatch, pick: GamePick): boolean {
+function pickCameTrue(game: SportEventRoundMatch, pick: GamePick): boolean {
   if (pick.predictedResult === PredictedResult.TIE) return game.winnerSide === null;
   if (game.winnerSide === null) return false;
   const winner = game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
@@ -65,7 +65,7 @@ export interface GamePickScoring {
  * game without both scores and a spread to measure them by. The winner of a game ended early (#825).
  * Undefined for a game still to be decided.
  */
-function coverOf(game: SportEventMatch): string | null | undefined {
+function coverOf(game: SportEventRoundMatch): string | null | undefined {
   if (game.status !== MatchStatus.COMPLETED) return undefined;
   if (game.ending !== MatchEnding.PLAYED && game.winnerSide !== null) {
     return game.winnerSide === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId;
@@ -87,7 +87,7 @@ function pickValue(pick: GamePick, mode: PickEmMode): number {
  * nothing and is not counted.
  */
 export function scoreGamePicks(
-  games: readonly SportEventMatch[],
+  games: readonly SportEventRoundMatch[],
   picks: readonly GamePick[],
   { mode, againstTheSpread }: GamePickScoring,
 ): BracketScore {
@@ -97,7 +97,7 @@ export function scoreGamePicks(
   let pendingPoints = 0;
   let correctPickCount = 0;
   for (const pick of picks) {
-    const game = gamesById.get(pick.sportEventMatchId);
+    const game = gamesById.get(pick.sportEventRoundMatchId);
     if (!game) continue;
     const value = pickValue(pick, mode);
     // A sport with tie picks has no spread pools (contest setup refuses them), so a pick against
@@ -130,7 +130,7 @@ export function scoreGamePicks(
  * kick off together. A game with no time of its own kicks off at `eventStart`. Null for a week with
  * no games.
  */
-export function weekTiebreakerGame<Match extends Pick<SportEventMatch, 'scheduledDate' | 'matchNumber'>>(
+export function weekTiebreakerGame<Match extends Pick<SportEventRoundMatch, 'scheduledDate' | 'matchNumber'>>(
   games: readonly Match[],
   eventStart: Date,
 ): Match | null {
@@ -143,7 +143,7 @@ export function weekTiebreakerGame<Match extends Pick<SportEventMatch, 'schedule
 }
 
 /** A played game's combined score, both teams together: what a tiebreaker guesses. Null until it completes. */
-export function gameTotalPoints(game: SportEventMatch | null): number | null {
+export function gameTotalPoints(game: SportEventRoundMatch | null): number | null {
   if (game?.status !== MatchStatus.COMPLETED || game.homeScore === null || game.awayScore === null) {
     return null;
   }

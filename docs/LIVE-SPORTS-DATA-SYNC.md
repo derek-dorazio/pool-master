@@ -126,7 +126,7 @@ Seeded by migration on `sport_leagues`:
 | `match_keyword` | Must equal the `metadata.tour` the adapter puts on the league's events (`core/league-keyword.ts`, case-insensitive). Required before `event_sync_provider_id` can be set. |
 | `event_sync_provider_id` | Makes the league synced. Refused unless the provider is registered and covers the sport. |
 | `round_series_lengths` | Best-of lengths per round for series playoffs (NBA/NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`). Empty means single games. |
-| `tier_profile_id`, `pricing_profile_id` | The profiles the field's tiers and prices come from (§3). |
+| `platform_tier_profile_id`, `platform_pricing_profile_id` | The profiles the field's tiers and prices come from (§3). |
 | `auto_release_days_before_start` | The auto-release window (default 7, `null` never). |
 
 ### The run
@@ -311,7 +311,7 @@ The family is the sport's own (`scoringFamilyForEvent`). Finish position (racing
 | Category | Writer | Writes |
 |---|---|---|
 | `GOLF` | `GolfScoreService` | Rounds and standings. Stroke play only. |
-| `GAME` | `writeGameScores` | `sport_event_matches`: links `external_game_id`, live scores, finals through `MatchResultService.recordResult` (`result_source = PROVIDER`). Postponed games are marked `POSTPONED`. |
+| `GAME` | `writeGameScores` | `sport_event_round_matches`: links `external_game_id`, live scores, finals through `MatchResultService.recordResult` (`result_source = PROVIDER`). Postponed games are marked `POSTPONED`. |
 
 **GAME linking.** A single-game round links the game to the one open match between its two
 teams; two candidates link nothing until a later sync. A best-of series links no game: the

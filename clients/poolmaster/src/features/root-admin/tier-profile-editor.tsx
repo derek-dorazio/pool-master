@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { explicitOrderValues, findTierLayoutProblem, TierProfileLastTier, TierProfileLastTierOrder } from '@poolmaster/shared/domain';
-import { TierProfileWriteRequestSchema } from '@poolmaster/shared/dto';
-import { createTierProfile, updateTierProfile, type TierProfileDto, type TierProfileWriteRequest } from '@/lib/api';
+import { explicitOrderValues, findTierLayoutProblem, PlatformTierProfileLastTier, PlatformTierProfileLastTierOrder } from '@poolmaster/shared/domain';
+import { PlatformTierProfileWriteRequestSchema } from '@poolmaster/shared/dto';
+import { createPlatformTierProfile, updatePlatformTierProfile, type PlatformTierProfileDto, type PlatformTierProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, Select, useMutationActionWorkflow } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
 import { numberFieldErrors } from '@/lib/number-field-errors';
@@ -12,7 +12,7 @@ import type { ProfileEditorProps } from './profile-dialog';
 import { ProfileFormModal } from './profile-form-modal';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 
-const { shape } = TierProfileWriteRequestSchema;
+const { shape } = PlatformTierProfileWriteRequestSchema;
 const countRange = (min: number, max: number) => `From ${min} to ${max}.`;
 
 const tierErrors = numberFieldErrors({
@@ -22,47 +22,47 @@ const tierErrors = numberFieldErrors({
 });
 
 /** The server's own checks, with a capped last tier's most it takes asked for only when Capped. */
-const TierProfileFormSchema = TierProfileWriteRequestSchema.superRefine((values, context) => {
+const PlatformTierProfileFormSchema = PlatformTierProfileWriteRequestSchema.superRefine((values, context) => {
   const problem = findTierLayoutProblem(values);
   if (problem) context.addIssue({ code: 'custom', path: ['lastTierMax'], message: problem });
 });
 
-const NEW_PROFILE: TierProfileWriteRequest = { name: '', tierCount: 6, tierSize: 10, lastTier: TierProfileLastTier.ALL_REMAINING, lastTierMax: null };
+const NEW_PROFILE: PlatformTierProfileWriteRequest = { code: '', name: '', tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
 
-function formValuesOf(profile: TierProfileDto | null): TierProfileWriteRequest {
+function formValuesOf(profile: PlatformTierProfileDto | null): PlatformTierProfileWriteRequest {
   return profile
-    ? { name: profile.name, tierCount: profile.tierCount, tierSize: profile.tierSize, lastTier: profile.lastTier, lastTierMax: profile.lastTierMax }
+    ? { code: profile.code, name: profile.name, tierCount: profile.tierCount, tierSize: profile.tierSize, lastTier: profile.lastTier, lastTierMax: profile.lastTierMax }
     : NEW_PROFILE;
 }
 
 /**
  * A tier profile's dialog (#1849): its view, then its form on Edit, or a new one's form. Save
- * writes the whole profile and hands back what the server saved; a refusal (a taken name, a bad
+ * writes the whole profile and hands back what the server saved; a refusal (a taken code or name, a bad
  * layout) stays in the dialog.
  */
-export function TierProfileEditor(dialog: ProfileEditorProps<TierProfileDto>) {
+export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTierProfileDto>) {
   const { onSaved, profile } = dialog;
-  const form = useForm<TierProfileWriteRequest>({
-    resolver: zodResolver(TierProfileFormSchema, { error: tierErrors }),
+  const form = useForm<PlatformTierProfileWriteRequest>({
+    resolver: zodResolver(PlatformTierProfileFormSchema, { error: tierErrors }),
     defaultValues: formValuesOf(profile),
   });
   const save = useMutationActionWorkflow({
-    action: async (values: TierProfileWriteRequest) => {
-      const body = { ...values, lastTierMax: values.lastTier === TierProfileLastTier.CAPPED ? values.lastTierMax : null };
+    action: async (values: PlatformTierProfileWriteRequest) => {
+      const body = { ...values, lastTierMax: values.lastTier === PlatformTierProfileLastTier.CAPPED ? values.lastTierMax : null };
       const response = profile
-        ? await updateTierProfile({ path: { profileId: profile.id }, body })
-        : await createTierProfile({ body });
-      if (!response.data?.tierProfile) {
+        ? await updatePlatformTierProfile({ path: { profileId: profile.id }, body })
+        : await createPlatformTierProfile({ body });
+      if (!response.data?.platformTierProfile) {
         throwApiError(response.error, 'Tier profile response is missing data.');
       }
-      return response.data.tierProfile;
+      return response.data.platformTierProfile;
     },
-    invalidateQueries: [QueryKeys.rootAdmin.tierProfiles],
+    invalidateQueries: [QueryKeys.rootAdmin.platformTierProfiles],
     onSuccess: onSaved,
     successToast: { title: 'Tier profile saved', tone: 'success' },
   });
   const { errors } = form.formState;
-  const isCapped = form.watch('lastTier') === TierProfileLastTier.CAPPED;
+  const isCapped = form.watch('lastTier') === PlatformTierProfileLastTier.CAPPED;
   const clearError = clearsSaveError(save);
 
   return (
@@ -77,6 +77,9 @@ export function TierProfileEditor(dialog: ProfileEditorProps<TierProfileDto>) {
       newTitle="New tier profile"
     >
       <div className="space-y-4">
+        <FormField error={errors.code?.message} id="tier-profile-code" label="Code">
+          <Input data-testid="root-admin-tier-profile-editor-code" id="tier-profile-code" {...form.register('code', { onChange: clearError })} />
+        </FormField>
         <FormField error={errors.name?.message} id="tier-profile-name" label="Name">
           <Input data-testid="root-admin-tier-profile-editor-name" id="tier-profile-name" {...form.register('name', { onChange: clearError })} />
         </FormField>
@@ -97,12 +100,12 @@ export function TierProfileEditor(dialog: ProfileEditorProps<TierProfileDto>) {
                 onChange: (event: { target: { value: string } }) => {
                   clearError();
                   // Capped asks for the most it takes; All remaining takes none.
-                  form.setValue('lastTierMax', event.target.value === TierProfileLastTier.CAPPED ? (profile?.lastTierMax ?? null) : null);
+                  form.setValue('lastTierMax', event.target.value === PlatformTierProfileLastTier.CAPPED ? (profile?.lastTierMax ?? null) : null);
                 },
               })}
             >
-              {explicitOrderValues(TierProfileLastTierOrder).map((lastTier) => (
-                <option key={lastTier} value={lastTier}>{enumLabel('TierProfileLastTier', lastTier)}</option>
+              {explicitOrderValues(PlatformTierProfileLastTierOrder).map((lastTier) => (
+                <option key={lastTier} value={lastTier}>{enumLabel('PlatformTierProfileLastTier', lastTier)}</option>
               ))}
             </Select>
           </FormField>

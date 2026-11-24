@@ -19,7 +19,7 @@ import {
   PrismaLeagueRepository,
   PrismaParticipantContestScoringRuleRepository,
   PrismaParticipantRepository,
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
@@ -47,7 +47,7 @@ function createContestLeaderboardReadDeps(
   prisma: PrismaClient,
 ): BracketStandingsReadDeps & {
   eventParticipants: EventFieldReads;
-  matches: PrismaSportEventMatchRepository;
+  matches: PrismaSportEventRoundMatchRepository;
   predictions: PrismaContestEntryMatchPredictionRepository;
 } {
   return {
@@ -57,7 +57,7 @@ function createContestLeaderboardReadDeps(
     entries: new PrismaContestEntryRepository(prisma),
     picks: new PrismaContestEntryPickRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
-    matches: new PrismaSportEventMatchRepository(prisma),
+    matches: new PrismaSportEventRoundMatchRepository(prisma),
   };
 }
 

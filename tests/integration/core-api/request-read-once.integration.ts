@@ -67,12 +67,12 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT contests', 1],
   ['SELECT event_series', 1],
   ['SELECT sport_event_match_period_scores', 1],
-  ['SELECT sport_event_matches', 1],
+  ['SELECT sport_event_round_matches', 1],
   ['SELECT sport_event_participant_standings', 1],
   ['SELECT sport_event_rounds', 1],
   ['SELECT sport_events', 1],
   ['SELECT sport_leagues', 1],
-  ['UPDATE sport_event_matches', 1],
+  ['UPDATE sport_event_round_matches', 1],
 ];
 
 /**
@@ -381,7 +381,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: team.id, isActive: true } });
   }));
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, roundNumber: 1, scheduledDate: event.startDate } });
-  const game = await prisma.sportEventMatch.create({
+  const game = await prisma.sportEventRoundMatch.create({
     data: {
       sportEventId: event.id,
       sportEventRoundId: round.id,
@@ -409,7 +409,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
         leagueId,
         seasonYear: 2026,
         sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
-        squaresGame: { create: { sportEventMatchId: game.id } },
+        squaresGame: { create: { sportEventRoundMatchId: game.id } },
         name: `Read Once Squares ${suffix} ${number}`,
         status: 'ACTIVE',
         contestFormat: 'SQUARES',
@@ -475,7 +475,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     expect(requestCounts(statements)).toEqual(PINNED_GAME_RESULT_COUNTS);
     await expect(getPrisma().backgroundJob.findMany({ select: { type: true, payload: true }, orderBy: { type: 'asc' } })).resolves.toEqual([
       // Ordered as the job types are declared.
-      { type: 'SETTLE_GAME_CONTESTS', payload: { sportEventId: eventId, sportEventMatchId: gameId, completedAt: expect.any(String) } },
+      { type: 'SETTLE_GAME_CONTESTS', payload: { sportEventId: eventId, sportEventRoundMatchId: gameId, completedAt: expect.any(String) } },
       { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: eventId } },
     ]);
 
@@ -483,7 +483,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
 
     expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contestId } })).status).toBe(ContestStatus.COMPLETED);
     // The job reads the event's games once, as the result left them.
-    expect(statementsOn(jobStatements, StatementVerb.SELECT, 'sport_event_matches')).toHaveLength(1);
+    expect(statementsOn(jobStatements, StatementVerb.SELECT, 'sport_event_round_matches')).toHaveLength(1);
     // Once by settlement for its championship finishes, and once by the results email job it queued.
     expect(finalPlaceReads(jobStatements, contestId)).toBe(2);
     await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);

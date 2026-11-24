@@ -15,7 +15,7 @@ import {
   SportEventStatus,
   type Contest,
   type ContestEntrySquare,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { EntryReminders, dueReminderHours } from '../../../packages/core-api/src/modules/notifications';
@@ -61,7 +61,7 @@ describe('dueReminderHours', () => {
 describe('EntryReminders.queueDue', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
-  let matches: SportEventMatch[];
+  let matches: SportEventRoundMatch[];
   /** Batched match reads: the cutoff windows of a contest's events come from one. */
   let matchReads: number;
   let predictions: ContestEntrySeasonPrediction[];
@@ -299,7 +299,7 @@ describe('EntryReminders.queueDue', () => {
       roundNumber: 3,
       status: MatchStatus.SCHEDULED,
       scheduledDate: index === 0 ? CLOSES_AT : new Date(CLOSES_AT.getTime() + 72 * HOUR),
-    }) as SportEventMatch);
+    }) as SportEventRoundMatch);
     const nora = member(league.id, 'Nora');
     matchReads = 0;
 
@@ -327,7 +327,7 @@ describe('EntryReminders.queueDue', () => {
       roundNumber,
       status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
       scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : CLOSES_AT,
-    }) as SportEventMatch);
+    }) as SportEventRoundMatch);
     const nora = member(league.id, 'Nora');
 
     await reminders().queueDue(before(CLOSES_AT, 24, 1));
@@ -362,12 +362,12 @@ describe('EntryReminders.queueDue', () => {
     expect(outbox.rows).toHaveLength(0);
   });
 
-  function pick(entryId: string, sportEventId: string, sportEventMatchId: string, participantId: string): ContestEntrySeasonPrediction {
+  function pick(entryId: string, sportEventId: string, sportEventRoundMatchId: string, participantId: string): ContestEntrySeasonPrediction {
     return {
       id: `prediction-${String(predictions.length + 1)}`,
       contestEntryId: entryId,
       sportEventId,
-      sportEventMatchId,
+      sportEventRoundMatchId,
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: `field-${participantId}`,
       participantId,
@@ -407,7 +407,7 @@ describe('EntryReminders.queueDue', () => {
       roundNumber: 1,
       matchNumber,
       status: matchNumber === 3 ? MatchStatus.CANCELLED : MatchStatus.SCHEDULED,
-    }) as SportEventMatch);
+    }) as SportEventRoundMatch);
     const dana = member(league.id, 'Dana');
     const entry = await enter(contest.id, dana.squad.id);
     predictions = [pick(entry.id, week.id, 'game-1', 'bears')];
@@ -453,13 +453,13 @@ describe('EntryReminders.queueDue', () => {
       homeSportEventParticipantId: 'field-bears',
       awaySportEventParticipantId: 'field-lions',
       scheduledDate: week1.startDate,
-    } as SportEventMatch, {
+    } as SportEventRoundMatch, {
       id: 'week2-game',
       sportEventId: week2.id,
       roundNumber: 1,
       status: MatchStatus.SCHEDULED,
       scheduledDate: CLOSES_AT,
-    } as SportEventMatch];
+    } as SportEventRoundMatch];
     const standing = member(league.id, 'Sam');
     const beaten = member(league.id, 'Lou');
     const missed = member(league.id, 'Mo');
@@ -501,7 +501,7 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.SQUARES,
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 100 },
     });
-    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventMatch];
+    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
     const holder = member(league.id, 'Sam');
     member(league.id, 'Nora');
     const holding = await enter(contest.id, holder.squad.id);
@@ -532,7 +532,7 @@ describe('EntryReminders.queueDue', () => {
       selectionType: SelectionType.SQUARES,
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
     });
-    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventMatch];
+    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventRoundMatch];
     const holder = member(league.id, 'Sam');
     const nora = member(league.id, 'Nora');
     const holding = await enter(contest.id, holder.squad.id);
@@ -573,7 +573,7 @@ describe('EntryReminders.queueDue', () => {
       roundNumber,
       status: roundNumber === 2 ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED,
       scheduledDate: roundNumber === 2 ? new Date('2026-03-21T16:00:00.000Z') : CLOSES_AT,
-    }) as SportEventMatch);
+    }) as SportEventRoundMatch);
     const contests = [1, 2, 3].map((index) => {
       const league = world.addLeague();
       member(league.id, `Member${String(index)}`);

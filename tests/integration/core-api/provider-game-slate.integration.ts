@@ -71,7 +71,7 @@ async function syncedWeek() {
 }
 
 async function matchesOf(sportEventId: string) {
-  const rows = await getPrisma().sportEventMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' } });
+  const rows = await getPrisma().sportEventRoundMatch.findMany({ where: { sportEventId }, orderBy: { matchNumber: 'asc' } });
   return rows.map((row) => [row.matchNumber, row.homeSportEventParticipantId, row.awaySportEventParticipantId, row.scheduledDate?.toISOString() ?? null]);
 }
 
@@ -178,7 +178,7 @@ describe('Provider game slate (#1728)', () => {
     await prisma.sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
     for (const [matchNumber, winnerSide] of [[1, 'HOME'], [2, 'AWAY'], [3, 'HOME']] as const) {
       // poolmaster-allow-query-in-loop: three test fixture results
-      await prisma.sportEventMatch.updateMany({ where: { sportEventId: event.id, matchNumber }, data: { status: 'COMPLETED', winnerSide, homeScore: 20, awayScore: 17 } });
+      await prisma.sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, matchNumber }, data: { status: 'COMPLETED', winnerSide, homeScore: 20, awayScore: 17 } });
     }
     const divisionalKickoff = new Date(KICKOFF.getTime() + WEEK);
     await expect(providerGames.afterFieldLoad({

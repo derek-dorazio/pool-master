@@ -2091,16 +2091,16 @@ export const ChampionshipTileOrder = explicitOrder<ChampionshipTile>({
 });
 
 /** What a tier profile's last tier takes (#1844). */
-export const TierProfileLastTier = {
+export const PlatformTierProfileLastTier = {
   /** Everyone left once the tiers before it are filled. */
   ALL_REMAINING: 'ALL_REMAINING',
   /** At most the profile's `lastTierMax`; anyone beyond is in no tier and can't be picked. */
   CAPPED: 'CAPPED',
 } as const;
-export type TierProfileLastTier = (typeof TierProfileLastTier)[keyof typeof TierProfileLastTier];
+export type PlatformTierProfileLastTier = (typeof PlatformTierProfileLastTier)[keyof typeof PlatformTierProfileLastTier];
 /** Uncapped first, as the profile form offers them. */
-export const TierProfileLastTierOrder = explicitOrder<TierProfileLastTier>({
-  [TierProfileLastTier.ALL_REMAINING]: 0,
-  [TierProfileLastTier.CAPPED]: 1,
+export const PlatformTierProfileLastTierOrder = explicitOrder<PlatformTierProfileLastTier>({
+  [PlatformTierProfileLastTier.ALL_REMAINING]: 0,
+  [PlatformTierProfileLastTier.CAPPED]: 1,
 });
 

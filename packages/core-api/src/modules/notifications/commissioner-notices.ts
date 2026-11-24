@@ -29,7 +29,7 @@ import type {
   ContestEntryStandingRepository,
   ContestRepository,
   LeagueRepository,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
   SportLeagueRepository,
 } from '@poolmaster/shared/db';
@@ -48,7 +48,7 @@ import {
   isTemplateOfferedOn,
   type League,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
   SportEventStatus,
   sportVocabulary,
   type User,
@@ -99,7 +99,7 @@ const UPCOMING_STATUSES: readonly SportEventStatus[] = [SportEventStatus.DRAFT, 
 
 export interface CommissionerNoticeDeps extends LeagueMemberDeps {
   /** A draft contest's first event's games, for a contest whose picks close at one of them. */
-  matches: Pick<SportEventMatchRepository, 'findBySportEvents'>;
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvents'>;
   sportEvents: Pick<SportEventRepository, 'findAll' | 'findByIds' | 'countParticipants'>;
   contests: Pick<ContestRepository, 'findBySportEvent' | 'findBySportEvents' | 'findDraftsStartingBy'>;
   /** A draft contest's rules, for when its picks close. */
@@ -513,7 +513,7 @@ export class CommissionerNotices implements DueNotifications {
       return rules ? [{ contest, first, rules }] : [];
     });
     const onAGame = [...new Set(ruled.filter(({ contest, rules }) => closesOnAGame(contest, rules)).map(({ first }) => first.id))];
-    const gamesByEvent = new Map<string, SportEventMatch[]>();
+    const gamesByEvent = new Map<string, SportEventRoundMatch[]>();
     for (const game of onAGame.length === 0 ? [] : await this.deps.matches.findBySportEvents(onAGame)) {
       gamesByEvent.set(game.sportEventId, [...(gamesByEvent.get(game.sportEventId) ?? []), game]);
     }

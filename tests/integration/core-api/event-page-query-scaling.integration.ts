@@ -96,7 +96,7 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
       return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
     };
     const [home, away] = [await team('Home'), await team('Away')];
-    await prisma.sportEventMatch.create({
+    await prisma.sportEventRoundMatch.create({
       data: {
         sportEventId: event.id,
         sportEventRoundId: round.id,

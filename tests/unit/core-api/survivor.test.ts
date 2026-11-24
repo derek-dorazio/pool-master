@@ -26,7 +26,7 @@ import {
   SportEventStatus,
   SurvivorWeekOutcome,
   type ContestEntry,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { ContestOperationError, ContestService } from '../../../packages/core-api/src/modules/contests/service';
@@ -64,7 +64,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
   // Week 1 brings the four teams; the later weeks put the same teams in their fields.
   const g1 = games.addGame(week1.id, 1, WEEK_1);
   const g2 = games.addGame(week1.id, 2, later(WEEK_1, 24));
-  const participantOf = (game: SportEventMatch, side: 'home' | 'away') =>
+  const participantOf = (game: SportEventRoundMatch, side: 'home' | 'away') =>
     expectDefined(games.field.get(expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId))).participantId;
   const team: Record<TeamName, string> = {
     Bills: participantOf(g1, 'home'),
@@ -95,13 +95,13 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
   });
 
   /** The field row the team plays the game from. */
-  const sideOf = (game: SportEventMatch, name: TeamName) => {
+  const sideOf = (game: SportEventRoundMatch, name: TeamName) => {
     const row = [game.homeSportEventParticipantId, game.awaySportEventParticipantId]
       .find((id) => id !== null && games.field.get(id)?.participantId === team[name]);
     return expectDefined(row ?? undefined);
   };
   const users = new Map<string, string>();
-  const enter = (name: string, weeks: Array<{ sportEventId: string; pick: [SportEventMatch, TeamName] | null; submitted: boolean }>) => {
+  const enter = (name: string, weeks: Array<{ sportEventId: string; pick: [SportEventRoundMatch, TeamName] | null; submitted: boolean }>) => {
     const user = world.addUser({ email: `${name.toLowerCase()}@example.com` });
     world.addMember(league.id, user.id);
     const squad = world.addSquad(league.id, `${name}'s Survivors`);
@@ -120,7 +120,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
       if (!week.pick) continue;
       const [game, picked] = week.pick;
       games.predictions.set(`${entry.id}:${game.id}`, {
-        id: `prediction-${entry.id}-${game.id}`, contestEntryId: entry.id, sportEventMatchId: game.id,
+        id: `prediction-${entry.id}-${game.id}`, contestEntryId: entry.id, sportEventRoundMatchId: game.id,
         predictedResult: PredictedResult.TEAM,
         sportEventParticipantId: sideOf(game, picked), confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
       });
@@ -169,10 +169,10 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
     now: () => now,
   });
 
-  const play = (game: SportEventMatch, winner: MatchSide | null) => {
+  const play = (game: SportEventRoundMatch, winner: MatchSide | null) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore: 20, awayScore: winner === null ? 20 : 10 }]);
   };
-  const cancel = (game: SportEventMatch) => {
+  const cancel = (game: SportEventRoundMatch) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.CANCELLED }]);
   };
   const setEventStatus = (sportEventId: string, status: SportEventStatus) => {
@@ -192,7 +192,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean; lives?: number } = {}) 
     leaderboard: () => contestService.getSurvivorLeaderboard(contest.id, viewerId).then((read) => read.board),
     storedPicks: (entryId: string) => [...games.predictions.values()]
       .filter((row) => row.contestEntryId === entryId)
-      .map((row) => row.sportEventMatchId)
+      .map((row) => row.sportEventRoundMatchId)
       .sort(),
   };
 }
@@ -214,7 +214,7 @@ function survivorWeek(overrides: Partial<SurvivorWeek> & Pick<SurvivorWeek, 'spo
   return { roundNumber: 1, started: true, cancelled: false, submitted: true, games: [], pick: null, pickedParticipantId: null, ...overrides };
 }
 
-function game(id: string, overrides: Partial<SportEventMatch> = {}): SportEventMatch {
+function game(id: string, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
   return {
     id, sportEventId: 'week', roundNumber: 1, matchNumber: 1,
     homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`,
@@ -225,7 +225,7 @@ function game(id: string, overrides: Partial<SportEventMatch> = {}): SportEventM
 }
 
 describe('survivorPickOutcome', () => {
-  const pick = { sportEventMatchId: 'g', sportEventParticipantId: 'g-home' };
+  const pick = { sportEventRoundMatchId: 'g', sportEventParticipantId: 'g-home' };
 
   it('survives when the picked team wins, and is out when it loses or ties', () => {
     expect(survivorPickOutcome([game('g', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME })], pick)).toBe(SurvivorWeekOutcome.SURVIVED);
@@ -242,8 +242,8 @@ describe('survivorPickOutcome', () => {
 describe('survivorRun', () => {
   const won = game('w', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
   const lost = game('l', { status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY });
-  const winning = { games: [won], pick: { sportEventMatchId: 'w', sportEventParticipantId: 'w-home' } };
-  const losing = { games: [lost], pick: { sportEventMatchId: 'l', sportEventParticipantId: 'l-home' } };
+  const winning = { games: [won], pick: { sportEventRoundMatchId: 'w', sportEventParticipantId: 'w-home' } };
+  const losing = { games: [lost], pick: { sportEventRoundMatchId: 'l', sportEventParticipantId: 'l-home' } };
 
   it('counts the weeks survived, puts the entry out at its first loss, and plays no week after it', () => {
     const run = survivorRun([
@@ -288,7 +288,7 @@ describe('survivorRun', () => {
   it('costs a life, not the entry, for a tie or a week not submitted when the entry has two lives', () => {
     const tied = game('t', { status: MatchStatus.COMPLETED, winnerSide: null });
     const run = survivorRun([
-      survivorWeek({ sportEventId: 'w1', games: [tied], pick: { sportEventMatchId: 't', sportEventParticipantId: 't-home' }, pickedParticipantId: 'bills' }),
+      survivorWeek({ sportEventId: 'w1', games: [tied], pick: { sportEventRoundMatchId: 't', sportEventParticipantId: 't-home' }, pickedParticipantId: 'bills' }),
     ], 2);
     expect(run.weeks[0]?.outcome).toBe(SurvivorWeekOutcome.LIFE_LOST);
     expect(run).toMatchObject({ eliminatedAt: null, livesLost: 1, livesLeft: 1 });
@@ -335,8 +335,8 @@ describe('survivorPredictionEngine', () => {
   const games = [game('a'), game('b')];
 
   it('keeps the latest pick of the week and clears the other, as a new pick replaces the entry\'s one', () => {
-    const first = { sportEventMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home', confidence: null };
-    const second = { sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-away', confidence: null };
+    const first = { sportEventRoundMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home', confidence: null };
+    const second = { sportEventRoundMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-away', confidence: null };
     const resolved = survivorPredictionEngine.resolvePicks({ games, predictions: [first, second], seedOf: new Map(), withdrawn: new Set() });
     expect(resolved.kept).toEqual([second]);
     expect(resolved.stranded).toEqual([first]);
@@ -353,7 +353,7 @@ describe('survivorPredictionEngine', () => {
       weekNumberOfRound: new Map([[1, 3]]),
       firstWeekNumber: 3,
     };
-    const issues = (predictions: Array<{ sportEventMatchId: string; predictedResult: typeof PredictedResult.TEAM; sportEventParticipantId: string }>, eliminatedInWeek: number | null = null) =>
+    const issues = (predictions: Array<{ sportEventRoundMatchId: string; predictedResult: typeof PredictedResult.TEAM; sportEventParticipantId: string }>, eliminatedInWeek: number | null = null) =>
       survivorPredictionEngine.findWeekIssues({
         configuration: { selectionType: SelectionType.SURVIVOR },
         gameMatchIds: ['a', 'b'],
@@ -362,12 +362,12 @@ describe('survivorPredictionEngine', () => {
         season: { ...season, eliminatedInWeek },
       }).map((issue) => issue.kind);
 
-    expect(issues([{ sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }])).toEqual([]);
+    expect(issues([{ sportEventRoundMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }])).toEqual([]);
     expect(issues([])).toEqual([PredictionIssueKind.ONE_PICK_REQUIRED]);
-    expect(issues([{ sportEventMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home' }, { sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }]))
+    expect(issues([{ sportEventRoundMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home' }, { sportEventRoundMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }]))
       .toEqual([PredictionIssueKind.ONE_PICK_REQUIRED, PredictionIssueKind.TEAM_ALREADY_USED]);
-    expect(issues([{ sportEventMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home' }])).toEqual([PredictionIssueKind.TEAM_ALREADY_USED]);
-    expect(issues([{ sportEventMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }], 2)).toEqual([PredictionIssueKind.ENTRY_ELIMINATED]);
+    expect(issues([{ sportEventRoundMatchId: 'a', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'a-home' }])).toEqual([PredictionIssueKind.TEAM_ALREADY_USED]);
+    expect(issues([{ sportEventRoundMatchId: 'b', predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'b-home' }], 2)).toEqual([PredictionIssueKind.ENTRY_ELIMINATED]);
   });
 
   it('takes no confidence value and has no tiebreaker game', () => {
@@ -391,7 +391,7 @@ describe('PredictionService — a survivor week', () => {
       sportEventId: context.week3.id,
       actorUserId: context.userOf(name),
     });
-    const pickOf = (game: SportEventMatch, name: TeamName) => ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(game, name), confidence: null });
+    const pickOf = (game: SportEventRoundMatch, name: TeamName) => ({ sportEventRoundMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(game, name), confidence: null });
     return { ...context, input, pickOf };
   }
 
@@ -721,7 +721,7 @@ describe('ContestSettlementService — a survivor contest', () => {
     const context = setup();
     // Alice picks the Raiders in week 3, on the game that is cancelled.
     context.games.predictions.set('entry-alice:game-5', {
-      id: 'prediction-alice-5', contestEntryId: 'entry-alice', sportEventMatchId: 'game-5',
+      id: 'prediction-alice-5', contestEntryId: 'entry-alice', sportEventRoundMatchId: 'game-5',
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: context.sideOf(context.gamesByNumber.g5, 'Raiders'), confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
     });
@@ -942,7 +942,7 @@ describe('A survivor contest with two lives', () => {
     context.setNow(later(WEEK_3, -2));
     const { g5, g6 } = context.gamesByNumber;
     const input = { contestId: context.contest.id, entryId: 'entry-bob', sportEventId: context.week3.id, actorUserId: context.userOf('Bob') };
-    const pickOf = (game: SportEventMatch, name: TeamName) => ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(game, name), confidence: null });
+    const pickOf = (game: SportEventRoundMatch, name: TeamName) => ({ sportEventRoundMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(game, name), confidence: null });
 
     const view = await context.predictions.getGamePicks(input);
     expect(view.survivor?.eliminatedInWeek).toBeNull();

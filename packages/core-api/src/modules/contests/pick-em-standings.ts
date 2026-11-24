@@ -12,7 +12,7 @@ import {
   contestEntryEventTiebreaker,
   type ContestEntryMatchPrediction,
   type SportEvent,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { rankPredictionStandings, type BracketScore } from '../scoring-families/head-to-head/bracket-picks';
 import { gameTotalPoints, scoreGamePicks, weekTiebreakerGame, type GamePickScoring } from '../scoring-families/head-to-head/game-picks';
@@ -64,7 +64,7 @@ export async function loadPickEmScoring(
 export interface PickEmWeekGames {
   eventCancelled: boolean;
   /** Cancelled games left out; none when the week was cancelled. */
-  games: SportEventMatch[];
+  games: SportEventRoundMatch[];
   /** The tiebreaker game's combined score once it is played. */
   tiebreakerTotalPoints: number | null;
 }
@@ -75,7 +75,7 @@ export interface PickEmWeekGames {
  */
 export function pickEmWeekGames(
   sportEvent: Pick<SportEvent, 'status' | 'startDate'>,
-  matches: readonly SportEventMatch[],
+  matches: readonly SportEventRoundMatch[],
 ): PickEmWeekGames {
   const eventCancelled = sportEvent.status === SportEventStatus.CANCELLED;
   const games = eventCancelled ? [] : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
@@ -92,7 +92,7 @@ export async function loadPickEmWeekStandings(
   contestId: string,
   sportEvent: Pick<SportEvent, 'id' | 'status' | 'startDate'>,
   scoring: GamePickScoring,
-  weekMatches?: readonly SportEventMatch[],
+  weekMatches?: readonly SportEventRoundMatch[],
   weekPredictions?: readonly ContestEntryMatchPrediction[],
 ): Promise<PickEmWeekStandings> {
   const sportEventId = sportEvent.id;

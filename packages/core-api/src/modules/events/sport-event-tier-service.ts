@@ -19,14 +19,14 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
-  PricingProfileRepository,
+  PlatformPricingProfileRepository,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventRepository,
   SportEventTierDefinition,
   SportEventTierRepository,
   TierAssignment,
-  TierProfileRepository,
+  PlatformTierProfileRepository,
 } from '@poolmaster/shared/db';
 import {
   eventPricingOf,
@@ -43,8 +43,8 @@ import {
   type SportEventParticipant,
   type SportEventParticipantValuation,
   type SportEventTier,
-  type PricingProfile,
-  type TierProfile,
+  type PlatformPricingProfile,
+  type PlatformTierProfile,
   type TierSpread,
 } from '@poolmaster/shared/domain';
 import { deriveGolfPrices } from '../golf/golf-seeding-algorithm';
@@ -118,9 +118,9 @@ export interface SportEventTierServiceDeps {
   /** The field's names, the order's last tie-break (#1807). */
   participants: Pick<ParticipantRepository, 'findByIds'>;
   /** The event's sport league's tier profile (#1844), the layout auto-tiering fills. */
-  tierProfiles: Pick<TierProfileRepository, 'findBySportLeague' | 'findById'>;
+  platformTierProfiles: Pick<PlatformTierProfileRepository, 'findBySportLeague' | 'findById'>;
   /** The event's sport league's pricing profile (#1844), which prices a synced field never priced before. */
-  pricingProfiles: Pick<PricingProfileRepository, 'findBySportLeague'>;
+  platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findBySportLeague'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -142,16 +142,16 @@ export class SportEventTierService {
    * editable afterwards; the tier count is however many rows exist, not a stored parameter
    * (plans/124 §4.5a). The events have no tiers yet: an event is created with them. Answers each
    * event's tiers as written. The caller has the league, so the profile is one read by its id.
-   * 404 TIER_PROFILE_NOT_FOUND for a profile that is gone.
+   * 404 PLATFORM_TIER_PROFILE_NOT_FOUND for a profile that is gone.
    */
   async createDefaultTiers(
-    sportLeague: Pick<SportLeague, 'id' | 'tierProfileId'>,
+    sportLeague: Pick<SportLeague, 'id' | 'platformTierProfileId'>,
     sportEventIds: readonly string[],
   ): Promise<Map<string, SportEventTierDefinition[]>> {
     if (sportEventIds.length === 0) return new Map();
-    const profile = await this.deps.tierProfiles.findById(sportLeague.tierProfileId);
+    const profile = await this.deps.platformTierProfiles.findById(sportLeague.platformTierProfileId);
     if (!profile) {
-      throw new SportEventError(`Tier profile ${sportLeague.tierProfileId} of sport league ${sportLeague.id} was not found.`, 'TIER_PROFILE_NOT_FOUND', 404);
+      throw new SportEventError(`Tier profile ${sportLeague.platformTierProfileId} of sport league ${sportLeague.id} was not found.`, 'PLATFORM_TIER_PROFILE_NOT_FOUND', 404);
     }
     const { tierCount } = profile;
     const tiersByEvent = new Map(sportEventIds.map((sportEventId) => [
@@ -253,7 +253,7 @@ export class SportEventTierService {
     }
     const [{ ordered, source }, profile] = await Promise.all([
       this.orderedActiveField(event.id),
-      this.requireTierProfile(event),
+      this.requirePlatformTierProfile(event),
     ]);
     const { placements, tierConfig, spread } = tierPlacements(profile, tiers, ordered, source, tierSize);
     await this.deps.valuations.assignEventTiers({ sportEventId: event.id, tierConfig, assignments: placements });
@@ -415,9 +415,9 @@ export class SportEventTierService {
     if (!areTiersAndPricesEditable(event)) {
       return { outcome: 'SKIPPED', reason: 'LOCKED' };
     }
-    const [tierProfile, pricingConfig] = await Promise.all([
-      this.requireTierProfile(event),
-      event.pricingConfig ?? this.requirePricingProfile(event).then(eventPricingOf),
+    const [platformTierProfile, pricingConfig] = await Promise.all([
+      this.requirePlatformTierProfile(event),
+      event.pricingConfig ?? this.requirePlatformPricingProfile(event).then(eventPricingOf),
     ]);
     // Checked before anything is written, so a bad profile never leaves tiers made and prices not.
     const problem = findBudgetPricingProblem(pricingConfig);
@@ -441,7 +441,7 @@ export class SportEventTierService {
     } else if (tiers.length === 0) {
       tiersResult = { result: 'NO_TIERS' };
     } else {
-      const { placements, tierConfig } = tierPlacements(tierProfile, tiers, ordered, source);
+      const { placements, tierConfig } = tierPlacements(platformTierProfile, tiers, ordered, source);
       const unchanged = sameTierConfig(event.tierConfig, tierConfig) && placements.every((placement) => {
         const current = stored.get(placement.sportEventParticipantId);
         return (current?.sportEventTierId ?? null) === placement.sportEventTierId
@@ -495,15 +495,15 @@ export class SportEventTierService {
   }
 
   /** The event's sport league's tier profile; every league names one, so a missing one is a broken reference. */
-  private async requireTierProfile(event: Pick<SportEvent, 'sportLeagueId'>): Promise<TierProfile> {
-    const profile = await this.deps.tierProfiles.findBySportLeague(event.sportLeagueId);
+  private async requirePlatformTierProfile(event: Pick<SportEvent, 'sportLeagueId'>): Promise<PlatformTierProfile> {
+    const profile = await this.deps.platformTierProfiles.findBySportLeague(event.sportLeagueId);
     if (!profile) throw new SportEventError(`Sport league ${event.sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     return profile;
   }
 
   /** The event's sport league's pricing profile; every league names one. */
-  private async requirePricingProfile(event: Pick<SportEvent, 'sportLeagueId'>): Promise<PricingProfile> {
-    const profile = await this.deps.pricingProfiles.findBySportLeague(event.sportLeagueId);
+  private async requirePlatformPricingProfile(event: Pick<SportEvent, 'sportLeagueId'>): Promise<PlatformPricingProfile> {
+    const profile = await this.deps.platformPricingProfiles.findBySportLeague(event.sportLeagueId);
     if (!profile) throw new SportEventError(`Sport league ${event.sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
     return profile;
   }
@@ -537,7 +537,7 @@ const SOURCE_BY_BASIS: Record<FieldOrderBasis, ValuationSource> = {
  * tier, and the layout as the event records it.
  */
 function tierPlacements(
-  profile: TierProfile,
+  profile: PlatformTierProfile,
   tiers: readonly SportEventTier[],
   ordered: readonly SportEventParticipant[],
   source: ValuationSource,

@@ -27,7 +27,7 @@ import {
   UpsetBonusRule,
   contestEntryEventStatus,
   type ContestEntry,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import type { SportEventRepository } from '@poolmaster/shared/db';
 import { loadBracketStandings } from '../../../packages/core-api/src/modules/contests/bracket-standings';
@@ -61,7 +61,7 @@ const KICKOFF_HOURS = new Map([[1, -48], [2, -48], [3, -46], [4, -46], [5, 2], [
 const ROUND_TWO_FIRST_GAME = at(2);
 
 /** Round 1 played (T5 upsetting T4) and round 2 placed by its results, as the admin's results leave it. */
-function bracketAfterRoundOne(sportEventId: string): SportEventMatch[] {
+function bracketAfterRoundOne(sportEventId: string): SportEventRoundMatch[] {
   const played = withResults(eightTeamBracket(sportEventId), new Map<number, GameResult>([
     [1, { winner: HOME }], [2, { winner: AWAY }], [3, { winner: HOME }], [4, { winner: HOME }],
   ]));
@@ -348,7 +348,7 @@ describe('a second-chance bracket — its leaderboard and standings', () => {
     await context.predictions.submitGamePicks(context.input);
     // A pick on game 1, which T1 won: a full bracket would score it, a second-chance one must not.
     context.games.predictions.set('entry-alice:m1', {
-      id: 'prediction-entry-alice-m1', contestEntryId: 'entry-alice', sportEventMatchId: 'm1',
+      id: 'prediction-entry-alice-m1', contestEntryId: 'entry-alice', sportEventRoundMatchId: 'm1',
       predictedResult: PredictedResult.TEAM,
       sportEventParticipantId: 'T1', confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
     });

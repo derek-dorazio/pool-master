@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import type { SportEventParticipantListResponse, SportEventParticipantResponse } from '@poolmaster/shared/dto';
 import {
-  PrismaSportEventMatchRepository,
+  PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRaceResultRepository,
 } from '../../../packages/core-api/src/adapters';
 import { createSportEventParticipantService } from '../../../packages/core-api/src/modules/events/wiring';
@@ -132,7 +132,7 @@ describe('An event\'s field', () => {
     expect(statementCounts(statements)).toEqual([
       ['SELECT event_series', 1],
       ['SELECT participants', 1],
-      ['SELECT sport_event_matches', 2],
+      ['SELECT sport_event_round_matches', 2],
       ['SELECT sport_event_participant_golf_rounds', 1],
       ['SELECT sport_event_participant_golf_standings', 1],
       ['SELECT sport_event_participant_race_results', 1],
@@ -235,10 +235,10 @@ describe('An event\'s field, for every scoring family', () => {
       data: { sportEventId: event.id, roundNumber, scheduledDate: new Date(`2026-03-${19 + roundNumber}`) },
     })));
     // Duke is away in match 1 and home in match 2; written match 2 first.
-    const match2 = await prisma.sportEventMatch.create({
+    const match2 = await prisma.sportEventRoundMatch.create({
       data: { sportEventId: event.id, sportEventRoundId: round2.id, matchNumber: 2, homeSportEventParticipantId: duke.id, isNeutralSite: true },
     });
-    const match1 = await prisma.sportEventMatch.create({
+    const match1 = await prisma.sportEventRoundMatch.create({
       data: {
         sportEventId: event.id,
         sportEventRoundId: round1.id,
@@ -256,14 +256,14 @@ describe('An event\'s field, for every scoring family', () => {
       },
     });
     for (const [periodNumber, homeScore, awayScore] of [[2, 40, 37], [1, 30, 38]]) {
-      await prisma.sportEventMatchPeriodScore.create({ data: { sportEventMatchId: match1.id, periodNumber, homeScore, awayScore } });
+      await prisma.sportEventMatchPeriodScore.create({ data: { sportEventRoundMatchId: match1.id, periodNumber, homeScore, awayScore } });
     }
-    await prisma.sportEventMatch.create({
+    await prisma.sportEventRoundMatch.create({
       data: { sportEventId: event.id, sportEventRoundId: round1.id, matchNumber: 3, homeSportEventParticipantId: kansas.id, awaySportEventParticipantId: baylor.id, isNeutralSite: true },
     });
 
     const rows = await createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id);
-    const matches = await new PrismaSportEventMatchRepository(getAppPrisma()).findBySportEvent(event.id);
+    const matches = await new PrismaSportEventRoundMatchRepository(getAppPrisma()).findBySportEvent(event.id);
 
     const dukeRow = rows.find((row) => row.entry.id === duke.id);
     expect(dukeRow?.matches.map((match) => [match.matchNumber, match.roundNumber])).toEqual([[1, 1], [2, 2]]);

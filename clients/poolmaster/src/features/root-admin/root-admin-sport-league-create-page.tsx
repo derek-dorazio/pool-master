@@ -11,14 +11,14 @@ import { formPageSave } from '@/lib/form-page-save';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { SPORTS_PATH } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
-import { usePricingProfilesQuery, useTierProfilesQuery } from './use-profiles';
+import { usePlatformPricingProfilesQuery, usePlatformTierProfilesQuery } from './use-profiles';
 import { SPORT_LEAGUE_WRITE_INVALIDATES } from './use-update-sport-league';
 import { upperFirst } from '@/lib/upper-first';
 
 const newTourSchema = z.object({
   name: z.string().trim().min(1, 'A name is required'),
-  tierProfileId: z.string().min(1, 'Choose a tier profile'),
-  pricingProfileId: z.string().min(1, 'Choose a pricing profile'),
+  platformTierProfileId: z.string().min(1, 'Choose a tier profile'),
+  platformPricingProfileId: z.string().min(1, 'Choose a pricing profile'),
 });
 
 type NewTourValues = z.infer<typeof newTourSchema>;
@@ -36,12 +36,12 @@ export function RootAdminSportLeagueCreatePage() {
     feature: 'root-admin-sport-league-create-page',
   });
   const navigate = useNavigate();
-  const tierProfiles = useTierProfilesQuery().data ?? [];
-  const pricingProfiles = usePricingProfilesQuery().data ?? [];
+  const platformTierProfiles = usePlatformTierProfilesQuery().data ?? [];
+  const platformPricingProfiles = usePlatformPricingProfilesQuery().data ?? [];
 
   const form = useForm<NewTourValues>({
     resolver: zodResolver(newTourSchema),
-    defaultValues: { name: '', tierProfileId: '', pricingProfileId: '' },
+    defaultValues: { name: '', platformTierProfileId: '', platformPricingProfileId: '' },
     mode: 'onChange',
   });
 
@@ -51,8 +51,8 @@ export function RootAdminSportLeagueCreatePage() {
         body: {
           sport,
           name: values.name,
-          tierProfileId: values.tierProfileId,
-          pricingProfileId: values.pricingProfileId,
+          platformTierProfileId: values.platformTierProfileId,
+          platformPricingProfileId: values.platformPricingProfileId,
         },
       });
       if (!response.data?.sportLeague) {
@@ -88,25 +88,25 @@ export function RootAdminSportLeagueCreatePage() {
         />
       </FormField>
       <FormField
-        error={form.formState.errors.tierProfileId?.message}
+        error={form.formState.errors.platformTierProfileId?.message}
         helperText="How many tiers a new event starts with, and how its field fills them."
         label="Tier profile"
       >
-        <Select data-testid="root-admin-sport-league-list-new-tier-profile" {...form.register('tierProfileId')}>
+        <Select data-testid="root-admin-sport-league-list-new-tier-profile" {...form.register('platformTierProfileId')}>
           <option value="">Choose a tier profile</option>
-          {tierProfiles.map((profile) => (
+          {platformTierProfiles.map((profile) => (
             <option key={profile.id} value={profile.id}>{profile.name}</option>
           ))}
         </Select>
       </FormField>
       <FormField
-        error={form.formState.errors.pricingProfileId?.message}
+        error={form.formState.errors.platformPricingProfileId?.message}
         helperText="The values a synced field is priced with."
         label="Pricing profile"
       >
-        <Select data-testid="root-admin-sport-league-list-new-pricing-profile" {...form.register('pricingProfileId')}>
+        <Select data-testid="root-admin-sport-league-list-new-pricing-profile" {...form.register('platformPricingProfileId')}>
           <option value="">Choose a pricing profile</option>
-          {pricingProfiles.map((profile) => (
+          {platformPricingProfiles.map((profile) => (
             <option key={profile.id} value={profile.id}>{profile.name}</option>
           ))}
         </Select>

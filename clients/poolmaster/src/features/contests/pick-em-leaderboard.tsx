@@ -80,8 +80,8 @@ function PickCell({ label, pick, testId }: { label: string; pick: Pick<PickEmBoa
  */
 function useOwnWeekPicks(contest: ContestDto, ownEntryIds: readonly string[], weekId: string): ReadonlyMap<string, ReadonlyMap<string, PickEmBoardPick>> {
   const reads = useQueries({ queries: ownEntryIds.map((entryId) => gamePicksQueryOptions(contest, entryId, weekId)) });
-  return new Map(ownEntryIds.map((entryId, index) => [entryId, new Map((reads[index]?.data?.games ?? []).flatMap((game) => (game.pick ? [[game.sportEventMatchId, {
-    sportEventMatchId: game.sportEventMatchId,
+  return new Map(ownEntryIds.map((entryId, index) => [entryId, new Map((reads[index]?.data?.games ?? []).flatMap((game) => (game.pick ? [[game.sportEventRoundMatchId, {
+    sportEventRoundMatchId: game.sportEventRoundMatchId,
     sportEventParticipantId: game.pick.sportEventParticipantId,
     outcome: game.pick.outcome ?? PickOutcome.PENDING,
   }] as const] : [])))]));
@@ -123,7 +123,7 @@ export function PickEmLeaderboard({ contest }: { contest: ContestDto }) {
     if (!currentWeek) {
       return [];
     }
-    const shown = new Map(entry.currentWeekPicks.map((pick) => [pick.sportEventMatchId, pick]));
+    const shown = new Map(entry.currentWeekPicks.map((pick) => [pick.sportEventRoundMatchId, pick]));
     const own = ownPicks.get(entry.entryId);
     return games.map((game) => {
       const pick = shown.get(game.id) ?? own?.get(game.id);

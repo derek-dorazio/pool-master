@@ -70,7 +70,7 @@ import { compareByEnumOrder, EventPricingConfigSchema, EventTierConfigSchema, Ma
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
-import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
+import { MATCH_INCLUDE, toSportEventRoundMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
@@ -173,14 +173,14 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return rows.map(toSportLeague);
   }
 
-  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'tierProfileId' | 'pricingProfileId'>): Promise<SportLeague> {
+  async create(input: Pick<SportLeague, 'sportId' | 'name' | 'bracketAdvancement' | 'platformTierProfileId' | 'platformPricingProfileId'>): Promise<SportLeague> {
     return toSportLeague(await this.prisma.sportLeague.create({
       data: {
         sportId: input.sportId,
         name: input.name,
         bracketAdvancement: input.bracketAdvancement,
-        tierProfileId: input.tierProfileId,
-        pricingProfileId: input.pricingProfileId,
+        platformTierProfileId: input.platformTierProfileId,
+        platformPricingProfileId: input.platformPricingProfileId,
       },
       include: SELECTED_PROVIDER_MAPPING_INCLUDE,
     }));
@@ -194,8 +194,8 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
         ...(updates.currentEventYear !== undefined && { currentEventYear: updates.currentEventYear }),
         ...(updates.bracketAdvancement !== undefined && { bracketAdvancement: updates.bracketAdvancement }),
         ...(updates.autoReleaseDaysBeforeStart !== undefined && { autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart }),
-        ...(updates.tierProfileId !== undefined && { tierProfileId: updates.tierProfileId }),
-        ...(updates.pricingProfileId !== undefined && { pricingProfileId: updates.pricingProfileId }),
+        ...(updates.platformTierProfileId !== undefined && { platformTierProfileId: updates.platformTierProfileId }),
+        ...(updates.platformPricingProfileId !== undefined && { platformPricingProfileId: updates.platformPricingProfileId }),
     } satisfies Prisma.SportLeagueUncheckedUpdateInput;
     // A provider league to sync from is mapped when it is not yet, then selected, in one
     // transaction (#1997); null stops the sync and keeps the mapping.
@@ -416,7 +416,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     const field = { sportEventParticipant: { sportEventId: id } };
     await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction([
       // The bracket first: its matches name field rows and rounds.
-      this.prisma.sportEventMatch.deleteMany({ where: { sportEventId: id } }),
+      this.prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
       this.prisma.sportEventParticipantRound.deleteMany({ where: field }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } }),
@@ -584,7 +584,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async sportLeagueHasLoadedBracket(sportLeagueId: string): Promise<boolean> {
-    const match = await this.prisma.sportEventMatch.findFirst({
+    const match = await this.prisma.sportEventRoundMatch.findFirst({
       where: { sportEvent: { eventSeries: { sportLeagueId } } },
       select: { id: true },
     });
@@ -695,7 +695,7 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
 
   async findResultFacts(sportEventId: string): Promise<Map<string, RoundResultFacts>> {
     const [matches, participantRounds] = await Promise.all([
-      this.prisma.sportEventMatch.groupBy({
+      this.prisma.sportEventRoundMatch.groupBy({
         by: ['sportEventRoundId', 'status'],
         where: { sportEventId },
         _count: { _all: true },
@@ -843,7 +843,7 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
     raceResult: raceResult ? toRaceResult(raceResult) : null,
     matches: [...homeMatches, ...awayMatches]
       .sort((left, right) => left.matchNumber - right.matchNumber)
-      .map(toSportEventMatch),
+      .map(toSportEventRoundMatch),
     affiliatedWithSportLeague: participant.sportLeagueId === sportLeagueId,
   };
 }
@@ -1012,7 +1012,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
           }),
         },
       });
-      await tx.sportEventMatch.update({
+      await tx.sportEventRoundMatch.update({
         where: { id: input.matchId },
         data: input.side === MatchSide.HOME
           ? { homeSportEventParticipantId: replacement.id }
@@ -1230,8 +1230,8 @@ function toSportLeague(row: SportLeagueRow): SportLeague {
     autoReleaseDaysBeforeStart: row.autoReleaseDaysBeforeStart,
     bracketAdvancement: row.bracketAdvancement,
     roundNames: row.roundNames,
-    tierProfileId: row.tierProfileId,
-    pricingProfileId: row.pricingProfileId,
+    platformTierProfileId: row.platformTierProfileId,
+    platformPricingProfileId: row.platformPricingProfileId,
     matchPeriodLayout: row.matchPeriodLayout,
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,

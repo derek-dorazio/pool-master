@@ -25,7 +25,7 @@ import type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventParticipantView,
-  SportEventMatchRepository,
+  SportEventRoundMatchRepository,
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,
@@ -34,8 +34,8 @@ import type {
   SportEventUpdate,
   SportLeagueRepository,
   SportRepository,
-  PricingProfileRepository,
-  TierProfileRepository,
+  PlatformPricingProfileRepository,
+  PlatformTierProfileRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
@@ -48,7 +48,7 @@ import type {
   ParticipantProviderMapping,
   SportConfig,
   SportEvent,
-  SportEventMatch,
+  SportEventRoundMatch,
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
@@ -59,15 +59,16 @@ import type {
   SportEventRound,
   SportEventTier,
   SportLeague,
-  PricingProfile,
-  TierProfile,
+  BudgetPricingProfile,
+  PlatformPricingProfile,
+  PlatformTierProfile,
 } from '@poolmaster/shared/domain';
 
 const T0 = new Date('2026-01-01T00:00:00.000Z');
 
-/** The profiles every in-memory sport league names (#1844); `tierProfileRepo` and `pricingProfileRepo` serve them. */
-export const IN_MEMORY_TIER_PROFILE_ID = 'tier-profile-default';
-export const IN_MEMORY_PRICING_PROFILE_ID = 'pricing-profile-default';
+/** The profiles every in-memory sport league names (#1844); `platformTierProfileRepo` and `platformPricingProfileRepo` serve them. */
+export const IN_MEMORY_PLATFORM_TIER_PROFILE_ID = 'tier-profile-default';
+export const IN_MEMORY_PLATFORM_PRICING_PROFILE_ID = 'pricing-profile-default';
 
 function stamp<T extends object>(row: T): T & { createdAt: Date; updatedAt: Date } {
   return { createdAt: T0, updatedAt: T0, ...row };
@@ -90,8 +91,8 @@ export class InMemorySportEvents {
   sports: SportConfig[] = [];
   sportLeagues: SportLeague[] = [];
   /** The profiles sport leagues name (#1844): golf's six tiers of ten, and Standard pricing. */
-  tierProfiles: TierProfile[] = [stamp({ id: IN_MEMORY_TIER_PROFILE_ID, name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING' as const, lastTierMax: null })];
-  pricingProfiles: PricingProfile[] = [stamp({ id: IN_MEMORY_PRICING_PROFILE_ID, name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
+  platformTierProfiles: PlatformTierProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, code: 'TIERS_6_OF_10', name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING' as const, lastTierMax: null })];
+  platformPricingProfiles: PlatformPricingProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
   eventSeriesRows: Array<{ id: string; sportLeagueId: string; name: string; isActive: boolean }> = [];
@@ -109,7 +110,7 @@ export class InMemorySportEvents {
   golfRoundRows: SportEventParticipantGolfRound[] = [];
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
   raceResultRows: SportEventParticipantRaceResult[] = [];
-  matchRows: SportEventMatch[] = [];
+  matchRows: SportEventRoundMatch[] = [];
   /** Each provider notification recorded against events (#1499). */
   readonly providerNotifications: ProviderNotificationReceipt[] = [];
   /** The jobs each status move or edit wrote with it (#1448, #1464). */
@@ -131,7 +132,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -217,7 +218,7 @@ export class InMemorySportEvents {
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
         this.sportLeagues.push(created);
         return created;
       },
@@ -612,41 +613,42 @@ export class InMemorySportEvents {
   }
 
   /** The tier profile each sport league names, by league id: what the tier service reads. */
-  tierProfileRepo(): Pick<TierProfileRepository, 'findBySportLeague' | 'findById'> {
+  platformTierProfileRepo(): Pick<PlatformTierProfileRepository, 'findBySportLeague' | 'findById'> {
     return {
-      findBySportLeague: async (sportLeagueId) => this.profileOf(this.tierProfiles, sportLeagueId, 'tierProfileId'),
+      findBySportLeague: async (sportLeagueId) => this.profileOf(this.platformTierProfiles, sportLeagueId, 'platformTierProfileId'),
       findById: async (id) => {
-        const profile = this.tierProfiles.find((row) => row.id === id);
+        const profile = this.platformTierProfiles.find((row) => row.id === id);
         return profile ? { ...profile } : null;
       },
     };
   }
 
   /** The pricing profile each sport league names, by league id. */
-  pricingProfileRepo(): Pick<PricingProfileRepository, 'findBySportLeague'> {
-    return { findBySportLeague: async (sportLeagueId) => this.profileOf(this.pricingProfiles, sportLeagueId, 'pricingProfileId') };
+  platformPricingProfileRepo(): Pick<PlatformPricingProfileRepository, 'findBySportLeague'> {
+    return { findBySportLeague: async (sportLeagueId) => this.profileOf(this.platformPricingProfiles, sportLeagueId, 'platformPricingProfileId') };
   }
 
   /** A league the store doesn't hold (an event's placeholder league) names the default profiles. */
-  private profileOf<T extends { id: string }>(profiles: T[], sportLeagueId: string, key: 'tierProfileId' | 'pricingProfileId'): T | null {
+  private profileOf<T extends { id: string }>(profiles: T[], sportLeagueId: string, key: 'platformTierProfileId' | 'platformPricingProfileId'): T | null {
     const league = this.sportLeagues.find((row) => row.id === sportLeagueId);
-    const profileId = league ? league[key] : { tierProfileId: IN_MEMORY_TIER_PROFILE_ID, pricingProfileId: IN_MEMORY_PRICING_PROFILE_ID }[key];
+    const profileId = league ? league[key] : { platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID }[key];
     const profile = profiles.find((row) => row.id === profileId);
     return profile ? { ...profile } : null;
   }
 
   /** A sport league of its own naming a new tier profile of this layout (#1844), for events to sit in. */
-  addLeagueWithTierProfile(layout: Pick<TierProfile, 'tierCount' | 'tierSize'> & Partial<Pick<TierProfile, 'lastTier' | 'lastTierMax'>>): SportLeague {
-    const profile: TierProfile = stamp({ id: this.id('tier-profile'), name: `${layout.tierCount} tiers of ${layout.tierSize}`, lastTier: 'ALL_REMAINING' as const, lastTierMax: null, ...layout });
-    this.tierProfiles.push(profile);
-    return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { tierProfileId: profile.id });
+  addLeagueWithPlatformTierProfile(layout: Pick<PlatformTierProfile, 'tierCount' | 'tierSize'> & Partial<Pick<PlatformTierProfile, 'lastTier' | 'lastTierMax'>>): SportLeague {
+    const profile: PlatformTierProfile = stamp({ id: this.id('tier-profile'), code: `TIERS_${layout.tierCount}_OF_${layout.tierSize}`, name: `${layout.tierCount} tiers of ${layout.tierSize}`, lastTier: 'ALL_REMAINING' as const, lastTierMax: null, ...layout });
+    this.platformTierProfiles.push(profile);
+    return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformTierProfileId: profile.id });
   }
 
   /** A sport league of its own naming a new pricing profile with these values (#1844). */
-  addLeagueWithPricingProfile(values: Omit<PricingProfile, 'id' | 'createdAt' | 'updatedAt'>): SportLeague {
-    const profile: PricingProfile = stamp({ id: this.id('pricing-profile'), ...values });
-    this.pricingProfiles.push(profile);
-    return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { pricingProfileId: profile.id });
+  addLeagueWithPlatformPricingProfile(values: BudgetPricingProfile): SportLeague {
+    const id = this.id('pricing-profile');
+    const profile: PlatformPricingProfile = stamp({ id, code: id.toUpperCase().replaceAll('-', '_'), ...values });
+    this.platformPricingProfiles.push(profile);
+    return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformPricingProfileId: profile.id });
   }
 
   valuationRepo(): SportEventParticipantValuationRepository {
@@ -807,7 +809,7 @@ export class InMemorySportEvents {
     return { standing: { ...standing }, golf: { ...golf } };
   }
 
-  matchRepo(): SportEventMatchRepository {
+  matchRepo(): SportEventRoundMatchRepository {
     const findBySportEvents = async (sportEventIds: readonly string[]) => this.matchRows
       .filter((row) => sportEventIds.includes(row.sportEventId))
       .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.matchNumber - right.matchNumber)
@@ -897,14 +899,14 @@ export class InMemorySportEvents {
           Object.assign(stored, standing);
         }
       },
-      savePeriodScore: async (sportEventMatchId, score, jobs) => {
+      savePeriodScore: async (sportEventRoundMatchId, score, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
-        const row = requireRow(sportEventMatchId);
+        const row = requireRow(sportEventRoundMatchId);
         row.periodScores = [...row.periodScores.filter((other) => other.periodNumber !== score.periodNumber), { ...score }];
       },
-      deletePeriodScore: async (sportEventMatchId, periodNumber, jobs) => {
+      deletePeriodScore: async (sportEventRoundMatchId, periodNumber, jobs) => {
         this.backgroundJobs.push(...(jobs ?? []));
-        const row = requireRow(sportEventMatchId);
+        const row = requireRow(sportEventRoundMatchId);
         row.periodScores = row.periodScores.filter((other) => other.periodNumber !== periodNumber);
       },
     };

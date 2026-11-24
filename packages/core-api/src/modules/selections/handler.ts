@@ -33,7 +33,7 @@ type RunDrawRequest = FastifyRequest<{ Params: ContestParams }>;
 type EntryEventParams = ContestParams & { entryId: string; sportEventId: string };
 type GamePicksRequest = FastifyRequest<{ Params: EntryEventParams }>;
 type SaveGamePicksHttpRequest = FastifyRequest<{ Params: EntryEventParams; Body: SaveGamePicksRequest }>;
-type ClearGamePickRequest = FastifyRequest<{ Params: EntryEventParams & { sportEventMatchId: string } }>;
+type ClearGamePickRequest = FastifyRequest<{ Params: EntryEventParams & { sportEventRoundMatchId: string } }>;
 
 /**
  * Function-typed properties rather than method shorthand: the route passes each of these to
@@ -128,7 +128,7 @@ export function createSelectionHandlers(service: SelectionService, predictions: 
   async function clearGamePick(request: ClearGamePickRequest): Promise<GamePicksResponse> {
     const view = await predictions.clearGamePick({
       ...gamePicksInput(request),
-      sportEventMatchId: request.params.sportEventMatchId,
+      sportEventRoundMatchId: request.params.sportEventRoundMatchId,
     });
     return toGamePicksResponse(view);
   }

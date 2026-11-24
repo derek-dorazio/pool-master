@@ -21,7 +21,7 @@ describe('useUpdateSportLeague', () => {
       failedAction: 'sportLeague.profile.failed',
       refusedMessage: 'Sport league update was rejected',
       sportLeagueId: 'pga',
-      toBody: (tierProfileId) => ({ tierProfileId }),
+      toBody: (platformTierProfileId) => ({ platformTierProfileId }),
     }), { wrapper });
 
     await act(async () => {
@@ -31,8 +31,8 @@ describe('useUpdateSportLeague', () => {
     expect(invalidated.mock.calls.map(([filters]) => filters?.queryKey)).toEqual(expect.arrayContaining([
       QueryKeys.rootAdmin.manageSport.leagues,
       QueryKeys.sportLeagues.list(),
-      QueryKeys.rootAdmin.tierProfiles,
-      QueryKeys.rootAdmin.pricingProfiles,
+      QueryKeys.rootAdmin.platformTierProfiles,
+      QueryKeys.rootAdmin.platformPricingProfiles,
     ]));
   });
 });

@@ -19,7 +19,7 @@ const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisi
  *
  * The College Football Playoff is a second sport league (#707): a fixed bracket of 12 teams in
  * four rounds, the top four seeds on byes into the quarterfinals. It names its own rounds and
- * names a tier profile of six tiers of two (`SportLeague.roundNames`, `SportLeague.tierProfileId`),
+ * names a tier profile of six tiers of two (`SportLeague.roundNames`, `SportLeague.platformTierProfileId`),
  * so the names below are the NFL's.
  */
 export const americanFootballSportDefinition: SportDefinition = {

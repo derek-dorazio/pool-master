@@ -10,13 +10,13 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRanking,
   ParticipantRepository,
-  PricingProfileRepository,
+  PlatformPricingProfileRepository,
   SportEventRepository,
   SportLeagueRepository,
   SportLeagueUpdate,
   SportLeagueUses,
   SportRepository,
-  TierProfileRepository,
+  PlatformTierProfileRepository,
 } from '@poolmaster/shared/db';
 import {
   BracketAdvancement,
@@ -75,15 +75,15 @@ export interface SportLeagueServiceDeps {
   /** Which providers can sync a sport league's events (ADR 0011). */
   providers: SportDataProviderLookup;
   /** The profiles a sport league names one of each (#1844). */
-  tierProfiles: Pick<TierProfileRepository, 'findById'>;
-  pricingProfiles: Pick<PricingProfileRepository, 'findById'>;
+  platformTierProfiles: Pick<PlatformTierProfileRepository, 'findById'>;
+  platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findById'>;
   logger?: FastifyBaseLogger;
 }
 
 /** The two profiles a sport league names (#1844). */
 export interface SportLeagueProfileIds {
-  tierProfileId: string;
-  pricingProfileId: string;
+  platformTierProfileId: string;
+  platformPricingProfileId: string;
 }
 
 export class SportLeagueService {
@@ -102,7 +102,7 @@ export class SportLeagueService {
 
   /**
    * 422 SPORT_LEAGUE_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket;
-   * 404 TIER_PROFILE_NOT_FOUND or PRICING_PROFILE_NOT_FOUND for a profile that does not exist.
+   * 404 PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for a profile that does not exist.
    */
   async createSportLeague(
     sport: Sport,
@@ -122,8 +122,8 @@ export class SportLeagueService {
       sportId: sportRow.id,
       name: input.name,
       bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
-      tierProfileId: input.tierProfileId,
-      pricingProfileId: input.pricingProfileId,
+      platformTierProfileId: input.platformTierProfileId,
+      platformPricingProfileId: input.platformPricingProfileId,
     });
     this.deps.logger?.info({ sportLeagueId: sportLeague.id, sport, name: input.name }, 'Created sport league');
     return (await this.summarize([sportLeague]))[0];
@@ -150,14 +150,14 @@ export class SportLeagueService {
    * another sport, and 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not
    * running here.
    *
-   * `tierProfileId` and `pricingProfileId` pick the league's profiles (#1844): 404
-   * TIER_PROFILE_NOT_FOUND or PRICING_PROFILE_NOT_FOUND for one that does not exist. An event
+   * `platformTierProfileId` and `platformPricingProfileId` pick the league's profiles (#1844): 404
+   * PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist. An event
    * already made keeps its tiers; its next auto-tiering and a never-priced field's next pricing
    * read the new profile.
    */
   async updateSportLeague(
     sportLeagueId: string,
-    updates: Pick<SportLeagueUpdate, 'name' | 'isActive' | 'bracketAdvancement' | 'syncProviderLeagueId' | 'autoReleaseDaysBeforeStart' | 'tierProfileId' | 'pricingProfileId'>
+    updates: Pick<SportLeagueUpdate, 'name' | 'isActive' | 'bracketAdvancement' | 'syncProviderLeagueId' | 'autoReleaseDaysBeforeStart' | 'platformTierProfileId' | 'platformPricingProfileId'>
       & { currentEventYear?: number },
   ): Promise<SportLeagueSummary> {
     const sportLeague = await this.requireSportLeague(sportLeagueId);
@@ -186,14 +186,14 @@ export class SportLeagueService {
       bracketAdvancement: updates.bracketAdvancement,
       syncProviderLeagueId: updates.syncProviderLeagueId,
       autoReleaseDaysBeforeStart: updates.autoReleaseDaysBeforeStart,
-      tierProfileId: updates.tierProfileId,
-      pricingProfileId: updates.pricingProfileId,
+      platformTierProfileId: updates.platformTierProfileId,
+      platformPricingProfileId: updates.platformPricingProfileId,
     });
-    if (updates.tierProfileId !== undefined && updates.tierProfileId !== sportLeague.tierProfileId) {
-      this.deps.logger?.info({ sportLeagueId, tierProfileId: updates.tierProfileId }, 'Set sport league tier profile');
+    if (updates.platformTierProfileId !== undefined && updates.platformTierProfileId !== sportLeague.platformTierProfileId) {
+      this.deps.logger?.info({ sportLeagueId, platformTierProfileId: updates.platformTierProfileId }, 'Set sport league tier profile');
     }
-    if (updates.pricingProfileId !== undefined && updates.pricingProfileId !== sportLeague.pricingProfileId) {
-      this.deps.logger?.info({ sportLeagueId, pricingProfileId: updates.pricingProfileId }, 'Set sport league pricing profile');
+    if (updates.platformPricingProfileId !== undefined && updates.platformPricingProfileId !== sportLeague.platformPricingProfileId) {
+      this.deps.logger?.info({ sportLeagueId, platformPricingProfileId: updates.platformPricingProfileId }, 'Set sport league pricing profile');
     }
     if (updates.syncProviderLeagueId !== undefined && updates.syncProviderLeagueId !== (sportLeague.selectedProviderMapping?.providerLeagueId ?? null)) {
       this.deps.logger?.info({ sportLeagueId, syncProviderLeagueId: updates.syncProviderLeagueId }, 'Set sport league event sync');
@@ -260,17 +260,17 @@ export class SportLeagueService {
     this.deps.logger?.info({ action: 'sportLeagueService.deleteSportLeague.success', data: { sportLeagueId } }, 'Deleted sport league');
   }
 
-  /** 404 TIER_PROFILE_NOT_FOUND or PRICING_PROFILE_NOT_FOUND for a named profile that does not exist. */
+  /** 404 PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for a named profile that does not exist. */
   private async assertProfilesExist(ids: Partial<SportLeagueProfileIds>): Promise<void> {
-    const [tierProfile, pricingProfile] = await Promise.all([
-      ids.tierProfileId === undefined ? undefined : this.deps.tierProfiles.findById(ids.tierProfileId),
-      ids.pricingProfileId === undefined ? undefined : this.deps.pricingProfiles.findById(ids.pricingProfileId),
+    const [platformTierProfile, platformPricingProfile] = await Promise.all([
+      ids.platformTierProfileId === undefined ? undefined : this.deps.platformTierProfiles.findById(ids.platformTierProfileId),
+      ids.platformPricingProfileId === undefined ? undefined : this.deps.platformPricingProfiles.findById(ids.platformPricingProfileId),
     ]);
-    if (tierProfile === null) {
-      throw new SportCatalogError(`Tier profile ${ids.tierProfileId} was not found.`, 'TIER_PROFILE_NOT_FOUND', 404);
+    if (platformTierProfile === null) {
+      throw new SportCatalogError(`Tier profile ${ids.platformTierProfileId} was not found.`, 'PLATFORM_TIER_PROFILE_NOT_FOUND', 404);
     }
-    if (pricingProfile === null) {
-      throw new SportCatalogError(`Pricing profile ${ids.pricingProfileId} was not found.`, 'PRICING_PROFILE_NOT_FOUND', 404);
+    if (platformPricingProfile === null) {
+      throw new SportCatalogError(`Pricing profile ${ids.platformPricingProfileId} was not found.`, 'PLATFORM_PRICING_PROFILE_NOT_FOUND', 404);
     }
   }
 

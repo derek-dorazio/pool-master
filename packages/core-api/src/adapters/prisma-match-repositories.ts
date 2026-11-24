@@ -8,12 +8,12 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   MatchLiveScoreWrite,
   MatchResultApply,
-  SportEventMatchPatch,
-  SportEventMatchRepository,
-  SportEventMatchWrite,
+  SportEventRoundMatchPatch,
+  SportEventRoundMatchRepository,
+  SportEventRoundMatchWrite,
 } from '@poolmaster/shared/db';
 import { MatchSide, MatchStatus, UNPLAYED_MATCH_STATUSES } from '@poolmaster/shared/domain';
-import type { BackgroundJobRequest, SportEventMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, SportEventRoundMatch, SportEventMatchPeriodScore } from '@poolmaster/shared/domain';
 import { rewriteStandings } from './prisma-standing-rewrite';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 
@@ -21,31 +21,31 @@ import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-
 export const MATCH_INCLUDE = {
   sportEventRound: { select: { roundNumber: true } },
   periodScores: { select: { periodNumber: true, homeScore: true, awayScore: true }, orderBy: { periodNumber: 'asc' } },
-} satisfies Prisma.SportEventMatchInclude;
+} satisfies Prisma.SportEventRoundMatchInclude;
 
-export class PrismaSportEventMatchRepository implements SportEventMatchRepository {
+export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatchRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findById(id: string): Promise<SportEventMatch | null> {
-    const row = await this.prisma.sportEventMatch.findUnique({ where: { id }, include: MATCH_INCLUDE });
-    return row ? toSportEventMatch(row) : null;
+  async findById(id: string): Promise<SportEventRoundMatch | null> {
+    const row = await this.prisma.sportEventRoundMatch.findUnique({ where: { id }, include: MATCH_INCLUDE });
+    return row ? toSportEventRoundMatch(row) : null;
   }
 
-  async findBySportEvent(sportEventId: string): Promise<SportEventMatch[]> {
+  async findBySportEvent(sportEventId: string): Promise<SportEventRoundMatch[]> {
     return this.findBySportEvents([sportEventId]);
   }
 
-  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventMatch[]> {
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventRoundMatch[]> {
     if (sportEventIds.length === 0) return [];
-    const rows = await this.prisma.sportEventMatch.findMany({
+    const rows = await this.prisma.sportEventRoundMatch.findMany({
       where: { sportEventId: { in: [...sportEventIds] } },
       include: MATCH_INCLUDE,
       orderBy: [{ sportEventId: 'asc' }, { matchNumber: 'asc' }],
     });
-    return rows.map(toSportEventMatch);
+    return rows.map(toSportEventRoundMatch);
   }
 
-  async replaceBracket(sportEventId: string, matches: readonly SportEventMatchWrite[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
+  async replaceBracket(sportEventId: string, matches: readonly SportEventRoundMatchWrite[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     const rounds = await this.prisma.sportEventRound.findMany({
       where: { sportEventId },
       select: { id: true, roundNumber: true },
@@ -59,25 +59,25 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
       return { ...match, sportEventId, sportEventRoundId };
     });
     await this.prisma.$transaction([
-      this.prisma.sportEventMatch.deleteMany({ where: { sportEventId } }),
-      this.prisma.sportEventMatch.createMany({ data }),
+      this.prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId } }),
+      this.prisma.sportEventRoundMatch.createMany({ data }),
       ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
   }
 
-  async update(id: string, patch: SportEventMatchPatch, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
-    const write = this.prisma.sportEventMatch.update({ where: { id }, data: patch });
+  async update(id: string, patch: SportEventRoundMatchPatch, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
+    const write = this.prisma.sportEventRoundMatch.update({ where: { id }, data: patch });
     await (jobs.length === 0 ? write : this.prisma.$transaction([write, backgroundJobsInsert(this.prisma, jobs)]));
   }
 
   async savePeriodScore(
-    sportEventMatchId: string,
+    sportEventRoundMatchId: string,
     { periodNumber, homeScore, awayScore }: SportEventMatchPeriodScore,
     jobs: readonly BackgroundJobRequest[] = [],
   ): Promise<void> {
     const save = (db: Prisma.TransactionClient | PrismaClient) => db.sportEventMatchPeriodScore.upsert({
-      where: { sportEventMatchId_periodNumber: { sportEventMatchId, periodNumber } },
-      create: { sportEventMatchId, periodNumber, homeScore, awayScore },
+      where: { sportEventRoundMatchId_periodNumber: { sportEventRoundMatchId, periodNumber } },
+      create: { sportEventRoundMatchId, periodNumber, homeScore, awayScore },
       update: { homeScore, awayScore },
     });
     if (jobs.length === 0) {
@@ -90,8 +90,8 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     });
   }
 
-  async deletePeriodScore(sportEventMatchId: string, periodNumber: number, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
-    const remove = (db: Prisma.TransactionClient | PrismaClient) => db.sportEventMatchPeriodScore.deleteMany({ where: { sportEventMatchId, periodNumber } });
+  async deletePeriodScore(sportEventRoundMatchId: string, periodNumber: number, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
+    const remove = (db: Prisma.TransactionClient | PrismaClient) => db.sportEventMatchPeriodScore.deleteMany({ where: { sportEventRoundMatchId, periodNumber } });
     if (jobs.length === 0) {
       await remove(this.prisma);
       return;
@@ -106,7 +106,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     if (links.length === 0) return;
     await this.prisma.$transaction(
       // poolmaster-allow-query-in-loop: the games one sync linked (per-row values, one transaction)
-      links.map(({ id, externalGameId }) => this.prisma.sportEventMatch.update({ where: { id }, data: { externalGameId } })),
+      links.map(({ id, externalGameId }) => this.prisma.sportEventRoundMatch.update({ where: { id }, data: { externalGameId } })),
     );
   }
 
@@ -114,7 +114,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
     if (scores.length === 0) return;
     await this.prisma.$transaction(
       // poolmaster-allow-query-in-loop: the games one sync found live (per-row values, one transaction)
-      scores.map(({ id, ...values }) => this.prisma.sportEventMatch.updateMany({
+      scores.map(({ id, ...values }) => this.prisma.sportEventRoundMatch.updateMany({
         // A result entered since the sync read the match stands.
         where: { id, status: { in: [...UNPLAYED_MATCH_STATUSES, MatchStatus.IN_PROGRESS] } },
         data: values,
@@ -125,7 +125,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
   async placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     await this.prisma.$transaction([
       // poolmaster-allow-query-in-loop: one round's matches (per-row values, one transaction)
-      ...sides.map(({ id, ...values }) => this.prisma.sportEventMatch.update({ where: { id }, data: values })),
+      ...sides.map(({ id, ...values }) => this.prisma.sportEventRoundMatch.update({ where: { id }, data: values })),
       ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
   }
@@ -133,9 +133,9 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
   async applyResult({ result, sideFill, standings, jobs = [] }: MatchResultApply): Promise<void> {
     const { id, ...values } = result;
     await this.prisma.$transaction(async (tx) => {
-      await tx.sportEventMatch.update({ where: { id }, data: values });
+      await tx.sportEventRoundMatch.update({ where: { id }, data: values });
       if (sideFill) {
-        await tx.sportEventMatch.update({
+        await tx.sportEventRoundMatch.update({
           where: { id: sideFill.id },
           data: sideFill.side === MatchSide.HOME
             ? { homeSportEventParticipantId: sideFill.sportEventParticipantId }
@@ -149,9 +149,9 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
   }
 }
 
-export function toSportEventMatch(
-  { sportEventRound, sportEventRoundId: _roundId, homeSpread, ...row }: Prisma.SportEventMatchGetPayload<{ include: typeof MATCH_INCLUDE }>,
-): SportEventMatch {
+export function toSportEventRoundMatch(
+  { sportEventRound, sportEventRoundId: _roundId, homeSpread, ...row }: Prisma.SportEventRoundMatchGetPayload<{ include: typeof MATCH_INCLUDE }>,
+): SportEventRoundMatch {
   return {
     ...row,
     roundNumber: sportEventRound.roundNumber,

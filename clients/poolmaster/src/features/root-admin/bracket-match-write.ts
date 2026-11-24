@@ -1,5 +1,5 @@
 import { MatchSide, type SportMatchPeriods, type SportVocabulary } from '@poolmaster/shared/domain';
-import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
+import type { SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -14,7 +14,7 @@ const logger = getLogger().child({ feature: 'root-admin-bracket' });
 export type BracketContext = {
   eventId: string;
   vocabulary: SportVocabulary;
-  bracket: readonly SportEventMatchDto[];
+  bracket: readonly SportEventRoundMatchDto[];
   field: readonly SportEventParticipantDto[];
   fieldById: ReadonlyMap<string, SportEventParticipantDto>;
   /** Whether the rows carry a spread column: a week of games that forms no bracket (#720). */
@@ -28,7 +28,7 @@ export type BracketContext = {
 };
 
 /** A side's team, with its seed, or who fills it while that is still to be decided. */
-export function describeSide(match: SportEventMatchDto, side: MatchSide, context: BracketContext): string {
+export function describeSide(match: SportEventRoundMatchDto, side: MatchSide, context: BracketContext): string {
   const entry = sideEntry(match, side, context.fieldById);
   if (entry) {
     return describeEntry(entry);
@@ -38,7 +38,7 @@ export function describeSide(match: SportEventMatchDto, side: MatchSide, context
 }
 
 /** "Duke vs Vermont" on a neutral site, "Bills @ Chiefs" otherwise. */
-export function describePairing(match: SportEventMatchDto, context: BracketContext): string {
+export function describePairing(match: SportEventRoundMatchDto, context: BracketContext): string {
   const home = describeSide(match, MatchSide.HOME, context);
   const away = describeSide(match, MatchSide.AWAY, context);
   return match.isNeutralSite ? `${home} vs ${away}` : `${away} @ ${home}`;
@@ -71,7 +71,7 @@ export function useMatchWrite<Variables = void>({
   failedAction: string;
   /** What the log adds about the variables, beside the match number. */
   logData?: (variables: Variables) => Record<string, unknown>;
-  match: SportEventMatchDto;
+  match: SportEventRoundMatchDto;
   onSuccess?: () => void;
   refusedMessage: string;
   write: (path: MatchPath, variables: Variables) => Promise<{ error?: unknown }>;

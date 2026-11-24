@@ -2,7 +2,7 @@ import { MatchEnding } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   LeagueContextResponse,
-  SportEventMatchDto,
+  SportEventRoundMatchDto,
   SquaresBoardResponse,
 } from '@/lib/api';
 import { bracketLeagueContextFixture } from './bracket-fixtures';
@@ -27,7 +27,7 @@ export function squaresContestFixture(overrides: Partial<ContestDto> = {}): Cont
 }
 
 /** One game of the event as the contract carries it. */
-export function squaresGameFixture(overrides: Partial<SportEventMatchDto> = {}): SportEventMatchDto {
+export function squaresGameFixture(overrides: Partial<SportEventRoundMatchDto> = {}): SportEventRoundMatchDto {
   return {
     id: 'game-1',
     sportEventId: 'event-1',

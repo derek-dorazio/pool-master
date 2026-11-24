@@ -18,7 +18,7 @@ import {
   contestEntryEventStatus,
   contestEntryEventTiebreaker,
   type ContestEntry,
-  type SportEventMatch,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import { PredictionService, type GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
@@ -50,7 +50,7 @@ const CHALK = [
   bracketPick(5, 'T1'), bracketPick(6, 'T2'), bracketPick(7, 'T1'),
 ].map((each) => ({ ...each, confidence: null }));
 
-function setup(options: { bracket?: SportEventMatch[]; seeds?: ReadonlyMap<string, number | null> } = {}) {
+function setup(options: { bracket?: SportEventRoundMatch[]; seeds?: ReadonlyMap<string, number | null> } = {}) {
   const world = new InMemoryContestWorld();
   const games = new InMemoryGamePicks(world);
   const league = world.addLeague();
@@ -110,7 +110,7 @@ function setup(options: { bracket?: SportEventMatch[]; seeds?: ReadonlyMap<strin
     status: () => contestEntryEventStatus(entry(), sportEvent.id),
     tiebreaker: () => contestEntryEventTiebreaker(entry(), sportEvent.id),
     storedPicks: () => [...games.predictions.values()]
-      .map((row) => [row.sportEventMatchId, row.sportEventParticipantId] as const)
+      .map((row) => [row.sportEventRoundMatchId, row.sportEventParticipantId] as const)
       .sort((left, right) => left[0].localeCompare(right[0], undefined, { numeric: true })),
     setNow: (when: Date) => { now = when; },
     goLive: () => {
@@ -160,7 +160,7 @@ describe('PredictionService on a bracket — filling it in', () => {
     const context = setup();
     const view = await context.service.saveGamePicks({ ...context.input, picks: CHALK });
 
-    expect(context.storedPicks()).toEqual(CHALK.map((each) => [each.sportEventMatchId, each.sportEventParticipantId]));
+    expect(context.storedPicks()).toEqual(CHALK.map((each) => [each.sportEventRoundMatchId, each.sportEventParticipantId]));
     expect(predicted(view, 5)).toEqual(['T1', 'T4']);
     expect(predicted(view, 7)).toEqual(['T1', 'T2']);
     expect(view.pickedCount).toBe(7);
@@ -208,7 +208,7 @@ describe('PredictionService on a bracket — filling it in', () => {
     const context = setup();
     await context.service.saveGamePicks({ ...context.input, picks: CHALK });
 
-    await context.service.clearGamePick({ ...context.input, sportEventMatchId: 'm3' });
+    await context.service.clearGamePick({ ...context.input, sportEventRoundMatchId: 'm3' });
 
     // Game 6 offered T2 only through game 3; the final still offers T1 through game 5.
     expect(context.storedPicks()).toEqual([['m1', 'T1'], ['m2', 'T4'], ['m4', 'T3'], ['m5', 'T1'], ['m7', 'T1']]);
@@ -347,7 +347,7 @@ describe('PredictionService on a bracket — what each viewer sees, and the scor
   it('scores each pick against the results: correct with its points and upset bonus, busted, or still pending', async () => {
     const context = setup();
     // Alice has T5 upsetting T4, and T2 through game 6; T2 loses in round 1.
-    const picks = CHALK.map((each) => (each.sportEventMatchId === 'm2' ? { ...each, sportEventParticipantId: 'T5' } : each));
+    const picks = CHALK.map((each) => (each.sportEventRoundMatchId === 'm2' ? { ...each, sportEventParticipantId: 'T5' } : each));
     await context.service.saveGamePicks({ ...context.input, picks, tiebreakerValue: 140 });
     await context.service.submitGamePicks(context.input);
     context.goLive();
@@ -422,7 +422,7 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
 describe('PredictionService.previewGames on a bracket setup, before it is saved', () => {
   const BRACKET_RULES = { selectionType: SelectionType.BRACKET, startsAtRound: 1 } as const;
   const eventId = (context: ReturnType<typeof setup>) => context.input.sportEventId;
-  const previewed = (games: readonly { match: SportEventMatch; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }[], matchNumber: number) => {
+  const previewed = (games: readonly { match: SportEventRoundMatch; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }[], matchNumber: number) => {
     const each = expectDefined(games.find((row) => row.match.matchNumber === matchNumber));
     return [each.predictedHome?.sportEventParticipantId ?? null, each.predictedAway?.sportEventParticipantId ?? null];
   };

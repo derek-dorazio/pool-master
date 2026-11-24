@@ -40,7 +40,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     reason: 'Authorizes on the entry: PredictionService.saveGamePicks requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
   },
   {
-    route: 'DELETE /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/game-picks/:sportEventMatchId',
+    route: 'DELETE /api/v1/selections/:contestId/entries/:entryId/events/:sportEventId/game-picks/:sportEventRoundMatchId',
     reason: 'Authorizes on the entry: PredictionService.clearGamePick requires an ACTIVE squad membership on the squad that owns that entry of this contest (ENTRY_ACCESS_DENIED).',
   },
   {
