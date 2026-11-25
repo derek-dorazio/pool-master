@@ -349,6 +349,25 @@ describe('SportEventAutoReleaseScheduler: the hourly sweep (#1823)', () => {
     }
   });
 
+  it('logs that it started and, after each sweep, how many drafts it looked at and queued; with no clock given it sweeps by the real time', async () => {
+    const { store, sportLeague, jobRows } = setup();
+    await readySyncedDraft(store, sportLeague.id, 3);
+    const info = jest.fn();
+    const logged = new SportEventAutoReleaseScheduler({
+      sportEvents: store.sportEventRepo(),
+      jobs: new BackgroundJobQueue({ jobs: jobRows, currentStart: testCurrentJobStart }),
+      jobLock: { runExclusive: async (_key, work) => { await work(); return true; } },
+      logger: { info, warn: jest.fn(), error: jest.fn(), debug: jest.fn() } as never,
+    });
+
+    logged.start();
+    logged.stop();
+    await logged.runSweep();
+
+    expect(info).toHaveBeenCalledWith('Sport event automatic release scheduler started');
+    expect(info).toHaveBeenCalledWith({ action: 'events.autoRelease.swept', data: expect.objectContaining({ candidateCount: expect.any(Number) }) }, 'Sport event automatic release sweep finished');
+  });
+
   it('leaves alone a test event on a test slot, which is released by hand only', async () => {
     const { store, sportLeague, scheduler, jobRows } = setup();
     const draft = await readySyncedDraft(store, sportLeague.id, 3, { providerMappings: [] });
