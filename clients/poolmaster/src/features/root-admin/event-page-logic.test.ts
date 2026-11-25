@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_DISPLAY_PREFERENCES } from '@/features/shared/ui';
-import { eventPageTabs } from './event-page-context';
+import { EVENT_PAGE_TABS } from './event-page-context';
 import { releaseCheckValueText, releaseTriesText } from './event-release-checks-text';
 import { settingsRequestBody } from './event-settings-form';
 
@@ -9,10 +9,9 @@ import { settingsRequestBody } from './event-settings-form';
 
 const preferences = { ...DEFAULT_DISPLAY_PREFERENCES, timeZone: 'UTC' };
 
-describe('eventPageTabs', () => {
-  it('shows every tab, Tools last, on an event no provider syncs, and leaves Tools out on a synced one', () => {
-    expect(eventPageTabs(false).map((tab) => tab.segment)).toEqual(['field', 'rounds', 'contests', 'activity', 'tools']);
-    expect(eventPageTabs(true).map((tab) => tab.segment)).toEqual(['field', 'rounds', 'contests', 'activity']);
+describe('EVENT_PAGE_TABS', () => {
+  it('lists Field, Rounds and matches, Contests and Activity, with no Tools tab on any event', () => {
+    expect(EVENT_PAGE_TABS.map((tab) => tab.segment)).toEqual(['field', 'rounds', 'contests', 'activity']);
   });
 });
 

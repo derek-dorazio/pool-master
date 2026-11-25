@@ -378,7 +378,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       summary: 'Preview a field upload',
       description:
         'Resolves each row against the event\'s field — participantId, then externalId, then an exact case-insensitive playerName, '
-        + 'with no fallback — and reports what applying it would change to ranking, oddsToWin, seedNumber, isActive and inactiveReason. '
+        + 'with no fallback — and reports what applying it would change to ranking, seedNumber, isActive and inactiveReason (odds come only from the feed). '
         + 'A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. '
         + 'A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.',
       operationId: 'previewEventParticipantUpload',
@@ -659,20 +659,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.recordEventMatchResult,
   });
 
-  fastify.delete('/:eventId/bracket/matches/:matchNumber/result', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Clear a match\'s result',
-      description: 'The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. '
-        + `409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. ${MATCH_RESULT_LOCKED} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
-      operationId: 'clearEventMatchResult',
-      params: MATCH_PARAMS,
-      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.clearEventMatchResult,
-  });
-
   const PERIOD_PARAMS = {
     type: 'object',
     required: ['eventId', 'matchNumber', 'periodNumber'],
@@ -698,19 +684,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.recordEventMatchPeriodScore,
   });
 
-  fastify.delete('/:eventId/bracket/matches/:matchNumber/periods/:periodNumber', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Clear a game\'s score at the end of a period',
-      description: `Clearing a score that is not entered changes nothing. ${PERIOD_REFUSALS} 422 ${BRACKET_NOT_A_BRACKET} Returns the bracket. Root admin only.`,
-      operationId: 'clearEventMatchPeriodScore',
-      params: PERIOD_PARAMS,
-      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.clearEventMatchPeriodScore,
-  });
-
   fastify.post('/:eventId/bracket/matches/:matchNumber/cancel', {
     ...write,
     schema: {
@@ -724,21 +697,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.cancelEventMatch,
-  });
-
-  fastify.post('/:eventId/bracket/matches/:matchNumber/postpone', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Postpone a game',
-      description: 'Marks a released game POSTPONED before it begins: it is still to be played, shows as postponed, and its picks stay open until its time, which the bracket match edit (or the provider) moves to the new one. A game of a bracket can be postponed. '
-        + 'Postponing a postponed game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_ALREADY_PLAYED for a game with a result. '
-        + '409 MATCH_CANCELLED for a cancelled game. 409 MATCH_ALREADY_STARTED for a game under way or with a period score. Returns the games. Root admin only.',
-      operationId: 'postponeEventMatch',
-      params: MATCH_PARAMS,
-      response: { 200: schemaRef('SportEventBracketResponse'), ...errors(401, 403, 404, 409) },
-    },
-    handler: handler.postponeEventMatch,
   });
 
   const ROUND_REFUSALS = '422 BRACKET_NOT_RESEEDED when the event\'s league does not reseed or the round is not one placed by seed. 409 SPORT_EVENT_NOT_RELEASED for a draft. '
@@ -796,27 +754,4 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.setEventPlayInWinner,
   });
 
-  fastify.put('/:eventId/participants/:sportEventParticipantId/replacement', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Replace a participant who withdrew after the draw',
-      description: 'For a field row named in the bracket whose match has not started, before or after release: the replacement (a tennis lucky loser) gets its own field row in that bracket place, unseeded, last in the event\'s last tier and at its lowest price. '
-        + 'The withdrawn row stays on the field, inactive as WITHDRAWN, keeping every pick of it, which scores as a first-round loss. '
-        + '404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the replacement is not an active participant of the event\'s sport; '
-        + '409 EVENT_PARTICIPANT_IS_PLAY_IN_PLACE for a play-in place, which is filled instead; 409 EVENT_PARTICIPANT_NOT_IN_BRACKET for a row no match names; '
-        + '409 BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409 BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); '
-        + '409 PARTICIPANT_NOT_IN_SPORT_LEAGUE when the event\'s sport league has a roster and the replacement is not on it; 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the replacement already has a field row. '
-        + `422 ${BRACKET_NOT_A_BRACKET} Returns the replacement's field row. Root admin only.`,
-      operationId: 'replaceEventParticipant',
-      params: {
-        type: 'object',
-        required: ['eventId', 'sportEventParticipantId'],
-        properties: { eventId: uuid, sportEventParticipantId: uuid },
-      },
-      body: schemaRef('ReplaceWithdrawnParticipantRequest'),
-      response: { 200: schemaRef('SportEventParticipantResponse'), ...errors(400, 401, 403, 404, 409, 422) },
-    },
-    handler: handler.replaceEventParticipant,
-  });
 }

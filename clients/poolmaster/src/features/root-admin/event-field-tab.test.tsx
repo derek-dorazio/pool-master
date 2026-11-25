@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { Toaster } from '@/features/shared/ui';
 import { EventFieldTab } from './event-field-tab';
-import { EventToolsTab } from './event-tools-tab';
 import { EventTabOutlet } from './test/event-tab-outlet';
 import {
   fieldEntryFixture,
@@ -148,7 +147,7 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0]; entrie
   });
 }
 
-function renderPage({ tab = 'field', isSynced = false }: { tab?: 'field' | 'tools'; isSynced?: boolean } = {}) {
+function renderPage({ tab = 'field', isSynced = false }: { tab?: 'field'; isSynced?: boolean } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -158,7 +157,6 @@ function renderPage({ tab = 'field', isSynced = false }: { tab?: 'field' | 'tool
         <Routes>
           <Route element={<EventTabOutlet isSynced={isSynced} />} path="/manage/sports/:sport/events/:eventId">
             <Route element={<EventFieldTab />} path="field" />
-            <Route element={<EventToolsTab />} path="tools" />
           </Route>
         </Routes>
         <Toaster />
@@ -316,14 +314,101 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     expect(screen.queryByTestId('root-admin-event-participant-dialog-edit')).not.toBeInTheDocument();
   });
 
-  it('shows the field\'s bulk upload on the Tools tab, open and without a Close', async () => {
-    seed();
-    renderPage({ tab: 'tools' });
+  it('names a guest as such and shows an untiered, unpriced, unseeded and unranked participant\'s values as not set', async () => {
+    const guest = fieldEntryFixture({
+      id: 'sep-guest',
+      participantId: 'p-guest',
+      participant: participantFixture({ id: 'p-guest', name: 'Sponsor Exemption', teamAffiliation: 'Ferrari', nationality: 'ITA' }),
+      ranking: null,
+      seedNumber: null,
+      oddsToWin: null,
+      valuation: null,
+      affiliatedWithSportLeague: false,
+    });
+    seed({ entries: [guest], tournament: { status: 'DRAFT', tiersLocked: false } });
+    renderPage();
 
-    expect(await screen.findByTestId('root-admin-event-field-upload-card')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-event-field-upload-textarea')).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-event-field-upload-close')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-event-field-upload-open')).not.toBeInTheDocument();
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-guest');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    const dialog = await screen.findByTestId('root-admin-event-participant-dialog');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-participant')).toHaveTextContent('Sponsor Exemption (guest)');
+    expect(within(dialog).getByText('Ferrari')).toBeInTheDocument();
+    expect(within(dialog).getByText('ITA')).toBeInTheDocument();
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-seed')).toHaveTextContent('Not set');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-rank')).toHaveTextContent('Not set');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-tier')).toHaveTextContent('Untiered');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-price')).toHaveTextContent('Not set');
+    expect(within(dialog).getByTestId('root-admin-event-participant-dialog-set-by')).toHaveTextContent('Not set');
+
+    await userEvent.click(within(dialog).getByTestId('root-admin-event-participant-dialog-edit'));
+    expect(within(screen.getByTestId('root-admin-event-participant-dialog-edit-tier')).getByRole('option', { name: 'Untiered' })).toBeInTheDocument();
+  });
+
+  it('shows a synced participant the feed has never listed with no feed id and never seen', async () => {
+    seed();
+    renderPage({ isSynced: true });
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    expect(await screen.findByTestId('root-admin-event-participant-dialog-feed-id')).toHaveTextContent('None');
+    expect(screen.getByTestId('root-admin-event-participant-dialog-last-in-feed')).toHaveTextContent('Never');
+  });
+
+  it('returns a withdrawn participant to the field behind a confirmation, sending only that it is active', async () => {
+    const withdrawn = fieldEntryFixture({
+      id: 'sep-out',
+      participantId: 'p-out',
+      participant: participantFixture({ id: 'p-out', name: 'Withdrawn Golfer' }),
+      isActive: false,
+      inactiveReason: 'WITHDRAWN',
+    });
+    seed({ entries: [withdrawn] });
+    updateEventParticipantsMock.mockResolvedValue({ data: { participants: [withdrawn] } });
+    renderPage();
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-out');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    expect(await screen.findByTestId('root-admin-event-participant-dialog-in-field')).toHaveTextContent('Withdrawn');
+    const returnButton = screen.getByTestId('root-admin-event-participant-dialog-withdraw');
+    expect(returnButton).toHaveTextContent('Return to field');
+    await userEvent.click(returnButton);
+    expect(await screen.findByTestId('root-admin-event-participant-dialog-withdraw-modal')).toHaveTextContent('It rejoins the field.');
+    await userEvent.click(screen.getByTestId('root-admin-event-participant-dialog-withdraw-confirm'));
+
+    await waitFor(() => expect(updateEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { participants: [{ sportEventParticipantId: 'sep-out', isActive: true }] },
+    })));
+  });
+
+  it('keeps the withdrawal confirmation open with the server\'s reason when the withdrawal is refused', async () => {
+    seed();
+    updateEventParticipantsMock.mockResolvedValue({ error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'The field is locked.' } } });
+    renderPage();
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-withdraw'));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-withdraw-confirm'));
+
+    expect(await screen.findByTestId('root-admin-event-participant-dialog-withdraw-modal-error')).toBeInTheDocument();
+    expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.participant.withdraw.failed' }), expect.any(String));
+  });
+
+  it('logs a refused correction and keeps the dialog in edit', async () => {
+    seed({ tournament: { status: 'DRAFT', tiersLocked: false } });
+    updateEventParticipantsMock.mockResolvedValue({ error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'The field is locked.' } } });
+    renderPage();
+
+    const row = await screen.findByTestId('root-admin-event-field-row-sep-rory');
+    await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-edit'));
+    const rank = screen.getByTestId('root-admin-event-participant-dialog-edit-rank');
+    await userEvent.clear(rank);
+    await userEvent.type(rank, '7');
+    await userEvent.click(screen.getByTestId('root-admin-event-participant-dialog-save'));
+
+    await waitFor(() => expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.participant.save.failed' }), expect.any(String)));
+    expect(screen.getByTestId('root-admin-event-participant-dialog-save')).toBeInTheDocument();
   });
 
   it('pool-master-za4 adds participants from the event\'s own league roster', async () => {

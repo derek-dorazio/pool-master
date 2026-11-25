@@ -32,14 +32,14 @@ import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 
 // Cycling end to end over HTTP (#626): an admin builds a race in the seeded UCI WorldTour and loads
-// its field's odds by upload, a commissioner runs a contest from the tour's default tiered template
+// its field's rankings by upload, a commissioner runs a contest from the tour's default tiered template
 // (its Top 10 points table comes with it), two entries pick one rider from each of the five tiers,
 // the admin enters the final overall classification with one rider who abandoned as a DNF, and the
 // board and the settled contest score each entry by Top 10 points.
 
 const RUN = `cycling-${Date.now()}`;
 const TOP_10_POINTS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-// Six riders, shortest odds first. Tiered from odds one to a tier, the fifth tier takes the last
+// Six riders, best ranked first. Tiered from ranking one to a tier, the fifth tier takes the last
 // two, so the two entries differ only in Roglic or Almeida.
 const RIDERS = ['Pogacar', 'Vingegaard', 'Evenepoel', 'Ayuso', 'Roglic', 'Almeida'];
 // The final overall order: Pogacar wins (10), Vingegaard second (9), Evenepoel third (8), Roglic
@@ -108,11 +108,11 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     }
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: riderIds } })).data?.added).toBe(6);
 
-    // The admin uploads each rider's odds to win overall, then tiers and prices follow from them.
+    // The admin uploads each rider's ranking (odds come only from the feed), then tiers and prices follow from it.
     const upload = await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: RIDERS.map((rider, index) => ({ playerName: `${rider} ${RUN}`, oddsToWin: 2 + index * 3 })) },
+      body: { rows: RIDERS.map((rider, index) => ({ playerName: `${rider} ${RUN}`, ranking: index + 1 })) },
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);

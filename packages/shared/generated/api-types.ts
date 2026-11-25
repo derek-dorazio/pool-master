@@ -2246,7 +2246,7 @@ export interface paths {
         put?: never;
         /**
          * Preview a field upload
-         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, oddsToWin, seedNumber, isActive and inactiveReason. A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
+         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber, isActive and inactiveReason (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
          */
         post: operations["previewEventParticipantUpload"];
         delete?: never;
@@ -2537,11 +2537,7 @@ export interface paths {
          */
         put: operations["recordEventMatchResult"];
         post?: never;
-        /**
-         * Clear a match's result
-         * @description The match is scheduled again, the side its winner filled is emptied and the standings are rewritten. Clearing a match with no result changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED once the match its winner advanced to has a result or a period score: clear those first. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
-         */
-        delete: operations["clearEventMatchResult"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2561,11 +2557,7 @@ export interface paths {
          */
         put: operations["recordEventMatchPeriodScore"];
         post?: never;
-        /**
-         * Clear a game's score at the end of a period
-         * @description Clearing a score that is not entered changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_CANCELLED for a cancelled game. 422 MATCH_PERIOD_INVALID when the event's sport keeps no score by period, or for the last period or past it, whose score is the final result. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the bracket. Root admin only.
-         */
-        delete: operations["clearEventMatchPeriodScore"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2585,26 +2577,6 @@ export interface paths {
          * @description Calls off an unplayed game of a released week whose games form no bracket, such as a postponed NFL game: it counts for nothing in any contest, and is added to the week it moves to while that week is a draft. Cancelling a cancelled game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft, whose games are edited freely. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_ALREADY_PLAYED for a game with a result (clear it first). 422 MATCH_IN_BRACKET for a game of a bracket, which cannot lose one. Returns the games. Root admin only.
          */
         post: operations["cancelEventMatch"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Postpone a game
-         * @description Marks a released game POSTPONED before it begins: it is still to be played, shows as postponed, and its picks stay open until its time, which the bracket match edit (or the provider) moves to the new one. A game of a bracket can be postponed. Postponing a postponed game changes nothing. 409 SPORT_EVENT_NOT_RELEASED for a draft. 404 BRACKET_MATCH_NOT_FOUND. 409 MATCH_ALREADY_PLAYED for a game with a result. 409 MATCH_CANCELLED for a cancelled game. 409 MATCH_ALREADY_STARTED for a game under way or with a period score. Returns the games. Root admin only.
-         */
-        post: operations["postponeEventMatch"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2664,26 +2636,6 @@ export interface paths {
          * @description For a field row that stands for a play-in pairing ("Texas / Xavier"): the row then names the team that won, keeping its seed, tier, price and every pick of it, and the pairing's participant is inactivated. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the winner is not an active participant of the event's sport; 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE when the event's sport league has a roster and the winner is not on it; 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the winner already has a field row; 409 PLAY_IN_SLOT_ALREADY_PLAYED once the place has started or played a bracket match. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the field row. Root admin only.
          */
         put: operations["setEventPlayInWinner"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/participants/{sportEventParticipantId}/replacement": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Replace a participant who withdrew after the draw
-         * @description For a field row named in the bracket whose match has not started, before or after release: the replacement (a tennis lucky loser) gets its own field row in that bracket place, unseeded, last in the event's last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, keeping every pick of it, which scores as a first-round loss. 404 EVENT_PARTICIPANT_NOT_FOUND for a row not on the event; 404 PARTICIPANT_NOT_FOUND when the replacement is not an active participant of the event's sport; 409 EVENT_PARTICIPANT_IS_PLAY_IN_PLACE for a play-in place, which is filled instead; 409 EVENT_PARTICIPANT_NOT_IN_BRACKET for a row no match names; 409 BRACKET_PARTICIPANT_ALREADY_PLAYED once its match has started; 409 BRACKET_PLACE_NOT_FIRST_ROUND for a place after the first round (a bye); 409 PARTICIPANT_NOT_IN_SPORT_LEAGUE when the event's sport league has a roster and the replacement is not on it; 409 EVENT_PARTICIPANT_ALREADY_ON_FIELD when the replacement already has a field row. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket. Returns the replacement's field row. Root admin only.
-         */
-        put: operations["replaceEventParticipant"];
         post?: never;
         delete?: never;
         options?: never;
@@ -13633,8 +13585,9 @@ export interface components {
                 /** @enum {string|null} */
                 inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
                 ranking?: number | null;
-                oddsToWin?: number | null;
                 seedNumber?: number | null;
+                /** @description The odds to win, as the feed sends them. Kept on the grid save only for the test-data loader, which writes test odds in the feed's place (#2077). */
+                oddsToWin?: number | null;
                 /** @description A manual price; null clears it. */
                 price?: number | null;
                 /** @description Moves the participant last into this tier as a manual tier, in the same save. Only before release; 422 UNKNOWN_TIER_KEY for a key the event has no tier for. */
@@ -13860,7 +13813,6 @@ export interface components {
                 /** @enum {string|null} */
                 inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
                 ranking?: number | null;
-                oddsToWin?: number | null;
                 seedNumber?: number | null;
             }[];
         };
@@ -13878,7 +13830,6 @@ export interface components {
                     /** @enum {string|null} */
                     inactiveReason?: "WITHDRAWN" | "ELIMINATED" | null;
                     ranking?: number | null;
-                    oddsToWin?: number | null;
                     seedNumber?: number | null;
                 };
                 /**
@@ -13914,7 +13865,6 @@ export interface components {
                     /** @enum {string|null} */
                     inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
                     ranking: number | null;
-                    oddsToWin: number | null;
                     seedNumber: number | null;
                 } | null;
                 /** @description What applying would store; null when the row cannot be applied. */
@@ -13923,7 +13873,6 @@ export interface components {
                     /** @enum {string|null} */
                     inactiveReason: "WITHDRAWN" | "ELIMINATED" | null;
                     ranking: number | null;
-                    oddsToWin: number | null;
                     seedNumber: number | null;
                 } | null;
                 /** @description Why the row cannot be applied, for display; null when it can. */
@@ -19868,6 +19817,8 @@ export interface components {
              * @enum {string}
              */
             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
+            isUnplayed: boolean;
             /**
              * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
              * @enum {string|null}
@@ -19887,10 +19838,10 @@ export interface components {
              */
             ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
             /**
-             * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+             * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
              * @enum {string|null}
              */
-            resultSource: "ADMIN" | "PROVIDER" | null;
+            resultSource: "PROVIDER" | null;
             /**
              * Format: date-time
              * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
@@ -19954,6 +19905,8 @@ export interface components {
                  * @enum {string}
                  */
                 status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
+                isUnplayed: boolean;
                 /**
                  * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
                  * @enum {string|null}
@@ -19973,10 +19926,10 @@ export interface components {
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+                 * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
                  * @enum {string|null}
                  */
-                resultSource: "ADMIN" | "PROVIDER" | null;
+                resultSource: "PROVIDER" | null;
                 /**
                  * Format: date-time
                  * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
@@ -20041,6 +19994,8 @@ export interface components {
                  * @enum {string}
                  */
                 status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
+                isUnplayed: boolean;
                 /**
                  * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
                  * @enum {string|null}
@@ -20060,10 +20015,10 @@ export interface components {
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+                 * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
                  * @enum {string|null}
                  */
-                resultSource: "ADMIN" | "PROVIDER" | null;
+                resultSource: "PROVIDER" | null;
                 /**
                  * Format: date-time
                  * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
@@ -20154,14 +20109,6 @@ export interface components {
             /**
              * Format: uuid
              * @description The team that won the play-in game: an active participant of the event's sport not yet on the field.
-             */
-            participantId: string;
-        };
-        /** @description A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row's bracket place, unseeded, last in the event's last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss. */
-        ReplaceWithdrawnParticipantRequest: {
-            /**
-             * Format: uuid
-             * @description Who takes the place: an active participant of the event's sport not yet on the field, such as a tennis lucky loser.
              */
             participantId: string;
         };
@@ -20350,6 +20297,8 @@ export interface components {
                  * @enum {string}
                  */
                 status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
+                isUnplayed: boolean;
                 /**
                  * @description Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
                  * @enum {string|null}
@@ -20369,10 +20318,10 @@ export interface components {
                  */
                 ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
                 /**
-                 * @description Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+                 * @description Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
                  * @enum {string|null}
                  */
-                resultSource: "ADMIN" | "PROVIDER" | null;
+                resultSource: "PROVIDER" | null;
                 /**
                  * Format: date-time
                  * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
@@ -34186,74 +34135,6 @@ export interface operations {
             };
         };
     };
-    clearEventMatchResult: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-                matchNumber: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description An event's bracket. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventBracketResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     recordEventMatchPeriodScore: {
         parameters: {
             query?: never;
@@ -34287,75 +34168,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    clearEventMatchPeriodScore: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-                matchNumber: number;
-                periodNumber: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description An event's bracket. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventBracketResponse"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -34464,65 +34276,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    postponeEventMatch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-                matchNumber: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description An event's bracket. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventBracketResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34694,87 +34447,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["FillPlayInSlotRequest"];
-            };
-        };
-        responses: {
-            /** @description One field row. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    replaceEventParticipant: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-                sportEventParticipantId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReplaceWithdrawnParticipantRequest"];
             };
         };
         responses: {

@@ -2,16 +2,10 @@ import type { SportEventParticipantDto, UpdateSportEventParticipantsRequest } fr
 
 // #236: a field row is the shared SportEventParticipant; its price sits on the valuation.
 export type EventFieldEntry = SportEventParticipantDto;
-export type EventFieldInactiveReason = NonNullable<EventFieldEntry['inactiveReason']>;
 export type EventFieldPatch = UpdateSportEventParticipantsRequest['participants'][number];
 
 /** The values the field participant dialog edits. Odds are never edited: they come only from the feed. */
 export type EventFieldNumericKey = 'ranking' | 'seedNumber' | 'price';
-
-export const EVENT_FIELD_INACTIVE_REASONS: readonly EventFieldInactiveReason[] = [
-  'WITHDRAWN',
-  'ELIMINATED',
-];
 
 /** Rank and seed are stored as 32-bit integers, so the server refuses anything larger. */
 const MAX_INT32 = 2147483647;

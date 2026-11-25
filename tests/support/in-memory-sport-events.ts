@@ -39,7 +39,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -596,29 +596,6 @@ export class InMemorySportEvents {
         row.isPlayInPlace = false;
         pairing.status = ParticipantStatus.INACTIVE;
       },
-      replaceWithdrawn: async ({ withdrawnId, matchId, side, replacementParticipantId, valuation }, jobs) => {
-        this.backgroundJobs.push(...(jobs ?? []));
-        const withdrawn = this.field.find((entry) => entry.id === withdrawnId);
-        const match = this.matchRows.find((row) => row.id === matchId);
-        if (!withdrawn || !match) throw new Error('unknown field row or match');
-        withdrawn.isActive = false;
-        withdrawn.inactiveReason = ParticipantInactiveReason.WITHDRAWN;
-        const replacement = this.addToField(withdrawn.sportEventId, replacementParticipantId);
-        if (valuation) {
-          this.valuationRows.push(stamp({
-            id: this.id('valuation'),
-            sportEventParticipantId: replacement.id,
-            sportEventTierId: valuation.sportEventTierId,
-            tierOrderIndex: valuation.tierOrderIndex,
-            tierAssignedSource: valuation.sportEventTierId === null ? null : ValuationSource.MANUAL,
-            price: valuation.price,
-            priceAssignedSource: valuation.price === null ? null : ValuationSource.MANUAL,
-          }));
-        }
-        if (side === MatchSide.HOME) match.homeSportEventParticipantId = replacement.id;
-        else match.awaySportEventParticipantId = replacement.id;
-        return replacement.id;
-      },
     };
   }
 
@@ -949,11 +926,6 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(jobs ?? []));
         const row = requireRow(sportEventRoundMatchId);
         row.periodScores = [...row.periodScores.filter((other) => other.periodNumber !== score.periodNumber), { ...score }];
-      },
-      deletePeriodScore: async (sportEventRoundMatchId, periodNumber, jobs) => {
-        this.backgroundJobs.push(...(jobs ?? []));
-        const row = requireRow(sportEventRoundMatchId);
-        row.periodScores = row.periodScores.filter((other) => other.periodNumber !== periodNumber);
       },
     };
   }

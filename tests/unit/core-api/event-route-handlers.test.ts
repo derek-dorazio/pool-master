@@ -104,7 +104,7 @@ function fakes() {
     golfScores: { previewRoundScores: fn([]), applyRoundScores: fn(undefined), updateRoundScore: fn(undefined) },
     raceResults: { previewResults: fn({ rows: [], orderErrors: [] }), applyResults: fn(undefined) },
     matchResults: {
-      recordResult: fn([]), clearResult: fn([]), recordPeriodScore: fn([]), clearPeriodScore: fn([]), cancelMatch: fn([]), postponeMatch: fn([]),
+      recordResult: fn([]), recordPeriodScore: fn([]), cancelMatch: fn([]),
     },
     bracket: {
       listBracket: fn([]),
@@ -113,7 +113,6 @@ function fakes() {
       proposeRoundMatchups: fn([{ matchNumber: 1 }]),
       setRoundMatchups: fn([]),
       fillPlayInSlot: fn(undefined),
-      replaceWithdrawn: fn('sep-2'),
     },
   };
   const lifecycle = { applySportEventStatusTransition: fn(undefined) };
@@ -461,23 +460,20 @@ describe('bracket', () => {
     expect(edited.body).toMatchObject({ match: { id: 'm1', scheduledDate: null } });
   });
 
-  it('records, clears and cancels results and period scores, each answering with the bracket', async () => {
+  it('records and cancels results and records period scores, each answering with the bracket', async () => {
     const { services, handlers } = fakes();
     const periodParams = { ...matchParams, periodNumber: 2 };
 
     for (const [handler, request] of [
       [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { homeScore: 70, awayScore: 65 } })],
-      [handlers.clearEventMatchResult, stubRequest({ params: matchParams })],
       [handlers.recordEventMatchPeriodScore, stubRequest({ params: periodParams, body: { homeScore: 7, awayScore: 3 } })],
-      [handlers.clearEventMatchPeriodScore, stubRequest({ params: periodParams })],
       [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
-      [handlers.postponeEventMatch, stubRequest({ params: matchParams })],
     ] as const) {
       expect((await callHandler(handler, request)).body).toEqual({ matches: [] });
     }
     expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, 4, 2, { homeScore: 7, awayScore: 3 });
-    expect(services.matchResults.clearPeriodScore).toHaveBeenCalledWith(EVENT_ID, 4, 2);
-    expect(services.matchResults.postponeMatch).toHaveBeenCalledWith(EVENT_ID, 4);
+    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, 4, { homeScore: 70, awayScore: 65 });
+    expect(services.matchResults.cancelMatch).toHaveBeenCalledWith(EVENT_ID, 4);
   });
 
   it('proposes and sets a round\'s matchups', async () => {
@@ -492,14 +488,13 @@ describe('bracket', () => {
     expect(set.body).toEqual({ matches: [] });
   });
 
-  it('answers a play-in winner with its slot\'s row, and a withdrawn team\'s replacement with the replacement\'s row', async () => {
+  it('answers a play-in winner with its slot\'s row', async () => {
     const { services, handlers } = fakes();
     const slot = { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' };
 
     await callHandler(handlers.setEventPlayInWinner, stubRequest({ params: slot, body: { participantId: 'p9' } }));
-    await callHandler(handlers.replaceEventParticipant, stubRequest({ params: slot, body: { participantId: 'p9' } }));
 
     expect(services.bracket.fillPlayInSlot).toHaveBeenCalledWith(EVENT_ID, 'sep-1', 'p9');
-    expect(services.field.getEventParticipant.mock.calls).toEqual([[EVENT_ID, 'sep-1'], [EVENT_ID, 'sep-2']]);
+    expect(services.field.getEventParticipant.mock.calls).toEqual([[EVENT_ID, 'sep-1']]);
   });
 });

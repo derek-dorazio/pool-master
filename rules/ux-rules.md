@@ -633,12 +633,16 @@ administration area (root admin included), reusing the same shared components.
     leads to a page of its own (a sport league, an event), and in ⤢ when its
     details open in a dialog over the grid (a participant, a contest template,
     a job). A row never does both.
-16. **Correction tools only where no sync runs.** Once a provider syncs a sport
-    league, the sync owns its events and participants, so the League page shows
-    their data but offers no tool that adds or rewrites it by hand (clone an
-    event, upload a roster or ranks). Those tools live on the League page's
-    Tools tab, which shows only on a league no provider syncs. A dialog may
-    still edit what the feed never sends, such as a participant's short name.
+16. **Results and fields come from the feed; no page enters them.** Every active
+    league is provider-synced, so the League and Event pages show results,
+    participants and odds but offer no tool that adds or rewrites them by hand:
+    no result entry or correction, no postpone, no withdrawn-participant
+    replacement, no roster upload and no Tools tab (ADR 0013). A correction is a
+    Re-settle from the feed. Test events take their results through the admin
+    API on a test slot only, never from a screen. A dialog may still edit what
+    the feed never sends, such as a participant's short name, or a value the
+    platform sets (tier and price). The golf-round and race-order panels an
+    unsynced event still shows leave with #2008.
 
 ## 13. Event Pages
 

@@ -396,12 +396,17 @@ export type AddSportEventParticipantsResponse = z.infer<typeof AddSportEventPart
 const MAX_INT32 = 2147483647;
 
 /** The field-row values an admin patches — by the grid save and by the field upload alike. */
-const SportEventParticipantPatchShape = {
+/** The values a field upload can set on a field row; odds come only from the feed (#2081). */
+const SportEventParticipantUploadPatchShape = {
   isActive: z.boolean().optional(),
   inactiveReason: z.enum(ParticipantInactiveReason).nullable().optional(),
   ranking: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
-  oddsToWin: z.number().nullable().optional(),
   seedNumber: z.number().int().min(1).max(MAX_INT32).nullable().optional(),
+};
+
+const SportEventParticipantPatchShape = {
+  ...SportEventParticipantUploadPatchShape,
+  oddsToWin: z.number().nullable().optional().describe('The odds to win, as the feed sends them. Kept on the grid save only for the test-data loader, which writes test odds in the feed\'s place (#2077).'),
 };
 
 export const UpdateSportEventParticipantsRequestSchema = z.object({
@@ -415,13 +420,13 @@ export const UpdateSportEventParticipantsRequestSchema = z.object({
 }).describe('One save of the field grid.');
 export type UpdateSportEventParticipantsRequest = z.infer<typeof UpdateSportEventParticipantsRequestSchema>;
 
-// --- Field upload (#128): adjust the field's rankings, odds, seeds and withdrawals ------
+// --- Field upload (#128): adjust the field's rankings, seeds and withdrawals ------
 
 export const SportEventParticipantUploadRowSchema = z.object({
   participantId: z.string().optional(),
   externalId: z.string().optional().describe('The participant\'s canonical external id.'),
   playerName: z.string().optional(),
-  ...SportEventParticipantPatchShape,
+  ...SportEventParticipantUploadPatchShape,
 }).describe(
   'One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact '
   + 'case-insensitive playerName — matched only within the event\'s field, with no fallback to the next. '
@@ -438,9 +443,8 @@ export const SportEventParticipantUploadValuesDtoSchema = z.object({
   isActive: z.boolean(),
   inactiveReason: z.enum(ParticipantInactiveReason).nullable(),
   ranking: z.number().int().nullable(),
-  oddsToWin: z.number().nullable(),
   seedNumber: z.number().int().nullable(),
-}).describe('The values a field upload can change on a field row.');
+}).describe('The values a field upload can change on a field row. Odds are not among them: they come only from the feed.');
 
 export const SportEventParticipantUploadChangeDtoSchema = z.enum(['UPDATE', 'UNCHANGED'])
   .describe('What applying the row would do to its field row: change a value, or nothing.');

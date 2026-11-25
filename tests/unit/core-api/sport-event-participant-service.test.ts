@@ -425,29 +425,30 @@ describe('SportEventParticipantService — field upload', () => {
     const { service, event } = fieldWithTwo();
 
     const [changed, same] = await service.previewUpload(event.id, [
-      { externalId: 'ext-ana', oddsToWin: 15 },
+      { externalId: 'ext-ana', ranking: 7 },
       { externalId: 'ext-bo', ranking: 9, seedNumber: 2, isActive: true },
     ]);
 
-    expect(changed).toMatchObject({ change: 'UPDATE', before: { oddsToWin: 12 }, after: { oddsToWin: 15, ranking: 5 } });
+    expect(changed).toMatchObject({ change: 'UPDATE', before: { ranking: 5 }, after: { ranking: 7, seedNumber: 1 } });
     expect(same).toMatchObject({ change: 'UNCHANGED' });
     expect(same.after).toEqual(same.before);
   });
 
   it('leaves an omitted value untouched and clears a value sent as null, in preview and on apply', async () => {
     const { store, service, event, anaEntry } = fieldWithTwo();
-    const row = { externalId: 'ext-ana', oddsToWin: null, isActive: false, inactiveReason: 'WITHDRAWN' as const };
+    const row = { externalId: 'ext-ana', seedNumber: null, isActive: false, inactiveReason: 'WITHDRAWN' as const };
 
     const [preview] = await service.previewUpload(event.id, [row]);
 
-    expect(preview.after).toEqual({ isActive: false, inactiveReason: 'WITHDRAWN', ranking: 5, oddsToWin: null, seedNumber: 1 });
-    expect(anaEntry.oddsToWin).toBe(12);
+    // The upload has no odds column: odds come only from the feed (#2081), so they are not among its values.
+    expect(preview.after).toEqual({ isActive: false, inactiveReason: 'WITHDRAWN', ranking: 5, seedNumber: null });
+    expect(anaEntry.seedNumber).toBe(1);
 
     await service.applyUpload(event.id, [row]);
 
     const stored = store.field.find((entry) => entry.id === anaEntry.id);
-    expect(stored).toMatchObject({ ranking: 5, seedNumber: 1, isActive: false, inactiveReason: 'WITHDRAWN' });
-    expect(stored?.oddsToWin).toBeUndefined();
+    expect(stored).toMatchObject({ ranking: 5, isActive: false, inactiveReason: 'WITHDRAWN', oddsToWin: 12 });
+    expect(stored?.seedNumber).toBeUndefined();
   });
 
   it('applies every changed row and returns the field, without adding a field row or a participant', async () => {

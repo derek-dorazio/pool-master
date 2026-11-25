@@ -15,7 +15,6 @@ import {
   listEvents,
   listSportLeagues,
   loadEventBracket,
-  postponeEventMatch,
   recordEventMatchResult,
   releaseEvent,
   transitionEvent,
@@ -105,7 +104,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: an NFL regular-season week (#715)', () => {
-  it('loads a week whose games link nowhere, releases it, cancels its postponed game, takes a tie on a game, completes it on the other three results, and refuses knockout round points on it', async () => {
+  it('loads a week whose games link nowhere, releases it, cancels a game, takes a tie on a game, completes it on the other three results, and refuses knockout round points on it', async () => {
     const db = getFunctionalPrisma();
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
@@ -142,7 +141,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     expect((await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
+      body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },
     })).response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: {} })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -194,11 +193,8 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
       },
     }), { status: 422, code: 'CONTEST_EVENT_NOT_A_BRACKET' });
 
-    // Eagles-Giants is postponed first, still to be played; then it is called off for this week:
-    // cancelled here, it would be added to the week it moves to.
-    const postponed = await postponeEventMatch({ client: a, path: { eventId, matchNumber: 4 } });
-    expect(expectMatchesSchema(SportEventBracketResponseSchema, postponed.data).matches.map((game) => [game.matchNumber, game.status]))
-      .toEqual([[1, MatchStatus.SCHEDULED], [2, MatchStatus.SCHEDULED], [3, MatchStatus.SCHEDULED], [4, MatchStatus.POSTPONED]]);
+    // Eagles-Giants is called off for this week: cancelled here, it would be added to the week it
+    // moves to. Only the feed postpones a game (#2074).
     const cancelled = await cancelEventMatch({ client: a, path: { eventId, matchNumber: 4 } });
     expect([cancelled.error, cancelled.response?.status]).toEqual([undefined, 200]);
     const statusOf = (matches: readonly { matchNumber: number; status: string }[]) => matches.map((game) => [game.matchNumber, game.status]);
@@ -224,9 +220,8 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const packersWin = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
     expect(expectMatchesSchema(SportEventBracketResponseSchema, packersWin.data).matches.map((game) => [game.matchNumber, game.status, game.winnerSide]))
       .toEqual([[1, MatchStatus.COMPLETED, MatchSide.HOME], [2, MatchStatus.COMPLETED, MatchSide.AWAY], [3, MatchStatus.COMPLETED, MatchSide.HOME], [4, MatchStatus.CANCELLED, null]]);
-    // A played game is not cancelled: its result is cleared first.
+    // A played game is not cancelled.
     expectFunctionalError(await cancelEventMatch({ client: a, path: { eventId, matchNumber: 1 } }), { status: 409, code: 'MATCH_ALREADY_PLAYED' });
-    expectFunctionalError(await postponeEventMatch({ client: a, path: { eventId, matchNumber: 1 } }), { status: 409, code: 'MATCH_ALREADY_PLAYED' });
 
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
   });

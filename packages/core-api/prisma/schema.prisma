@@ -386,9 +386,8 @@ enum PrismaMatchEnding {
   DEFAULT
 }
 
-/// Who set a match's result (#1531). Mirrors the domain `MatchResultSource`.
+/// Who set a match's result (#1496): the feed only (#2074). Mirrors the domain `MatchResultSource`.
 enum PrismaMatchResultSource {
-  ADMIN
   PROVIDER
 }
 

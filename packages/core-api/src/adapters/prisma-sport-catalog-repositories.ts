@@ -14,7 +14,6 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   EventSeriesRepository,
   PriceAssignment,
-  ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
   SportEventParticipantCreate,
@@ -67,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSpan,
 } from '@poolmaster/shared/domain';
-import { EventPricingConfigSchema, EventTierConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { EventPricingConfigSchema, EventTierConfigSchema, ParticipantStatus, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -1049,47 +1048,6 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       this.prisma.participant.update({ where: { id: input.pairingParticipantId }, data: { status: ParticipantStatus.INACTIVE } }),
       ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
-  }
-
-  async replaceWithdrawn(input: {
-    withdrawnId: string;
-    matchId: string;
-    side: MatchSide;
-    replacementParticipantId: string;
-    valuation: ReplacementValuation | null;
-  }, jobs: readonly BackgroundJobRequest[] = []): Promise<string> {
-    return this.prisma.$transaction(async (tx) => {
-      const withdrawn = await tx.sportEventParticipant.update({
-        where: { id: input.withdrawnId },
-        data: { isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN },
-      });
-      const { valuation } = input;
-      const replacement = await tx.sportEventParticipant.create({
-        data: {
-          sportEventId: withdrawn.sportEventId,
-          participantId: input.replacementParticipantId,
-          ...(valuation && {
-            valuation: {
-              create: {
-                sportEventTierId: valuation.sportEventTierId,
-                tierOrderIndex: valuation.tierOrderIndex,
-                tierAssignedSource: valuation.sportEventTierId === null ? null : ValuationSource.MANUAL,
-                price: valuation.price,
-                priceAssignedSource: valuation.price === null ? null : ValuationSource.MANUAL,
-              },
-            },
-          }),
-        },
-      });
-      await tx.sportEventRoundMatch.update({
-        where: { id: input.matchId },
-        data: input.side === MatchSide.HOME
-          ? { homeSportEventParticipantId: replacement.id }
-          : { awaySportEventParticipantId: replacement.id },
-      });
-      await insertBackgroundJobs(tx, jobs);
-      return replacement.id;
-    });
   }
 }
 

@@ -3,7 +3,6 @@ import {
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
-  clearEventMatchResult,
   createEvent,
   createParticipant,
   createSportLeague,
@@ -111,7 +110,7 @@ describe('SDK Functional: Reseeded bracket', () => {
     await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: SEEDS.map((seed) => ({ playerName: `Seed ${seed} ${RUN}`, seedNumber: seed, oddsToWin: seed * 3 })) },
+      body: { rows: SEEDS.map((seed) => ({ playerName: `Seed ${seed} ${RUN}`, seedNumber: seed })) },
     });
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -203,7 +202,6 @@ describe('SDK Functional: Reseeded bracket', () => {
       await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } }),
       { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
-    expectFunctionalError(await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } }), { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' });
     expectFunctionalError(
       await setEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 }, body: { matches: proposal } }),
       { status: 409, code: 'BRACKET_ROUND_ALREADY_PLAYED' },

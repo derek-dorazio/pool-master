@@ -12702,8 +12702,11 @@ export type UpdateSportEventParticipantsRequest = {
         isActive?: boolean;
         inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
         ranking?: number | null;
-        oddsToWin?: number | null;
         seedNumber?: number | null;
+        /**
+         * The odds to win, as the feed sends them. Kept on the grid save only for the test-data loader, which writes test odds in the feed's place (#2077).
+         */
+        oddsToWin?: number | null;
         /**
          * A manual price; null clears it.
          */
@@ -12987,7 +12990,6 @@ export type SportEventParticipantUploadRequest = {
         isActive?: boolean;
         inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
         ranking?: number | null;
-        oddsToWin?: number | null;
         seedNumber?: number | null;
     }>;
 };
@@ -13013,7 +13015,6 @@ export type SportEventParticipantUploadPreviewResponse = {
             isActive?: boolean;
             inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
             ranking?: number | null;
-            oddsToWin?: number | null;
             seedNumber?: number | null;
         };
         /**
@@ -13047,7 +13048,6 @@ export type SportEventParticipantUploadPreviewResponse = {
             isActive: boolean;
             inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
             ranking: number | null;
-            oddsToWin: number | null;
             seedNumber: number | null;
         } | null;
         /**
@@ -13057,7 +13057,6 @@ export type SportEventParticipantUploadPreviewResponse = {
             isActive: boolean;
             inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
             ranking: number | null;
-            oddsToWin: number | null;
             seedNumber: number | null;
         } | null;
         /**
@@ -21355,6 +21354,10 @@ export type SportEventRoundMatchDto = {
      */
     status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
+     * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+     */
+    isUnplayed: boolean;
+    /**
      * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
      */
     winnerSide: 'HOME' | 'AWAY' | null;
@@ -21379,9 +21382,9 @@ export type SportEventRoundMatchDto = {
      */
     ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
     /**
-     * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+     * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
      */
-    resultSource: 'ADMIN' | 'PROVIDER' | null;
+    resultSource: 'PROVIDER' | null;
     /**
      * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
      */
@@ -21460,6 +21463,10 @@ export type SportEventBracketResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
@@ -21484,9 +21491,9 @@ export type SportEventBracketResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
          */
-        resultSource: 'ADMIN' | 'PROVIDER' | null;
+        resultSource: 'PROVIDER' | null;
         /**
          * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
          */
@@ -21566,6 +21573,10 @@ export type SportEventRoundMatchResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
@@ -21590,9 +21601,9 @@ export type SportEventRoundMatchResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
          */
-        resultSource: 'ADMIN' | 'PROVIDER' | null;
+        resultSource: 'PROVIDER' | null;
         /**
          * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
          */
@@ -21705,16 +21716,6 @@ export type UpdateSportEventRoundMatchRequest = {
 export type FillPlayInSlotRequest = {
     /**
      * The team that won the play-in game: an active participant of the event's sport not yet on the field.
-     */
-    participantId: string;
-};
-
-/**
- * A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row's bracket place, unseeded, last in the event's last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss.
- */
-export type ReplaceWithdrawnParticipantRequest = {
-    /**
-     * Who takes the place: an active participant of the event's sport not yet on the field, such as a tennis lucky loser.
      */
     participantId: string;
 };
@@ -21990,6 +21991,10 @@ export type SquaresBoardResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
@@ -22014,9 +22019,9 @@ export type SquaresBoardResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
          */
-        resultSource: 'ADMIN' | 'PROVIDER' | null;
+        resultSource: 'PROVIDER' | null;
         /**
          * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
          */
@@ -35445,50 +35450,6 @@ export type UpdateEventBracketMatchResponses = {
 
 export type UpdateEventBracketMatchResponse = UpdateEventBracketMatchResponses[keyof UpdateEventBracketMatchResponses];
 
-export type ClearEventMatchResultData = {
-    body?: never;
-    path: {
-        eventId: string;
-        matchNumber: number;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result';
-};
-
-export type ClearEventMatchResultErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ClearEventMatchResultError = ClearEventMatchResultErrors[keyof ClearEventMatchResultErrors];
-
-export type ClearEventMatchResultResponses = {
-    /**
-     * An event's bracket.
-     */
-    200: SportEventBracketResponse;
-};
-
-export type ClearEventMatchResultResponse = ClearEventMatchResultResponses[keyof ClearEventMatchResultResponses];
-
 export type RecordEventMatchResultData = {
     body: RecordSportEventRoundMatchResultRequest;
     path: {
@@ -35536,51 +35497,6 @@ export type RecordEventMatchResultResponses = {
 };
 
 export type RecordEventMatchResultResponse = RecordEventMatchResultResponses[keyof RecordEventMatchResultResponses];
-
-export type ClearEventMatchPeriodScoreData = {
-    body?: never;
-    path: {
-        eventId: string;
-        matchNumber: number;
-        periodNumber: number;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}';
-};
-
-export type ClearEventMatchPeriodScoreErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ClearEventMatchPeriodScoreError = ClearEventMatchPeriodScoreErrors[keyof ClearEventMatchPeriodScoreErrors];
-
-export type ClearEventMatchPeriodScoreResponses = {
-    /**
-     * An event's bracket.
-     */
-    200: SportEventBracketResponse;
-};
-
-export type ClearEventMatchPeriodScoreResponse = ClearEventMatchPeriodScoreResponses[keyof ClearEventMatchPeriodScoreResponses];
 
 export type RecordEventMatchPeriodScoreData = {
     body: RecordSportEventMatchPeriodScoreRequest;
@@ -35674,46 +35590,6 @@ export type CancelEventMatchResponses = {
 };
 
 export type CancelEventMatchResponse = CancelEventMatchResponses[keyof CancelEventMatchResponses];
-
-export type PostponeEventMatchData = {
-    body?: never;
-    path: {
-        eventId: string;
-        matchNumber: number;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone';
-};
-
-export type PostponeEventMatchErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-};
-
-export type PostponeEventMatchError = PostponeEventMatchErrors[keyof PostponeEventMatchErrors];
-
-export type PostponeEventMatchResponses = {
-    /**
-     * An event's bracket.
-     */
-    200: SportEventBracketResponse;
-};
-
-export type PostponeEventMatchResponse = PostponeEventMatchResponses[keyof PostponeEventMatchResponses];
 
 export type ProposeEventRoundMatchupsData = {
     body?: never;
@@ -35854,54 +35730,6 @@ export type SetEventPlayInWinnerResponses = {
 };
 
 export type SetEventPlayInWinnerResponse = SetEventPlayInWinnerResponses[keyof SetEventPlayInWinnerResponses];
-
-export type ReplaceEventParticipantData = {
-    body: ReplaceWithdrawnParticipantRequest;
-    path: {
-        eventId: string;
-        sportEventParticipantId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/replacement';
-};
-
-export type ReplaceEventParticipantErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ReplaceEventParticipantError = ReplaceEventParticipantErrors[keyof ReplaceEventParticipantErrors];
-
-export type ReplaceEventParticipantResponses = {
-    /**
-     * One field row.
-     */
-    200: SportEventParticipantResponse;
-};
-
-export type ReplaceEventParticipantResponse = ReplaceEventParticipantResponses[keyof ReplaceEventParticipantResponses];
 
 export type ListSportsData = {
     body?: never;

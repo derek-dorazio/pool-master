@@ -4,7 +4,6 @@ import {
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
-  clearEventMatchResult,
   createContest,
   createEvent,
   createParticipant,
@@ -138,7 +137,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: FIELD.map((team, index) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed, oddsToWin: 2 + index * 5 })) },
+      body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },
     });
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -237,13 +236,6 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const final = expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, afterFirstRound.data).matches.find((match) => match.matchNumber === 3));
     expect([nameOf(expectDefined(final.homeSportEventParticipantId)), nameOf(expectDefined(final.awaySportEventParticipantId))]).toEqual(['Duke', 'Vermont']);
 
-    // While the final is unplayed a first-round result can be taken back: Vermont leaves the
-    // final's away side, and the result goes in again.
-    const cleared = await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } });
-    const clearedFinal = expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, cleared.data).matches.find((match) => match.matchNumber === 3));
-    expect(clearedFinal.awaySportEventParticipantId).toBeNull();
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 71 } });
-
     // After the first round: Duke 1, Vermont 1 + (15 - 2) = 14, Houston and Texas 0; the best two count.
     const totalsOf = async () => Object.fromEntries(
       expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data).entries
@@ -270,10 +262,6 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // The final is decided, so a first-round winner can no longer change; its score still can.
     expectFunctionalError(
       await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 71, awayScore: 66 } }),
-      { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
-    );
-    expectFunctionalError(
-      await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } }),
       { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
     const corrected = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 73 } });

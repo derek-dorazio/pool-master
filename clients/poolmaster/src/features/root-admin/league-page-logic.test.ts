@@ -3,7 +3,7 @@ import type { DisplayPreferences } from '@/features/shared/ui';
 import type { SportLeagueParticipantOverviewDto, SportLeagueSyncDto } from '@/lib/api';
 import { contestTemplateUpdateBody, contestTemplateValuesOf } from './league-contest-template-form';
 import { defaultSeasonId } from './league-event-columns';
-import { isSyncedLeague, leaguePageTabs } from './league-page-context';
+import { isSyncedLeague, LEAGUE_PAGE_TABS } from './league-page-context';
 import { failedJobCount } from './use-activity';
 import { leagueParticipantColumnIds } from './league-participant-columns';
 import { editableParticipantFields, participantUpdateBody, participantValuesOf } from './league-participant-form';
@@ -33,10 +33,9 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto> = {})
   };
 }
 
-describe('leaguePageTabs', () => {
-  it('shows Events, Participants, Activity, Contest templates and Structure on a synced league, and adds Tools only on a league no provider syncs', () => {
-    expect(leaguePageTabs(true).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure']);
-    expect(leaguePageTabs(false).map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure', 'Tools']);
+describe('LEAGUE_PAGE_TABS', () => {
+  it('lists Events, Participants, Activity, Contest templates and Structure, with no Tools tab on any league', () => {
+    expect(LEAGUE_PAGE_TABS.map((tab) => tab.label)).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure']);
   });
 });
 

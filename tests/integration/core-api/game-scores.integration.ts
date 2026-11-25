@@ -227,19 +227,19 @@ describe('game scores from a provider', () => {
     expect((await matches.findBySportEvent(event.id)).at(0)?.updatedAt).toEqual(written.updatedAt);
   });
 
-  it('marks a result the provider wrote as the provider\'s, and leaves alone one an admin has since corrected (#1531)', async () => {
+  it('overwrites a result an admin wrote earlier with the provider\'s final: the feed is the only writer on a synced event', async () => {
     const { event, externalId, teamId, matches } = await linkedBracket();
     const final = { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 };
     await publish(externalId, [final]);
     const fromProvider = (await matches.findBySportEvent(event.id)).at(0);
-    // The admin's correction, as the admin's result route writes it.
-    await getPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 1 }, data: { awayScore: 68, resultSource: MatchResultSource.ADMIN } });
+    // A correction an admin wrote before results came only from the feed; the migration relabelled its source PROVIDER.
+    await getPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 1 }, data: { awayScore: 68, resultSource: MatchResultSource.PROVIDER } });
 
     const again = await publish(externalId, [final]);
 
     expect(fromProvider).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
-    expect(again).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
-    expect((await matches.findBySportEvent(event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 68, resultSource: MatchResultSource.ADMIN });
+    expect(again).toMatchObject({ updatesPersisted: 1 });
+    expect((await matches.findBySportEvent(event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
   });
 
   it('links each game nobody linked to the match its teams play, records the final, and keeps the link for the next sync', async () => {

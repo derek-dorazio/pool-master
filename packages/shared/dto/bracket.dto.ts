@@ -31,13 +31,14 @@ export const SportEventRoundMatchDtoSchema = z.object({
   isNeutralSite: z.boolean().describe('True when neither side is at home: screens then say "vs" rather than "@".'),
   scheduledDate: z.iso.datetime().nullable().describe('Tip-off or kickoff; null until it is announced.'),
   status: MatchStatusDtoSchema,
+  isUnplayed: z.boolean().describe('True while the match is still to be played: scheduled, or postponed to be played later. The server\'s own `isMatchUnplayed`, so a client never re-derives it from the status.'),
   winnerSide: MatchSideDtoSchema.nullable().describe('Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.'),
   homeScore: z.number().int().nullable().describe('The home side\'s score; in a series, games won.'),
   awayScore: z.number().int().nullable().describe('The away side\'s score; in a series, games won.'),
   homeShootoutScore: z.number().int().nullable().describe('The home side\'s kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side\'s when there was none. Not part of the match score.'),
   awayShootoutScore: z.number().int().nullable().describe('The away side\'s kicks scored in the shoot-out; null with the home side\'s.'),
   ending: MatchEndingDtoSchema.describe('How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.'),
-  resultSource: z.enum(MatchResultSource).nullable().describe('Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider\'s later final never overwrites an admin\'s result.'),
+  resultSource: z.enum(MatchResultSource).nullable().describe('Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.'),
   completedAt: z.iso.datetime().nullable().describe('When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.'),
   advancesToMatchId: z.uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
@@ -91,11 +92,6 @@ export const FillPlayInSlotRequestSchema = z.object({
 }).describe('The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing\'s participant is inactivated.');
 export type FillPlayInSlotRequest = z.infer<typeof FillPlayInSlotRequestSchema>;
 
-export const ReplaceWithdrawnParticipantRequestSchema = z.object({
-  participantId: z.uuid().describe('Who takes the place: an active participant of the event\'s sport not yet on the field, such as a tennis lucky loser.'),
-}).describe('A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row\'s bracket place, unseeded, last in the event\'s last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss.');
-export type ReplaceWithdrawnParticipantRequest = z.infer<typeof ReplaceWithdrawnParticipantRequestSchema>;
-
 export const RecordSportEventRoundMatchResultRequestSchema = z.object({
   winnerSide: MatchSideDtoSchema.nullable().describe('The side that won; null for a tie (#792), which needs both scores, level. Only a game of a week, which forms no bracket, can end in a tie.'),
   homeScore: z.number().int().min(0).nullable().describe('The home side\'s score (games won, for a series), or null with the away score null too.'),
@@ -140,7 +136,6 @@ registerSchema('SportEventRoundMatchResponse', SportEventRoundMatchResponseSchem
 registerSchema('LoadSportEventBracketRequest', LoadSportEventBracketRequestSchema);
 registerSchema('UpdateSportEventRoundMatchRequest', UpdateSportEventRoundMatchRequestSchema);
 registerSchema('FillPlayInSlotRequest', FillPlayInSlotRequestSchema);
-registerSchema('ReplaceWithdrawnParticipantRequest', ReplaceWithdrawnParticipantRequestSchema);
 registerSchema('RecordSportEventRoundMatchResultRequest', RecordSportEventRoundMatchResultRequestSchema);
 registerSchema('RecordSportEventMatchPeriodScoreRequest', RecordSportEventMatchPeriodScoreRequestSchema);
 registerSchema('RoundMatchupDto', RoundMatchupDtoSchema);

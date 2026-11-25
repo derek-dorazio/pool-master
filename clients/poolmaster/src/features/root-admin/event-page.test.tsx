@@ -15,7 +15,6 @@ import { EventContestsTab } from './event-contests-tab';
 import { EventFieldTab } from './event-field-tab';
 import { EventPageLayout } from './event-page-layout';
 import { EventRoundsTab } from './event-rounds-tab';
-import { EventToolsTab } from './event-tools-tab';
 import {
   passingReleaseChecks,
   platformPricingProfilesFixture,
@@ -242,7 +241,6 @@ function renderEventPage(path: string, {
             <Route element={<EventRoundsTab />} path="rounds" />
             <Route element={<EventContestsTab />} path="contests" />
             <Route element={<EventActivityTab />} path="activity" />
-            <Route element={<EventToolsTab />} path="tools" />
             <Route element={<Navigate replace to="../field" relative="path" />} path="edit" />
             <Route element={<Navigate replace to="../field" relative="path" />} path="tiers" />
             <Route element={<Navigate replace to="../rounds" relative="path" />} path="results" />
@@ -288,19 +286,12 @@ describe('Event page header and tabs', () => {
     await waitFor(() => expect(screen.getByTestId('root-admin-event-tab-field')).toHaveAttribute('aria-current', 'page'));
   });
 
-  it('shows Tools only on an event of a league no provider syncs', async () => {
+  it('shows Field, Rounds and matches, Contests and Activity on an event of any league, with no Tools tab', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/contests');
     listEventContestsMock.mockResolvedValue({ data: { contests: [] } });
 
     await screen.findByTestId('root-admin-event-header', {}, { timeout: 5_000 });
-    await waitFor(() => expect(tabLabels()).toEqual(['Field', 'Rounds and matches', 'Contests', 'Activity', 'Tools']));
-  });
-
-  it('leaves Tools off a synced league\'s event and sends its old Tools link to Field', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/tools', { synced: true });
-
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/manage/sports/golf/events/tour-1/field'), { timeout: 5_000 });
-    expect(tabLabels()).toEqual(['Field', 'Rounds and matches', 'Contests', 'Activity']);
+    await waitFor(() => expect(tabLabels()).toEqual(['Field', 'Rounds and matches', 'Contests', 'Activity']));
   });
 
   it('sends the old edit and results links to Field and to Rounds and matches', async () => {

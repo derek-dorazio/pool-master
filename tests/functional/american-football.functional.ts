@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   acceptInvitation,
-  clearEventMatchPeriodScore,
   createContest,
   enterContest,
   generateInviteLink,
@@ -118,9 +117,24 @@ describe('SDK Functional: American football', () => {
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(4), body: { homeScore: 0, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_INVALID');
     const outsider = await buildRegisteredUser({ displayName: 'Scoreboard Stranger' });
     expect((await recordEventMatchPeriodScore({ client: outsider.client, path: superBowlQuarter(1), body: { homeScore: 0, awayScore: 3 } })).response?.status).toBe(403);
-    // Cleared and entered again, the half's score reads as before.
-    expect(expectDefined((await clearEventMatchPeriodScore({ client: a, path: superBowlQuarter(2) })).data).matches[12].periodScores.map((score) => score.periodNumber)).toEqual([1, 3]);
+    // Entered again, the half's score reads as before.
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
+    expect((await superBowlOf()).periodScores).toEqual(asLoaded);
+
+    // Results come only from the feed (#2074): the routes that cleared a result or a quarter's score,
+    // postponed a game or replaced a withdrawn participant are gone, so even a root admin gets 404.
+    const removedRoutes = await Promise.all([
+      a.delete({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result', path: { eventId: event.id, matchNumber: 13 } }),
+      a.delete({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}', path: superBowlQuarter(2) }),
+      a.post({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone', path: { eventId: event.id, matchNumber: 13 } }),
+      a.put({
+        url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/replacement',
+        path: { eventId: event.id, sportEventParticipantId: superBowl.homeSportEventParticipantId },
+        body: {},
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ]);
+    expect(removedRoutes.map((removed) => removed.response?.status)).toEqual([404, 404, 404, 404]);
     expect((await superBowlOf()).periodScores).toEqual(asLoaded);
 
     // --- A contest from the NFL's default template ----------------------------------------------

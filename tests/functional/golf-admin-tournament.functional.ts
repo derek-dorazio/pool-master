@@ -298,6 +298,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     });
     expect(uploadPreview.response?.status).toBe(200);
     expect(expectDefined(uploadPreview.data).rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
+    expect(expectDefined(uploadPreview.data).rows[0].after).not.toHaveProperty('oddsToWin');
     expect(expectDefined(uploadPreview.data).rows[1]).toMatchObject({ sportEventParticipantId: upB.id, after: { ranking: null } });
     expect(expectDefined(uploadPreview.data).rows[2].message).toMatch(/refresh the field from the provider first/);
 
@@ -311,7 +312,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const uploaded = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows: uploadRows } });
     expect(uploaded.response?.status).toBe(200);
     expect(expectDefined(uploaded.data).participants).toHaveLength(expectDefined(field.data).participants.length);
-    expect(expectDefined(uploaded.data).participants.find((e) => e.id === upA.id)).toMatchObject({ ranking: 1, oddsToWin: 3.5 });
+    // Odds come only from the feed (#2081): an odds value sent in an upload row is dropped, and the field keeps its odds.
+    expect(expectDefined(uploaded.data).participants.find((e) => e.id === upA.id)).toMatchObject({ ranking: 1, oddsToWin: upA.oddsToWin ?? null });
     expect(expectDefined(expectDefined(uploaded.data).participants.find((e) => e.id === upB.id)).ranking).toBeNull();
 
     expectFunctionalError(

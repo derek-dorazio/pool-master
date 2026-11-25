@@ -339,7 +339,7 @@ describe('Entering a bracket match\'s result (#1252)', () => {
       });
 
       await measure(() => new PrismaSportEventRoundMatchRepository(getAppPrisma()).applyResult({
-        result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.ADMIN, completedAt: AS_OF },
+        result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.PROVIDER, completedAt: AS_OF },
         sideFill: null,
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, currentRound: 1, asOf: AS_OF })),
       }));

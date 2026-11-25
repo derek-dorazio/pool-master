@@ -150,7 +150,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     expect((await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
+      body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },
     })).response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);

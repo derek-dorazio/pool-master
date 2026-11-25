@@ -13,7 +13,6 @@ import type {
   EventTierConfig,
   PlatformPricingProfile,
   ProviderEventRef,
-  MatchSide,
   OverdueEventFacts,
   ParticipantInactiveReason,
   Participant,
@@ -464,25 +463,6 @@ export interface SportEventParticipantRepository {
    * tier, price and picks, and is no longer a play-in place (#709). `jobs` are written with it.
    */
   fillPlayInSlot(input: { id: string; winnerParticipantId: string; pairingParticipantId: string }, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
-  /**
-   * Replaces a withdrawn field row in its bracket place, in one transaction (#704): adds the
-   * replacement's field row (unseeded) with `valuation`, names it on the match's side, and
-   * inactivates the withdrawn row as WITHDRAWN, with `jobs`. Returns the replacement's field row id.
-   */
-  replaceWithdrawn(input: {
-    withdrawnId: string;
-    matchId: string;
-    side: MatchSide;
-    replacementParticipantId: string;
-    valuation: ReplacementValuation | null;
-  }, jobs?: readonly BackgroundJobRequest[]): Promise<string>;
-}
-
-/** A replacement's tier, its place in the tier and its price; each null where the event has none. */
-export interface ReplacementValuation {
-  sportEventTierId: string | null;
-  tierOrderIndex: number | null;
-  price: number | null;
 }
 
 export interface SportEventTierRepository {
