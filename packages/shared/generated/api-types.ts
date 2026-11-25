@@ -5796,6 +5796,10 @@ export interface components {
             cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
             /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
             cupCustomPoints: number[];
+            /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+            cupCustomPointsMax: number;
+            /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+            cupCustomPointsMaxPlaces: number;
             /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
             hallOfLameVisible: boolean;
             /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */
@@ -6033,6 +6037,10 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+                cupCustomPointsMax: number;
+                /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+                cupCustomPointsMaxPlaces: number;
                 /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
                 hallOfLameVisible: boolean;
                 /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */
@@ -6105,6 +6113,10 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+                cupCustomPointsMax: number;
+                /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+                cupCustomPointsMaxPlaces: number;
                 /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
                 hallOfLameVisible: boolean;
                 /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */
@@ -6327,6 +6339,10 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400. */
+                cupCustomPointsMax: number;
+                /** @description The most places a CUSTOM table can list; a save with more is refused with 400. */
+                cupCustomPointsMaxPlaces: number;
                 /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
                 hallOfLameVisible: boolean;
                 /** @description The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects. */

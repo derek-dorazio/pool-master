@@ -8,7 +8,7 @@
  * With the viewer context gone, the only remaining inputs are the league row and its two
  * counts, so the options bag went with them.
  */
-import type { LeagueDto } from '@poolmaster/shared/dto';
+import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, type LeagueDto } from '@poolmaster/shared/dto';
 import type { League } from '@poolmaster/shared/domain';
 import type { PlanEntitlements } from '../modules/plans/plan-entitlements-service';
 import type { LeagueActivityCounts } from '../modules/leagues/service';
@@ -34,6 +34,8 @@ export function toLeagueDto(
     cupName: league.cupName,
     cupPointsScale: league.cupPointsScale,
     cupCustomPoints: league.cupCustomPoints,
+    cupCustomPointsMax: CUP_CUSTOM_POINTS_MAX,
+    cupCustomPointsMaxPlaces: CUP_CUSTOM_POINTS_MAX_PLACES,
     hallOfLameVisible: league.hallOfLameVisible,
     planEntitlements: toPlanEntitlementsDto(entitlements),
     planRenewsAt: league.planRenewsAt.toISOString(),

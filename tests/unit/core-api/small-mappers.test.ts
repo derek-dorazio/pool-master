@@ -18,7 +18,7 @@ import {
   type SportConfig,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
-import { SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
+import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
 import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
 import { toAuthResponse, toTokenRefreshResponse } from '../../../packages/core-api/src/mappers/auth.mapper';
 import { toLeaguePaymentListResponse, toUserPaymentListResponse } from '../../../packages/core-api/src/mappers/billing.mapper';
@@ -274,6 +274,13 @@ describe('toLeagueDto', () => {
 
   it('sends a league with no description as null', () => {
     expect(toLeagueDto(league(undefined), entitlements, { memberCount: 0, activeContestCount: 0 }).description).toBeNull();
+  });
+
+  it('sends the bounds a custom points table is saved under, so the settings form checks what the server checks', () => {
+    expect(toLeagueDto(league(undefined), entitlements, { memberCount: 0, activeContestCount: 0 })).toEqual(expect.objectContaining({
+      cupCustomPointsMax: CUP_CUSTOM_POINTS_MAX,
+      cupCustomPointsMaxPlaces: CUP_CUSTOM_POINTS_MAX_PLACES,
+    }));
   });
 });
 

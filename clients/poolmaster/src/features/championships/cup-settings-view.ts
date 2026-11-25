@@ -1,9 +1,6 @@
-import {
-  CUP_CUSTOM_POINTS_MAX,
-  CUP_CUSTOM_POINTS_MAX_PLACES,
-} from '@poolmaster/shared/dto';
 import { CupPointsScale, CupWeight, cupPlacePoints, type CupPointsTable } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
+import type { LeagueDto } from '@/lib/api';
 import { formatNumberList, formatOrdinal } from '@/features/shared/ui';
 
 /** How many places the points preview shows. */
@@ -57,22 +54,25 @@ export function describePointsTable(table: CupPointsTable): string {
   return enumLabel('CupPointsScale', table.scale);
 }
 
+/** The custom table's bounds, as the league's read sends them. */
+export type CustomPointsLimits = Pick<LeagueDto, 'cupCustomPointsMax' | 'cupCustomPointsMaxPlaces'>;
+
 /**
  * The custom points typed into the form, 1st place first, separated by commas or spaces. Whole
  * numbers from 0 to the cap, at least one place and no more than the server takes.
  */
-export function parseCustomPoints(text: string): { points: number[]; error: null } | { points: null; error: string } {
+export function parseCustomPoints(text: string, limits: CustomPointsLimits): { points: number[]; error: null } | { points: null; error: string } {
   const parts = text.split(/[\s,]+/).filter(Boolean);
   if (!parts.length) {
     return { points: null, error: 'Enter the points for 1st place at least.' };
   }
-  if (parts.length > CUP_CUSTOM_POINTS_MAX_PLACES) {
-    return { points: null, error: `Enter points for no more than ${CUP_CUSTOM_POINTS_MAX_PLACES} places.` };
+  if (parts.length > limits.cupCustomPointsMaxPlaces) {
+    return { points: null, error: `Enter points for no more than ${String(limits.cupCustomPointsMaxPlaces)} places.` };
   }
   // Plain digits only: Number() would also read 1e1 and 0x5.
   const points = parts.map((part) => (/^\d+$/.test(part) ? Number(part) : Number.NaN));
-  if (points.some((value) => !Number.isInteger(value) || value > CUP_CUSTOM_POINTS_MAX)) {
-    return { points: null, error: `Each place's points must be a whole number from 0 to ${CUP_CUSTOM_POINTS_MAX}.` };
+  if (points.some((value) => !Number.isInteger(value) || value > limits.cupCustomPointsMax)) {
+    return { points: null, error: `Each place's points must be a whole number from 0 to ${String(limits.cupCustomPointsMax)}.` };
   }
   return { points, error: null };
 }

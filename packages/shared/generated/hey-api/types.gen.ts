@@ -2610,6 +2610,14 @@ export type LeagueDto = {
      */
     cupCustomPoints: Array<number>;
     /**
+     * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+     */
+    cupCustomPointsMax: number;
+    /**
+     * The most places a CUSTOM table can list; a save with more is refused with 400.
+     */
+    cupCustomPointsMaxPlaces: number;
+    /**
      * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
      */
     hallOfLameVisible: boolean;
@@ -2925,6 +2933,14 @@ export type LeagueResponse = {
          */
         cupCustomPoints: Array<number>;
         /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
+        /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
         hallOfLameVisible: boolean;
@@ -3029,6 +3045,14 @@ export type LeagueContextResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
         /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
@@ -3315,6 +3339,14 @@ export type LeagueListResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
         /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
