@@ -86,7 +86,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   // poolmaster-allow-list-lookup: the same few dozen sport leagues, for whether a provider syncs this one
   const leagueOverview = overviewsQuery.data?.find((candidate) => candidate.id === event.sportLeagueId);
   const isSynced = sportLeague === undefined && leagueOverview === undefined
-    ? event.providerSynced
+    ? !event.isTestData
     : isSyncedLeague(sportLeague ?? { selectedProviderMapping: null }, leagueOverview);
   const overview = overviewQuery.data;
 

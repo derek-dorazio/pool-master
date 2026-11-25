@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
@@ -121,7 +122,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
   if (created.userIds.size) {
     await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });

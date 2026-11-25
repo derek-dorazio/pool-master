@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   createParticipant,
@@ -45,7 +46,7 @@ afterAll(async () => {
   await db.participantProviderMapping.deleteMany({ where: { participantId: { in: participantIds } } });
   await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
   await db.participant.deleteMany({ where: { id: { in: participantIds } } });
-  await db.sportLeague.deleteMany({ where: { id: { in: sportLeagueIds } } });
+  await deleteTestSportLeagues(db, sportLeagueIds);
   await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
   await db.user.deleteMany({ where: { id: { in: [...created.userIds] } } });
   await cleanupFunctionalData();
@@ -107,7 +108,7 @@ async function newTournament(client: Client, sportLeagueId: string, name: string
 beforeAll(() => ensureGolfSportRow());
 
 describe('SDK Functional: a root admin deletes a sport league or a participant nothing uses (#1400)', () => {
-  it('deletes a sport league with no events and no participants, taking its emptied event series with it', async () => {
+  it('deletes a sport league with no events and no participants, taking its emptied event series and the test slot and Season phase its deleted event left with it', async () => {
     const { client } = await rootAdmin();
     const sportLeagueId = await newTour(client, 'Delete Tour');
     // A tournament made and deleted again leaves its series behind with no edition.
@@ -120,6 +121,8 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
     expectFunctionalError(await getSportLeague({ client, path: { sportLeagueId } }), { status: 404, code: 'SPORT_LEAGUE_NOT_FOUND' });
     const db = getFunctionalPrisma();
     expect(await db.eventSeries.count({ where: { sportLeagueId } })).toBe(0);
+    expect(await db.sportLeagueSeasonPhaseSlot.count({ where: { sportLeagueId } })).toBe(0);
+    expect(await db.sportLeagueSeasonPhase.count({ where: { sportLeagueId } })).toBe(0);
   });
 
   it('refuses to delete a sport league that still has a participant with 409 SPORT_LEAGUE_IN_USE, and keeps both (#1853)', async () => {

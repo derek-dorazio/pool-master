@@ -220,17 +220,18 @@ export class SportEventService {
    * SEASON_SLOT_TAKEN, EVENT_EDITION_ALREADY_EXISTS.
    */
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
-    const slot = await this.deps.seasons.findSlot(input.seasonSlotId);
-    if (slot === null) throw new SportEventError(`Season slot ${input.seasonSlotId} was not found.`, 'SEASON_SLOT_NOT_FOUND', 404);
+    const found = await this.deps.seasons.findSlot(input.seasonSlotId);
+    if (found === null) throw new SportEventError(`Season slot ${input.seasonSlotId} was not found.`, 'SEASON_SLOT_NOT_FOUND', 404);
+    const { slot } = found;
     if (!slot.isTestData) throw new SportEventError('Only a test slot takes an event made by hand; the sync makes every other.', 'SEASON_SLOT_NOT_TEST', 422);
-    const { sportLeague, sport } = await this.resolveSportLeague(slot.sportLeagueId);
-    if (slot.sportLeagueSeasonId !== sportLeague.currentSeasonId) {
+    const { sportLeague, sport } = await this.resolveSportLeague(found.sportLeagueId);
+    if (found.sportLeagueSeasonId !== sportLeague.currentSeasonId) {
       throw new SportEventError(`Season slot ${slot.id} is not in ${sportLeague.name}'s current Season.`, 'SEASON_SLOT_NOT_CURRENT', 422);
     }
-    if (slot.sportEventId !== null) throw new SportEventError(`Season slot ${slot.id} already has an event.`, 'SEASON_SLOT_TAKEN', 409);
-    // A test slot is made with both dates (createTestSlot).
+    if (found.sportEventId !== null) throw new SportEventError(`Season slot ${slot.id} already has an event.`, 'SEASON_SLOT_TAKEN', 409);
+    // A test slot is always made with a start (createTestSlot), so its dates are never null.
     const dates = eventDatesFromSlots([slot]);
-    if (dates === null) throw new Error(`Test slot ${slot.id} has no start.`);
+    if (dates === null) throw new Error(`Season slot ${slot.id} has no start.`);
     const rounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
     const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
 
@@ -244,7 +245,7 @@ export class SportEventService {
         status: SportEventStatus.DRAFT,
         rounds,
         eventSeriesId: seriesIdOf(seriesIdByName, input.name),
-        sportLeagueSeasonId: slot.sportLeagueSeasonId,
+        sportLeagueSeasonId: found.sportLeagueSeasonId,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
         seasonSlotIds: [slot.id],
       },
@@ -252,7 +253,7 @@ export class SportEventService {
     }], [slot]));
 
     this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: slot.sportLeagueSeasonId, seasonSlotId: slot.id, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: found.sportLeagueSeasonId, seasonSlotId: slot.id, rounds },
       'Created test sport event',
     );
     return summary;

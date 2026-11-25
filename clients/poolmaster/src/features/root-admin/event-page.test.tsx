@@ -674,7 +674,7 @@ describe('Event page ⚙ dialog', () => {
   });
 
   it('reads "Not set" for a missing venue, location and round count, and a synced event\'s feed id', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ venue: null, location: null, rounds: null, providerSynced: true }) });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ venue: null, location: null, rounds: null, isTestData: false }) });
 
     const dialog = await openSettings();
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-venue')).toHaveTextContent('Not set');
@@ -794,8 +794,8 @@ describe('Event page ⚙ dialog Edit', () => {
   });
 
   it('leaves a provider-synced event\'s name, venue and dates out of the form, and saves only what an admin still owns', async () => {
-    updateEventMock.mockResolvedValue({ data: { event: tournament({ providerSynced: true, location: 'Hoylake' }) } });
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ providerSynced: true }) });
+    updateEventMock.mockResolvedValue({ data: { event: tournament({ isTestData: false, location: 'Hoylake' }) } });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ isTestData: false }) });
 
     const dialog = await openSettingsEdit();
     for (const field of ['name', 'venue', 'start', 'end']) {

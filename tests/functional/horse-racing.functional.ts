@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -74,7 +75,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
 }
 

@@ -51,12 +51,18 @@ export interface SportLeagueSeasonSlot {
   label: string | null;
 }
 
+/** A Season slot as its Season lists it: with the event covering it, if any. */
+export interface SportLeagueSeasonPhaseSlot extends SportLeagueSeasonSlot {
+  /** The event covering it; null while it is free. */
+  sportEventId: string | null;
+}
+
 /** One phase of one Season, with its slots in play order. */
 export interface SportLeagueSeasonPhase {
   id: string;
   phase: LeaguePhase;
   isSynced: boolean;
-  slots: SportLeagueSeasonSlot[];
+  slots: SportLeagueSeasonPhaseSlot[];
 }
 
 /** One Season of a sport league. */

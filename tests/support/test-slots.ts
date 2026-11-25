@@ -78,17 +78,59 @@ export async function testSlotId(
 ): Promise<string> {
   const { currentSeasonId } = await prisma.sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId }, select: { currentSeasonId: true } });
   if (currentSeasonId === null) throw new Error(`Sport league ${sportLeagueId} has no current Season for a test slot.`);
-  const definitionId = await testSlotDefinitionId(prisma, sportLeagueId, currentSeasonId);
+  return testSlotIdIn(prisma, sportLeagueId, currentSeasonId, startsAt, endsAt);
+}
+
+/** A labelled test slot in the given Season of the league, written straight to the database. Answers its id. */
+export async function testSlotIdIn(
+  prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonPhaseSlot'>,
+  sportLeagueId: string,
+  sportLeagueSeasonId: string,
+  startsAt: Date,
+  endsAt: Date | null = null,
+): Promise<string> {
+  const definitionId = await testSlotDefinitionId(prisma, sportLeagueId, sportLeagueSeasonId);
   const definition = await prisma.sportLeaguePhaseSlot.findUniqueOrThrow({ where: { id: definitionId }, select: { sportLeaguePhaseId: true } });
   const phase = await prisma.sportLeagueSeasonPhase.findUniqueOrThrow({
-    where: { sportLeagueSeasonId_sportLeaguePhaseId: { sportLeagueSeasonId: currentSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId } },
+    where: { sportLeagueSeasonId_sportLeaguePhaseId: { sportLeagueSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId } },
     select: { id: true },
   });
   return (await prisma.sportLeagueSeasonPhaseSlot.create({
     data: {
-      sportLeagueId, sportLeagueSeasonId: currentSeasonId, sportLeagueSeasonPhaseId: phase.id, sportLeaguePhaseSlotId: definitionId,
+      sportLeagueId, sportLeagueSeasonId, sportLeagueSeasonPhaseId: phase.id, sportLeaguePhaseSlotId: definitionId,
       startsAt, endsAt, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: uniqueTestSlotLabel(),
     },
     select: { id: true },
   })).id;
+}
+
+/**
+ * Makes an event a test event, as one created on a test slot is: a test slot in its Season, linked
+ * to it. Written straight to the database for a test below the API.
+ */
+export async function linkTestSlot(
+  prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonPhaseSlot' | 'sportEventSlot' | 'sportLeagueSeason'>,
+  event: { id: string; sportLeagueSeasonId: string; startDate: Date },
+): Promise<string> {
+  const { sportLeagueId } = await prisma.sportLeagueSeason.findUniqueOrThrow({ where: { id: event.sportLeagueSeasonId }, select: { sportLeagueId: true } });
+  const slotId = await testSlotIdIn(prisma, sportLeagueId, event.sportLeagueSeasonId, event.startDate);
+  await prisma.sportEventSlot.create({
+    data: { sportEventId: event.id, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonPhaseSlotId: slotId },
+    select: { id: true },
+  });
+  return slotId;
+}
+
+/**
+ * Deletes test sport leagues. A Season's phases and slots restrict their definitions' deletes, so
+ * the league's cascade cannot take them: they go first, slots before phases (as the API's delete does).
+ */
+export async function deleteTestSportLeagues(
+  prisma: Pick<PrismaClient, 'sportLeague' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonPhaseSlot'>,
+  sportLeagueIds: readonly string[],
+): Promise<void> {
+  const ids = [...sportLeagueIds];
+  await prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { sportLeagueId: { in: ids } } });
+  await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: ids } } });
+  await prisma.sportLeague.deleteMany({ where: { id: { in: ids } } });
 }

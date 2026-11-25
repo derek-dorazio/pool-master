@@ -23579,6 +23579,138 @@
         "additionalProperties": false,
         "description": "One slot of one Season."
       },
+      "SportLeagueSeasonPhaseSlotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slotDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The slot definition it plays (SportLeagueSlotDefinitionDto)."
+          },
+          "key": {
+            "type": "string",
+            "description": "Its definition's key."
+          },
+          "slotKind": {
+            "type": "string",
+            "enum": [
+              "WEEK",
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "ROUND_OF_16",
+              "QUARTERFINAL",
+              "SEMIFINAL",
+              "THIRD_PLACE",
+              "FINAL",
+              "TOURNAMENT"
+            ]
+          },
+          "weekNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "name": {
+            "description": "Its definition's proper name; null when screens show the word for its kind.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startsAt": {
+            "description": "The earliest start of its Games; null until the sync has matched one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "description": "The latest end of its Games; null until the sync has matched one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED"
+            ]
+          },
+          "seriesFormat": {
+            "type": "string",
+            "enum": [
+              "SINGLE_GAME",
+              "BEST_OF",
+              "AGGREGATE"
+            ],
+            "description": "Copied from the definition when the Season was added, so a later format change never rewrites a past Season."
+          },
+          "seriesGames": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "pairing": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "RESEEDED"
+            ]
+          },
+          "isTestData": {
+            "type": "boolean",
+            "description": "A test slot: QA only, never read or written by the sync."
+          },
+          "label": {
+            "description": "A test slot's label, unique per Season and definition; null on a synced slot.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sportEventId": {
+            "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "slotDefinitionId",
+          "key",
+          "slotKind",
+          "weekNumber",
+          "name",
+          "startsAt",
+          "endsAt",
+          "status",
+          "seriesFormat",
+          "seriesGames",
+          "pairing",
+          "isTestData",
+          "label",
+          "sportEventId"
+        ],
+        "additionalProperties": false,
+        "description": "One slot of one Season, as its Season lists it."
+      },
       "CreateTestSlotRequest": {
         "type": "object",
         "properties": {
@@ -23871,6 +24003,14 @@
                     "string",
                     "null"
                   ]
+                },
+                "sportEventId": {
+                  "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
                 }
               },
               "required": [
@@ -23887,10 +24027,11 @@
                 "seriesGames",
                 "pairing",
                 "isTestData",
-                "label"
+                "label",
+                "sportEventId"
               ],
               "additionalProperties": false,
-              "description": "One slot of one Season."
+              "description": "One slot of one Season, as its Season lists it."
             },
             "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
           }
@@ -24097,6 +24238,14 @@
                           "string",
                           "null"
                         ]
+                      },
+                      "sportEventId": {
+                        "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uuid"
                       }
                     },
                     "required": [
@@ -24113,10 +24262,11 @@
                       "seriesGames",
                       "pairing",
                       "isTestData",
-                      "label"
+                      "label",
+                      "sportEventId"
                     ],
                     "additionalProperties": false,
-                    "description": "One slot of one Season."
+                    "description": "One slot of one Season, as its Season lists it."
                   },
                   "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
                 }
@@ -24344,6 +24494,14 @@
                                 "string",
                                 "null"
                               ]
+                            },
+                            "sportEventId": {
+                              "description": "The event covering it; null while it is free, as a test slot is before its test event is made on it.",
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "format": "uuid"
                             }
                           },
                           "required": [
@@ -24360,10 +24518,11 @@
                             "seriesGames",
                             "pairing",
                             "isTestData",
-                            "label"
+                            "label",
+                            "sportEventId"
                           ],
                           "additionalProperties": false,
-                          "description": "One slot of one Season."
+                          "description": "One slot of one Season, as its Season lists it."
                         },
                         "description": "In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition's synced slot."
                       }

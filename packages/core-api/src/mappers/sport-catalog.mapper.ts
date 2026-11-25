@@ -268,7 +268,7 @@ export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): Spor
       id: phase.id,
       phase: phase.phase,
       isSynced: phase.isSynced,
-      slots: phase.slots.map(mapSportLeagueSeasonSlotToDto),
+      slots: phase.slots.map((slot) => ({ ...mapSportLeagueSeasonSlotToDto(slot), sportEventId: slot.sportEventId })),
     })),
   };
 }

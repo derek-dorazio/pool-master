@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getLeagueByCode, getVersion, listContestEntries, listContests, listLeagueMembers, listSportLeagues, loginUser } from '@poolmaster/shared/generated/hey-api';
@@ -39,7 +40,7 @@ async function cleanup(): Promise<void> {
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).
   if (leagueIds.length) await db.participant.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   if (leagueIds.length) await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-  if (leagueIds.length) await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+  if (leagueIds.length) await deleteTestSportLeagues(db, leagueIds);
 }
 
 afterAll(async () => {

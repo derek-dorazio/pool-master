@@ -15,7 +15,7 @@ import {
   SlotPairing,
   type CurrentSeasonCandidate,
   type SportLeagueSeasonDetail,
-  type SportLeagueSeasonSlot,
+  type SportLeagueSeasonPhaseSlot,
 } from '@poolmaster/shared/domain';
 import type { SportLeagueCurrentSeasonFacts } from '@poolmaster/shared/db';
 import { SportLeagueSeasonListResponseSchema } from '@poolmaster/shared/dto/sport-catalog.dto';
@@ -72,11 +72,11 @@ describe('seasonsToSync', () => {
   });
 });
 
-function slot(key: string, overrides: Partial<SportLeagueSeasonSlot> = {}): SportLeagueSeasonSlot {
+function slot(key: string, overrides: Partial<SportLeagueSeasonPhaseSlot> = {}): SportLeagueSeasonPhaseSlot {
   return {
     id: `slot-${key}`, slotDefinitionId: `def-${key}`, key, slotKind: SlotKind.WEEK, weekNumber: null, name: null,
     startsAt: null, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1,
-    pairing: SlotPairing.FIXED, isTestData: false, label: null, ...overrides,
+    pairing: SlotPairing.FIXED, isTestData: false, label: null, sportEventId: null, ...overrides,
   };
 }
 

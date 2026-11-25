@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -93,7 +94,7 @@ async function cleanup(): Promise<void> {
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 

@@ -14,7 +14,7 @@ import type {
   SportLeaguePageRun,
   SportLeagueSyncFacts,
 } from '@poolmaster/shared/db';
-import type { SportLeaguePhaseDefinition, SportLeaguePosition, SportLeagueSeasonDetail, SportLeagueSeasonSlot, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
+import type { SportLeaguePhaseDefinition, SportLeaguePosition, SportLeagueSeasonDetail, SportLeagueSeasonPhaseSlot, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
 import { buildEventPagePath, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
@@ -148,14 +148,14 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       }),
       this.prisma.sportLeagueSeasonPhaseSlot.findMany({
         where: { sportLeagueId },
-        select: { ...SEASON_SLOT_SELECT, sportLeagueSeasonPhaseId: true },
+        select: { ...SEASON_SLOT_SELECT, sportLeagueSeasonPhaseId: true, eventSlot: { select: { sportEventId: true } } },
       }),
     ]);
     if (league === null) return null;
-    const slotsByPhase = new Map<string, SportLeagueSeasonSlot[]>();
-    for (const { sportLeagueSeasonPhaseId, ...slot } of slots) {
+    const slotsByPhase = new Map<string, SportLeagueSeasonPhaseSlot[]>();
+    for (const { sportLeagueSeasonPhaseId, eventSlot, ...slot } of slots) {
       const list = slotsByPhase.get(sportLeagueSeasonPhaseId) ?? [];
-      list.push(toSeasonSlot(slot));
+      list.push({ ...toSeasonSlot(slot), sportEventId: eventSlot?.sportEventId ?? null });
       slotsByPhase.set(sportLeagueSeasonPhaseId, list);
     }
     return seasons.map(({ providerMappings, ...season }) => ({

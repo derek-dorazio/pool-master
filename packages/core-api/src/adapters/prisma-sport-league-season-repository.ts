@@ -73,7 +73,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     });
     if (row === null) return null;
     const { sportLeagueId, sportLeagueSeasonId, eventSlot, ...slot } = row;
-    return { ...toSeasonSlot(slot), sportLeagueId, sportLeagueSeasonId, sportEventId: eventSlot?.sportEventId ?? null };
+    return { slot: toSeasonSlot(slot), sportLeagueId, sportLeagueSeasonId, sportEventId: eventSlot?.sportEventId ?? null };
   }
 
   async createTestSlot(input: TestSeasonSlotCreate): Promise<SportLeagueSeasonSlot | null> {

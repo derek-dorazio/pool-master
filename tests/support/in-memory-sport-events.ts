@@ -141,7 +141,8 @@ export class InMemorySportEvents {
         const slot = this.seasonSlots.find((candidate) => candidate.id === id);
         if (!slot) return null;
         const owner = [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === id));
-        return { ...slot, sportEventId: owner?.[0] ?? null };
+        const { sportLeagueId, sportLeagueSeasonId, ...seasonSlot } = slot;
+        return { slot: seasonSlot, sportLeagueId, sportLeagueSeasonId, sportEventId: owner?.[0] ?? null };
       },
     };
   }

@@ -11685,6 +11685,52 @@ export interface components {
             /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
             label: string | null;
         };
+        /** @description One slot of one Season, as its Season lists it. */
+        SportLeagueSeasonPhaseSlotDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The slot definition it plays (SportLeagueSlotDefinitionDto).
+             */
+            slotDefinitionId: string;
+            /** @description Its definition's key. */
+            key: string;
+            /** @enum {string} */
+            slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+            weekNumber: number | null;
+            /** @description Its definition's proper name; null when screens show the word for its kind. */
+            name: string | null;
+            /**
+             * Format: date-time
+             * @description The earliest start of its Games; null until the sync has matched one.
+             */
+            startsAt: string | null;
+            /**
+             * Format: date-time
+             * @description The latest end of its Games; null until the sync has matched one.
+             */
+            endsAt: string | null;
+            /** @enum {string} */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+            /**
+             * @description Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+             * @enum {string}
+             */
+            seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+            seriesGames: number;
+            /** @enum {string} */
+            pairing: "FIXED" | "RESEEDED";
+            /** @description A test slot: QA only, never read or written by the sync. */
+            isTestData: boolean;
+            /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
+            label: string | null;
+            /**
+             * Format: uuid
+             * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+             */
+            sportEventId: string | null;
+        };
         /** @description A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season. */
         CreateTestSlotRequest: {
             /**
@@ -11797,6 +11843,11 @@ export interface components {
                 isTestData: boolean;
                 /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                 label: string | null;
+                /**
+                 * Format: uuid
+                 * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                 */
+                sportEventId: string | null;
             }[];
         };
         /** @description One Season of a sport league, added by migration. */
@@ -11879,6 +11930,11 @@ export interface components {
                     isTestData: boolean;
                     /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                     label: string | null;
+                    /**
+                     * Format: uuid
+                     * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                     */
+                    sportEventId: string | null;
                 }[];
             }[];
         };
@@ -11964,6 +12020,11 @@ export interface components {
                         isTestData: boolean;
                         /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                         label: string | null;
+                        /**
+                         * Format: uuid
+                         * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                         */
+                        sportEventId: string | null;
                     }[];
                 }[];
             }[];

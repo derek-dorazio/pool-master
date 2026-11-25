@@ -17,7 +17,7 @@ function slot(id: string, overrides: Partial<SportLeagueSeasonDto['phases'][numb
   return {
     id, slotDefinitionId: `def-${id}`, key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
     startsAt: null, endsAt: null, status: 'SCHEDULED', seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
-    isTestData: false, label: null, ...overrides,
+    isTestData: false, label: null, sportEventId: null, ...overrides,
   };
 }
 

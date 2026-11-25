@@ -89,6 +89,7 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT contest_sport_events', 1],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_slots', 1], // the answer's event slots, one batched read (#2004)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 2],
   ['SELECT sport_league_seasons', 2],
@@ -720,6 +721,7 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT contests', 2],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_slots', 1], // the answer's event slots, one batched read (#2004)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
   ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)
@@ -742,6 +744,7 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 3],
   ['SELECT sport_event_rounds', 1],
+  ['SELECT sport_event_slots', 2], // whether the event has slots (its dates are theirs), and the answer's (#2004)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
   ['SELECT sport_league_seasons', 4], // a sport is read through its event's Season and league (#2042, #2004)

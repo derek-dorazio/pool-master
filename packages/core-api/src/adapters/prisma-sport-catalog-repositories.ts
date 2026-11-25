@@ -263,6 +263,10 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       };
       if (Object.values(uses).some((count) => count > 0)) return uses;
       await tx.eventSeries.deleteMany({ where: { sportLeagueId: id } });
+      // A Season's phases restrict their phase definition's delete, and its slots their slot
+      // definition's, so the league's cascade cannot take them: they go first, slots before phases.
+      await tx.sportLeagueSeasonPhaseSlot.deleteMany({ where: { sportLeagueId: id } });
+      await tx.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: id } });
       // A muted list is checked when set, not a foreign key, and a league saves its whole list
       // back: an id left in it would make that save fail. Prisma cannot remove an array element.
       await tx.$executeRaw`UPDATE "leagues" SET muted_sport_league_ids = array_remove(muted_sport_league_ids, ${id}::uuid) WHERE ${id}::uuid = ANY(muted_sport_league_ids)`;

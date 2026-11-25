@@ -198,7 +198,10 @@ describe('SportEventService.createEvent', () => {
   it('refuses the second of two creates racing for one slot with 409 SEASON_SLOT_TAKEN when the database\'s slot key raises', async () => {
     // The other create wrote its slot row after this one read the slot as free.
     const { store, service, sportLeague } = setup(Sport.GOLF, undefined, undefined, undefined, (world) => ({
-      findSlot: async (id) => ({ ...expectDefined(world.seasonSlots.find((slot) => slot.id === id)), sportEventId: null }),
+      findSlot: async (id) => {
+        const { sportLeagueId, sportLeagueSeasonId, ...slot } = expectDefined(world.seasonSlots.find((each) => each.id === id));
+        return { slot, sportLeagueId, sportLeagueSeasonId, sportEventId: null };
+      },
     }));
     const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate);
     store.slotsByEvent.set('racing-event', [expectDefined(store.seasonSlots.at(0))]);

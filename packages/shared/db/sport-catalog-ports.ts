@@ -830,7 +830,8 @@ export interface SportLeagueSeasonRepository {
 }
 
 /** A Season slot as an event create reads it: where it is, and the event already on it. */
-export interface SeasonSlotWithEvent extends SportLeagueSeasonSlot {
+export interface SeasonSlotWithEvent {
+  slot: SportLeagueSeasonSlot;
   sportLeagueId: string;
   sportLeagueSeasonId: string;
   /** The event covering it; null while it is free. */

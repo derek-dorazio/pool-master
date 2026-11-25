@@ -10142,6 +10142,54 @@ export type SportLeagueSeasonSlotDto = {
 };
 
 /**
+ * One slot of one Season, as its Season lists it.
+ */
+export type SportLeagueSeasonPhaseSlotDto = {
+    id: string;
+    /**
+     * The slot definition it plays (SportLeagueSlotDefinitionDto).
+     */
+    slotDefinitionId: string;
+    /**
+     * Its definition's key.
+     */
+    key: string;
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    weekNumber: number | null;
+    /**
+     * Its definition's proper name; null when screens show the word for its kind.
+     */
+    name: string | null;
+    /**
+     * The earliest start of its Games; null until the sync has matched one.
+     */
+    startsAt: string | null;
+    /**
+     * The latest end of its Games; null until the sync has matched one.
+     */
+    endsAt: string | null;
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    /**
+     * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+     */
+    seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+    seriesGames: number;
+    pairing: 'FIXED' | 'RESEEDED';
+    /**
+     * A test slot: QA only, never read or written by the sync.
+     */
+    isTestData: boolean;
+    /**
+     * A test slot's label, unique per Season and definition; null on a synced slot.
+     */
+    label: string | null;
+    /**
+     * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+     */
+    sportEventId: string | null;
+};
+
+/**
  * A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season.
  */
 export type CreateTestSlotRequest = {
@@ -10264,6 +10312,10 @@ export type SportLeagueSeasonPhaseDto = {
          * A test slot's label, unique per Season and definition; null on a synced slot.
          */
         label: string | null;
+        /**
+         * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+         */
+        sportEventId: string | null;
     }>;
 };
 
@@ -10360,6 +10412,10 @@ export type SportLeagueSeasonDto = {
              * A test slot's label, unique per Season and definition; null on a synced slot.
              */
             label: string | null;
+            /**
+             * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+             */
+            sportEventId: string | null;
         }>;
     }>;
 };
@@ -10461,6 +10517,10 @@ export type SportLeagueSeasonListResponse = {
                  * A test slot's label, unique per Season and definition; null on a synced slot.
                  */
                 label: string | null;
+                /**
+                 * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                 */
+                sportEventId: string | null;
             }>;
         }>;
     }>;

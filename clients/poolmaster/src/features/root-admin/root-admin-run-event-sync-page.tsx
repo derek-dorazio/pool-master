@@ -113,7 +113,7 @@ export function RootAdminRunEventSyncPage() {
   const selectableEvents = useMemo(() => {
     const validStatuses = getValidEventStatusesForPreset(eventSyncPresetId);
     // Only an event its league's provider syncs can sync; the server refuses a test event.
-    return (eventsQuery.data ?? []).filter((event) => event.providerSynced && validStatuses.includes(event.status));
+    return (eventsQuery.data ?? []).filter((event) => !event.isTestData && validStatuses.includes(event.status));
   }, [eventSyncPresetId, eventsQuery.data]);
   // Events are chosen by id: two providers' events can share an external id.
   const selectedEvent = selectableEvents.find((event) => event.id === chosenEventId);

@@ -447,11 +447,16 @@ export const SportLeagueSeasonSlotResponseSchema = z.object({
 }).describe('One Season slot.');
 export type SportLeagueSeasonSlotResponse = z.infer<typeof SportLeagueSeasonSlotResponseSchema>;
 
+export const SportLeagueSeasonPhaseSlotDtoSchema = SportLeagueSeasonSlotDtoSchema.extend({
+  sportEventId: z.uuid().nullable().describe('The event covering it; null while it is free, as a test slot is before its test event is made on it.'),
+}).describe('One slot of one Season, as its Season lists it.');
+export type SportLeagueSeasonPhaseSlotDto = z.infer<typeof SportLeagueSeasonPhaseSlotDtoSchema>;
+
 export const SportLeagueSeasonPhaseDtoSchema = z.object({
   id: z.uuid(),
   phase: z.enum(LeaguePhase),
   isSynced: z.boolean().describe('Whether the league\'s sync reads the phase. An unsynced phase has no slots.'),
-  slots: z.array(SportLeagueSeasonSlotDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition\'s synced slot.'),
+  slots: z.array(SportLeagueSeasonPhaseSlotDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by start, undated ones last. A test slot follows its definition\'s synced slot.'),
 }).describe('One phase of one Season.');
 export type SportLeagueSeasonPhaseDto = z.infer<typeof SportLeagueSeasonPhaseDtoSchema>;
 
@@ -530,6 +535,7 @@ registerSchema('SportLeaguePhaseDefinitionDto', SportLeaguePhaseDefinitionDtoSch
 registerSchema('SportLeagueStructureResponse', SportLeagueStructureResponseSchema);
 registerSchema('SportLeagueSeasonProviderMappingDto', SportLeagueSeasonProviderMappingDtoSchema);
 registerSchema('SportLeagueSeasonSlotDto', SportLeagueSeasonSlotDtoSchema);
+registerSchema('SportLeagueSeasonPhaseSlotDto', SportLeagueSeasonPhaseSlotDtoSchema);
 registerSchema('CreateTestSlotRequest', CreateTestSlotRequestSchema);
 registerSchema('SportLeagueSeasonSlotResponse', SportLeagueSeasonSlotResponseSchema);
 registerSchema('SportLeagueSeasonPhaseDto', SportLeagueSeasonPhaseDtoSchema);

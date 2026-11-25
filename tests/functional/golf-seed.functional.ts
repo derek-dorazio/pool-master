@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   getEventBracket,
   listEventParticipants,
@@ -82,7 +83,7 @@ async function cleanup(): Promise<void> {
   await db.participantProviderMapping.deleteMany({ where: { participant: participantWhere } });
   await db.participant.deleteMany({ where: participantWhere });
   await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-  await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+  await deleteTestSportLeagues(db, leagueIds);
 }
 
 let admin: RegisteredUserContext;
