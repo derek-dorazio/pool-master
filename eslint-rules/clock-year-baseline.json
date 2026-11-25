@@ -7,7 +7,6 @@
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-reader.ts": 2,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-reader.ts": 2,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs-reader.ts": 2,
-  "packages/core-api/src/modules/sport-catalog/sport-league-service.ts": 1,
   "clients/poolmaster/src/features/contest-types/illustrations.tsx": 1,
   "clients/poolmaster/src/features/contest-types/sport-blurbs.ts": 1
 }
