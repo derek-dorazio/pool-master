@@ -186,9 +186,10 @@ function GamePickPreview({
       {tiebreaker ? (
         <TiebreakerNumberField
           label={tiebreaker}
+          max={week.tiebreakerMax}
           onChange={(text) => {
             setTiebreakerText(text);
-            setTiebreakerValue(parseBracketTiebreaker(text));
+            setTiebreakerValue(parseBracketTiebreaker(text, week.tiebreakerMax));
           }}
           testId="pick-em-tiebreaker-input"
           text={tiebreakerText}

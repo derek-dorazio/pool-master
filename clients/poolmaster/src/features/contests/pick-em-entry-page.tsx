@@ -202,6 +202,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     savedTiebreaker: gamePicks.tiebreakerValue,
     submitFallback: 'We could not submit this week. Please try again.',
     submits,
+    tiebreakerMax: gamePicks.tiebreakerMax,
     writes: { saveMutation, submitMutation, tiebreakerDraft },
   });
   // What still blocks Submit, counting a tiebreaker typed but not yet saved: the button saves it first.
@@ -310,6 +311,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             <TiebreakerNumberField
               disabled={isFinishing}
               label={tiebreakerFieldLabel}
+              max={gamePicks.tiebreakerMax}
               onChange={setTiebreakerDraft}
               testId="pick-em-tiebreaker-input"
               text={tiebreakerText}

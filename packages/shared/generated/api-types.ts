@@ -16333,6 +16333,8 @@ export interface components {
             tiebreakerMatchId: string | null;
             /** @description The entry's tiebreaker for the event, the tiebreaker game's total points. Null when not given, and on another team's entry until that game's picks are revealed. */
             tiebreakerValue: number | null;
+            /** @description The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400. */
+            tiebreakerMax: number;
             /** @description Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed. */
             points: number | null;
             /** @description Points so far plus what every pick still pending is worth: the most the entry can still reach. Null where points is. */
@@ -16598,6 +16600,8 @@ export interface components {
              * @description The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.
              */
             tiebreakerMatchId: string | null;
+            /** @description The highest tiebreaker an entry's save would take; 0 is the lowest. */
+            tiebreakerMax: number;
             /** @description The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round. */
             games: {
                 /** Format: uuid */

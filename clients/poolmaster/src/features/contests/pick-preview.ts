@@ -123,6 +123,7 @@ export function toPreviewWeek(preview: GamePickPreviewResponse, tiebreakerValue:
     survivor: null,
     tiePicksOffered: preview.tiePicksOffered,
     tiebreakerMatchId: preview.tiebreakerMatchId,
+    tiebreakerMax: preview.tiebreakerMax,
     tiebreakerValue,
     games: preview.games.map((game): PickEmGame => ({
       ...game,

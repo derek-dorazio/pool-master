@@ -141,6 +141,7 @@ export function gamePicksFixture(overrides: Partial<GamePicksResponse> = {}): Ga
     pickedCount: games.filter((game) => game.pick !== null).length,
     gameCount: games.length,
     tiebreakerMatchId: null,
+    tiebreakerMax: 999,
     tiebreakerValue: null,
     points: 0,
     maxPossiblePoints: 0,

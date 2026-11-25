@@ -18,7 +18,7 @@ import {
   type SportConfig,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
-import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
+import { CUP_CUSTOM_POINTS_MAX, CUP_CUSTOM_POINTS_MAX_PLACES, GAME_PICKS_TIEBREAKER_MAX, SportLeaguePositionDtoSchema } from '@poolmaster/shared/dto';
 import { buildLeague, buildProviderMapping, buildUser } from '../../factories';
 import { toAuthResponse, toTokenRefreshResponse } from '../../../packages/core-api/src/mappers/auth.mapper';
 import { toLeaguePaymentListResponse, toUserPaymentListResponse } from '../../../packages/core-api/src/mappers/billing.mapper';
@@ -435,10 +435,11 @@ describe('toGamePicksResponse', () => {
   } as unknown as GamePicksView);
   const pick = { predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', confidence: 2, pickedAt: AT } as unknown as GamePickGame['pick'];
 
-  it('sends a game with no pick as a null pick, and an unsubmitted entry\'s submission time as null', () => {
+  it('sends a game with no pick as a null pick, an unsubmitted entry\'s submission time as null, and the highest tiebreaker a save takes', () => {
     const dto = toGamePicksResponse(view([game({})], null));
 
     expect(dto.submittedAt).toBeNull();
+    expect(dto.tiebreakerMax).toBe(GAME_PICKS_TIEBREAKER_MAX);
     expect(dto.games[0]).toEqual(expect.objectContaining({ sportEventRoundMatchId: 'm1', matchNumber: 3, kickoff: ISO, pick: null }));
   });
 

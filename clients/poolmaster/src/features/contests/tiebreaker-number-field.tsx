@@ -1,4 +1,3 @@
-import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
 import { FormField, Input } from '@/features/shared/ui';
 import { parseBracketTiebreaker } from './bracket-layout';
 
@@ -13,25 +12,28 @@ import { parseBracketTiebreaker } from './bracket-layout';
 export function TiebreakerNumberField({
   disabled = false,
   label,
+  max,
   onChange,
   testId,
   text,
 }: {
   disabled?: boolean;
   label: string;
+  /** The highest tiebreaker the server takes, from the picks read (`tiebreakerMax`). */
+  max: number;
   onChange: (text: string) => void;
   /** The input's test id. */
   testId: string;
   text: string;
 }) {
-  const isInvalid = text.trim() !== '' && parseBracketTiebreaker(text) === null;
+  const isInvalid = text.trim() !== '' && parseBracketTiebreaker(text, max) === null;
   return (
-    <FormField error={isInvalid ? `Enter a whole number from 0 to ${GAME_PICKS_TIEBREAKER_MAX}.` : undefined} label={label}>
+    <FormField error={isInvalid ? `Enter a whole number from 0 to ${String(max)}.` : undefined} label={label}>
       <Input
         data-testid={testId}
         disabled={disabled}
         inputMode="numeric"
-        max={GAME_PICKS_TIEBREAKER_MAX}
+        max={max}
         min={0}
         onChange={(event) => onChange(event.target.value)}
         type="number"

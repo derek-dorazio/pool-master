@@ -16327,6 +16327,10 @@ export type GamePicksResponse = {
      */
     tiebreakerValue: number | null;
     /**
+     * The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400.
+     */
+    tiebreakerMax: number;
+    /**
      * Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed.
      */
     points: number | null;
@@ -16672,6 +16676,10 @@ export type GamePickPreviewResponse = {
      * The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.
      */
     tiebreakerMatchId: string | null;
+    /**
+     * The highest tiebreaker an entry's save would take; 0 is the lowest.
+     */
+    tiebreakerMax: number;
     /**
      * The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round.
      */

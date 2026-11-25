@@ -38204,6 +38204,12 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "tiebreakerMax": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400."
+          },
           "points": {
             "description": "Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed.",
             "type": [
@@ -38541,6 +38547,7 @@
           "gameCount",
           "tiebreakerMatchId",
           "tiebreakerValue",
+          "tiebreakerMax",
           "points",
           "maxPossiblePoints",
           "games"
@@ -39070,6 +39077,12 @@
             ],
             "format": "uuid"
           },
+          "tiebreakerMax": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The highest tiebreaker an entry's save would take; 0 is the lowest."
+          },
           "games": {
             "type": "array",
             "items": {
@@ -39345,6 +39358,7 @@
           "pickedCount",
           "gameCount",
           "tiebreakerMatchId",
+          "tiebreakerMax",
           "games"
         ],
         "additionalProperties": false,

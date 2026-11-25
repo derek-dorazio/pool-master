@@ -79,6 +79,7 @@ function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTe
     pickedCount: pickedTeam ? 1 : 0,
     gameCount: 1,
     tiebreakerMatchId: 'match-1',
+    tiebreakerMax: 999,
     games: [{
       sportEventRoundMatchId: 'match-1',
       matchNumber: 1,

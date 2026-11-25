@@ -72,7 +72,6 @@
   "findBudgetPricingProblem": 2,
   "findFallingPlanLimit": 1,
   "findTierLayoutProblem": 1,
-  "GAME_PICKS_TIEBREAKER_MAX": 2,
   "getDefaultCountedScores": 1,
   "getSportDefinition": 10,
   "getTieredRosterSize": 2,
