@@ -264,6 +264,7 @@
       "events": [
         {
           "key": "kentucky-derby",
+          "slotKey": "KENTUCKY_DERBY",
           "name": "Kentucky Derby",
           "startDate": "2026-05-02",
           "endDate": "2026-05-02",
@@ -540,6 +541,7 @@
         },
         {
           "key": "preakness-stakes",
+          "slotKey": "PREAKNESS_STAKES",
           "name": "Preakness Stakes",
           "startDate": "2026-05-16",
           "endDate": "2026-05-16",
@@ -706,6 +708,7 @@
         },
         {
           "key": "belmont-stakes",
+          "slotKey": "BELMONT_STAKES",
           "name": "Belmont Stakes",
           "startDate": "2026-06-06",
           "endDate": "2026-06-06",

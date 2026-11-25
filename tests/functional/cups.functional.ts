@@ -8,7 +8,6 @@ import {
   autoAssignEventTiers,
   createContest,
   crownCup,
-  createEvent,
   createParticipant,
   enterContest,
   generateInviteLink,
@@ -54,7 +53,7 @@ import {
   SquadHistoryResponseSchema,
   SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
@@ -135,9 +134,9 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
 
     /** A released race with the five runners, tiered one to a tier by ranking. */
     const releaseRace = async (name: string, startDate: string, eventYear = SEASON) => {
-      const eventId = expectDefined((await createEvent({
+      const eventId = expectDefined((await createTestEvent({
         client: a,
-        body: { sportLeagueId: await inCurrentSeason(majorsMen.id, eventYear), name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
+        body: { sportLeagueId: majorsMen.id, championshipYear: eventYear, name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });

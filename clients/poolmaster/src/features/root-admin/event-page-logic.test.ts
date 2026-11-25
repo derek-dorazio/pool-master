@@ -11,8 +11,8 @@ const preferences = { ...DEFAULT_DISPLAY_PREFERENCES, timeZone: 'UTC' };
 
 describe('eventPageTabs', () => {
   it('shows every tab, Tools last, on an event no provider syncs, and leaves Tools out on a synced one', () => {
-    expect(eventPageTabs(false).map((tab) => tab.segment)).toEqual(['field', 'rounds', 'contests', 'activity', 'tools']);
-    expect(eventPageTabs(true).map((tab) => tab.segment)).toEqual(['field', 'rounds', 'contests', 'activity']);
+    expect(eventPageTabs(false).map((tab) => tab.segment)).toEqual(['field', 'slots', 'rounds', 'contests', 'activity', 'tools']);
+    expect(eventPageTabs(true).map((tab) => tab.segment)).toEqual(['field', 'slots', 'rounds', 'contests', 'activity']);
   });
 });
 
@@ -43,29 +43,29 @@ describe('releaseTriesText', () => {
 
 describe('settingsRequestBody', () => {
   const current = {
-    name: 'The Open', venue: 'Royal Liverpool', location: 'Hoylake', startDate: '2026-07-16T08:00', endDate: '2026-07-19T20:00', rounds: '4', roundsPar: '',
+    name: 'The Open', venue: 'Royal Liverpool', location: 'Hoylake', rounds: '4', roundsPar: '',
   };
-  const options = { providerSynced: false, sendsRoundsPar: true, timeZone: 'UTC' };
+  const options = { isTestData: true, sendsRoundsPar: true };
 
   it('sends nothing when nothing changed', () => {
     expect(settingsRequestBody(current, current, options)).toEqual({});
   });
 
-  it('sends each changed value, a cleared one as null and dates as instants', () => {
+  it('sends each changed value of a test event, a cleared one as null', () => {
     expect(settingsRequestBody(
-      { ...current, name: 'The 154th Open', venue: '', location: '', startDate: '2026-07-17T08:00', endDate: '', rounds: '3', roundsPar: '71' },
+      { ...current, name: 'The 154th Open', venue: '', location: '', rounds: '3', roundsPar: '71' },
       current,
       options,
     )).toEqual({
-      name: 'The 154th Open', venue: null, location: null, startDate: '2026-07-17T08:00:00.000Z', endDate: null, rounds: 3, roundsPar: 71,
+      name: 'The 154th Open', venue: null, location: null, rounds: 3, roundsPar: 71,
     });
   });
 
-  it('never sends a synced event\'s name, venue or dates, nor par for a family that does not read it', () => {
+  it('never sends a synced event\'s name or venue, nor par for a family that does not read it', () => {
     expect(settingsRequestBody(
-      { ...current, name: 'Other', venue: 'Other', startDate: '2026-07-17T08:00', endDate: '', roundsPar: '71', location: 'Wirral' },
+      { ...current, name: 'Other', venue: 'Other', roundsPar: '71', location: 'Wirral' },
       current,
-      { providerSynced: true, sendsRoundsPar: false, timeZone: 'UTC' },
+      { isTestData: false, sendsRoundsPar: false },
     )).toEqual({ location: 'Wirral' });
   });
 });

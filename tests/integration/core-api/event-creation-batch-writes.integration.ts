@@ -8,6 +8,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { testSlotId } from '../../support/test-slots';
 import { syncLeagueTo } from '../../support/league-sync';
 
 // Creating and importing events against real Postgres (#1253): each writes its events,
@@ -97,7 +98,7 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     const [linked, edition, fresh] = providerSlate(3, 2087);
     const { sportEvents } = integrationSportEventServices();
     await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: [expectDefined(linked)] });
-    await sportEvents.createEvent({ sportLeagueId: tour.id, name: expectDefined(edition).name, startDate: expectDefined(edition).startDate });
+    await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, expectDefined(edition).startDate), name: expectDefined(edition).name });
     const sameName = { ...expectDefined(fresh), externalId: `slate-${randomUUID()}` };
 
     const result = await sportEvents.importProviderSeason({
@@ -114,22 +115,26 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
 });
 
 describe('Creating one event (#1253)', () => {
-  it('creates the event with its default rounds and tiers in one insert per table, answering the summary a read of it gives', async () => {
+  it('creates a test event on its test slot with its default rounds and tiers in one insert per table, answering the summary a read of it gives', async () => {
     const tour = await golfTour();
     const { sportEvents } = integrationSportEventServices();
 
+    const seasonSlotId = await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'));
+
     const { result: created, statements } = await recordStatements(
-      () => sportEvents.createEvent({ sportLeagueId: tour.id, name: 'The Batch Classic', startDate: new Date('2087-05-06T12:00:00.000Z') }),
+      () => sportEvents.createEvent({ seasonSlotId, name: 'The Batch Classic' }),
     );
 
     // One insert per table: the default rounds and tiers go in together, not one at a time; and
     // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
     // The tour is synced: its selected mapping, provider league and provider are read with the
-    // league and again with the event read back, beside the event's own provider ids (#2004).
+    // league and again with the event read back, beside the event's own provider ids (#2004). The
+    // test slot is read once with its definition and any event on it, and linked in one insert.
     expect(statementCounts(statements)).toEqual([
-      ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
+      ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
       ['SELECT event_series', 1], ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
-      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_events', 1], ['SELECT sport_league_provider_mappings', 2],
+      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 1], ['SELECT sport_events', 1], ['SELECT sport_league_phase_slots', 1],
+      ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_phase_slots', 1],
       ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
@@ -139,9 +144,9 @@ describe('Creating one event (#1253)', () => {
   it('refuses a second edition of a series in a Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
     const tour = await golfTour();
     const { sportEvents } = integrationSportEventServices();
-    await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'The Batch Classic', startDate: new Date('2087-05-06T12:00:00.000Z') });
+    await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'The Batch Classic' });
 
-    await expect(sportEvents.createEvent({ sportLeagueId: tour.id, name: 'The Batch Classic', startDate: new Date('2087-05-13T12:00:00.000Z') }))
+    await expect(sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'The Batch Classic' }))
       .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409 });
   });
 });
@@ -152,8 +157,8 @@ describe('Editing an event\'s tiers (#1253)', () => {
   it('saves a tier list in the same number of queries however many tiers stay as they were', async () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
-    const six = await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'Six Tier Open', startDate: new Date('2087-05-06T12:00:00.000Z') });
-    const two = await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'Two Tier Open', startDate: new Date('2087-05-13T12:00:00.000Z') });
+    const six = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'Six Tier Open' });
+    const two = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'Two Tier Open' });
     await tiers.replaceTiers({ sportEventId: two.event.id, tiers: [tier(1), tier(2)] });
 
     const counts = [];
@@ -171,7 +176,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
   it('reverses, renames, removes and adds tiers in one save, a new tier taking a removed one\'s number and kept tiers keeping their rows', async () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
-    const created = await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'Shuffle Open', startDate: new Date('2087-05-06T12:00:00.000Z') });
+    const created = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'Shuffle Open' });
     const before = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id } });
     const idByKey = new Map(before.map((row) => [row.tierKey, row.id]));
 

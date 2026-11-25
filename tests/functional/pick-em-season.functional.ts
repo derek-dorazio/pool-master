@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -5,7 +6,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
   createSportLeague,
   enterContest,
@@ -42,7 +42,7 @@ import {
   SportEventBracketResponseSchema,
   type PickEmLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -105,7 +105,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -123,9 +123,9 @@ type Side = 'home' | 'away';
  * at `kickoffs` (game 4 last), its later rounds called off so the week is those four games.
  */
 async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly string[], name: string, kickoffs: readonly [string, string, string, string]) {
-  const event = await createEvent({
+  const event = await createTestEvent({
     client: a,
-    body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${name} ${RUN}`, startDate: kickoffs[0], rounds: 3, autoLifecycleEnabled: false },
+    body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${name} ${RUN}`, startDate: kickoffs[0], rounds: 3, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);

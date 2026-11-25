@@ -11,6 +11,7 @@ import type {
   SportEventTierDto,
   SportLeagueDto,
   SportLeagueProviderMappingDto,
+  SportLeagueSeasonSlotDto,
   ProviderLeagueDto,
   ProviderSettingsDto,
   ProviderSummaryDto,
@@ -25,6 +26,15 @@ export const STANDARD_PLATFORM_PRICING_PROFILE_ID = '00000000-0000-4000-8000-000
  * #236 — fixtures for the golf admin tests, typed by the generated DTOs the screens read.
  * Each builder returns a complete, valid object; a test overrides only what it is about.
  */
+
+/** A Season slot; a labelled test slot unless overridden. */
+export function seasonSlotFixture(overrides: Partial<SportLeagueSeasonSlotDto> = {}): SportLeagueSeasonSlotDto {
+  return {
+    id: 'slot-1', slotDefinitionId: 'def-1', key: 'TEST_EVENT', slotKind: 'TOURNAMENT', weekNumber: null, name: null,
+    startsAt: '2026-05-07T12:00:00.000Z', endsAt: '2026-05-10T22:00:00.000Z', status: 'SCHEDULED',
+    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: 'QA 1', ...overrides,
+  };
+}
 
 export function sportEventFixture(overrides: Partial<SportEventDto> = {}): SportEventDto {
   return {
@@ -59,7 +69,11 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     championshipYear: 2026,
     sportLeagueId: 'league-1',
     ...sportPlay(overrides.sport ?? 'GOLF'),
-    providerSynced: false,
+    // The API answers it from the sport's definition; a test of a shoot-out sets it.
+    shootout: false,
+    // A test event: one made on a test slot (#2004).
+    isTestData: true,
+    slots: [seasonSlotFixture()],
     autoLifecycleEnabled: true,
     tierCount: 6,
     adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },

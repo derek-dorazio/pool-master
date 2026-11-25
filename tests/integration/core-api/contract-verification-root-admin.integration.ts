@@ -1,4 +1,5 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
+import { deleteTestSportLeagues, testSlotDefinitionId } from '../../support/test-slots';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
@@ -28,6 +29,7 @@ import {
   SportEventParticipantUploadPreviewResponseSchema,
   RaceResultPreviewResponseSchema,
   SportEventResponseSchema,
+  SportLeagueSeasonSlotDtoSchema,
   SportLeagueSeasonListResponseSchema,
   ActivityJobResponseSchema,
   ActivityListResponseSchema,
@@ -57,6 +59,7 @@ import type {
   ProviderSyncRunListResponse,
   SportEventListResponse,
   SportEventResponse,
+  SportLeagueSeasonSlotResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
   SportLeagueListResponse,
@@ -1336,19 +1339,32 @@ describe('Contract verification (root admin)', () => {
       expect(paddedSearchRes.statusCode).toBe(200);
       expect(paddedSearchRes.json<ParticipantListResponse>().participants).toHaveLength(3);
 
+      // --- createTestSlot (201: { slot }) ------------------------------------
+      const testSlotRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/sport-leagues/${leagueId}/test-slots`,
+        headers: rootAdmin.headers,
+        payload: {
+          slotDefinitionId: await testSlotDefinitionId(getPrisma(), leagueId, currentSeasonId),
+          label: `Z3L ${stamp}`,
+          startsAt: '2081-07-16T08:00:00.000Z',
+          endsAt: '2081-07-19T20:00:00.000Z',
+        },
+      });
+      expect(testSlotRes.statusCode).toBe(201);
+      // The response is { slot }: the slot validated against its DTO.
+      expect(SportLeagueSeasonSlotDtoSchema.safeParse(testSlotRes.json<{ slot: unknown }>().slot).success).toBe(true);
+
       // --- createEvent (201: { event }) ---------------------------------------
       const tournamentRes = await getApp().inject({
         method: 'POST',
         url: '/api/v1/events',
         headers: rootAdmin.headers,
         payload: {
+          seasonSlotId: testSlotRes.json<SportLeagueSeasonSlotResponse>().slot.id,
           name: `Z3L Contract Open ${stamp}`,
           venue: 'Contract Links',
           location: 'Testshire',
-          startDate: '2081-07-16T08:00:00.000Z',
-          endDate: '2081-07-19T20:00:00.000Z',
-          rounds: 4,
-          sportLeagueId: leagueId,
           autoLifecycleEnabled: false,
         },
       });
@@ -1612,7 +1628,7 @@ describe('Contract verification (root admin)', () => {
         await prisma.participant.deleteMany({ where: { id: { in: created.participantIds } } });
       }
       if (created.sportLeagueId) {
-        await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
+        await deleteTestSportLeagues(prisma, [created.sportLeagueId]);
       }
     }
   });
@@ -1691,7 +1707,7 @@ describe('Contract verification (root admin)', () => {
       await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
       await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
       await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } } });
-      await prisma.sportLeague.deleteMany({ where: { id: { in: [synced.id, unsynced.id] } } });
+      await deleteTestSportLeagues(prisma, [synced.id, unsynced.id]);
       await app.close();
     }
   });

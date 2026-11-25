@@ -128,7 +128,6 @@ export function deriveSportEventReadiness(
 
 // --- Player status (Participant.status) ---
 
-type BadgeToneLite = 'active' | 'inactive' | 'warning';
 export type ManagedParticipantStatus = ParticipantDto['status'];
 
 export const PARTICIPANT_STATUSES = [
@@ -147,17 +146,6 @@ type _ParticipantStatusExhaustive =
       : ['unknown golf player status listed', (typeof PARTICIPANT_STATUSES)[number]]
     : ['golf player status missing from PARTICIPANT_STATUSES', ManagedParticipantStatus];
 export type ParticipantStatusesMatchEnum = AssertTrue<_ParticipantStatusExhaustive>;
-
-/** A participant's status in plain words, for badges, rows and options. */
-export function participantStatusLabel(status: ManagedParticipantStatus): string {
-  return enumLabel('ParticipantStatus', status);
-}
-
-export function participantStatusTone(status: ManagedParticipantStatus): BadgeToneLite {
-  if (status === 'ACTIVE') return 'active';
-  if (status === 'SUSPENDED') return 'warning';
-  return 'inactive';
-}
 
 // --- League roster bulk upload (plans/124 §6.3 Tour Home / §6.4) ---
 //

@@ -1,9 +1,9 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
-  createEvent,
   createParticipant,
   createSportLeague,
   getEventBracket,
@@ -19,7 +19,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -73,7 +73,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -101,9 +101,9 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
     const sportLeagueId = expectDefined(tour.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
-    const draw = await createEvent({
+    const draw = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Harbour Open ${RUN}`, startDate: '2099-08-30T15:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Harbour Open ${RUN}`, startDate: '2099-08-30T15:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
     });
     expect(draw.response?.status).toBe(201);
     const eventId = expectDefined(draw.data).event.id;

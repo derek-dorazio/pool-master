@@ -1145,6 +1145,7 @@
         },
         {
           "key": "giro-d-italia",
+          "slotKey": "GIRO_DITALIA",
           "name": "Giro d'Italia",
           "startDate": "2026-05-08",
           "endDate": "2026-05-31",
@@ -1247,6 +1248,7 @@
         },
         {
           "key": "tour-de-france",
+          "slotKey": "TOUR_DE_FRANCE",
           "name": "Tour de France",
           "startDate": "2026-07-04",
           "endDate": "2026-07-26",
@@ -2748,6 +2750,7 @@
       "events": [
         {
           "key": "giro-d-italia-women",
+          "slotKey": "GIRO_DITALIA_WOMEN",
           "name": "Giro d'Italia Women",
           "startDate": "2026-05-30",
           "endDate": "2026-06-07",

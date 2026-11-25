@@ -63,7 +63,7 @@ function run(kind: ProviderSyncKind, overrides: Partial<SportLeaguePageRun> = {}
 function pageEvent(overrides: Partial<SportLeaguePageEvent> = {}): SportLeaguePageEvent {
   return {
     id: 'e1', name: 'Opening Day', sportLeagueSeasonId: '6e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f', startDate: at('2027-04-20T17:00:00.000Z'), endDate: null,
-    status: SportEventStatus.DRAFT, providerSynced: true, releasedAt: null, lastReleaseCheck: null,
+    status: SportEventStatus.DRAFT, isTestData: false, releasedAt: null, lastReleaseCheck: null,
     ...overrides,
   };
 }
@@ -132,7 +132,7 @@ describe('buildSportLeagueEvents', () => {
     const [auto, manual] = buildSportLeagueEvents(eventFacts({
       events: [
         pageEvent({ status: SportEventStatus.SCHEDULED, releasedAt }),
-        pageEvent({ id: 'e2', status: SportEventStatus.SCHEDULED, releasedAt, providerSynced: false }),
+        pageEvent({ id: 'e2', status: SportEventStatus.SCHEDULED, releasedAt, isTestData: true }),
       ],
     }), NOW);
 
@@ -142,7 +142,7 @@ describe('buildSportLeagueEvents', () => {
 
   it('gives a manual draft, and an event released before release times were kept, no release date', () => {
     const [unsynced, offLeague, oldRelease] = [
-      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ providerSynced: false })] }), NOW)[0],
+      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ isTestData: true })] }), NOW)[0],
       buildSportLeagueEvents(eventFacts({ league: league({ autoReleaseDaysBeforeStart: null }) }), NOW)[0],
       buildSportLeagueEvents(eventFacts({ events: [pageEvent({ status: SportEventStatus.COMPLETED })] }), NOW)[0],
     ];
@@ -210,7 +210,7 @@ describe('buildSportEventOverview', () => {
   });
 
   it('reads every sync OFF for an event no provider syncs, as a test event in a synced league', () => {
-    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ providerSynced: false }) }), context);
+    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ isTestData: true }) }), context);
 
     expect(overview.syncHealth).toBe(SportLeagueSyncHealth.OFF);
     expect(overview.syncs.map((sync) => sync.health)).toEqual([SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF]);

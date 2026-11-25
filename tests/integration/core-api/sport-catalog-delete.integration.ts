@@ -99,7 +99,7 @@ function remove(url: string, admin: TestUserResult) {
 }
 
 describe('deleting a sport league or a participant costs fixed statements (#1400)', () => {
-  it(`DELETE a sport league: the same 14 statements with ${SMALL} empty series as with ${LARGE}, and every one is gone`, async () => {
+  it(`DELETE a sport league: the same 15 statements with ${SMALL} empty series as with ${LARGE}, and every one is gone`, async () => {
     const admin = await createTestUser({ isRootAdmin: true });
     const small = await tourWithEmptySeries(SMALL);
     const large = await tourWithEmptySeries(LARGE);
@@ -217,9 +217,10 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
 
 /**
  * Find; then one transaction: begin, lock the sport league, lock its series, its five uses (events,
- * contest setups, event page offers, cups, participants: one count each), series,
- * the leagues that muted it, the sport league, commit.
+ * contest setups, event page offers, cups, participants: one count each), series, its Seasons'
+ * slots and phases (#2004: a Season's phases and slots restrict their definitions' delete), the
+ * leagues that muted it, the sport league, commit.
  */
-const SPORT_LEAGUE_DELETE_STATEMENTS = 13;
+const SPORT_LEAGUE_DELETE_STATEMENTS = 15;
 /** One transaction: begin, lock the participant, count their field rows, provider identities, the participant, commit. */
 const PARTICIPANT_DELETE_STATEMENTS = 6;

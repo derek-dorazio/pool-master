@@ -168,6 +168,7 @@
       "events": [
         {
           "key": "ncaamh-tournament-2026",
+          "slotKey": "FINAL",
           "name": "NCAA Men's Ice Hockey Tournament",
           "startDate": "2026-03-26",
           "endDate": "2026-04-11",
@@ -645,6 +646,7 @@
       "events": [
         {
           "key": "ncaawh-tournament-2026",
+          "slotKey": "FINAL",
           "name": "NCAA Women's Ice Hockey Tournament",
           "startDate": "2026-03-12",
           "endDate": "2026-03-22",

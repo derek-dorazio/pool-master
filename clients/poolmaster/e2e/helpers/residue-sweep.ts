@@ -14,7 +14,8 @@ import {
  * that is cancelled or times out never reaches it, and leaves its whole set behind. The sweep finds
  * those leftovers by the one test-name marker (`test-marker.ts`) and removes them through the
  * admin API, with the same helpers the teardowns use: leagues (their contests, entries, squads and
- * cups go with them) → events → tours → players → users. Each league is deleted on its own, as
+ * cups go with them) → events → tours → players → users. A run's events on a seeded tour's test
+ * slots (#2004) go and the tour stays. Each league is deleted on its own, as
  * the API deletes one tenant at a time; nothing here touches the database.
  *
  * Only runs older than `minAgeMs` are removed, so a live run is never raced. A failed removal is
@@ -95,21 +96,25 @@ export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeade
   await remove('tours (listing)', async () => {
     const list = await expectOk(api.get('/api/v1/sport-leagues', { headers }), 'list tours');
     const { sportLeagues } = (await list.json()) as { sportLeagues: { id: string; name: string }[] };
-    for (const tour of sportLeagues.filter((candidate) => due(runIdOfName(candidate.name)))) {
+    for (const tour of sportLeagues) {
+      // A run's own tour is removed whole; a seeded one (#2004) keeps every event but the runs'.
+      const ownTour = due(runIdOfName(tour.name));
       // A tour is refused while it has an event, so its events go first.
       await remove(`events of tour "${tour.name}" (listing)`, async () => {
         const events = await expectOk(
-          api.get('/api/v1/events', { headers, params: { sportLeagueId: tour.id } }),
+          api.get('/api/v1/events', { headers, params: { sportLeagueId: tour.id, q: E2E_NAME_PREFIX } }),
           `list events of ${tour.name}`,
         );
         const { events: rows } = (await events.json()) as { events: { id: string; name: string }[] };
-        for (const event of rows.filter((candidate) => runIdOfName(candidate.name) !== null)) {
+        const runEvents = rows.filter((candidate) => (ownTour ? runIdOfName(candidate.name) !== null : due(runIdOfName(candidate.name))));
+        for (const event of runEvents) {
           await remove(`event "${event.name}"`, async () => {
             await expectOk(api.delete(`/api/v1/events/${event.id}`, { headers }), `delete event ${event.name}`);
             log(`event "${event.name}" removed`);
           }, report.events, event.name);
         }
       });
+      if (!ownTour) continue;
       // A tour is refused while it has a participant (#1853), so its players go next.
       await remove(`players of tour "${tour.name}" (listing)`, async () => {
         const list = await expectOk(

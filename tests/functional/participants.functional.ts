@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import { randomUUID } from 'node:crypto';
 import { createParticipant, updateParticipant } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser, promoteToRootAdmin } from './builders';
@@ -33,7 +34,7 @@ async function golfTourId(): Promise<string> {
 afterEach(async () => {
   const database = getFunctionalPrisma();
   await database.participant.deleteMany({ where: { id: { in: createdParticipantIds.splice(0) } } });
-  await database.sportLeague.deleteMany({ where: { id: { in: createdSportLeagueIds.splice(0) } } });
+  await deleteTestSportLeagues(database, createdSportLeagueIds.splice(0));
   await cleanupFunctionalData();
 });
 

@@ -1,7 +1,8 @@
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
+import type { SportLeagueSeasonRepository } from '@poolmaster/shared/db';
 import { BracketAdvancement, ProviderCode, Sport } from '@poolmaster/shared/domain';
-import type { Participant, SportLeague } from '@poolmaster/shared/domain';
+import type { Participant, SportLeague, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
   fakeParticipantProviderMappingRepo,
@@ -88,6 +89,7 @@ function buildService(overrides: {
   participants?: Parameters<typeof fakeParticipantRepo>[0];
   mappings?: Parameters<typeof fakeParticipantProviderMappingRepo>[0];
   providers?: SportDataProviderLookup;
+  seasons?: Pick<SportLeagueSeasonRepository, 'createTestSlot'>;
   platformTierProfiles?: { findById: jest.Mock };
   platformPricingProfiles?: { findById: jest.Mock };
   now?: () => Date;
@@ -102,6 +104,7 @@ function buildService(overrides: {
     }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     participants: fakeParticipantRepo(overrides.participants),
+    seasons: overrides.seasons ?? { createTestSlot: jest.fn() },
     mappings: fakeParticipantProviderMappingRepo(overrides.mappings),
     providers: overrides.providers ?? registeredProviders({}),
     platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
@@ -483,5 +486,50 @@ describe('SportLeagueService — deleting a sport league (#1400)', () => {
     const { service } = buildService({ sportLeagues: { deleteUnlessUsed: jest.fn().mockResolvedValue(null) } });
 
     await expect(service.deleteSportLeague('sl-pga')).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('SportLeagueService — adding a test slot (#2004)', () => {
+  const input = { slotDefinitionId: 'def-1', label: 'QA 1', startsAt: new Date('2026-06-01T12:00:00Z'), endsAt: null };
+  const slot = { id: 'slot-1', label: 'QA 1', isTestData: true } as SportLeagueSeasonSlot;
+  const inSeason = { findById: jest.fn().mockResolvedValue(sportLeague({ currentSeasonId: 'season-2026' })) };
+
+  it('adds the slot to the league\'s current Season and answers it', async () => {
+    const createTestSlot = jest.fn().mockResolvedValue({ outcome: 'CREATED', slot });
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot } });
+    await expect(service.createTestSlot('sl-pga', input)).resolves.toBe(slot);
+    expect(createTestSlot).toHaveBeenCalledWith({ ...input, sportLeagueId: 'sl-pga', sportLeagueSeasonId: 'season-2026' });
+  });
+
+  it('refuses an unknown league with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
+    const { service } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
+    await expect(service.createTestSlot('sl-none', input)).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses a league with no current Season with 422 SPORT_LEAGUE_HAS_NO_SEASON', async () => {
+    const { service } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ currentSeasonId: null })) } });
+    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_SEASON', statusCode: 422 });
+  });
+
+  it('refuses a slot that ends before it starts with 422 TEST_SLOT_ENDS_BEFORE_START, adding nothing', async () => {
+    const createTestSlot = jest.fn();
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot } });
+    await expect(service.createTestSlot('sl-pga', { ...input, endsAt: new Date('2026-05-31T12:00:00Z') })).rejects.toMatchObject({ code: 'TEST_SLOT_ENDS_BEFORE_START', statusCode: 422 });
+    expect(createTestSlot).not.toHaveBeenCalled();
+  });
+
+  it('refuses a label the Season already has on that definition with 409 TEST_SLOT_LABEL_TAKEN', async () => {
+    const taken = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'LABEL_TAKEN' }) } });
+    await expect(taken.service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'TEST_SLOT_LABEL_TAKEN', statusCode: 409 });
+  });
+
+  it('refuses a definition that is not the league\'s with 404 SLOT_DEFINITION_NOT_FOUND', async () => {
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'DEFINITION_NOT_FOUND' }) } });
+    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SLOT_DEFINITION_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses a definition whose phase the current Season lacks with 422 SLOT_PHASE_NOT_IN_SEASON', async () => {
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'PHASE_NOT_IN_SEASON' }) } });
+    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SLOT_PHASE_NOT_IN_SEASON', statusCode: 422 });
   });
 });

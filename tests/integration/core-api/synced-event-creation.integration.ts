@@ -13,6 +13,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
+import { testSlotId } from '../../support/test-slots';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
 // Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
@@ -140,21 +141,20 @@ describe('Synced event creation (ADR 0011)', () => {
     ]);
   });
 
-  it('reads each created event as provider-synced, and an admin-authored event of the same league as not (#1729)', async () => {
+  it('reads each event the sync created as synced, and a test event on a test slot of the same league as a test event (#1729, #2004)', async () => {
     const synced = await golfLeague();
     const { scheduler } = buildScheduler();
     await scheduler.runSweep();
     const { sportEvents } = integrationSportEventServices();
     const manual = await sportEvents.createEvent({
-      sportLeagueId: synced.id,
+      seasonSlotId: await testSlotId(getPrisma(), synced.id, new Date('2027-08-01T12:00:00Z')),
       name: 'Members Cup',
-      startDate: new Date('2027-08-01T12:00:00Z'),
     });
 
     const events = await getPrisma().sportEvent.findMany({ where: { eventSeries: { sportLeagueId: synced.id } }, select: { id: true } });
     const flags = await Promise.all(events.map(async ({ id }) => {
       const read = mapSportEventToDto(await sportEvents.requireAdminSummary(id));
-      return [read.name, read.providerSynced] as const;
+      return [read.name, !read.isTestData] as const;
     }));
     const byName = (a: readonly [string, boolean], b: readonly [string, boolean]) => a[0].localeCompare(b[0]);
     expect([...flags].sort(byName)).toEqual(([

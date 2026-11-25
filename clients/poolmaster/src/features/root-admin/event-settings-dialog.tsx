@@ -11,7 +11,6 @@ import {
 import {
   Button,
   ConfirmDialog,
-  DateTimeField,
   DetailEditModal,
   formatDateTimeDisplay,
   FormField,
@@ -54,7 +53,6 @@ export function EventSettingsDialog({
   sportLeague: SportLeagueDto | undefined;
 }) {
   const preferences = useDisplayPreferences();
-  const { timeZone } = preferences;
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(event);
   const platformTierProfilesQuery = usePlatformTierProfilesQuery();
   const platformPricingProfilesQuery = usePlatformPricingProfilesQuery();
@@ -63,7 +61,7 @@ export function EventSettingsDialog({
   const [tiersOpen, setTiersOpen] = useState(false);
   const tiersQuery = useSportEventTiersQuery(event.id);
   const fieldQuery = useSportEventFieldQuery(event.id);
-  const current = valuesOf(event, timeZone);
+  const current = valuesOf(event);
 
   const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema), defaultValues: current, mode: 'onChange' });
   const dialog = useDetailEditDialog(form, current, onClose);
@@ -73,7 +71,7 @@ export function EventSettingsDialog({
     mutationFn: async (values: SettingsValues) => {
       const response = await updateEvent({
         path: { eventId: event.id },
-        body: settingsRequestBody(values, current, { providerSynced: event.providerSynced, sendsRoundsPar: scoresUnplayedRoundsAgainstPar, timeZone }),
+        body: settingsRequestBody(values, current, { isTestData: event.isTestData, sendsRoundsPar: scoresUnplayedRoundsAgainstPar }),
       });
       if (!response.data?.event) throwApiError(response.error, 'The event update response is missing data.');
       return response.data.event;
@@ -223,7 +221,7 @@ export function EventSettingsDialog({
         title={dialog.mode === 'view' ? `${event.name} settings` : `${event.name} settings · Edit`}
       >
         <div className="grid gap-4">
-          {event.providerSynced ? null : (
+          {event.isTestData ? (
             <>
               <FormField error={form.formState.errors.name?.message} label="Name">
                 <Input data-testid="root-admin-sport-event-edit-name" {...form.register('name')} />
@@ -231,14 +229,8 @@ export function EventSettingsDialog({
               <FormField label="Venue">
                 <Input data-testid="root-admin-sport-event-edit-venue" {...form.register('venue')} />
               </FormField>
-              <FormField error={form.formState.errors.startDate?.message} label="Starts">
-                <DateTimeField data-testid="root-admin-sport-event-edit-start" {...form.register('startDate')} />
-              </FormField>
-              <FormField label="Ends">
-                <DateTimeField data-testid="root-admin-sport-event-edit-end" {...form.register('endDate')} />
-              </FormField>
             </>
-          )}
+          ) : null}
           <FormField label="Location">
             <Input data-testid="root-admin-sport-event-edit-location" {...form.register('location')} />
           </FormField>

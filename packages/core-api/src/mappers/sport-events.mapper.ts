@@ -5,7 +5,8 @@
  */
 
 import {
-  isProviderSyncedEvent,
+  getSportDefinition,
+  isTestEvent,
   ReleaseCheckKey,
   type ReleaseCheck,
   SPORT_EVENT_STATUS_TRANSITIONS,
@@ -21,6 +22,7 @@ import type {
   SportEventRoundDto,
   SportEventTierDto,
 } from '@poolmaster/shared/dto/events.dto';
+import { mapSportLeagueSeasonSlotToDto } from './sport-catalog.mapper';
 import { eventContestOpenings } from '../modules/contest-management/contest-opening';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 import { areTiersAndPricesEditable } from '../modules/events/sport-event-tier-service';
@@ -43,6 +45,7 @@ export function mapSportEventToDto({
   tierCount,
   adminCounts,
   releaseChecks,
+  slots,
 }: SportEventSummary): SportEventDto {
   const now = new Date();
   const operationalState = evaluateEventOperationalState({
@@ -81,7 +84,9 @@ export function mapSportEventToDto({
     sportLeagueId: event.sportLeagueId,
     participantType: event.participantType,
     scoringFamily: event.scoringFamily,
-    providerSynced: isProviderSyncedEvent(event),
+    shootout: getSportDefinition(event.sport).shootout,
+    isTestData: isTestEvent(slots),
+    slots: slots.map(mapSportLeagueSeasonSlotToDto),
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
     lastAutoReleaseCheck: event.autoReleaseCheck

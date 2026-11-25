@@ -8,9 +8,9 @@ import { useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 
 /**
- * plans/124 §6.3 / §4.4a — /manage/sports/:sport/events/new. Owns the required tour (the event
- * goes in its current Season, #2003); the form itself is a separate component. A provider's
- * events are never created here: sync creates them (#2004).
+ * plans/124 §6.3 / §4.4a — /manage/sports/:sport/events/new. Owns the required tour; the form
+ * makes a test event on a free test slot of the tour's current Season (#2004). A provider's events
+ * are never created here: sync creates them.
  */
 export function RootAdminSportEventCreatePage() {
   const [searchParams] = useSearchParams();
@@ -61,7 +61,7 @@ export function RootAdminSportEventCreatePage() {
       className="space-y-6"
       data-testid="root-admin-sport-event-create-page"
     >
-      <PageHeader testId="root-admin-sport-event-create-header" title={`New ${event.one}`} />
+      <PageHeader testId="root-admin-sport-event-create-header" title={`New test ${event.one}`} />
       <SportEventManualCreateForm edition={edition} onEditionChange={setSelection} sportLeagues={sportLeagues} />
     </section>
   );

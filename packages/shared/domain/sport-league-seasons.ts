@@ -51,12 +51,18 @@ export interface SportLeagueSeasonSlot {
   label: string | null;
 }
 
+/** A Season slot as its Season lists it: with the event covering it, if any. */
+export interface SportLeagueSeasonPhaseSlot extends SportLeagueSeasonSlot {
+  /** The event covering it; null while it is free. */
+  sportEventId: string | null;
+}
+
 /** One phase of one Season, with its slots in play order. */
 export interface SportLeagueSeasonPhase {
   id: string;
   phase: LeaguePhase;
   isSynced: boolean;
-  slots: SportLeagueSeasonSlot[];
+  slots: SportLeagueSeasonPhaseSlot[];
 }
 
 /** One Season of a sport league. */
@@ -150,3 +156,44 @@ export function orderSportLeagueSeasons(seasons: readonly SportLeagueSeasonDetai
 
 /** A Season's own facts, as a write gives them. */
 export type SportLeagueSeasonSpan = Pick<SportLeagueSeason, 'name' | 'championshipYear' | 'startsAt' | 'endsAt'>;
+
+/**
+ * Whether an event is a test event (#2004, plan §2): it covers a test slot. A league is synced or
+ * off, so every other event is one its sync keeps, and the provider wins over an edit to it.
+ */
+export function isTestEvent(slots: ReadonlyArray<Pick<SportLeagueSeasonSlot, 'isTestData'>>): boolean {
+  return slots.some((slot) => slot.isTestData);
+}
+
+/** Why a Season slot cannot take a test event made by hand (#2004): the error code each answers with. */
+export type TestEventSlotRefusal = 'SEASON_SLOT_NOT_TEST' | 'SEASON_SLOT_NOT_CURRENT' | 'SEASON_SLOT_TAKEN';
+
+/**
+ * Whether a Season slot takes a test event, and if not why (#2004, plan §2): only a test slot does,
+ * since the sync makes every other event; it must be in its league's current Season and free. Null
+ * when it takes one. The one rule: `createEvent` refuses by it, and a slot's `takesTestEvent` says it.
+ */
+export function testEventSlotRefusal(
+  slot: Pick<SportLeagueSeasonPhaseSlot, 'isTestData' | 'sportEventId'>,
+  inCurrentSeason: boolean,
+): TestEventSlotRefusal | null {
+  if (!slot.isTestData) return 'SEASON_SLOT_NOT_TEST';
+  if (!inCurrentSeason) return 'SEASON_SLOT_NOT_CURRENT';
+  if (slot.sportEventId !== null) return 'SEASON_SLOT_TAKEN';
+  return null;
+}
+
+/**
+ * An event's dates from the Season slots it covers (#2004): the earliest slot start and the latest
+ * slot end, the end null while any slot has none. Null when no slot has a start yet, and for an
+ * event with no slots (golf, racing and tennis until slice 12), which keeps the feed's dates.
+ */
+export function eventDatesFromSlots(
+  slots: ReadonlyArray<Pick<SportLeagueSeasonSlot, 'startsAt' | 'endsAt'>>,
+): { startDate: Date; endDate: Date | null } | null {
+  const starts = slots.flatMap((slot) => (slot.startsAt === null ? [] : [slot.startsAt.getTime()]));
+  if (starts.length === 0) return null;
+  const ends = slots.map((slot) => slot.endsAt?.getTime() ?? null);
+  const endDate = ends.includes(null) ? null : new Date(Math.max(...ends.filter((end): end is number => end !== null)));
+  return { startDate: new Date(Math.min(...starts)), endDate };
+}

@@ -7,15 +7,15 @@ import {
 } from './helpers/admin-session';
 import { correctFieldParticipant } from './helpers/event-field';
 import { submitAndRead } from './helpers/browser-writes';
-import { createJourneySportLeague } from './helpers/admin-api';
 import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
+import { createTestEvent, findSeededSportLeague, setSportLeagueActive } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #623 — the horse racing journey (plans/racing-sports.md §9, slice 4): the root admin builds a
- * race on the shared Manage pages (a circuit, eight horses, the race, its seeded field, tiers
+ * race on the shared Manage pages (the seeded circuit, eight horses, the race, its seeded field, tiers
  * from those seeds, prices) and releases it (act 1); a new commissioner creates a horse racing
  * contest on it with an edited points table (act 2); a new member joins by link and submits an
  * entry, with no tiebreaker to choose (act 3); and the root admin starts the race, loads its
@@ -41,8 +41,8 @@ const TIER_OF_HORSE: readonly number[] = [1, 1, 1, 2, 2, 2, 3, 3];
 const PICKED_HORSES: readonly number[] = [2, 4, 8];
 
 /**
- * The commissioner types this table in (the circuit has no setup to start from), so the settled
- * total can only come out right if the typed table reached the contest.
+ * The commissioner types this table in over whatever the circuit's setup starts from, so the
+ * settled total can only come out right if the typed table reached the contest.
  */
 const POINTS_TABLE: readonly number[] = [10, 6, 4, 2];
 
@@ -114,7 +114,7 @@ function horseName(run: JourneyRun, horse: number): string {
   return `${run.playerNamePrefix} ${horse}`;
 }
 
-test('act 1: the root admin builds a race — circuit, eight horses, the race, its seeded field, tiers from seeds and prices — and releases it', async ({ page }) => {
+test('act 1: the root admin builds a race — the seeded circuit, eight horses, the race, its seeded field, tiers from seeds and prices — and releases it', async ({ page }) => {
   test.setTimeout(180_000);
   const credentials = readAdminCredentials();
   admin = credentials;
@@ -123,7 +123,7 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   const run: JourneyRun = {
     runId,
     sport: 'HORSE_RACING',
-    tourName: e2eName('Circuit', runId),
+    tourName: 'US Thoroughbred',
     playerNamePrefix: e2eName('Horse', runId),
     tournamentName: e2eName('Stakes', runId),
     commissioner: {
@@ -154,13 +154,17 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
     await expect(page.getByTestId('root-admin-sports-table')).toBeVisible();
   });
 
-  const circuitId = await test.step('create a racing circuit', async () => {
-    // A league is added by migration, so a journey makes its own through the API.
-    const id = await createJourneySportLeague(page, { sport: 'HORSE_RACING', name: run.tourName, participantType: 'INDIVIDUAL', scoringFamily: 'FINISH_POSITION', platformTierProfileCode: 'TIERS_3_OF_3' });
-    // The Sports page's one grid lists every sport league, the new one too.
+  const circuitId = await test.step('switch the seeded racing circuit on, and find it on the Sports page', async () => {
+    // A league is added by migration, so a journey plays in a seeded one (#2004). No feed covers
+    // horse racing yet, so the circuit is off until the run switches it on; teardown switches it off.
+    const circuit = await findSeededSportLeague(page, 'HORSE_RACING', run.tourName);
+    if (!circuit.isActive) {
+      await setSportLeagueActive(page, circuit.id, true);
+      run.switchedTourOn = true;
+    }
     await page.goto('/manage/sports');
-    await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
-    return id;
+    await expect(page.getByTestId(`root-admin-sports-row-${circuit.id}`)).toBeVisible();
+    return circuit.id;
   });
 
   const horseIds = await test.step(`create ${HORSE_COUNT} horses`, async () => {
@@ -174,22 +178,21 @@ test('act 1: the root admin builds a race — circuit, eight horses, the race, i
   const raceId = await test.step('create the race on the circuit, a week out', async () => {
     const start = addDays(new Date(), 7);
     start.setHours(17, 0, 0, 0);
-    await page.goto('/manage/sports/horse-racing/events/new');
-    await page.getByTestId('root-admin-sport-event-create-tour').selectOption(circuitId);
-    await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
-    await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
-    // A race is one race: the form starts from the sport's own default.
-    await expect(page.getByTestId('root-admin-sport-event-create-rounds')).toHaveValue('1');
-    const created = await submitAndRead<{ event: { id: string; sport: string } }>(
-      page,
-      'root-admin-sport-event-create-submit',
-      'POST',
-      '/api/v1/events',
-    );
-    expect(created.event.sport).toBe('HORSE_RACING');
-    await expect(page).toHaveURL(new RegExp(`/manage/sports/horse-racing/events/${created.event.id}/field$`));
-    await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
-    return created.event.id;
+    // A race is one race: the event takes the sport's own single round.
+    const created = await createTestEvent(page, {
+      sportUrlSegment: 'horse-racing',
+      sportLeagueId: circuitId,
+      slotKind: 'TOURNAMENT',
+      slotLabel: run.tournamentName,
+      startsAt: start,
+      name: run.tournamentName,
+    });
+    expect(created.sport).toBe('HORSE_RACING');
+    await page.goto(`/manage/sports/horse-racing/events/${created.id}`);
+    await page.getByTestId('root-admin-event-settings').click();
+    await expect(page.getByTestId('root-admin-event-settings-dialog-rounds')).toContainText('1');
+    await page.getByTestId('root-admin-event-settings-dialog').getByRole('button', { name: 'Close', exact: true }).click();
+    return created.id;
   });
   journey.raceId = raceId;
 
@@ -276,7 +279,7 @@ test('act 2: a new commissioner creates a horse racing contest on the race with 
     await expect(page.getByTestId('league-home')).toBeVisible();
   });
 
-  await test.step('choose horse racing and the race; the run\'s own circuit has no contest setups, so no preset fills the rules', async () => {
+  await test.step('choose horse racing and the race', async () => {
     await page.goto(`/league/${run.leagueCode}/admin/contests/new`);
     await expect(page.getByTestId('create-contest-page')).toBeVisible();
     await page.getByTestId('contest-sport-HORSE_RACING').click();
@@ -284,8 +287,6 @@ test('act 2: a new commissioner creates a horse racing contest on the race with 
     await expect(raceChoice).toContainText(run.tournamentName);
     await raceChoice.click();
     await expect(raceChoice).toBeChecked();
-    // Every setup is one sport league's, seeded by migration (#1825); a circuit an admin adds has none.
-    await expect(page.getByTestId('contest-scoring-points-table')).toHaveValue('');
   });
 
   await test.step(`set one horse a tier, all three count, nothing for not finishing, the points table ${POINTS_TABLE.join(', ')}, name the contest, and create it`, async () => {
@@ -476,8 +477,3 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
-const pad = (value: number) => String(value).padStart(2, '0');
-
-function dateTimeInput(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}

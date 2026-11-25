@@ -1,4 +1,4 @@
-import { getSportDefinition, SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
+import { SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
 import { Notice, Heading, SectionCard, SimpleTable, TableBody, TableHead, TableHeaderCell } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
@@ -21,7 +21,6 @@ import { upperFirst } from '@/lib/upper-first';
  * before their first match is replaced on the withdrawals card (#704).
  */
 export function BracketPanel({ event }: { event: SportEventDto }) {
-  const definition = getSportDefinition(event.sport);
   const bracketQuery = useSportEventBracketQuery(event.id);
   const fieldQuery = useSportEventFieldQuery(event.id);
   const roundLabel = useEventRoundLabel(event);
@@ -40,7 +39,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
   }
 
   const bracket = bracketQuery.data;
-  const vocabulary = sportVocabulary(definition);
+  const vocabulary = sportVocabulary(event);
   const noun = vocabulary.match;
   const released = event.status !== SportEventStatus.DRAFT;
   const context: BracketContext = {
@@ -52,7 +51,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     spreads: bracket.length > 0 && formsNoBracket(bracket),
     periods,
     // A week of games forms no bracket, so none of its games goes to a shoot-out (#791).
-    shootout: definition.shootout && bracket.length > 0 && !formsNoBracket(bracket) ? vocabulary.shootout ?? null : null,
+    shootout: event.shootout && bracket.length > 0 && !formsNoBracket(bracket) ? vocabulary.shootout ?? null : null,
     feedName,
   };
   const roundCount = Math.max(event.rounds ?? 0, ...bracket.map((match) => match.roundNumber));

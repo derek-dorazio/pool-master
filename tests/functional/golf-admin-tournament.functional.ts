@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
@@ -6,6 +7,7 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createEvent,
+  createTestSlot,
   createParticipant,
   createSportLeague,
   getEvent,
@@ -24,7 +26,7 @@ import {
   updateEventParticipants,
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -120,7 +122,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
   if (created.userIds.size) {
     await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
@@ -181,7 +183,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(rosterApply.data).participants.length).toBe(20);
 
     // --- Event: seeds 4 rounds + 6 default tiers --------------------------------
-    const tournament = await createEvent({
+    const tournament = await createTestEvent({
       client: c,
       body: {
         name: `The ${RUN} Open`,
@@ -190,15 +192,15 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         // Far future so the release step below never meets a start that has passed.
         startDate: '2099-07-16T08:00:00.000Z',
         endDate: '2099-07-19T20:00:00.000Z',
-        rounds: 4,
-        sportLeagueId: await inCurrentSeason(sportLeagueId, 2026),
+        sportLeagueId,
+        championshipYear: 2026,
         autoLifecycleEnabled: false,
       },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
-    expect(expectDefined(tournament.data).event).toMatchObject({ providerMappings: [], providerSynced: false, sportLeagueId, championshipYear: 2026 });
+    expect(expectDefined(tournament.data).event).toMatchObject({ providerMappings: [], isTestData: true, sportLeagueId, championshipYear: 2026, startDate: '2099-07-16T08:00:00.000Z', endDate: '2099-07-19T20:00:00.000Z' });
 
     const rounds = await listEventRounds({ client: c, path: { eventId } });
     expect(expectDefined(rounds.data).rounds.length).toBe(4);
@@ -451,10 +453,11 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const sportLeagueId = expectDefined(league.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
     // A new event goes in the league's current Season, so each edition first makes its year's current.
-    const edition = async (championshipYear: number) => createEvent({
+    const edition = async (championshipYear: number) => createTestEvent({
       client: c,
       body: {
-        sportLeagueId: await inCurrentSeason(sportLeagueId, championshipYear),
+        sportLeagueId,
+        championshipYear,
         name: `The ${RUN} Masters`,
         startDate: `${championshipYear}-04-09T12:00:00.000Z`,
       },
@@ -495,7 +498,12 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,
-      body: { sportLeagueId: ANY_UUID, name: 'x', startDate: '2030-01-01T00:00:00.000Z' },
+      body: { seasonSlotId: ANY_UUID, name: 'x' },
+    }), deny);
+    expectFunctionalError(await createTestSlot({
+      client: c,
+      path: { sportLeagueId: ANY_UUID },
+      body: { slotDefinitionId: ANY_UUID, label: 'x', startsAt: '2030-01-01T00:00:00.000Z' },
     }), deny);
     expectFunctionalError(await createParticipant({ client: c, body: { sportLeagueId: ANY_UUID, participantType: 'INDIVIDUAL', name: `denied-${RUN}` } }), deny);
   });
