@@ -126,6 +126,27 @@ export function identifierCounts(path, text) {
 }
 
 /**
+ * The `[original, newName]` pairs a file's import and export lists rename: `import { a as b }`
+ * and `export { a as b } from './x'`. Code that reads `b` is then a reader of `a`.
+ */
+export function renamedSpecifiers(path, text) {
+  const pairs = [];
+  for (const statement of parse(path, text).statements) {
+    let elements = [];
+    if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+      elements = statement.exportClause.elements;
+    } else if (ts.isImportDeclaration(statement)) {
+      const bindings = statement.importClause?.namedBindings;
+      if (bindings && ts.isNamedImports(bindings)) elements = bindings.elements;
+    }
+    for (const element of elements) {
+      if (element.propertyName && element.propertyName.text !== element.name.text) pairs.push([element.propertyName.text, element.name.text]);
+    }
+  }
+  return pairs;
+}
+
+/**
  * Classifies each production export from the identifiers of every source file: `unused`,
  * `tests-only`, `own-file` or alive (left out).
  */
@@ -135,6 +156,18 @@ export function classifyExports(files) {
     for (const word of identifiers.keys()) {
       if (!readers.has(word)) readers.set(word, []);
       readers.get(word).push(path);
+    }
+  }
+  // A name passed on under a new one is read wherever the new name is (renames chain).
+  const renames = [...files.values()].flatMap(({ renames: pairs }) => pairs ?? []);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const [original, renamed] of renames) {
+      const into = readers.get(original) ?? [];
+      const added = (readers.get(renamed) ?? []).filter((reader) => !into.includes(reader));
+      if (added.length === 0) continue;
+      readers.set(original, [...into, ...added]);
+      changed = true;
     }
   }
   const findings = [];
@@ -196,7 +229,7 @@ export function readRepo(repoRoot) {
     } catch {
       continue;
     }
-    files.set(path, { identifiers: identifierCounts(path, text), exports: isProduction(path) ? exportedNames(path, text) : null });
+    files.set(path, { identifiers: identifierCounts(path, text), exports: isProduction(path) ? exportedNames(path, text) : null, renames: renamedSpecifiers(path, text) });
   }
   return files;
 }

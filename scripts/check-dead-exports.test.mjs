@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { classifyExports, compareWithBaseline, entriesFor, exportedNames, identifierCounts, isTestLike, ratchetBaseline } from './check-dead-exports.mjs';
+import { classifyExports, compareWithBaseline, entriesFor, exportedNames, identifierCounts, isTestLike, ratchetBaseline, renamedSpecifiers } from './check-dead-exports.mjs';
 
-const file = (text, exports = null, path = 'x.ts') => ({ identifiers: identifierCounts(path, text), exports });
+const file = (text, exports = null, path = 'x.ts') => ({ identifiers: identifierCounts(path, text), exports, renames: renamedSpecifiers(path, text) });
 
 describe('check-dead-exports (#2111)', () => {
   it('lists exported values, leaving out types, default exports, enum order lists built by explicitOrder or alphabeticalOrder, and marked test hooks', () => {
@@ -50,6 +50,23 @@ describe('check-dead-exports (#2111)', () => {
       ['packages/core-api/src/jobs/queue.ts', file('export const enqueue = () => {};', ['enqueue'])],
       ['packages/core-api/src/jobs/index.ts', file("export { enqueue } from './queue';")],
       ['packages/core-api/src/app.ts', file("import { enqueue } from './jobs';\nenqueue();")],
+    ]);
+    assert.deepEqual(classifyExports(files), []);
+  });
+
+  it('counts an export passed on under a new name as alive once code reads the new name, and as unused while nothing does', () => {
+    const files = new Map([
+      ['packages/core-api/src/jobs/queue.ts', file('export const enqueue = () => {}; export const drain = () => {};', ['enqueue', 'drain'])],
+      ['packages/core-api/src/jobs/index.ts', file("export { enqueue as addJob, drain as drainQueue } from './queue';")],
+      ['packages/core-api/src/app.ts', file("import { addJob } from './jobs';\naddJob();")],
+    ]);
+    assert.deepEqual(classifyExports(files).map(({ name, kind }) => `${name}:${kind}`), ['drain:unused']);
+  });
+
+  it('counts an export imported under a new name as alive once the importing code reads that name', () => {
+    const files = new Map([
+      ['packages/core-api/src/jobs/queue.ts', file('export const enqueue = () => {};', ['enqueue'])],
+      ['packages/core-api/src/app.ts', file("import { enqueue as addJob } from './jobs/queue';\naddJob();")],
     ]);
     assert.deepEqual(classifyExports(files), []);
   });
