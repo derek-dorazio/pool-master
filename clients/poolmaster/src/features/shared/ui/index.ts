@@ -58,6 +58,7 @@ export {
   formatNumber,
   formatNumberList,
   formatAndList,
+  formatOrList,
   formatOrdinal,
   formatPlace,
   type InitialsEntry,

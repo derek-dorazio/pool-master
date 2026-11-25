@@ -40,11 +40,11 @@ import {
   SportLeagueSyncHealth,
   SportLeagueSyncMode,
   TournamentFormat,
+  FieldOrderBasis,
 } from '../domain/enums';
 import { ScoringFamily } from '../domain/sports/scoring-family';
 import { AUTO_RELEASE_DAYS_MAX, ReleaseCheckKey } from '../domain/release-checks';
 import { DateTimeSchema } from './common.dto';
-import { FieldOrderBasis } from '../domain/enums';
 import { URL_SEGMENT_PATTERN } from '../domain/url-segment';
 
 // --- Sport ---------------------------------------------------------------------
@@ -501,8 +501,9 @@ export const SportEventOverviewDtoSchema = z.object({
   releaseMode: z.enum(SportEventReleaseMode).describe('AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.'),
   releaseAt: DateTimeSchema.nullable().describe('With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league\'s window (PLANNED). Null otherwise.'),
   releaseAtKind: z.enum(SportEventReleaseAtKind).nullable().describe('What releaseAt is; null with it.'),
-  tierOrderBasis: z.enum(FieldOrderBasis).nullable().describe('The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.'),
+  tierOrderBasis: z.enum(FieldOrderBasis).nullable().describe('The value that orders its active field for automatic tiers and prices: the first of tierOrderSources every participant has, else the first anyone has. Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.'),
   tierOrderCoversField: z.boolean().describe('False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last.'),
+  tierOrderSources: z.array(z.enum(FieldOrderBasis)).describe('The sources its sport league\'s tier profile orders a field by, in order (#2160); its pricing profile starts with the same one. Names what a field with no order lacks.'),
   fieldFeed: z.array(SportEventFieldFeedRowDtoSchema).describe('One per field row, active or withdrawn, never paged.'),
   eventPagePath: z.string().nullable().describe('The web address of the active event page offering the event\'s series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.'),
 }).describe('The root admin\'s Event page header and sync rows.');

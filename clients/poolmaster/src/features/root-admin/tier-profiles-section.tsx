@@ -1,7 +1,7 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useState } from 'react';
-import { PlatformTierProfileLastTierOrder, type PlatformTierProfileLastTier } from '@poolmaster/shared/domain';
+import { TierProfileType, TierProfileTypeOrder } from '@poolmaster/shared/domain';
 import { deletePlatformTierProfile, type PlatformTierProfileDto } from '@/lib/api';
 import { Button, DataGrid, QueryState, RowActionsMenu, SectionCard } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -9,7 +9,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { ProfileDeleteDialog } from './profile-delete-dialog';
 import { ProfileDialog, type ProfileDialogState } from './profile-dialog';
 import { PlatformTierProfileEditor } from './tier-profile-editor';
-import { describeLastTier } from './tier-profile-format';
+import { describeLastTier, describeRanges, describeSources, describeTierLayout } from './tier-profile-format';
 import { usePlatformTierProfilesQuery } from './use-profiles';
 
 const columnHelper = createColumnHelper<PlatformTierProfileDto>();
@@ -23,21 +23,22 @@ const columns = [
     header: 'Name',
     meta: { info: 'The tier profile\'s name, as a sport league\'s settings offer it.', type: { kind: 'text' } },
   }),
-  columnHelper.accessor('tierCount', {
-    header: 'Tiers',
-    meta: { info: 'How many tiers a new event of a sport league naming it starts with.', type: { kind: 'number' } },
+  columnHelper.accessor((profile) => describeSources(profile.sources), {
+    id: 'sources',
+    header: 'Order by',
+    meta: { info: 'The values auto-tiering puts the field in order by: the first everyone has decides, and later ones break ties.', type: { kind: 'text' } },
   }),
-  columnHelper.accessor('tierSize', {
-    header: 'Per tier',
-    meta: { info: 'How many participants auto-tiering puts in each tier before the last.', type: { kind: 'number' } },
-  }),
-  columnHelper.accessor('lastTier', {
-    header: 'Last tier',
+  columnHelper.accessor('type', {
+    header: 'Tiers by',
     meta: {
-      info: 'All remaining: the last tier takes everyone left. Capped: it takes at most the number shown, and anyone beyond is in no tier and can\'t be picked.',
-      type: { kind: 'enum', order: PlatformTierProfileLastTierOrder, label: (value) => enumLabel('PlatformTierProfileLastTier', value as PlatformTierProfileLastTier) },
+      info: 'Equal groups: tiers of one size in the field\'s order. Ranges: each tier takes the seeds or ranks its range holds.',
+      type: { kind: 'enum', order: TierProfileTypeOrder, label: (value) => enumLabel('TierProfileType', value as TierProfileType) },
     },
-    cell: ({ row }) => describeLastTier(row.original),
+  }),
+  columnHelper.accessor((profile) => describeTierLayout(profile), {
+    id: 'layout',
+    header: 'Layout',
+    meta: { info: 'Equal groups: how many tiers, how many in each, and what the last takes (capped: anyone beyond is in no tier and can\'t be picked). Ranges: each tier\'s seeds or ranks, first to last.', type: { kind: 'text' } },
   }),
   columnHelper.accessor('sportLeagueCount', {
     header: 'Used by',
@@ -95,9 +96,15 @@ export function PlatformTierProfilesSection() {
       </QueryState>
       <ProfileDialog
         facts={(profile) => [
-          { id: 'tiers', label: 'Tiers', value: profile.tierCount },
-          { id: 'per-tier', label: 'Per tier', value: profile.tierSize },
-          { id: 'last-tier', label: 'Last tier', value: describeLastTier(profile) },
+          { id: 'sources', label: 'Order by', value: describeSources(profile.sources) },
+          { id: 'type', label: 'Tiers by', value: enumLabel('TierProfileType', profile.type) },
+          ...(profile.type === TierProfileType.RANGES
+            ? [{ id: 'ranges', label: 'Ranges', value: describeRanges(profile.ranges) }]
+            : [
+              { id: 'tiers', label: 'Tiers', value: profile.tierCount },
+              { id: 'per-tier', label: 'Per tier', value: profile.tierSize },
+              { id: 'last-tier', label: 'Last tier', value: describeLastTier(profile) },
+            ]),
           { id: 'used-by', label: 'Used by', value: profile.sportLeagueCount },
         ]}
         // poolmaster-allow-list-lookup: tier profiles are reference data, a handful of rows

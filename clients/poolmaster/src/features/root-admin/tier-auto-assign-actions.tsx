@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { autoAssignEventTiers } from '@/lib/api';
+import { autoAssignEventTiers, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
@@ -20,10 +20,13 @@ export function TierAutoAssignActions({
   eventId,
   disabled,
   field,
+  overview,
 }: {
   eventId: string;
   disabled: boolean;
   field: readonly EventFieldEntry[];
+  /** The event's overview: the order the server decided for its field, which the dialog names. */
+  overview: SportEventOverviewDto | undefined;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-event-field',
@@ -71,7 +74,7 @@ export function TierAutoAssignActions({
       <ConfirmDialog
         confirmLabel="Replace tier assignments"
         confirmTestId="root-admin-tier-auto-tiers-confirm"
-        description={`${describeFieldOrder(field)} Every participant is re-tiered in that order, the order prices use too. Manual tier assignments will be replaced. Prices are untouched.`}
+        description={`${describeFieldOrder(overview, field.some((entry) => entry.isActive))} Every participant is re-tiered in that order, the order prices use too. Manual tier assignments will be replaced. Prices are untouched.`}
         error={
           autoTiersMutation.isError
             ? extractErrorMessage(autoTiersMutation.error, {

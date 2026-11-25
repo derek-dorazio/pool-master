@@ -1,4 +1,3 @@
-import { FieldOrderBasis } from '@poolmaster/shared/domain';
 import { z } from 'zod';
 import type { SportEventDto, UpdateSportEventRequest } from '@/lib/api';
 
@@ -19,13 +18,6 @@ export function settingsSchema({ roundsParMin, roundsParMax }: Pick<SportEventDt
 }
 
 export type SettingsValues = z.infer<ReturnType<typeof settingsSchema>>;
-
-/** Each value the field can be ordered by, as the ⚙ dialog names it. */
-export const TIER_ORDER_LABELS: Record<FieldOrderBasis, string> = {
-  [FieldOrderBasis.ODDS]: 'Odds',
-  [FieldOrderBasis.SEED]: 'Seed',
-  [FieldOrderBasis.RANKING]: 'Rank',
-};
 
 export function valuesOf(event: SportEventDto): SettingsValues {
   return {

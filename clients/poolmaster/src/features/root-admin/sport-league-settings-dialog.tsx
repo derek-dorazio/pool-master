@@ -15,7 +15,8 @@ import {
   showToast,
   type Fact,
 } from '@/features/shared/ui';
-import { extractErrorMessage } from '@/lib/errors';
+import { displayString } from '@poolmaster/shared/display-strings';
+import { extractErrorMessage, hasErrorCode } from '@/lib/errors';
 import { usePlatformPricingProfilesQuery, usePlatformTierProfilesQuery } from './use-profiles';
 import { useProvidersQuery } from './use-providers-query';
 import { useSportLeagueQuery } from './use-sport-league-overviews';
@@ -138,6 +139,10 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
     { id: 'platformPricingProfile', label: 'Pricing profile', value: platformPricingProfileName, testId: 'root-admin-sport-league-settings-pricing-profile' },
   ];
 
+  // The league's two profiles must start with the same source (#2160): the refusal shows under the
+  // pricing profile, the second of the pair, rather than above the form.
+  const profilesDisagree = hasErrorCode(updateMutation.error, 'PROFILE_FIRST_SOURCES_DIFFER');
+
   const cancelEdit = () => {
     form.reset(current);
     updateMutation.reset();
@@ -147,7 +152,7 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
   return (
     <DetailEditModal
       canSave={form.formState.isValid && form.formState.isDirty}
-      error={updateMutation.error}
+      error={profilesDisagree ? null : updateMutation.error}
       errorFallback="We could not save these settings."
       facts={facts}
       isPending={updateMutation.isPending}
@@ -199,7 +204,7 @@ function LoadedSettingsDialog({ onClose, sportLeague }: { onClose: () => void; s
             ))}
           </Select>
         </FormField>
-        <FormField label="Pricing profile">
+        <FormField error={profilesDisagree ? displayString('error.PROFILE_FIRST_SOURCES_DIFFER') : undefined} label="Pricing profile">
           <Select data-testid="root-admin-sport-league-settings-pricing-profile-input" {...form.register('platformPricingProfileId')}>
             {(platformPricingProfilesQuery.data ?? []).length === 0
               ? <option value={current.platformPricingProfileId}>{platformPricingProfileName}</option>

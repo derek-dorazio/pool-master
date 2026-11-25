@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
+import { Controller, useForm } from 'react-hook-form';
+import { explicitOrderValues, FieldOrderBasisOrder, findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
 import { PlatformPricingProfileWriteRequestSchema } from '@poolmaster/shared/dto';
 import { createPlatformPricingProfile, updatePlatformPricingProfile, type PlatformPricingProfileDto, type PlatformPricingProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, useMutationActionWorkflow } from '@/features/shared/ui';
@@ -10,6 +10,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { clearsSaveError } from './clears-save-error';
 import type { ProfileEditorProps } from './profile-dialog';
 import { ProfileFormModal } from './profile-form-modal';
+import { ProfileSourcesField } from './profile-sources-field';
 
 const { shape } = PlatformPricingProfileWriteRequestSchema;
 const dollarsRange = (min: number, max: number) => `From ${formatDollars(min)} to ${formatDollars(max)}.`;
@@ -37,13 +38,14 @@ const NUMBER_FIELDS = [
   { key: 'steepness', label: 'Steepness', step: 'any' },
 ] as const;
 
-const NEW_PROFILE: PlatformPricingProfileWriteRequest = { code: '', name: '', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+const NEW_PROFILE: PlatformPricingProfileWriteRequest = { code: '', name: '', sources: explicitOrderValues(FieldOrderBasisOrder), salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
 function formValuesOf(profile: PlatformPricingProfileDto | null): PlatformPricingProfileWriteRequest {
   return profile
     ? {
       code: profile.code,
       name: profile.name,
+      sources: [...profile.sources],
       salaryCap: profile.salaryCap,
       unit: profile.unit,
       topSharePercent: profile.topSharePercent,
@@ -99,6 +101,22 @@ export function PlatformPricingProfileEditor(dialog: ProfileEditorProps<Platform
         <FormField error={errors.name?.message} id="pricing-profile-name" label="Name">
           <Input data-testid="root-admin-pricing-profile-editor-name" id="pricing-profile-name" {...form.register('name', { onChange: clearError })} />
         </FormField>
+        <Controller
+          control={form.control}
+          name="sources"
+          render={({ field }) => (
+            <ProfileSourcesField
+              error={errors.sources?.message}
+              id="pricing-profile-sources"
+              onChange={(sources) => {
+                clearError();
+                field.onChange(sources);
+              }}
+              testId="root-admin-pricing-profile-editor-sources"
+              value={field.value}
+            />
+          )}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           {NUMBER_FIELDS.map((field) => (
             <FormField error={errors[field.key]?.message} id={`pricing-profile-${field.key}`} key={field.key} label={field.label}>

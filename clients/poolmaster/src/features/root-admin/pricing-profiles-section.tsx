@@ -9,6 +9,7 @@ import { PlatformPricingProfileEditor } from './pricing-profile-editor';
 import { ProfileDeleteDialog } from './profile-delete-dialog';
 import { ProfileDialog, type ProfileDialogState } from './profile-dialog';
 import { usePlatformPricingProfilesQuery } from './use-profiles';
+import { describeSources } from './tier-profile-format';
 
 const columnHelper = createColumnHelper<PlatformPricingProfileDto>();
 
@@ -42,6 +43,11 @@ const columns = [
   columnHelper.accessor('steepness', {
     header: 'Steepness',
     meta: { info: 'How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive.', type: { kind: 'number' } },
+  }),
+  columnHelper.accessor((profile) => describeSources(profile.sources), {
+    id: 'sources',
+    header: 'Order by',
+    meta: { info: 'The values pricing puts the field in order by: the first everyone has decides, and later ones break ties. A league\'s tier and pricing profiles start with the same one.', type: { kind: 'text' } },
   }),
   columnHelper.accessor('sportLeagueCount', {
     header: 'Used by',
@@ -99,6 +105,7 @@ export function PlatformPricingProfilesSection() {
       </QueryState>
       <ProfileDialog
         facts={(profile) => [
+          { id: 'sources', label: 'Order by', value: describeSources(profile.sources) },
           { id: 'salary-cap', label: 'Salary cap', value: formatDollars(profile.salaryCap) },
           { id: 'unit', label: 'Unit', value: formatDollars(profile.unit) },
           { id: 'top-share', label: 'Top share', value: `${profile.topSharePercent}%` },

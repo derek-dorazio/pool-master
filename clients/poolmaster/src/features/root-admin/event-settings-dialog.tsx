@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -31,7 +32,7 @@ import { EventTiersDialog } from './event-tiers-dialog';
 import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
 import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
-import { settingsRequestBody, settingsSchema, TIER_ORDER_LABELS, valuesOf, type SettingsValues } from './event-settings-form';
+import { settingsRequestBody, settingsSchema, valuesOf, type SettingsValues } from './event-settings-form';
 import { usePlatformPricingProfilesQuery, usePlatformTierProfilesQuery } from './use-profiles';
 
 const logger = getLogger().child({ feature: 'root-admin-event-settings' });
@@ -110,7 +111,7 @@ export function EventSettingsDialog({
   const platformTierProfileName = platformTierProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformTierProfileId)?.name ?? '…';
   // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
   const platformPricingProfileName = platformPricingProfilesQuery.data?.find((profile) => profile.id === sportLeague?.platformPricingProfileId)?.name ?? '…';
-  const tierOrder = overview === undefined ? '…' : overview.tierOrderBasis === null ? 'No active field' : TIER_ORDER_LABELS[overview.tierOrderBasis];
+  const tierOrder = overview === undefined ? '…' : overview.tierOrderBasis === null ? 'No active field' : enumLabel('FieldOrderBasis', overview.tierOrderBasis);
   const testId = 'root-admin-event-settings-dialog';
 
   const facts: Fact[] = [

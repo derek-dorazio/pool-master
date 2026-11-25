@@ -1286,6 +1286,23 @@ export const enUS = {
     raceNumber: 'Race {{n}}',
     singleRace: 'Race',
     roundHeading: 'Round',
+    // How auto-assigned tiers and prices put a field in order (#2160), by the league's profile's
+    // sources, keyed by FieldOrderBasis code: each source's name, how a participant without it is
+    // said to lack it, and the order.
+    fieldOrderSourceODDS: 'odds',
+    fieldOrderSourceSEED: 'seed',
+    fieldOrderSourceRANKING: 'rank',
+    fieldOrderMissingODDS: 'odds',
+    fieldOrderMissingSEED: 'a seed',
+    fieldOrderMissingRANKING: 'a rank',
+    fieldOrderedByODDS: 'Ordered by odds, shortest first',
+    fieldOrderedBySEED: 'Ordered by seed',
+    fieldOrderedByRANKING: 'Ordered by rank',
+    fieldOrderCovered: '{{order}}.',
+    fieldOrderAfterEarlier: '{{order}} (not every participant has {{sources}}).',
+    fieldOrderPartial: 'Ordered by {{source}}, participants without {{missing}} last (no value is set for every participant).',
+    fieldOrderNone: 'Not ordered: no participant has {{sources}}, so nothing is assigned.',
+    fieldOrderNoField: 'Not ordered: the event has no active field.',
     // A numbered part of a game or event; the short form heads a tight column or tags a box.
     quarterNumber: { name: 'Quarter {{n}}', short: 'Q{{n}}' },
     halfNumber: { name: 'Half {{n}}', short: 'H{{n}}' },

@@ -11203,12 +11203,14 @@ export interface components {
              */
             releaseAtKind: "PLANNED" | "ACTUAL" | null;
             /**
-             * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
+             * @description The value that orders its active field for automatic tiers and prices: the first of tierOrderSources every participant has, else the first anyone has. Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
              * @enum {string|null}
              */
             tierOrderBasis: "ODDS" | "SEED" | "RANKING" | null;
             /** @description False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last. */
             tierOrderCoversField: boolean;
+            /** @description The sources its sport league's tier profile orders a field by, in order (#2160); its pricing profile starts with the same one. Names what a field with no order lacks. */
+            tierOrderSources: ("ODDS" | "SEED" | "RANKING")[];
             /** @description One per field row, active or withdrawn, never paged. */
             fieldFeed: {
                 /**
@@ -11402,12 +11404,14 @@ export interface components {
                  */
                 releaseAtKind: "PLANNED" | "ACTUAL" | null;
                 /**
-                 * @description The value that orders its active field for automatic tiers and prices: ODDS, SEED or RANKING (the first every participant has). Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
+                 * @description The value that orders its active field for automatic tiers and prices: the first of tierOrderSources every participant has, else the first anyone has. Null while it has no active field, or no participant has any of them, so nothing is tiered or priced automatically.
                  * @enum {string|null}
                  */
                 tierOrderBasis: "ODDS" | "SEED" | "RANKING" | null;
                 /** @description False when no value covers the whole active field, so tierOrderBasis is the first value anyone has and those without it go last. */
                 tierOrderCoversField: boolean;
+                /** @description The sources its sport league's tier profile orders a field by, in order (#2160); its pricing profile starts with the same one. Names what a field with no order lacks. */
+                tierOrderSources: ("ODDS" | "SEED" | "RANKING")[];
                 /** @description One per field row, active or withdrawn, never paged. */
                 fieldFeed: {
                     /**

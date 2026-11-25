@@ -237,6 +237,7 @@ export function buildSportEventOverview(
     ...sportEventReleaseOf(event, league),
     tierOrderBasis: decision?.basis ?? null,
     tierOrderCoversField: decision?.coversField ?? true,
+    tierOrderSources: [...league.tierSources],
     fieldFeed: facts.field.map((row) => ({
       sportEventParticipantId: row.id,
       feedId: row.mapping?.externalId ?? null,

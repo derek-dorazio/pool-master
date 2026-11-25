@@ -34,12 +34,13 @@ export function EventFieldTab() {
     <span className="flex flex-wrap justify-end gap-2">
       {locked ? null : (
         <>
-          <TierAutoAssignActions disabled={entries.length === 0} eventId={event.id} field={entries} />
+          <TierAutoAssignActions disabled={entries.length === 0} eventId={event.id} field={entries} overview={overview} />
           <PriceAssignAction
             current={event.pricing}
             disabled={entries.length === 0}
             eventId={event.id}
             field={entries}
+            overview={overview}
             sportLeagueId={event.sportLeagueId}
           />
         </>

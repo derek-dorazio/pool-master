@@ -85,6 +85,11 @@ export function formatAndList(items: readonly string[], locale?: string): string
   return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(items);
 }
 
+/** Words as one choice in the viewer's language: "odds, a seed, or a rank". */
+export function formatOrList(items: readonly string[], locale?: string): string {
+  return new Intl.ListFormat(locale, { style: "long", type: "disjunction" }).format(items);
+}
+
 /** A place as an ordinal: "1st", "2nd", "3rd", "11th", "22nd". */
 export function formatOrdinal(place: number): string {
   const lastTwo = place % 100;

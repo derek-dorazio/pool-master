@@ -28,9 +28,26 @@ bindApiMocks(mocks);
 const STAMPS = { createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' };
 const GOLF_ID = '00000000-0000-4000-8000-0000000000a1';
 const CAPPED_ID = '00000000-0000-4000-8000-0000000000a2';
+const RANGES_ID = '00000000-0000-4000-8000-0000000000a3';
 
-function platformTierProfile(overrides: Partial<PlatformTierProfileDto> = {}): PlatformTierProfileDto {
-  return { id: GOLF_ID, code: 'TIERS_6_OF_10', name: '6 tiers of 10', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, sportLeagueCount: 2, ...STAMPS, ...overrides };
+type EqualGroupsProfile = Extract<PlatformTierProfileDto, { type: 'EQUAL_GROUPS' }>;
+
+function platformTierProfile(overrides: Partial<EqualGroupsProfile> = {}): EqualGroupsProfile {
+  return { id: GOLF_ID, type: 'EQUAL_GROUPS', code: 'TIERS_6_OF_10', name: '6 tiers of 10', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null, sportLeagueCount: 2, ...STAMPS, ...overrides };
+}
+
+/** The NFL's seed profile: tier 1 the 1 seeds, tier 2 seeds 2 to 4, tier 3 the rest. */
+function seedRangesProfile(): PlatformTierProfileDto {
+  return {
+    id: RANGES_ID,
+    type: 'RANGES',
+    code: 'PLAYOFF_SEEDS_1_4_REST',
+    name: 'Playoff seeds 1, 2-4, rest',
+    sources: ['SEED', 'ODDS', 'RANKING'],
+    ranges: [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }],
+    sportLeagueCount: 0,
+    ...STAMPS,
+  };
 }
 
 function seed(platformTierProfiles: PlatformTierProfileDto[] = [platformTierProfile(), platformTierProfile({ id: CAPPED_ID, code: 'TIERS_4_OF_8_CAPPED', name: '4 tiers of 8, capped', tierCount: 4, tierSize: 8, lastTier: 'CAPPED', lastTierMax: 12, sportLeagueCount: 0 })]) {
@@ -71,13 +88,18 @@ describe('RootAdminProfilesPage', () => {
     expect(screen.getByTestId('root-admin-sports-tab-leagues')).toHaveAttribute('href', '/manage/sports');
   });
 
-  it('lists every tier profile with its layout and use, a capped last tier with its cap, and every pricing profile in dollars', async () => {
-    seed();
+  it('lists every tier profile with its sources, layout and use, a capped last tier with its cap, a ranges profile with its ranges, and every pricing profile in dollars', async () => {
+    seed([platformTierProfile(), platformTierProfile({ id: CAPPED_ID, code: 'TIERS_4_OF_8_CAPPED', name: '4 tiers of 8, capped', tierCount: 4, tierSize: 8, lastTier: 'CAPPED', lastTierMax: 12, sportLeagueCount: 0 }), seedRangesProfile()]);
     renderPage();
 
     const capped = await screen.findByTestId(`root-admin-tier-profile-${CAPPED_ID}`);
-    expect(within(capped).getByText('Capped at 12')).toBeInTheDocument();
-    expect(within(screen.getByTestId(`root-admin-tier-profile-${GOLF_ID}`)).getByText('All remaining')).toBeInTheDocument();
+    expect(within(capped).getByText('4 × 8, last tier capped at 12')).toBeInTheDocument();
+    const golf = screen.getByTestId(`root-admin-tier-profile-${GOLF_ID}`);
+    expect(within(golf).getByText('6 × 10, last tier all remaining')).toBeInTheDocument();
+    expect(within(golf).getByText('Odds, Seed, Rank')).toBeInTheDocument();
+    const ranges = screen.getByTestId(`root-admin-tier-profile-${RANGES_ID}`);
+    expect(within(ranges).getByText('Ranges: 1 · 2–4 · 5+')).toBeInTheDocument();
+    expect(within(ranges).getByText('Seed, Odds, Rank')).toBeInTheDocument();
     const standard = await screen.findByTestId(`root-admin-pricing-profile-${STANDARD_PLATFORM_PRICING_PROFILE_ID}`);
     expect(within(standard).getByText('$50,000')).toBeInTheDocument();
     expect(within(standard).getByText('$100')).toBeInTheDocument();
@@ -105,7 +127,7 @@ describe('RootAdminProfilesPage', () => {
 
     await waitFor(() => expect(mocks.updatePlatformTierProfile).toHaveBeenCalledWith(expect.objectContaining({
       path: { profileId: GOLF_ID },
-      body: { code: 'TIERS_6_OF_10', name: '6 tiers of 12', tierCount: 6, tierSize: 12, lastTier: 'ALL_REMAINING', lastTierMax: null },
+      body: { type: 'EQUAL_GROUPS', code: 'TIERS_6_OF_10', name: '6 tiers of 12', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 6, tierSize: 12, lastTier: 'ALL_REMAINING', lastTierMax: null },
     })));
     expect(await screen.findByTestId('root-admin-tier-profile-dialog-edit')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-tier-profile-editor-name')).not.toBeInTheDocument();
@@ -141,9 +163,44 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-save'));
 
     await waitFor(() => expect(mocks.createPlatformTierProfile).toHaveBeenCalledWith(expect.objectContaining({
-      body: { code: 'TIERS_5_OF_5_CAPPED', name: '5 of 5, capped', tierCount: 5, tierSize: 5, lastTier: 'CAPPED', lastTierMax: 9 },
+      body: { type: 'EQUAL_GROUPS', code: 'TIERS_5_OF_5_CAPPED', name: '5 of 5, capped', sources: ['ODDS', 'SEED', 'RANKING'], tierCount: 5, tierSize: 5, lastTier: 'CAPPED', lastTierMax: 9 },
     })));
     expect(await screen.findByTestId('root-admin-tier-profile-dialog-leagues-none')).toBeInTheDocument();
+  });
+
+  it('creates a ranges tier profile ordered by seed first, each range numbered by its place, and sends no equal-groups values', async () => {
+    seed();
+    mocks.createPlatformTierProfile.mockResolvedValue({ data: { platformTierProfile: seedRangesProfile() } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-tier-profiles-new'));
+    await userEvent.type(await screen.findByTestId('root-admin-tier-profile-editor-code'), 'PLAYOFF_SEEDS_1_4_REST');
+    await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-name'), 'Playoff seeds 1, 2-4, rest');
+    await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-sources-SEED-up'));
+    await userEvent.selectOptions(screen.getByTestId('root-admin-tier-profile-editor-type'), 'RANGES');
+    expect(screen.queryByTestId('root-admin-tier-profile-editor-tier-count')).not.toBeInTheDocument();
+    const to0 = screen.getByTestId('root-admin-tier-profile-editor-range-to-0');
+    await userEvent.type(to0, '1');
+    await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-range-add'));
+    const from1 = screen.getByTestId('root-admin-tier-profile-editor-range-from-1');
+    await userEvent.clear(from1);
+    await userEvent.type(from1, '2');
+    await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-range-to-1'), '4');
+    await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-range-add'));
+    const from2 = screen.getByTestId('root-admin-tier-profile-editor-range-from-2');
+    await userEvent.clear(from2);
+    await userEvent.type(from2, '5');
+    await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-save'));
+
+    await waitFor(() => expect(mocks.createPlatformTierProfile).toHaveBeenCalledWith(expect.objectContaining({
+      body: {
+        type: 'RANGES',
+        code: 'PLAYOFF_SEEDS_1_4_REST',
+        name: 'Playoff seeds 1, 2-4, rest',
+        sources: ['SEED', 'ODDS', 'RANKING'],
+        ranges: [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }],
+      },
+    })));
   });
 
   it('shows the server\'s refusal to delete a tier profile a sport league names, keeping the dialog open', async () => {
@@ -201,7 +258,7 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.click(screen.getByTestId('root-admin-pricing-profile-editor-save'));
 
     await waitFor(() => expect(mocks.createPlatformPricingProfile).toHaveBeenCalledWith(expect.objectContaining({
-      body: { code: 'BIG', name: 'Big', salaryCap: 100000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+      body: { code: 'BIG', name: 'Big', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 100000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     })));
     expect(await screen.findByTestId('root-admin-pricing-profile-dialog-edit')).toBeInTheDocument();
   });
