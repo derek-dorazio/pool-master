@@ -144,6 +144,7 @@ type Day = { year: number; month: number; day: number };
 
 function addDays({ year, month, day }: Day, days: number): Day {
   const moved = new Date(Date.UTC(year, month - 1, day + days));
+  // poolmaster-allow-clock-year: calendar arithmetic for the date filter, not a season
   return { year: moved.getUTCFullYear(), month: moved.getUTCMonth() + 1, day: moved.getUTCDate() };
 }
 
@@ -255,6 +256,7 @@ function parseTypedDate(text: string, preferences: DisplayPreferences, thisYear:
 
 function validDay({ year, month, day }: Day): boolean {
   const check = new Date(Date.UTC(year, month - 1, day));
+  // poolmaster-allow-clock-year: checks a typed date is a real calendar day, not a season
   return check.getUTCFullYear() === year && check.getUTCMonth() === month - 1 && check.getUTCDate() === day;
 }
 

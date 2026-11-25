@@ -147,6 +147,7 @@ function addMonths(date: Date, months: number): Date {
   const moved = new Date(date);
   moved.setUTCDate(1);
   moved.setUTCMonth(moved.getUTCMonth() + months);
+  // poolmaster-allow-clock-year: the last day of a month for billing dates, not a season
   const lastDay = new Date(Date.UTC(moved.getUTCFullYear(), moved.getUTCMonth() + 1, 0)).getUTCDate();
   moved.setUTCDate(Math.min(date.getUTCDate(), lastDay));
   return moved;

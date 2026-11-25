@@ -29,6 +29,7 @@ import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 import noNodeEnvReads from '../no-node-env-reads.mjs';
 import noSportBranching from '../no-sport-branching.mjs';
+import noClockYearOrLeagueTables from '../no-clock-year-or-league-tables.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
@@ -1433,6 +1434,45 @@ typedRuleTester.run('follow-ups-via-domain-events', followUpsViaDomainEvents, {
       }`,
       filename: typedFixture,
       errors: [{ messageId: 'unusedAllow' }],
+    },
+  ],
+});
+
+ruleTester.run('no-clock-year-or-league-tables', noClockYearOrLeagueTables, {
+  valid: [
+    // The Season and its year come from the model.
+    'const year = season.championshipYear;',
+    // Month and day are not a year.
+    'const month = date.getUTCMonth();',
+    // Date arithmetic that is not a season, with its reason.
+    '// poolmaster-allow-clock-year: the last day of a month for billing\nconst last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0));',
+    // A table keyed by a status or a plan is not a fact about a league.
+    'const tones: Record<SportEventStatus, string> = {};',
+    'const caps: Record<LeaguePlan, number> = {};',
+    // A table of behaviour keyed by sport is a dispatch.
+    'const readers: Record<Sport, (id: string) => Reader> = {};',
+    // A lookup by id.
+    'const byId = new Map<string, League>();',
+    'const bySport = new Map<Sport, SportLeagueDto>();',
+    // A file at or under its baseline passes.
+    { code: 'const y = now.getUTCFullYear();', filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
+  ],
+  invalid: [
+    { code: 'const year = new Date().getUTCFullYear();', errors: [{ messageId: 'clockYear' }] },
+    { code: 'const year = today.getFullYear() - 1;', errors: [{ messageId: 'clockYear' }] },
+    { code: 'const months: Record<Sport, number> = {};', errors: [{ messageId: 'leagueTable' }] },
+    { code: 'const windows: Readonly<Record<ProviderLeagueCode, string>> = {};', errors: [{ messageId: 'leagueTable' }] },
+    { code: 'const editions = new Map<SportLeagueCode, number>([[SportLeagueCode.NFL, 1]]);', errors: [{ messageId: 'leagueTable' }] },
+    { code: 'type T = Record<NcaaTournamentLeague, { window: string }>;', errors: [{ messageId: 'leagueTable' }] },
+    // A marker needs a reason, and one that excuses nothing is reported.
+    { code: '// poolmaster-allow-clock-year\nconst y = d.getUTCFullYear();', errors: [{ messageId: 'missingReason' }] },
+    { code: '// poolmaster-allow-clock-year: nothing here\nconst m = d.getUTCMonth();', errors: [{ messageId: 'unusedAllow' }] },
+    // A file over its baseline reports every hit, so it cannot add one.
+    {
+      code: 'const a = d.getUTCFullYear();\nconst b = e.getUTCFullYear();',
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
     },
   ],
 });
