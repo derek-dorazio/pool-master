@@ -455,6 +455,88 @@ describe('SportEventService.importProviderSeason', () => {
   });
 });
 
+// #2011: an open phase's tournaments match their Season slot by name the first time, then by code.
+describe('SportEventService.importProviderSeason by tournament name', () => {
+  const masters = providerEvent('17', 'Masters Tournament 2027', 'Augusta National', new Date('2026-04-09T12:00:00.000Z'), new Date('2026-04-12T23:00:00.000Z'));
+
+  it('creates the Season slot of the one definition the tournament\'s name matches, links it to the tournament\'s code, and puts the new event on it', async () => {
+    const { store, service, sportLeague, sportEvents } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+    store.templateCoveredDefinitionIds.add('masters');
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    const created = store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters');
+    expect(created).toHaveLength(1);
+    expect(store.slotLinks.get(created[0].id)).toBe('17');
+    expect(result.unmatched).toEqual([]);
+    expect(result.unplacedNames).toEqual([]);
+    const eventId = result.created[0].event.id;
+    expect(expectDefined((await sportEvents.findSlots([eventId])).get(eventId)).map((slot) => slot.id)).toEqual([created[0].id]);
+  });
+
+  it('matches a linked tournament by its code on the next sync even after its name changed, creating no second slot', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+    store.templateCoveredDefinitionIds.add('masters');
+    await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    const renamed = await service.importProviderSeason(importOf(sportLeague, [{ ...masters, name: 'The Masters presented by Someone' }]));
+
+    expect(store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters')).toHaveLength(1);
+    expect(renamed.unplacedNames).toEqual([]);
+    expect(renamed.skipped).toEqual([{ externalId: '17', name: 'The Masters presented by Someone', reason: 'ALREADY_LINKED' }]);
+  });
+
+  it('places nothing for a name no pattern matches, and reports it once by its normalized name rather than as an unmapped code', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [
+      providerEvent('40', 'The New Open 2027', null, new Date('2026-05-01T12:00:00.000Z'), null),
+      providerEvent('41', 'The New Open', null, new Date('2027-05-01T12:00:00.000Z'), null),
+    ]));
+
+    expect(result.created).toEqual([]);
+    expect(result.unmatched).toEqual([]);
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'the new open', name: 'The New Open 2027', reason: 'UNMATCHED' }]);
+    expect(store.seasonSlots.filter((slot) => !slot.isTestData)).toEqual([]);
+  });
+
+  it('reports a name the patterns of two definitions match as ambiguous, and links it to neither', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'twin-a', pattern: 'twin championship' }, { slotDefinitionId: 'twin-b', pattern: 'twin championship' });
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [providerEvent('50', 'Twin Championship', null, new Date('2026-05-01T12:00:00.000Z'), null)]));
+
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'twin championship', name: 'Twin Championship', reason: 'AMBIGUOUS' }]);
+    expect(store.slotLinks.size).toBe(0);
+  });
+
+  it('reports a name whose matched slot has no phase in the Season, creating no slot and raising no unmapped code, rather than dropping it', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+    store.templateCoveredDefinitionIds.add('masters');
+    store.definitionsWithoutSeasonPhase.add('masters');
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'masters tournament', name: 'Masters Tournament 2027', reason: 'SEASON_PHASE_MISSING' }]);
+    expect(result.created).toEqual([]);
+    expect(result.unmatched).toEqual([]);
+    expect(store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters')).toEqual([]);
+  });
+
+  it('matches by name only in a league with NAME_PATTERN mappings: elsewhere a code no mapping includes is an unmapped code', async () => {
+    const { service, sportLeague } = setup();
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    expect(result.unmatched).toEqual([{ code: '17', eventName: 'Masters Tournament 2027' }]);
+    expect(result.unplacedNames).toEqual([]);
+  });
+});
+
 describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
   const DAY = 24 * 60 * 60 * 1000;
   const listed = providerEvent('pga-2026-a', 'Alpha Open', 'A Links', new Date('2026-03-05T12:00:00.000Z'), new Date('2026-03-08T23:00:00.000Z'));

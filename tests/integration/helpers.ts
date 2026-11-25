@@ -123,6 +123,7 @@ import { activityModule } from '../../packages/core-api/src/modules/activity/rou
 import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestion/findings/routes';
 import { ProviderSyncFindingService } from '../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
 import { resolveMappedParticipantFindingsJobHandler } from '../../packages/core-api/src/modules/ingestion/findings/mapped-participant-findings-job';
+import { PrismaSlotNamePatternRepository } from '../../packages/core-api/src/adapters/prisma-slot-name-pattern-repository';
 import { PrismaProviderSyncFindingRepository } from '../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
 import { PrismaSportLeagueSeasonRepository } from '../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { ParticipantService } from '../../packages/core-api/src/modules/participants/service';
@@ -256,6 +257,7 @@ export function integrationSyncFindings(
     repository: new PrismaProviderSyncFindingRepository(prisma),
     providers,
     participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), testDomainEvents()),
+    slotNamePatterns: new PrismaSlotNamePatternRepository(prisma),
   });
 }
 

@@ -7,8 +7,8 @@ import {
   Sport,
   type ProviderSyncFinding,
 } from '@poolmaster/shared/domain';
-import { ProviderSyncFindingDtoSchema } from '@poolmaster/shared/dto';
-import { toProviderSyncFindingDto } from '../../../packages/core-api/src/mappers/sync-findings.mapper';
+import { ProviderSyncFindingDtoSchema, ProviderSyncFindingSlotChoiceListResponseSchema } from '@poolmaster/shared/dto';
+import { toProviderSyncFindingDto, toProviderSyncFindingSlotChoiceDto } from '../../../packages/core-api/src/mappers/sync-findings.mapper';
 
 const AT = new Date('2027-04-15T12:00:00.000Z');
 
@@ -61,5 +61,17 @@ describe('toProviderSyncFindingDto', () => {
       statusChangedBy: { id: '9d4fce2c-9e4c-4a5c-9b87-6dac2c7c8f54', displayName: 'Ada Admin' },
       actions: ['REOPEN'],
     });
+  });
+});
+
+describe('toProviderSyncFindingSlotChoiceDto', () => {
+  it('answers a slot a tournament name can be linked to with its key, kind, week, name and a copy of its patterns', () => {
+    const patterns = ['the memorial tournament'];
+    const dto = toProviderSyncFindingSlotChoiceDto({ slotDefinitionId: '5b1f4c0e-3d7a-4f8e-9a52-1c3e8f2d6a10', key: 'MEMORIAL', slotKind: 'TOURNAMENT', weekNumber: null, name: 'Memorial Tournament', patterns });
+    patterns.push('jack\'s invitational');
+
+    expect(ProviderSyncFindingSlotChoiceListResponseSchema.parse({ slots: [dto] }).slots).toEqual([{
+      slotDefinitionId: '5b1f4c0e-3d7a-4f8e-9a52-1c3e8f2d6a10', key: 'MEMORIAL', slotKind: 'TOURNAMENT', weekNumber: null, name: 'Memorial Tournament', patterns: ['the memorial tournament'],
+    }]);
   });
 });

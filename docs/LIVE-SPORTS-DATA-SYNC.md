@@ -199,6 +199,23 @@ takes its dates from them (`eventDatesFromSlots`), on creation and on every late
 maps raises one `SLOT_VALUE_UNMAPPED` INFO finding per league and code; waive it for a code the
 league does not play (the preseason). A page that lists fewer events or games deletes nothing.
 
+**Tournaments matched by name (#2011).** An open phase (golf) has one slot definition per
+recurring tournament, and its Season slots are not created with the Season. A league whose
+selected provider mapping has `NAME_PATTERN` rows places a tournament no code places by its
+normalized name (lower case, any year and anything from "presented by" on
+removed), once, in `placeSlotsByName`, the one place name matching happens. One definition's
+pattern matching creates that definition's Season slot when the events sync loads the season
+schedule (or links the existing one) and records the tournament's code on it
+(`sport_league_season_phase_slot_provider_mappings`); from then on the tournament matches by that code, whatever it is
+called. A name no pattern matches places nothing and raises one `SLOT_NAME_UNMATCHED` INFO finding
+per league and normalized name, whose **Link to existing** action adds the name as another
+pattern of a chosen definition and resolves it (the next sync links the tournament). There is no
+"create new": definitions are set by migration, so a tournament with none waits for its migration.
+A name that matches more than one definition, or a slot another tournament already has, raises one
+`SLOT_NAME_AMBIGUOUS` ERROR finding and links nothing. A name that matches a definition whose phase
+the Season has no phase for gets no slot and raises one `SLOT_SEASON_PHASE_MISSING` ERROR finding,
+so a Season added without its open phase is never skipped in silence.
+
 For each provider event:
 
 - **New, start in the future, on a slot a contest template lists**: created as a `DRAFT`
@@ -391,9 +408,12 @@ column. Each finding names its sport league; its event, Provider row and the fee
   raised per synced league when a worker task starts with the Provider's webhooks on and no
   signing secret; resolved once it is set, and on a league the Provider no longer syncs at the next check, #2070),
   `SEASON_MISSING` (ERROR, *The run* above), `PROVIDER_LEAGUE_UNKNOWN` (ERROR, a mapping's
-  provider league code the provider does not read, *The run* above) and `SLOT_VALUE_UNMAPPED`
+  provider league code the provider does not read, *The run* above), `SLOT_VALUE_UNMAPPED`
   (INFO, a provider code no slot maps, *Matching games to Season slots* above; it has no action,
-  since a mapping is added by migration). Three are checked on an event by each sync that
+  since a mapping is added by migration), `SLOT_NAME_UNMATCHED` (INFO, a tournament name no
+  pattern matches; its action is Link to existing) and `SLOT_NAME_AMBIGUOUS` (ERROR, a name that
+  matches more than one slot) and `SLOT_SEASON_PHASE_MISSING` (ERROR, a matched slot whose phase the
+  Season lacks), all three *Tournaments matched by name* above. Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
@@ -530,10 +550,9 @@ every league, and the PR must say so.
   MLB's `quietAfterMinutes` is 210 in case innings are not notified. Confirm during the paid trial
   (#1500).
 - **CFP feed**: confirm bowl and playoff games are carried and whether a marker exists (#1500).
-- **Golf and college football create no new events yet** (#2005): a PGA tournament's code is its
-  tournament id, which no slot maps until slots match by name (slice 12), so each raises a
-  `SLOT_VALUE_UNMAPPED` finding; college football sends no codes until slots match by date window
-  (slice 13). Events already linked keep syncing.
+- **College football creates no new events yet** (#2005): it sends no codes until slots match by
+  date window (slice 13). Events already linked keep syncing. Golf tournaments match by name
+  (#2011).
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
 - **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
 - **Per-event tier override** from the event ⚙ dialog is in progress.

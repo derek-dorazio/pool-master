@@ -129,6 +129,7 @@ import { PrismaSportLeagueSeasonRepository } from './adapters/prisma-sport-leagu
 import { syncFindingsModule } from './modules/ingestion/findings/routes';
 import { resolveMappedParticipantFindingsJobHandler } from './modules/ingestion/findings/mapped-participant-findings-job';
 import { ProviderRateLimitWatch } from './modules/ingestion/findings/provider-rate-limit-watch';
+import { PrismaSlotNamePatternRepository } from './adapters/prisma-slot-name-pattern-repository';
 import { PrismaProviderSyncFindingRepository } from './adapters/prisma-provider-sync-finding-repository';
 import { ParticipantService } from './modules/participants/service';
 import { registerConfiguredProviders, type SportDataProviderFactory } from './modules/ingestion/core/provider-bindings';
@@ -230,6 +231,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     repository: syncFindingRepository,
     providers: providerSettings,
     participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), domainEvents, app.log),
+    slotNamePatterns: new PrismaSlotNamePatternRepository(prisma),
     logger: app.log,
   });
   // A Provider that keeps rate limiting raises a finding on each league it syncs (#2038).

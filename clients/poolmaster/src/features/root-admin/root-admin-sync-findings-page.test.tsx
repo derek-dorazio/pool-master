@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => ({
   changeProviderSyncFindingStatus: vi.fn(),
   mapProviderSyncFindingParticipant: vi.fn(),
   listSportLeagueParticipants: vi.fn(),
+  listProviderSyncFindingSlotChoices: vi.fn(),
+  linkProviderSyncFindingSlot: vi.fn(),
 }));
 
 bindApiMocks(mocks);
@@ -56,6 +58,14 @@ const NAMESAKE = finding({
   id: 'finding-4', kind: 'WEBHOOK_SECRET_MISSING', severity: 'ERROR', sportLeague: { id: 'nfl-2', name: 'NFL', sport: 'AMERICAN_FOOTBALL' },
   providerValue: null, providerValueName: null, actions: ['RESOLVE', 'WAIVE'],
 });
+const UNMATCHED_NAME = finding({
+  id: 'finding-5', kind: 'SLOT_NAME_UNMATCHED', severity: 'INFO', providerValue: 'the new open', providerValueName: 'The 2027 New Open',
+  actions: ['LINK_SLOT', 'RESOLVE', 'WAIVE'],
+});
+const SLOT_CHOICES = [
+  { slotDefinitionId: 'slot-masters', key: 'MASTERS', slotKind: 'TOURNAMENT', weekNumber: null, name: 'Masters Tournament', patterns: ['masters tournament'] },
+  { slotDefinitionId: 'slot-memorial', key: 'MEMORIAL_TOURNAMENT', slotKind: 'TOURNAMENT', weekNumber: null, name: 'the Memorial Tournament', patterns: ['the memorial tournament'] },
+] as const;
 const WAIVED = finding({
   id: 'finding-3', status: 'WAIVED', providerValue: 'golfer-88', providerValueName: 'An Amateur', waiveNote: 'Plays once a year',
   statusChangedBy: { id: 'admin-1', displayName: 'Root Admin' }, actions: ['REOPEN'],
@@ -87,7 +97,8 @@ async function openFinding(id: string) {
 
 beforeEach(() => {
   for (const mock of Object.values(mocks)) mock.mockReset();
-  mocks.listProviderSyncFindings.mockResolvedValue({ data: { findings: [finding(), WEBHOOK, WAIVED] } });
+  mocks.listProviderSyncFindings.mockResolvedValue({ data: { findings: [finding(), WEBHOOK, WAIVED, UNMATCHED_NAME] } });
+  mocks.listProviderSyncFindingSlotChoices.mockResolvedValue({ data: { slots: SLOT_CHOICES } });
   mocks.getProviderSyncFinding.mockResolvedValue({ data: { finding: finding() } });
   mocks.listSportLeagueParticipants.mockResolvedValue({
     data: {
@@ -201,6 +212,64 @@ describe('RootAdminSyncFindingsPage', () => {
   });
 });
 
+describe('Link to existing on a tournament name finding', () => {
+  it('reads the slots only once it is opened, sends the chosen slot, and closes when the finding is resolved', async () => {
+    mocks.linkProviderSyncFindingSlot.mockResolvedValue({ data: { finding: { ...UNMATCHED_NAME, status: 'RESOLVED', actions: ['REOPEN'] } } });
+    renderPage();
+
+    const dialog = within(await openFinding('finding-5'));
+    expect(dialog.getByTestId(`${DIALOG}-value`)).toHaveTextContent('the new open');
+    expect(dialog.queryByTestId(`${DIALOG}-MAP_PARTICIPANT`)).not.toBeInTheDocument();
+    expect(mocks.listProviderSyncFindingSlotChoices).not.toHaveBeenCalled();
+    fireEvent.click(dialog.getByTestId(`${DIALOG}-LINK_SLOT`));
+
+    const confirm = await screen.findByTestId(`${DIALOG}-link-confirm`);
+    expect(confirm).toBeDisabled();
+    const picker = await screen.findByTestId(`${DIALOG}-link-slot`);
+    await waitFor(() => expect(picker).toHaveTextContent('Masters Tournament'));
+    expect(mocks.listProviderSyncFindingSlotChoices).toHaveBeenCalledWith(expect.objectContaining({ path: { findingId: 'finding-5' } }));
+    fireEvent.change(picker, { target: { value: 'slot-memorial' } });
+    fireEvent.click(confirm);
+
+    await waitFor(() => expect(mocks.linkProviderSyncFindingSlot).toHaveBeenCalledWith(expect.objectContaining({
+      path: { findingId: 'finding-5' }, body: { slotDefinitionId: 'slot-memorial' },
+    })));
+    await waitFor(() => expect(screen.queryByTestId(`${DIALOG}-link`)).not.toBeInTheDocument());
+    await waitFor(() => expect(mocks.listProviderSyncFindings).toHaveBeenCalledTimes(2));
+  });
+
+  it('keeps the link confirm open with the server\'s reason when the name already places a tournament', async () => {
+    mocks.linkProviderSyncFindingSlot.mockResolvedValue({
+      error: { error: { code: 'SLOT_NAME_PATTERN_TAKEN', message: '"the new open" already places a tournament on a slot of PGA TOUR.' } },
+      response: { status: 409 },
+    });
+    renderPage();
+
+    fireEvent.click(within(await openFinding('finding-5')).getByTestId(`${DIALOG}-LINK_SLOT`));
+    const picker = await screen.findByTestId(`${DIALOG}-link-slot`);
+    await waitFor(() => expect(picker).toHaveTextContent('Masters Tournament'));
+    fireEvent.change(picker, { target: { value: 'slot-masters' } });
+    fireEvent.click(screen.getByTestId(`${DIALOG}-link-confirm`));
+
+    expect(await screen.findByTestId(`${DIALOG}-link-error`)).toBeInTheDocument();
+    expect(screen.getByTestId(`${DIALOG}-link`)).toBeInTheDocument();
+  });
+
+  it('says why, with a retry, when the slots cannot be read, and offers no slot to confirm', async () => {
+    mocks.listProviderSyncFindingSlotChoices.mockResolvedValue({
+      error: { error: { code: 'SYNC_FINDING_ACTION_NOT_OFFERED', message: 'A RESOLVED SLOT_NAME_UNMATCHED finding does not offer LINK_SLOT.' } },
+      response: { status: 409 },
+    });
+    renderPage();
+
+    fireEvent.click(within(await openFinding('finding-5')).getByTestId(`${DIALOG}-LINK_SLOT`));
+
+    expect(await screen.findByTestId(`${DIALOG}-link-slots-error`)).toBeInTheDocument();
+    expect(screen.queryByTestId(`${DIALOG}-link-slot`)).not.toBeInTheDocument();
+    expect(screen.getByTestId(`${DIALOG}-link-confirm`)).toBeDisabled();
+  });
+});
+
 describe('buildLeagueOpenFindingsPath', () => {
   it('opens Findings filtered to one league\'s OPEN findings of one severity, by the league\'s id, so another league of the same name stays out', async () => {
     const path = buildLeagueOpenFindingsPath('nfl', 'ERROR');
@@ -256,6 +325,36 @@ describe('RootAdminMapFindingParticipantPage', () => {
     await waitFor(() => expect(mocks.mapProviderSyncFindingParticipant).toHaveBeenCalled());
     expect(screen.getByTestId('root-admin-map-finding-participant-page')).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent(MAP_PATH);
+  });
+
+  it('starts with an empty name box and names the league when the feed sent no name and the finding names no Provider', async () => {
+    mocks.getProviderSyncFinding.mockResolvedValue({ data: { finding: finding({ providerValueName: null, provider: null }) } });
+    renderPage(MAP_PATH);
+
+    expect(await screen.findByTestId('root-admin-map-finding-participant-search')).toHaveValue('');
+    const picker = screen.getByTestId('root-admin-map-finding-participant-participant');
+    await waitFor(() => expect(picker).toHaveTextContent('Tom Kim'));
+    expect(picker).toHaveTextContent('Ludvig Åberg (SWE)');
+  });
+
+  it('says no participant matches a name the roster does not have, and keeps Map participant off', async () => {
+    renderPage(MAP_PATH);
+
+    fireEvent.change(await screen.findByTestId('root-admin-map-finding-participant-search'), { target: { value: 'Nobody Here' } });
+
+    await waitFor(() => expect(screen.getByTestId('root-admin-map-finding-participant-participant')).toHaveTextContent('No matching participants'));
+    expect(screen.getByTestId('root-admin-map-finding-participant-participant')).toBeDisabled();
+    expect(screen.getByTestId('root-admin-map-finding-participant-save')).toBeDisabled();
+  });
+
+  it('says it could not load the participants, and offers a retry, when the roster read fails', async () => {
+    mocks.listSportLeagueParticipants.mockResolvedValue({
+      error: { error: { code: 'INTERNAL_ERROR', message: 'Down for a moment.' } },
+      response: { status: 500 },
+    });
+    renderPage(MAP_PATH);
+
+    expect(await screen.findByTestId('root-admin-map-finding-participant-error')).toBeInTheDocument();
   });
 
   it('says there is nothing to map when the finding no longer offers Map participant', async () => {

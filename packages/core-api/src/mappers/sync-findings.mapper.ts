@@ -1,6 +1,7 @@
 /** Sync finding mapper (#1999): the domain finding to its DTO, with the actions it offers now. */
 import { providerSyncFindingActions, type ProviderSyncFinding } from '@poolmaster/shared/domain';
-import type { ProviderSyncFindingDto } from '@poolmaster/shared/dto';
+import type { SlotNamePatternChoice } from '@poolmaster/shared/db';
+import type { ProviderSyncFindingDto, ProviderSyncFindingSlotChoiceDto } from '@poolmaster/shared/dto';
 import { formatUserName } from '../modules/email/email-content';
 
 export function toProviderSyncFindingDto(finding: ProviderSyncFinding): ProviderSyncFindingDto {
@@ -23,5 +24,17 @@ export function toProviderSyncFindingDto(finding: ProviderSyncFinding): Provider
       ? null
       : { id: finding.statusChangedBy.id, displayName: formatUserName(finding.statusChangedBy) },
     actions: providerSyncFindingActions(finding),
+  };
+}
+
+/** A slot "link to existing" offers (#2011), as the slot choices route sends it. */
+export function toProviderSyncFindingSlotChoiceDto(choice: SlotNamePatternChoice): ProviderSyncFindingSlotChoiceDto {
+  return {
+    slotDefinitionId: choice.slotDefinitionId,
+    key: choice.key,
+    slotKind: choice.slotKind,
+    weekNumber: choice.weekNumber,
+    name: choice.name,
+    patterns: [...choice.patterns],
   };
 }

@@ -20,11 +20,13 @@ import {
   ErrorEnvelopeSchema,
   ProviderSyncFindingListResponseSchema,
   ProviderSyncFindingResponseSchema,
+  ProviderSyncFindingSlotChoiceListResponseSchema,
   SportLeagueOverviewListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaProviderSettingsRepository } from '../../../packages/core-api/src/adapters/prisma-provider-settings-repository';
 import { PrismaProviderSyncFindingRepository } from '../../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
+import { PrismaSlotNamePatternRepository } from '../../../packages/core-api/src/adapters/prisma-slot-name-pattern-repository';
 import { ProviderRateLimitWatch } from '../../../packages/core-api/src/modules/ingestion/findings/provider-rate-limit-watch';
 import { ProviderSyncFindingService } from '../../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
 import { ProviderSettingsStore } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
@@ -33,7 +35,8 @@ import { SyncFindingRetention } from '../../../packages/core-api/src/modules/ing
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import { cleanupTestData, createTestUser, drainBackgroundJobs, getApp, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
-import { syncLeagueTo } from '../../support/league-sync';
+import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { nameSlotDefinitionFor } from '../../support/sync-slots';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 import { freshEventEdition } from '../../support/event-edition';
@@ -262,6 +265,7 @@ describe('the startup webhook check', () => {
       repository: new PrismaProviderSyncFindingRepository(getPrisma()),
       providers: { all: () => [{ ...provider, leagues: [] }] },
       participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma()), testDomainEvents()),
+      slotNamePatterns: new PrismaSlotNamePatternRepository(getPrisma()),
       now: () => NOW,
     });
     const syncedLeagues = synced.map(({ id }) => ({ id, selectedProviderMapping: { providerCode: ProviderCode.BALLDONTLIE } as never }));
@@ -287,6 +291,7 @@ describe('the startup webhook check, a league dropped from the synced set', () =
       repository: new PrismaProviderSyncFindingRepository(getPrisma()),
       providers: { all: () => [{ ...provider, leagues: [] }] },
       participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma()), testDomainEvents()),
+      slotNamePatterns: new PrismaSlotNamePatternRepository(getPrisma()),
       now: () => NOW,
     });
     const synced = (ids: string[]) => ids.map((id) => ({ id, selectedProviderMapping: { providerCode: ProviderCode.BALLDONTLIE } as never }));
@@ -316,6 +321,7 @@ describe('the rate-limit finding', () => {
         repository: new PrismaProviderSyncFindingRepository(getPrisma()),
         providers,
         participants: new ParticipantService(new PrismaParticipantRepository(getPrisma()), new PrismaParticipantProviderMappingRepository(getPrisma()), testDomainEvents()),
+        slotNamePatterns: new PrismaSlotNamePatternRepository(getPrisma()),
         now: () => new Date(clock),
       }),
       providers,
@@ -402,6 +408,60 @@ describe('the sync findings routes (contract)', () => {
     expect(resolveRes.statusCode).toBe(409);
     expect(ErrorEnvelopeSchema.parse(resolveRes.json()).error.code).toBe('SYNC_FINDING_ACTION_NOT_OFFERED');
     expect(ProviderSyncFindingResponseSchema.parse(reopenedRes.json()).finding).toMatchObject({ status: ProviderSyncFindingStatus.OPEN, waiveNote: null });
+  });
+
+  it('lists a tournament-name finding\'s slot choices and links one, which adds the name as its pattern and resolves the finding; a pattern another slot holds is 409 SLOT_NAME_PATTERN_TAKEN', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    const prisma = getPrisma();
+    const league = await golfLeague();
+    const provider = await balldontlie();
+    const sportLeagueProviderMappingId = await syncLeagueTo(prisma, league.id, 'pga');
+    const [seasonId] = await syncSeasonsTo(prisma, league.id, sportLeagueProviderMappingId, [2027]);
+    const memorial = await nameSlotDefinitionFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId, pattern: 'the memorial tournament', seasonIds: [seasonId], covered: false });
+    const open = await nameSlotDefinitionFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId, pattern: 'u.s. open', seasonIds: [seasonId], covered: false });
+    const nameFinding = (providerValue: string) => ({
+      kind: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, severity: ProviderSyncFindingSeverity.INFO, sportLeagueId: league.id, sportEventId: null, providerId: provider.id, providerValue, providerValueName: providerValue,
+    });
+    const [finding, taken] = await new PrismaProviderSyncFindingRepository(prisma).raise([nameFinding('memorial tournament'), nameFinding('the memorial tournament')], NOW);
+    const link = (findingId: string, slotDefinitionId: string) => getApp().inject({ method: 'POST', url: `/api/v1/ingestion/sync-findings/${findingId}/slot-link`, headers: rootAdmin.headers, payload: { slotDefinitionId } });
+
+    const choicesRes = await getApp().inject({ method: 'GET', url: `/api/v1/ingestion/sync-findings/${finding.id}/slot-choices`, headers: rootAdmin.headers });
+    const linkedRes = await link(finding.id, memorial);
+    const takenRes = await link(taken.id, open);
+
+    expect(choicesRes.statusCode).toBe(200);
+    expect(ProviderSyncFindingSlotChoiceListResponseSchema.parse(choicesRes.json()).slots.map((slot) => [slot.slotDefinitionId, slot.patterns]))
+      .toEqual(expect.arrayContaining([[memorial, ['the memorial tournament']], [open, ['u.s. open']]]));
+    expect(ProviderSyncFindingResponseSchema.parse(linkedRes.json()).finding).toMatchObject({ id: finding.id, status: ProviderSyncFindingStatus.RESOLVED });
+    expect(takenRes.statusCode).toBe(409);
+    expect(ErrorEnvelopeSchema.parse(takenRes.json()).error.code).toBe('SLOT_NAME_PATTERN_TAKEN');
+    expect(await prisma.sportLeaguePhaseSlotProviderMapping.findMany({ where: { sportLeaguePhaseSlotId: open }, select: { providerValue: true } })).toEqual([{ providerValue: 'u.s. open' }]);
+  });
+
+  it('offers and links only slots of the mapping the league\'s sync reads, when the league maps two leagues of the finding\'s Provider', async () => {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    const prisma = getPrisma();
+    const league = await golfLeague();
+    const provider = await balldontlie();
+    const [seasonId] = await syncSeasonsTo(prisma, league.id, await syncLeagueTo(prisma, league.id, 'pga'), [2027]);
+    const unread = (await prisma.sportLeagueProviderMapping.findFirstOrThrow({ where: { sportLeagueId: league.id }, select: { id: true } })).id;
+    const decoy = await nameSlotDefinitionFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId: unread, pattern: 'the memorial tournament', seasonIds: [seasonId], covered: false });
+    // The league's sync now reads its second mapping to BALLDONTLIE.
+    const selected = await syncLeagueTo(prisma, league.id, 'nfl');
+    const read = await nameSlotDefinitionFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId: selected, pattern: 'u.s. open', seasonIds: [seasonId], covered: false });
+    const [finding] = await new PrismaProviderSyncFindingRepository(prisma).raise([{
+      kind: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, severity: ProviderSyncFindingSeverity.INFO, sportLeagueId: league.id, sportEventId: null, providerId: provider.id, providerValue: 'us open', providerValueName: 'US Open',
+    }], NOW);
+
+    const choicesRes = await getApp().inject({ method: 'GET', url: `/api/v1/ingestion/sync-findings/${finding.id}/slot-choices`, headers: rootAdmin.headers });
+    const decoyRes = await getApp().inject({ method: 'POST', url: `/api/v1/ingestion/sync-findings/${finding.id}/slot-link`, headers: rootAdmin.headers, payload: { slotDefinitionId: decoy } });
+    const linkedRes = await getApp().inject({ method: 'POST', url: `/api/v1/ingestion/sync-findings/${finding.id}/slot-link`, headers: rootAdmin.headers, payload: { slotDefinitionId: read } });
+
+    expect(ProviderSyncFindingSlotChoiceListResponseSchema.parse(choicesRes.json()).slots.map((slot) => slot.slotDefinitionId)).toEqual([read]);
+    expect(decoyRes.statusCode).toBe(404);
+    expect(linkedRes.statusCode).toBe(200);
+    expect(await prisma.sportLeaguePhaseSlotProviderMapping.findMany({ where: { sportLeaguePhaseSlotId: read }, select: { sportLeagueProviderMappingId: true, providerValue: true }, orderBy: { providerValue: 'asc' } }))
+      .toEqual([{ sportLeagueProviderMappingId: selected, providerValue: 'u.s. open' }, { sportLeagueProviderMappingId: selected, providerValue: 'us open' }]);
   });
 
   it('maps an unmapped participant finding to a participant of its league, which binds the feed id and resolves it; a participant of another league is 422', async () => {

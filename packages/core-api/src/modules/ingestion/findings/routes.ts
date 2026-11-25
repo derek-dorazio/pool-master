@@ -8,11 +8,11 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import '@poolmaster/shared/dto/errors.dto';
 // Registers the named components these routes $ref.
 import '@poolmaster/shared/dto/sync-findings.dto';
-import type { ApiErrorCode, ChangeProviderSyncFindingStatusRequest, MapProviderSyncFindingParticipantRequest } from '@poolmaster/shared/dto';
+import type { ApiErrorCode, ChangeProviderSyncFindingStatusRequest, LinkProviderSyncFindingSlotRequest, MapProviderSyncFindingParticipantRequest } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { requireRootAdmin } from '../../../core/root-admin-guard';
 import { sendError } from '../../../core/error-handler';
-import { toProviderSyncFindingDto } from '../../../mappers/sync-findings.mapper';
+import { toProviderSyncFindingDto, toProviderSyncFindingSlotChoiceDto } from '../../../mappers/sync-findings.mapper';
 import { requireAuthUser } from '../../../plugins/auth-guard';
 import { schemaComponentsPlugin } from '../../../plugins/schema-components';
 import { ParticipantNotFoundError } from '../../participants/service';
@@ -144,6 +144,50 @@ export async function syncFindingsModule(fastify: FastifyInstance, opts: SyncFin
     try {
       const finding = await opts.syncFindings.mapParticipant(request.params.findingId, {
         participantId: request.body.participantId,
+        userId: requireAuthUser(request).userId,
+      });
+      return reply.send({ finding: toProviderSyncFindingDto(finding) });
+    } catch (err) {
+      return sendFindingError(reply, err);
+    }
+  });
+
+  fastify.get<{ Params: { findingId: string } }>('/:findingId/slot-choices', {
+    schema: {
+      tags: ['Ingestion'],
+      summary: 'List the slots a tournament name finding can be linked to',
+      description: 'What an OPEN SLOT_NAME_UNMATCHED finding\'s "link to existing" offers (#2011): every slot definition its sport league matches tournaments to by name through its mapping to the finding\'s Provider, by key, each with the names that already place a tournament on it. Read in a fixed number of queries. '
+        + '404 SYNC_FINDING_NOT_FOUND. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer LINK_SLOT now.' + RATE_LIMITED,
+      operationId: 'listProviderSyncFindingSlotChoices',
+      params: FINDING_PARAMS,
+      response: { 200: schemaRef('ProviderSyncFindingSlotChoiceListResponse'), ...errors(404, 409) },
+    },
+    config,
+  }, async (request, reply) => {
+    try {
+      const slots = await opts.syncFindings.slotLinkChoices(request.params.findingId);
+      return reply.send({ slots: slots.map(toProviderSyncFindingSlotChoiceDto) });
+    } catch (err) {
+      return sendFindingError(reply, err);
+    }
+  });
+
+  fastify.post<{ Params: { findingId: string }; Body: LinkProviderSyncFindingSlotRequest }>('/:findingId/slot-link', {
+    schema: {
+      tags: ['Ingestion'],
+      summary: 'Link a tournament name finding to an existing slot',
+      description: 'An OPEN SLOT_NAME_UNMATCHED finding\'s fix, "link to existing" (#2011): adds the tournament\'s normalized name (providerValue) as a NAME_PATTERN mapping of the chosen slot definition and resolves the finding; the next events sync links the tournament there. There is no "create new": slot definitions are set by migration. '
+        + '404 SYNC_FINDING_NOT_FOUND, or SLOT_DEFINITION_NOT_FOUND for a slot listProviderSyncFindingSlotChoices does not offer. 409 SYNC_FINDING_ACTION_NOT_OFFERED when the finding does not offer LINK_SLOT now, or SLOT_NAME_PATTERN_TAKEN when the name already places a tournament.' + RATE_LIMITED,
+      operationId: 'linkProviderSyncFindingSlot',
+      params: FINDING_PARAMS,
+      body: schemaRef('LinkProviderSyncFindingSlotRequest'),
+      response: { 200: schemaRef('ProviderSyncFindingResponse'), ...errors(400, 404, 409) },
+    },
+    config,
+  }, async (request, reply) => {
+    try {
+      const finding = await opts.syncFindings.linkSlot(request.params.findingId, {
+        slotDefinitionId: request.body.slotDefinitionId,
         userId: requireAuthUser(request).userId,
       });
       return reply.send({ finding: toProviderSyncFindingDto(finding) });

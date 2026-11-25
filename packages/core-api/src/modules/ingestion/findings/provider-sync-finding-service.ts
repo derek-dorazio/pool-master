@@ -5,7 +5,7 @@
  * a CloudWatch metric filter counts and alarms on (`infrastructure/terraform/monitoring.tf`).
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncFindingRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncFindingRepository, SlotNamePatternChoice, SlotNamePatternChoices, SlotNamePatternRepository } from '@poolmaster/shared/db';
 import {
   PROVIDER_SYNC_FINDING_STATUS_ACTIONS,
   ProviderSyncFindingAction,
@@ -45,6 +45,8 @@ export interface ProviderSyncFindingServiceDeps {
   providers: { all(): readonly ProviderSettings[] };
   /** Mapping a participant from a finding goes through the participants' own bind. */
   participants: Pick<ParticipantService, 'findById' | 'bindProviderMapping'>;
+  /** "Link to existing" reads and adds a league's NAME_PATTERN mappings (#2011). */
+  slotNamePatterns: SlotNamePatternRepository;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -345,6 +347,62 @@ export class ProviderSyncFindingService {
     return saved;
   }
 
+  /**
+   * The slot definitions an OPEN SLOT_NAME_UNMATCHED finding's tournament can be linked to (#2011):
+   * those its league matches tournaments to by name through its mapping to the finding's Provider,
+   * each with the names that already place tournaments on it. 404 SYNC_FINDING_NOT_FOUND; 409
+   * SYNC_FINDING_ACTION_NOT_OFFERED.
+   */
+  async slotLinkChoices(findingId: string): Promise<SlotNamePatternChoice[]> {
+    const finding = await this.get(findingId);
+    this.assertOffered(finding, ProviderSyncFindingAction.LINK_SLOT);
+    return (await this.patternChoicesOf(finding))?.slots ?? [];
+  }
+
+  /**
+   * "Link to existing" on an OPEN SLOT_NAME_UNMATCHED finding (#2011): adds the tournament's
+   * normalized name as a NAME_PATTERN mapping of the chosen slot definition and resolves the
+   * finding, so the next events sync links the tournament there. 404 SYNC_FINDING_NOT_FOUND or
+   * SLOT_DEFINITION_NOT_FOUND (not one of the definitions offered); 409
+   * SYNC_FINDING_ACTION_NOT_OFFERED, or SLOT_NAME_PATTERN_TAKEN when the name already places a
+   * tournament.
+   */
+  async linkSlot(findingId: string, input: { slotDefinitionId: string; userId: string }): Promise<ProviderSyncFinding> {
+    const finding = await this.get(findingId);
+    this.assertOffered(finding, ProviderSyncFindingAction.LINK_SLOT);
+    const choices = await this.patternChoicesOf(finding);
+    if (choices === null || !choices.slots.some((slot) => slot.slotDefinitionId === input.slotDefinitionId)) {
+      throw new ProviderSyncFindingError(`Slot ${input.slotDefinitionId} is not one ${finding.sportLeague.name} matches tournaments to by name.`, 'SLOT_DEFINITION_NOT_FOUND', 404);
+    }
+    const pattern = this.mappingSourceOf(finding).externalId;
+    const added = await this.deps.slotNamePatterns.addPattern({
+      sportLeagueId: finding.sportLeague.id,
+      sportLeagueProviderMappingId: choices.sportLeagueProviderMappingId,
+      slotDefinitionId: input.slotDefinitionId,
+      pattern,
+    });
+    if (added === 'TAKEN') {
+      throw new ProviderSyncFindingError(`"${pattern}" already places a tournament on a slot of ${finding.sportLeague.name}.`, 'SLOT_NAME_PATTERN_TAKEN', 409);
+    }
+    const saved = await this.deps.repository.setStatus(findingId, {
+      status: ProviderSyncFindingStatus.RESOLVED,
+      waiveNote: null,
+      changedByUserId: input.userId,
+      changedAt: this.now(),
+    });
+    if (saved === null) throw notFound(findingId);
+    this.deps.logger?.info(
+      { action: 'ingestion.syncFinding.slotLinked', findingId, slotDefinitionId: input.slotDefinitionId, pattern, userId: input.userId },
+      'A root admin linked a sync finding\'s tournament name to a slot',
+    );
+    return saved;
+  }
+
+  /** The league's NAME_PATTERN definitions through its mapping to the finding's Provider; null without one. */
+  private async patternChoicesOf(finding: ProviderSyncFinding): Promise<SlotNamePatternChoices | null> {
+    return finding.provider === null ? null : this.deps.slotNamePatterns.findChoices(finding.sportLeague.id, finding.provider.id);
+  }
+
   private assertOffered(finding: ProviderSyncFinding, action: ProviderSyncFindingAction): void {
     if (!providerSyncFindingActions(finding).includes(action)) {
       throw new ProviderSyncFindingError(
@@ -355,7 +413,10 @@ export class ProviderSyncFindingService {
     }
   }
 
-  /** The Provider row a mapping names (#2040), and the value the feed sent. An UNMAPPED_PARTICIPANT finding always has both. */
+  /**
+   * The Provider row a mapping names (#2040), and the value the feed sent. An UNMAPPED_PARTICIPANT
+   * or SLOT_NAME_UNMATCHED finding always has both.
+   */
   private mappingSourceOf(finding: ProviderSyncFinding): { providerId: string; externalId: string } {
     if (finding.provider === null || finding.providerValue === null) {
       throw new Error(`Finding ${finding.id} names no Provider row or feed value to map from`);
