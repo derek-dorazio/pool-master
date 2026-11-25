@@ -112,6 +112,7 @@ export type TextFilter = { kind: "text"; term: string; match: TextMatch };
  * A number column's filter. Between takes either bound or both (only From is "at least", only
  * To "at most"); Equals and Not equal take `from`; the blank tests take neither.
  */
+// poolmaster-allow-dto-shape: a grid column's number filter; it shares only the names kind, from and to with ActivityListQuery, which is a queue-time window.
 export type NumberFilter = { kind: "number"; match: NumberMatch; from: number | null; to: number | null };
 /**
  * A date column's filter: the span as chosen, and the instants it covered when applied, so a
