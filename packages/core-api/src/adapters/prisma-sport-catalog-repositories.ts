@@ -77,7 +77,7 @@ import { mapToParticipant } from './prisma-participant-repository';
 import { toRaceResult } from './prisma-race-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 import { SPORT_EVENT_SPORT_SELECT, SPORT_LEAGUE_SPORT_SELECT, sportEventSportWhere, sportOfEvent, sportUrlSegmentOfEvent } from './sport-of';
-import { SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
+import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
 
 type Db = PrismaClient;
 
@@ -601,7 +601,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
         startDate: { gt: now, lte: horizon },
         sportLeagueSeason: { sportLeague: { isActive: true, selectedProviderMappingId: { not: null }, autoReleaseDaysBeforeStart: { not: null } } },
         // A test event is released by hand only (#2004).
-        slots: { none: { seasonSlot: { isTestData: true } } },
+        slots: { none: COVERS_TEST_SLOT },
       },
       select: {
         id: true,

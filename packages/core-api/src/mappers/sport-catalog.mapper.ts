@@ -18,6 +18,7 @@ import {
   type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
+  testEventSlotRefusal,
 } from '@poolmaster/shared/domain';
 import type {
   SportDto,
@@ -268,7 +269,11 @@ export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): Spor
       id: phase.id,
       phase: phase.phase,
       isSynced: phase.isSynced,
-      slots: phase.slots.map((slot) => ({ ...mapSportLeagueSeasonSlotToDto(slot), sportEventId: slot.sportEventId })),
+      slots: phase.slots.map((slot) => ({
+        ...mapSportLeagueSeasonSlotToDto(slot),
+        sportEventId: slot.sportEventId,
+        takesTestEvent: testEventSlotRefusal(slot, season.isCurrent) === null,
+      })),
     })),
   };
 }

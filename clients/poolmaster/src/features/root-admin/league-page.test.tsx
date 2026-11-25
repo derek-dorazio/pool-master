@@ -129,7 +129,7 @@ const SEASONS = [
       id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [{
         id: 'slot-week-1', slotDefinitionId: 'def-week-1', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
         startsAt: '2026-10-20T00:00:00.000Z', endsAt: '2026-10-26T00:00:00.000Z', status: 'SCHEDULED',
-        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null, sportEventId: null,
+        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null, sportEventId: null, takesTestEvent: false,
       }],
     }],
   }),

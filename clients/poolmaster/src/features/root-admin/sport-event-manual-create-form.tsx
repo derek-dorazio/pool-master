@@ -23,7 +23,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { SportEventEditionFields } from './sport-event-edition-fields';
-import { freeTestSlotsOf, isCompleteEdition, type SportEventEdition } from './sport-event-edition';
+import { testEventSlotsOf, isCompleteEdition, type SportEventEdition } from './sport-event-edition';
 import { buildSportEventPath } from './manage-navigation';
 import { TestSlotCreateForm } from './test-slot-create-form';
 import { useManagedSport } from './use-managed-sport';
@@ -60,7 +60,7 @@ export function SportEventManualCreateForm({
   const sportLeague = sportLeagues.find((candidate) => candidate.id === edition.sportLeagueId);
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeague?.noun ?? null);
   const seasonsQuery = useSportLeagueSeasonsQuery(edition.sportLeagueId);
-  const freeSlots = freeTestSlotsOf(seasonsQuery.data ?? []);
+  const freeSlots = testEventSlotsOf(seasonsQuery.data ?? []);
   const hasCurrentSeason = sportLeague?.currentSeasonId != null;
 
   const form = useForm<ManualFormValues>({

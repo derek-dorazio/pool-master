@@ -16,3 +16,9 @@ export type SeasonSlotRow = Prisma.SportLeagueSeasonPhaseSlotGetPayload<{ select
 export function toSeasonSlot({ sportLeaguePhaseSlotId, definition, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
   return { ...slot, ...definition, slotDefinitionId: sportLeaguePhaseSlotId };
 }
+
+/**
+ * An event that covers a test slot, as a relation filter on its `slots` (#2004): the one database
+ * form of `isTestEvent`. `some` finds test events and `none` leaves them out.
+ */
+export const COVERS_TEST_SLOT = { seasonSlot: { isTestData: true } } as const satisfies Prisma.SportEventSlotWhereInput;

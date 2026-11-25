@@ -18,8 +18,7 @@ export function isCompleteEdition(edition: SportEventEdition): boolean {
   return edition.sportLeagueId !== '';
 }
 
-/** The current Season's test slots that no event covers yet, in the Season's play order. */
-export function freeTestSlotsOf(seasons: readonly SportLeagueSeasonDto[]): SportLeagueSeasonPhaseSlotDto[] {
-  const current = seasons.find((season) => season.isCurrent);
-  return (current?.phases ?? []).flatMap((phase) => phase.slots).filter((slot) => slot.isTestData && slot.sportEventId === null);
+/** The slots a test event can be made on now, as the API says of each (`takesTestEvent`), in the Seasons' order. */
+export function testEventSlotsOf(seasons: readonly SportLeagueSeasonDto[]): SportLeagueSeasonPhaseSlotDto[] {
+  return seasons.flatMap((season) => season.phases).flatMap((phase) => phase.slots).filter((slot) => slot.takesTestEvent);
 }

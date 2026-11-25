@@ -11730,6 +11730,8 @@ export interface components {
              * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
              */
             sportEventId: string | null;
+            /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+            takesTestEvent: boolean;
         };
         /** @description A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season. */
         CreateTestSlotRequest: {
@@ -11848,6 +11850,8 @@ export interface components {
                  * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
                  */
                 sportEventId: string | null;
+                /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+                takesTestEvent: boolean;
             }[];
         };
         /** @description One Season of a sport league, added by migration. */
@@ -11935,6 +11939,8 @@ export interface components {
                      * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
                      */
                     sportEventId: string | null;
+                    /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+                    takesTestEvent: boolean;
                 }[];
             }[];
         };
@@ -12025,6 +12031,8 @@ export interface components {
                          * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
                          */
                         sportEventId: string | null;
+                        /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+                        takesTestEvent: boolean;
                     }[];
                 }[];
             }[];

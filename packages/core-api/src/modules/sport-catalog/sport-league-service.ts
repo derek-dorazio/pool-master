@@ -16,7 +16,6 @@ import type {
   SportLeagueSeasonRepository,
   SportLeagueUpdate,
   SportLeagueUses,
-  TestSlotCreateResult,
   SportRepository,
   PlatformTierProfileRepository,
   ParticipantProviderMappingRepository,
@@ -182,14 +181,9 @@ export class SportLeagueService {
     if (input.endsAt !== null && input.endsAt.getTime() <= input.startsAt.getTime()) {
       throw new SportCatalogError('A test slot must end after it starts.', 'TEST_SLOT_ENDS_BEFORE_START', 422);
     }
-    let created: TestSlotCreateResult;
-    try {
-      created = await this.deps.seasons.createTestSlot({ ...input, sportLeagueId, sportLeagueSeasonId: sportLeague.currentSeasonId });
-    } catch (error) {
-      if ((error as { code?: unknown } | null)?.code === 'P2002') {
-        throw new SportCatalogError(`The current Season already has a test slot labelled "${input.label}" on that definition.`, 'TEST_SLOT_LABEL_TAKEN', 409);
-      }
-      throw error;
+    const created = await this.deps.seasons.createTestSlot({ ...input, sportLeagueId, sportLeagueSeasonId: sportLeague.currentSeasonId });
+    if (created.outcome === 'LABEL_TAKEN') {
+      throw new SportCatalogError(`The current Season already has a test slot labelled "${input.label}" on that definition.`, 'TEST_SLOT_LABEL_TAKEN', 409);
     }
     if (created.outcome === 'DEFINITION_NOT_FOUND') {
       throw new SportCatalogError(`Slot definition ${input.slotDefinitionId} is not one of ${sportLeague.name}'s.`, 'SLOT_DEFINITION_NOT_FOUND', 404);

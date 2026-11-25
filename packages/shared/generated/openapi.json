@@ -23689,6 +23689,10 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "takesTestEvent": {
+            "type": "boolean",
+            "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
           }
         },
         "required": [
@@ -23706,7 +23710,8 @@
           "pairing",
           "isTestData",
           "label",
-          "sportEventId"
+          "sportEventId",
+          "takesTestEvent"
         ],
         "additionalProperties": false,
         "description": "One slot of one Season, as its Season lists it."
@@ -24011,6 +24016,10 @@
                     "null"
                   ],
                   "format": "uuid"
+                },
+                "takesTestEvent": {
+                  "type": "boolean",
+                  "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
                 }
               },
               "required": [
@@ -24028,7 +24037,8 @@
                 "pairing",
                 "isTestData",
                 "label",
-                "sportEventId"
+                "sportEventId",
+                "takesTestEvent"
               ],
               "additionalProperties": false,
               "description": "One slot of one Season, as its Season lists it."
@@ -24246,6 +24256,10 @@
                           "null"
                         ],
                         "format": "uuid"
+                      },
+                      "takesTestEvent": {
+                        "type": "boolean",
+                        "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
                       }
                     },
                     "required": [
@@ -24263,7 +24277,8 @@
                       "pairing",
                       "isTestData",
                       "label",
-                      "sportEventId"
+                      "sportEventId",
+                      "takesTestEvent"
                     ],
                     "additionalProperties": false,
                     "description": "One slot of one Season, as its Season lists it."
@@ -24502,6 +24517,10 @@
                                 "null"
                               ],
                               "format": "uuid"
+                            },
+                            "takesTestEvent": {
+                              "type": "boolean",
+                              "description": "Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season."
                             }
                           },
                           "required": [
@@ -24519,7 +24538,8 @@
                             "pairing",
                             "isTestData",
                             "label",
-                            "sportEventId"
+                            "sportEventId",
+                            "takesTestEvent"
                           ],
                           "additionalProperties": false,
                           "description": "One slot of one Season, as its Season lists it."

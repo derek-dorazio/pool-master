@@ -449,6 +449,7 @@ export type SportLeagueSeasonSlotResponse = z.infer<typeof SportLeagueSeasonSlot
 
 const SportLeagueSeasonPhaseSlotDtoSchema = SportLeagueSeasonSlotDtoSchema.extend({
   sportEventId: z.uuid().nullable().describe('The event covering it; null while it is free, as a test slot is before its test event is made on it.'),
+  takesTestEvent: z.boolean().describe('Whether a test event can be made on it now (createEvent): a free test slot of its league\'s current Season.'),
 }).describe('One slot of one Season, as its Season lists it.');
 export type SportLeagueSeasonPhaseSlotDto = z.infer<typeof SportLeagueSeasonPhaseSlotDtoSchema>;
 

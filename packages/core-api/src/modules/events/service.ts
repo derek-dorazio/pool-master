@@ -32,6 +32,8 @@ import {
   AutoReleaseCheckOutcome,
   blocksManualRelease,
   eventDatesFromSlots,
+  testEventSlotRefusal,
+  type TestEventSlotRefusal,
   eventPlaysMatches,
   eventSportDefinition,
   isProviderSyncedEvent,
@@ -185,6 +187,14 @@ export interface SportEventServiceDeps {
 }
 
 /** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
+/** The error each test-slot refusal answers with (#2004). */
+const TEST_EVENT_SLOT_REFUSALS: Readonly<Record<TestEventSlotRefusal, (seasonSlotId: string, sportLeagueName: string) => SportEventError>> = {
+  SEASON_SLOT_NOT_TEST: () => new SportEventError('Only a test slot takes an event made by hand; the sync makes every other.', 'SEASON_SLOT_NOT_TEST', 422),
+  SEASON_SLOT_NOT_CURRENT: (seasonSlotId, sportLeagueName) =>
+    new SportEventError(`Season slot ${seasonSlotId} is not in ${sportLeagueName}'s current Season.`, 'SEASON_SLOT_NOT_CURRENT', 422),
+  SEASON_SLOT_TAKEN: (seasonSlotId) => new SportEventError(`Season slot ${seasonSlotId} already has an event.`, 'SEASON_SLOT_TAKEN', 409),
+};
+
 function isDateOnlyPlaceholder(start: Date): boolean {
   return start.getUTCHours() === 12 && start.getUTCMinutes() === 0 && start.getUTCSeconds() === 0 && start.getUTCMilliseconds() === 0;
 }
@@ -209,10 +219,6 @@ export class SportEventService {
   }
 
   /**
-   * An admin-authored event: DRAFT, with no provider id, so no provider syncs it (#2004), in its
-   * league's current Season (#2003).
-   */
-  /**
    * A test event on a test slot (#2004, plan §2): only a test slot takes an event made by hand,
    * since the sync makes every other. The slot must be free and in its league's current Season;
    * the event's dates are the slot's, and it gets its league's default round count. 404
@@ -223,12 +229,12 @@ export class SportEventService {
     const found = await this.deps.seasons.findSlot(input.seasonSlotId);
     if (found === null) throw new SportEventError(`Season slot ${input.seasonSlotId} was not found.`, 'SEASON_SLOT_NOT_FOUND', 404);
     const { slot } = found;
-    if (!slot.isTestData) throw new SportEventError('Only a test slot takes an event made by hand; the sync makes every other.', 'SEASON_SLOT_NOT_TEST', 422);
     const { sportLeague, sport } = await this.resolveSportLeague(found.sportLeagueId);
-    if (found.sportLeagueSeasonId !== sportLeague.currentSeasonId) {
-      throw new SportEventError(`Season slot ${slot.id} is not in ${sportLeague.name}'s current Season.`, 'SEASON_SLOT_NOT_CURRENT', 422);
-    }
-    if (found.sportEventId !== null) throw new SportEventError(`Season slot ${slot.id} already has an event.`, 'SEASON_SLOT_TAKEN', 409);
+    const refusal = testEventSlotRefusal(
+      { isTestData: slot.isTestData, sportEventId: found.sportEventId },
+      found.sportLeagueSeasonId === sportLeague.currentSeasonId,
+    );
+    if (refusal !== null) throw TEST_EVENT_SLOT_REFUSALS[refusal](slot.id, sportLeague.name);
     // A test slot is always made with a start (createTestSlot), so its dates are never null.
     const dates = eventDatesFromSlots([slot]);
     if (dates === null) throw new Error(`Season slot ${slot.id} has no start.`);

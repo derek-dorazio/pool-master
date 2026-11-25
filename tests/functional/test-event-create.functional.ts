@@ -138,6 +138,18 @@ describe('createEvent on a season slot', () => {
     expect(enUS.error.SEASON_SLOT_TAKEN).toBeTruthy();
   });
 
+  it('answers one of two creates racing for the same free slot with 409 SEASON_SLOT_TAKEN, never a 500', async () => {
+    const seasonSlotId = await newTestSlot('2026-09-10T12:00:00.000Z');
+    const results = await Promise.all([
+      createEvent({ client, body: { seasonSlotId, name: `Race A Open ${RUN}` } }),
+      createEvent({ client, body: { seasonSlotId, name: `Race B Open ${RUN}` } }),
+    ]);
+    for (const result of results) if (result.data) created.sportEventIds.add(result.data.event.id);
+    expect(results.map((result) => result.response?.status ?? 0).sort((left, right) => left - right)).toEqual([201, 409]);
+    const refused = expectDefined(results.find((result) => result.response?.status === 409));
+    expectFunctionalError(refused, { status: 409, code: 'SEASON_SLOT_TAKEN' });
+  });
+
   it('refuses a slot id that names no slot with 404 SEASON_SLOT_NOT_FOUND', async () => {
     expectFunctionalError(await createEvent({ client, body: { seasonSlotId: ANY_UUID, name: `Nowhere Open ${RUN}` } }), { status: 404, code: 'SEASON_SLOT_NOT_FOUND' });
   });

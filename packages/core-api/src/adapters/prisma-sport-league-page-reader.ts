@@ -18,7 +18,7 @@ import type { SportLeaguePhaseDefinition, SportLeaguePosition, SportLeagueSeason
 import { buildEventPagePath, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
-import { SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
+import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
 
 const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, summary: true, changedCount: true } as const;
 const SLOT_SELECT = {
@@ -37,7 +37,7 @@ const EVENT_SELECT = {
   id: true, name: true, sportLeagueSeasonId: true, startDate: true, endDate: true, status: true, releasedAt: true,
   autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true,
   // A test event is one on a test slot (#2004): its first such slot, if any, says so.
-  slots: { where: { seasonSlot: { isTestData: true } }, select: { id: true }, take: 1 },
+  slots: { where: COVERS_TEST_SLOT, select: { id: true }, take: 1 },
 } as const;
 
 export class PrismaSportLeaguePageReader implements SportLeaguePageReader {

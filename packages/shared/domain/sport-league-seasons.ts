@@ -165,6 +165,24 @@ export function isTestEvent(slots: ReadonlyArray<Pick<SportLeagueSeasonSlot, 'is
   return slots.some((slot) => slot.isTestData);
 }
 
+/** Why a Season slot cannot take a test event made by hand (#2004): the error code each answers with. */
+export type TestEventSlotRefusal = 'SEASON_SLOT_NOT_TEST' | 'SEASON_SLOT_NOT_CURRENT' | 'SEASON_SLOT_TAKEN';
+
+/**
+ * Whether a Season slot takes a test event, and if not why (#2004, plan §2): only a test slot does,
+ * since the sync makes every other event; it must be in its league's current Season and free. Null
+ * when it takes one. The one rule: `createEvent` refuses by it, and a slot's `takesTestEvent` says it.
+ */
+export function testEventSlotRefusal(
+  slot: Pick<SportLeagueSeasonPhaseSlot, 'isTestData' | 'sportEventId'>,
+  inCurrentSeason: boolean,
+): TestEventSlotRefusal | null {
+  if (!slot.isTestData) return 'SEASON_SLOT_NOT_TEST';
+  if (!inCurrentSeason) return 'SEASON_SLOT_NOT_CURRENT';
+  if (slot.sportEventId !== null) return 'SEASON_SLOT_TAKEN';
+  return null;
+}
+
 /**
  * An event's dates from the Season slots it covers (#2004): the earliest slot start and the latest
  * slot end, the end null while any slot has none. Null when no slot has a start yet, and for an

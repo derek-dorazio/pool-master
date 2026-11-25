@@ -189,7 +189,7 @@ league and provider (*Sync findings* below), since only a migration can add it. 
 | `COMPLETED`, `CANCELLED` | nothing |
 
 On a synced event the admin's Edit details shows name, venue and dates read-only
-(`SportEventDto.providerSynced`); location, rounds, field, tiers, prices, release and result entry
+(any event that is not a test event, `SportEventDto.isTestData` false); location, rounds, field, tiers, prices, release and result entry
 stay the admin's. The older admin routes (Create from provider event, Link score source under
 `/api/v1/events`) remain as a fallback for an event the feed lacks; the Year import went with
 event years (#2003).

@@ -10187,6 +10187,10 @@ export type SportLeagueSeasonPhaseSlotDto = {
      * The event covering it; null while it is free, as a test slot is before its test event is made on it.
      */
     sportEventId: string | null;
+    /**
+     * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+     */
+    takesTestEvent: boolean;
 };
 
 /**
@@ -10316,6 +10320,10 @@ export type SportLeagueSeasonPhaseDto = {
          * The event covering it; null while it is free, as a test slot is before its test event is made on it.
          */
         sportEventId: string | null;
+        /**
+         * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+         */
+        takesTestEvent: boolean;
     }>;
 };
 
@@ -10416,6 +10424,10 @@ export type SportLeagueSeasonDto = {
              * The event covering it; null while it is free, as a test slot is before its test event is made on it.
              */
             sportEventId: string | null;
+            /**
+             * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+             */
+            takesTestEvent: boolean;
         }>;
     }>;
 };
@@ -10521,6 +10533,10 @@ export type SportLeagueSeasonListResponse = {
                  * The event covering it; null while it is free, as a test slot is before its test event is made on it.
                  */
                 sportEventId: string | null;
+                /**
+                 * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+                 */
+                takesTestEvent: boolean;
             }>;
         }>;
     }>;

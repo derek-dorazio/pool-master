@@ -518,11 +518,9 @@ describe('SportLeagueService — adding a test slot (#2004)', () => {
     expect(createTestSlot).not.toHaveBeenCalled();
   });
 
-  it('turns the database\'s unique violation on the label into 409 TEST_SLOT_LABEL_TAKEN, and rethrows any other failure', async () => {
-    const taken = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockRejectedValue(Object.assign(new Error('unique'), { code: 'P2002' })) } });
+  it('refuses a label the Season already has on that definition with 409 TEST_SLOT_LABEL_TAKEN', async () => {
+    const taken = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'LABEL_TAKEN' }) } });
     await expect(taken.service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'TEST_SLOT_LABEL_TAKEN', statusCode: 409 });
-    const broken = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockRejectedValue(new Error('down')) } });
-    await expect(broken.service.createTestSlot('sl-pga', input)).rejects.toThrow('down');
   });
 
   it('refuses a definition that is not the league\'s with 404 SLOT_DEFINITION_NOT_FOUND', async () => {

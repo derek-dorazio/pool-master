@@ -11,7 +11,7 @@ import type {
 } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { RootAdminSportEventCreatePage } from './root-admin-sport-event-create-page';
-import { freeTestSlotsOf } from './sport-event-edition';
+import { testEventSlotsOf } from './sport-event-edition';
 import { sportEventFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // /manage/sports/golf/events/new: a test event is made on a free test slot of its tour's current
@@ -55,7 +55,7 @@ function slot(id: string, overrides: Partial<SportLeagueSeasonPhaseSlotDto> = {}
   return {
     id, slotDefinitionId: 'def-masters', key: 'MASTERS', slotKind: 'TOURNAMENT', weekNumber: null, name: 'The Masters',
     startsAt: '2026-04-09T12:00:00.000Z', endsAt: '2026-04-12T22:00:00.000Z', status: 'SCHEDULED',
-    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: `QA ${id}`, sportEventId: null, ...overrides,
+    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: `QA ${id}`, sportEventId: null, takesTestEvent: true, ...overrides,
   };
 }
 
@@ -69,10 +69,10 @@ function season(id: string, isCurrent: boolean, slots: SportLeagueSeasonPhaseSlo
 const SEASONS = [
   season('season-2026', true, [
     slot('free'),
-    slot('taken', { sportEventId: 'event-on-it' }),
-    slot('synced', { isTestData: false, label: null }),
+    slot('taken', { sportEventId: 'event-on-it', takesTestEvent: false }),
+    slot('synced', { isTestData: false, label: null, takesTestEvent: false }),
   ]),
-  season('season-2025', false, [slot('last-year')]),
+  season('season-2025', false, [slot('last-year', { takesTestEvent: false })]),
 ];
 
 const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [{
@@ -136,9 +136,9 @@ describe('RootAdminSportEventCreatePage', () => {
     expect(listSportLeagueSeasonsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'league-1' } }));
   });
 
-  it('lists no slot from a Season that is not current, and none taken or synced', () => {
-    expect(freeTestSlotsOf(SEASONS).map((each) => each.id)).toEqual(['free']);
-    expect(freeTestSlotsOf([season('old', false, [slot('a')])])).toEqual([]);
+  it('offers exactly the slots the API says take a test event, and none it says do not', () => {
+    expect(testEventSlotsOf(SEASONS).map((each) => each.id)).toEqual(['free']);
+    expect(testEventSlotsOf([season('old', false, [slot('a', { takesTestEvent: false })])])).toEqual([]);
   });
 
   it('says a tour with no current Season has no test slots, and offers no test slot form', async () => {

@@ -4,7 +4,7 @@
  * Seasons are added by migration, so nothing here creates one; a labelled test slot is added here
  * (#2004).
  */
-import type { PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import type {
   SeasonSlotWithEvent,
   SportLeagueCurrentSeasonFacts,
@@ -14,7 +14,7 @@ import type {
   TestSlotCreateResult,
 } from '@poolmaster/shared/db';
 import type { SportLeagueSeason } from '@poolmaster/shared/domain';
-import { SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
+import { SEASON_SLOT_SELECT, toSeasonSlot, type SeasonSlotRow } from './season-slot-select';
 
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
 
@@ -88,7 +88,9 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       select: { id: true },
     });
     if (phase === null) return { outcome: 'PHASE_NOT_IN_SEASON' };
-    const slot = toSeasonSlot(await this.prisma.sportLeagueSeasonPhaseSlot.create({
+    let row: SeasonSlotRow;
+    try {
+      row = await this.prisma.sportLeagueSeasonPhaseSlot.create({
       data: {
         sportLeagueId: input.sportLeagueId,
         sportLeagueSeasonId: input.sportLeagueSeasonId,
@@ -103,7 +105,12 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         label: input.label,
       },
       select: SEASON_SLOT_SELECT,
-    }));
-    return { outcome: 'CREATED', slot };
+      });
+    } catch (error) {
+      // The Season's unique key on its definition and label.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return { outcome: 'LABEL_TAKEN' };
+      throw error;
+    }
+    return { outcome: 'CREATED', slot: toSeasonSlot(row) };
   }
 }
