@@ -64,4 +64,15 @@ describe('EventSlotsTab', () => {
 
     expect(await screen.findByTestId('root-admin-event-slot-dialog-label')).toHaveTextContent('Synced slot');
   });
+
+  it('closes the slot dialog on Escape, leaving the grid', async () => {
+    renderTab(sportEventFixture({ slots: [seasonSlotFixture({ id: 'open', name: 'The Open' })] }));
+
+    await userEvent.click(within(screen.getByTestId('root-admin-event-slot-open')).getByRole('button', { name: /open/i }));
+    await screen.findByRole('dialog');
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-event-slot-open')).toBeInTheDocument();
+  });
 });

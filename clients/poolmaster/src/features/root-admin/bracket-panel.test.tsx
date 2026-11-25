@@ -174,6 +174,22 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
+  it('says the bracket could not load, in the API\'s words, when the bracket read fails', async () => {
+    seed([]);
+    getEventBracketMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Bracket store down.' } }, response: new Response(null, { status: 500 }) });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-bracket-error')).toHaveTextContent('Couldn\'t load the bracket');
+  });
+
+  it('says the bracket could not load when the field read fails, though the bracket loaded', async () => {
+    seed([]);
+    listEventParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Field store down.' } }, response: new Response(null, { status: 500 }) });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-bracket-error')).toHaveTextContent('Couldn\'t load the bracket');
+  });
+
   it('says the bracket is not loaded yet when the tournament has no matches', async () => {
     seed([]);
     renderPage();
