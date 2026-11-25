@@ -793,6 +793,8 @@ export interface SportLeagueSeasonRepository {
    * already has a test slot of that label on that definition.
    */
   createTestSlot(input: TestSeasonSlotCreate): Promise<TestSlotCreateResult>;
+  /** Removes a test slot with no event on it (#2075); a synced slot is never removed. */
+  deleteTestSlot(seasonSlotId: string): Promise<void>;
   /**
    * A Season's slots as its events sync reads them (#2005): each with the PROVIDER_CODE value the
    * league's provider mapping names its definition by, whether one of the league's active contest

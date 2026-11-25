@@ -435,6 +435,12 @@ export interface ParticipantSearchFilters {
   status?: ParticipantStatus;
 }
 
+/** A provider's id for a participant: the Provider row and the feed's own id (#2096). */
+export interface ParticipantFeedId {
+  providerId: string;
+  externalId: string;
+}
+
 export interface ParticipantRepository {
   findById(id: string): Promise<Participant | null>;
   findByIds(ids: readonly string[]): Promise<Participant[]>;
@@ -442,16 +448,32 @@ export interface ParticipantRepository {
   search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
   /**
    * Candidates for a whole upload within one sport league, in one read (#1183): every participant
-   * any of the queries matches, exactly on each identifier a query gives. Ordered by name.
+   * any of the queries matches, exactly on each identifier a query gives, test participants left
+   * out (#2096). Ordered by name.
    */
   findMatchingAny(sportLeagueId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
-  /** A sport league's roster (#1853): best rank first, unranked last, then by name. Never paged. */
+  /** A sport league's roster (#1853), test participants left out (#2096): best rank first, unranked last, then by name. Never paged. */
   findBySportLeague(sportLeagueId: string): Promise<Participant[]>;
   /** Re-ranks participants of the sport league, all or none. */
   updateRankings(sportLeagueId: string, rankings: readonly ParticipantRanking[]): Promise<void>;
-  /** Participants per sport league, for each id asked about (0 where none). */
+  /** Rostered participants per sport league, test participants left out, for each id asked about (0 where none). */
   countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>>;
   create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant>;
+  /**
+   * Removes the sport league's test participants no event field holds (#2096), in one statement:
+   * what a removed test slot's field leaves behind. Returns how many went.
+   */
+  deleteUnfieldedTestParticipants(sportLeagueId: string): Promise<number>;
+  /**
+   * The participant and its feed id's provider mapping in one transaction (#2096), with the
+   * mapping's follow-up `jobs`: how a provider-synced league takes a participant. Null, writing
+   * nothing, when another participant of the league already holds the feed id.
+   */
+  createWithProviderMapping(
+    participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>,
+    feedId: ParticipantFeedId,
+    jobs?: readonly BackgroundJobRequest[],
+  ): Promise<Participant | null>;
   update(id: string, updates: Partial<Participant>): Promise<Participant>;
   /**
    * Deletes the participant unless an event field holds them (#1400), with their provider
@@ -481,6 +503,12 @@ export interface ParticipantProviderMappingRepository {
   findByProviderExternalIds(providerCode: ProviderCode, scope: ProviderMappingScope, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   /** Every mapping a provider has for the participants of one sport league, in one read. Never paged. */
   findByProviderAndSportLeague(providerId: string, sportLeagueId: string): Promise<ParticipantProviderMapping[]>;
+  /**
+   * The Provider row id of the sport league's sync provider (#2096): the provider its selected
+   * mapping names, whose feed ids its participants carry. Null when the league is not synced;
+   * undefined when there is no such league. One read.
+   */
+  findSyncProviderId(sportLeagueId: string): Promise<string | null | undefined>;
   /**
    * Binds a provider identity to a participant. A provider identity maps to one participant per
    * sport league and kind, so an identity already bound to another of the league's participants

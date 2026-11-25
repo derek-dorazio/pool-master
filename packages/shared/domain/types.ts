@@ -245,6 +245,11 @@ export interface Participant extends DomainEntity {
   injuryStatus: InjuryStatus;
   photoUrl?: string;
   photoLastUpdated?: Date;
+  /**
+   * A test participant (QA only, #2096), made for a test slot's field: it joins only a test slot's
+   * field, never gets a provider mapping, and no roster or sync reads it.
+   */
+  isTestData: boolean;
 }
 
 /** Injury or availability status captured for a participant. */

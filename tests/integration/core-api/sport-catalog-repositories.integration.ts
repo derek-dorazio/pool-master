@@ -409,6 +409,7 @@ describe('ParticipantRepository — search and matching', () => {
       ranking: 12,
       name: 'Ludvig Aberg',
       participantType: 'INDIVIDUAL',
+      isTestData: false,
       nationality: 'SWE',
       role: 'GOLFER',
       status: 'ACTIVE',
@@ -444,7 +445,7 @@ describe('ParticipantRepository — search and matching', () => {
     const sport = await golfSport();
     const participants = new PrismaParticipantRepository(getAppPrisma());
     const created = await participants.create({
-      sportLeagueId: await participantLeagueId(getPrisma(), sport.id), ranking: null, name: 'Old Name', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' },
+      sportLeagueId: await participantLeagueId(getPrisma(), sport.id), ranking: null, name: 'Old Name', participantType: 'INDIVIDUAL', status: 'ACTIVE', injuryStatus: { status: 'HEALTHY' }, isTestData: false,
     });
     const expectedReturn = new Date('2026-06-01T00:00:00.000Z');
     const injuryUpdatedAt = new Date('2026-05-20T00:00:00.000Z');

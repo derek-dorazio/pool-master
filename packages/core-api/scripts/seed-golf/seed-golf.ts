@@ -456,11 +456,17 @@ class Loader {
    * a provider maps the player's feed id to (#1850), else the league's participant found by exact
    * name, else created in the league at the file's ranking (#1853). A
    * participant belongs to one sport league, so a player is only ever found among the league's
-   * own. A feed id the league has no participant mapped to yet is bound to the player's
-   * participant, so the provider's sync fields that participant rather than creating a second. A
-   * player already in the league keeps the ranking it has.
+   * own. A player made in a provider-synced league carries its sync provider's feed id, written
+   * with it (#2096); one the file gives no such id for is made a test participant, which joins only
+   * the test slots' events this load makes, since the league takes no other participant without
+   * a feed id. Any other feed id the league has
+   * no participant mapped to yet is bound to the player's participant, so the provider's sync fields
+   * that participant rather than creating a second. A player already in the league keeps the
+   * ranking it has.
    */
-  private async ensurePlayers(client: Client, league: SportDataLeague, sportLeagueId: string): Promise<Map<string, string | null>> {
+  private async ensurePlayers(client: Client, league: SportDataLeague, siteLeague: SportLeagueDto): Promise<Map<string, string | null>> {
+    const sportLeagueId = siteLeague.id;
+    const syncProviderCode = siteLeague.selectedProviderMapping?.providerCode ?? null;
     const { participants } = await must(listParticipants({ client, query: { sportLeagueId } }), `List ${league.name} players`);
     const byName = new Map(participants.map((p) => [p.name.toLowerCase(), p.id]));
     const providerIds = await this.providerIdsByCode(client, league);
@@ -475,12 +481,16 @@ class Loader {
         return participantId === undefined ? [] : [participantId];
       });
       let id = mapped.at(0) ?? byName.get(player.name.toLowerCase()) ?? null;
+      // A test participant made here never takes a feed id (#2096).
+      let madeTestParticipant = false;
       if (new Set(mapped).size > 1) {
         throw new Error(`${league.name}: ${player.name}'s feed ids are mapped to ${new Set(mapped).size} different participants; merge them on the site first.`);
       }
       if (id === null) {
         this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.ADD, name: player.name, detail: `ranked ${player.ranking}` });
         if (this.apply) {
+          const feedId = syncProviderCode === null ? undefined : player.feedIds?.[syncProviderCode];
+          madeTestParticipant = syncProviderCode !== null && feedId === undefined;
           const created = await must(createParticipant({
             client,
             body: {
@@ -490,14 +500,18 @@ class Loader {
               name: player.name,
               nationality: player.countryCode,
               ...splitName(player.name),
+              // A synced league takes a player with its sync provider's feed id, or as test data.
+              ...(feedId !== undefined ? { feedId } : { isTestData: madeTestParticipant }),
             },
           }), `Create player ${player.name}`);
           id = created.participant.id;
+          // The create mapped the sync provider's feed id with the player.
+          if (feedId !== undefined && syncProviderCode !== null) byFeedId.set(feedKey(syncProviderCode, feedId), id);
         }
       } else {
         this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.SKIP, name: player.name, detail: null });
       }
-      for (const [providerCode, externalId] of feedIds) {
+      for (const [providerCode, externalId] of madeTestParticipant ? [] : feedIds) {
         if (!byFeedId.has(feedKey(providerCode, externalId))) binds.push({ participantId: id, player, providerCode, externalId });
       }
       ids.set(player.key, id);
@@ -547,7 +561,7 @@ class Loader {
     const siteLeague = await this.ensureLeague(client, league);
     const sportLeagueId = siteLeague.id;
     const participantIds = this.contents.has(SportDataContent.PLAYERS)
-      ? await this.ensurePlayers(client, league, sportLeagueId)
+      ? await this.ensurePlayers(client, league, siteLeague)
       : new Map<string, string | null>();
 
     const stored = await currentSeasonEvents(client, siteLeague);
@@ -945,7 +959,7 @@ class Loader {
     const stored = editable[0];
 
     this.report({ sportLeague: league.name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.SKIP, name: league.name, detail: null });
-    const participantIds = await this.ensurePlayers(client, league, sportLeague.id);
+    const participantIds = await this.ensurePlayers(client, league, sportLeague);
     const slate: FieldSource = {
       name: stored.name,
       field: league.players.map((player): SportDataFieldEntry => ({ player: player.key, ranking: player.ranking })),

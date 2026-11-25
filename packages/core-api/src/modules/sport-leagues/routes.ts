@@ -129,6 +129,24 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     handler: handler.createTestSlot,
   });
 
+  fastify.delete('/:sportLeagueId/test-slots/:seasonSlotId', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Remove a test slot',
+      description: 'Removes a test slot (QA only, #2075): the test event on it, then the slot, then every test participant of the league no event field holds any more. How a browser journey cleans up after itself. '
+        + '404 SEASON_SLOT_NOT_FOUND for a slot that is not the league\'s; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps; 409 EVENT_HAS_CONTESTS while a contest covers its event. Root admin only.',
+      operationId: 'deleteTestSlot',
+      params: {
+        type: 'object',
+        required: ['sportLeagueId', 'seasonSlotId'],
+        properties: { sportLeagueId: { type: 'string', format: 'uuid' }, seasonSlotId: { type: 'string', format: 'uuid' } },
+      },
+      response: { 204: { type: 'null' }, ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.deleteTestSlot,
+  });
+
   fastify.patch('/:sportLeagueId', {
     ...write,
     schema: {

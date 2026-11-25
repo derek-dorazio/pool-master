@@ -114,6 +114,11 @@ export function buildSportLeagueHandlers(
       return reply.status(201).send({ slot: mapSportLeagueSeasonSlotToDto(slot) } satisfies SportLeagueSeasonSlotResponse);
     },
 
+    deleteTestSlot: async (request: FastifyRequest<{ Params: { sportLeagueId: string; seasonSlotId: string } }>, reply: FastifyReply) => {
+      await sportLeagues.deleteTestSlot(request.params.sportLeagueId, request.params.seasonSlotId);
+      return reply.status(204).send();
+    },
+
     updateSportLeague: async (request: FastifyRequest<SportLeagueParams & { Body: UpdateSportLeagueRequest }>): Promise<SportLeagueResponse> => {
       const sportLeague = await sportLeagues.updateSportLeague(request.params.sportLeagueId, request.body);
       return { sportLeague: mapSportLeagueToDto(sportLeague) };

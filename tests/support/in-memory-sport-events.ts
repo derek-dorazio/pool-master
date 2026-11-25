@@ -235,7 +235,7 @@ export class InMemorySportEvents {
     const sportLeagueId = this.sportLeagues.find((league) => league.sportId === sportId)?.id ?? UNPLACED_SPORT_LEAGUE_ID;
     const participant: Participant = stamp({
       id: this.id('participant'), sportLeagueId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-      injuryStatus: { status: 'HEALTHY' }, ranking: null, ...overrides,
+      injuryStatus: { status: 'HEALTHY' }, ranking: null, isTestData: false, ...overrides,
     });
     this.participants.push(participant);
     if (externalId !== undefined) {
@@ -353,6 +353,8 @@ export class InMemorySportEvents {
       updateRankings: async () => undefined,
       countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.participants.filter((row) => row.sportLeagueId === id).length])),
       create: async () => { throw new Error('not used'); },
+      createWithProviderMapping: async () => { throw new Error('not used'); },
+      deleteUnfieldedTestParticipants: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
       deleteUnlessOnAField: async () => { throw new Error('not used'); },
     };
@@ -376,6 +378,7 @@ export class InMemorySportEvents {
         && externalIds.includes(row.externalId) && this.inScope(row.participantId, scope)),
       findByProviderAndSportLeague: async (providerId, sportLeagueId) => this.mappings.filter((row) => row.providerId === providerId
         && row.sportLeagueId === sportLeagueId),
+      findSyncProviderId: async () => { throw new Error('not used'); },
       bind: async (mapping) => {
         const provider = Object.values(TEST_PROVIDER_ROWS).find((candidate) => candidate.id === mapping.providerId);
         if (!provider) return null;

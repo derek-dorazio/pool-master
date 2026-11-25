@@ -58,6 +58,7 @@ export type {
   MembershipTransaction,
   ParticipantProviderMappingRepository,
   ProviderMappingScope,
+  ParticipantFeedId,
   ParticipantRepository,
   ParticipantSearchFilters,
   SquadDetails,

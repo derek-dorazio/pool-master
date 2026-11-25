@@ -350,6 +350,8 @@ export function fakeParticipantRepo(
     updateRankings: nothing(),
     countBySportLeagues: noCounts(),
     create: echoCreate('participant'),
+    createWithProviderMapping: echoCreate('participant'),
+    deleteUnfieldedTestParticipants: jest.fn().mockResolvedValue(0),
     update: echoUpdate(),
     deleteUnlessOnAField: jest.fn().mockResolvedValue(0),
     ...overrides,
@@ -365,6 +367,8 @@ export function fakeParticipantProviderMappingRepo(
     findByParticipantIds: many(),
     findByProviderExternalIds: many(),
     findByProviderAndSportLeague: many(),
+    // A league with no feed, as most tests' leagues are; a test of a synced league names its provider.
+    findSyncProviderId: jest.fn().mockResolvedValue(null),
     bind: echoCreate('participant-provider-mapping'),
     ...overrides,
   };

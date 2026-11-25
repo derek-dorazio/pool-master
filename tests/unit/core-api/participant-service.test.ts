@@ -101,3 +101,86 @@ describe('ParticipantService delete (#1400)', () => {
     await expect(service.delete('participant-9')).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_FOUND', statusCode: 404 });
   });
 });
+
+// #2096 — a provider-synced league takes a participant with its sync provider's feed id, written
+// with the mapping, or a test participant; nothing else, since the sync would make a duplicate.
+describe('ParticipantService create in a provider-synced sport league (#2096)', () => {
+  const SYNC_PROVIDER_ROW_ID = 'provider-row-balldontlie';
+  const NEW_PLAYER = { sportLeagueId: 'league-1', name: 'Avery Hart', participantType: 'INDIVIDUAL' as const };
+
+  function syncedService(syncProviderId: string | null = SYNC_PROVIDER_ROW_ID) {
+    const participants = fakeParticipantRepo();
+    const mappings = fakeParticipantProviderMappingRepo({ findSyncProviderId: jest.fn().mockResolvedValue(syncProviderId) });
+    return { service: new ParticipantService(participants, mappings, testDomainEvents(), fakeLogger()), participants };
+  }
+
+  it('refuses a participant with no feed id with 409 PARTICIPANT_FEED_ID_REQUIRED, writing nothing', async () => {
+    const { service, participants } = syncedService();
+
+    await expect(service.create(NEW_PLAYER)).rejects.toMatchObject({ code: 'PARTICIPANT_FEED_ID_REQUIRED', statusCode: 409 });
+    expect(participants.create).not.toHaveBeenCalled();
+    expect(participants.createWithProviderMapping).not.toHaveBeenCalled();
+  });
+
+  it('writes a participant given the sync provider\'s feed id together with its mapping at that provider, and the job that resolves its unmapped finding', async () => {
+    const { service, participants } = syncedService();
+
+    await service.create({ ...NEW_PLAYER, feedId: 'player-41' });
+
+    expect(participants.create).not.toHaveBeenCalled();
+    expect(participants.createWithProviderMapping).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Avery Hart', isTestData: false }),
+      { providerId: SYNC_PROVIDER_ROW_ID, externalId: 'player-41' },
+      [expect.objectContaining({ type: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS', payload: { sportLeagueId: 'league-1', providerId: SYNC_PROVIDER_ROW_ID, externalIds: ['player-41'] } })],
+    );
+  });
+
+  it('refuses a feed id another participant of the league already holds with 409 PARTICIPANT_FEED_ID_TAKEN', async () => {
+    const { service, participants } = syncedService();
+    (participants.createWithProviderMapping as jest.Mock).mockResolvedValue(null);
+
+    await expect(service.create({ ...NEW_PLAYER, feedId: 'player-41' })).rejects.toMatchObject({ code: 'PARTICIPANT_FEED_ID_TAKEN', statusCode: 409 });
+  });
+
+  it('writes a test participant with no feed id and no mapping', async () => {
+    const { service, participants } = syncedService();
+
+    await service.create({ ...NEW_PLAYER, isTestData: true });
+
+    expect(participants.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Avery Hart', isTestData: true }));
+    expect(participants.createWithProviderMapping).not.toHaveBeenCalled();
+  });
+
+  it('refuses a test participant given a feed id with 422 TEST_PARTICIPANT_FEED_ID, before reading the league', async () => {
+    const { service, participants } = syncedService();
+
+    await expect(service.create({ ...NEW_PLAYER, isTestData: true, feedId: 'player-41' })).rejects.toMatchObject({ code: 'TEST_PARTICIPANT_FEED_ID', statusCode: 422 });
+    expect(participants.create).not.toHaveBeenCalled();
+  });
+
+  it('takes a participant with no feed id in a league with no feed, as before, and refuses a feed id there with 422 SPORT_LEAGUE_NOT_SYNCED', async () => {
+    const { service, participants } = syncedService(null);
+
+    await service.create(NEW_PLAYER);
+    await expect(service.create({ ...NEW_PLAYER, feedId: 'player-41' })).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_SYNCED', statusCode: 422 });
+
+    expect(participants.create).toHaveBeenCalledTimes(1);
+    expect(participants.create).toHaveBeenCalledWith(expect.objectContaining({ isTestData: false }));
+  });
+
+  it('answers 404 SPORT_LEAGUE_NOT_FOUND for a sport league that does not exist', async () => {
+    const mappings = fakeParticipantProviderMappingRepo({ findSyncProviderId: jest.fn().mockResolvedValue(undefined) });
+    const service = new ParticipantService(fakeParticipantRepo(), mappings, testDomainEvents(), fakeLogger());
+
+    await expect(service.create(NEW_PLAYER)).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses to bind a feed id to a test participant with 422 TEST_PARTICIPANT_FEED_ID, binding nothing', async () => {
+    const participants = fakeParticipantRepo({ findById: jest.fn().mockResolvedValue({ ...PARTICIPANT, isTestData: true }) });
+    const mappings = fakeParticipantProviderMappingRepo();
+    const service = new ParticipantService(participants, mappings, testDomainEvents(), fakeLogger());
+
+    await expect(service.bindProviderMapping('participant-1', SYNC_PROVIDER_ROW_ID, 'player-41')).rejects.toMatchObject({ code: 'TEST_PARTICIPANT_FEED_ID', statusCode: 422 });
+    expect(mappings.bind).not.toHaveBeenCalled();
+  });
+});
