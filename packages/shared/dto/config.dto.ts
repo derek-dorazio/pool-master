@@ -13,8 +13,8 @@ import {
 } from '@poolmaster/shared/domain';
 
 
-export const IngestionFeedSchedulePolicySchema = z.object({
-  enabled: z.boolean().describe('Whether the feed should be scheduled automatically.'),
+/** How often a sync runs, and over which events: what every sync kind's policy holds. */
+const IngestionScheduleIntervalSchema = z.object({
   intervalMinutes: z.number().int().min(1).optional().describe(
     'How often the feed should run, in minutes, for interval-driven orchestration.',
   ),
@@ -24,15 +24,33 @@ export const IngestionFeedSchedulePolicySchema = z.object({
   lookaheadDays: z.number().int().min(0).optional().describe(
     'How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).',
   ),
+});
+
+/** A sync kind's policy with a switch: an admin can turn it off. */
+export const IngestionFeedSchedulePolicySchema = IngestionScheduleIntervalSchema.extend({
+  enabled: z.boolean().describe('Whether the feed should be scheduled automatically.'),
 }).describe('Feed-specific ingestion scheduling policy.');
 export type IngestionFeedSchedulePolicy = z.infer<typeof IngestionFeedSchedulePolicySchema>;
 
+/**
+ * The FIELD sync's policy (#2086): it has no switch. It always runs, for synced sport leagues
+ * only, since every active league is provider-synced.
+ */
+export const IngestionAlwaysOnSchedulePolicySchema = IngestionScheduleIntervalSchema
+  .describe('A sync kind\'s scheduling policy that has no switch: it always runs.');
+export type IngestionAlwaysOnSchedulePolicy = z.infer<typeof IngestionAlwaysOnSchedulePolicySchema>;
+
+const atLeastOneProperty = (value: object) => Object.keys(value).length > 0;
+const AT_LEAST_ONE_PROPERTY = { message: 'At least one feed scheduling property must be provided.' };
+
 export const IngestionFeedSchedulePolicyPatchSchema = IngestionFeedSchedulePolicySchema.partial()
-  .refine((value) => Object.keys(value).length > 0, {
-    message: 'At least one feed scheduling property must be provided.',
-  })
+  .refine(atLeastOneProperty, AT_LEAST_ONE_PROPERTY)
   .describe('Partial feed-scheduling update payload.');
 export type IngestionFeedSchedulePolicyPatch = z.infer<typeof IngestionFeedSchedulePolicyPatchSchema>;
+
+const IngestionAlwaysOnSchedulePolicyPatchSchema = IngestionAlwaysOnSchedulePolicySchema.partial()
+  .refine(atLeastOneProperty, AT_LEAST_ONE_PROPERTY)
+  .describe('Partial scheduling update for a sync kind with no switch.');
 
 /**
  * One schedule for every sport league (#1871), keyed by `ProviderSyncKind` (#1999): there are no
@@ -42,8 +60,8 @@ export const IngestionScheduleConfigSchema = z.object({
   [ProviderSyncKind.EVENTS]: IngestionFeedSchedulePolicySchema.describe(
     'The EVENTS sync: how often each synced sport league\'s events sync is queued.',
   ),
-  [ProviderSyncKind.FIELD]: IngestionFeedSchedulePolicySchema.describe(
-    'The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.',
+  [ProviderSyncKind.FIELD]: IngestionAlwaysOnSchedulePolicySchema.describe(
+    'The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.',
   ),
   [ProviderSyncKind.SCORES]: IngestionFeedSchedulePolicySchema.describe(
     'The SCORES sync: live score polling.',
@@ -53,12 +71,31 @@ export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSche
 
 export const IngestionScheduleConfigPatchSchema = z.object({
   [ProviderSyncKind.EVENTS]: IngestionFeedSchedulePolicyPatchSchema.optional(),
-  [ProviderSyncKind.FIELD]: IngestionFeedSchedulePolicyPatchSchema.optional(),
+  [ProviderSyncKind.FIELD]: IngestionAlwaysOnSchedulePolicyPatchSchema.optional(),
   [ProviderSyncKind.SCORES]: IngestionFeedSchedulePolicyPatchSchema.optional(),
 }).refine((value) => Object.keys(value).length > 0, {
   message: 'At least one ingestion schedule change must be provided.',
 }).describe('Partial ingestion schedule update: only the sync kinds and properties it names change.');
 export type IngestionScheduleConfigPatch = z.infer<typeof IngestionScheduleConfigPatchSchema>;
+
+/** What the schedule read says of each sync kind beside its policy (#2086), so no client re-derives it. */
+const IngestionSyncScheduleStateSchema = z.object({
+  runs: z.boolean().describe('Whether the sync runs on its interval now.'),
+  switchable: z.boolean().describe('Whether the sync has a switch an admin can turn off; a sync with none always runs.'),
+});
+
+export const IngestionSyncScheduleSchema = IngestionScheduleIntervalSchema.extend({
+  enabled: z.boolean().optional().describe('The sync\'s switch; absent for a sync with none.'),
+}).extend(IngestionSyncScheduleStateSchema.shape).describe('One sync kind\'s schedule as the read answers it: its policy, whether it runs, and whether it has a switch.');
+export type IngestionSyncSchedule = z.infer<typeof IngestionSyncScheduleSchema>;
+
+/** The schedule read (#2086): each sync kind's policy, whether it runs and whether it has a switch. */
+export const IngestionScheduleSchema = z.object({
+  [ProviderSyncKind.EVENTS]: IngestionSyncScheduleSchema,
+  [ProviderSyncKind.FIELD]: IngestionSyncScheduleSchema,
+  [ProviderSyncKind.SCORES]: IngestionSyncScheduleSchema,
+}).describe('The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.');
+export type IngestionSchedule = z.infer<typeof IngestionScheduleSchema>;
 
 // --- Published contract (#192) -------------------------------------------------
 // Served by the platform module (platform/routes.ts). IngestionFeedSchedulePolicy is not registered directly: it appears only
@@ -246,3 +283,5 @@ registerSchema('PlanPrice', PlanPriceSchema);
 registerSchema('BillingConfig', BillingConfigSchema);
 registerSchema('IngestionScheduleConfigPatch', IngestionScheduleConfigPatchSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);
+registerSchema('IngestionSyncSchedule', IngestionSyncScheduleSchema);
+registerSchema('IngestionSchedule', IngestionScheduleSchema);

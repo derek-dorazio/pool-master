@@ -1790,10 +1790,6 @@
           "EVENTS": {
             "type": "object",
             "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
               "intervalMinutes": {
                 "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                 "type": "integer",
@@ -1811,6 +1807,10 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
               }
             },
             "additionalProperties": false,
@@ -1819,10 +1819,6 @@
           "FIELD": {
             "type": "object",
             "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
               "intervalMinutes": {
                 "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                 "type": "integer",
@@ -1843,15 +1839,11 @@
               }
             },
             "additionalProperties": false,
-            "description": "Partial feed-scheduling update payload."
+            "description": "Partial scheduling update for a sync kind with no switch."
           },
           "SCORES": {
             "type": "object",
             "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
               "intervalMinutes": {
                 "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                 "type": "integer",
@@ -1869,6 +1861,10 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
               }
             },
             "additionalProperties": false,
@@ -1884,10 +1880,6 @@
           "EVENTS": {
             "type": "object",
             "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
               "intervalMinutes": {
                 "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                 "type": "integer",
@@ -1905,6 +1897,10 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
               }
             },
             "required": [
@@ -1916,10 +1912,6 @@
           "FIELD": {
             "type": "object",
             "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
               "intervalMinutes": {
                 "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                 "type": "integer",
@@ -1939,19 +1931,12 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "enabled"
-            ],
             "additionalProperties": false,
-            "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+            "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
           },
           "SCORES": {
             "type": "object",
             "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
               "intervalMinutes": {
                 "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                 "type": "integer",
@@ -1969,6 +1954,10 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
               }
             },
             "required": [
@@ -1985,6 +1974,182 @@
         ],
         "additionalProperties": false,
         "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind."
+      },
+      "IngestionSyncSchedule": {
+        "type": "object",
+        "properties": {
+          "intervalMinutes": {
+            "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "intervalSeconds": {
+            "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "lookaheadDays": {
+            "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "enabled": {
+            "description": "The sync's switch; absent for a sync with none.",
+            "type": "boolean"
+          },
+          "runs": {
+            "type": "boolean",
+            "description": "Whether the sync runs on its interval now."
+          },
+          "switchable": {
+            "type": "boolean",
+            "description": "Whether the sync has a switch an admin can turn off; a sync with none always runs."
+          }
+        },
+        "required": [
+          "runs",
+          "switchable"
+        ],
+        "additionalProperties": false,
+        "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+      },
+      "IngestionSchedule": {
+        "type": "object",
+        "properties": {
+          "EVENTS": {
+            "type": "object",
+            "properties": {
+              "intervalMinutes": {
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "intervalSeconds": {
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "lookaheadDays": {
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "enabled": {
+                "description": "The sync's switch; absent for a sync with none.",
+                "type": "boolean"
+              },
+              "runs": {
+                "type": "boolean",
+                "description": "Whether the sync runs on its interval now."
+              },
+              "switchable": {
+                "type": "boolean",
+                "description": "Whether the sync has a switch an admin can turn off; a sync with none always runs."
+              }
+            },
+            "required": [
+              "runs",
+              "switchable"
+            ],
+            "additionalProperties": false,
+            "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+          },
+          "FIELD": {
+            "type": "object",
+            "properties": {
+              "intervalMinutes": {
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "intervalSeconds": {
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "lookaheadDays": {
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "enabled": {
+                "description": "The sync's switch; absent for a sync with none.",
+                "type": "boolean"
+              },
+              "runs": {
+                "type": "boolean",
+                "description": "Whether the sync runs on its interval now."
+              },
+              "switchable": {
+                "type": "boolean",
+                "description": "Whether the sync has a switch an admin can turn off; a sync with none always runs."
+              }
+            },
+            "required": [
+              "runs",
+              "switchable"
+            ],
+            "additionalProperties": false,
+            "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+          },
+          "SCORES": {
+            "type": "object",
+            "properties": {
+              "intervalMinutes": {
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "intervalSeconds": {
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "lookaheadDays": {
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "enabled": {
+                "description": "The sync's switch; absent for a sync with none.",
+                "type": "boolean"
+              },
+              "runs": {
+                "type": "boolean",
+                "description": "Whether the sync runs on its interval now."
+              },
+              "switchable": {
+                "type": "boolean",
+                "description": "Whether the sync has a switch an admin can turn off; a sync with none always runs."
+              }
+            },
+            "required": [
+              "runs",
+              "switchable"
+            ],
+            "additionalProperties": false,
+            "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+          }
+        },
+        "required": [
+          "EVENTS",
+          "FIELD",
+          "SCORES"
+        ],
+        "additionalProperties": false,
+        "description": "The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch."
       },
       "PlanCapsDto": {
         "type": "object",
@@ -38840,10 +39005,6 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -38861,6 +39022,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -38872,10 +39037,6 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -38895,19 +39056,12 @@
                         "maximum": 9007199254740991
                       }
                     },
-                    "required": [
-                      "enabled"
-                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -38925,6 +39079,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -38948,10 +39106,6 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -38969,6 +39123,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -38980,10 +39138,6 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -39003,19 +39157,12 @@
                         "maximum": 9007199254740991
                       }
                     },
-                    "required": [
-                      "enabled"
-                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -39033,6 +39180,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -40888,10 +41039,6 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -40909,6 +41056,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -40920,10 +41071,6 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -40943,19 +41090,12 @@
                               "maximum": 9007199254740991
                             }
                           },
-                          "required": [
-                            "enabled"
-                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -40973,6 +41113,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -40996,10 +41140,6 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -41017,6 +41157,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -41028,10 +41172,6 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -41051,19 +41191,12 @@
                               "maximum": 9007199254740991
                             }
                           },
-                          "required": [
-                            "enabled"
-                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -41081,6 +41214,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -42893,10 +43030,6 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -42914,6 +43047,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -42925,10 +43062,6 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -42948,19 +43081,12 @@
                         "maximum": 9007199254740991
                       }
                     },
-                    "required": [
-                      "enabled"
-                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -42978,6 +43104,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -43915,10 +44045,6 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -43936,6 +44062,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -43947,10 +44077,6 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -43970,19 +44096,12 @@
                         "maximum": 9007199254740991
                       }
                     },
-                    "required": [
-                      "enabled"
-                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -44000,6 +44119,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -44022,10 +44145,6 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -44043,6 +44162,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -44054,10 +44177,6 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -44077,19 +44196,12 @@
                         "maximum": 9007199254740991
                       }
                     },
-                    "required": [
-                      "enabled"
-                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
-                      },
                       "intervalMinutes": {
                         "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                         "type": "integer",
@@ -44107,6 +44219,10 @@
                         "type": "integer",
                         "minimum": 0,
                         "maximum": 9007199254740991
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether the feed should be scheduled automatically."
                       }
                     },
                     "required": [
@@ -45907,10 +46023,6 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -45928,6 +46040,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -45939,10 +46055,6 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -45962,19 +46074,12 @@
                               "maximum": 9007199254740991
                             }
                           },
-                          "required": [
-                            "enabled"
-                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -45992,6 +46097,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -46014,10 +46123,6 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -46035,6 +46140,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -46046,10 +46155,6 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -46069,19 +46174,12 @@
                               "maximum": 9007199254740991
                             }
                           },
-                          "required": [
-                            "enabled"
-                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "enabled": {
-                              "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
-                            },
                             "intervalMinutes": {
                               "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
                               "type": "integer",
@@ -46099,6 +46197,10 @@
                               "type": "integer",
                               "minimum": 0,
                               "maximum": 9007199254740991
+                            },
+                            "enabled": {
+                              "type": "boolean",
+                              "description": "Whether the feed should be scheduled automatically."
                             }
                           },
                           "required": [
@@ -70488,7 +70590,8 @@
               "RELEASE_SPORT_EVENT",
               "SYNC_EVENT_GAMES_AND_TIERS",
               "ACTIVATE_EVENT_CONTESTS",
-              "FOLLOW_POSTPONED_EVENT_CONTESTS"
+              "FOLLOW_POSTPONED_EVENT_CONTESTS",
+              "RESOLVE_MAPPED_PARTICIPANT_FINDINGS"
             ],
             "description": "The job's handler. Its kind follows from it."
           },
@@ -70796,7 +70899,8 @@
                     "RELEASE_SPORT_EVENT",
                     "SYNC_EVENT_GAMES_AND_TIERS",
                     "ACTIVATE_EVENT_CONTESTS",
-                    "FOLLOW_POSTPONED_EVENT_CONTESTS"
+                    "FOLLOW_POSTPONED_EVENT_CONTESTS",
+                    "RESOLVE_MAPPED_PARTICIPANT_FINDINGS"
                   ],
                   "description": "The job's handler. Its kind follows from it."
                 },
@@ -71063,7 +71167,8 @@
                   "RELEASE_SPORT_EVENT",
                   "SYNC_EVENT_GAMES_AND_TIERS",
                   "ACTIVATE_EVENT_CONTESTS",
-                  "FOLLOW_POSTPONED_EVENT_CONTESTS"
+                  "FOLLOW_POSTPONED_EVENT_CONTESTS",
+                  "RESOLVE_MAPPED_PARTICIPANT_FINDINGS"
                 ],
                 "description": "The job's handler. Its kind follows from it."
               },
@@ -87774,14 +87879,14 @@
         "tags": [
           "Platform"
         ],
-        "description": "Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.",
+        "description": "Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools, with whether each sync kind runs and whether it has a switch.",
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
+            "description": "The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IngestionScheduleConfig"
+                  "$ref": "#/components/schemas/IngestionSchedule"
                 }
               }
             }
@@ -87827,11 +87932,11 @@
         },
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
+            "description": "The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IngestionScheduleConfig"
+                  "$ref": "#/components/schemas/IngestionSchedule"
                 }
               }
             }
@@ -87869,11 +87974,11 @@
         "description": "Resets ingestion scheduling back to the platform defaults.",
         "responses": {
           "200": {
-            "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.",
+            "description": "The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IngestionScheduleConfig"
+                  "$ref": "#/components/schemas/IngestionSchedule"
                 }
               }
             }

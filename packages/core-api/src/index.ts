@@ -127,6 +127,7 @@ import { SyncFindingRetention } from './modules/ingestion/findings/sync-finding-
 import { CurrentSeasonRecompute } from './modules/sport-catalog/current-season-recompute';
 import { PrismaSportLeagueSeasonRepository } from './adapters/prisma-sport-league-season-repository';
 import { syncFindingsModule } from './modules/ingestion/findings/routes';
+import { resolveMappedParticipantFindingsJobHandler } from './modules/ingestion/findings/mapped-participant-findings-job';
 import { ProviderRateLimitWatch } from './modules/ingestion/findings/provider-rate-limit-watch';
 import { PrismaProviderSyncFindingRepository } from './adapters/prisma-provider-sync-finding-repository';
 import { ParticipantService } from './modules/participants/service';
@@ -182,21 +183,6 @@ export function buildApp(options: BuildAppOptions = {}) {
     ...(balldontlieWebhookSecret !== undefined && { [ProviderCode.BALLDONTLIE]: balldontlieWebhookSecret }),
   });
   const providers = providerLookupOf(providerSettings, registry);
-  // The one list of problems the sync found (#1999); the sync raises them, Findings lists them.
-  const syncFindingRepository = new PrismaProviderSyncFindingRepository(prisma);
-  const syncFindings = new ProviderSyncFindingService({
-    repository: syncFindingRepository,
-    providers: providerSettings,
-    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), app.log),
-    logger: app.log,
-  });
-  // A Provider that keeps rate limiting raises a finding on each league it syncs (#2038).
-  const providerRateLimits = new ProviderRateLimitWatch({
-    findings: syncFindings,
-    providers: providerSettings,
-    syncedLeagues: () => new PrismaSportLeagueRepository(prisma).findEventSynced(),
-    logger: app.log,
-  });
   const webhookProviderIds = () => providerWebhooks.onProviderIds();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const appSettings = new AppSettingsService({
@@ -239,6 +225,21 @@ export function buildApp(options: BuildAppOptions = {}) {
     queue: backgroundJobs,
     releasedEditionContests: createReleasedEditionContests(prisma, app.log),
     sportEventChanged: contestNotices,
+  });
+  // The one list of problems the sync found (#1999); the sync raises them, Findings lists them.
+  const syncFindingRepository = new PrismaProviderSyncFindingRepository(prisma);
+  const syncFindings = new ProviderSyncFindingService({
+    repository: syncFindingRepository,
+    providers: providerSettings,
+    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), domainEvents, app.log),
+    logger: app.log,
+  });
+  // A Provider that keeps rate limiting raises a finding on each league it syncs (#2038).
+  const providerRateLimits = new ProviderRateLimitWatch({
+    findings: syncFindings,
+    providers: providerSettings,
+    syncedLeagues: () => new PrismaSportLeagueRepository(prisma).findEventSynced(),
+    logger: app.log,
   });
   const contestSettlement = createContestSettlementService(prisma, app.log, { domainEvents });
   // Each job that adds a released edition to a template contest is run by contest management.
@@ -442,6 +443,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       SYNC_EVENT_GAMES_AND_TIERS: (payload) => syncedFieldFollowUps.run(payload),
       ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
       FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
+      RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(syncFindings),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -500,7 +502,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   app.register(platformTierProfilesModule, { prefix: '/api/v1/tier-profiles', platformTierProfiles: profiles.platformTierProfiles });
   app.register(platformPricingProfilesModule, { prefix: '/api/v1/pricing-profiles', platformPricingProfiles: profiles.platformPricingProfiles });
   app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
-  app.register(participantsModule, { prefix: '/api/v1/participants' });
+  app.register(participantsModule, { prefix: '/api/v1/participants', domainEvents });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
   app.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails });

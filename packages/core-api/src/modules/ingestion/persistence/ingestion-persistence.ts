@@ -197,15 +197,26 @@ export class IngestionPersistence {
     }
 
     if (unmapped.length > 0) {
+      // Each new participant's mapping is keyed to its Provider row (#2040), read once here.
+      const providerIds = new Map((await this.prisma.provider.findMany({
+        where: { code: { in: [...new Set(unmapped.map((participant) => requireProviderCodeOfSourceId(participant.providerId)))] } },
+        select: { id: true, code: true },
+      })).map((provider) => [provider.code, provider.id]));
+      // Each participant's id is chosen here, so its mapping names it without leaning on the
+      // order the insert returns rows in (rules/domain-model-conventions-rules.md §17).
+      const withIds = unmapped.map((participant) => ({ participant, participantId: randomUUID(), providerRowId: requireProviderId(providerIds, participant.providerId) }));
+      // The new mappings' follow-ups (#2069), one event per Provider, written with them.
+      const externalIdsByProvider = new Map<string, string[]>();
+      for (const { participant, providerRowId } of withIds) {
+        externalIdsByProvider.set(providerRowId, [...(externalIdsByProvider.get(providerRowId) ?? []), participant.externalId]);
+      }
+      const followUps = await Promise.all([...externalIdsByProvider].map(([providerRowId, externalIds]) => this.domainEvents.collect({
+        type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED,
+        sportLeagueId: league.id,
+        providerId: providerRowId,
+        externalIds,
+      })));
       const created = await this.prisma.$transaction(async (tx) => {
-        // Each new participant's mapping is keyed to its Provider row (#2040), read once here.
-        const providerIds = new Map((await tx.provider.findMany({
-          where: { code: { in: [...new Set(unmapped.map((participant) => requireProviderCodeOfSourceId(participant.providerId)))] } },
-          select: { id: true, code: true },
-        })).map((provider) => [provider.code, provider.id]));
-        // Each participant's id is chosen here, so its mapping names it without leaning on the
-        // order the insert returns rows in (rules/domain-model-conventions-rules.md §17).
-        const withIds = unmapped.map((participant) => ({ participant, participantId: randomUUID() }));
         await tx.participant.createMany({
           data: withIds.map(({ participant, participantId }) => ({
             id: participantId,
@@ -215,21 +226,23 @@ export class IngestionPersistence {
           })),
         });
         await tx.participantProviderMapping.createMany({
-          data: withIds.map(({ participant, participantId }) => ({
+          data: withIds.map(({ participant, participantId, providerRowId }) => ({
             participantId,
             sportLeagueId: league.id,
             participantType: league.participantType,
-            providerId: requireProviderId(providerIds, participant.providerId),
+            providerId: providerRowId,
             externalId: participant.externalId,
             lastSeenAt: seenAt,
           })),
         });
+        await insertBackgroundJobs(tx, followUps.flatMap((followUp) => followUp.jobs));
         return withIds.map(({ participant, participantId }) => ({
           providerId: participant.providerId,
           externalId: participant.externalId,
           participantId,
         }));
       });
+      for (const followUp of followUps) followUp.queued();
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
     }
 

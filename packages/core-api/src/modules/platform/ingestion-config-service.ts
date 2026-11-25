@@ -6,6 +6,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  IngestionAlwaysOnSchedulePolicy,
   IngestionFeedSchedulePolicy,
   IngestionScheduleConfig,
   IngestionScheduleConfigPatch,
@@ -26,8 +27,8 @@ export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionSchedule
       enabled: true,
       intervalMinutes: 360,
     },
+    // The field sync has no switch (#2086): it always runs, for synced sport leagues.
     [ProviderSyncKind.FIELD]: {
-      enabled: false,
       intervalMinutes: 360,
       lookaheadDays: 14,
     },
@@ -121,10 +122,10 @@ function applyPatch(
   };
 }
 
-function mergePolicy(
-  base: IngestionFeedSchedulePolicy,
-  patch?: Partial<IngestionFeedSchedulePolicy>,
-): IngestionFeedSchedulePolicy {
+function mergePolicy<P extends IngestionFeedSchedulePolicy | IngestionAlwaysOnSchedulePolicy>(
+  base: P,
+  patch?: Partial<P>,
+): P {
   return {
     ...base,
     ...patch,
