@@ -127,7 +127,7 @@
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping.ts": 4,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-contract.ts": 8,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/pga-mapping.ts": 1,
-  "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket.ts": 2,
+  "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket.ts": 1,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/soccer-contract.ts": 2,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-contract.ts": 3,
   "own:packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-mapping.ts": 4,

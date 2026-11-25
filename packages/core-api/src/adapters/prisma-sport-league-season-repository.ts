@@ -4,16 +4,17 @@
  * Seasons are added by migration, so nothing here creates one; a labelled test slot is added here
  * (#2004).
  */
-import { Prisma, type PrismaClient } from '@prisma/client';
+import { Prisma, PrismaSlotProviderMatchType, type PrismaClient } from '@prisma/client';
 import type {
   SeasonSlotWithEvent,
   SportLeagueCurrentSeasonFacts,
   SportLeagueSeasonRepository,
+  SyncedSlotsRecord,
   SyncableSportLeagueSeason,
   TestSeasonSlotCreate,
   TestSlotCreateResult,
 } from '@poolmaster/shared/db';
-import type { SportLeagueSeason } from '@poolmaster/shared/domain';
+import type { SportLeagueSeason, SyncSeasonSlot } from '@poolmaster/shared/domain';
 import { SEASON_SLOT_SELECT, toSeasonSlot, type SeasonSlotRow } from './season-slot-select';
 
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
@@ -112,5 +113,57 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       throw error;
     }
     return { outcome: 'CREATED', slot: toSeasonSlot(row) };
+  }
+
+  async findSyncSlots(sportLeagueSeasonId: string, sportLeagueProviderMappingId: string): Promise<SyncSeasonSlot[]> {
+    const rows = await this.prisma.sportLeagueSeasonPhaseSlot.findMany({
+      where: { sportLeagueSeasonId, isTestData: false },
+      select: {
+        id: true,
+        startsAt: true,
+        endsAt: true,
+        eventSlot: { select: { sportEventId: true } },
+        definition: {
+          select: {
+            providerMappings: {
+              where: { sportLeagueProviderMappingId, matchType: PrismaSlotProviderMatchType.PROVIDER_CODE },
+              select: { providerValue: true },
+            },
+            _count: { select: { templateSlots: { where: { template: { active: true } } } } },
+          },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+    return rows.map((row) => ({
+      seasonSlotId: row.id,
+      // A slot has one mapping row per provider mapping (the mappings' unique key).
+      providerCode: row.definition.providerMappings.at(0)?.providerValue ?? null,
+      coveredByTemplate: row.definition._count.templateSlots > 0,
+      sportEventId: row.eventSlot?.sportEventId ?? null,
+      startsAt: row.startsAt,
+      endsAt: row.endsAt,
+    }));
+  }
+
+  async recordSyncedSlots(input: SyncedSlotsRecord): Promise<void> {
+    if (input.eventSlots.length === 0 && input.slotDates.length === 0) return;
+    await this.prisma.$transaction([
+      // A slot that already has an event keeps it: the unique key on the Season slot skips it.
+      ...(input.eventSlots.length === 0 ? [] : [this.prisma.sportEventSlot.createMany({
+        data: input.eventSlots.map((row) => ({
+          sportEventId: row.sportEventId,
+          sportLeagueSeasonId: row.sportLeagueSeasonId,
+          sportLeagueSeasonPhaseSlotId: row.seasonSlotId,
+        })),
+        skipDuplicates: true,
+      })]),
+      // poolmaster-allow-query-in-loop: one update per slot whose games moved, each to its own dates; after a Season's first sync, only the slots whose games the provider rescheduled
+      ...input.slotDates.map((change) => this.prisma.sportLeagueSeasonPhaseSlot.update({
+        where: { id: change.seasonSlotId },
+        data: { startsAt: change.startsAt, endsAt: change.endsAt },
+        select: { id: true },
+      })),
+    ]);
   }
 }

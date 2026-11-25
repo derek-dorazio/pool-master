@@ -166,6 +166,7 @@ class OperationalContractProvider implements SportDataProvider {
         rounds: 4,
         participantCount: 2,
         fieldLocked: false,
+        providerSlots: [],
       },
     ];
   }
@@ -188,6 +189,7 @@ class OperationalContractProvider implements SportDataProvider {
       rounds: 4,
       participantCount: 2,
       fieldLocked: false,
+      providerSlots: [],
       participants: [
         {
           externalId: 'golfer-1',
@@ -288,6 +290,7 @@ class TourSlateContractProvider extends OperationalContractProvider {
       endDate: new Date(`${day.slice(0, 8)}${String(Number(day.slice(8)) + 3).padStart(2, '0')}T23:00:00.000Z`),
       status: 'SCHEDULED',
       fieldLocked: false,
+      providerSlots: [],
       providerLeagueCode,
     });
     return [

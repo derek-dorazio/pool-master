@@ -177,16 +177,34 @@ the Event list policy; a root admin's **Sync now**
 or the one Season a **Sync now** names (`sportLeagueSeasonId`), asks the provider for each by its
 own id for that Season, and records one `EVENTS` sync run. A Season the provider has no id for is
 not read; when the last of them lacks one, the job raises one `SEASON_MISSING` ERROR finding per
-league and provider (*Sync findings* below), since only a migration can add it. For each provider event:
+league and provider (*Sync findings* below), since only a migration can add it.
 
-- **New, start in the future**: created as a `DRAFT` `sport_events` row in the Season it was
-  read for, on the league (`sport_league_id`), kept under the provider's id for it: a
-  `sport_event_provider_mappings` row under the league's selected provider mapping, written in the
-  same transaction.
+**Matching games to Season slots (#2005).** The adapter reduces each provider event's games to
+plays: one per code the provider names their place by (`providerSlots`, each with its games'
+earliest and latest start). A code is the provider's own value, never ours: the season type and
+the vendor's week or round (`REG:5`, `POST:2`, built once in `provider-slot-codes.ts`), or a
+tournament id. The sync matches each code to a Season slot through the slot definition's
+`PROVIDER_CODE` row in `sport_league_phase_slot_provider_mappings` at the league's selected
+provider mapping, so a league's own offsets live in those rows, not in code. Test slots are never
+read. Each matched slot takes its games' dates (an update only when they moved). A code no slot
+maps raises one `SLOT_VALUE_UNMAPPED` INFO finding per league and code; waive it for a code the
+league does not play (the preseason). A page that lists fewer events or games deletes nothing.
+
+For each provider event:
+
+- **New, start in the future, on a slot a contest template lists**: created as a `DRAFT`
+  `sport_events` row in the Season it was read for, on the league (`sport_league_id`), playing its
+  matched slots (`sport_event_slots`, dates from those slots), kept under the provider's id for
+  it: a `sport_event_provider_mappings` row under the league's selected provider mapping, written
+  in the same transaction (ADR 0011).
+- **New, but no slot matched** (`NO_SLOT`), **no active template lists its slot**
+  (`NO_TEMPLATE`), or **its slot already has an event** (`SLOT_TAKEN`): never created. The
+  slot still takes the games' dates.
 - **New, start already passed**: never created (`ALREADY_STARTED`).
-- **Already linked**: kept current (`SportEventService.keepProviderEventsCurrent`) through
-  `updateEvent`, the admin's own edit, so a moved start shifts the rounds and notifies leagues
-  on a released event. A value the provider stops sending is kept.
+- **Already linked**: kept current (`SportEventService.keepProviderEventsCurrent`) through the
+  same update the admin's own edit makes, so a moved start shifts the rounds and notifies leagues
+  on a released event. A value the provider stops sending is kept. It also takes any matched
+  slot no event plays yet, so a playoff event gains each later round as its games arrive.
 
 | Status | Provider may change |
 |---|---|
@@ -362,7 +380,10 @@ column. Each finding names its sport league; its event, Provider row and the fee
   answer, *Rate limit and retries* above), `UNMAPPED_PARTICIPANT` (WARNING, raised by the live
   scores writer; its action is the Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR,
   raised per synced league when a worker task starts with the Provider's webhooks on and no
-  signing secret; resolved once it is set, and on a league the Provider no longer syncs at the next check, #2070). Three are checked on an event by each sync that
+  signing secret; resolved once it is set, and on a league the Provider no longer syncs at the next check, #2070),
+  `SEASON_MISSING` (ERROR, *The run* above) and `SLOT_VALUE_UNMAPPED` (INFO, a provider code no
+  slot maps, *Matching games to Season slots* above; it has no action, since a mapping is added by
+  migration). Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
@@ -496,6 +517,10 @@ every league, and the PR must say so.
   MLB's `quietAfterMinutes` is 210 in case innings are not notified. Confirm during the paid trial
   (#1500).
 - **CFP feed**: confirm bowl and playoff games are carried and whether a marker exists (#1500).
+- **Golf and college football create no new events yet** (#2005): a PGA tournament's code is its
+  tournament id, which no slot maps until slots match by name (slice 12), so each raises a
+  `SLOT_VALUE_UNMAPPED` finding; college football sends no codes until slots match by date window
+  (slice 13). Events already linked keep syncing.
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
 - **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
 - **Per-event tier override** from the event ⚙ dialog is in progress.

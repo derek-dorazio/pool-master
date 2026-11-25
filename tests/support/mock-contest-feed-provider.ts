@@ -417,6 +417,7 @@ function toSportEvent(
     fieldLocked:
       detail.event.field.status === 'locked'
       || detail.event.field.status === 'final',
+    providerSlots: [],
   };
 }
 

@@ -24,6 +24,7 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import type { SoccerMatch, SoccerTeam } from './soccer-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 export const EPL_MATCHES_PATH = '/epl/v2/matches';
 export const EPL_TEAMS_PATH = '/epl/v2/teams';
@@ -78,6 +79,11 @@ export function toEplMatchweekEvent(scope: EplScope, matches: readonly SoccerMat
     rounds: 1,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
+    // A league match's code is the vendor's round number: the regular season is all there is.
+    providerSlots: slotPlaysOf(matches.map((match, index) => ({
+      code: providerSlotCode(ProviderSeasonType.REGULAR_SEASON, required(match.round_number, EPL_MATCHES_PATH, matchName(match), 'round_number')),
+      start: times[index],
+    }))),
   };
 }
 

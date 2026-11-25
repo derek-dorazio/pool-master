@@ -72381,7 +72381,8 @@
               "SEASON_MISSING",
               "NO_PROVIDER_PARTICIPANTS",
               "NO_PROVIDER_LIVE_SCORES",
-              "GAMES_NOT_SYNCED"
+              "GAMES_NOT_SYNCED",
+              "SLOT_VALUE_UNMAPPED"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
           },
@@ -72601,7 +72602,8 @@
                     "SEASON_MISSING",
                     "NO_PROVIDER_PARTICIPANTS",
                     "NO_PROVIDER_LIVE_SCORES",
-                    "GAMES_NOT_SYNCED"
+                    "GAMES_NOT_SYNCED",
+                    "SLOT_VALUE_UNMAPPED"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
                 },
@@ -72827,7 +72829,8 @@
                   "SEASON_MISSING",
                   "NO_PROVIDER_PARTICIPANTS",
                   "NO_PROVIDER_LIVE_SCORES",
-                  "GAMES_NOT_SYNCED"
+                  "GAMES_NOT_SYNCED",
+                  "SLOT_VALUE_UNMAPPED"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer."
               },

@@ -31,6 +31,7 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import type { NcaaBracketGame, NcaaBracketTeam, NcaaTeam } from './ncaa-tournament-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 /** One of the vendor's NCAA basketball leagues and how its bracket numbers its rounds. */
 export interface NcaaTournamentLeague {
@@ -132,6 +133,10 @@ export function toNcaaTournamentEvent(scope: NcaaTournamentScope, games: readonl
     rounds: tournamentRoundsOf(league),
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
+    // A bracket game's code is the vendor's round, First Four included; an undated game has no place in time yet.
+    providerSlots: slotPlaysOf(games.flatMap((game) => (game.date && game.round !== undefined
+      ? [{ code: providerSlotCode(ProviderSeasonType.POSTSEASON, game.round), start: Date.parse(game.date) }]
+      : []))),
   };
 }
 

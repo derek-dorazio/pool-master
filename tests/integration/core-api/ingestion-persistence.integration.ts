@@ -93,6 +93,7 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-15T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
+      providerSlots: [],
       participants: [{ externalId: golferId, providerId: 'balldontlie', sport: Sport.GOLF, name: `Golfer ${golferId}`, active: true, ranking: 3, metadata: {} }],
     };
     await linkedProviderEvent(getPrisma(), { providerId: detail.providerId, externalId, name: detail.name, startDate: detail.startDate });
@@ -184,6 +185,7 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-15T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
+      providerSlots: [],
       participants: [
         {
           externalId: 'ingestion-player-1',
@@ -259,6 +261,7 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-22T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
+      providerSlots: [],
       participants: [golfer('ingestion-ranked-1', 'Ranked Golfer', 7), golfer('ingestion-ranked-2', 'Unranked Golfer')],
     };
     const event = await linkedProviderEvent(prisma, {
@@ -301,6 +304,7 @@ describe('IngestionPersistence', () => {
       startDate: new Date('2026-04-29T12:00:00.000Z'),
       status: 'SCHEDULED',
       fieldLocked: false,
+      providerSlots: [],
       participants,
     };
   }
@@ -370,6 +374,7 @@ describe('IngestionPersistence', () => {
       status: 'SCHEDULED' as const,
       participantCount: 80,
       fieldLocked: false,
+      providerSlots: [],
     });
 
     const result = await persistence.persistEventsWithDiagnostics([
@@ -406,6 +411,7 @@ describe('IngestionPersistence', () => {
       status: 'SCHEDULED' as const,
       participantCount,
       fieldLocked: false,
+      providerSlots: [],
     });
 
     const result = await persistence.persistEventsWithDiagnostics([
@@ -523,6 +529,7 @@ describe('IngestionPersistence', () => {
         rounds: 5,
         participantCount: 80,
         fieldLocked: true,
+        providerSlots: [],
       }]);
 
       const row = await prisma.sportEvent.findUniqueOrThrow({ where: { id: created.id } });

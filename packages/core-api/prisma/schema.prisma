@@ -589,6 +589,7 @@ enum PrismaProviderSyncFindingKind {
   NO_PROVIDER_PARTICIPANTS
   NO_PROVIDER_LIVE_SCORES
   GAMES_NOT_SYNCED
+  SLOT_VALUE_UNMAPPED
 }
 
 /// How a sport event's latest automatic release check ended (#1847).

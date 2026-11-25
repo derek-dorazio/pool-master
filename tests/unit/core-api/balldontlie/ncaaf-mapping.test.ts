@@ -92,6 +92,7 @@ describe('a College Football Playoff as an event', () => {
       status: 'COMPLETED',
       participantCount: 14,
       fieldLocked: true,
+      providerSlots: [],
     });
   });
 

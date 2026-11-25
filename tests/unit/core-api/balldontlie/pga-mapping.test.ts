@@ -44,6 +44,9 @@ describe('BALLDONTLIE PGA tournament to sport event', () => {
       rounds: 4,
       participantCount: 156,
       fieldLocked: true,
+      providerSlots: [
+        { code: '40', startsAt: new Date('2026-08-06T00:00:00.000Z'), endsAt: new Date('2026-08-09T00:00:00.000Z') },
+      ],
     });
   });
 
