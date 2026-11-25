@@ -43,9 +43,10 @@ function listedFiles(text) {
 
 /**
  * A coverage floor config (#2103), read so that going down in coverage is a raise: each floor is
- * `<name>` and each exception `<name>:<file>`, valued 200 minus its lines and branches floors. A
- * lowered floor, a lowered exception and a new exception all count up and are refused; a raised
- * or deleted exception counts down.
+ * `<name>:lines` and `<name>:branches`, each exception `<name>:<file>:lines` and
+ * `<name>:<file>:branches`, valued 100 minus the percentage held. A lowered floor, a lowered
+ * exception and a new exception all count up and are refused; a raised or deleted exception
+ * counts down.
  */
 function coverageFloors(text) {
   const { floors = [] } = JSON.parse(text);
@@ -64,6 +65,8 @@ function coverageFloors(text) {
 }
 
 export { coverageFloors };
+
+/** Every ratcheted baseline and how its entries are read. A new baseline is added here. */
 export const BASELINES = [
   { file: 'scripts/text-style-baseline.json', read: countsPerFile },
   { file: 'scripts/titled-tile-baseline.json', read: countsPerFile },
