@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
-import { SegmentedControl, Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
-import { Text } from "./text";
+import { SegmentedControl, Tabs } from "./tabs";
 
 const meta = {
   title: "Navigation/Tabs",
@@ -9,21 +8,6 @@ const meta = {
 } satisfies Meta<typeof Tabs>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-/** In-card tabs. A page's own views use `PageTabs`. */
-export const Default: Story = {
-  render: () => (
-    <Tabs defaultValue="entries">
-      <TabsList>
-        <TabsTrigger value="entries">Entries</TabsTrigger>
-        <TabsTrigger value="picks">Picks</TabsTrigger>
-      </TabsList>
-      <TabsContent value="entries"><Text>Entries</Text></TabsContent>
-      <TabsContent value="picks"><Text>Picks</Text></TabsContent>
-    </Tabs>
-  ),
-};
 
 function SegmentedDemo() {
   const [value, setValue] = useState("week");

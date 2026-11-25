@@ -1,0 +1,114 @@
+{
+  "$comment": "#2107 -- names the web app imports from @poolmaster/shared, /domain or /dto that are not contract vocabulary, with how many imports each may have. Read by scripts/check-web-shared-imports.mjs. Each count only falls: a slice that removes imports runs the check with --update in the same PR. The fix for an entry is a DTO field the API decides (rules/domain-model-conventions-rules.md §17); the ticket that removes each is in notes/web-violations-by-slice-2026-11-25.md and #2108-#2110. Types and enums are always allowed; $allowed lists the other name patterns that are vocabulary, each with its reason.",
+  "$allowed": [
+    {
+      "pattern": "Order$",
+      "reason": "An enum's declared order list (rules/domain-model-conventions-rules.md enum order)."
+    },
+    {
+      "pattern": "^explicitOrder",
+      "reason": "Reads an enum's declared order."
+    },
+    {
+      "pattern": "^compareByEnumOrder$",
+      "reason": "Sorts by an enum's declared order."
+    },
+    {
+      "pattern": "^assertNever$",
+      "reason": "Exhaustiveness check, no domain value."
+    },
+    {
+      "pattern": "^pluralize$",
+      "reason": "Display helper."
+    },
+    {
+      "pattern": "^format",
+      "reason": "Display formatter: turns a value the API sent into text."
+    },
+    {
+      "pattern": "^describe",
+      "reason": "Display formatter: describes rules the API sent."
+    },
+    {
+      "pattern": "^PRODUCT_",
+      "reason": "Brand strings (brand.ts)."
+    },
+    {
+      "pattern": "^(sportVocabulary|sportLeagueNounOf|sportNoun)$",
+      "reason": "Sport display words, looked up by the sport's code."
+    },
+    {
+      "pattern": "ImagePath$",
+      "reason": "Path of a static image."
+    },
+    {
+      "pattern": "Schema$",
+      "reason": "A zod schema of the contract."
+    },
+    {
+      "pattern": "^isApiErrorCode$",
+      "reason": "Checks an error code the API sent against the contract's codes."
+    }
+  ],
+  "AUTO_RELEASE_DAYS_MAX": 1,
+  "blocksManualRelease": 1,
+  "BUDGET_ROSTER_SIZE_MAX": 1,
+  "buildEventPagePath": 1,
+  "CHAMPIONSHIP_MATRIX_PLACES": 1,
+  "championshipYear": 9,
+  "contestFormatForSelectionType": 1,
+  "ContestStatusOrderForHomeCurrent": 1,
+  "contestTemplateEventTypeOf": 1,
+  "countParticipants": 6,
+  "coversOneEvent": 2,
+  "CUP_CUSTOM_POINTS_MAX": 1,
+  "CUP_CUSTOM_POINTS_MAX_PLACES": 1,
+  "cupPlacePoints": 1,
+  "cupWeightRaisesPoints": 1,
+  "DEFAULT_DISPLAY_LOCALE": 1,
+  "DEFAULT_DISPLAY_TIME_ZONE": 2,
+  "englishLocaleFor": 1,
+  "eventPlaysMatches": 1,
+  "eventRoundLabel": 2,
+  "eventSportDefinition": 8,
+  "fieldOrderDecision": 1,
+  "findBudgetPricingProblem": 2,
+  "findFallingPlanLimit": 1,
+  "findTierLayoutProblem": 1,
+  "GAME_PICKS_TIEBREAKER_MAX": 2,
+  "getDefaultCountedScores": 1,
+  "getSportDefinition": 18,
+  "getTieredRosterSize": 2,
+  "getTiersInPlay": 1,
+  "hasSportEventStarted": 1,
+  "isHallOfLameRecord": 1,
+  "isMatchUnplayed": 4,
+  "isPredictionSelectionType": 1,
+  "isRosterSelectionType": 2,
+  "isRoundComplete": 2,
+  "isSecondChanceBracket": 2,
+  "isSquaresRound": 1,
+  "isTemplateOfferedOn": 1,
+  "isUrlSegment": 2,
+  "KNOCKOUT_ROUND_VALUES_MAX_ROUNDS": 1,
+  "LEAGUE_PLANS": 8,
+  "MATCH_PERIOD_LAYOUTS": 1,
+  "matchPeriodsOf": 1,
+  "OFFERABLE_SPORT_EVENT_STATUSES": 1,
+  "PARTICIPANT_SCORING_DEFINITIONS": 5,
+  "PASSWORD_RESET_LINK_MINUTES": 1,
+  "PLAN_FEATURE_GROUP": 3,
+  "priceOnBudgetCurve": 1,
+  "RANDOM_DRAW_PICKS_PER_ENTRY_MAX": 2,
+  "ROUNDS_PAR_MAX": 1,
+  "ROUNDS_PAR_MIN": 1,
+  "sportAllowsSelectionType": 1,
+  "sportLeagueDefinitionOf": 1,
+  "SQUARES_GRID_SIZE": 1,
+  "SQUARES_PER_ENTRY_MAX": 2,
+  "suggestContestName": 1,
+  "SUPPORTED_SPORTS": 3,
+  "SURVIVOR_LIVES_DEFAULT": 1,
+  "SURVIVOR_LIVES_MAX": 2,
+  "toCents": 1
+}

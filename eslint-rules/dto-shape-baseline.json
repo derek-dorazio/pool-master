@@ -1,0 +1,17 @@
+{
+  "$comment": "#2107 -- local interfaces or object types that copy a generated hey-api type (75% or more of at least 3 fields), per web production file. Read by poolmaster/no-dto-shaped-local-types (eslint.config.js). Counts only fall: a file that removes one lowers its entry in the same PR, and rules:check:baseline-ratchet refuses a raise unless scripts/baseline-raises.json declares it. Fix: use the DTO, Pick<> or a field the API adds; a shape that only shares names takes poolmaster-allow-dto-shape with a reason.",
+  "clients/poolmaster/src/features/championships/cup-view.ts": 1,
+  "clients/poolmaster/src/features/championships/squad-standing-columns.tsx": 1,
+  "clients/poolmaster/src/features/contest-types/contest-catalog.ts": 1,
+  "clients/poolmaster/src/features/contests/contest-events-page.tsx": 1,
+  "clients/poolmaster/src/features/contests/contest-leaderboard.ts": 2,
+  "clients/poolmaster/src/features/contests/leaderboard-columns.tsx": 1,
+  "clients/poolmaster/src/features/contests/pick-em-board.ts": 1,
+  "clients/poolmaster/src/features/contests/squares-board.ts": 1,
+  "clients/poolmaster/src/features/plans/plan-comparison.ts": 1,
+  "clients/poolmaster/src/features/root-admin/email-send-result.ts": 1,
+  "clients/poolmaster/src/features/root-admin/golf-round-score-patch.ts": 1,
+  "clients/poolmaster/src/features/root-admin/provider-league-columns.tsx": 1,
+  "clients/poolmaster/src/features/shared/ui/data-grid-filters.ts": 1,
+  "clients/poolmaster/src/lib/logger/types.ts": 1
+}

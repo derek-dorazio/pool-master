@@ -30,6 +30,9 @@ import noMockedApi from '../no-mocked-api.mjs';
 import noNodeEnvReads from '../no-node-env-reads.mjs';
 import noSportBranching from '../no-sport-branching.mjs';
 import noClockYearOrLeagueTables from '../no-clock-year-or-league-tables.mjs';
+import noEnumStringLiterals from '../no-enum-string-literals.mjs';
+import noDtoShapedLocalTypes from '../no-dto-shaped-local-types.mjs';
+import noLocalEnums from '../no-local-enums.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
@@ -1470,6 +1473,105 @@ ruleTester.run('no-clock-year-or-league-tables', noClockYearOrLeagueTables, {
     // A file over its baseline reports every hit, so it cannot add one.
     {
       code: 'const a = d.getUTCFullYear();\nconst b = e.getUTCFullYear();',
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2107: a shared enum value is named, not written as a string, in comparisons, case labels and
+// literal types. The values come from the real shared domain (ContestStatus, LeagueRole).
+ruleTester.run('no-enum-string-literals', noEnumStringLiterals, {
+  valid: [
+    // The enum member, and the enum's type.
+    'if (contest.status === ContestStatus.OPEN) {}',
+    'let status: ContestStatus;',
+    // A string that is no enum value, and an enum value that is only displayed or passed on.
+    "if (tone === 'success') {}",
+    "const label = 'OPEN';",
+    "send({ status: 'OPEN' });",
+    // A string that only happens to match takes a marker with its reason.
+    "// poolmaster-allow-enum-literal: a CSS keyword, not the contest status\nif (value === 'OPEN') {}",
+    // A file on its baseline may keep the hits it has.
+    { code: "if (a === 'OPEN') {}", filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
+  ],
+  invalid: [
+    { code: "if (contest.status === 'OPEN') {}", errors: [{ messageId: 'enumLiteral' }] },
+    // SelectionType's members carry doc comments; its values are found all the same.
+    { code: "type Mode = 'PICK_EM' | 'SURVIVOR';", errors: [{ messageId: 'enumLiteral' }, { messageId: 'enumLiteral' }] },
+    // Optional chains and plain variables, which no-bare-enum-literals does not see.
+    { code: "if (a?.status !== 'COMPLETED') {}", errors: [{ messageId: 'enumLiteral' }] },
+    { code: "if ('COMMISSIONER' == role) {}", errors: [{ messageId: 'enumLiteral' }] },
+    { code: "switch (role) { case 'COMMISSIONER': break; }", errors: [{ messageId: 'enumLiteral' }] },
+    // A literal union is a local copy of the enum.
+    { code: "type Role = 'MEMBER' | 'COMMISSIONER';", errors: [{ messageId: 'enumLiteral' }, { messageId: 'enumLiteral' }] },
+    { code: "// poolmaster-allow-enum-literal\nif (a === 'OPEN') {}", errors: [{ messageId: 'missingReason' }] },
+    { code: "// poolmaster-allow-enum-literal: nothing here\nconst x = 1;", errors: [{ messageId: 'unusedAllow' }] },
+    // A file over its baseline reports every hit, so it cannot add one.
+    {
+      code: "if (a === 'OPEN') {}\nif (b === 'DRAFT') {}",
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2107: no local copy of a generated hey-api type under another name. Shapes come from the real
+// generated file (LeagueDto: id, leagueCode, name, description, isActive, memberCount, ...).
+ruleTester.run('no-dto-shaped-local-types', noDtoShapedLocalTypes, {
+  valid: [
+    // The DTO itself, and Pick<>.
+    'type Row = LeagueDto;',
+    "type Row = Pick<LeagueDto, 'id' | 'name'>;",
+    // Component props are left alone.
+    'interface LeagueCardProps { id: string; name: string; leagueCode: string; memberCount: number }',
+    // Fewer than 3 fields, or under 75% shared.
+    'interface Row { id: string; name: string }',
+    'interface Row { id: string; name: string; leagueCode: string; tone: string; width: number }',
+    // A shape that only shares names takes a marker with its reason.
+    '// poolmaster-allow-dto-shape: form values, not the league\ninterface FormValues { id: string; name: string; leagueCode: string }',
+  ],
+  invalid: [
+    { code: 'interface LeagueRow { id: string; name: string; leagueCode: string; memberCount: number }', errors: [{ messageId: 'dtoCopy' }] },
+    { code: 'export type LeagueRow = { id: string; name: string; isActive: boolean };', errors: [{ messageId: 'dtoCopy' }] },
+    { code: '// poolmaster-allow-dto-shape\ninterface Row { id: string; name: string; leagueCode: string }', errors: [{ messageId: 'missingReason' }] },
+    { code: '// poolmaster-allow-dto-shape: nothing here\nconst x = 1;', errors: [{ messageId: 'unusedAllow' }] },
+    {
+      code: 'interface A { id: string; name: string; leagueCode: string }\ninterface B { id: string; name: string; isActive: boolean }',
+      filename: 'legacy.ts',
+      options: [{ baseline: { 'legacy.ts': 1 } }],
+      errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
+    },
+  ],
+});
+
+// #2107: no enum of the web app's own, declared or as a const object of codes.
+ruleTester.run('no-local-enums', noLocalEnums, {
+  valid: [
+    // Display keys and mixed objects are not codes.
+    "const tabs = { details: 'details', actions: 'actions' };",
+    "const tone = { OPEN: 'success', FINAL: 'neutral' };",
+    "const sizes = { SMALL: 1, LARGE: 2 };",
+    // One entry is a constant, not a set of codes.
+    "const only = { A: 'A' };",
+    "let mutable = { A: 'A', B: 'B' };",
+    // A map keyed by a shared enum's members is a lookup, not new codes.
+    "const labels = { [SportEventStatus.DRAFT]: 'DRAFT_LABEL', [SportEventStatus.OPEN]: 'OPEN_LABEL' };",
+    // Codes that are not domain take a marker with their reason.
+    "// poolmaster-allow-local-enum: the chart library's mode names\nconst ChartMode = { LINE: 'LINE', BAR: 'BAR' };",
+    { code: 'enum Legacy { A = "A" }', filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
+  ],
+  invalid: [
+    { code: "export enum FeatureMark { INCLUDED = 'INCLUDED', LOCKED = 'LOCKED' }", errors: [{ messageId: 'localEnum' }] },
+    { code: 'const enum Mode { A, B }', errors: [{ messageId: 'localEnum' }] },
+    { code: "export const Mark = { INCLUDED: 'INCLUDED', LOCKED: 'LOCKED' } as const;", errors: [{ messageId: 'localEnum' }] },
+    { code: "const Mode = { PICK_EM: 'PICK_EM', SURVIVOR: 'SURVIVOR' } satisfies Record<string, string>;", errors: [{ messageId: 'localEnum' }] },
+    { code: "// poolmaster-allow-local-enum\nenum A { X = 'X' }", errors: [{ messageId: 'missingReason' }] },
+    { code: "// poolmaster-allow-local-enum: nothing here\nconst x = 1;", errors: [{ messageId: 'unusedAllow' }] },
+    {
+      code: "enum A { X = 'X' }\nenum B { Y = 'Y' }",
       filename: 'legacy.ts',
       options: [{ baseline: { 'legacy.ts': 1 } }],
       errors: [{ messageId: 'overBaseline' }, { messageId: 'overBaseline' }],
