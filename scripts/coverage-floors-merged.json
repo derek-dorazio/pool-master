@@ -24,7 +24,8 @@
       "name": "jobs",
       "include": "packages/core-api/src/{modules/background-jobs/**/*.ts,modules/domain-events/**/*.ts,modules/**/*-job.ts,modules/**/*-job-requests.ts,**/*-scheduler.ts,core/job-lock.ts,core/job-start.ts,core/locked-sweep.ts,plugins/request-job-start.ts,adapters/prisma-background-job-repository.ts,modules/events/event-lifecycle-service.ts,modules/events/league-events-sync.ts,modules/events/synced-field-follow-ups.ts,modules/events/synced-field-valuation.ts,modules/ingestion/ingestion-service.ts,modules/notifications/contest-email-jobs.ts,modules/contests/service.ts,modules/contest-management/service.ts}",
       "lines": 100,
-      "branches": 96
+      "branches": 96,
+      "exceptions": {}
     }
   ]
 }

@@ -26,7 +26,7 @@ import {
   toBracketLeaderboardSnapshotResponse,
 } from '../../../packages/core-api/src/mappers/bracket-leaderboard.mapper';
 import { toEmailTestResponseDto } from '../../../packages/core-api/src/mappers/email-test.mapper';
-import { toGamePicksResponse } from '../../../packages/core-api/src/mappers/game-picks.mapper';
+import { toGamePickPreviewResponse, toGamePicksResponse } from '../../../packages/core-api/src/mappers/game-picks.mapper';
 import { mapGolfRoundScorePreviewToDto } from '../../../packages/core-api/src/mappers/golf-scores.mapper';
 import { toLeagueDto } from '../../../packages/core-api/src/mappers/leagues.mapper';
 import { toPickEmLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/pick-em-leaderboard.mapper';
@@ -44,7 +44,7 @@ import { toSurvivorLeaderboardResponse, toSurvivorLeaderboardSnapshotResponse } 
 import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import type { PlanEntitlements } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import type { RaceResultPreviewRow } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
-import type { GamePickGame, GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
+import type { GamePickGame, GamePicksView, GamesPreview } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import type { SquaresBoard } from '../../../packages/core-api/src/modules/selections/squares-service';
 import type { SelectionGroup } from '../../../packages/core-api/src/modules/selections/types';
 import type { SportLeagueSummary } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
@@ -458,5 +458,26 @@ describe('toGamePicksResponse', () => {
     const dto = toGamePicksResponse(view([game({ pick, pickScore })], AT));
 
     expect(dto.games[0].pick).toEqual(expect.objectContaining({ outcome: 'CORRECT', points: 2 }));
+  });
+});
+
+describe('toGamePickPreviewResponse', () => {
+  it('sends the highest tiebreaker a save takes with a setup\'s pick preview', () => {
+    const preview = {
+      sportEventId: 'e1',
+      selectionType: 'PICK_EM',
+      mode: null,
+      againstTheSpread: false,
+      tiePicksOffered: false,
+      pickedCount: 0,
+      gameCount: 0,
+      tiebreakerMatchId: null,
+      games: [],
+    } as unknown as GamesPreview;
+
+    const dto = toGamePickPreviewResponse(preview);
+
+    expect(dto.tiebreakerMax).toBe(GAME_PICKS_TIEBREAKER_MAX);
+    expect(dto).toEqual(expect.objectContaining({ sportEventId: 'e1', pickedCount: 0, gameCount: 0, games: [] }));
   });
 });
