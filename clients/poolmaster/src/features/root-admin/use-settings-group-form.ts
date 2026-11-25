@@ -59,6 +59,10 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
   };
   const isThisGroup = (candidate: SettingsGroup): candidate is G => candidate.key === key;
 
+  const placedRefusals = (error: unknown) => (placeRefusal && hasErrorCode(error, 'SETTINGS_INVALID')
+    ? errorIssuePaths(error).map(placeRefusal).filter((placed) => placed !== null)
+    : []);
+
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (values: V) => {
       const response = await updateSettingsGroup({ path: { key }, body: saveBody<G>(key, toValue(values), baseUpdatedAt) });
@@ -68,6 +72,9 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
       return response.data;
     },
     onSuccess: take,
+    onError: (error) => {
+      for (const { name, message } of placedRefusals(error)) form.setError(name, { type: 'server', message });
+    },
     invalidates: [QueryKeys.rootAdmin.settings],
   });
 
@@ -88,10 +95,6 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
     saveMutation.reset();
   }
 
-  const placedRefusals = (error: unknown) => (placeRefusal && hasErrorCode(error, 'SETTINGS_INVALID')
-    ? errorIssuePaths(error).map(placeRefusal).filter((placed) => placed !== null)
-    : []);
-
   return {
     conflicted: hasErrorCode(saveMutation.error, 'SETTINGS_CONFLICT'),
     /** The failed save's reason when it shows above the form; null when it shows on its fields. */
@@ -99,10 +102,6 @@ export function useSettingsGroupForm<G extends SettingsGroup, V extends FieldVal
     form,
     loadLatest,
     saveMutation,
-    submit: form.handleSubmit((values) => saveMutation.mutate(values, {
-      onError: (error) => {
-        for (const { name, message } of placedRefusals(error)) form.setError(name, { type: 'server', message });
-      },
-    })),
+    submit: form.handleSubmit((values) => saveMutation.mutate(values)),
   };
 }
