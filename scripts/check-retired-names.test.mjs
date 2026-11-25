@@ -19,6 +19,11 @@ describe('check-retired-names', () => {
     assert.equal(countUses('const $roundLabel = 1;', 'roundLabel'), 0);
   });
 
+  it('matches a name with regex characters literally, so a name never acts as a pattern', () => {
+    assert.equal(countUses('use $store and a.b, not aXb', '$store'), 1);
+    assert.equal(countUses('a.b and aXb', 'a.b'), 1);
+  });
+
   it('reports a name used more than its baseline as a new use, and one used less as an entry to lower', () => {
     const { over, under } = compareWithBaseline({ a: 3, b: 1 }, { a: 2, b: 2 }, { a: '#1', b: '#2' });
     assert.deepEqual(over, [{ name: 'a', count: 3, allowed: 2 }]);

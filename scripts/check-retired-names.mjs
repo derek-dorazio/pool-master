@@ -38,7 +38,8 @@ export function isCountedSource(path) {
 
 /** How many whole-word uses of `name` a text holds. */
 export function countUses(text, name) {
-  const pattern = new RegExp(`(?<![\\w$])${name.replace(/[$]/g, '\\$')}(?![\\w$])`, 'g');
+  const escaped = name.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+  const pattern = new RegExp(`(?<![\\w$])${escaped}(?![\\w$])`, 'g');
   return text.match(pattern)?.length ?? 0;
 }
 
