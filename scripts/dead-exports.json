@@ -184,7 +184,7 @@
   "own:packages/shared/domain/tier-profiles.ts": 2,
   "own:packages/shared/dto/activity.dto.ts": 8,
   "own:packages/shared/dto/api-error-codes.ts": 1,
-  "own:packages/shared/dto/auth.dto.ts": 6,
+  "own:packages/shared/dto/auth.dto.ts": 5,
   "own:packages/shared/dto/billing.dto.ts": 8,
   "own:packages/shared/dto/bracket.dto.ts": 16,
   "own:packages/shared/dto/championship.dto.ts": 5,
