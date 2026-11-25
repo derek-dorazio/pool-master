@@ -108,13 +108,13 @@ describe('the provider, unmapped participant and provider event mappers', () => 
   });
 
   it('sends a provider\'s stored settings and leagues with whether its webhook secret is set, and none for a provider with no row', () => {
-    const league = { id: 'pl-1', providerId: 'prov-1', code: 'nfl', name: 'NFL', sport: Sport.AMERICAN_FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true };
+    const league = { id: 'pl-1', providerId: 'prov-1', code: 'nfl', name: 'NFL', sport: Sport.FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true };
     const settings = {
       id: 'prov-1', code: 'BALLDONTLIE', name: 'BALLDONTLIE', baseUrl: 'https://api.example.test', requestsPerMinute: 5, webhooksEnabled: true,
       webhookPollMinutes: 10, webhookRoundPollMinutes: 5, hasPlayerStats: true, isEnabled: true, leagues: [league], webhookSecretSet: false,
     };
     const dto = toProviderSummaryDto({ ...provider, settings } as unknown as Parameters<typeof toProviderSummaryDto>[0]);
-    expect(dto.settings).toEqual({ ...settings, leagues: [{ id: 'pl-1', code: 'nfl', name: 'NFL', sport: Sport.AMERICAN_FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true }] });
+    expect(dto.settings).toEqual({ ...settings, leagues: [{ id: 'pl-1', code: 'nfl', name: 'NFL', sport: Sport.FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true }] });
     expect(toProviderSummaryDto(provider).settings).toBeNull();
   });
 

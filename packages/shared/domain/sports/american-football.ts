@@ -22,8 +22,8 @@ const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisi
  * so the names below are the NFL's.
  */
 export const americanFootballSportDefinition: SportDefinition = {
-  sport: Sport.AMERICAN_FOOTBALL,
-  name: 'American football',
+  sport: Sport.FOOTBALL,
+  name: 'Football',
   tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],

@@ -36,11 +36,11 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
 export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}): EventPageDto {
   return {
     id: 'page-cw',
-    sport: 'AMERICAN_FOOTBALL',
-    sportName: 'American football',
-    sportUrlSegment: 'american-football',
+    sport: 'FOOTBALL',
+    sportName: 'Football',
+    sportUrlSegment: 'football',
     urlSegment: 'championship-weekend',
-    path: '/play/american-football/championship-weekend',
+    path: '/play/football/championship-weekend',
     displayOrder: 20,
     isActive: true,
     redirectTo: null,

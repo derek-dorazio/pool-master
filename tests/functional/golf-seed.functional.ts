@@ -94,7 +94,7 @@ beforeAll(async () => {
   await db.sport.upsert({ where: { sport: Sport.GOLF }, create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' }, update: {} });
   await db.sport.upsert({ where: { sport: Sport.HORSE_RACING }, create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING), tournamentFormat: 'RACE' }, update: {} });
   await db.sport.upsert({ where: { sport: Sport.BASKETBALL }, create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' }, update: {} });
-  await db.sport.upsert({ where: { sport: Sport.AMERICAN_FOOTBALL }, create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' }, update: {} });
+  await db.sport.upsert({ where: { sport: Sport.FOOTBALL }, create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' }, update: {} });
   admin = await buildRegisteredUser({ displayName: 'Load Admin' });
   await promoteToRootAdmin(admin);
 });
@@ -380,12 +380,12 @@ describe('Loading the NFL playoffs test seed through the admin API', () => {
   }
 
   it('releases the playoffs with reseeded Divisional and conference rounds and every result entered, the Seahawks winning the Super Bowl, then skips on a second run', async () => {
-    await addSportLeague(league, Sport.AMERICAN_FOOTBALL);
+    await addSportLeague(league, Sport.FOOTBALL);
     const applied = await loadSportData(nflSeed(), { getClient, now, mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
     // The league starts on the default bracket rule, and the file's reseeding is set on it.
     expect(counts(applied)).toEqual({ 'SPORT_LEAGUE UPDATE': 1, 'PLAYER ADD': 14, 'EVENT ADD': 1, 'FIELD ADD': 1, 'BRACKET ADD': 1 });
 
-    const stored = expectDefined(await leagueNamed(league, Sport.AMERICAN_FOOTBALL));
+    const stored = expectDefined(await leagueNamed(league, Sport.FOOTBALL));
     expect(stored.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
     const event = expectDefined((await eventsOf(stored.id, 2026)).find((row) => row.name === playoffs));
     const nameOf = new Map([...(await fieldOf(event.id)).entries()].map(([name, row]) => [row.id, name]));

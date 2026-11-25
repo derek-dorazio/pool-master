@@ -4,8 +4,8 @@
     "sport": "TENNIS",
     "season": 2025,
     "sportLeagues": [
-      "NCAA Division I Men",
-      "NCAA Division I Women"
+      "NCAA Men's Tennis",
+      "NCAA Women's Tennis"
     ],
     "participantType": "INDIVIDUAL",
     "scoringFamily": "HEAD_TO_HEAD",
@@ -42,7 +42,7 @@
   },
   "sportLeagues": [
     {
-      "name": "NCAA Division I Men",
+      "name": "NCAA Men's Tennis",
       "players": [
         {
           "key": "ncaam-tennis-jay-friend",
@@ -1897,7 +1897,7 @@
       ]
     },
     {
-      "name": "NCAA Division I Women",
+      "name": "NCAA Women's Tennis",
       "players": [
         {
           "key": "ncaaw-tennis-valerie-glozman",

@@ -78,7 +78,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('2025-06-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'ncaaf' });
+      const events = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, { from: new Date('2025-06-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'ncaaf' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status, event.providerLeagueCode])).toEqual([
         ['ncaaf-2025-cfp', 'College Football Playoff', 'COMPLETED', 'ncaaf'],
@@ -96,7 +96,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'ncaaf' });
+      await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'ncaaf' });
 
       expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual([]);
     });
@@ -105,7 +105,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 0, 15));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerLeagueCode: 'ncaaf', providerSeasonId: '2025' });
+      const events = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, undefined, { providerLeagueCode: 'ncaaf', providerSeasonId: '2025' });
 
       expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual(['2025']);
       // Its window is still open in mid-January, so it is not over yet.
@@ -120,7 +120,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
 
       const detail = await harness.adapter.getEventDetails('ncaaf-2025-cfp');
 
-      expect(detail).toMatchObject({ externalId: 'ncaaf-2025-cfp', sport: Sport.AMERICAN_FOOTBALL, participantCount: 14, status: 'COMPLETED' });
+      expect(detail).toMatchObject({ externalId: 'ncaaf-2025-cfp', sport: Sport.FOOTBALL, participantCount: 14, status: 'COMPLETED' });
       expect(detail?.participants.map((team) => team.name)).not.toContain('Michigan Wolverines');
       expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/games?start_date=2025-12-07&end_date=2026-02-01&per_page=100']);
     });
@@ -176,7 +176,7 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
     const harness = setup();
     restore = harness.restore;
 
-    const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
+    const teams = await harness.adapter.getParticipants(Sport.FOOTBALL);
 
     expect(teams.slice(-5).map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
     expect(teams.length).toBeGreaterThan(5);

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "sport": "AMERICAN_FOOTBALL",
+    "sport": "FOOTBALL",
     "season": 2025,
     "sportLeagues": [
-      "College Football Playoff"
+      "NCAA Men's Football"
     ],
     "participantType": "TEAM",
     "scoringFamily": "HEAD_TO_HEAD",
@@ -33,7 +33,7 @@
   },
   "sportLeagues": [
     {
-      "name": "College Football Playoff",
+      "name": "NCAA Men's Football",
       "bracketAdvancement": "FIXED",
       "players": [
         {

@@ -182,7 +182,7 @@ describe('EntryReceipts', () => {
   }
 
   it('sends each active owner a pick\'em receipt under the week\'s header with every pick at its spread and confidence and the tiebreaker in points, from the contest\'s league', async () => {
-    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
 
     await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       mode: PickEmMode.CONFIDENCE,
@@ -221,7 +221,7 @@ describe('EntryReceipts', () => {
   });
 
   it('reads a neutral-site game as "vs", a team not yet known as To be decided, a pick on a game with no line by the team alone, and a tiebreaker on no listed game by its total', async () => {
-    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
     const neutral = game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' });
     const undecided = { ...game({ id: 'game-2', away: 'Bears', home: 'Lions', picked: 'Lions' }), away: null, predictedAway: null };
 
@@ -239,7 +239,7 @@ describe('EntryReceipts', () => {
   });
 
   it('sends nothing, logging the skip, for a week that is not submitted', async () => {
-    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
 
     await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, { submittedAt: null, status: ContestEntryStatus.DRAFT }));
 
@@ -247,7 +247,7 @@ describe('EntryReceipts', () => {
   });
 
   it('sends a second receipt when a week is submitted again, and none twice for the same submission', async () => {
-    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
     const base = { contestId: contest.id, entryId: entry.id, sportEventId: event.id };
     const games = [game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' })];
 
@@ -308,7 +308,7 @@ describe('EntryReceipts', () => {
   });
 
   it('sends a survivor receipt with the team, its game and when the pick locks', async () => {
-    const { contest, event, entry, owners } = await entryIn(SelectionType.SURVIVOR, { name: 'Week 3', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const { contest, event, entry, owners } = await entryIn(SelectionType.SURVIVOR, { name: 'Week 3', sport: Sport.FOOTBALL, startDate: KICKOFF });
 
     await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       selectionType: SelectionType.SURVIVOR,
@@ -326,7 +326,7 @@ describe('EntryReceipts', () => {
   });
 
   it('logs and resolves, so the submit it follows stands, when the owners\' receipts cannot be queued', async () => {
-    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const { contest, event, entry } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
     outbox.recordMany = () => Promise.reject(new Error('database unavailable'));
 
     await expect(submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
@@ -341,7 +341,7 @@ describe('EntryReceipts', () => {
   });
 
   it('reads the squad\'s owners in one membership read and one user read, the contest, entry and event coming from the submit', async () => {
-    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
     const reads = { squadMemberships: world.squadMembershipRepo(), users: world.userRepo() };
     const membershipReads = jest.spyOn(reads.squadMemberships, 'findBySquads');
     const userReads = jest.spyOn(reads.users, 'findByIds');
@@ -381,7 +381,7 @@ describe('EntryReceipts', () => {
     }
 
     it('sends every active owner of each entry with a box its boxes\' numbers by team, once, and nothing to an entry without one', async () => {
-      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.FOOTBALL, startDate: KICKOFF });
       const empty = await world.entryRepo().create({ contestId: contest.id, squadId: entry.squadId, entryNumber: 2, name: 'Entry 2', tiebreakerValue: null }, { entriesPerContest: () => null });
       if (empty.status !== 'created') throw new Error('entry not created');
       const board = drawnBoard(contest.id, [
@@ -402,7 +402,7 @@ describe('EntryReceipts', () => {
     });
 
     it('reads every box holder\'s owners in one membership read and one user read, however many entries hold boxes', async () => {
-      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.FOOTBALL, startDate: KICKOFF });
       const otherSquad = world.addSquad(contest.leagueId, 'Second Squad');
       const otherOwner = world.addUser({ firstName: 'Otto', lastName: 'Owner' });
       world.addMember(contest.leagueId, otherOwner.id);
@@ -425,7 +425,7 @@ describe('EntryReceipts', () => {
     });
 
     it('queues every box holder\'s receipts in one outbox write, however many entries hold boxes (#1171)', async () => {
-      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.FOOTBALL, startDate: KICKOFF });
       const otherSquad = world.addSquad(contest.leagueId, 'Second Squad');
       const otherOwner = world.addUser({ firstName: 'Otto', lastName: 'Owner' });
       world.addMember(contest.leagueId, otherOwner.id);
@@ -444,7 +444,7 @@ describe('EntryReceipts', () => {
     });
 
     it('names the row and column sides Away and Home while the game\'s teams are not known', async () => {
-      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.FOOTBALL, startDate: KICKOFF });
       const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), homeTeamName: null, awayTeamName: null };
 
       await drawn(board);
@@ -453,7 +453,7 @@ describe('EntryReceipts', () => {
     });
 
     it('logs and resolves, sending nothing, when the draw is missing from the board', async () => {
-      const { contest, entry } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const { contest, entry } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.FOOTBALL, startDate: KICKOFF });
       const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), digits: null };
 
       await expect(drawn(board)).resolves.toBeUndefined();

@@ -18,7 +18,7 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   it('reads a subscribed NFL game event as that game\'s notification, for the NFL\'s scopes', () => {
     expect(read(PAYLOADS.nflGameEnded)).toEqual({
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       notificationType: 'nfl.game.ended',
       phase: 'END',
       subject: 'GAME',
@@ -30,7 +30,7 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   });
 
   it('reads a college football game event as a notification for the College Football Playoff\'s scope, not the NFL\'s', () => {
-    expect(read(PAYLOADS.ncaafGameEnded)).toMatchObject({ sport: Sport.AMERICAN_FOOTBALL, providerLeagueCode: 'ncaaf', gameId: '5041', phase: 'END' });
+    expect(read(PAYLOADS.ncaafGameEnded)).toMatchObject({ sport: Sport.FOOTBALL, providerLeagueCode: 'ncaaf', gameId: '5041', phase: 'END' });
   });
 
   it('reads the NBA\'s, each NCAA tournament\'s, the Premier League\'s and the World Cup\'s game events with their own league\'s event prefix', () => {

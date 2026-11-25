@@ -470,9 +470,9 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(response.response?.status).toBe(200);
     const sportLeagues = expectDefined(response.data).sportLeagues;
     const named = (sport: Sport, name: string) => sportLeagues.find((sportLeague) => sportLeague.sport === sport && sportLeague.name === name);
-    expect(named(Sport.AMERICAN_FOOTBALL, 'NFL')?.displayName).toBeNull();
-    expect(named(Sport.BASKETBALL, 'NCAA Division I Women')?.displayName).toBe('NCAA Women\'s Basketball');
-    expect(named(Sport.HOCKEY, 'NCAA Division I Men')?.displayName).toBe('NCAA Men\'s Hockey');
+    expect(named(Sport.FOOTBALL, 'NFL')?.displayName).toBeNull();
+    expect(named(Sport.BASKETBALL, 'NCAA Women\'s Basketball')?.displayName).toBeNull();
+    expect(named(Sport.HOCKEY, 'NCAA Men\'s Hockey')?.displayName).toBeNull();
   });
 
   it('still refuses a signed-out visitor one sport league\'s own read with 401', async () => {

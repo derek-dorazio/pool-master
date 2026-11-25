@@ -116,7 +116,7 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[], windowC
   return {
     externalId: cfpScopeId(scope),
     providerId: BALLDONTLIE_PROVIDER_ID,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     name: CFP_LEAGUE.eventName,
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
@@ -133,7 +133,7 @@ export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderP
   return {
     externalId: participantFeedId(id),
     providerId: BALLDONTLIE_PROVIDER_ID,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     active: true,
     metadata: {

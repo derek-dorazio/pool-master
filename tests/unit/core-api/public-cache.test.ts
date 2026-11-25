@@ -57,8 +57,8 @@ afterAll(() => app.close());
 describe('Cache-Control on GET answers (#1181)', () => {
   it.each([
     '/api/v1/event-pages',
-    '/api/v1/event-pages?sport=AMERICAN_FOOTBALL',
-    '/api/v1/event-pages/american-football/championship-weekend',
+    '/api/v1/event-pages?sport=FOOTBALL',
+    '/api/v1/event-pages/football/championship-weekend',
     '/api/v1/sport-leagues',
     '/api/v1/sport-leagues/',
     '/api/v1/contest-config-templates?active=true',
@@ -85,7 +85,7 @@ describe('Cache-Control on GET answers (#1181)', () => {
   });
 
   it('keeps a public read\'s 404 private, so an address that later gets a page is not cached as missing for an hour', async () => {
-    const response = await app.inject({ method: 'GET', url: '/api/v1/event-pages/american-football/missing' });
+    const response = await app.inject({ method: 'GET', url: '/api/v1/event-pages/football/missing' });
 
     expect(response.statusCode).toBe(404);
     expect(response.headers['cache-control']).toBe(PRIVATE_CACHE_CONTROL);
@@ -116,7 +116,7 @@ describe('an event page is never kept past an offer\'s cutoff (#1181)', () => {
     ['closes-in-2-hours', PUBLIC_CACHE_CONTROL],
     ['closed-a-second-ago', PRIVATE_CACHE_CONTROL],
   ])('a page that is %s gets %s, so neither CloudFront nor the browser shows a closed contest as open', async (urlSegment, expected) => {
-    const response = await app.inject({ method: 'GET', url: `/api/v1/event-pages/american-football/${urlSegment}` });
+    const response = await app.inject({ method: 'GET', url: `/api/v1/event-pages/football/${urlSegment}` });
 
     expect(response.statusCode).toBe(200);
     expect(response.headers['cache-control']).toBe(expected);

@@ -139,7 +139,7 @@ describe('contest rules form', () => {
 });
 
 describe('pick\'em rules', () => {
-  const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
+  const TEAM = sportVocabulary(Sport.FOOTBALL).participant;
 
   it('names pick\'em in product words', () => {
     expect(formatSelectionTypeName(SelectionType.PICK_EM)).toBe('Pick’em');
@@ -183,7 +183,7 @@ describe('pick\'em rules', () => {
 });
 
 describe('survivor rules', () => {
-  const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
+  const TEAM = sportVocabulary(Sport.FOOTBALL).participant;
 
   it('names survivor and reads its rules as one winner a week, each team once until all are picked (unless set otherwise), out after a loss', () => {
     expect(formatSelectionTypeName(SelectionType.SURVIVOR)).toBe('Survivor');
@@ -229,7 +229,7 @@ describe('survivor rules', () => {
 });
 
 describe('squares rules', () => {
-  const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
+  const TEAM = sportVocabulary(Sport.FOOTBALL).participant;
 
   it('names squares and its suggested name, and reads its rules as boxes on a grid won by last digits', () => {
     expect(formatSelectionTypeName(SelectionType.SQUARES)).toBe('Squares');

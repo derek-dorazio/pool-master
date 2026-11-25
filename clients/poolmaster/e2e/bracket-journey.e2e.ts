@@ -107,7 +107,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourUrlSegment: 'ncaa-division-i-women',
+    tourUrlSegment: 'ncaawb',
     playerNamePrefix: e2eName('Team', runId),
     tournamentName: e2eName('Bracket Classic', runId),
     commissioner: {

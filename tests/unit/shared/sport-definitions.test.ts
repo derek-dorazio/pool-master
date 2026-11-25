@@ -283,12 +283,12 @@ describe('basketball', () => {
 });
 
 describe('American football', () => {
-  const americanFootball = getSportDefinition(Sport.AMERICAN_FOOTBALL);
+  const americanFootball = getSportDefinition(Sport.FOOTBALL);
 
   it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
-    expect(americanFootball.name).toBe('American football');
+    expect(americanFootball.name).toBe('Football');
     expect(americanFootball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysMatches(Sport.AMERICAN_FOOTBALL)).toBe(true);
+    expect(sportPlaysMatches(Sport.FOOTBALL)).toBe(true);
   });
 
   it('gives new playoffs four rounds', () => {

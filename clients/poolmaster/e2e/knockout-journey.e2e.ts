@@ -155,7 +155,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourUrlSegment: 'ncaa-division-i-men',
+    tourUrlSegment: 'ncaamb',
     playerNamePrefix: e2eName('Team', runId),
     tournamentName: e2eName('Playoffs', runId),
     commissioner: {

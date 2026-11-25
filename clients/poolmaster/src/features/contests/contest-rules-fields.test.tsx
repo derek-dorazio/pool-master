@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ContestRulesFields } from './contest-rules-fields';
 import { DEFAULT_CONTEST_RULES } from './contest-rules-form';
 
-const TEAM = sportVocabulary(Sport.AMERICAN_FOOTBALL).participant;
+const TEAM = sportVocabulary(Sport.FOOTBALL).participant;
 
 describe('contest rules fields for a pick\'em contest', () => {
   it('offers the two modes instead of roster size and scores that count, and reports the mode chosen', () => {

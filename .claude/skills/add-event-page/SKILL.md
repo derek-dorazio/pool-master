@@ -64,7 +64,7 @@ round, so a league or template the joins did not find (and so silently seeded no
 ## Step 4 — the copy
 
 Add the page to `EVENT_PAGE_COPY` in `clients/poolmaster/src/features/event-pages/event-page-copy.ts`,
-under its sport's URL segment and its own (`'american-football'`, then `'championship-weekend'`), with every offer's card keyed by its template key. Write the cards in
+under its sport's URL segment and its own (`'football'`, then `'championship-weekend'`), with every offer's card keyed by its template key. Write the cards in
 the offers' `sort_order`: the preview image's chips follow the copy's order, so the image and
 the page then agree. Follow
 `rules/ux-rules.md` §13 *Event Pages* items 3 and 4 for what the words may say. Read the

@@ -151,10 +151,10 @@ describe('american-football-2026-nfl-playoffs-test.json', () => {
 
   it('is a test seed of one NFL playoffs bracket that reseeds, with fourteen teams seeded 1 to 7 in each conference', () => {
     expect(file.scope).toEqual({
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       season: 2026,
       sportLeagues: ['NFL'],
-      ...sportPlay(Sport.AMERICAN_FOOTBALL),
+      ...sportPlay(Sport.FOOTBALL),
       contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS],
     });
     expect(nfl.bracketAdvancement).toBe('RESEED_BY_SEED');
@@ -245,7 +245,7 @@ describe('american-football-2025-cfp-test.json', () => {
   const matches = playoff.matches ?? [];
 
   it('is a test seed of one fixed four-round College Football Playoff of 12 teams seeded 1 to 12, Indiana beating Miami 27-21 in the National Championship', () => {
-    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.AMERICAN_FOOTBALL, 2025, ['College Football Playoff']]);
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.FOOTBALL, 2025, ['NCAA Men\'s Football']]);
     expect([playoff.rounds, playoff.startDate, playoff.endDate]).toEqual([4, '2025-12-19', '2026-01-19']);
     expect(playoff.field.map((entry) => entry.seed)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(file.sportLeagues[0].bracketAdvancement).toBe('FIXED');
@@ -266,7 +266,7 @@ describe('basketball-2026-ncaa-tournaments-test.json', () => {
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
 
   it('is a test seed of the 2026 men\'s and women\'s tournaments, each a six-round bracket of 64 places seeded 1 to 16 in four regions', () => {
-    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASKETBALL, 2026, ['NCAA Division I Men', 'NCAA Division I Women']]);
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.BASKETBALL, 2026, ['NCAA Men\'s Basketball', 'NCAA Women\'s Basketball']]);
     for (const tournament of [men, women]) {
       const matches = tournament.matches ?? [];
       expect(tournament.rounds).toBe(6);
@@ -337,7 +337,7 @@ describe('hockey-2026-ncaa-tournaments-test.json', () => {
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
 
   it('is a test seed of the men\'s 16-team tournament in four regions seeded 1 to 4, every game at a neutral site', () => {
-    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['NCAA Division I Men', 'NCAA Division I Women']]);
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.HOCKEY, 2026, ['NCAA Men\'s Hockey', 'NCAA Women\'s Hockey']]);
     const matches = men.matches ?? [];
     expect(men.rounds).toBe(4);
     for (let seed = 1; seed <= 4; seed += 1) expect(men.field.filter((entry) => entry.seed === seed)).toHaveLength(4);
@@ -498,7 +498,7 @@ describe('soccer-2025-ncaa-tournaments-test.json', () => {
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
 
   it('is a test seed of both 2025 NCAA tournaments, six rounds each, the College Cup at a neutral site', () => {
-    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['NCAA Division I Men', 'NCAA Division I Women']]);
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues]).toEqual([Sport.SOCCER, 2025, ['NCAA Men\'s Soccer', 'NCAA Women\'s Soccer']]);
     for (const tournament of [men, women]) {
       const matches = tournament.matches ?? [];
       expect(tournament.rounds).toBe(6);
@@ -567,7 +567,7 @@ describe('american-football-2025-nfl-weeks-test.json', () => {
   const [nfl] = file.sportLeagues;
 
   it('is a test seed of the 2025 NFL season\'s first three weeks, each one round of sixteen played games that link nowhere', () => {
-    expect(file.scope).toEqual({ sport: Sport.AMERICAN_FOOTBALL, season: 2025, sportLeagues: ['NFL'], ...sportPlay(Sport.AMERICAN_FOOTBALL), contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS] });
+    expect(file.scope).toEqual({ sport: Sport.FOOTBALL, season: 2025, sportLeagues: ['NFL'], ...sportPlay(Sport.FOOTBALL), contents: [SportDataContent.SCHEDULE, SportDataContent.PLAYERS, SportDataContent.FIELDS, SportDataContent.BRACKET, SportDataContent.RESULTS] });
     expect(eventRows(file)).toEqual([
       ['NFL Week 1', '2025-09-04', '2025-09-08', 1, null],
       ['NFL Week 2', '2025-09-11', '2025-09-15', 1, null],

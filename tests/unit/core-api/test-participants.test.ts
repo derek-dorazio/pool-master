@@ -69,10 +69,10 @@ describe('test participants: where and under what name', () => {
     expect(testLeagueCode(Sport.RUNNING, 'World Marathon Majors (men)')).toBe(men);
   });
 
-  it('keeps college basketball and college hockey in separate test pools though their leagues share a name', () => {
-    expect(testLeagueCode(Sport.HOCKEY, 'NCAA Division I Men')).not.toBe(testLeagueCode(Sport.BASKETBALL, 'NCAA Division I Men'));
-    expect(testLeagueName(Sport.HOCKEY, 'NCAA Division I Men')).toBe('NCAA Division I Men Hockey test pool');
-    expect(testLeagueName(Sport.BASKETBALL, 'NCAA Division I Men')).toBe('NCAA Division I Men Basketball test pool');
+  it('keeps two sports\' leagues of the same name in separate test pools', () => {
+    expect(testLeagueCode(Sport.HOCKEY, 'Division I')).not.toBe(testLeagueCode(Sport.BASKETBALL, 'Division I'));
+    expect(testLeagueName(Sport.HOCKEY, 'Division I')).toBe('Division I Hockey test pool');
+    expect(testLeagueName(Sport.BASKETBALL, 'Division I')).toBe('Division I Basketball test pool');
   });
 
   it('shows test participant rows in the report only on a run that loads them', () => {

@@ -492,7 +492,7 @@ describe('sport data bracket', () => {
 
   it('refuses a football test seed\'s period scores for the last quarter, out of order, or on a match with no result', () => {
     const file = bracketTestSeed();
-    (file.scope as { sport?: string }).sport = 'AMERICAN_FOOTBALL';
+    (file.scope as { sport?: string }).sport = 'FOOTBALL';
     const matches = file.sportLeagues[0].events[0].matches;
     matches[0].periodScores = [{ periodNumber: 1, homeScore: 7, awayScore: 0 }, { periodNumber: 3, homeScore: 14, awayScore: 7 }];
     expect(problemsOf(file)).toEqual([]);

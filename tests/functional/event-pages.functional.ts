@@ -32,7 +32,7 @@ afterAll(async () => {
 });
 
 async function readPage(client: Client) {
-  const response = await getEventPage({ client, path: { sportUrlSegment: 'american-football', urlSegment: 'championship-weekend' } });
+  const response = await getEventPage({ client, path: { sportUrlSegment: 'football', urlSegment: 'championship-weekend' } });
   expect(response.response?.status).toBe(200);
   return EventPageResponseSchema.parse(response.data).eventPage;
 }
@@ -42,7 +42,7 @@ describe('SDK Functional: event pages (#1007)', () => {
     const admin = await buildRegisteredUser({ displayName: 'Event Page Editor' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const nflId = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nflId = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL')).id;
     const created = await createTestEvent({
       client: a,
@@ -68,15 +68,22 @@ describe('SDK Functional: event pages (#1007)', () => {
     expect(page.offers.filter((offer) => offer.isPrimary)).toHaveLength(1);
 
     // --- The list carries the same page --------------------------------------------------------
-    const list = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL } })).data);
+    const list = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.FOOTBALL } })).data);
     expect(list.eventPages.find((listed) => listed.urlSegment === 'championship-weekend')?.offers.find((offer) => offer.isPrimary)?.template.templateKey)
       .toBe('nfl-bracket-second-chance-doubling');
 
     // --- The upcoming list: only pages with a primary edition coming, soonest first (#1202) ------
-    const upcoming = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.AMERICAN_FOOTBALL, upcoming: true } })).data);
+    const upcoming = EventPageListResponseSchema.parse((await listEventPages({ client: visitor, query: { sport: Sport.FOOTBALL, upcoming: true } })).data);
     expect(upcoming.eventPages.map((listed) => listed.urlSegment)).toContain('championship-weekend');
     const starts = upcoming.eventPages.map((listed) => expectDefined(listed.offers.find((offer) => offer.isPrimary)).nextSlot.startDate);
     expect(starts).toEqual([...starts].sort());
+  });
+
+  it('answers 404 EVENT_PAGE_NOT_FOUND at the sport\'s old long address, now that football\'s pages live under /play/football', async () => {
+    const response = await getEventPage({ client: getSdkClient(), path: { sportUrlSegment: 'american-football', urlSegment: 'championship-weekend' } });
+
+    expect(response.response?.status).toBe(404);
+    expect(response.error?.error.code).toBe('EVENT_PAGE_NOT_FOUND');
   });
 
   it('answers 404 EVENT_PAGE_NOT_FOUND for an address no page has', async () => {

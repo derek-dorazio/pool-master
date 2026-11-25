@@ -35,7 +35,7 @@ export type JourneyUser = {
  * auto racing (Formula 1), the basketball of the knockout and bracket journeys, and the pick'em
  * journey's American football.
  */
-export type JourneySport = 'GOLF' | 'AUTO_RACING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL';
+export type JourneySport = 'GOLF' | 'AUTO_RACING' | 'BASKETBALL' | 'FOOTBALL';
 
 /**
  * Every name one attempt of a journey can create, all derived from its run id. The tour, players

@@ -86,7 +86,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'nfl' });
+      const events = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, { from: new Date('2026-01-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'nfl' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['nfl-2025-postseason', 'NFL Playoffs', 'COMPLETED'],
@@ -102,7 +102,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'nfl' });
+      const events = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'nfl' });
 
       expect(events).toEqual([]);
       expect(requestLine(harness.api)).toEqual([]);
@@ -114,7 +114,7 @@ describe('BalldontlieAdapter (NFL)', () => {
       jest.spyOn(Date, 'now').mockReturnValue(Date.UTC(2027, 1, 1));
       const adapter = new BalldontlieAdapter({ connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }), apiKey: API_KEY, leagues: BALLDONTLIE_TEST_LEAGUES });
 
-      await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerLeagueCode: 'nfl', providerSeasonId: '2026' });
+      await adapter.getUpcomingEvents(Sport.FOOTBALL, undefined, { providerLeagueCode: 'nfl', providerSeasonId: '2026' });
 
       expect(requestLine(harness.api).map((line) => /seasons\[\]=(\d+)/.exec(line)?.[1])).toEqual(['2026']);
     });
@@ -135,7 +135,7 @@ describe('BalldontlieAdapter (NFL)', () => {
 
       const detail = await harness.adapter.getEventDetails('nfl-2026-week-12');
 
-      expect(detail).toMatchObject({ externalId: 'nfl-2026-week-12', sport: Sport.AMERICAN_FOOTBALL, participantCount: 8, rounds: 1 });
+      expect(detail).toMatchObject({ externalId: 'nfl-2026-week-12', sport: Sport.FOOTBALL, participantCount: 8, rounds: 1 });
       expect(detail?.participants.map((team) => team.externalId)).toEqual(
         ['25', '27', '9', '4', '17', '3', '31', '30'],
       );
@@ -192,10 +192,10 @@ describe('BalldontlieAdapter (NFL)', () => {
     const harness = setup();
     restore = harness.restore;
 
-    const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
+    const teams = await harness.adapter.getParticipants(Sport.FOOTBALL);
 
     expect(teams).toHaveLength(14);
-    expect(teams[0]).toMatchObject({ externalId: '17', name: 'Kansas City Chiefs', sport: Sport.AMERICAN_FOOTBALL });
+    expect(teams[0]).toMatchObject({ externalId: '17', name: 'Kansas City Chiefs', sport: Sport.FOOTBALL });
     expect(requestLine(harness.api)).toEqual(['/nfl/v1/teams?']);
   });
 

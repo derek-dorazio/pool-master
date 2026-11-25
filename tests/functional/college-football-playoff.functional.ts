@@ -82,7 +82,7 @@ function taggedSeed(fileName: string, eventName: string): SportDataFile {
 async function loadPlayoffs(admin: RegisteredUserContext, file: SportDataFile) {
   await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const leagueName = file.sportLeagues[0].name;
-  const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+  const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
     .find((league) => league.name === leagueName), leagueName);
   const eventName = file.sportLeagues[0].events[0].name;
   const event = expectDefined(expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId: sportLeague.id } })).data).events
@@ -95,8 +95,8 @@ describe('SDK Functional: College Football Playoff', () => {
   beforeAll(async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, ...sportRowKeys(Sport.AMERICAN_FOOTBALL), tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
   });

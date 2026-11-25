@@ -129,8 +129,8 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
 - NCAAB: a decided bracket side's `full_name` is the name the teams list gives ("Duke Blue
   Devils"), which is what the site's teams loaded from data files are called, so the first
   import links them rather than adding new ones. The women's teams carry the same names, so a
-  team links only to the site's team affiliated with its own league (NCAA Division I Men or
-  Women, by match keyword).
+  team links only to the site's team affiliated with its own league (NCAA Men's or Women's
+  Basketball, by match keyword).
 
 - NBA: `season_type=playoffs` returns every playoff game of the season and no play-in game (the
   document lists `playin` as its own type), since playoffs are called complete only once the

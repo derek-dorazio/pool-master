@@ -342,7 +342,7 @@ enum PrismaSport {
   CYCLING
   RUNNING
   BASKETBALL
-  AMERICAN_FOOTBALL
+  FOOTBALL
   HOCKEY
   BASEBALL
   SOCCER
@@ -1099,7 +1099,7 @@ model Sport {
   /// Which sport this row is (#603). One row per built sport, seeded by the
   /// migration that adds the sport's support.
   sport            PrismaSport            @unique
-  /// The sport's name in addresses (#2042): `/play/american-football/...`, `?sport=horse-racing`.
+  /// The sport's name in addresses (#2042): `/play/football/...`, `?sport=horse-racing`.
   /// Stored, never built from the code, so the API and the web app spell it the same way. Set by
   /// the migration that adds the sport, and kept forever, because addresses are.
   urlSegment       String                 @unique @map("url_segment") @db.VarChar(50)
@@ -1129,9 +1129,10 @@ model SportLeague {
   id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportId                    String                   @map("sport_id") @db.Uuid
   name                       String                   @db.VarChar(255)
-  /// The sport league's name in addresses within its sport (#2042): How to Play's
-  /// `?sport=basketball&league=wnba`. Stored, never built from the name, and kept forever.
-  urlSegment                 String                   @map("url_segment") @db.VarChar(100)
+  /// The sport league's name in addresses (#2042, #2143): How to Play's
+  /// `?sport=basketball&league=wnba`. A short code that names the league on its own, unique
+  /// across every sport. Stored, never built from the name, and kept forever.
+  urlSegment                 String                   @unique @map("url_segment") @db.VarChar(100)
   /// The league's current Season (#2003, plan §2): recomputed once a day from the Season rows by
   /// one global rule (`currentSeasonOf`), never set by hand. Null only for a league no migration
   /// has given a Season.
@@ -1173,8 +1174,8 @@ model SportLeague {
   /// the migration that seeds the league.
   noun                       PrismaSportLeagueNoun?   @map("noun")
   /// What screens call the sport league away from its sport's own pages, when its name alone
-  /// does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null:
-  /// the name. Reference data, set by the migration that seeds the league.
+  /// does not say the sport. Null: the name, as for every seeded league, each named with its sport
+  /// ("NCAA Men's Basketball"). Reference data, set by the migration that seeds the league.
   displayName                String?                  @map("display_name") @db.VarChar(255)
   /// Where the sport league sits among its sport's leagues wherever they are listed together
   /// (How to Play's chips): the major professional leagues first, then the NCAA's. Lower comes
@@ -1221,7 +1222,6 @@ model SportLeague {
   selectedProviderMapping     SportLeagueProviderMapping?  @relation("SelectedSportLeagueProviderMapping", fields: [id, selectedProviderMappingId], references: [sportLeagueId, id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([sportId, name])
-  @@unique([sportId, urlSegment])
   /// A mapping is selected by at most its own league, once.
   @@unique([id, selectedProviderMappingId])
   /// A Season is current for at most its own league.

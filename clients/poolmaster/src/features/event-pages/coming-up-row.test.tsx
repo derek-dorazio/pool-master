@@ -11,7 +11,7 @@ const { listEventPagesMock } = vi.hoisted(() => ({ listEventPagesMock: vi.fn() }
 
 bindApiMocks({ listEventPages: listEventPagesMock });
 
-function renderRow(sport?: 'AMERICAN_FOOTBALL') {
+function renderRow(sport?: 'FOOTBALL') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
@@ -31,30 +31,30 @@ describe('Coming up row', () => {
     const superBowl = championshipWeekendFixture({
       id: 'page-sb',
       urlSegment: 'super-bowl',
-      path: '/play/american-football/super-bowl',
+      path: '/play/football/super-bowl',
       offers: [{ ...championshipWeekendFixture().offers[0], nextSlot: { seasonSlotId: 'season-slot-sb', sportEventId: 'sb', name: 'Super Bowl', championshipYear: 2027, startDate: '2027-02-07T23:30:00.000Z', endDate: null } }],
     });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture(), superBowl] } });
-    renderRow('AMERICAN_FOOTBALL');
+    renderRow('FOOTBALL');
 
     const row = await screen.findByTestId('coming-up');
     const cards = within(row).getAllByRole('link');
-    expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/play/american-football/championship-weekend', '/play/american-football/super-bowl']);
+    expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/play/football/championship-weekend', '/play/football/super-bowl']);
     expect(cards[0]).toHaveTextContent('Championship Weekend');
     expect(cards[0]).toHaveTextContent('Bracket · Squares');
-    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL', upcoming: 'true' } }));
+    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'FOOTBALL', upcoming: 'true' } }));
   });
 
   it('shows every sport\'s next three pages, asking for the upcoming pages of every sport', async () => {
-    const pages = ['one', 'two', 'three', 'four'].map((slug) => championshipWeekendFixture({ id: `page-${slug}`, urlSegment: slug, path: `/play/american-football/${slug}` }));
+    const pages = ['one', 'two', 'three', 'four'].map((slug) => championshipWeekendFixture({ id: `page-${slug}`, urlSegment: slug, path: `/play/football/${slug}` }));
     listEventPagesMock.mockResolvedValue({ data: { eventPages: pages } });
     renderRow();
 
     const row = await screen.findByTestId('coming-up');
     expect(within(row).getAllByRole('link').map((card) => card.getAttribute('href'))).toEqual([
-      '/play/american-football/one',
-      '/play/american-football/two',
-      '/play/american-football/three',
+      '/play/football/one',
+      '/play/football/two',
+      '/play/football/three',
     ]);
     expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { upcoming: 'true' } }));
   });

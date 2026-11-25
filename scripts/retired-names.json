@@ -35,7 +35,8 @@
     "parseCfpScope": "#2007 (10): provider event ids from the ProviderMapping tables, never parsed",
     "parseEplScope": "#2007 (10): provider event ids from the ProviderMapping tables, never parsed",
     "parseWorldCupScope": "#2007 (10): provider event ids from the ProviderMapping tables, never parsed",
-    "parseNcaaTournamentScope": "#2007 (10): provider event ids from the ProviderMapping tables, never parsed"
+    "parseNcaaTournamentScope": "#2007 (10): provider event ids from the ProviderMapping tables, never parsed",
+    "AMERICAN_FOOTBALL": "#2143 (3d): the sport code is FOOTBALL"
   },
   "ROUND_NAMES_FROM_FINAL": 10,
   "roundLabel": 61,
@@ -71,5 +72,6 @@
   "parseCfpScope": 3,
   "parseEplScope": 3,
   "parseWorldCupScope": 3,
-  "parseNcaaTournamentScope": 3
+  "parseNcaaTournamentScope": 3,
+  "AMERICAN_FOOTBALL": 0
 }

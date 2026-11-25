@@ -39,7 +39,7 @@ function reader(provider = fakeSportDataProvider({ providerId: PROVIDER })) {
 }
 
 /** The provider league an event of each sport here is kept under. */
-const PROVIDER_LEAGUE_OF: Partial<Record<Sport, string>> = { [Sport.GOLF]: 'pga', [Sport.AMERICAN_FOOTBALL]: 'nfl' };
+const PROVIDER_LEAGUE_OF: Partial<Record<Sport, string>> = { [Sport.GOLF]: 'pga', [Sport.FOOTBALL]: 'nfl' };
 
 /**
  * A Season of its own in a new golf league, synced from BALLDONTLIE's PGA league when `synced`:
@@ -140,8 +140,8 @@ describe('ScheduledEventReader — play under way and notifications (#1499)', ()
 
   it('reads a game event as in play since its earliest-scheduled match in progress, and not in play between its matches', async () => {
     const provider = fakeSportDataProvider({ providerId: PROVIDER });
-    const playing = await createEvent('nfl-week-live', { sport: Sport.AMERICAN_FOOTBALL, status: 'IN_PROGRESS', withField: true });
-    const between = await createEvent('nfl-week-between', { sport: Sport.AMERICAN_FOOTBALL, status: 'IN_PROGRESS', withField: true });
+    const playing = await createEvent('nfl-week-live', { sport: Sport.FOOTBALL, status: 'IN_PROGRESS', withField: true });
+    const between = await createEvent('nfl-week-between', { sport: Sport.FOOTBALL, status: 'IN_PROGRESS', withField: true });
     const early = new Date('2026-04-26T17:00:00.000Z');
     for (const [event, matches] of [
       [playing, [{ status: 'COMPLETED', scheduledDate: new Date('2026-04-26T13:00:00.000Z') }, { status: 'IN_PROGRESS', scheduledDate: early }, { status: 'IN_PROGRESS', scheduledDate: new Date('2026-04-26T20:00:00.000Z') }]],
@@ -153,7 +153,7 @@ describe('ScheduledEventReader — play under way and notifications (#1499)', ()
       });
     }
 
-    const listed = await reader(provider).listLiveScoreEvents({ sport: Sport.AMERICAN_FOOTBALL, now });
+    const listed = await reader(provider).listLiveScoreEvents({ sport: Sport.FOOTBALL, now });
 
     expect(listed).toEqual(expect.arrayContaining([
       expect.objectContaining({ externalId: 'nfl-week-live', playUnderwaySince: early, lastProviderNotificationAt: null }),

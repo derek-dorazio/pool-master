@@ -9,7 +9,7 @@ const meta = {
     className: "w-52",
     items: [
       { isChosen: false, label: "All sports", to: "?", tone: "heading" },
-      { count: 6, isChosen: false, label: "Football", to: "?sport=american-football", tone: "heading" },
+      { count: 6, isChosen: false, label: "Football", to: "?sport=football", tone: "heading" },
       { count: 8, isChosen: false, label: "Hockey", to: "?sport=hockey", tone: "heading" },
       { depth: 1, isChosen: false, label: "NHL", to: "?sport=hockey&league=nhl" },
       { depth: 2, isChosen: false, label: "Regular season", to: "?sport=hockey&league=nhl&part=nhl" },

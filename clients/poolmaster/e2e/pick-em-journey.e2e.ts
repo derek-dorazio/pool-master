@@ -112,7 +112,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
   const runId = newRunId();
   const run: JourneyRun = {
     runId,
-    sport: 'AMERICAN_FOOTBALL',
+    sport: 'FOOTBALL',
     tourUrlSegment: 'nfl',
     playerNamePrefix: e2eName('Club', runId),
     tournamentName: e2eName('Pickem Week 1', runId),
@@ -146,7 +146,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
     }
 
     // A league is added by migration, so a journey plays in a seeded one, on its own test slots (#2004).
-    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'AMERICAN_FOOTBALL', run.tourUrlSegment);
+    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'FOOTBALL', run.tourUrlSegment);
     const eventIds: string[] = [];
     for (const [index, week] of WEEKS.entries()) {
       const event = await createTestEventThroughApi(api, headers, {
@@ -228,7 +228,7 @@ test('act 2: a new commissioner creates a Pick\'em contest on week 1, adds the o
   await test.step('choose American football, week 1 and the Pick\'em format, straight up', async () => {
     await page.goto(`/league/${run.leagueCode}/admin/contests/new`);
     await expect(page.getByTestId('create-contest-page')).toBeVisible();
-    await page.getByTestId('contest-sport-AMERICAN_FOOTBALL').click();
+    await page.getByTestId('contest-sport-FOOTBALL').click();
     const week1 = page.getByTestId(`contest-event-${week1Id}`);
     await expect(week1).toContainText(run.tournamentName);
     await week1.click();

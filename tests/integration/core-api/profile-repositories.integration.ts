@@ -44,7 +44,7 @@ describe('The migration to tier and pricing profiles', () => {
       include: { sport: true, platformTierProfile: true },
       orderBy: [{ sport: { sport: 'asc' } }, { name: 'asc' }],
     });
-    const overrides: Record<string, string> = { 'College Football Playoff': 'TIERS_6_OF_2', PWHL: 'TIERS_2_OF_2' };
+    const overrides: Record<string, string> = { 'NCAA Men\'s Football': 'TIERS_6_OF_2', PWHL: 'TIERS_2_OF_2' };
 
     const mismatched = leagues.flatMap((league) => {
       const expected = overrides[league.name] ?? SPORT_PLATFORM_TIER_PROFILE_CODE[league.sport.sport];

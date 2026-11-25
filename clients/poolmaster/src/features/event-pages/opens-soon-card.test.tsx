@@ -21,7 +21,7 @@ function renderCard(entry: string) {
   );
 }
 
-const BRACKET = '/league/OFFICE?sport=american-football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
+const BRACKET = '/league/OFFICE?sport=football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
 
 afterEach(() => getEventPageMock.mockReset());
 

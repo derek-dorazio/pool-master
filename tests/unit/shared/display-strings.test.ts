@@ -20,7 +20,7 @@ const frFR: DisplayStringsModule = {
   enum: {
     ...enUS.enum,
     ContestStatus: { ...enUS.enum.ContestStatus, ACTIVE: 'En direct' },
-    Sport: { ...enUS.enum.Sport, AMERICAN_FOOTBALL: 'Football américain' },
+    Sport: { ...enUS.enum.Sport, FOOTBALL: 'Football américain' },
   },
   error: { ...enUS.error, CONTEST_FULL: 'Ce concours est complet.' },
   word: { ...enUS.word, roundCount_one: '{{count}} manche', roundCount_other: '{{count}} manches', participant_one: 'concurrent', participant_other: 'concurrents' },
@@ -30,7 +30,7 @@ const frFR: DisplayStringsModule = {
 /** The source language with words the real module does not have yet: a short form, a placeholder and a plural. */
 const enWithWords: DisplayStringsModule = {
   ...enUS,
-  enum: { ...enUS.enum, Sport: { ...enUS.enum.Sport, AMERICAN_FOOTBALL: { name: 'American football', short: 'Football' } } },
+  enum: { ...enUS.enum, Sport: { ...enUS.enum.Sport, FOOTBALL: { name: 'American football', short: 'Football' } } },
   word: { ...enUS.word, roundCount_one: '{{count}} round', roundCount_other: '{{count}} rounds', championship: { name: 'Championship', short: 'Champ' } },
   sport: { ...enUS.sport, GOLF: { ...enUS.sport.GOLF, eventStart: { name: 'first tee time', short: 'tee time' } } },
 };
@@ -68,14 +68,14 @@ describe('display string lookups', () => {
   });
 
   it('give the short form when asked, and the name for an entry that has no short form', () => {
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short' })).toBe('Football');
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL)).toBe('American football');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL, { form: 'short' })).toBe('Football');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL)).toBe('American football');
     expect(strings.enumLabel('Sport', Sport.GOLF, { form: 'short' })).toBe(enUS.enum.Sport.GOLF);
   });
 
   it('give a French reader the French name, not the English short form, when the French entry has no short form', () => {
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short', locale: 'fr-FR' })).toBe('Football américain');
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short', locale: 'en-US' })).toBe('Football');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL, { form: 'short', locale: 'fr-FR' })).toBe('Football américain');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL, { form: 'short', locale: 'en-US' })).toBe('Football');
   });
 
   it('give any key\'s short form through displayString when asked, and the name otherwise', () => {
@@ -145,8 +145,8 @@ describe('display string lookups', () => {
   it('flatten a module to i18next keys, with a short form under its entry\'s key plus .short', () => {
     const flat = flattenDisplayStrings(enWithWords);
 
-    expect(flat['enum.Sport.AMERICAN_FOOTBALL']).toBe('American football');
-    expect(flat['enum.Sport.AMERICAN_FOOTBALL.short']).toBe('Football');
+    expect(flat['enum.Sport.FOOTBALL']).toBe('American football');
+    expect(flat['enum.Sport.FOOTBALL.short']).toBe('Football');
     expect(flat['enum.Sport.GOLF.short']).toBeUndefined();
     expect(flat['word.roundCount_other']).toBe('{{count}} rounds');
     expect(flat['sport.GOLF.participant_one']).toBe('golfer');

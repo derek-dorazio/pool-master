@@ -11,11 +11,11 @@ describe('StartButton', () => {
   it('sends the visitor to /start with the event page and the setup they chose', () => {
     render(
       <MemoryRouter>
-        <StartButton request={{ sportUrlSegment: 'american-football', urlSegment: 'super-bowl', templateId: 'tpl-1' }} testId="start">Start your league</StartButton>
+        <StartButton request={{ sportUrlSegment: 'football', urlSegment: 'super-bowl', templateId: 'tpl-1' }} testId="start">Start your league</StartButton>
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId('start')).toHaveAttribute('href', '/start?sport=american-football&page=super-bowl&template=tpl-1');
+    expect(screen.getByTestId('start')).toHaveAttribute('href', '/start?sport=football&page=super-bowl&template=tpl-1');
     expect(screen.getByTestId('start')).toHaveTextContent('Start your league');
   });
 });
@@ -44,9 +44,9 @@ describe('LandingSection', () => {
 
 describe('PhotoHero', () => {
   it("heads the hero with the sport's photo, shared with its email, above the hero's content", () => {
-    render(<PhotoHero sportUrlSegment="american-football"><h1>Super Bowl</h1></PhotoHero>);
+    render(<PhotoHero sportUrlSegment="football"><h1>Super Bowl</h1></PhotoHero>);
 
-    expect(screen.getByTestId('event-page-photo')).toHaveAttribute('src', '/email/sports/american-football.jpg');
+    expect(screen.getByTestId('event-page-photo')).toHaveAttribute('src', '/email/sports/football.jpg');
     expect(screen.getByTestId('event-page-photo')).toHaveAttribute('alt', '');
     expect(screen.getByRole('heading', { name: 'Super Bowl' })).toBeInTheDocument();
   });
@@ -56,13 +56,13 @@ describe('NextUpCard', () => {
   it("names what comes next and links to its page", () => {
     render(
       <MemoryRouter>
-        <NextUpCard actionLabel="See ways to play" name="Super Bowl" testId="next" to="/play/american-football/super-bowl" />
+        <NextUpCard actionLabel="See ways to play" name="Super Bowl" testId="next" to="/play/football/super-bowl" />
       </MemoryRouter>,
     );
 
     expect(screen.getByText('Next up')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Super Bowl' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'See ways to play' })).toHaveAttribute('href', '/play/american-football/super-bowl');
+    expect(screen.getByRole('link', { name: 'See ways to play' })).toHaveAttribute('href', '/play/football/super-bowl');
   });
 });
 

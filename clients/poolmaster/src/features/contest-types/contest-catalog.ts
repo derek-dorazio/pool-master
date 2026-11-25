@@ -16,7 +16,7 @@ export interface ContestTypeTile {
 /** A sport league's contest types on Contest types: its own templates (#1825: every template has one league). */
 export interface ContestCatalogLeague {
   sportLeagueId: string;
-  /** What the page calls it, as How to Play does: "NCAA Men's Hockey", not "NCAA Division I Men". */
+  /** What the page calls it, as How to Play does: the league's display name, else its name. */
   name: string;
   /** Its stored URL segment, its name in the page's link: `?sport=golf&league=pga-tour`. */
   urlSegment: string;
@@ -113,7 +113,7 @@ export function buildLeagueContestCatalog(
 /** A sport league on the public How to Play page: the formats its own templates offer. */
 export interface PublicCatalogLeague {
   sportLeagueId: string;
-  /** What the page calls it beside other sports' leagues: "NCAA Men's Basketball", not "NCAA Division I Men". */
+  /** What the page calls it beside other sports' leagues: its display name, else its name. */
   name: string;
   /** Its stored URL segment, its name in the page's link: `?sport=basketball&league=wnba`. */
   urlSegment: string;
