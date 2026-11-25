@@ -323,6 +323,21 @@ describe('The events sync matches golf tournaments to slots by name (#2011)', ()
       .toEqual([[ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS, ProviderSyncFindingSeverity.ERROR, 'u.s. open']]);
   });
 
+  it('creates no slot and raises an ERROR SLOT_SEASON_PHASE_MISSING finding for a tournament whose matched slot has no phase in the Season', async () => {
+    const prisma = getPrisma();
+    const { league } = await golfTour([]);
+    const mapping = await prisma.sportLeagueProviderMapping.findFirstOrThrow({ where: { sportLeagueId: league.id }, select: { id: true } });
+    // The definition's phase exists in no Season.
+    await nameSlotDefinitionFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId: mapping.id, pattern: 'the memorial tournament', seasonIds: [] });
+
+    await runSync(buildSync({ events: [slateEvent('pga-31', 'The Memorial Tournament', [play('31', '2027-06-03T12:00:00Z', '2027-06-06T23:00:00Z')])] }), league.id);
+
+    expect(await seasonSlotsOf(league.id)).toEqual([]);
+    expect(await eventsWithSlots(league.id)).toEqual([]);
+    expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.severity, finding.providerValue]))
+      .toEqual([[ProviderSyncFindingKind.SLOT_SEASON_PHASE_MISSING, ProviderSyncFindingSeverity.ERROR, 'the memorial tournament']]);
+  });
+
   it('links a tournament on the next sync once "link to existing" adds its name to a slot, resolving its finding', async () => {
     const { league, definitionIds } = await golfTour(['the memorial tournament']);
     const sync = buildSync({ events: [slateEvent('pga-31', 'Memorial Tournament presented by Workday', [play('31', '2027-06-03T12:00:00Z', '2027-06-06T23:00:00Z')])] });

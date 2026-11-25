@@ -499,7 +499,7 @@ describe('SportEventService.importProviderSeason by tournament name', () => {
 
     expect(result.created).toEqual([]);
     expect(result.unmatched).toEqual([]);
-    expect(result.unplacedNames).toEqual([{ normalizedName: 'the new open', name: 'The New Open 2027', ambiguous: false }]);
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'the new open', name: 'The New Open 2027', reason: 'UNMATCHED' }]);
     expect(store.seasonSlots.filter((slot) => !slot.isTestData)).toEqual([]);
   });
 
@@ -509,8 +509,22 @@ describe('SportEventService.importProviderSeason by tournament name', () => {
 
     const result = await service.importProviderSeason(importOf(sportLeague, [providerEvent('50', 'Twin Championship', null, new Date('2026-05-01T12:00:00.000Z'), null)]));
 
-    expect(result.unplacedNames).toEqual([{ normalizedName: 'twin championship', name: 'Twin Championship', ambiguous: true }]);
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'twin championship', name: 'Twin Championship', reason: 'AMBIGUOUS' }]);
     expect(store.slotLinks.size).toBe(0);
+  });
+
+  it('reports a name whose matched slot has no phase in the Season, creating no slot and raising no unmapped code, rather than dropping it', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+    store.templateCoveredDefinitionIds.add('masters');
+    store.definitionsWithoutSeasonPhase.add('masters');
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'masters tournament', name: 'Masters Tournament 2027', reason: 'SEASON_PHASE_MISSING' }]);
+    expect(result.created).toEqual([]);
+    expect(result.unmatched).toEqual([]);
+    expect(store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters')).toEqual([]);
   });
 
   it('matches by name only in a league with NAME_PATTERN mappings: elsewhere a code no mapping includes is an unmapped code', async () => {

@@ -72385,9 +72385,10 @@
               "SLOT_VALUE_UNMAPPED",
               "PROVIDER_LEAGUE_UNKNOWN",
               "SLOT_NAME_UNMATCHED",
-              "SLOT_NAME_AMBIGUOUS"
+              "SLOT_NAME_AMBIGUOUS",
+              "SLOT_SEASON_PHASE_MISSING"
             ],
-            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR)."
+            "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
           },
           "severity": {
             "type": "string",
@@ -72763,9 +72764,10 @@
                     "SLOT_VALUE_UNMAPPED",
                     "PROVIDER_LEAGUE_UNKNOWN",
                     "SLOT_NAME_UNMATCHED",
-                    "SLOT_NAME_AMBIGUOUS"
+                    "SLOT_NAME_AMBIGUOUS",
+                    "SLOT_SEASON_PHASE_MISSING"
                   ],
-                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR)."
+                  "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
                 },
                 "severity": {
                   "type": "string",
@@ -72994,9 +72996,10 @@
                   "SLOT_VALUE_UNMAPPED",
                   "PROVIDER_LEAGUE_UNKNOWN",
                   "SLOT_NAME_UNMATCHED",
-                  "SLOT_NAME_AMBIGUOUS"
+                  "SLOT_NAME_AMBIGUOUS",
+                  "SLOT_SEASON_PHASE_MISSING"
                 ],
-                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR)."
+                "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR)."
               },
               "severity": {
                 "type": "string",

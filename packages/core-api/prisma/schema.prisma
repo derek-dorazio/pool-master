@@ -593,6 +593,7 @@ enum PrismaProviderSyncFindingKind {
   PROVIDER_LEAGUE_UNKNOWN
   SLOT_NAME_UNMATCHED
   SLOT_NAME_AMBIGUOUS
+  SLOT_SEASON_PHASE_MISSING
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -2768,7 +2769,7 @@ model SportLeaguePhaseSlotProviderMapping {
   @@unique([sportLeagueProviderMappingId, matchType, providerValue], map: "sport_league_phase_slot_provider_mappings_value_key")
   /// A slot has one row per provider (plan §1), one way each feed's games are matched to it, except
   /// NAME_PATTERN: "link to existing" adds a tournament's other names as more patterns (#2011). A
-  /// partial unique index in the migration (`..._slot_provider_key`, WHERE match_type is not
+  /// partial unique index in the migration (`..._one_per_provider`, WHERE match_type is not
   /// NAME_PATTERN) holds it; Prisma cannot declare one.
   @@index([sportLeaguePhaseSlotId, sportLeagueProviderMappingId], map: "sport_league_phase_slot_provider_mappings_slot_provider_idx")
   @@index([sportLeagueId, sportLeaguePhaseSlotId], map: "sport_league_phase_slot_provider_mappings_slot_idx")
@@ -2911,13 +2912,13 @@ model SportLeagueSeasonPhaseSlotProviderMapping {
   createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  seasonSlot                 SportLeagueSeasonPhaseSlot @relation(fields: [sportLeagueId, sportLeagueSeasonPhaseSlotId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_provider_links_slot_fkey")
-  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_provider_links_provider_mapping_fkey")
+  seasonSlot                 SportLeagueSeasonPhaseSlot @relation(fields: [sportLeagueId, sportLeagueSeasonPhaseSlotId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_phase_slot_provider_mappings_slot_fkey")
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_phase_slot_provider_mappings_mapping_fkey")
 
-  @@unique([sportLeagueSeasonPhaseSlotId, sportLeagueProviderMappingId], map: "season_slot_provider_links_slot_provider_key")
-  @@unique([sportLeagueProviderMappingId, providerValue], map: "season_slot_provider_links_value_key")
-  @@index([sportLeagueId, sportLeagueSeasonPhaseSlotId], map: "season_slot_provider_links_slot_idx")
-  @@map("season_slot_provider_links")
+  @@unique([sportLeagueSeasonPhaseSlotId, sportLeagueProviderMappingId], map: "sport_league_season_phase_slot_provider_mappings_slot_key")
+  @@unique([sportLeagueProviderMappingId, providerValue], map: "sport_league_season_phase_slot_provider_mappings_value_key")
+  @@index([sportLeagueId, sportLeagueSeasonPhaseSlotId], map: "sport_league_season_phase_slot_provider_mappings_slot_idx")
+  @@map("sport_league_season_phase_slot_provider_mappings")
 }
 
 model ProviderSyncRun {

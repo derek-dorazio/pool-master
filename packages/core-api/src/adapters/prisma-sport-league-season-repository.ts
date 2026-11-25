@@ -161,10 +161,10 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     return rows.flatMap((row) => (row.providerValue === null ? [] : [{ slotDefinitionId: row.sportLeaguePhaseSlotId, pattern: row.providerValue }]));
   }
 
-  async linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<void> {
-    if (input.links.length === 0 && input.creates.length === 0) return;
+  async linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<{ phaseMissing: string[] }> {
+    if (input.links.length === 0 && input.creates.length === 0) return { phaseMissing: [] };
     const { sportLeagueId, sportLeagueSeasonId, sportLeagueProviderMappingId } = input;
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const definitionIds = input.creates.map((create) => create.slotDefinitionId);
       const [definitions, phases] = definitionIds.length === 0 ? [[], []] : await Promise.all([
         tx.sportLeaguePhaseSlot.findMany({
@@ -205,6 +205,8 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         // A slot or a code already linked keeps its link: the links' unique keys skip it.
         skipDuplicates: true,
       });
+      const made = new Set(creatable.map(({ create }) => create.slotDefinitionId));
+      return { phaseMissing: input.creates.flatMap((create) => (made.has(create.slotDefinitionId) ? [] : [create.slotDefinitionId])) };
     });
   }
 

@@ -71,7 +71,7 @@ describe('placeSlotsByName', () => {
 
   it('creates the Season slot of the one definition a tournament\'s name matches when the Season has none yet', () => {
     expect(placeSlotsByName([tournament('Masters Tournament 2027', '17')], [], patterns))
-      .toEqual([{ outcome: 'CREATE', slotDefinitionId: 'masters', play: play('17'), name: 'Masters Tournament 2027' }]);
+      .toEqual([{ outcome: 'CREATE', slotDefinitionId: 'masters', play: play('17'), name: 'Masters Tournament 2027', normalizedName: 'masters tournament' }]);
   });
 
   it('links the Season\'s existing unlinked slot of that definition', () => {

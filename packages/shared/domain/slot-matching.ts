@@ -104,7 +104,7 @@ type SlotNamePlacement =
   /** One pattern matched and the Season already has that definition's slot, still unlinked: link it. */
   | { outcome: 'LINK'; seasonSlotId: string; play: ProviderSlotPlay; name: string }
   /** One pattern matched and the Season has no slot of that definition yet: add it, linked. */
-  | { outcome: 'CREATE'; slotDefinitionId: string; play: ProviderSlotPlay; name: string }
+  | { outcome: 'CREATE'; slotDefinitionId: string; play: ProviderSlotPlay; name: string; normalizedName: string }
   /** No pattern matched: nothing is created, and a finding offers "link to existing". */
   | { outcome: 'UNMATCHED'; normalizedName: string; name: string }
   /**
@@ -140,7 +140,7 @@ export function placeSlotsByName(
     claimed.add(slotDefinitionId);
     const slot = slotByDefinition.get(slotDefinitionId);
     return slot === undefined
-      ? { outcome: 'CREATE', slotDefinitionId, play, name }
+      ? { outcome: 'CREATE', slotDefinitionId, play, name, normalizedName }
       : { outcome: 'LINK', seasonSlotId: slot.seasonSlotId, play, name };
   });
 }

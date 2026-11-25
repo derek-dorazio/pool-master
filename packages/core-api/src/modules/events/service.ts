@@ -139,9 +139,10 @@ export interface ProviderSeasonImport {
   unmatched: Array<{ code: string; eventName: string }>;
   /**
    * Each tournament name no NAME_PATTERN mapping placed (#2011), once per normalized name: matched
-   * by none, or ambiguous (more than one slot, or a slot another tournament already has).
+   * by none, ambiguous (more than one slot, or a slot another tournament already has), or matched
+   * to a slot whose phase the Season lacks.
    */
-  unplacedNames: Array<{ normalizedName: string; name: string; ambiguous: boolean }>;
+  unplacedNames: Array<{ normalizedName: string; name: string; reason: 'UNMATCHED' | 'AMBIGUOUS' | 'SEASON_PHASE_MISSING' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -407,21 +408,28 @@ export class SportEventService {
     const unplaced = new Map<string, ProviderSeasonImport['unplacedNames'][number]>();
     for (const placement of placements) {
       if ((placement.outcome === 'UNMATCHED' || placement.outcome === 'AMBIGUOUS') && !unplaced.has(placement.normalizedName)) {
-        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, ambiguous: placement.outcome === 'AMBIGUOUS' });
+        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: placement.outcome });
       }
     }
-    await this.deps.seasons.linkNameMatchedSlots({
+    const { phaseMissing } = await this.deps.seasons.linkNameMatchedSlots({
       sportLeagueId: input.sportLeagueId,
       sportLeagueSeasonId: input.sportLeagueSeasonId,
       sportLeagueProviderMappingId: input.sportLeagueProviderMappingId,
       links,
       creates,
     });
+    // A matched slot whose phase the Season lacks got no Season slot: said, never dropped silently.
+    const missing = new Set(phaseMissing);
+    for (const placement of placements) {
+      if (placement.outcome === 'CREATE' && missing.has(placement.slotDefinitionId)) {
+        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: 'SEASON_PHASE_MISSING' });
+      }
+    }
     this.deps.logger?.info(
       { sportLeagueId: input.sportLeagueId, sportLeagueSeasonId: input.sportLeagueSeasonId, linkedCount: links.length, createdCount: creates.length, unplacedNames: [...unplaced.keys()] },
       'Placed provider tournaments on Season slots by name',
     );
-    const slots = links.length + creates.length === 0
+    const slots = links.length + creates.length === missing.size
       ? seasonSlots
       : await this.deps.seasons.findSyncSlots(input.sportLeagueSeasonId, input.sportLeagueProviderMappingId);
     return { slots, handledCodes: new Set(unplacedEvents.map(({ play }) => play.code)), unplaced: [...unplaced.values()] };

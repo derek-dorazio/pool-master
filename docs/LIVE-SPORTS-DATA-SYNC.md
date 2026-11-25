@@ -202,17 +202,19 @@ league does not play (the preseason). A page that lists fewer events or games de
 **Tournaments matched by name (#2011).** An open phase (golf) has one slot definition per
 recurring tournament, and its Season slots are not created with the Season. A league whose
 selected provider mapping has `NAME_PATTERN` rows places a tournament no code places by its
-normalized name (`normalizeSlotName`: lower case, any year and anything from "presented by" on
+normalized name (lower case, any year and anything from "presented by" on
 removed), once, in `placeSlotsByName`, the one place name matching happens. One definition's
 pattern matching creates that definition's Season slot when the events sync loads the season
 schedule (or links the existing one) and records the tournament's code on it
-(`season_slot_provider_links`); from then on the tournament matches by that code, whatever it is
+(`sport_league_season_phase_slot_provider_mappings`); from then on the tournament matches by that code, whatever it is
 called. A name no pattern matches places nothing and raises one `SLOT_NAME_UNMATCHED` INFO finding
 per league and normalized name, whose **Link to existing** action adds the name as another
 pattern of a chosen definition and resolves it (the next sync links the tournament). There is no
 "create new": definitions are set by migration, so a tournament with none waits for its migration.
 A name that matches more than one definition, or a slot another tournament already has, raises one
-`SLOT_NAME_AMBIGUOUS` ERROR finding and links nothing.
+`SLOT_NAME_AMBIGUOUS` ERROR finding and links nothing. A name that matches a definition whose phase
+the Season has no phase for gets no slot and raises one `SLOT_SEASON_PHASE_MISSING` ERROR finding,
+so a Season added without its open phase is never skipped in silence.
 
 For each provider event:
 
@@ -410,7 +412,8 @@ column. Each finding names its sport league; its event, Provider row and the fee
   (INFO, a provider code no slot maps, *Matching games to Season slots* above; it has no action,
   since a mapping is added by migration), `SLOT_NAME_UNMATCHED` (INFO, a tournament name no
   pattern matches; its action is Link to existing) and `SLOT_NAME_AMBIGUOUS` (ERROR, a name that
-  matches more than one slot), both *Tournaments matched by name* above. Three are checked on an event by each sync that
+  matches more than one slot) and `SLOT_SEASON_PHASE_MISSING` (ERROR, a matched slot whose phase the
+  Season lacks), all three *Tournaments matched by name* above. Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the

@@ -278,6 +278,7 @@ export const enUS = {
       PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
       SLOT_NAME_UNMATCHED: 'Tournament name not matched to a slot',
       SLOT_NAME_AMBIGUOUS: 'Tournament name matches more than one slot',
+      SLOT_SEASON_PHASE_MISSING: 'Tournament slot has no phase in the season',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

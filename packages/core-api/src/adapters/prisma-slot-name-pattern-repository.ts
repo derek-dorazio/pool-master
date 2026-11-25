@@ -10,18 +10,22 @@ export class PrismaSlotNamePatternRepository implements SlotNamePatternRepositor
   constructor(private readonly prisma: PrismaClient) {}
 
   async findChoices(sportLeagueId: string, providerId: string): Promise<SlotNamePatternChoices | null> {
-    const mapping = await this.prisma.sportLeagueProviderMapping.findFirst({
-      where: { sportLeagueId, providerLeague: { providerId } },
-      select: {
+    // The mapping the league's sync reads, and only when it is the finding's Provider's: a league
+    // may map several leagues of one Provider, and a pattern on another would never be read.
+    const league = await this.prisma.sportLeague.findUnique({
+      where: { id: sportLeagueId },
+      select: { selectedProviderMapping: { select: {
         id: true,
+        providerLeague: { select: { providerId: true } },
         slotMappings: {
           where: { matchType: PrismaSlotProviderMatchType.NAME_PATTERN, providerValue: { not: null } },
           select: { providerValue: true, slot: { select: { id: true, key: true, slotKind: true, weekNumber: true, name: true } } },
           orderBy: [{ slot: { key: 'asc' } }, { providerValue: 'asc' }],
         },
-      },
+      } } },
     });
-    if (mapping === null) return null;
+    const mapping = league?.selectedProviderMapping ?? null;
+    if (mapping === null || mapping.providerLeague.providerId !== providerId) return null;
     const slots = new Map<string, SlotNamePatternChoices['slots'][number]>();
     for (const row of mapping.slotMappings) {
       const choice = slots.get(row.slot.id) ?? { slotDefinitionId: row.slot.id, key: row.slot.key, slotKind: row.slot.slotKind, weekNumber: row.slot.weekNumber, name: row.slot.name, patterns: [] };

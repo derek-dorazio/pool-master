@@ -142,6 +142,8 @@ export class InMemorySportEvents {
   slotLinks = new Map<string, string>();
   /** The slot definitions a template lists, so a Season slot created by name is covered (#2011). */
   templateCoveredDefinitionIds = new Set<string>();
+  /** Slot definitions whose phase the Season lacks: a name match on one makes no Season slot (#2011). */
+  definitionsWithoutSeasonPhase = new Set<string>();
 
   /**
    * A synced Season slot of the league's current Season (#2005), with no dates yet, mapped by
@@ -179,12 +181,18 @@ export class InMemorySportEvents {
           taken.add(code);
         };
         for (const each of links) link(each.seasonSlotId, each.code);
+        const phaseMissing: string[] = [];
         for (const create of creates) {
+          if (this.definitionsWithoutSeasonPhase.has(create.slotDefinitionId)) {
+            phaseMissing.push(create.slotDefinitionId);
+            continue;
+          }
           const id = this.addTestSlot({ id: sportLeagueId, currentSeasonId: sportLeagueSeasonId }, new Date(0), {
             isTestData: false, label: null, startsAt: null, slotDefinitionId: create.slotDefinitionId, key: create.slotDefinitionId, sportLeagueSeasonId,
           });
           link(id, create.code);
         }
+        return { phaseMissing };
       },
       recordSyncedSlots: async ({ eventSlots, slotDates }) => {
         for (const change of slotDates) {

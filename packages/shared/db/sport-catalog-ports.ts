@@ -825,9 +825,10 @@ export interface SportLeagueSeasonRepository {
    * The tournaments the events sync placed by name (#2011), in one transaction: an existing Season
    * slot linked to its tournament's code, or a new Season slot of the definition, in the Season's
    * phase for the definition's phase, with the definition's series format and pairing, and linked.
-   * A definition whose phase the Season lacks gets no slot. A link already taken is skipped.
+   * A definition whose phase the Season lacks gets no slot, and is answered in `phaseMissing` so
+   * the sync can say so. A link already taken is skipped.
    */
-  linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<void>;
+  linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<{ phaseMissing: string[] }>;
   /**
    * What the events sync learned of a Season's slots (#2005), in one transaction: the slots already
    * synced events now play (a slot that has an event already keeps it), and each slot's dates from

@@ -937,6 +937,13 @@ export const ProviderSyncFindingKind = {
    * fixed. Subject: league, Provider and the normalized name, with the feed's name.
    */
   SLOT_NAME_AMBIGUOUS: 'SLOT_NAME_AMBIGUOUS',
+  /**
+   * A tournament's normalized name matched one slot definition, but the Season has no phase for
+   * that definition's phase, so no Season slot could be made and the tournament is not synced
+   * (#2011). ERROR, since a tournament the league plays is missing until the Season's phase is
+   * added. Subject: league, Provider and the normalized name, with the feed's name.
+   */
+  SLOT_SEASON_PHASE_MISSING: 'SLOT_SEASON_PHASE_MISSING',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
