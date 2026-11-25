@@ -101,6 +101,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     // The league row is locked first, so a concurrent move waits rather than being logged with a
     // stale from-date. (The stored date has microseconds a JS Date lacks, so it can't be matched by value.)
     return forgettingReads(ReadMemoKey.league, () => this.prisma.$transaction(async (tx) => {
+      // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
       await tx.$queryRaw`SELECT id FROM "leagues" WHERE id = ${leagueId}::uuid FOR UPDATE`;
       const league = await tx.league.findUnique({ where: { id: leagueId } });
       if (!league) {
@@ -133,6 +134,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     // The running leagues' rows are locked first, in id order, so a concurrent move waits rather
     // than being logged with a stale from-date; the lock re-checks each row's date once it is free.
     return forgettingReads(ReadMemoKey.league, () => this.prisma.$transaction(async (tx) => {
+      // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
       const locked = await tx.$queryRaw<{ id: string }[]>`
         SELECT id FROM "leagues"
         WHERE "plan_renews_at" > ${change.now} AND "plan_renews_at" < ${change.renewsAt}
@@ -173,6 +175,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     // The ended leagues' rows are locked first, in id order, so a concurrent plan change or
     // extension waits; the lock re-checks each row, so one extended meanwhile is left alone.
     return forgettingReads(ReadMemoKey.league, () => this.prisma.$transaction(async (tx) => {
+      // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
       const ended = await tx.$queryRaw<Array<{ id: string; plan: LeaguePlan }>>`
         SELECT id, plan FROM "leagues"
         WHERE "plan_renews_at" <= ${now} AND plan <> 'FREE'

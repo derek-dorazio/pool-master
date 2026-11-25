@@ -231,6 +231,7 @@ export class PrismaStandingsEmailPositionRepository implements StandingsEmailPos
     if (positions.length === 0) return;
     const ids = positions.map((row) => row.contestEntryId);
     const places = positions.map((row) => row.position);
+    // poolmaster-allow-raw-sql: a set-based update from unnest arrays: Prisma can't update many rows to different values in one statement
     await this.prisma.$executeRaw`
       UPDATE "contest_entries" AS entry
       SET "last_standings_email_position" = placed.position
