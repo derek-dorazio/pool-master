@@ -512,12 +512,12 @@ describe('SDK Functional: Root Admin', () => {
     }
   });
 
-  it("lists templates by the slot definitions they cover, refuses a bracket on a week or ALL_LISTED across two events' slots, and moves a default by unsetting the old one (#2010)", async () => {
+  it("lists templates by the slot definitions they cover, refuses a bracket on a week or ALL_LISTED across two competitions' slots, and moves a default by unsetting the old one (#2010, #2153)", async () => {
     const user = await buildRegisteredUser({ displayName: 'Root Admin Template Coverage User' });
     await promoteToRootAdmin(user);
     const prisma = getFunctionalPrisma();
     const nfl = await prisma.sportLeague.findFirstOrThrow({ where: { name: 'NFL' } });
-    const definition = (slotKind: 'WEEK' | 'FINAL') => prisma.sportLeaguePhaseSlot.findFirstOrThrow({ where: { sportLeagueId: nfl.id, slotKind }, orderBy: { key: 'asc' } });
+    const definition = (slotKind: 'WEEK' | 'FINAL') => prisma.sportLeagueCompetitionSlot.findFirstOrThrow({ where: { sportLeagueId: nfl.id, slotKind }, orderBy: { key: 'asc' } });
     const week = await definition('WEEK');
     const final = await definition('FINAL');
     const templateOf = (templateKey: string) => prisma.contestConfigTemplate.findUniqueOrThrow({ where: { sportLeagueId_templateKey: { sportLeagueId: nfl.id, templateKey } } });
@@ -535,8 +535,9 @@ describe('SDK Functional: Root Admin', () => {
     );
     const tiered = await templateOf('nfl-tiered-doubling');
     expectFunctionalError(
+      // A regular-season week and the Super Bowl sit in two competitions, which no contest crosses.
       await updateContestConfigTemplate({ client: user.client, path: { templateId: tiered.id }, body: { slotDefinitionIds: [week.id, final.id] } }),
-      { status: 422, code: 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS' },
+      { status: 422, code: 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS' },
     );
 
     const upsetBonus = await templateOf('nfl-bracket-doubling-upset-bonus');

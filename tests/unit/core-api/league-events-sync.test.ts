@@ -438,7 +438,7 @@ describe('LeagueEventsSync', () => {
       }]);
     });
 
-    it('raises one INFO SLOT_NAME_UNMATCHED finding for a tournament name no pattern matched and an ERROR SLOT_NAME_AMBIGUOUS or SLOT_SEASON_PHASE_MISSING for a name that matched more than one slot or a slot its Season has no phase for, each by its normalized name', async () => {
+    it('raises one INFO SLOT_NAME_UNMATCHED finding for a tournament name no pattern matched and an ERROR SLOT_NAME_AMBIGUOUS or SLOT_SEASON_COMPETITION_MISSING for a name that matched more than one slot or a slot its Season has no phase for, each by its normalized name', async () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const own = seasonsOf();
       const pga = syncedLeague(seasons, {}, own);
@@ -452,7 +452,7 @@ describe('LeagueEventsSync', () => {
         unplacedNames: [
           { normalizedName: 'the new open', name: 'The 2027 New Open', reason: 'UNMATCHED' },
           { normalizedName: 'twin championship', name: 'Twin Championship', reason: 'AMBIGUOUS' },
-          { normalizedName: 'masters tournament', name: 'Masters Tournament', reason: 'SEASON_PHASE_MISSING' },
+          { normalizedName: 'masters tournament', name: 'Masters Tournament', reason: 'SEASON_COMPETITION_MISSING' },
         ],
       }));
       const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
@@ -462,7 +462,7 @@ describe('LeagueEventsSync', () => {
       expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [
         { kind: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED, severity: ProviderSyncFindingSeverity.INFO, sportLeagueId: pga.id, sportEventId: null, providerValue: 'the new open', providerValueName: 'The 2027 New Open' },
         { kind: ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS, severity: ProviderSyncFindingSeverity.ERROR, sportLeagueId: pga.id, sportEventId: null, providerValue: 'twin championship', providerValueName: 'Twin Championship' },
-        { kind: ProviderSyncFindingKind.SLOT_SEASON_PHASE_MISSING, severity: ProviderSyncFindingSeverity.ERROR, sportLeagueId: pga.id, sportEventId: null, providerValue: 'masters tournament', providerValueName: 'Masters Tournament' },
+        { kind: ProviderSyncFindingKind.SLOT_SEASON_COMPETITION_MISSING, severity: ProviderSyncFindingSeverity.ERROR, sportLeagueId: pga.id, sportEventId: null, providerValue: 'masters tournament', providerValueName: 'Masters Tournament' },
       ]);
     });
 

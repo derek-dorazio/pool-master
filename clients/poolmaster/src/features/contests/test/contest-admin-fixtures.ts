@@ -64,7 +64,7 @@ export const WEEK_SLOT_ID = 'slot-week';
 export function templateSlotFixture(id: string): ContestConfigTemplateDto['slots'][number] {
   return {
     id, key: id.toUpperCase().replace(/-/g, '_'), name: null, slotKind: id === WEEK_SLOT_ID ? 'WEEK' : 'TOURNAMENT', weekNumber: null,
-    sportLeaguePhaseId: 'phase-regular', phase: 'REGULAR', matchFormat: 'FIELD',
+    sportLeagueCompetitionId: 'competition-regular', competitionCode: 'REGULAR', competitionOrderIndex: 1, phase: 'REGULAR', matchFormat: 'FIELD',
   };
 }
 

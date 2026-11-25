@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
+import { SLOT_PLACE_SELECT, slotPlaceOf, type SlotPlaceRow } from './slot-place-select';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigTemplateUpdate,
@@ -11,7 +12,6 @@ import type {
   ContestConfiguration,
   ContestFormat,
   ContestTemplateSlot,
-  LeaguePhase,
   MatchFormat,
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
@@ -122,7 +122,7 @@ export class PrismaContestConfigTemplateRepository
       where: {
         ...(input.sportLeagueId !== undefined && { sportLeagueId: input.sportLeagueId }),
         // Covering one of the slot definitions: where the template is offered (#2010).
-        ...(input.slotDefinitionIds !== undefined && { slots: { some: { sportLeaguePhaseSlotId: { in: [...input.slotDefinitionIds] } } } }),
+        ...(input.slotDefinitionIds !== undefined && { slots: { some: { sportLeagueCompetitionSlotId: { in: [...input.slotDefinitionIds] } } } }),
         ...(input.active !== undefined && { active: input.active }),
       },
       include: TEMPLATE_INCLUDE,
@@ -153,7 +153,7 @@ export class PrismaContestConfigTemplateRepository
         // The composite key keeps every definition in the template's own league.
         await tx.contestConfigTemplateSlot.deleteMany({ where: { templateId: id } });
         await tx.contestConfigTemplateSlot.createMany({
-          data: [...new Set(updates.slotDefinitionIds)].map((sportLeaguePhaseSlotId) => ({ sportLeagueId, templateId: id, sportLeaguePhaseSlotId })),
+          data: [...new Set(updates.slotDefinitionIds)].map((sportLeagueCompetitionSlotId) => ({ sportLeagueId, templateId: id, sportLeagueCompetitionSlotId })),
         });
       }
       const row = await tx.contestConfigTemplate.update({
@@ -175,7 +175,7 @@ export class PrismaContestConfigTemplateRepository
 
   async findSlotDefinitions(sportLeagueId: string, ids: readonly string[]): Promise<ContestTemplateSlot[]> {
     if (ids.length === 0) return [];
-    const rows = await this.prisma.sportLeaguePhaseSlot.findMany({
+    const rows = await this.prisma.sportLeagueCompetitionSlot.findMany({
       where: { sportLeagueId, id: { in: [...ids] } },
       select: TEMPLATE_SLOT_DEFINITION_SELECT,
     });
@@ -255,7 +255,7 @@ function mapContestConfiguration(row: {
   };
 }
 
-/** A slot definition as a template lists it (#2010), with its phase's kind. */
+/** A slot definition as a template lists it (#2010), with where it sits in play (#2153). */
 const TEMPLATE_SLOT_DEFINITION_SELECT = {
   id: true,
   key: true,
@@ -263,20 +263,17 @@ const TEMPLATE_SLOT_DEFINITION_SELECT = {
   slotKind: true,
   weekNumber: true,
   matchFormat: true,
-  sportLeaguePhaseId: true,
-  phase: { select: { phase: true } },
+  ...SLOT_PLACE_SELECT,
 } as const;
 
 /** A slot definition row selected with `TEMPLATE_SLOT_DEFINITION_SELECT`. */
-interface TemplateSlotDefinitionRow {
+interface TemplateSlotDefinitionRow extends SlotPlaceRow {
   id: string;
   key: string;
   name: string | null;
   slotKind: SlotKind;
   weekNumber: number | null;
   matchFormat: MatchFormat;
-  sportLeaguePhaseId: string;
-  phase: { phase: LeaguePhase };
 }
 
 /** What every template read joins: the slot definitions it covers (#2010). The event page adapter maps its offers' templates with it too. */
@@ -289,8 +286,7 @@ function mapTemplateSlot(row: TemplateSlotDefinitionRow): ContestTemplateSlot {
     name: row.name,
     slotKind: row.slotKind,
     weekNumber: row.weekNumber,
-    sportLeaguePhaseId: row.sportLeaguePhaseId,
-    phase: row.phase.phase,
+    ...slotPlaceOf(row),
     matchFormat: row.matchFormat,
   };
 }

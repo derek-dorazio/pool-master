@@ -11,6 +11,7 @@
  */
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport } from '@poolmaster/shared/domain';
+import { competitionFor, seasonCompetitionFor } from './competitions';
 import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
 import { sportRowKeys } from './sport-rows';
@@ -20,7 +21,7 @@ export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
 const LINKED_EVENT_ROUNDS = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'sportLeagueSeason' | 'platformTierProfile' | 'platformPricingProfile'>;
+type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueSeason' | 'platformTierProfile' | 'platformPricingProfile'>;
 
 /** What an event row needs to be one league's (#2010): spread it into `sportEvent.create`. */
 export interface EventEdition {
@@ -67,16 +68,21 @@ export async function fixtureSeasonId(
  * the API (a new event goes in the current Season).
  */
 export async function withCurrentSeason(
-  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeagueSeasonPhase'>,
+  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition'>,
   sportLeagueId: string,
   championshipYear = new Date().getUTCFullYear(),
 ): Promise<string> {
   const seasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
-  // A Season a migration adds has every phase of its league; one a fixture made is given them, so
-  // a test slot of any of the league's definitions can be added to it.
+  // A Season a migration adds has every phase and competition of its league; one a fixture made is
+  // given them, so a test slot of any of the league's definitions can be added to it.
   const phases = await prisma.sportLeaguePhase.findMany({ where: { sportLeagueId }, select: { id: true } });
   await prisma.sportLeagueSeasonPhase.createMany({
     data: phases.map((phase) => ({ sportLeagueId, sportLeagueSeasonId: seasonId, sportLeaguePhaseId: phase.id })),
+    skipDuplicates: true,
+  });
+  const competitions = await prisma.sportLeagueCompetition.findMany({ where: { sportLeagueId }, select: { id: true } });
+  await prisma.sportLeagueSeasonCompetition.createMany({
+    data: competitions.map((competition) => ({ sportLeagueId, sportLeagueSeasonId: seasonId, sportLeagueCompetitionId: competition.id })),
     skipDuplicates: true,
   });
   await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { currentSeasonId: seasonId } });
@@ -134,13 +140,12 @@ async function fixtureSlotPlay(prisma: Db, sportLeagueId: string) {
   return { matchFormat: scoringFamily === 'HEAD_TO_HEAD' ? 'HEAD_TO_HEAD' as const : 'FIELD' as const, canEndTied: false };
 }
 
-/** The fixture tour's one phase and slot; `skipDuplicates` lets two first uses race safely. */
+/** The fixture tour's one phase, competition and slot; `skipDuplicates` lets two first uses race safely. */
 async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<void> {
-  await prisma.sportLeaguePhase.createMany({ data: [{ sportLeagueId, phase: 'REGULAR', isSynced: true }], skipDuplicates: true });
-  const phase = await prisma.sportLeaguePhase.findUniqueOrThrow({ where: { sportLeagueId_phase: { sportLeagueId, phase: 'REGULAR' } }, select: { id: true } });
-  await prisma.sportLeaguePhaseSlot.createMany({
+  const { competitionId } = await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR' });
+  await prisma.sportLeagueCompetitionSlot.createMany({
     data: [{
-      sportLeagueId, sportLeaguePhaseId: phase.id, key: FIXTURE_TOUR_SLOT_KEY, slotKind: 'TOURNAMENT',
+      sportLeagueId, sportLeagueCompetitionId: competitionId, key: FIXTURE_TOUR_SLOT_KEY, slotKind: 'TOURNAMENT',
       awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
       ...(await fixtureSlotPlay(prisma, sportLeagueId)),
     }],
@@ -151,26 +156,25 @@ async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<
 /** The fixture tour's one slot definition: the slot a `freshEventEdition` event can be put in. */
 export async function fixtureTourSlotId(prisma: Db, sportCode: Sport = Sport.GOLF): Promise<string> {
   const sportLeagueId = await fixtureTourId(prisma, sportCode);
-  return (await prisma.sportLeaguePhaseSlot.findUniqueOrThrow({ where: { sportLeagueId_key: { sportLeagueId, key: FIXTURE_TOUR_SLOT_KEY } }, select: { id: true } })).id;
+  return (await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({ where: { sportLeagueId_key: { sportLeagueId, key: FIXTURE_TOUR_SLOT_KEY } }, select: { id: true } })).id;
 }
 
 /**
- * A slot definition of the league's own, on its regular season, keyed `key` (made on first use):
+ * A slot definition of the league's own, in its phase's first competition (the regular season's
+ * unless `phase` says otherwise), keyed `key` (made on first use):
  * a test that needs two events in different slots, or a template covering one of them (#2010).
  */
 export async function keyedSlotDefinitionId(prisma: Db, sportLeagueId: string, key: string, options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: 'TOURNAMENT' | 'WEEK' | 'SEMIFINAL' | 'FINAL'; name?: string } = {}): Promise<string> {
-  const phase = options.phase ?? 'REGULAR';
-  await prisma.sportLeaguePhase.createMany({ data: [{ sportLeagueId, phase, isSynced: true }], skipDuplicates: true });
-  const phaseRow = await prisma.sportLeaguePhase.findUniqueOrThrow({ where: { sportLeagueId_phase: { sportLeagueId, phase } }, select: { id: true } });
-  await prisma.sportLeaguePhaseSlot.createMany({
+  const { competitionId } = await competitionFor(prisma, { sportLeagueId, phase: options.phase ?? 'REGULAR' });
+  await prisma.sportLeagueCompetitionSlot.createMany({
     data: [{
-      sportLeagueId, sportLeaguePhaseId: phaseRow.id, key, slotKind: options.slotKind ?? 'TOURNAMENT', name: options.name ?? null,
+      sportLeagueId, sportLeagueCompetitionId: competitionId, key, slotKind: options.slotKind ?? 'TOURNAMENT', name: options.name ?? null,
       awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
       ...(await fixtureSlotPlay(prisma, sportLeagueId)),
     }],
     skipDuplicates: true,
   });
-  return (await prisma.sportLeaguePhaseSlot.findUniqueOrThrow({ where: { sportLeagueId_key: { sportLeagueId, key } }, select: { id: true } })).id;
+  return (await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({ where: { sportLeagueId_key: { sportLeagueId, key } }, select: { id: true } })).id;
 }
 
 /**
@@ -179,30 +183,29 @@ export async function keyedSlotDefinitionId(prisma: Db, sportLeagueId: string, k
  * Season slot's id.
  */
 export async function putEventInSlot(
-  prisma: Pick<PrismaClient, 'sportEvent' | 'sportLeaguePhaseSlot' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonPhaseSlot' | 'sportEventSlot'>,
+  prisma: Pick<PrismaClient, 'sportEvent' | 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventSlot'>,
   sportEventId: string,
-  sportLeaguePhaseSlotId: string,
+  sportLeagueCompetitionSlotId: string,
 ): Promise<string> {
   const event = await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { sportLeagueId: true, sportLeagueSeasonId: true } });
-  const definition = await prisma.sportLeaguePhaseSlot.findUniqueOrThrow({
-    where: { id: sportLeaguePhaseSlotId },
-    select: { sportLeaguePhaseId: true, seriesFormat: true, seriesGames: true, pairing: true },
+  const definition = await prisma.sportLeagueCompetitionSlot.findUniqueOrThrow({
+    where: { id: sportLeagueCompetitionSlotId },
+    select: { sportLeagueCompetitionId: true, competition: { select: { sportLeaguePhaseId: true } }, seriesFormat: true, seriesGames: true, pairing: true },
   });
-  const seasonPhase = await prisma.sportLeagueSeasonPhase.upsert({
-    where: { sportLeagueSeasonId_sportLeaguePhaseId: { sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId } },
-    create: { sportLeagueId: event.sportLeagueId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId },
-    update: {},
-    select: { id: true },
+  const seasonCompetitionId = await seasonCompetitionFor(prisma, {
+    sportLeagueId: event.sportLeagueId,
+    sportLeagueSeasonId: event.sportLeagueSeasonId,
+    competition: { competitionId: definition.sportLeagueCompetitionId, phaseId: definition.competition.sportLeaguePhaseId },
   });
-  const seasonSlot = await prisma.sportLeagueSeasonPhaseSlot.create({
+  const seasonSlot = await prisma.sportLeagueSeasonCompetitionSlot.create({
     data: {
-      sportLeagueId: event.sportLeagueId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonPhaseId: seasonPhase.id,
-      sportLeaguePhaseSlotId, seriesFormat: definition.seriesFormat, seriesGames: definition.seriesGames, pairing: definition.pairing,
+      sportLeagueId: event.sportLeagueId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonCompetitionId: seasonCompetitionId,
+      sportLeagueCompetitionSlotId, seriesFormat: definition.seriesFormat, seriesGames: definition.seriesGames, pairing: definition.pairing,
       isTestData: true, label: `event ${sportEventId}`,
     },
     select: { id: true },
   });
-  await prisma.sportEventSlot.create({ data: { sportEventId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonPhaseSlotId: seasonSlot.id } });
+  await prisma.sportEventSlot.create({ data: { sportEventId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId: seasonSlot.id } });
   return seasonSlot.id;
 }
 
@@ -306,14 +309,14 @@ export async function coverLeagueEventsWithTestSlot(prisma: PrismaClient, sportL
   const definitionId = await keyedSlotDefinitionId(prisma, sportLeagueId, 'TEST_TOURNAMENT');
   const unslotted = await prisma.sportEvent.findMany({ where: { sportLeagueId, slots: { none: {} } }, select: { id: true } });
   for (const event of unslotted) await putEventInSlot(prisma, event.id, definitionId);
-  const played = await prisma.sportLeagueSeasonPhaseSlot.findMany({
+  const played = await prisma.sportLeagueSeasonCompetitionSlot.findMany({
     where: { sportLeagueId, eventSlot: { isNot: null } },
-    select: { sportLeaguePhaseSlotId: true },
-    distinct: ['sportLeaguePhaseSlotId'],
+    select: { sportLeagueCompetitionSlotId: true },
+    distinct: ['sportLeagueCompetitionSlotId'],
   });
   const templates = await prisma.contestConfigTemplate.findMany({ where: { sportLeagueId }, select: { id: true } });
   await prisma.contestConfigTemplateSlot.createMany({
-    data: templates.flatMap((template) => played.map((slot) => ({ sportLeagueId, templateId: template.id, sportLeaguePhaseSlotId: slot.sportLeaguePhaseSlotId }))),
+    data: templates.flatMap((template) => played.map((slot) => ({ sportLeagueId, templateId: template.id, sportLeagueCompetitionSlotId: slot.sportLeagueCompetitionSlotId }))),
     skipDuplicates: true,
   });
 }

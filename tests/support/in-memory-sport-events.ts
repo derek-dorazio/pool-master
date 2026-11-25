@@ -197,10 +197,10 @@ export class InMemorySportEvents {
           taken.add(code);
         };
         for (const each of links) link(each.seasonSlotId, each.code);
-        const phaseMissing: string[] = [];
+        const competitionMissing: string[] = [];
         for (const create of creates) {
           if (this.definitionsWithoutSeasonPhase.has(create.slotDefinitionId)) {
-            phaseMissing.push(create.slotDefinitionId);
+            competitionMissing.push(create.slotDefinitionId);
             continue;
           }
           const id = this.addTestSlot({ id: sportLeagueId, currentSeasonId: sportLeagueSeasonId }, new Date(0), {
@@ -208,7 +208,7 @@ export class InMemorySportEvents {
           });
           link(id, create.code);
         }
-        return { phaseMissing };
+        return { competitionMissing };
       },
       recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows }) => {
         for (const slotId of confirmedWindows) {
@@ -488,7 +488,7 @@ export class InMemorySportEvents {
           if (taken.has(slotId)) {
             throw Object.assign(new Error('Unique constraint failed'), {
               code: 'P2002',
-              meta: { target: ['sport_league_season_id', 'sport_league_season_phase_slot_id'] },
+              meta: { target: ['sport_league_season_id', 'sport_league_season_competition_slot_id'] },
             });
           }
           taken.add(slotId);

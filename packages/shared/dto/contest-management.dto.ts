@@ -218,13 +218,15 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
 const ContestTemplateSlotDtoSchema = z.object({
-  id: z.uuid().describe('The slot definition\'s id (SportLeaguePhaseSlot).'),
+  id: z.uuid().describe('The slot definition\'s id (SportLeagueCompetitionSlot).'),
   key: z.string().describe('Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.'),
   name: z.string().nullable().describe('The league\'s proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.'),
   slotKind: z.enum(SlotKind).describe('What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.'),
   weekNumber: z.number().int().nullable().describe('For a WEEK slot, its week; null otherwise.'),
-  sportLeaguePhaseId: z.uuid().describe('The phase the slot is in.'),
-  phase: z.enum(LeaguePhase).describe('That phase\'s kind: PRESEASON, REGULAR or POSTSEASON.'),
+  sportLeagueCompetitionId: z.uuid().describe('The competition the slot is in (#2153); a template\'s slots all sit in one.'),
+  competitionCode: z.string().describe('That competition\'s code, such as REGULAR or CFP; nothing parses it.'),
+  competitionOrderIndex: z.number().int().min(1).describe('That competition\'s place in its phase.'),
+  phase: z.enum(LeaguePhase).describe('Its phase\'s kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.'),
   matchFormat: z.enum(MatchFormat).describe('How the slot\'s games are contested: HEAD_TO_HEAD or FIELD.'),
 }).describe('One slot definition a contest template covers (#2010), with the facts screens show.');
 

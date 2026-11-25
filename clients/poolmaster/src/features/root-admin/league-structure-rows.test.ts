@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SportLeaguePhaseDefinitionDto } from '@/lib/api';
-import { mappingText, periodsText, positionCodeText, seriesText, slotRowsOf } from './league-structure-rows';
+import { competitionCodesText, mappingText, periodsText, phaseSlotCount, positionCodeText, seriesText, slotRowsOf } from './league-structure-rows';
 
 // The Structure tab's words for a slot (#2002): its name, series and provider mappings.
 
@@ -27,17 +27,22 @@ describe('league structure rows', () => {
     expect(periodsText({ periodUnit: 'QUARTER', periodCount: null })).toBe('No periods');
   });
 
-  it('flattens phases into slot rows that carry their phase, in the order given', () => {
+  it('flattens phases and their competitions into slot rows that carry their phase and competition code, in the order given', () => {
+    const final: SportLeaguePhaseDefinitionDto['competitions'][number]['slots'][number] = {
+      id: 's', key: 'FINAL', slotKind: 'FINAL', weekNumber: null, name: null, awardsTrophy: true, squaresEligible: true,
+      seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+      matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
+    };
     const phases: SportLeaguePhaseDefinitionDto[] = [
-      { id: 'a', phase: 'REGULAR', isSynced: true, slots: [] },
+      { id: 'a', phase: 'REGULAR', isSynced: true, competitions: [{ id: 'ca', code: 'REGULAR', orderIndex: 1, slots: [] }] },
       {
-        id: 'b', phase: 'POSTSEASON', isSynced: true, slots: [{
-          id: 's', key: 'FINAL', slotKind: 'FINAL', weekNumber: null, name: null, awardsTrophy: true, squaresEligible: true,
-          seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
-          matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
-        }],
+        id: 'b', phase: 'POSTSEASON', isSynced: true, competitions: [
+          { id: 'cb', code: 'BOWLS', orderIndex: 1, slots: [{ ...final, id: 'bowl', key: 'BOWL' }] },
+          { id: 'cc', code: 'CFP', orderIndex: 2, slots: [final] },
+        ],
       },
     ];
-    expect(slotRowsOf(phases).map((row) => [row.phase, row.key])).toEqual([['POSTSEASON', 'FINAL']]);
+    expect(slotRowsOf(phases).map((row) => [row.phase, row.competitionCode, row.key])).toEqual([['POSTSEASON', 'BOWLS', 'BOWL'], ['POSTSEASON', 'CFP', 'FINAL']]);
+    expect(phases.map((phase) => [competitionCodesText(phase), phaseSlotCount(phase)])).toEqual([['REGULAR', 0], ['BOWLS, CFP', 2]]);
   });
 });

@@ -21,15 +21,17 @@ code lives only in a table whose name ends in `ProviderMapping`.
 | `SPORT_DATA_PROVIDER_BINDINGS_JSON`, webhook provider list, adapter constants | `Provider` (table) | One row per data provider, with its settings (Derek 2026-11-22). |
 | `BALLDONTLIE_WEBHOOK_GAME_LEAGUES` and other per-league adapter constants | `ProviderLeague` | The provider's own list of leagues: provider, its code, sport, webhook timing. |
 | `SportLeague.eventSyncProviderId`, `matchKeyword` | `SportLeagueProviderMapping` | Links a league to a ProviderLeague; `SportLeague.selectedProviderMapping` picks the one synced. |
-| none | `SportLeaguePhase` | Timeless phase definition: PRESEASON, REGULAR, POSTSEASON. |
-| none | `SportLeaguePhaseSlot` | Timeless slot definition in a phase: WEEK 14, WILD_CARD, FINAL, MASTERS. |
-| none | `SportLeaguePhaseSlotProviderMapping` | How a provider's games match a slot. |
+| none | `SportLeaguePhase` | Timeless phase definition: PRESEASON, REGULAR, POSTSEASON_CONFERENCE, POSTSEASON. |
+| none | `SportLeagueCompetition` | A competition inside a phase (6b): REGULAR, CFP, BOWLS, a conference tournament. No contest crosses competitions. |
+| none | `SportLeagueCompetitionSlot` | Timeless slot definition in a competition: WEEK 14, WILD_CARD, FINAL, MASTERS. |
+| none | `SportLeagueCompetitionSlotProviderMapping` | How a provider's games match a slot. |
 | none | `SportLeaguePosition` | QB, RB, WR, TE, with field eligibility and a baseline rating. |
 | none | `SportLeaguePositionProviderMapping` | A provider's position codes. |
 | `SportLeague.currentEventYear` | `SportLeagueSeason` | One real Season, with its date span. |
 | none | `SportLeagueSeasonProviderMapping` | A provider's season id. |
-| none | `SportLeagueSeasonPhase` | A phase in one Season. |
-| none | `SportLeagueSeasonPhaseSlot` | A slot in one Season: dates, status, series format. |
+| none | `SportLeagueSeasonPhase` | A phase in one Season, with its status. |
+| none | `SportLeagueSeasonCompetition` | A competition in one Season, with its status and champion (6b). |
+| none | `SportLeagueSeasonCompetitionSlot` | A slot in one Season: dates, status, series format. |
 | team conference/division in `metadata` JSON | `SportLeagueConference`, `SportLeagueConferenceDivision` (+ `…ProviderMapping` each) | A league's conferences (AFC, American League, Big Ten) and their divisions (AFC East); set by migration. |
 | none | `SportLeagueSeasonTeamConference` | One row per Season and team: conference required, division optional, composite FK keeps the division inside the conference. |
 | `Participant.teamAffiliation` | `SportLeagueSeasonParticipantTeam` | Roster row: one per Season and player, with team, position and rating. |
@@ -100,11 +102,17 @@ The current model was built one sport at a time and leans on code to look right:
 ## 1. Definitions (timeless, one set per league, set by migration)
 
 - **SportLeaguePhase**
-  - `phase`: PRESEASON / REGULAR / POSTSEASON. The enum's explicit order is the phase's
-    only order.
+  - `phase`: PRESEASON / REGULAR / POSTSEASON_CONFERENCE / POSTSEASON. The enum's explicit
+    order is the phase's only order.
   - `isSynced`, non-null. An unsynced phase (NFL PRESEASON) gets no slots, events or
     findings.
-- **SportLeaguePhaseSlot**: a position within a phase, and the strong key everything links on.
+- **SportLeagueCompetition** (6b, #2153): a competition inside a phase. `code` (a readable key
+  typed into migrations, unique per league, never built or parsed) and `orderIndex` (unique per
+  phase, its only order). Most phases hold one, coded as the phase; NCAA Men's Football's
+  POSTSEASON holds the CFP, and 13b adds BOWLS beside it. No contest crosses competitions: a
+  template covering more than one slot per contest (ALL_LISTED, FROM_SLOT) lists slots of one.
+  `conferenceId` comes with the conference table (21b).
+- **SportLeagueCompetitionSlot**: a position within a competition, and the strong key everything links on.
   - `key`: a unique code that nothing parses.
   - `slotKind`: an ordered enum (WEEK, PLAY_IN, ROUND_OF_64, ROUND_OF_32, ROUND_OF_16,
     QUARTERFINAL, SEMIFINAL, THIRD_PLACE, FINAL, TOURNAMENT), plus a checked `weekNumber`
@@ -127,7 +135,7 @@ The current model was built one sport at a time and leans on code to look right:
     time zone, which is a column on the league. Games match them by that date rule
     (matchType CALENDAR_WEEK), never by admin-entered dates.
   - Switched-off leagues get their definitions too, so reactivating one needs no new rows.
-- **SportLeaguePhaseSlotProviderMapping**: one row per slot per provider. `matchType` is
+- **SportLeagueCompetitionSlotProviderMapping**: one row per slot per provider. `matchType` is
   one of:
   - PROVIDER_CODE: structured phases, set by migration;
   - NAME_PATTERN: open phases;
@@ -156,8 +164,11 @@ The current model was built one sport at a time and leans on code to look right:
     otherwise the last one.
   - This replaces `currentEventYear` and every year fallback. A league's first Season comes
     from the migration that adds the league.
-- **SportLeagueSeasonPhase**: FK to its phase definition.
-- **SportLeagueSeasonPhaseSlot**: FK to its slot definition, plus:
+- **SportLeagueSeasonPhase**: FK to its phase definition, and a `status` (SCHEDULED /
+  IN_PROGRESS / COMPLETED) that slice 14 moves.
+- **SportLeagueSeasonCompetition** (6b): one per Season and competition, with the same `status`
+  and a nullable `championParticipantId`, set once it is COMPLETED (slice 14's handlers).
+- **SportLeagueSeasonCompetitionSlot**: FK to its slot definition and its Season competition, plus:
   - `startsAt`, `endsAt` and `status` (SCHEDULED / IN_PROGRESS / COMPLETED);
   - `seriesFormat`, `seriesGames` and `pairing`, copied from the definition when the
     Season is created, so a later format change never rewrites a past Season.
@@ -691,7 +702,7 @@ Contest:
     `ContestConfiguration.selectionType` and `templateVersion`, `ContestPrizeDefinition`.
 - Template coverage (Derek 2026-11-23, slice 11): `ContestConfigTemplate` drops `sport`,
   `eventType` and `eventSeriesNames` and lists the slot definitions it covers in one child
-  table, `ContestConfigTemplateSlot` (template, `SportLeaguePhaseSlot`); there is no phase
+  table, `ContestConfigTemplateSlot` (template, `SportLeagueCompetitionSlot`); there is no phase
   table ("whole postseason" lists its slots; a season-long open-phase contest is not
   offered). One default per (sport league, selection type). Coverage mode (Derek
   2026-11-24), `ContestConfigTemplate.coverageMode`: ONE_SLOT (the list is where it may run;
@@ -1005,7 +1016,7 @@ and Actions; later slices add actions by kind. Sync kinds come from `ProviderSyn
 **Sync matching (8, 12, 13).**
 - 8 adds the inclusion-only INFO finding (one per league and value; waiving marks it known
   and excluded). 12 and 13 are blocked by 8 only and land before 10 and 10b.
-- 12 uses `SportLeaguePhaseSlotProviderMapping` with matchType NAME_PATTERN: normalized
+- 12 uses `SportLeagueCompetitionSlotProviderMapping` with matchType NAME_PATTERN: normalized
   (case, year, "presented by"), actions "link to existing (adds a pattern)" and "create
   new", an ERROR on two matches, and match by id once linked. The open-phase Season slot is
   created when its first tournament matches, never at Season creation.
@@ -1288,7 +1299,7 @@ Both reviewers agreed with the recommendations for 1, 2, 3 and 5.
 3. ~~Multi-slot Clutch Card picks~~ Settled: pick once; a player stops scoring when his team is out (§8).
 4. ~~Clutch Cards during the build~~ Settled (Derek): no users, so the old Clutch Card leagues and code are removed early (slice 1b) and rebuilt as the new contest type; no effort keeps them working.
 5. ~~Naming pass~~ Settled (Derek 2026-11-22): keep the full-path names and today's
-   `SportEvent` prefix. Definitions `SportLeaguePhase`, `SportLeaguePhaseSlot`,
+   `SportEvent` prefix. Definitions `SportLeaguePhase`, `SportLeagueCompetitionSlot`,
    `…SlotProviderMapping`, `SportLeaguePosition` (+ `…PositionProviderMapping`); calendar `SportLeagueSeason`,
    `…SeasonProviderMapping`, `…SeasonPhase`, `…SeasonPhaseSlot`, `…SeasonParticipantTeam`;
    events `SportEvent`, `SportEventSlot`, `SportEventProviderMapping`, `SportEventParticipant`,

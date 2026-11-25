@@ -14,5 +14,5 @@ export interface EventPageRepository {
    * one under way first, then the soonest to start. One list per definition asked for, in the
    * order asked; a Season slot no event owns yet is left out.
    */
-  findSlotsNotOver(sportLeaguePhaseSlotIds: readonly string[]): Promise<EventPageNextSlot[][]>;
+  findSlotsNotOver(sportLeagueCompetitionSlotIds: readonly string[]): Promise<EventPageNextSlot[][]>;
 }

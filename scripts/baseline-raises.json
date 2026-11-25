@@ -132,6 +132,90 @@
       "key": "AMERICAN_FOOTBALL",
       "now": 0,
       "reason": "retired by #2143"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportLeaguePhaseSlot",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportLeaguePhaseSlot",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportLeagueSeasonPhaseSlot",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportLeagueSeasonPhaseSlot",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportLeaguePhaseSlotProviderMapping",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportLeagueSeasonPhaseSlotProviderMapping",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportLeaguePhaseSlotId",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportLeagueSeasonPhaseSlotId",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportLeagueSeasonPhaseId",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SLOT_SEASON_PHASE_MISSING",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SEASON_PHASE_MISSING",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SLOT_PHASE_NOT_IN_SEASON",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PHASE_NOT_IN_SEASON",
+      "now": 0,
+      "reason": "retired by #2153"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "phaseMissing",
+      "now": 0,
+      "reason": "retired by #2153"
     }
   ]
 }

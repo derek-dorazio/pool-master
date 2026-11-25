@@ -40,7 +40,11 @@ export class ContestConfigTemplateRulesMismatchError extends Error {
  */
 export class ContestConfigTemplateCoverageError extends Error {
   constructor(
-    readonly code: 'CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT' | 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS' | 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT',
+    readonly code:
+      | 'CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT'
+      | 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS'
+      | 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS'
+      | 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT',
     message: string,
   ) {
     super(message);
@@ -49,9 +53,13 @@ export class ContestConfigTemplateCoverageError extends Error {
 }
 
 const COVERAGE_PROBLEM_ERRORS: Record<TemplateCoverageProblem, { code: ContestConfigTemplateCoverageError['code']; message: string }> = {
+  [TemplateCoverageProblem.SPANS_COMPETITIONS]: {
+    code: 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS',
+    message: 'A template covering more than one slot per contest (ALL_LISTED, FROM_SLOT) must list slots of one competition: no contest crosses competitions.',
+  },
   [TemplateCoverageProblem.ALL_LISTED_SPANS_EVENTS]: {
     code: 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS',
-    message: 'A template covering all of its slots must list one event\'s slots: one phase, and a tournament on its own.',
+    message: 'A template covering all of its slots must list one event\'s slots: a tournament on its own.',
   },
   [TemplateCoverageProblem.BRACKET_OUTSIDE_KNOCKOUT]: {
     code: 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT',

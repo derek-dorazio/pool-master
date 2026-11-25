@@ -320,8 +320,8 @@ describe('IngestionPersistence', () => {
     await persistence.persistEventDetailWithDiagnostics(rankedFieldDetail(externalId, [rankedGolfer('ingestion-window-seed', 4)]));
     const { sportLeagueProviderMappingId } = await prisma.sportEventProviderMapping.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueProviderMappingId: true } });
     const definitionId = await keyedSlotDefinitionId(prisma, event.sportLeagueId, 'WINDOWED_ROUND', { phase: 'POSTSEASON', slotKind: 'SEMIFINAL' });
-    await prisma.sportLeaguePhaseSlotProviderMapping.createMany({
-      data: [{ sportLeagueId: event.sportLeagueId, sportLeaguePhaseSlotId: definitionId, sportLeagueProviderMappingId, matchType: 'DATE_WINDOW', providerValue: null }],
+    await prisma.sportLeagueCompetitionSlotProviderMapping.createMany({
+      data: [{ sportLeagueId: event.sportLeagueId, sportLeagueCompetitionSlotId: definitionId, sportLeagueProviderMappingId, matchType: 'DATE_WINDOW', providerValue: null }],
       skipDuplicates: true,
     });
     await putEventInSlot(prisma, event.id, definitionId);

@@ -117,18 +117,18 @@ describe('PrismaSportLeagueSeasonRepository test slots (#2004)', () => {
     await expect(repository.createTestSlot({ ...input, label: 'QA 2' })).resolves.toMatchObject({ outcome: 'CREATED' });
   });
 
-  it('refuses a definition of another league as not found, and one whose phase the Season lacks as not in the Season', async () => {
+  it('refuses a definition of another league as not found, and one whose competition the Season lacks as not in the Season', async () => {
     const { league, s2026, s2027 } = await seasonedLeague();
     const other = await seasonedLeague();
     const prisma = getPrisma();
     const slotDefinitionId = await testSlotDefinitionId(prisma, league.id, s2026);
     const otherDefinitionId = await testSlotDefinitionId(prisma, other.league.id, other.s2026);
-    await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueSeasonId: s2027 } });
+    await prisma.sportLeagueSeasonCompetition.deleteMany({ where: { sportLeagueSeasonId: s2027 } });
     const repository = new PrismaSportLeagueSeasonRepository(prisma);
     const input = { sportLeagueId: league.id, sportLeagueSeasonId: s2026, label: 'QA', startsAt: STARTS, endsAt: null };
 
     await expect(repository.createTestSlot({ ...input, slotDefinitionId: otherDefinitionId })).resolves.toEqual({ outcome: 'DEFINITION_NOT_FOUND' });
-    await expect(repository.createTestSlot({ ...input, sportLeagueSeasonId: s2027, slotDefinitionId })).resolves.toEqual({ outcome: 'PHASE_NOT_IN_SEASON' });
+    await expect(repository.createTestSlot({ ...input, sportLeagueSeasonId: s2027, slotDefinitionId })).resolves.toEqual({ outcome: 'COMPETITION_NOT_IN_SEASON' });
   });
 
   it('finds a slot with its league and Season, with no event while free and its event once one covers it, and null for an id no slot has', async () => {
@@ -149,13 +149,16 @@ describe('PrismaSportLeagueSeasonRepository test slots (#2004)', () => {
 const NFL_ID = 'f91f2566-1978-4171-a706-ae417c4d601a';
 
 describe('PrismaSportLeaguePageReader.readSeasons', () => {
-  it('gives each of the NFL\'s Seasons its phases, a phase the migration gave no slots an empty list, and BALLDONTLIE\'s id for it by provider', async () => {
+  it('gives each of the NFL\'s Seasons its phases, each with its one competition named by the phase (a competition the migration gave no slots an empty list), and BALLDONTLIE\'s id for it by provider', async () => {
     const seasons = expectDefinedSeasons(await new PrismaSportLeaguePageReader(getPrisma()).readSeasons(NFL_ID));
 
     expect(seasons.filter((season) => season.isCurrent)).toHaveLength(1);
     const phases = seasons.flatMap((season) => season.phases);
-    expect(phases.some((phase) => phase.slots.length === 0)).toBe(true);
-    expect(phases.some((phase) => phase.slots.length > 0)).toBe(true);
+    expect(phases.every((phase) => phase.competitions.length === 1 && phase.competitions[0]?.code === phase.phase)).toBe(true);
+    const competitions = phases.flatMap((phase) => phase.competitions);
+    expect(competitions.some((competition) => competition.slots.length === 0)).toBe(true);
+    expect(competitions.some((competition) => competition.slots.length > 0)).toBe(true);
+    expect(competitions.every((competition) => competition.status === 'SCHEDULED' && competition.championParticipantId === null)).toBe(true);
     expect(seasons.flatMap((season) => season.providerMappings).every((mapping) => mapping.providerName.length > 0 && mapping.providerLeagueCode === 'nfl')).toBe(true);
   });
 

@@ -116,7 +116,7 @@ describe('SDK Functional: a root admin deletes a sport league or a participant n
     expect(deleted.response?.status).toBe(204);
     expectFunctionalError(await getSportLeague({ client, path: { sportLeagueId } }), { status: 404, code: 'SPORT_LEAGUE_NOT_FOUND' });
     const db = getFunctionalPrisma();
-    expect(await db.sportLeagueSeasonPhaseSlot.count({ where: { sportLeagueId } })).toBe(0);
+    expect(await db.sportLeagueSeasonCompetitionSlot.count({ where: { sportLeagueId } })).toBe(0);
     expect(await db.sportLeagueSeasonPhase.count({ where: { sportLeagueId } })).toBe(0);
   });
 

@@ -80,7 +80,7 @@ export class PrismaEventPageRepository implements EventPageRepository {
       eventPageId: row.eventPageId,
       sportLeagueId: row.sportLeagueId,
       sportLeagueName: row.sportLeague.displayName ?? row.sportLeague.name,
-      sportLeaguePhaseSlotId: row.sportLeaguePhaseSlotId,
+      sportLeagueCompetitionSlotId: row.sportLeagueCompetitionSlotId,
       template: mapContestConfigTemplate(row.template),
       bracketStartRound: row.bracketStartRound,
       sortOrder: row.sortOrder,
@@ -88,28 +88,28 @@ export class PrismaEventPageRepository implements EventPageRepository {
     }));
   }
 
-  async findSlotsNotOver(sportLeaguePhaseSlotIds: readonly string[]): Promise<EventPageNextSlot[][]> {
-    if (sportLeaguePhaseSlotIds.length === 0) return [];
+  async findSlotsNotOver(sportLeagueCompetitionSlotIds: readonly string[]): Promise<EventPageNextSlot[][]> {
+    if (sportLeagueCompetitionSlotIds.length === 0) return [];
     // A Season slot is shown through the event that owns it (#2010); one no event owns yet is left out.
     const rows = await this.prisma.sportEventSlot.findMany({
       where: {
-        seasonSlot: { sportLeaguePhaseSlotId: { in: [...new Set(sportLeaguePhaseSlotIds)] } },
+        seasonSlot: { sportLeagueCompetitionSlotId: { in: [...new Set(sportLeagueCompetitionSlotIds)] } },
         sportEvent: { status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] } },
       },
       select: {
-        sportLeagueSeasonPhaseSlotId: true,
-        seasonSlot: { select: { sportLeaguePhaseSlotId: true, season: { select: { championshipYear: true } } } },
+        sportLeagueSeasonCompetitionSlotId: true,
+        seasonSlot: { select: { sportLeagueCompetitionSlotId: true, season: { select: { championshipYear: true } } } },
         sportEvent: { select: { id: true, name: true, startDate: true, endDate: true, status: true } },
       },
       orderBy: [{ sportEvent: { startDate: 'asc' } }, { id: 'asc' }],
     });
-    return sportLeaguePhaseSlotIds.map((definitionId) => {
-      const slots = rows.filter((row) => row.seasonSlot.sportLeaguePhaseSlotId === definitionId);
+    return sportLeagueCompetitionSlotIds.map((definitionId) => {
+      const slots = rows.filter((row) => row.seasonSlot.sportLeagueCompetitionSlotId === definitionId);
       // The slot under way comes first, then the rest soonest first.
       const underWay = slots.filter((row) => row.sportEvent.status === SportEventStatus.IN_PROGRESS);
       const rest = slots.filter((row) => row.sportEvent.status !== SportEventStatus.IN_PROGRESS);
       return [...underWay, ...rest].map((row) => ({
-        seasonSlotId: row.sportLeagueSeasonPhaseSlotId,
+        seasonSlotId: row.sportLeagueSeasonCompetitionSlotId,
         sportEventId: row.sportEvent.id,
         name: row.sportEvent.name,
         championshipYear: row.seasonSlot.season.championshipYear,

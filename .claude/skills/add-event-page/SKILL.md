@@ -30,7 +30,7 @@ Check each offer before writing anything:
 - The template exists, is active, and belongs to that sport league. Find it in the contest
   template reference migrations by its key. The offers insert joins the template to its league,
   so a template with no league seeds no offer.
-- The slot definition key is one of that sport league's (`sport_league_phase_slots`), and the
+- The slot definition key is one of that sport league's (`sport_league_competition_slots`), and the
   template covers it. An offer whose definition has no Season slot left that is not over is
   simply not shown, so a typo fails silently.
 - The page's hero is its sport's photo (`rules/ux-rules.md` §13 *Event Pages* item 6), already
@@ -48,7 +48,7 @@ applies: idempotent on the natural key, never an edit to an applied migration.
 2. Insert the page with its `url_segment` (lower-case words joined by single hyphens; a check
    constraint refuses anything else) `ON CONFLICT ("sport", "url_segment") DO NOTHING`.
 3. Insert the offers from a `VALUES` list joined to `sports`, `sport_leagues` (by name),
-   `sport_league_phase_slots` (by key and league) and `contest_config_templates` (by key and
+   `sport_league_competition_slots` (by key and league) and `contest_config_templates` (by key and
    league), as the Championship Weekend migration
    (`*_event_pages`) does, `ON CONFLICT ("event_page_id", "sort_order") DO NOTHING`. Exactly one
    row has `is_primary`; a starting round goes only on a bracket template.

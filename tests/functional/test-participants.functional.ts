@@ -37,7 +37,8 @@ async function cleanup(): Promise<void> {
     await db.sportEventTier.deleteMany({ where });
     await db.sportEventSlot.deleteMany({ where });
     await db.sportEvent.deleteMany({ where: ofLeagues });
-    await db.sportLeagueSeasonPhaseSlot.deleteMany({ where: ofLeagues });
+    await db.sportLeagueSeasonCompetitionSlot.deleteMany({ where: ofLeagues });
+    await db.sportLeagueSeasonCompetition.deleteMany({ where: ofLeagues });
     await db.sportLeagueSeasonPhase.deleteMany({ where: ofLeagues });
   }
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).

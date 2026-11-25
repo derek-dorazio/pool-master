@@ -133,7 +133,7 @@ export class EventPageService {
    * number of offers (#1316).
    */
   private async showOffers(offers: readonly EventPageOffer[]): Promise<EventPageOfferView[]> {
-    const slots = await this.pages.findSlotsNotOver(offers.map((offer) => offer.sportLeaguePhaseSlotId));
+    const slots = await this.pages.findSlotsNotOver(offers.map((offer) => offer.sportLeagueCompetitionSlotId));
     const askOpening = this.openings();
     const shown = await Promise.all(offers.map((offer, index) => showOffer(offer, slots[index] ?? [], askOpening)));
     return shown.filter((view): view is EventPageOfferView => view !== null);

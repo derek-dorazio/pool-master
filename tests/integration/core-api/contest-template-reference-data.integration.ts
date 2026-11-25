@@ -575,7 +575,7 @@ describe('Seeded soccer week templates', () => {
 
       // Each covers the competition's WEEK slots, its matchdays (#2010): none yet where the
       // tournament has no matchday definitions, every one where it has them.
-      const matchdays = await getPrisma().sportLeaguePhaseSlot.count({ where: { sportLeague: { sport: { sport: Sport.SOCCER }, name }, slotKind: SlotKind.WEEK } });
+      const matchdays = await getPrisma().sportLeagueCompetitionSlot.count({ where: { sportLeague: { sport: { sport: Sport.SOCCER }, name }, slotKind: SlotKind.WEEK } });
       expect(templates.map((template) => [template.templateKey, template.selectionType, template.isDefault, template.slots.length])).toEqual([
         [`${prefix}-matchday-pick-em-straight-up`, SelectionType.PICK_EM, true, matchdays],
         [`${prefix}-matchday-pick-em-confidence`, SelectionType.PICK_EM, false, matchdays],
@@ -1132,16 +1132,57 @@ describe('Every seeded sport league\'s test data', () => {
   });
 });
 
+/**
+ * The matchday pick'em templates of the soccer cups, which cover no slots yet: the soccer cups
+ * decision settles whether they get group-stage slots or go (#2153). Named here so the exception
+ * is seen, and the check fails once one of them covers a slot or is deleted.
+ */
+const SOCCER_MATCHDAY_TEMPLATES_WITHOUT_SLOTS = [
+  'copa-america-matchday-pick-em-confidence',
+  'copa-america-matchday-pick-em-straight-up',
+  'euro-matchday-pick-em-confidence',
+  'euro-matchday-pick-em-straight-up',
+  'womens-world-cup-matchday-pick-em-confidence',
+  'womens-world-cup-matchday-pick-em-straight-up',
+  'world-cup-matchday-pick-em-confidence',
+  'world-cup-matchday-pick-em-straight-up',
+];
+
 describe('Seeded template coverage (#2010)', () => {
   const templates = () => new PrismaContestConfigTemplateRepository(getAppPrisma()).list({ active: true });
+  /** Every seeded template, switched off or in a switched-off league too: each is held to the same checks (#2153). */
+  const everyTemplate = () => new PrismaContestConfigTemplateRepository(getAppPrisma()).list();
 
-  it('gives every seeded template slots its coverage mode and selection type allow: ALL_LISTED within one event, a bracket only on knockout slots', async () => {
-    const problems = (await templates()).flatMap((template) => {
+  it('gives every seeded template, active or not and in an active or a switched-off league, slots its coverage mode and selection type allow: ALL_LISTED and FROM_SLOT within one competition, ALL_LISTED within one event, a bracket only on knockout slots', async () => {
+    const leagues = new Map((await getPrisma().sportLeague.findMany({ select: { id: true, isActive: true } })).map((league) => [league.id, league.isActive]));
+    const all = await everyTemplate();
+    const problems = all.flatMap((template) => {
       const problem = templateCoverageProblem(template, template.slots);
       return problem === null ? [] : [`${template.templateKey}: ${problem}`];
     });
 
+    // Switched-off leagues' templates are read too: the tennis tours are off.
+    expect(all.some((template) => leagues.get(template.sportLeagueId) === false)).toBe(true);
     expect(problems).toEqual([]);
+  });
+
+  it('gives every seeded template, in an active or a switched-off league, at least one slot to cover, but for the soccer cups\' matchday pick\'em still waiting on their slots', async () => {
+    const prisma = getPrisma();
+    const leagues = new Map((await prisma.sportLeague.findMany({ select: { id: true, isActive: true } })).map((league) => [league.id, league.isActive]));
+    const all = await everyTemplate();
+    const withoutSlots = all.filter((template) => template.slots.length === 0).map((template) => template.templateKey).sort();
+
+    expect(new Set(all.map((template) => leagues.get(template.sportLeagueId)))).toEqual(new Set([true, false]));
+    expect(withoutSlots).toEqual(SOCCER_MATCHDAY_TEMPLATES_WITHOUT_SLOTS);
+  });
+
+  it('leaves the tennis knockout survivors on their regular season\'s tournaments, without the tour Finals of the postseason, so a survivor stays in one competition', async () => {
+    const survivors = (await everyTemplate()).filter((template) => ['atp-knockout-survivor', 'wta-knockout-survivor'].includes(template.templateKey));
+
+    expect(survivors.map((template) => template.templateKey).sort()).toEqual(['atp-knockout-survivor', 'wta-knockout-survivor']);
+    expect(survivors.map((template) => [template.templateKey, [...new Set(template.slots.map((slot) => slot.competitionCode))]])).toEqual(
+      survivors.map((template) => [template.templateKey, [LeaguePhase.REGULAR]]),
+    );
   });
 
   it("maps the NFL's templates to its slots: pick'em one week, survivor from a week on, a bracket and the roster pools across the postseason, squares on any one game slot", async () => {
@@ -1183,10 +1224,10 @@ describe('Seeded template coverage (#2010)', () => {
 
   it('refuses deleting a slot definition a template covers or a Season slot plays, so no contest or template loses its slot', async () => {
     const prisma = getPrisma();
-    const covered = await prisma.contestConfigTemplateSlot.findFirstOrThrow({ select: { sportLeaguePhaseSlotId: true } });
-    const played = await prisma.sportLeagueSeasonPhaseSlot.findFirstOrThrow({ select: { sportLeaguePhaseSlotId: true } });
+    const covered = await prisma.contestConfigTemplateSlot.findFirstOrThrow({ select: { sportLeagueCompetitionSlotId: true } });
+    const played = await prisma.sportLeagueSeasonCompetitionSlot.findFirstOrThrow({ select: { sportLeagueCompetitionSlotId: true } });
 
-    await expect(prisma.sportLeaguePhaseSlot.delete({ where: { id: covered.sportLeaguePhaseSlotId } })).rejects.toThrow();
-    await expect(prisma.sportLeaguePhaseSlot.delete({ where: { id: played.sportLeaguePhaseSlotId } })).rejects.toThrow();
+    await expect(prisma.sportLeagueCompetitionSlot.delete({ where: { id: covered.sportLeagueCompetitionSlotId } })).rejects.toThrow();
+    await expect(prisma.sportLeagueCompetitionSlot.delete({ where: { id: played.sportLeagueCompetitionSlotId } })).rejects.toThrow();
   });
 });

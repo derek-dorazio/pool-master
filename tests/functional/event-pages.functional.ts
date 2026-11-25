@@ -26,7 +26,7 @@ afterAll(async () => {
     await db.sportEventRound.deleteMany({ where });
     await db.sportEventTier.deleteMany({ where });
     await db.sportEvent.deleteMany({ where: { id: { in: createdEventIds } } });
-    await db.sportLeagueSeasonPhaseSlot.deleteMany({ where: { label: { in: createdEventIds.map((id) => `event ${id}`) } } });
+    await db.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { label: { in: createdEventIds.map((id) => `event ${id}`) } } });
   }
   await disconnectFunctionalPrisma();
 });
@@ -55,9 +55,9 @@ describe('SDK Functional: event pages (#1007)', () => {
     // slots (slice 8), the test puts the playoffs in the offer's.
     const offered = await getFunctionalPrisma().eventPageOffer.findFirstOrThrow({
       where: { eventPage: { urlSegment: 'championship-weekend' }, isPrimary: true },
-      select: { sportLeaguePhaseSlotId: true },
+      select: { sportLeagueCompetitionSlotId: true },
     });
-    await putEventInSlot(getFunctionalPrisma(), eventId, offered.sportLeaguePhaseSlotId);
+    await putEventInSlot(getFunctionalPrisma(), eventId, offered.sportLeagueCompetitionSlotId);
     const visitor = getSdkClient();
 
     // --- The page: its bracket offer is the primary, starting at the conference championships --

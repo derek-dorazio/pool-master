@@ -8,7 +8,7 @@ export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto
     id: view.offer.id,
     sportLeagueId: view.offer.sportLeagueId,
     sportLeagueName: view.offer.sportLeagueName,
-    sportLeaguePhaseSlotId: view.offer.sportLeaguePhaseSlotId,
+    sportLeagueCompetitionSlotId: view.offer.sportLeagueCompetitionSlotId,
     template: mapContestConfigTemplateDto(view.offer.template),
     startsAtRound: view.startsAtRound,
     sortOrder: view.offer.sortOrder,

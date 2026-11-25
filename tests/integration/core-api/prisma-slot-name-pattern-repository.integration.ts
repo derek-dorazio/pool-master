@@ -69,6 +69,6 @@ describe('PrismaSlotNamePatternRepository', () => {
 
     expect(await repository().addPattern({ sportLeagueId: league.id, sportLeagueProviderMappingId, slotDefinitionId: open, pattern: 'the memorial tournament' })).toBe('TAKEN');
     await expect(repository().addPattern({ sportLeagueId: league.id, sportLeagueProviderMappingId, slotDefinitionId: randomUUID(), pattern: 'the new open' })).rejects.toThrow();
-    expect(await prisma.sportLeaguePhaseSlotProviderMapping.count({ where: { sportLeaguePhaseSlotId: { in: [memorial, open] } } })).toBe(2);
+    expect(await prisma.sportLeagueCompetitionSlotProviderMapping.count({ where: { sportLeagueCompetitionSlotId: { in: [memorial, open] } } })).toBe(2);
   });
 });

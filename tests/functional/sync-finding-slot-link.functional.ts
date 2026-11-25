@@ -71,8 +71,8 @@ describe('SDK Functional: linking a tournament name to an existing slot', () => 
 
     expect(choices.data?.slots).toEqual([expect.objectContaining({ slotDefinitionId, slotKind: 'TOURNAMENT', patterns: ['the memorial tournament'] })]);
     expect(linked.data?.finding).toMatchObject({ id: findingId, status: ProviderSyncFindingStatus.RESOLVED, actions: [ProviderSyncFindingAction.REOPEN] });
-    expect(await getFunctionalPrisma().sportLeaguePhaseSlotProviderMapping.findMany({
-      where: { sportLeaguePhaseSlotId: slotDefinitionId, sportLeagueProviderMappingId },
+    expect(await getFunctionalPrisma().sportLeagueCompetitionSlotProviderMapping.findMany({
+      where: { sportLeagueCompetitionSlotId: slotDefinitionId, sportLeagueProviderMappingId },
       select: { matchType: true, providerValue: true },
       orderBy: { providerValue: 'asc' },
     })).toEqual([{ matchType: 'NAME_PATTERN', providerValue: 'memorial tournament' }, { matchType: 'NAME_PATTERN', providerValue: 'the memorial tournament' }]);
@@ -90,7 +90,7 @@ describe('SDK Functional: linking a tournament name to an existing slot', () => 
 
     expectFunctionalError(unknown, { status: 404, code: 'SLOT_DEFINITION_NOT_FOUND' });
     expectFunctionalError(refused, { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' });
-    expect(await getFunctionalPrisma().sportLeaguePhaseSlotProviderMapping.count({ where: { sportLeaguePhaseSlotId: slotDefinitionId } })).toBe(1);
+    expect(await getFunctionalPrisma().sportLeagueCompetitionSlotProviderMapping.count({ where: { sportLeagueCompetitionSlotId: slotDefinitionId } })).toBe(1);
     expect((await getFunctionalPrisma().providerSyncFinding.findUniqueOrThrow({ where: { id: findingId } })).status).toBe(ProviderSyncFindingStatus.OPEN);
   });
 });

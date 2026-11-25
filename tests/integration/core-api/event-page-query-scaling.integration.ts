@@ -105,10 +105,10 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
       },
     });
     // Each offer shows the next slot of a definition of its own, the event's (#2010).
-    const sportLeaguePhaseSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
-    await putEventInSlot(prisma, event.id, sportLeaguePhaseSlotId);
+    const sportLeagueCompetitionSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
+    await putEventInSlot(prisma, event.id, sportLeagueCompetitionSlotId);
     await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId, sportLeaguePhaseSlotId, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },
+      data: { eventPageId: page.id, sportLeagueId, sportLeagueCompetitionSlotId, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },
     });
   }
   return page;

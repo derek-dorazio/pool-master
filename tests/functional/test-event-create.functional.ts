@@ -70,19 +70,20 @@ describe('createTestSlot', () => {
     expectFunctionalError(await createTestSlot({ client, path: { sportLeagueId }, body }), { status: 409, code: 'TEST_SLOT_LABEL_TAKEN' });
   });
 
-  it('refuses a definition whose phase the current Season does not have with 422 SLOT_PHASE_NOT_IN_SEASON, not a 500', async () => {
+  it('refuses a definition whose competition the current Season does not have with 422 SLOT_COMPETITION_NOT_IN_SEASON, not a 500', async () => {
     const db = getFunctionalPrisma();
     const phase = await db.sportLeaguePhase.create({ data: { sportLeagueId, phase: 'POSTSEASON', isSynced: true }, select: { id: true } });
-    const definition = await db.sportLeaguePhaseSlot.create({
+    const competition = await db.sportLeagueCompetition.create({ data: { sportLeagueId, sportLeaguePhaseId: phase.id, code: 'POSTSEASON', orderIndex: 1 }, select: { id: true } });
+    const definition = await db.sportLeagueCompetitionSlot.create({
       data: {
-        sportLeagueId, sportLeaguePhaseId: phase.id, key: 'FINAL', slotKind: 'TOURNAMENT', awardsTrophy: false, squaresEligible: true,
+        sportLeagueId, sportLeagueCompetitionId: competition.id, key: 'FINAL', slotKind: 'TOURNAMENT', awardsTrophy: false, squaresEligible: true,
         seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', matchFormat: 'HEAD_TO_HEAD', canEndTied: false,
       },
       select: { id: true },
     });
     const slot = await createTestSlot({ client, path: { sportLeagueId }, body: { slotDefinitionId: definition.id, label: uniqueTestSlotLabel(), startsAt: '2026-06-01T12:00:00.000Z' } });
-    expectFunctionalError(slot, { status: 422, code: 'SLOT_PHASE_NOT_IN_SEASON' });
-    expect(enUS.error.SLOT_PHASE_NOT_IN_SEASON).toBeTruthy();
+    expectFunctionalError(slot, { status: 422, code: 'SLOT_COMPETITION_NOT_IN_SEASON' });
+    expect(enUS.error.SLOT_COMPETITION_NOT_IN_SEASON).toBeTruthy();
   });
 
   it('refuses a definition that is not the league\'s with 404 SLOT_DEFINITION_NOT_FOUND', async () => {
@@ -116,7 +117,7 @@ describe('createEvent on a season slot', () => {
   it('refuses a slot the sync keeps with 422 SEASON_SLOT_NOT_TEST, and the refusal has en-US copy', async () => {
     const db = getFunctionalPrisma();
     const seasonSlotId = await testSlotIdIn(db, sportLeagueId, expectDefined((await db.sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId } })).currentSeasonId ?? undefined), new Date('2026-08-20T12:00:00.000Z'));
-    await db.sportLeagueSeasonPhaseSlot.update({ where: { id: seasonSlotId }, data: { isTestData: false, label: null } });
+    await db.sportLeagueSeasonCompetitionSlot.update({ where: { id: seasonSlotId }, data: { isTestData: false, label: null } });
     expectFunctionalError(await createEvent({ client, body: { seasonSlotId, name: `Synced Open ${RUN}` } }), { status: 422, code: 'SEASON_SLOT_NOT_TEST' });
     expect(enUS.error.SEASON_SLOT_NOT_TEST).toBe('Events can be made by hand only on a test slot.');
   });

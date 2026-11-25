@@ -37,11 +37,11 @@ describe('Seeded event pages', () => {
 
     const page = await pages.findByUrlSegments('football', 'championship-weekend');
     const offers = await pages.findOffers([page?.id ?? '']);
-    const definitions = await getPrisma().sportLeaguePhaseSlot.findMany({ where: { id: { in: offers.map((offer) => offer.sportLeaguePhaseSlotId) } } });
+    const definitions = await getPrisma().sportLeagueCompetitionSlot.findMany({ where: { id: { in: offers.map((offer) => offer.sportLeagueCompetitionSlotId) } } });
     const keyOf = (id: string) => definitions.find((definition) => definition.id === id)?.key;
 
     expect(page).toMatchObject({ isActive: true, redirectTo: null });
-    expect(offers.map((offer) => [offer.sportLeagueName, keyOf(offer.sportLeaguePhaseSlotId), offer.template.templateKey, offer.bracketStartRound, offer.isPrimary])).toEqual([
+    expect(offers.map((offer) => [offer.sportLeagueName, keyOf(offer.sportLeagueCompetitionSlotId), offer.template.templateKey, offer.bracketStartRound, offer.isPrimary])).toEqual([
       ['NFL', 'SEMIFINAL', 'nfl-bracket-second-chance-doubling', 3, true],
       ['NFL', 'SEMIFINAL', 'nfl-squares', null, false],
     ]);
@@ -124,7 +124,7 @@ describe('Event page offers', () => {
     });
     const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: `scratch-${randomUUID()}`, displayOrder: 999 } });
     const offer = (sortOrder: number, isPrimary: boolean) => prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId: seeded.sportLeagueId, sportLeaguePhaseSlotId: seeded.sportLeaguePhaseSlotId, templateId: copy.id, sortOrder, isPrimary },
+      data: { eventPageId: page.id, sportLeagueId: seeded.sportLeagueId, sportLeagueCompetitionSlotId: seeded.sportLeagueCompetitionSlotId, templateId: copy.id, sortOrder, isPrimary },
     });
     const remove = async () => {
       await prisma.eventPage.delete({ where: { id: page.id } });
@@ -165,13 +165,13 @@ describe('Event page offers', () => {
     const definitionId = await keyedSlotDefinitionId(prisma, switchedOff.id, 'SCRATCH');
     try {
       await prisma.eventPageOffer.create({
-        data: { eventPageId: page.id, sportLeagueId: switchedOff.id, sportLeaguePhaseSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
+        data: { eventPageId: page.id, sportLeagueId: switchedOff.id, sportLeagueCompetitionSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
       });
 
       expect(await new PrismaEventPageRepository(getAppPrisma()).findOffers([page.id])).toEqual([]);
     } finally {
       await remove();
-      await prisma.sportLeaguePhaseSlot.deleteMany({ where: { sportLeagueId: switchedOff.id } });
+      await prisma.sportLeagueCompetitionSlot.deleteMany({ where: { sportLeagueId: switchedOff.id } });
       await prisma.sportLeaguePhase.deleteMany({ where: { sportLeagueId: switchedOff.id } });
       await prisma.sportLeague.delete({ where: { id: switchedOff.id } });
     }

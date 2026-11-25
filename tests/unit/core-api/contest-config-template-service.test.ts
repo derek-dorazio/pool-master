@@ -16,7 +16,7 @@ import {
 function slot(overrides: Partial<ContestTemplateSlot> & { id: string }): ContestTemplateSlot {
   return {
     key: overrides.id.toUpperCase(), name: null, slotKind: SlotKind.TOURNAMENT, weekNumber: null,
-    sportLeaguePhaseId: 'pga-regular', phase: LeaguePhase.REGULAR, matchFormat: MatchFormat.FIELD,
+    sportLeagueCompetitionId: 'pga-regular', competitionCode: 'REGULAR', competitionOrderIndex: 1, phase: LeaguePhase.REGULAR, matchFormat: MatchFormat.FIELD,
     ...overrides,
   };
 }
@@ -235,8 +235,8 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
 
   describe('the slots it covers (#2010)', () => {
     const regular = (id: string, overrides: Partial<ContestTemplateSlot> = {}) => slot({ id, ...overrides });
-    const week = (id: string, weekNumber: number) => slot({ id, slotKind: SlotKind.WEEK, weekNumber, matchFormat: MatchFormat.HEAD_TO_HEAD, sportLeaguePhaseId: 'nfl-regular' });
-    const playoff = (id: string, slotKind: SlotKind) => slot({ id, slotKind, phase: LeaguePhase.POSTSEASON, matchFormat: MatchFormat.HEAD_TO_HEAD, sportLeaguePhaseId: 'nfl-post' });
+    const week = (id: string, weekNumber: number) => slot({ id, slotKind: SlotKind.WEEK, weekNumber, matchFormat: MatchFormat.HEAD_TO_HEAD, sportLeagueCompetitionId: 'nfl-regular' });
+    const playoff = (id: string, slotKind: SlotKind) => slot({ id, slotKind, phase: LeaguePhase.POSTSEASON, matchFormat: MatchFormat.HEAD_TO_HEAD, sportLeagueCompetitionId: 'nfl-post', competitionCode: 'POSTSEASON' });
     const nfl = [week('week-1', 1), week('week-2', 2), playoff('wild-card', SlotKind.ROUND_OF_16), playoff('final', SlotKind.FINAL)];
 
     it('replaces the slots a template covers and its coverage mode with the ones the edit lists', async () => {
@@ -268,14 +268,34 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
       expect(store.get('t1')?.coverageMode).toBe(TemplateCoverageMode.ONE_SLOT);
     });
 
-    it('refuses switching a template already listing two phases to ALL_LISTED, checking the slots it keeps', async () => {
-      const { service } = templateStore([template({ id: 'nfl-season', sportLeagueId: 'nfl', coverageMode: TemplateCoverageMode.FROM_SLOT, slots: [nfl[1], nfl[2]] })], { nfl });
+    it('refuses switching a ONE_SLOT template listing two competitions to ALL_LISTED or FROM_SLOT with CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS, checking the slots it keeps, and stores nothing', async () => {
+      const { store, service } = templateStore([template({ id: 'nfl-squares', sportLeagueId: 'nfl', slots: [nfl[1], nfl[3]] })], { nfl });
 
-      await expect(service.updateTemplate('nfl-season', { coverageMode: TemplateCoverageMode.ALL_LISTED }))
-        .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS' });
+      await expect(service.updateTemplate('nfl-squares', { coverageMode: TemplateCoverageMode.ALL_LISTED }))
+        .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS' });
+      await expect(service.updateTemplate('nfl-squares', { coverageMode: TemplateCoverageMode.FROM_SLOT }))
+        .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS' });
+      expect(store.get('nfl-squares')?.coverageMode).toBe(TemplateCoverageMode.ONE_SLOT);
     });
 
-    it('accepts ALL_LISTED over one phase\'s knockout rounds, the slots one event plays', async () => {
+    it('refuses a FROM_SLOT edit listing a regular-season week and a playoff round with CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS, and accepts one over the weeks alone', async () => {
+      const { store, service } = templateStore([template({ id: 'survivor', sportLeagueId: 'nfl', coverageMode: TemplateCoverageMode.FROM_SLOT, slots: [nfl[0]] })], { nfl });
+
+      await expect(service.updateTemplate('survivor', { slotDefinitionIds: ['week-2', 'wild-card'] }))
+        .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_SPANS_COMPETITIONS' });
+      await service.updateTemplate('survivor', { slotDefinitionIds: ['week-1', 'week-2'] });
+      expect(store.get('survivor')?.slots.map((covered) => covered.id)).toEqual(['week-1', 'week-2']);
+    });
+
+    it('accepts a ONE_SLOT template listing a week and a playoff round, as each of its contests covers one slot', async () => {
+      const { store, service } = templateStore([template({ id: 'nfl-squares', sportLeagueId: 'nfl', slots: [nfl[0]] })], { nfl });
+
+      await service.updateTemplate('nfl-squares', { slotDefinitionIds: ['week-1', 'final'] });
+
+      expect(store.get('nfl-squares')?.slots.map((covered) => covered.id)).toEqual(['week-1', 'final']);
+    });
+
+    it('accepts ALL_LISTED over one competition\'s knockout rounds, the slots one event plays', async () => {
       const { store, service } = templateStore([template({ id: 'playoffs', sportLeagueId: 'nfl', slots: [nfl[2]] })], { nfl });
 
       await service.updateTemplate('playoffs', { coverageMode: TemplateCoverageMode.ALL_LISTED, slotDefinitionIds: ['wild-card', 'final'] });
@@ -290,7 +310,7 @@ describe('ContestConfigTemplateService.updateTemplate', () => {
       });
       const { store, service } = templateStore([bracket], { nfl });
 
-      await expect(service.updateTemplate('bracket', { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: ['week-2', 'wild-card'] }))
+      await expect(service.updateTemplate('bracket', { coverageMode: TemplateCoverageMode.ONE_SLOT, slotDefinitionIds: ['week-2', 'wild-card'] }))
         .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT' });
       expect(store.get('bracket')?.slots.map((covered) => covered.id)).toEqual(['wild-card', 'final']);
     });

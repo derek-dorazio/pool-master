@@ -197,8 +197,12 @@ export interface ContestTemplateSlot {
   name: string | null;
   slotKind: SlotKind;
   weekNumber: number | null;
-  /** The phase it is in, and that phase's kind. */
-  sportLeaguePhaseId: string;
+  /** The competition it is in (#2153); a template's slots all sit in one. */
+  sportLeagueCompetitionId: string;
+  /** That competition's code (REGULAR, CFP); nothing parses it. */
+  competitionCode: string;
+  /** That competition's place in its phase, and the phase's kind: where the slot sits in play order. */
+  competitionOrderIndex: number;
   phase: LeaguePhase;
   matchFormat: MatchFormat;
 }

@@ -5,10 +5,12 @@
  * templates; a league a test made has none, so this adds them. Test code only.
  */
 import type { PrismaClient } from '@prisma/client';
+import { competitionFor, seasonCompetitionFor } from './competitions';
 
 type Db = Pick<PrismaClient,
-  'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'sportLeaguePhaseSlotProviderMapping' | 'sportLeagueSeasonPhase'
-  | 'sportLeagueSeasonPhaseSlot' | 'contestConfigTemplate' | 'contestConfigTemplateSlot'>;
+  'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueCompetitionSlotProviderMapping' | 'sportLeagueSeasonPhase'
+  | 'sportLeagueSeasonCompetition'
+  | 'sportLeagueSeasonCompetitionSlot' | 'contestConfigTemplate' | 'contestConfigTemplateSlot'>;
 
 let definitionCount = 0;
 
@@ -40,8 +42,8 @@ export async function syncSlotsFor(
 
 /**
  * A tournament's slot definition matched by the NAME_PATTERN `pattern` at the league's provider
- * mapping (#2011), listed by an active contest template unless `covered` is false, with its phase
- * in each of `seasonIds` but no Season slot: the events sync creates that when a tournament's name
+ * mapping (#2011), listed by an active contest template unless `covered` is false, with its
+ * competition in each of `seasonIds` but no Season slot: the events sync creates that when a tournament's name
  * first matches. Answers the definition's id.
  */
 export async function nameSlotDefinitionFor(
@@ -59,16 +61,11 @@ async function slotDefinitionFor(
   },
 ): Promise<{ definitionId: string; seasonSlotIds: string[] }> {
   const { sportLeagueId } = input;
-  const phase = await prisma.sportLeaguePhase.upsert({
-    where: { sportLeagueId_phase: { sportLeagueId, phase: 'REGULAR' } },
-    create: { sportLeagueId, phase: 'REGULAR', isSynced: true },
-    update: {},
-    select: { id: true },
-  });
-  const definition = await prisma.sportLeaguePhaseSlot.create({
+  const competition = await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR' });
+  const definition = await prisma.sportLeagueCompetitionSlot.create({
     data: {
       sportLeagueId,
-      sportLeaguePhaseId: phase.id,
+      sportLeagueCompetitionId: competition.competitionId,
       // A definition key is upper-case letters, digits and underscores, never the provider's code.
       key: `SYNC_SLOT_${String(process.pid)}_${String(++definitionCount)}`,
       slotKind: 'TOURNAMENT',
@@ -82,10 +79,10 @@ async function slotDefinitionFor(
     },
     select: { id: true },
   });
-  await prisma.sportLeaguePhaseSlotProviderMapping.create({
+  await prisma.sportLeagueCompetitionSlotProviderMapping.create({
     data: {
       sportLeagueId,
-      sportLeaguePhaseSlotId: definition.id,
+      sportLeagueCompetitionSlotId: definition.id,
       sportLeagueProviderMappingId: input.sportLeagueProviderMappingId,
       matchType: input.matchType,
       providerValue: input.value,
@@ -108,20 +105,15 @@ async function slotDefinitionFor(
       update: {},
       select: { id: true },
     });
-    await prisma.contestConfigTemplateSlot.create({ data: { sportLeagueId, templateId: template.id, sportLeaguePhaseSlotId: definition.id } });
+    await prisma.contestConfigTemplateSlot.create({ data: { sportLeagueId, templateId: template.id, sportLeagueCompetitionSlotId: definition.id } });
   }
   const ids: string[] = [];
   for (const sportLeagueSeasonId of input.seasonIds) {
-    const seasonPhase = await prisma.sportLeagueSeasonPhase.upsert({
-      where: { sportLeagueSeasonId_sportLeaguePhaseId: { sportLeagueSeasonId, sportLeaguePhaseId: phase.id } },
-      create: { sportLeagueId, sportLeagueSeasonId, sportLeaguePhaseId: phase.id },
-      update: {},
-      select: { id: true },
-    });
+    const seasonCompetitionId = await seasonCompetitionFor(prisma, { sportLeagueId, sportLeagueSeasonId, competition });
     if (input.seasonSlots === false) continue;
-    ids.push((await prisma.sportLeagueSeasonPhaseSlot.create({
+    ids.push((await prisma.sportLeagueSeasonCompetitionSlot.create({
       data: {
-        sportLeagueId, sportLeagueSeasonId, sportLeagueSeasonPhaseId: seasonPhase.id, sportLeaguePhaseSlotId: definition.id,
+        sportLeagueId, sportLeagueSeasonId, sportLeagueSeasonCompetitionId: seasonCompetitionId, sportLeagueCompetitionSlotId: definition.id,
         seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
         ...(input.window && { windowStartsAt: input.window.startsAt, windowEndsAt: input.window.endsAt, windowStatus: input.window.status }),
       },

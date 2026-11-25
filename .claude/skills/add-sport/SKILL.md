@@ -104,7 +104,7 @@ In order:
    slot definitions, all in the reference-data migration
    (`rules/domain-model-concepts.md` §5 *The Target Model*). Give it one `SportLeaguePhase` per
    phase it plays; a phase its sync does not read (the NFL's preseason) is `isSynced` false
-   and gets no slots. Each `SportLeaguePhaseSlot` has a key nothing parses (`WEEK_14`,
+   and gets no slots. Each `SportLeagueCompetitionSlot` has a key nothing parses (`WEEK_14`,
    `FINAL`, `MASTERS`), a `slotKind` counted back from the final (a 12-team bracket's opening
    round is `ROUND_OF_16`), a proper `name` only where the league has one (Super Bowl, Sweet
    16), `awardsTrophy`, `squaresEligible` (single games with period scores only), its
@@ -114,7 +114,7 @@ In order:
    season; never a tie pick, since a pick names a winner), and its `periodUnit` with `periodCount` (four
    quarters, nine innings, eighteen holes; both null for a race). Weeks go to the longest
    season the league plays. An open phase (golf, tennis, racing) has one `TOURNAMENT` slot per recurring tournament. A
-   synced league gives each slot it syncs a `SportLeaguePhaseSlotProviderMapping` on its
+   synced league gives each slot it syncs a `SportLeagueCompetitionSlotProviderMapping` on its
    `SportLeagueProviderMapping`: `PROVIDER_CODE` with the code its adapter reduces a game to
    (`REG:<week>`, `POST:<the round's place in the postseason, first round 1>`),
    `NAME_PATTERN` with the normalized tournament name, or `CALENDAR_WEEK` for a daily

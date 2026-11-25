@@ -7,19 +7,19 @@ import type { Prisma } from '@prisma/client';
 import type { SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 
 export const SEASON_SLOT_SELECT = {
-  id: true, sportLeaguePhaseSlotId: true, startsAt: true, endsAt: true, status: true,
+  id: true, sportLeagueCompetitionSlotId: true, startsAt: true, endsAt: true, status: true,
   seriesFormat: true, seriesGames: true, pairing: true, isTestData: true, label: true,
   windowStartsAt: true, windowEndsAt: true, windowStatus: true,
   definition: { select: { key: true, slotKind: true, weekNumber: true, name: true } },
-} as const satisfies Prisma.SportLeagueSeasonPhaseSlotSelect;
+} as const satisfies Prisma.SportLeagueSeasonCompetitionSlotSelect;
 
-export type SeasonSlotRow = Prisma.SportLeagueSeasonPhaseSlotGetPayload<{ select: typeof SEASON_SLOT_SELECT }>;
+export type SeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof SEASON_SLOT_SELECT }>;
 
-export function toSeasonSlot({ sportLeaguePhaseSlotId, definition, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
+export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
   return {
     ...slot,
     ...definition,
-    slotDefinitionId: sportLeaguePhaseSlotId,
+    slotDefinitionId: sportLeagueCompetitionSlotId,
     // The database check sets the three window columns together (#2012).
     window: windowStartsAt !== null && windowEndsAt !== null && windowStatus !== null
       ? { startsAt: windowStartsAt, endsAt: windowEndsAt, status: windowStatus }

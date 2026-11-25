@@ -12,6 +12,7 @@ import {
   SlotKind,
   type LeaguePhase,
   SlotWindowStatus,
+  type SeasonCompetitionStatus,
   type SeasonSlotStatus,
   type SeriesFormat,
   type SlotPairing,
@@ -67,19 +68,36 @@ export interface SportLeagueSeasonSlot {
 }
 
 /** A Season slot as its Season lists it: with the event covering it, if any. */
-export interface SportLeagueSeasonPhaseSlot extends SportLeagueSeasonSlot {
+export interface SportLeagueSeasonCompetitionSlot extends SportLeagueSeasonSlot {
   /** The event covering it; null while it is free. */
   sportEventId: string | null;
   /** Whether the league's selected provider places its games by date window (DATE_WINDOW). */
   placedByWindow: boolean;
 }
 
-/** One phase of one Season, with its slots in play order. */
+/** One competition of one Season (#2153), with its slots in play order. */
+export interface SportLeagueSeasonCompetition {
+  id: string;
+  /** The competition definition it plays. */
+  sportLeagueCompetitionId: string;
+  /** The definition's code (REGULAR, CFP); nothing parses it. */
+  code: string;
+  orderIndex: number;
+  /** How far it has got this Season; slice 14 (#2013) moves it. */
+  status: SeasonCompetitionStatus;
+  /** Who won it; null until it is COMPLETED, and always for a competition with no FINAL slot. */
+  championParticipantId: string | null;
+  slots: SportLeagueSeasonCompetitionSlot[];
+}
+
+/** One phase of one Season, with its competitions in order. */
 export interface SportLeagueSeasonPhase {
   id: string;
   phase: LeaguePhase;
   isSynced: boolean;
-  slots: SportLeagueSeasonPhaseSlot[];
+  /** How far the phase has got this Season; slice 14 (#2013) moves it. */
+  status: SeasonCompetitionStatus;
+  competitions: SportLeagueSeasonCompetition[];
 }
 
 /** One Season of a sport league. */
@@ -94,7 +112,7 @@ export interface SportLeagueSeason {
   endsAt: Date;
 }
 
-/** A Season with its provider ids and its phases and slots, as the Structure tab lists it. */
+/** A Season with its provider ids and its phases, competitions and slots, as the Structure tab lists it. */
 export interface SportLeagueSeasonDetail extends SportLeagueSeason {
   /** Whether it is its league's current Season. */
   isCurrent: boolean;
@@ -156,7 +174,7 @@ export function slotNeedsDates(slot: { placedByWindow: boolean; window: SlotWind
 const byPhase = compareByEnumOrder(LeaguePhaseOrder);
 
 /**
- * Slots in play order within a phase: by kind and week number as their definitions are, a
+ * Slots in play order within a competition: by kind and week number as their definitions are, a
  * TOURNAMENT slot by its start (the PGA's order changes every year; an undated one comes last, by
  * key), and a test slot after its definition's synced slot, by label.
  */
@@ -169,7 +187,10 @@ export function compareSeasonSlots(left: SportLeagueSeasonSlot, right: SportLeag
     || (left.label ?? '').localeCompare(right.label ?? '');
 }
 
-/** A league's Seasons in their one order, latest first; each Season's phases and slots in play order. */
+/**
+ * A league's Seasons in their one order, latest first; each Season's phases in play order, each
+ * phase's competitions by their order, and each competition's slots in play order.
+ */
 export function orderSportLeagueSeasons(seasons: readonly SportLeagueSeasonDetail[]): SportLeagueSeasonDetail[] {
   return [...seasons]
     .sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime())
@@ -178,7 +199,12 @@ export function orderSportLeagueSeasons(seasons: readonly SportLeagueSeasonDetai
       providerMappings: [...season.providerMappings].sort((left, right) => left.providerName.localeCompare(right.providerName)),
       phases: [...season.phases]
         .sort((left, right) => byPhase(left.phase, right.phase))
-        .map((phase) => ({ ...phase, slots: [...phase.slots].sort(compareSeasonSlots) })),
+        .map((phase) => ({
+          ...phase,
+          competitions: [...phase.competitions]
+            .sort((left, right) => left.orderIndex - right.orderIndex)
+            .map((competition) => ({ ...competition, slots: [...competition.slots].sort(compareSeasonSlots) })),
+        })),
     }));
 }
 
@@ -199,7 +225,7 @@ export type TestEventSlotRefusal = 'SEASON_SLOT_NOT_TEST' | 'SEASON_SLOT_NOT_CUR
  * when it takes one. The one rule: `createEvent` refuses by it, and a slot's `takesTestEvent` says it.
  */
 export function testEventSlotRefusal(
-  slot: Pick<SportLeagueSeasonPhaseSlot, 'isTestData' | 'sportEventId'>,
+  slot: Pick<SportLeagueSeasonCompetitionSlot, 'isTestData' | 'sportEventId'>,
   inCurrentSeason: boolean,
 ): TestEventSlotRefusal | null {
   if (!slot.isTestData) return 'SEASON_SLOT_NOT_TEST';

@@ -28,20 +28,23 @@ export async function findSeededSportLeagueThroughApi(api: APIRequestContext, he
 
 /**
  * The slot definition a test slot plays: the league's first definition of that kind (a golf
- * tournament, a race, a knockout round) in a phase its current Season has, as the Structure tab
- * and the Season list read them.
+ * tournament, a race, a knockout round) in a competition its current Season has, as the Structure
+ * tab and the Season list read them.
  */
 async function currentSeasonDefinitionId(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string, slotKind: string): Promise<string> {
   const [structureResponse, seasonsResponse] = await Promise.all([
     expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/structure`, { headers }), 'read the league structure'),
     expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/seasons`, { headers }), 'list Seasons'),
   ]);
-  const { phases } = (await structureResponse.json()) as { phases: Array<{ phase: string; slots: Array<{ id: string; slotKind: string }> }> };
-  const { seasons } = (await seasonsResponse.json()) as { seasons: Array<{ isCurrent: boolean; phases: Array<{ phase: string }> }> };
-  const seasonPhases = new Set(seasons.find((season) => season.isCurrent)?.phases.map((phase) => phase.phase) ?? []);
+  const { phases } = (await structureResponse.json()) as { phases: Array<{ competitions: Array<{ id: string; slots: Array<{ id: string; slotKind: string }> }> }> };
+  const { seasons } = (await seasonsResponse.json()) as { seasons: Array<{ isCurrent: boolean; phases: Array<{ competitions: Array<{ sportLeagueCompetitionId: string }> }> }> };
+  const seasonCompetitions = new Set(
+    seasons.find((season) => season.isCurrent)?.phases.flatMap((phase) => phase.competitions.map((competition) => competition.sportLeagueCompetitionId)) ?? [],
+  );
   const definition = phases
-    .filter((phase) => seasonPhases.has(phase.phase))
-    .flatMap((phase) => phase.slots)
+    .flatMap((phase) => phase.competitions)
+    .filter((competition) => seasonCompetitions.has(competition.id))
+    .flatMap((competition) => competition.slots)
     .find((candidate) => candidate.slotKind === slotKind);
   if (!definition) throw new Error(`sport league ${sportLeagueId}'s current Season has no ${slotKind} slot definition`);
   return definition.id;

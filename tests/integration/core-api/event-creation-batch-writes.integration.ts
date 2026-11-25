@@ -90,9 +90,9 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     // their slots in one insert each, and the slot links and dates in one transaction. Each slot
     // whose games moved is one update with its own dates: every slot on a Season's first sync, then
     // only those the provider reschedules.
-    const slotUpdates = (count: ReadonlyArray<readonly [string, number]>) => count.find(([statement]) => statement === 'UPDATE sport_league_season_phase_slots')?.[1];
+    const slotUpdates = (count: ReadonlyArray<readonly [string, number]>) => count.find(([statement]) => statement === 'UPDATE sport_league_season_competition_slots')?.[1];
     expect([slotUpdates(counts[0]), slotUpdates(counts[1])]).toEqual([2, 6]);
-    const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_phase_slots');
+    const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_competition_slots');
     expect(others(counts[1])).toEqual(others(counts[0]));
   });
 
@@ -118,7 +118,7 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     }
 
     // Every new slot takes its tournament's dates, one update each; nothing else grows with the slate.
-    const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_phase_slots');
+    const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_competition_slots');
     expect(others(counts[1])).toEqual(others(counts[0]));
   });
 
@@ -176,12 +176,13 @@ describe('Creating one event (#1253)', () => {
     // league and again with the event read back, beside the event's own provider ids (#2004). The
     // test slot is read once with its definition and any event on it, and linked in one insert. The
     // event read back carries the slot definitions it covers (#2010), a second slot read #2089
-    // folds into the summary's. No series is found or created (#2010).
+    // folds into the summary's; the definitions' competitions and phases once each (#2153). No
+    // series is found or created (#2010).
     expect(statementCounts(statements)).toEqual([
       ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
       ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
-      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 2], ['SELECT sport_events', 1], ['SELECT sport_league_phase_slots', 2],
-      ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_phase_slots', 2],
+      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 2], ['SELECT sport_events', 1], ['SELECT sport_league_competition_slots', 2],
+      ['SELECT sport_league_competitions', 1], ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_competition_slots', 2],
       ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));

@@ -117,7 +117,7 @@ describe('SDK Functional: Participants', () => {
     expect(test.response?.status).toBe(201);
     expectFunctionalError(unmapped, { status: 409, code: 'PARTICIPANT_FEED_ID_REQUIRED' });
     expect(removed.response?.status).toBe(204);
-    await expect(getFunctionalPrisma().sportLeagueSeasonPhaseSlot.count({ where: { id: slotId } })).resolves.toBe(0);
+    await expect(getFunctionalPrisma().sportLeagueSeasonCompetitionSlot.count({ where: { id: slotId } })).resolves.toBe(0);
     // The removal takes only test participants from the slot's own field; this one was on no field, so it stays.
     await expect(getFunctionalPrisma().participant.count({ where: { id: test.data?.participant.id } })).resolves.toBe(1);
   });

@@ -454,7 +454,7 @@ unprefixed.
 ### Full-path names
 
 A table that belongs to another is named by its full owner path, so the name says where it sits
-without reading the schema: `SportLeagueSeasonPhaseSlot` is a slot of a phase of a Season of a
+without reading the schema: `SportLeagueSeasonCompetitionSlot` is a slot of a phase of a Season of a
 sport league, and `SportEventRoundMatchGameSideResult` is a side's result in a game of a match
 of a round of a sport event. Two tables with the same last word (a slot definition and a
 Season's slot) never need context to tell apart.

@@ -20,7 +20,7 @@ const OFFER: EventPageOffer = {
   eventPageId: PAGE.id,
   sportLeagueId: 'cw',
   sportLeagueName: 'Championship Weekend',
-  sportLeaguePhaseSlotId: 'conference-championships',
+  sportLeagueCompetitionSlotId: 'conference-championships',
   template: {
     id: 'cw-tiered',
     coverageMode: TemplateCoverageMode.ONE_SLOT,

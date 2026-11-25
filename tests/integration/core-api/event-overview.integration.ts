@@ -116,7 +116,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ select: { id: true } });
     const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment, displayOrder: 9000 } });
     await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId: event.sportLeagueId, sportLeaguePhaseSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
+      data: { eventPageId: page.id, sportLeagueId: event.sportLeagueId, sportLeagueCompetitionSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
     });
     const rootAdmin = await createTestUser({ isRootAdmin: true });
 
