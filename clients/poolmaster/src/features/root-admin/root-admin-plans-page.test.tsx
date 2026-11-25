@@ -46,6 +46,13 @@ function savedRequest(call = 0) {
   return request;
 }
 
+/** The server's 400 for a cap that falls as the plan rises: a Zod issue on that cell. */
+function refuseFallingCap(cap: string, plan: string) {
+  updateSettingsGroupMock.mockResolvedValueOnce({
+    error: { error: { code: 'SETTINGS_INVALID', message: 'The payload for settings group PLAN_CONFIG is invalid.', details: [{ code: 'custom', path: ['caps', cap, plan], message: 'falls' }] } },
+  });
+}
+
 async function openCapForEdit(cap: string) {
   await userEvent.click(await screen.findByTestId(`root-admin-plans-cap-${cap}`));
   await userEvent.click(await screen.findByTestId(`${CAP_DIALOG}-edit`));
@@ -173,7 +180,8 @@ describe('RootAdminPlansPage', () => {
     expect(await screen.findByTestId(`${CAP_DIALOG}-edit`)).toBeInTheDocument();
   });
 
-  it('refuses a cap below the plan beneath it, saying so on that plan inside the dialog', async () => {
+  it('shows the server\'s refusal of a cap below the plan beneath it on that plan alone, not above the form', async () => {
+    refuseFallingCap('ENTRIES_PER_CONTEST', 'PRO');
     renderPage();
 
     await openCapForEdit('ENTRIES_PER_CONTEST');
@@ -183,10 +191,12 @@ describe('RootAdminPlansPage', () => {
     const dialog = within(screen.getByTestId(CAP_DIALOG));
     expect(await dialog.findByText(FALLING)).toBeInTheDocument();
     expect(dialog.getByTestId(`${CAP_DIALOG}-PRO-limit`)).toHaveAttribute('aria-invalid', 'true');
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+    expect(dialog.queryByTestId(`${CAP_DIALOG}-error`)).not.toBeInTheDocument();
+    expect(savedRequest().body.value.caps.ENTRIES_PER_CONTEST.PRO).toBe(10);
   });
 
-  it('refuses a number on a plan above one that is unlimited', async () => {
+  it('shows the server\'s refusal of a number on a plan above one that is unlimited on that plan', async () => {
+    refuseFallingCap('SPORTS_LEAGUES_PER_YEAR', 'PREMIUM');
     renderPage();
 
     await openCapForEdit('SPORTS_LEAGUES_PER_YEAR');
@@ -197,7 +207,7 @@ describe('RootAdminPlansPage', () => {
     const dialog = within(screen.getByTestId(CAP_DIALOG));
     expect(await dialog.findByText(FALLING)).toBeInTheDocument();
     expect(dialog.getByTestId(`${CAP_DIALOG}-PREMIUM-limit`)).toHaveAttribute('aria-invalid', 'true');
-    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+    expect(savedRequest().body.value.caps.SPORTS_LEAGUES_PER_YEAR.PRO).toBeNull();
   });
 
   it('refuses a limit that is blank, not a whole number, or zero', async () => {
