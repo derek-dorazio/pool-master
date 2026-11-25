@@ -74,10 +74,6 @@
           "reason": "Under the job floor when it came in; raised by #2106.",
           "branches": 86
         },
-        "packages/core-api/src/modules/events/league-events-sync.ts": {
-          "reason": "Under the job floor when it came in; raised by #2106.",
-          "branches": 95
-        },
         "packages/core-api/src/modules/ingestion/core/ingestion-scheduler.ts": {
           "reason": "Under the job floor when it came in; raised by #2106.",
           "lines": 96,
