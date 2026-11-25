@@ -19,7 +19,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { freshEventEdition, putEventInSlot, testSlotDefinitionId } from '../../support/event-edition';
+import { freshEventEdition, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 
@@ -162,7 +162,7 @@ describe('Event page offers', () => {
     const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
     const switchedOff = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sportLeague: { sport: { sport: Sport.GOLF } } } });
-    const definitionId = await testSlotDefinitionId(prisma, switchedOff.id, 'SCRATCH');
+    const definitionId = await keyedSlotDefinitionId(prisma, switchedOff.id, 'SCRATCH');
     try {
       await prisma.eventPageOffer.create({
         data: { eventPageId: page.id, sportLeagueId: switchedOff.id, sportLeaguePhaseSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
@@ -183,8 +183,8 @@ describe('PrismaEventPageRepository.findSlotsNotOver', () => {
     const prisma = getPrisma();
     const { sportLeagueId } = await freshEventEdition(prisma);
     const key = `EVENT_PAGE_${randomUUID().replace(/-/g, '_').toUpperCase()}`;
-    const asked = await testSlotDefinitionId(prisma, sportLeagueId, key);
-    const other = await testSlotDefinitionId(prisma, sportLeagueId, `${key}_OTHER`);
+    const asked = await keyedSlotDefinitionId(prisma, sportLeagueId, key);
+    const other = await keyedSlotDefinitionId(prisma, sportLeagueId, `${key}_OTHER`);
     const make = async (definitionId: string, name: string, championshipYear: number, status: SportEventStatus, startDate: string) => {
       const event = await prisma.sportEvent.create({
         data: { ...(await freshEventEdition(prisma, { championshipYear })), status, startDate: new Date(startDate), name },
@@ -197,7 +197,7 @@ describe('PrismaEventPageRepository.findSlotsNotOver', () => {
     await make(asked, `${key} 2026`, 2026, SportEventStatus.IN_PROGRESS, '2026-04-10T12:00:00.000Z');
     await make(asked, `${key} 2029`, 2029, SportEventStatus.CANCELLED, '2029-04-10T12:00:00.000Z');
     await make(other, `${key} other 2027`, 2027, SportEventStatus.SCHEDULED, '2027-01-10T12:00:00.000Z');
-    const unasked = await testSlotDefinitionId(prisma, sportLeagueId, `${key}_EMPTY`);
+    const unasked = await keyedSlotDefinitionId(prisma, sportLeagueId, `${key}_EMPTY`);
 
     const slots = await new PrismaEventPageRepository(getAppPrisma()).findSlotsNotOver([other, asked, unasked]);
 

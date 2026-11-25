@@ -6,7 +6,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
   enterContest,
   generateInviteLink,
@@ -22,7 +21,7 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -90,9 +89,9 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     expect(series.map((league) => league.name).sort()).toEqual(['World Marathon Majors (men)', 'World Marathon Majors (women)']);
     const majorsMen = expectDefined(series.find((league) => league.name === 'World Marathon Majors (men)'));
 
-    const race = await createEvent({
+    const race = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(majorsMen.id, 2099), name: `Harbour Marathon ${RUN}`, startDate: '2099-04-19T13:30:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: majorsMen.id, championshipYear: 2099, name: `Harbour Marathon ${RUN}`, startDate: '2099-04-19T13:30:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;

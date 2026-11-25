@@ -24,7 +24,7 @@ import { SquaresBoardResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, inCurrentSeason, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
@@ -92,6 +92,8 @@ describe('SDK Functional: Super Bowl squares', () => {
     const superBowlRow = expectDefined((playoffs.matches ?? []).find((match) => match.matchNumber === SUPER_BOWL));
     delete superBowlRow.result;
     delete superBowlRow.periodScores;
+    // The loader makes the event in the NFL's current Season; another suite may have moved it.
+    await inCurrentSeason((await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { name: 'NFL', displayOrder: { not: null } }, select: { id: true } })).id, 2026);
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
     const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues

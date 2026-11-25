@@ -144,6 +144,7 @@
       "events": [
         {
           "key": "nfl-playoffs-2025-season",
+          "slotKey": "FINAL",
           "name": "NFL Playoffs",
           "startDate": "2026-01-10",
           "endDate": "2026-02-08",

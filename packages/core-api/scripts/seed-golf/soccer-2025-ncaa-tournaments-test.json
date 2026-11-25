@@ -400,6 +400,7 @@
       "events": [
         {
           "key": "ncaam-soccer-tournament-2025",
+          "slotKey": "FINAL",
           "name": "NCAA Men's Soccer Tournament",
           "startDate": "2025-11-20",
           "endDate": "2025-12-16",
@@ -1907,6 +1908,7 @@
       "events": [
         {
           "key": "ncaaw-soccer-tournament-2025",
+          "slotKey": "FINAL",
           "name": "NCAA Women's Soccer Tournament",
           "startDate": "2025-11-14",
           "endDate": "2025-12-09",

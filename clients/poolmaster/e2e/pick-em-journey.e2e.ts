@@ -1,8 +1,9 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { adminApiHeaders, e2eLeagueUrlSegment, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
+import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
 import { logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
+import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
@@ -112,7 +113,7 @@ test('act 1: the root admin releases two American football weeks, each one game 
   const run: JourneyRun = {
     runId,
     sport: 'AMERICAN_FOOTBALL',
-    tourName: e2eName('Football League', runId),
+    tourName: 'NFL',
     playerNamePrefix: e2eName('Club', runId),
     tournamentName: e2eName('Pickem Week 1', runId),
     moreTournamentNames: [e2eName('Pickem Week 2', runId)],
@@ -144,21 +145,16 @@ test('act 1: the root admin releases two American football weeks, each one game 
       throw new Error('the root admin could not sign in to the API');
     }
 
-    const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
-      sport: 'AMERICAN_FOOTBALL',
-      timeZone: 'UTC',
-      name: run.tourName,
-      urlSegment: e2eLeagueUrlSegment(),
-      ...(await sportLeagueProfileIds(api, headers, 'TIERS_7_OF_2')),
-      participantType: 'TEAM',
-      scoringFamily: 'HEAD_TO_HEAD',
-    });
+    // A league is added by migration, so a journey plays in a seeded one, on its own test slots (#2004).
+    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'AMERICAN_FOOTBALL', run.tourName);
     const eventIds: string[] = [];
     for (const [index, week] of WEEKS.entries()) {
-      const { event } = await postJson<{ event: { id: string } }>(api, headers, '/api/v1/events/', {
+      const event = await createTestEventThroughApi(api, headers, {
         sportLeagueId: sportLeague.id,
+        slotKind: 'WEEK',
+        slotLabel: weekName(run, index),
         name: weekName(run, index),
-        startDate: week.start,
+        startsAt: week.start,
         rounds: 1,
         autoLifecycleEnabled: false,
       });

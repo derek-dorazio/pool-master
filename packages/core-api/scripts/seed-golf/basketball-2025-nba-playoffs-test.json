@@ -211,6 +211,7 @@
       "events": [
         {
           "key": "nba-playoffs-2025",
+          "slotKey": "FINAL",
           "name": "NBA Playoffs",
           "startDate": "2025-04-19",
           "endDate": "2025-06-22",

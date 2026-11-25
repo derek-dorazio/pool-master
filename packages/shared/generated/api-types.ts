@@ -2025,8 +2025,8 @@ export interface paths {
         get: operations["listEvents"];
         put?: never;
         /**
-         * Create a sport event
-         * @description An admin-authored edition of a series in its sport league's current Season, SCHEDULED, accepting no provider data, with its default rounds and tiers. 422 SPORT_LEAGUE_HAS_NO_SEASON when the league has no current Season. The sport comes from the sport league. Root admin only.
+         * Create a test event on a test slot
+         * @description A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's default rounds and tiers. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -2058,7 +2058,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport event
-         * @description Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. 400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. Root admin only.
+         * @description Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. 400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. 422 EVENT_DATES_FROM_SLOTS when startDate or endDate is sent for an event with Season slots, whose dates are its slots'. Root admin only.
          */
         patch: operations["updateEvent"];
         trace?: never;
@@ -2778,6 +2778,26 @@ export interface paths {
          * @description The current Season is never set here: the daily recompute sets it (#2003). 422 SPORT_LEAGUE_NOT_BRACKET when bracketAdvancement is RESEED_BY_SEED for a sport not played as a bracket. 409 SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED when bracketAdvancement changes while any event of the sport league has its bracket loaded: the loaded bracket's links were drawn for the rule it has. Sending the rule the league already has is allowed and changes nothing. syncProviderLeagueId turns the league's event sync on with a provider league (ADR 0011, #1997), mapping the league to it when it is not yet, or off with null: 404 PROVIDER_LEAGUE_NOT_FOUND for one that does not exist, 422 PROVIDER_SPORT_MISMATCH for one of another sport, 422 PROVIDER_NOT_FOUND while it or its provider is switched off or not running. autoReleaseDaysBeforeStart sets how many days before its start a synced draft event is released on its own once its ready checks pass, or null for never (#1823). Root admin only.
          */
         patch: operations["updateSportLeague"];
+        trace?: never;
+    };
+    "/api/v1/sport-leagues/{sportLeagueId}/test-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a test slot to the current Season
+         * @description A labelled test slot of one of the league's slot definitions, in its current Season (QA only, #2004): the sync never reads or writes it, and a test event is made on it (createEvent). It copies the definition's series format and pairing, and its dates are the test event's. 404 SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON, TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON when the current Season lacks the phase of the definition; 409 TEST_SLOT_LABEL_TAKEN. Root admin only.
+         */
+        post: operations["createTestSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/sport-leagues/{sportLeagueId}/syncs": {
@@ -11797,6 +11817,118 @@ export interface components {
             /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
             label: string | null;
         };
+        /** @description One slot of one Season, as its Season lists it. */
+        SportLeagueSeasonPhaseSlotDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The slot definition it plays (SportLeagueSlotDefinitionDto).
+             */
+            slotDefinitionId: string;
+            /** @description Its definition's key. */
+            key: string;
+            /** @enum {string} */
+            slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+            weekNumber: number | null;
+            /** @description Its definition's proper name; null when screens show the word for its kind. */
+            name: string | null;
+            /**
+             * Format: date-time
+             * @description The earliest start of its Games; null until the sync has matched one.
+             */
+            startsAt: string | null;
+            /**
+             * Format: date-time
+             * @description The latest end of its Games; null until the sync has matched one.
+             */
+            endsAt: string | null;
+            /** @enum {string} */
+            status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+            /**
+             * @description Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+             * @enum {string}
+             */
+            seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+            seriesGames: number;
+            /** @enum {string} */
+            pairing: "FIXED" | "RESEEDED";
+            /** @description A test slot: QA only, never read or written by the sync. */
+            isTestData: boolean;
+            /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
+            label: string | null;
+            /**
+             * Format: uuid
+             * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+             */
+            sportEventId: string | null;
+            /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+            takesTestEvent: boolean;
+        };
+        /** @description A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season. */
+        CreateTestSlotRequest: {
+            /**
+             * Format: uuid
+             * @description The slot definition it plays (SportLeagueSlotDefinitionDto), one of the league's: 404 SLOT_DEFINITION_NOT_FOUND otherwise.
+             */
+            slotDefinitionId: string;
+            /** @description Tells it apart from the Season's other test slots of that definition: 409 TEST_SLOT_LABEL_TAKEN when one already has it. */
+            label: string;
+            /**
+             * Format: date-time
+             * @description When its test event starts.
+             */
+            startsAt: string;
+            /**
+             * Format: date-time
+             * @description When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt. Omitted, the end is not known.
+             */
+            endsAt?: string;
+        };
+        /** @description One Season slot. */
+        SportLeagueSeasonSlotResponse: {
+            /** @description One slot of one Season. */
+            slot: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The slot definition it plays (SportLeagueSlotDefinitionDto).
+                 */
+                slotDefinitionId: string;
+                /** @description Its definition's key. */
+                key: string;
+                /** @enum {string} */
+                slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                weekNumber: number | null;
+                /** @description Its definition's proper name; null when screens show the word for its kind. */
+                name: string | null;
+                /**
+                 * Format: date-time
+                 * @description The earliest start of its Games; null until the sync has matched one.
+                 */
+                startsAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description The latest end of its Games; null until the sync has matched one.
+                 */
+                endsAt: string | null;
+                /** @enum {string} */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                /**
+                 * @description Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+                 * @enum {string}
+                 */
+                seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                seriesGames: number;
+                /** @enum {string} */
+                pairing: "FIXED" | "RESEEDED";
+                /** @description A test slot: QA only, never read or written by the sync. */
+                isTestData: boolean;
+                /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
+                label: string | null;
+            };
+        };
         /** @description One phase of one Season. */
         SportLeagueSeasonPhaseDto: {
             /** Format: uuid */
@@ -11845,6 +11977,13 @@ export interface components {
                 isTestData: boolean;
                 /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                 label: string | null;
+                /**
+                 * Format: uuid
+                 * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                 */
+                sportEventId: string | null;
+                /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+                takesTestEvent: boolean;
             }[];
         };
         /** @description One Season of a sport league, added by migration. */
@@ -11927,6 +12066,13 @@ export interface components {
                     isTestData: boolean;
                     /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                     label: string | null;
+                    /**
+                     * Format: uuid
+                     * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                     */
+                    sportEventId: string | null;
+                    /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+                    takesTestEvent: boolean;
                 }[];
             }[];
         };
@@ -12012,6 +12158,13 @@ export interface components {
                         isTestData: boolean;
                         /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
                         label: string | null;
+                        /**
+                         * Format: uuid
+                         * @description The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                         */
+                        sportEventId: string | null;
+                        /** @description Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season. */
+                        takesTestEvent: boolean;
                     }[];
                 }[];
             }[];
@@ -12325,8 +12478,51 @@ export interface components {
              * @enum {string}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-            /** @description Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
-            providerSynced: boolean;
+            /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+            shootout: boolean;
+            /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
+            isTestData: boolean;
+            /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
+            slots: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The slot definition it plays (SportLeagueSlotDefinitionDto).
+                 */
+                slotDefinitionId: string;
+                /** @description Its definition's key. */
+                key: string;
+                /** @enum {string} */
+                slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                weekNumber: number | null;
+                /** @description Its definition's proper name; null when screens show the word for its kind. */
+                name: string | null;
+                /**
+                 * Format: date-time
+                 * @description The earliest start of its Games; null until the sync has matched one.
+                 */
+                startsAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description The latest end of its Games; null until the sync has matched one.
+                 */
+                endsAt: string | null;
+                /** @enum {string} */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                /**
+                 * @description Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+                 * @enum {string}
+                 */
+                seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                seriesGames: number;
+                /** @enum {string} */
+                pairing: "FIXED" | "RESEEDED";
+                /** @description A test slot: QA only, never read or written by the sync. */
+                isTestData: boolean;
+                /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
+                label: string | null;
+            }[];
             /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
             autoLifecycleEnabled: boolean;
             /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
@@ -12593,8 +12789,51 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-                /** @description Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
-                providerSynced: boolean;
+                /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+                shootout: boolean;
+                /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
+                isTestData: boolean;
+                /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
+                slots: {
+                    /** Format: uuid */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The slot definition it plays (SportLeagueSlotDefinitionDto).
+                     */
+                    slotDefinitionId: string;
+                    /** @description Its definition's key. */
+                    key: string;
+                    /** @enum {string} */
+                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                    weekNumber: number | null;
+                    /** @description Its definition's proper name; null when screens show the word for its kind. */
+                    name: string | null;
+                    /**
+                     * Format: date-time
+                     * @description The earliest start of its Games; null until the sync has matched one.
+                     */
+                    startsAt: string | null;
+                    /**
+                     * Format: date-time
+                     * @description The latest end of its Games; null until the sync has matched one.
+                     */
+                    endsAt: string | null;
+                    /** @enum {string} */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                    /**
+                     * @description Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+                     * @enum {string}
+                     */
+                    seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                    seriesGames: number;
+                    /** @enum {string} */
+                    pairing: "FIXED" | "RESEEDED";
+                    /** @description A test slot: QA only, never read or written by the sync. */
+                    isTestData: boolean;
+                    /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
+                    label: string | null;
+                }[];
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
@@ -12840,8 +13079,51 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
-                /** @description Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and that provider has an id for the event; its scores and field sync from it. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
-                providerSynced: boolean;
+                /** @description Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport. */
+                shootout: boolean;
+                /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
+                isTestData: boolean;
+                /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
+                slots: {
+                    /** Format: uuid */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The slot definition it plays (SportLeagueSlotDefinitionDto).
+                     */
+                    slotDefinitionId: string;
+                    /** @description Its definition's key. */
+                    key: string;
+                    /** @enum {string} */
+                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                    weekNumber: number | null;
+                    /** @description Its definition's proper name; null when screens show the word for its kind. */
+                    name: string | null;
+                    /**
+                     * Format: date-time
+                     * @description The earliest start of its Games; null until the sync has matched one.
+                     */
+                    startsAt: string | null;
+                    /**
+                     * Format: date-time
+                     * @description The latest end of its Games; null until the sync has matched one.
+                     */
+                    endsAt: string | null;
+                    /** @enum {string} */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+                    /**
+                     * @description Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+                     * @enum {string}
+                     */
+                    seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
+                    seriesGames: number;
+                    /** @enum {string} */
+                    pairing: "FIXED" | "RESEEDED";
+                    /** @description A test slot: QA only, never read or written by the sync. */
+                    isTestData: boolean;
+                    /** @description A test slot's label, unique per Season and definition; null on a synced slot. */
+                    label: string | null;
+                }[];
                 /** @description Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.) */
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
@@ -12947,28 +13229,16 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released. */
+        /** @description A test event, made by hand on a test slot (QA only). Created DRAFT with its league's default round count and tiers, and its slot's dates; commissioners see it once it is released. */
         CreateSportEventRequest: {
             /**
              * Format: uuid
-             * @description The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none.
+             * @description The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event's league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season; 409 SEASON_SLOT_TAKEN when it already has an event.
              */
-            sportLeagueId: string;
+            seasonSlotId: string;
             name: string;
             venue?: string;
             location?: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            startDate: string;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            endDate?: string;
-            /** @description Round count; omitted, the sport's default round count (4 for golf). */
-            rounds?: number;
             autoLifecycleEnabled?: boolean;
         };
         /** @description Changes to an event; omitted fields are left alone. */
@@ -12980,12 +13250,12 @@ export interface components {
             location?: string | null;
             /**
              * Format: date-time
-             * @description ISO 8601 datetime string.
+             * @description 422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots'.
              */
             startDate?: string;
             /**
              * Format: date-time
-             * @description null clears it.
+             * @description null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.
              */
             endDate?: string | null;
             rounds?: number;
@@ -32696,6 +32966,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
         };
     };
     releaseEvent: {
@@ -35396,6 +35675,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportLeagueResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    createTestSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTestSlotRequest"];
+            };
+        };
+        responses: {
+            /** @description One Season slot. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeagueSeasonSlotResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */

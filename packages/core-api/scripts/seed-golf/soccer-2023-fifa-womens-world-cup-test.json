@@ -151,6 +151,7 @@
       "events": [
         {
           "key": "fifa-womens-world-cup-2023",
+          "slotKey": "FINAL",
           "name": "FIFA Women's World Cup",
           "startDate": "2023-08-05",
           "endDate": "2023-08-20",

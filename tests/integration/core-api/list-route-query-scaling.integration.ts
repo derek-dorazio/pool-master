@@ -39,7 +39,7 @@ import { expectConstantQueries } from '../query-scaling';
 import { get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestRow } from '../../support/contest-rows';
-import { fixtureSeasonId, freshEventEdition, putEventInSlot, testSlotDefinitionId } from '../../support/event-edition';
+import { fixtureSeasonId, freshEventEdition, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
@@ -137,7 +137,7 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
         },
       });
       if (recurring) {
-        const slot = recurringSlot ?? { sportLeagueId: edition.sportLeagueId, definitionId: await testSlotDefinitionId(prisma, edition.sportLeagueId, `SCALING_${seeded.suffix}_${String(index)}`.toUpperCase()) };
+        const slot = recurringSlot ?? { sportLeagueId: edition.sportLeagueId, definitionId: await keyedSlotDefinitionId(prisma, edition.sportLeagueId, `SCALING_${seeded.suffix}_${String(index)}`.toUpperCase()) };
         slotByIndex.set(index, slot);
         await putEventInSlot(prisma, event.id, slot.definitionId);
       }

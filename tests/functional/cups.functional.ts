@@ -9,6 +9,7 @@ import {
   createContest,
   crownCup,
   createEvent,
+  createTestSlot,
   createParticipant,
   enterContest,
   generateInviteLink,
@@ -56,7 +57,8 @@ import {
 } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
-import { putEventInSlot, testSlotDefinitionId } from '../support/event-edition';
+import { keyedSlotDefinitionId } from '../support/event-edition';
+import { uniqueTestSlotLabel } from '../support/test-slots';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 
@@ -98,9 +100,9 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.sportLeagueSeasonPhaseSlot.deleteMany({ where: { label: { in: eventIds.map((id) => `event ${id}`) } } });
   }
   if (created.slotDefinitionIds.size) {
+    await db.sportLeagueSeasonPhaseSlot.deleteMany({ where: { sportLeaguePhaseSlotId: { in: [...created.slotDefinitionIds] } } });
     await db.sportLeaguePhaseSlot.deleteMany({ where: { id: { in: [...created.slotDefinitionIds] } } });
   }
   if (created.participantIds.size) {
@@ -139,16 +141,21 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
 
     /** A released race with the five runners, tiered one to a tier by ranking. */
     // Each race is run in a slot of its own definition (#2010), which a perpetual trophy is kept
-    // by; until the sync gives events their slots (slice 8), the test puts each race in its slot.
+    // by: a test slot of that definition in the race's Season, then the race on it (#2004).
     const releaseRace = async (name: string, slotKey: string, startDate: string, eventYear = SEASON) => {
+      const slotDefinitionId = await keyedSlotDefinitionId(getFunctionalPrisma(), majorsMen.id, `${slotKey}_${RUN_KEY}`, { name: `${name} ${RUN}` });
+      created.slotDefinitionIds.add(slotDefinitionId);
+      await inCurrentSeason(majorsMen.id, eventYear);
+      const slot = expectDefined((await createTestSlot({
+        client: a,
+        path: { sportLeagueId: majorsMen.id },
+        body: { slotDefinitionId, label: uniqueTestSlotLabel(), startsAt: startDate },
+      })).data).slot;
       const eventId = expectDefined((await createEvent({
         client: a,
-        body: { sportLeagueId: await inCurrentSeason(majorsMen.id, eventYear), name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
+        body: { seasonSlotId: slot.id, name: `${name} ${RUN}`, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
-      const definitionId = await testSlotDefinitionId(getFunctionalPrisma(), majorsMen.id, `${slotKey}_${RUN_KEY}`, { name: `${name} ${RUN}` });
-      created.slotDefinitionIds.add(definitionId);
-      await putEventInSlot(getFunctionalPrisma(), eventId, definitionId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });
       await applyEventParticipantUpload({
         client: a,

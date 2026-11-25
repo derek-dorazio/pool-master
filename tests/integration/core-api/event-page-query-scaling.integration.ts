@@ -16,7 +16,7 @@ import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, tear
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { participantLeagueId } from '../../support/participant-league';
-import { fixtureSeasonId, putEventInSlot, testSlotDefinitionId } from '../../support/event-edition';
+import { fixtureSeasonId, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 
 // No mocks.
 
@@ -105,7 +105,7 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
       },
     });
     // Each offer shows the next slot of a definition of its own, the event's (#2010).
-    const sportLeaguePhaseSlotId = await testSlotDefinitionId(prisma, sportLeagueId, `SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
+    const sportLeaguePhaseSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
     await putEventInSlot(prisma, event.id, sportLeaguePhaseSlotId);
     await prisma.eventPageOffer.create({
       data: { eventPageId: page.id, sportLeagueId, sportLeaguePhaseSlotId, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },

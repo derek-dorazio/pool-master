@@ -112,10 +112,6 @@
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 63
         },
-        "src/features/root-admin/bracket-panel.tsx": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 72
-        },
         "src/features/root-admin/bracket-test-context.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 71
@@ -243,7 +239,7 @@
         },
         "src/features/root-admin/sport-league-page.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 57
+          "branches": 66
         },
         "src/features/root-admin/sport-league-roster-upload-card.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
@@ -311,10 +307,6 @@
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 33
         },
-        "src/features/root-admin/use-sport-event.ts": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 75
-        },
         "src/features/root-admin/use-sport-league-overviews.ts": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 75
@@ -375,10 +367,6 @@
         "src/features/teams/your-entries-section.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
           "branches": 78
-        },
-        "src/lib/logger/index.ts": {
-          "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",
-          "branches": 50
         },
         "src/main.tsx": {
           "reason": "Below 80/80 when the per-file floor was introduced (#2103). Cleanup: #2108, #2109, #2110 or the slice that owns the file.",

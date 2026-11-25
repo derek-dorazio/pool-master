@@ -27,7 +27,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { fixtureSeasonId, freshEventEdition, testSlotDefinitionId } from '../../support/event-edition';
+import { fixtureSeasonId, freshEventEdition, keyedSlotDefinitionId } from '../../support/event-edition';
 import { mockFn } from '../../support/mock-fn';
 import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
@@ -977,8 +977,8 @@ describe('ContestConfigTemplateRepository', () => {
 
   it('lists the templates covering any slot definition asked for, in sort order, leaving out one covering only others and one covering none', async () => {
     const { pga } = await createGolfLeagues();
-    const masters = await testSlotDefinitionId(getPrisma(), pga.id, 'MASTERS');
-    const open = await testSlotDefinitionId(getPrisma(), pga.id, 'OPEN');
+    const masters = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MASTERS');
+    const open = await keyedSlotDefinitionId(getPrisma(), pga.id, 'OPEN');
     await createTemplate('both', [masters, open], 2, pga.id);
     await createTemplate('masters', [masters], 1, pga.id);
     await createTemplate('open', [open], 0, pga.id);
@@ -1009,8 +1009,8 @@ describe('ContestConfigTemplateRepository', () => {
 
   it('narrows by sport league and slot definition together: the league must match and the template cover one of the definitions', async () => {
     const { pga, lpga } = await createGolfLeagues();
-    const lpgaMajor = await testSlotDefinitionId(getPrisma(), lpga.id, 'MAJOR');
-    const lpgaOther = await testSlotDefinitionId(getPrisma(), lpga.id, 'OTHER');
+    const lpgaMajor = await keyedSlotDefinitionId(getPrisma(), lpga.id, 'MAJOR');
+    const lpgaOther = await keyedSlotDefinitionId(getPrisma(), lpga.id, 'OTHER');
     await createTemplate('lpga-major', [lpgaMajor], 0, lpga.id);
     await createTemplate('lpga-other', [lpgaOther], 1, lpga.id);
     await createTemplate('pga-any', [], 3, pga.id);
@@ -1023,7 +1023,7 @@ describe('ContestConfigTemplateRepository', () => {
 
   it("refuses a template covering another sport league's slot definition", async () => {
     const { pga, lpga } = await createGolfLeagues();
-    const pgaMajor = await testSlotDefinitionId(getPrisma(), pga.id, 'MAJOR');
+    const pgaMajor = await keyedSlotDefinitionId(getPrisma(), pga.id, 'MAJOR');
 
     await expect(createTemplate('crossed', [pgaMajor], 0, lpga.id)).rejects.toThrow();
   });

@@ -5,6 +5,7 @@ import type { ActivityState } from './use-activity';
 /** The Event page's tabs, in order (the Event page spec); Tools only on an event no provider syncs. */
 export const EVENT_PAGE_TABS = [
   { segment: 'field', label: 'Field' },
+  { segment: 'slots', label: 'Slots' },
   { segment: 'rounds', label: 'Rounds and matches' },
   { segment: 'contests', label: 'Contests' },
   { segment: 'activity', label: 'Activity' },

@@ -1,6 +1,6 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getSportDefinition } from '@poolmaster/shared/domain';
 import { submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import {
@@ -113,7 +113,7 @@ export function RootAdminRunEventSyncPage() {
   const selectableEvents = useMemo(() => {
     const validStatuses = getValidEventStatusesForPreset(eventSyncPresetId);
     // Only an event its league's provider syncs can sync; the server refuses a test event.
-    return (eventsQuery.data ?? []).filter((event) => event.providerSynced && validStatuses.includes(event.status));
+    return (eventsQuery.data ?? []).filter((event) => !event.isTestData && validStatuses.includes(event.status));
   }, [eventSyncPresetId, eventsQuery.data]);
   // Events are chosen by id: two providers' events can share an external id.
   const selectedEvent = selectableEvents.find((event) => event.id === chosenEventId);
@@ -244,7 +244,7 @@ export function RootAdminRunEventSyncPage() {
             >
               {supportedSyncSports.map((sport) => (
                 <option key={sport} value={sport}>
-                  {getSportDefinition(sport).name}
+                  {enumLabel('Sport', sport)}
                 </option>
               ))}
             </Select>
@@ -314,7 +314,7 @@ export function RootAdminRunEventSyncPage() {
 
           {!eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
             <Notice>
-              No synced {getSportDefinition(eventSyncSport).name.toLowerCase()} events match this preset. A test event has
+              No synced {enumLabel('Sport', eventSyncSport).toLowerCase()} events match this preset. A test event has
               nothing to sync.
             </Notice>
           ) : null}

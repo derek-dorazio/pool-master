@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -5,7 +6,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
   createSportLeague,
   enterContest,
@@ -23,7 +23,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -74,7 +74,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
 }
 
@@ -103,9 +103,9 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     created.sportLeagueIds.add(sportLeagueId);
     await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'US Thoroughbred', toSportLeagueId: sportLeagueId });
 
-    const race = await createEvent({
+    const race = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Harbour Stakes ${RUN}`, startDate: '2099-05-02T22:00:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Harbour Stakes ${RUN}`, startDate: '2099-05-02T22:00:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;

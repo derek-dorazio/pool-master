@@ -23,11 +23,15 @@ import type {
   SportEventRepository,
   SportEventUpdate,
   SportLeagueRepository,
+  SportLeagueSeasonRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
 import {
   AutoReleaseCheckOutcome,
   blocksManualRelease,
+  eventDatesFromSlots,
+  testEventSlotRefusal,
+  type TestEventSlotRefusal,
   eventPlaysMatches,
   eventSportDefinition,
   isProviderSyncedEvent,
@@ -42,6 +46,7 @@ import {
   type SportEvent,
   SportEventStatus,
   type SportLeague,
+  type SportLeagueSeasonSlot,
   sportLeagueDefinitionOf,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
@@ -74,6 +79,8 @@ export interface SportEventSummary {
   event: SportEvent;
   loadedParticipantCount: number;
   tierCount: number;
+  /** The Season slots it covers (#2004), in play order; empty for an event with none yet. */
+  slots: SportLeagueSeasonSlot[];
   /** Null unless the read asked for them: see `SportEventAdminCounts`. */
   adminCounts: SportEventAdminCounts | null;
   /**
@@ -92,16 +99,13 @@ export interface SportEventReadOptions {
   adminCounts: boolean;
 }
 
+/** A test event (#2004): made by hand on a free test slot of its league's current Season. */
 export interface CreateSportEventInput {
-  /** The sport league the event is one of; it is in the league's current Season. */
-  sportLeagueId: string;
+  /** The test slot it covers; its Season and league are the event's, and its dates the event's. */
+  seasonSlotId: string;
   name: string;
   venue?: string;
   location?: string;
-  startDate: Date;
-  endDate?: Date;
-  rounds?: number;
-  roundsPar?: number;
   autoLifecycleEnabled?: boolean;
 }
 
@@ -139,10 +143,25 @@ const PROVIDER_DETAILS_BY_STATUS: Readonly<Record<SportEventStatus, ReadonlyArra
   [SportEventStatus.CANCELLED]: [],
 };
 
+/** A Prisma unique violation's target, or null. Duck-typed so the service does not depend on the Prisma client. */
+function uniqueViolationTarget(error: unknown): string | null {
+  if (typeof error !== 'object' || error === null) return null;
+  const { code, meta } = error as { code?: unknown; meta?: { target?: unknown } };
+  return code === 'P2002' ? JSON.stringify(meta?.target ?? '') : null;
+}
+
+/** The database refusing a second event on one Season slot (#2004): the slot's unique key. */
+function isSlotConflict(error: unknown): boolean {
+  const target = uniqueViolationTarget(error);
+  return target !== null && (target.includes('sport_league_season_phase_slot_id') || target.includes('sportLeagueSeasonPhaseSlotId') || target.includes('sport_event_slots_season_slot_key'));
+}
+
 export interface SportEventServiceDeps {
   sportEvents: SportEventRepository;
   sportLeagues: SportLeagueRepository;
   sports: SportRepository;
+  /** The Season slot a test event is made on (#2004). */
+  seasons: Pick<SportLeagueSeasonRepository, 'findSlot'>;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
@@ -155,16 +174,13 @@ export interface SportEventServiceDeps {
   now?: () => Date;
 }
 
-/**
- * The Season a new event goes in: its league's current Season (#2003). 422
- * SPORT_LEAGUE_HAS_NO_SEASON for a league with none, since an event belongs to a Season.
- */
-function currentSeasonIdOf(sportLeague: SportLeague): string {
-  if (sportLeague.currentSeasonId === null) {
-    throw new SportEventError(`${sportLeague.name} has no Season to create an event in.`, 'SPORT_LEAGUE_HAS_NO_SEASON', 422);
-  }
-  return sportLeague.currentSeasonId;
-}
+/** The error each test-slot refusal answers with (#2004). */
+const TEST_EVENT_SLOT_REFUSALS: Readonly<Record<TestEventSlotRefusal, (seasonSlotId: string, sportLeagueName: string) => SportEventError>> = {
+  SEASON_SLOT_NOT_TEST: () => new SportEventError('Only a test slot takes an event made by hand; the sync makes every other.', 'SEASON_SLOT_NOT_TEST', 422),
+  SEASON_SLOT_NOT_CURRENT: (seasonSlotId, sportLeagueName) =>
+    new SportEventError(`Season slot ${seasonSlotId} is not in ${sportLeagueName}'s current Season.`, 'SEASON_SLOT_NOT_CURRENT', 422),
+  SEASON_SLOT_TAKEN: (seasonSlotId) => new SportEventError(`Season slot ${seasonSlotId} already has an event.`, 'SEASON_SLOT_TAKEN', 409),
+};
 
 /** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
 function isDateOnlyPlaceholder(start: Date): boolean {
@@ -191,34 +207,47 @@ export class SportEventService {
   }
 
   /**
-   * An admin-authored event: DRAFT, with no provider id, so no provider syncs it (#2004), in its
-   * league's current Season (#2003).
+   * A test event on a test slot (#2004, plan §2): only a test slot takes an event made by hand,
+   * since the sync makes every other. The slot must be free and in its league's current Season;
+   * the event's dates are the slot's, and it gets its league's default round count. 404
+   * SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST, SEASON_SLOT_NOT_CURRENT; 409
+   * SEASON_SLOT_TAKEN.
    */
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
-    const sportLeagueSeasonId = currentSeasonIdOf(sportLeague);
-    const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    const found = await this.deps.seasons.findSlot(input.seasonSlotId);
+    if (found === null) throw new SportEventError(`Season slot ${input.seasonSlotId} was not found.`, 'SEASON_SLOT_NOT_FOUND', 404);
+    const { slot } = found;
+    const { sportLeague, sport } = await this.resolveSportLeague(found.sportLeagueId);
+    const refusal = testEventSlotRefusal(
+      { isTestData: slot.isTestData, sportEventId: found.sportEventId },
+      found.sportLeagueSeasonId === sportLeague.currentSeasonId,
+    );
+    if (refusal !== null) throw TEST_EVENT_SLOT_REFUSALS[refusal](slot.id, sportLeague.name);
+    // A test slot is always made with a start (createTestSlot), so its dates are never null.
+    const dates = eventDatesFromSlots([slot]);
+    if (dates === null) throw new Error(`Season slot ${slot.id} has no start.`);
+    const rounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
       event: {
         name: input.name,
         venue: input.venue,
         location: input.location,
-        startDate: input.startDate,
-        endDate: input.endDate,
+        startDate: dates.startDate,
+        endDate: dates.endDate ?? undefined,
         status: SportEventStatus.DRAFT,
         rounds,
-        roundsPar: input.roundsPar,
         sportLeagueId: sportLeague.id,
-        sportLeagueSeasonId,
+        sportLeagueSeasonId: found.sportLeagueSeasonId,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
+        seasonSlotIds: [slot.id],
       },
-      rounds: dailyRoundSchedule(rounds, input.startDate),
-    }]));
+      rounds: dailyRoundSchedule(rounds, dates.startDate),
+    }], [slot]));
 
     this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId, rounds },
-      'Created sport event',
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: found.sportLeagueSeasonId, seasonSlotId: slot.id, rounds },
+      'Created test sport event',
     );
     return summary;
   }
@@ -339,6 +368,10 @@ export class SportEventService {
     options: { tellMembers: boolean },
   ): Promise<SportEventAdminSummary> {
     const { startDate: startedAt, rounds: roundCount, status } = await this.requireEvent(sportEventId);
+    if ((updates.startDate !== undefined || updates.endDate !== undefined)
+      && ((await this.deps.sportEvents.findSlots([sportEventId])).get(sportEventId) ?? []).length > 0) {
+      throw new SportEventError('This event\'s dates come from its Season slots.', 'EVENT_DATES_FROM_SLOTS', 422);
+    }
     const movesStart = updates.startDate !== undefined && updates.startDate.getTime() !== startedAt.getTime();
     if (movesStart && !options.tellMembers && !isDateOnlyPlaceholder(startedAt)) {
       this.deps.logger?.warn(
@@ -422,10 +455,12 @@ export class SportEventService {
         422,
       );
     }
-    await this.release(sportEventId);
+    const released = await this.release(sportEventId);
     // The admin's judgement replaces the automatic one: no stored hold outlives the release.
     await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, null);
-    return this.requireAdminSummary(sportEventId);
+    // A release moves only the status (its follow-ups are jobs), so the counts and slots read for
+    // its checks still hold: the answer is the released event with them, not a second read.
+    return { ...summary, event: { ...released, autoReleaseCheck: undefined } };
   }
 
   /**
@@ -477,14 +512,16 @@ export class SportEventService {
   }
 
   /** DRAFT → SCHEDULED through the one status path, whether a root admin or the sweep released it. */
-  private async release(sportEventId: string): Promise<void> {
-    await this.deps.lifecycle.applySportEventStatusTransition({
+  /** Releases the draft; answers the event as the release left it. */
+  private async release(sportEventId: string): Promise<SportEvent> {
+    const { sportEvent } = await this.deps.lifecycle.applySportEventStatusTransition({
       sportEventId,
       toStatus: SportEventStatus.SCHEDULED,
       actor: { type: 'ROOT_ADMIN' },
       release: true,
     });
     this.deps.logger?.info({ sportEventId }, 'Released sport event for contests');
+    return sportEvent;
   }
 
   /**
@@ -591,17 +628,29 @@ export class SportEventService {
    * field, no contests and every tier empty, so its summary is built from what was written
    * rather than read back.
    */
-  private async createEditions(sportLeague: SportLeague, editions: readonly NewEdition[]): Promise<SportEventAdminSummary[]> {
+  private async createEditions(
+    sportLeague: SportLeague,
+    editions: readonly NewEdition[],
+    /** The Season slots the editions cover (a test event's one), for their summaries. */
+    slots: readonly SportLeagueSeasonSlot[] = [],
+  ): Promise<SportEventAdminSummary[]> {
     if (editions.length === 0) return [];
-    const events = await this.deps.sportEvents.createMany(editions.map((edition) => edition.event));
+    let events: SportEvent[];
+    try {
+      events = await this.deps.sportEvents.createMany(editions.map((edition) => edition.event));
+    } catch (error) {
+      if (isSlotConflict(error)) throw new SportEventError('That slot already has an event.', 'SEASON_SLOT_TAKEN', 409);
+      throw error;
+    }
     await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
     const tiersByEvent = await this.deps.tiers.createDefaultTiers(sportLeague, events.map((event) => event.id));
-    return events.map((event): SportEventAdminSummary => {
+    return events.map((event, index): SportEventAdminSummary => {
       const tiers = tiersByEvent.get(event.id) ?? [];
       return {
         event,
         loadedParticipantCount: 0,
         tierCount: tiers.length,
+        slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
         adminCounts: {
           untieredParticipantCount: 0,
           unpricedParticipantCount: 0,
@@ -629,17 +678,19 @@ export class SportEventService {
     return this.deps.now?.() ?? new Date();
   }
 
-  /** The counts every reader of an event needs: two grouped counts for the whole list. */
+  /** The counts every reader of an event needs, and its slots: three grouped reads for the whole list. */
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, tiers] = await Promise.all([
+    const [participants, tiers, slots] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
       this.deps.sportEvents.countTiers(ids),
+      this.deps.sportEvents.findSlots(ids),
     ]);
     return events.map((event) => ({
       event,
       loadedParticipantCount: participants.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
+      slots: slots.get(event.id) ?? [],
       adminCounts: null,
     }));
   }

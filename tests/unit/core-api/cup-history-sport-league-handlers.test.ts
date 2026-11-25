@@ -269,7 +269,7 @@ describe('sport league handlers', () => {
       readEventFacts: (sportLeagueId) => known(sportLeagueId, {
         league: pageLeague,
         events: [{
-          id: 'e1', name: 'The Open', sportLeagueSeasonId: 'season-2026', startDate: AT, endDate: null, status: 'SCHEDULED' as const, providerSynced: true, releasedAt: null, lastReleaseCheck: null,
+          id: 'e1', name: 'The Open', sportLeagueSeasonId: 'season-2026', startDate: AT, endDate: null, status: 'SCHEDULED' as const, isTestData: false, releasedAt: null, lastReleaseCheck: null,
         }],
         fieldSizes: new Map(),
         latestRunsByEvent: new Map(),

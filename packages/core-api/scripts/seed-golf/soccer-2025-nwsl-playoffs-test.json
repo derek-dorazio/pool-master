@@ -91,6 +91,7 @@
       "events": [
         {
           "key": "nwsl-playoffs-2025",
+          "slotKey": "FINAL",
           "name": "NWSL Playoffs",
           "startDate": "2025-11-08",
           "endDate": "2025-11-23",

@@ -174,6 +174,22 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
+  it('says the bracket could not load, in the API\'s words, when the bracket read fails', async () => {
+    seed([]);
+    getEventBracketMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Bracket store down.' } }, response: new Response(null, { status: 500 }) });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-bracket-error')).toHaveTextContent('Couldn\'t load the bracket');
+  });
+
+  it('says the bracket could not load when the field read fails, though the bracket loaded', async () => {
+    seed([]);
+    listEventParticipantsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Field store down.' } }, response: new Response(null, { status: 500 }) });
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-bracket-error')).toHaveTextContent('Couldn\'t load the bracket');
+  });
+
   it('says the bracket is not loaded yet when the tournament has no matches', async () => {
     seed([]);
     renderPage();
@@ -217,7 +233,7 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
   });
 
   it('names the data feed a synced result came from with the event\'s provider name, reading no provider list', async () => {
-    const synced = sportEventFixture({ ...tournament, providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'feed-401' }], providerName: 'BALLDONTLIE', providerSynced: true });
+    const synced = sportEventFixture({ ...tournament, providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'feed-401' }], providerName: 'BALLDONTLIE', isTestData: false });
     seed([
       match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'COMPLETED', winnerSide: 'HOME', homeScore: 80, awayScore: 61, resultSource: 'PROVIDER' }),
       match({ id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', status: 'COMPLETED', winnerSide: 'AWAY', homeScore: 70, awayScore: 72, resultSource: 'ADMIN' }),
@@ -237,7 +253,7 @@ describe('The Rounds and matches tab for a basketball tournament', () => {
   });
 
   it('shows a live game\'s score from the data feed, away side first, and no result for it', async () => {
-    const synced = sportEventFixture({ ...tournament, providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'feed-401' }], providerName: 'BALLDONTLIE', providerSynced: true, status: 'IN_PROGRESS' });
+    const synced = sportEventFixture({ ...tournament, providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'feed-401' }], providerName: 'BALLDONTLIE', isTestData: false, status: 'IN_PROGRESS' });
     seed([match({ id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2', status: 'IN_PROGRESS', homeScore: 40, awayScore: 38 })], { event: synced });
     renderPage();
 

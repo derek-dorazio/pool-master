@@ -46,7 +46,6 @@ const GOLF_EVENT_PHASES: Readonly<Record<string, ProviderNotificationPhase>> = {
   'pga.player.round_completed': 'PROGRESS',
   'pga.tournament.ended': 'END',
 };
-const GOLF_EVENT_TYPES = Object.keys(GOLF_EVENT_PHASES);
 
 /**
  * How long an event of the provider may stay in play with no notification before its webhook is
@@ -57,14 +56,6 @@ export function balldontlieQuietAfterMs(leagues: readonly BalldontlieWebhookLeag
   const league = leagues.find((candidate) => candidate.code === providerLeagueCode);
   const minutes = league?.quietAfterMinutes ?? Math.max(0, ...leagues.map((each) => each.quietAfterMinutes));
   return minutes * 60_000;
-}
-
-/** Every event type the endpoint subscribes to for these leagues, for its setup (packages/README.md). */
-export function balldontlieWebhookEventTypes(leagues: readonly BalldontlieWebhookLeague[]): string[] {
-  return [
-    ...leagues.flatMap((league) => GAME_EVENTS_BY_SET[league.webhookEventSet].map((event) => `${league.code}.${event}`)),
-    ...(leagues.some((league) => league.webhookEventSet === ProviderWebhookEventSet.GOLF_ROUNDS) ? GOLF_EVENT_TYPES : []),
-  ];
 }
 
 /**

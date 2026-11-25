@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -6,7 +7,6 @@ import {
   autoAssignEventTiers,
   clearGamePick,
   createContest,
-  createEvent,
   createParticipant,
   createSportLeague,
   enterContest,
@@ -31,7 +31,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueCreateBody, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -84,7 +84,7 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -113,9 +113,9 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueCreateBody(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Pickem Conference ${RUN}` } });
     const sportLeagueId = expectDefined(conference.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
-    const tournament = await createEvent({
+    const tournament = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Pickem Classic ${RUN}`, startDate: firstKickoff.toISOString(), rounds: 2, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Pickem Classic ${RUN}`, startDate: firstKickoff.toISOString(), rounds: 2, autoLifecycleEnabled: false },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;

@@ -26,6 +26,7 @@ import type {
   SportEventParticipantView,
   SportEventRoundMatchRepository,
   SportEventRepository,
+  SportLeagueSeasonRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,
   SportEventTierDefinition,
@@ -38,7 +39,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, ValuationSource } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -63,6 +64,7 @@ import type {
   BudgetPricingProfile,
   PlatformPricingProfile,
   PlatformTierProfile,
+  SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
 import { sportRowKeys } from './sport-rows';
 
@@ -110,6 +112,38 @@ export class InMemorySportEvents {
   /** Each event's latest automatic release check (#1847); absent when none is stored. */
   autoReleaseChecks = new Map<string, AutoReleaseCheck>();
   contestsByEvent = new Map<string, number>();
+  /** The Season slots each event covers, as `findSlots` answers them (#2004); a test sets them. */
+  slotsByEvent = new Map<string, SportLeagueSeasonSlot[]>();
+  /** Season slots a test event can be made on (`addTestSlot`), as `seasonRepo().findSlot` reads them. */
+  seasonSlots: Array<SportLeagueSeasonSlot & { sportLeagueId: string; sportLeagueSeasonId: string }> = [];
+
+  /**
+   * A Season slot of the league's current Season (#2004): a test slot unless `isTestData` is
+   * false, starting `startsAt`. Answers its id.
+   */
+  addTestSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, startsAt: Date, overrides: Partial<SportLeagueSeasonSlot & { sportLeagueSeasonId: string }> = {}): string {
+    const id = this.id('season-slot');
+    this.seasonSlots.push({
+      id, slotDefinitionId: 'slot-definition', key: 'TEST_EVENT', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: null,
+      startsAt, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+      isTestData: true, label: id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: sportLeague.currentSeasonId ?? IN_MEMORY_SEASON_ID,
+      ...overrides,
+    });
+    return id;
+  }
+
+  /** The Season slot reads an event create makes. */
+  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot'> {
+    return {
+      findSlot: async (id) => {
+        const slot = this.seasonSlots.find((candidate) => candidate.id === id);
+        if (!slot) return null;
+        const owner = [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === id));
+        const { sportLeagueId, sportLeagueSeasonId, ...seasonSlot } = slot;
+        return { slot: seasonSlot, sportLeagueId, sportLeagueSeasonId, sportEventId: owner?.[0] ?? null };
+      },
+    };
+  }
   picksByEntry = new Map<string, number>();
   roundRows: SportEventRound[] = [];
   field: SportEventParticipant[] = [];
@@ -350,7 +384,25 @@ export class InMemorySportEvents {
         && (filters.startsFrom === undefined || row.startDate >= filters.startsFrom)
         && (filters.startsBefore === undefined || row.startDate < filters.startsBefore)
       )),
-      createMany: async (inputs: readonly SportEventCreate[]) => inputs.map((input) => this.addEvent(input)),
+      createMany: async (inputs: readonly SportEventCreate[]) => {
+        // A Season slot belongs to at most one event: its unique key, raised the same way.
+        const taken = new Set([...this.slotsByEvent.values()].flat().map((slot) => slot.id));
+        for (const slotId of inputs.flatMap((input) => input.seasonSlotIds ?? [])) {
+          if (taken.has(slotId)) {
+            throw Object.assign(new Error('Unique constraint failed'), {
+              code: 'P2002',
+              meta: { target: ['sport_league_season_id', 'sport_league_season_phase_slot_id'] },
+            });
+          }
+          taken.add(slotId);
+        }
+        return inputs.map(({ seasonSlotIds, ...input }) => {
+          const event = this.addEvent(input);
+          const slots = this.seasonSlots.filter((slot) => seasonSlotIds?.includes(slot.id));
+          if (slots.length > 0) this.slotsByEvent.set(event.id, slots);
+          return event;
+        });
+      },
       update: async (id, updates: SportEventUpdate, options) => {
         const row = this.events.find((candidate) => candidate.id === id) as SportEvent;
         for (const [key, value] of Object.entries(updates)) {
@@ -395,6 +447,7 @@ export class InMemorySportEvents {
         .sort((left, right) => left.tierNumber - right.tierNumber)
         .map((tier) => tier.label)])),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
+      findSlots: async (ids) => new Map(ids.map((id) => [id, [...(this.slotsByEvent.get(id) ?? [])]])),
       countBySportLeagues: async (ids) => count(ids, (id) => this.events.filter((row) => row.sportLeagueId === id).length),
       sportLeagueHasLoadedBracket: async (sportLeagueId) => this.matchRows.some((match) => (
         this.events.some((event) => event.id === match.sportEventId && event.sportLeagueId === sportLeagueId)
@@ -435,9 +488,10 @@ export class InMemorySportEvents {
         const league = this.sportLeagues.find((candidate) => candidate.id === row.sportLeagueId);
         if (row.status !== 'DRAFT' || row.startDate <= now || row.startDate > horizon) return [];
         if (!league?.isActive || league.selectedProviderMapping === null || league.autoReleaseDaysBeforeStart === null) return [];
+        // A test event is released by hand only (#2004).
+        if ((this.slotsByEvent.get(row.id) ?? []).some((slot) => slot.isTestData)) return [];
         return [{
           id: row.id, startDate: row.startDate,
-          providerSynced: this.externalIdAt(row.id, league.selectedProviderMapping.providerId) !== undefined,
           syncProviderId: league.selectedProviderMapping.providerId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
         }];
       }),

@@ -31,9 +31,11 @@ import {
 } from '../helpers';
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedTiers } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
+import { recordStatements, statementCounts } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
+import { linkTestSlot } from '../../support/test-slots';
 import { sportPlay } from '../../support/sport-play';
 
 // No mocks.
@@ -112,6 +114,10 @@ async function seedSportLeagueEvents(events: number) {
       field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
     }
     await seedTiers(event.id, field, 1);
+  }
+  // Each event covers a slot, the league's own event included, so the list reads every event's slots (#2004).
+  for (const event of await prisma.sportEvent.findMany({ where: { sportLeagueId: sportLeague.id }, select: { id: true, sportLeagueSeasonId: true, startDate: true } })) {
+    await linkTestSlot(prisma, event);
   }
   return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
@@ -235,8 +241,26 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       route: 'GET /api/v1/events/',
       seed: seedSportLeagueEvents,
       call: ({ sportLeague, rootAdmin }) => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin),
-      rowsShown: (response) => okBody(response, SportEventListResponseSchema).events.length,
+      rowsShown: (response) => {
+        const { events } = okBody(response, SportEventListResponseSchema);
+        // Every event lists the slot it covers, so a read that skipped one would show here.
+        for (const event of events) expect(event.slots).toHaveLength(1);
+        return events.length;
+      },
     });
+  });
+
+  it("GET a sport league's events: one event with its slot costs a fixed set of statements, its slots in two reads and its slot definitions in two more", async () => {
+    // The league's own event only.
+    const { sportLeague, rootAdmin } = await seedSportLeagueEvents(0);
+    const { result, statements } = await recordStatements(() => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin));
+    expect(okBody(result, SportEventListResponseSchema).events.map((each) => each.slots.length)).toEqual([1]);
+    // The listed slots are read once (#2004); the event read carries the slot definitions it
+    // covers (#2010) through the same tables, a second read #2089 folds into the first.
+    expect(statementCounts(statements).filter(([statement]) => statement.includes('sport_league_season_phase_slots') || statement.includes('sport_league_phase_slots'))).toEqual([
+      ['SELECT sport_league_phase_slots', 2],
+      ['SELECT sport_league_season_phase_slots', 2],
+    ]);
   });
 
   it('GET an event: the same statements for a field of 2 as for 20', async () => {

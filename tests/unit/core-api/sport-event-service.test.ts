@@ -29,6 +29,7 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
 import { fakeLogger } from '../../support/fake-logger';
+import { expectDefined } from '../../support/expect-defined';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
@@ -44,7 +45,7 @@ const NOW = new Date('2026-01-15T12:00:00.000Z');
 /** The leagues' notices among the jobs the store's writes carried, leaving out the boards' rebuilds. */
 const noticeJobs = (store: InMemorySportEvents) => store.backgroundJobs.filter((job) => job.type === BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS);
 
-function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, domainEvents?: RecordingDomainEvents, logger?: ReturnType<typeof fakeLogger>) {
+function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, domainEvents?: RecordingDomainEvents, logger?: ReturnType<typeof fakeLogger>, seasons?: (store: InMemorySportEvents) => ReturnType<InMemorySportEvents['seasonRepo']>) {
   const store = new InMemorySportEvents();
   const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
   const sport = store.addSport(sportName);
@@ -66,6 +67,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     sportEvents,
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
+    seasons: seasons?.(store) ?? store.seasonRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() }),
     bracket: new SportEventBracketService({ domainEvents: testDomainEvents(),
@@ -97,6 +99,27 @@ const MANUAL_INPUT = {
   startDate: new Date('2026-06-04T12:00:00.000Z'),
 };
 
+/** What `setup` gives that an event made by a test needs. */
+type EventContext = Pick<ReturnType<typeof setup>, 'store' | 'service' | 'sportLeague'>;
+
+/**
+ * An event with no Season slots yet, as a synced golf event has until slice 12 matches them: its
+ * dates are its own, and an edit can move them. Made through createEvent on a test slot, then
+ * unlinked from it; a round count below its league's default trims the rounds the create scheduled.
+ */
+async function slotlessEvent({ store, service, sportLeague }: EventContext, input: { name?: string; startDate?: Date; rounds?: number } = {}) {
+  const startDate = input.startDate ?? MANUAL_INPUT.startDate;
+  const created = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, startDate), name: input.name ?? MANUAL_INPUT.name });
+  const eventId = created.event.id;
+  store.slotsByEvent.delete(eventId);
+  const { rounds } = input;
+  if (rounds !== undefined) {
+    store.roundRows = store.roundRows.filter((round) => round.sportEventId !== eventId || round.roundNumber <= rounds);
+    await store.sportEventRepo().update(eventId, { rounds });
+  }
+  return { ...created, event: expectDefined(await store.sportEventRepo().findById(eventId)) };
+}
+
 /** The provider the slate tests import from: BALLDONTLIE's adapter id, the only provider with a row. */
 const FEED = 'balldontlie';
 
@@ -106,20 +129,25 @@ function feedIdOf(event: SportEvent): string | undefined {
 }
 
 describe('SportEventService.createEvent', () => {
-  it('creates a golf event with the manual identity, as a DRAFT, no provider data, four rounds and six tiers', async () => {
+  it('creates a test event on a test slot as a DRAFT with no provider ids, its league\'s four golf rounds, six tiers and the slot\'s dates', async () => {
     const { store, service, sportLeague } = setup();
+    const endsAt = new Date('2026-06-07T23:00:00.000Z');
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { endsAt });
 
-    const created = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
+    const created = await service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name });
 
     expect(created.event).toMatchObject({
       sport: Sport.GOLF,
       providerMappings: [],
       status: SportEventStatus.DRAFT,
       rounds: 4,
+      startDate: MANUAL_INPUT.startDate,
+      endDate: endsAt,
       sportLeagueId: sportLeague.id,
       sportLeagueSeasonId: IN_MEMORY_SEASON_ID,
       championshipYear: 2026,
     });
+    expect(created.slots.map((slot) => slot.id)).toEqual([seasonSlotId]);
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
     // The summary is read after the rounds and tiers exist, so its counts include them.
     expect(created.tierCount).toBe(6);
@@ -128,29 +156,85 @@ describe('SportEventService.createEvent', () => {
   it('puts each event in its sport league\'s current Season, the league\'s own, so a year later the same event goes in the new Season', async () => {
     const { store, service, sportLeague } = setup();
 
-    const first = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
+    const first = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
     store.seasonYears.set('season-2027', 2027);
     sportLeague.currentSeasonId = 'season-2027';
-    const second = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 2 });
+    const second = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
 
     expect([first.event.sportLeagueId, second.event.sportLeagueId]).toEqual([sportLeague.id, sportLeague.id]);
     expect([first.event.sportLeagueSeasonId, second.event.sportLeagueSeasonId]).toEqual([IN_MEMORY_SEASON_ID, 'season-2027']);
   });
 
-  it('refuses an event for a sport league with no current Season with 422 SPORT_LEAGUE_HAS_NO_SEASON, creating nothing', async () => {
+  it('refuses a slot the sync keeps with 422 SEASON_SLOT_NOT_TEST, creating nothing', async () => {
     const { store, service, sportLeague } = setup();
-    sportLeague.currentSeasonId = null;
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { isTestData: false, label: null });
 
-    await expect(service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_SEASON', statusCode: 422 });
+    await expect(service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_TEST', statusCode: 422 });
     expect(store.events).toHaveLength(0);
   });
 
-  it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
+  it('refuses a test slot outside its league\'s current Season with 422 SEASON_SLOT_NOT_CURRENT, creating nothing', async () => {
+    const { store, service, sportLeague } = setup();
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { sportLeagueSeasonId: 'season-2025' });
+
+    await expect(service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_CURRENT', statusCode: 422 });
+    expect(store.events).toHaveLength(0);
+  });
+
+  it('refuses a test slot that already has an event with 409 SEASON_SLOT_TAKEN, creating nothing more', async () => {
+    const { store, service, sportLeague } = setup();
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate);
+    await service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name });
+
+    await expect(service.createEvent({ seasonSlotId, name: 'Another Open' }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_TAKEN', statusCode: 409 });
+    expect(store.events).toHaveLength(1);
+  });
+
+  it('refuses the second of two creates racing for one slot with 409 SEASON_SLOT_TAKEN when the database\'s slot key raises', async () => {
+    // The other create wrote its slot row after this one read the slot as free.
+    const { store, service, sportLeague } = setup(Sport.GOLF, undefined, undefined, undefined, (world) => ({
+      findSlot: async (id) => {
+        const { sportLeagueId, sportLeagueSeasonId, ...slot } = expectDefined(world.seasonSlots.find((each) => each.id === id));
+        return { slot, sportLeagueId, sportLeagueSeasonId, sportEventId: null };
+      },
+    }));
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate);
+    store.slotsByEvent.set('racing-event', [expectDefined(store.seasonSlots.at(0))]);
+
+    await expect(service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_TAKEN', statusCode: 409 });
+  });
+
+  it('fails with 404 SEASON_SLOT_NOT_FOUND for an unknown slot', async () => {
     const { service } = setup();
 
-    await expect(service.createEvent({ sportLeagueId: 'missing', ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+    await expect(service.createEvent({ seasonSlotId: 'missing', name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('SportEventService.updateEvent on an event with Season slots', () => {
+  it('refuses a new start or end with 422 EVENT_DATES_FROM_SLOTS, since its dates are its slots\'', async () => {
+    const { store, service, sportLeague } = setup();
+    const { event } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
+
+    await expect(service.updateEvent(event.id, { startDate: new Date('2026-06-11T12:00:00.000Z') }, TELL))
+      .rejects.toMatchObject({ code: 'EVENT_DATES_FROM_SLOTS', statusCode: 422 });
+    await expect(service.updateEvent(event.id, { endDate: null }, TELL))
+      .rejects.toMatchObject({ code: 'EVENT_DATES_FROM_SLOTS', statusCode: 422 });
+    expect(expectDefined(await store.sportEventRepo().findById(event.id)).startDate).toEqual(MANUAL_INPUT.startDate);
+  });
+
+  it('still takes an edit that moves no date, such as its name', async () => {
+    const { store, service, sportLeague } = setup();
+    const { event } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
+
+    const edited = await service.updateEvent(event.id, { name: 'Renamed Open' }, TELL);
+
+    expect(edited.event.name).toBe('Renamed Open');
   });
 });
 
@@ -175,7 +259,7 @@ describe('SportEventService.importProviderSeason', () => {
   it('skips an event already linked to the provider event, and creates one whose name a hand-made event of the Season shares, telling events apart by feed id, never by name', async () => {
     const { store, service, sportLeague } = setup();
     store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-a' } });
-    await service.createEvent({ ...MANUAL_INPUT, sportLeagueId: sportLeague.id });
+    await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
 
     const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: FEED, providerEvents: slate });
 
@@ -184,8 +268,8 @@ describe('SportEventService.importProviderSeason', () => {
   });
 
   it('creates the provider\'s event beside a "Test- " event the test data loaded with its name and dates, and leaves the test event as it was (#1850)', async () => {
-    const { service, sportLeague, sportEvents } = setup();
-    const { event: testEvent } = await service.createEvent({ sportLeagueId: sportLeague.id, name: 'Test- Alpha Open', startDate: slate[0].startDate });
+    const { store, service, sportLeague, sportEvents } = setup();
+    const { event: testEvent } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, slate[0].startDate), name: 'Test- Alpha Open' });
     const before = await sportEvents.findById(testEvent.id);
 
     const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: FEED, providerEvents: [slate[0]] });
@@ -287,8 +371,8 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
   });
 
   it('never changes a "Test- " event, which no provider event is linked to, though the provider sends an event of its name (#1850)', async () => {
-    const { service, sportLeague, sportEvents } = setup();
-    const { event: testEvent } = await service.createEvent({ sportLeagueId: sportLeague.id, name: 'Test- Alpha Open', startDate: listed.startDate });
+    const { store, service, sportLeague, sportEvents } = setup();
+    const { event: testEvent } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, listed.startDate), name: 'Test- Alpha Open' });
     const before = await sportEvents.findById(testEvent.id);
 
     const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [{ ...listed, name: 'Test- Alpha Open', startDate: new Date(listed.startDate.getTime() + DAY) }] });
@@ -625,7 +709,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('schedules the added rounds a day apart when an admin raises the round count, so their live scores are kept', async () => {
     const { store, service, sportLeague } = setup();
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 3 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 3 });
 
     await service.updateEvent(event.id, { rounds: 4 }, TELL);
 
@@ -639,7 +723,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('moves every round by the same amount when an admin moves the start date, so automatic lifecycle starts it on the new date', async () => {
     const { store, service, sportLeague } = setup();
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 2 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 2 });
     // An irregular schedule the admin set: round 2 two days after round 1.
     await new SportEventRoundService({ rounds: store.roundRepo() }).reschedule(event.id, [
       { roundNumber: 2, scheduledDate: new Date(MANUAL_INPUT.startDate.getTime() + 2 * DAY) },
@@ -656,8 +740,8 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
   it('tells the leagues on a released event its previous start when an admin moves it, but not for a draft or an unchanged start', async () => {
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
-    const { event: draft } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, name: 'Released Open' });
+    const { event: draft } = await slotlessEvent({ store, service, sportLeague });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { name: 'Released Open' });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
     const moved = new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY);
 
@@ -680,7 +764,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
     const moved = new Date(MANUAL_INPUT.startDate.getTime() + DAY);
     for (const status of [SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
-      const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, name: `${status} Open` });
+      const { event } = await slotlessEvent({ store, service, sportLeague }, { name: `${status} Open` });
       await store.sportEventRepo().update(event.id, { status });
 
       // poolmaster-allow-query-in-loop: one in-memory edit per status under test
@@ -695,7 +779,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     const notice = recordingSportEventChangedNotice();
     notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
 
     await expect(service.updateEvent(released.id, { startDate: new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY) }, TELL))
@@ -708,7 +792,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
   it('moves a released event\'s start and its rounds without telling its leagues when the edit is a data correction', async () => {
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
     // Noon UTC, the date-only placeholder, filled in with the real first tee time that day.
     const realStart = new Date('2026-06-04T11:45:00.000Z');
@@ -723,7 +807,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
     const realStart = new Date('2026-06-04T11:45:00.000Z');
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, startDate: realStart, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { startDate: realStart, rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
 
     await expect(service.updateEvent(released.id, { startDate: new Date(realStart.getTime() + DAY) }, { tellMembers: false }))
@@ -735,7 +819,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('has the reminder sweep look again at the event\'s contests when its start moves, even quietly, but not when the start stays (#1170)', async () => {
     const { store, service, sportLeague, reminderRechecks } = setup();
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
 
     await service.updateEvent(released.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate }, TELL);
@@ -747,7 +831,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {
     const { store, service, sportLeague } = setup();
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 2 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 2 });
     const before = roundsOf(store, event.id);
 
     await service.updateEvent(event.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate, rounds: 2 }, TELL);
@@ -785,7 +869,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
   }
 
   async function releasedPlaceholderEvent({ store, service, sportLeague }: ReturnType<typeof setupHandlers>) {
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
+    const { event } = await slotlessEvent({ store, service, sportLeague });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
     return event;
   }
@@ -921,7 +1005,7 @@ describe('SportEventService — leaderboard rebuild (#1466)', () => {
     const domainEvents = new RecordingDomainEvents();
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice, domainEvents);
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
 
     await service.updateEvent(event.id, { name: 'Renamed Open' }, TELL);

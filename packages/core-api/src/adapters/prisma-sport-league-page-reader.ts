@@ -14,10 +14,11 @@ import type {
   SportLeaguePageRun,
   SportLeagueSyncFacts,
 } from '@poolmaster/shared/db';
-import type { SportLeaguePhaseDefinition, SportLeaguePosition, SportLeagueSeasonDetail, SportLeagueSeasonSlot, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
+import type { SportLeaguePhaseDefinition, SportLeaguePosition, SportLeagueSeasonDetail, SportLeagueSeasonPhaseSlot, SportLeagueSlotDefinition } from '@poolmaster/shared/domain';
 import { buildEventPagePath, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
+import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
 
 const RUN_SELECT = { id: true, kind: true, status: true, createdAt: true, startedAt: true, summary: true, changedCount: true } as const;
 const SLOT_SELECT = {
@@ -35,9 +36,8 @@ const SLOT_SELECT = {
 const EVENT_SELECT = {
   id: true, name: true, sportLeagueSeasonId: true, startDate: true, endDate: true, status: true, releasedAt: true,
   autoReleaseCheckedAt: true, autoReleaseOutcome: true, autoReleaseFailedChecks: true,
-  // The event's id at its league's sync provider (#2004): the mapping under the league's selected
-  // provider mapping, which is the league's own since the sync writes it under that one.
-  providerMappings: { where: { sportLeagueProviderMapping: { selectedBy: { isNot: null } } }, select: { id: true } },
+  // A test event is one on a test slot (#2004): its first such slot, if any, says so.
+  slots: { where: COVERS_TEST_SLOT, select: { id: true }, take: 1 },
 } as const;
 
 export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
@@ -148,18 +148,14 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       }),
       this.prisma.sportLeagueSeasonPhaseSlot.findMany({
         where: { sportLeagueId },
-        select: {
-          id: true, sportLeagueSeasonPhaseId: true, sportLeaguePhaseSlotId: true, startsAt: true, endsAt: true, status: true,
-          seriesFormat: true, seriesGames: true, pairing: true, isTestData: true, label: true,
-          definition: { select: { key: true, slotKind: true, weekNumber: true, name: true } },
-        },
+        select: { ...SEASON_SLOT_SELECT, sportLeagueSeasonPhaseId: true, eventSlot: { select: { sportEventId: true } } },
       }),
     ]);
     if (league === null) return null;
-    const slotsByPhase = new Map<string, SportLeagueSeasonSlot[]>();
-    for (const { sportLeagueSeasonPhaseId, sportLeaguePhaseSlotId, definition, ...slot } of slots) {
+    const slotsByPhase = new Map<string, SportLeagueSeasonPhaseSlot[]>();
+    for (const { sportLeagueSeasonPhaseId, eventSlot, ...slot } of slots) {
       const list = slotsByPhase.get(sportLeagueSeasonPhaseId) ?? [];
-      list.push({ ...slot, ...definition, slotDefinitionId: sportLeaguePhaseSlotId });
+      list.push({ ...toSeasonSlot(slot), sportEventId: eventSlot?.sportEventId ?? null });
       slotsByPhase.set(sportLeagueSeasonPhaseId, list);
     }
     return seasons.map(({ providerMappings, ...season }) => ({
@@ -315,10 +311,10 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
 type RunRow = Prisma.ProviderSyncRunGetPayload<{ select: typeof RUN_SELECT }>;
 type EventRow = Prisma.SportEventGetPayload<{ select: typeof EVENT_SELECT }>;
 
-function toPageEvent({ autoReleaseCheckedAt, autoReleaseOutcome, autoReleaseFailedChecks, providerMappings, ...event }: EventRow): SportLeaguePageEvent {
+function toPageEvent({ autoReleaseCheckedAt, autoReleaseOutcome, autoReleaseFailedChecks, slots, ...event }: EventRow): SportLeaguePageEvent {
   return {
     ...event,
-    providerSynced: providerMappings.length > 0,
+    isTestData: slots.length > 0,
     // The check constraint sets the time and the outcome together.
     lastReleaseCheck: autoReleaseCheckedAt === null || autoReleaseOutcome === null
       ? null

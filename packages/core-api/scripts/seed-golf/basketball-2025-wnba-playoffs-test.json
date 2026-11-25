@@ -127,6 +127,7 @@
       "events": [
         {
           "key": "wnba-playoffs-2025",
+          "slotKey": "FINAL",
           "name": "WNBA Playoffs",
           "startDate": "2025-09-14",
           "endDate": "2025-10-10",

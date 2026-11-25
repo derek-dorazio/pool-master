@@ -568,6 +568,7 @@
       "events": [
         {
           "key": "ncaam-tournament-2026",
+          "slotKey": "FINAL",
           "name": "NCAA Men's Tournament",
           "startDate": "2026-03-17",
           "endDate": "2026-04-06",
@@ -2541,6 +2542,7 @@
       "events": [
         {
           "key": "ncaaw-tournament-2026",
+          "slotKey": "FINAL",
           "name": "NCAA Women's Tournament",
           "startDate": "2026-03-18",
           "endDate": "2026-04-05",

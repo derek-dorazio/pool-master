@@ -19,7 +19,7 @@ import {
 } from '../helpers';
 import { recordStatements } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
-import { testSlotDefinitionId } from '../../support/event-edition';
+import { keyedSlotDefinitionId } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
@@ -75,7 +75,7 @@ async function tourWithEmptySlots(size: number): Promise<string> {
   const prisma = getPrisma();
   const sportLeagueId = await tour(await golfSportId());
   for (let index = 0; index < size; index += 1) {
-    await testSlotDefinitionId(prisma, sportLeagueId, `EMPTIED_CLASSIC_${index}`);
+    await keyedSlotDefinitionId(prisma, sportLeagueId, `EMPTIED_CLASSIC_${index}`);
   }
   return sportLeagueId;
 }
@@ -99,7 +99,7 @@ function remove(url: string, admin: TestUserResult) {
 }
 
 describe('deleting a sport league or a participant costs fixed statements (#1400)', () => {
-  it(`DELETE a sport league: the same 11 statements with ${SMALL} unplayed slot definitions as with ${LARGE}, and every one is gone`, async () => {
+  it(`DELETE a sport league: the same 13 statements with ${SMALL} unplayed slot definitions as with ${LARGE}, and every one is gone`, async () => {
     const admin = await createTestUser({ isRootAdmin: true });
     const small = await tourWithEmptySlots(SMALL);
     const large = await tourWithEmptySlots(LARGE);
@@ -218,9 +218,10 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
 
 /**
  * Find; then one transaction: begin, lock the sport league, its five uses (events, contest setups,
- * event page offers, cups, participants: one count each), the leagues that muted it, the sport
- * league, commit. Its slot definitions go with it by cascade (#2010: no series left to lock).
+ * event page offers, cups, participants: one count each), its Seasons' slots and phases (#2004: a
+ * Season's phases and slots restrict their definitions' delete), the leagues that muted it, the
+ * sport league, commit. Its slot definitions go with it by cascade (#2010: no series left to lock).
  */
-const SPORT_LEAGUE_DELETE_STATEMENTS = 11;
+const SPORT_LEAGUE_DELETE_STATEMENTS = 13;
 /** One transaction: begin, lock the participant, count their field rows, provider identities, the participant, commit. */
 const PARTICIPANT_DELETE_STATEMENTS = 6;
