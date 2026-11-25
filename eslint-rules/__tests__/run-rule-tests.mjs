@@ -1453,6 +1453,7 @@ ruleTester.run('no-clock-year-or-league-tables', noClockYearOrLeagueTables, {
     'const readers: Record<Sport, (id: string) => Reader> = {};',
     // A lookup by id.
     'const byId = new Map<string, League>();',
+    'const bySport = new Map<Sport, SportLeagueDto>();',
     // A file at or under its baseline passes.
     { code: 'const y = now.getUTCFullYear();', filename: 'legacy.ts', options: [{ baseline: { 'legacy.ts': 1 } }] },
   ],
@@ -1461,7 +1462,7 @@ ruleTester.run('no-clock-year-or-league-tables', noClockYearOrLeagueTables, {
     { code: 'const year = today.getFullYear() - 1;', errors: [{ messageId: 'clockYear' }] },
     { code: 'const months: Record<Sport, number> = {};', errors: [{ messageId: 'leagueTable' }] },
     { code: 'const windows: Readonly<Record<ProviderLeagueCode, string>> = {};', errors: [{ messageId: 'leagueTable' }] },
-    { code: 'const editions = new Map<SportLeagueCode, number>();', errors: [{ messageId: 'leagueTable' }] },
+    { code: 'const editions = new Map<SportLeagueCode, number>([[SportLeagueCode.NFL, 1]]);', errors: [{ messageId: 'leagueTable' }] },
     { code: 'type T = Record<NcaaTournamentLeague, { window: string }>;', errors: [{ messageId: 'leagueTable' }] },
     // A marker needs a reason, and one that excuses nothing is reported.
     { code: '// poolmaster-allow-clock-year\nconst y = d.getUTCFullYear();', errors: [{ messageId: 'missingReason' }] },

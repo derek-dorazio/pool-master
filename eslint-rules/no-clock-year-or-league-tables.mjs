@@ -12,9 +12,11 @@
  *
  * Reported:
  *   - a call to `.getFullYear()` or `.getUTCFullYear()`;
- *   - a `Record<K, V>` type, or `new Map<K, V>()`, whose key type `K` names a league, sport or
- *     Season (`Sport`, `SportLeagueCode`, `ProviderLeagueCode`, `SeasonKey`…), unless `V` is a
- *     function type: a table of behaviour is a dispatch, not a fact.
+ *   - a `Record<K, V>` type, or a `new Map<K, V>([...])` built from literal entries, whose key
+ *     type `K` names a league, sport or Season (`Sport`, `SportLeagueCode`, `ProviderLeagueCode`,
+ *     `SeasonKey`…), unless `V` is a function type: a table of behaviour is a dispatch, not a
+ *     fact. An empty `new Map<Sport, …>()` filled from API or database rows is an index over
+ *     data, not a table in code, and is not reported.
  *
  * Grandfathered files sit on a shrink-only count (`eslint-rules/clock-year-baseline.json`): a
  * file over its count reports every hit, so a listed file cannot add one, and
@@ -99,6 +101,7 @@ export default {
       },
       NewExpression(node) {
         if (node.callee.type !== 'Identifier' || node.callee.name !== 'Map') return;
+        if (node.arguments[0]?.type !== 'ArrayExpression') return;
         const params = (node.typeArguments ?? node.typeParameters)?.params;
         if (!isKeyedByLeague(params)) return;
         const key = keyNames(params[0]).join(' | ');
