@@ -2,10 +2,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { expect } from '@jest/globals';
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { sportLeagueRowDefaults } from '../../support/league-profiles';
-import { syncLeagueTo } from '../../support/league-sync';
-import { sportPlay } from '../../support/sport-play';
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema, type ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
@@ -176,13 +173,21 @@ async function linkProviderGolfEvents(from: Date, to: Date): Promise<number> {
   return events.length;
 }
 
-/** Puts the linked provider events' series in a new golf league synced from BALLDONTLIE's PGA league. */
-async function moveLinkedEventsToSyncedLeague(prisma: ReturnType<typeof getPrisma>): Promise<void> {
-  const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
-  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced golf ${randomUUID()}` } });
-  await syncLeagueTo(prisma, league.id, 'pga');
-  const events = await prisma.sportEvent.findMany({ where: { providerId: 'balldontlie', eventSeries: { sportLeague: { sport: { sport: Sport.GOLF } } } }, select: { eventSeriesId: true } });
-  await prisma.eventSeries.updateMany({ where: { id: { in: events.map((event) => event.eventSeriesId) } }, data: { sportLeagueId: league.id } });
+/**
+ * Makes the leagues of the linked provider events synced from the provider league each event is
+ * mapped under (#2086): an event's league is its Season's (#2004), and its provider mapping is kept
+ * under that league's mapping, so selecting that mapping syncs the league.
+ */
+async function syncLinkedEventsLeagues(prisma: ReturnType<typeof getPrisma>): Promise<void> {
+  const mappings = await prisma.sportEventProviderMapping.findMany({
+    where: { provider: { code: ProviderCode.BALLDONTLIE }, sportEvent: { sportLeagueSeason: { sportLeague: { sport: { sport: Sport.GOLF } } } } },
+    distinct: ['sportLeagueProviderMappingId'],
+    select: { sportLeagueProviderMapping: { select: { id: true, sportLeagueId: true } } },
+  });
+  for (const { sportLeagueProviderMapping: mapping } of mappings) {
+    // poolmaster-allow-query-in-loop: test setup, once per league the linked events are in.
+    await prisma.sportLeague.update({ where: { id: mapping.sportLeagueId }, data: { selectedProviderMappingId: mapping.id, isActive: true } });
+  }
 }
 
 const SYNC_RUN_WAIT_MS = 10_000;
@@ -731,9 +736,9 @@ describe('mock contest feed provider event-first verification', () => {
 
     const linked = await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
     expect(linked).toBeGreaterThan(0);
-    // The field sync reads only synced leagues' events (#2086): the linked events' series join a
-    // league of their own, synced from the provider's PGA league.
-    await moveLinkedEventsToSyncedLeague(prisma);
+    // The field sync reads only synced leagues' events (#2086): the linked events' leagues are
+    // synced from the provider league their events are mapped under.
+    await syncLinkedEventsLeagues(prisma);
 
     const eligibleEvents = await eventReader.listEventsForFeed({
       sport: Sport.GOLF,
