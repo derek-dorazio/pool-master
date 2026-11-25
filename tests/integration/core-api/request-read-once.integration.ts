@@ -74,6 +74,11 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_rounds', 1],
   ['SELECT sport_event_slots', 1], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_events', 1],
+  // The event covers a test slot, as every event an admin scores does (#2074): its slot, the slot's
+  // definition and phase are read once each.
+  ['SELECT sport_league_phase_slots', 1],
+  ['SELECT sport_league_phases', 1],
+  ['SELECT sport_league_season_phase_slots', 1],
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
   ['SELECT sports', 1], // a sport is read through its event's Season and league since #2042 (#2089)
