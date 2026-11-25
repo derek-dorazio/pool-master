@@ -46,6 +46,8 @@ async function buildApp(role: LeagueRole = LeagueRole.COMMISSIONER) {
   app.post('/leagues/:id/tools', { preHandler: requireCommissioner(memberships) }, queueOne);
   app.post('/leagues/:id/admin-tools', { onRequest: requireRootAdmin, preHandler: requireCommissioner(memberships) }, queueOne);
   app.post('/leagues/:id/picks', { preHandler: requireMemberOfLeague(memberships, leagueFromPath) }, queueOne);
+  // A public route (no one signed in), here only to show what queueing a job from one does.
+  app.get('/api/v1/contest-config-templates', queueOne);
   await app.ready();
   return { app, jobs };
 }
@@ -85,6 +87,18 @@ describe('request job start', () => {
   it('records SYSTEM with no person for upkeep a member\'s own request queues', async () => {
     await expect(startOf(`/leagues/${LEAGUE_ID}/picks`, bearer('member-1', false), LeagueRole.MEMBER))
       .resolves.toEqual({ trigger: JobTrigger.SYSTEM, startedByUserId: undefined });
+  });
+
+  it('refuses to queue a job from a request with no one signed in, since nothing says what started it, and writes no job', async () => {
+    const { app, jobs } = await buildApp();
+    try {
+      const response = await app.inject({ method: 'GET', url: '/api/v1/contest-config-templates' });
+
+      expect(response.statusCode).toBe(500);
+      expect(jobs.rows).toHaveLength(0);
+    } finally {
+      await app.close();
+    }
   });
 
   it('keeps the stronger role whichever gate says so first', () => {

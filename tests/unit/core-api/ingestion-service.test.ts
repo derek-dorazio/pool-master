@@ -6,11 +6,12 @@ import {
   SportEventNotSyncedError,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import { Sport } from '../../../packages/shared/domain';
+import { JobTrigger, ProviderCode, ProviderSyncKind, ProviderSyncRunStatus, Sport } from '../../../packages/shared/domain';
 import { fakeSportEventRepo } from '../../support/repo-fakes';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { stubInstance } from '../../support/stub-instance';
@@ -134,6 +135,30 @@ describe('IngestionService manual sync submission', () => {
       ['FIELD', 'COMPLETED'],
     ]);
     expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ status: 'SUCCEEDED', attempts: 1 })]);
+  });
+
+  it('fails a submitted run whose kind no event feed serves, an events sync, without calling the provider, and runs the rest', async () => {
+    const syncRuns = inMemorySyncRuns();
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
+    const service = new IngestionService({
+      ...ports({ syncRuns }),
+      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })),
+      scheduler,
+      logger: fakeLogger(),
+    });
+    const eventsRun = await syncRuns.create({
+      providerCode: ProviderCode.BALLDONTLIE, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.ADMIN,
+      sportLeagueId: null, sportEventId: null, backgroundJobId: null, status: ProviderSyncRunStatus.SUBMITTED,
+      startedAt: null, completedAt: null, ...syncRunOutcome(),
+    });
+
+    await service.runManualEventSync(
+      { syncRunIds: [eventsRun.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'open-2026' },
+      { attempt: 1, jobId: 'job-1' },
+    );
+
+    expect(scheduler.runEventSync).not.toHaveBeenCalled();
+    expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, summary: expect.stringContaining('Unsupported event sync kind: EVENTS') });
   });
 
   describe('a root admin\'s sync of one event, by its own id (#2004)', () => {

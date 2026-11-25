@@ -406,3 +406,61 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
     expect(logger.error).toHaveBeenCalledWith({ action: 'lockedSweep.failed', data: { lockKey: 'event-lifecycle-sweep', error: 'db down' } }, 'The event lifecycle sweep failed');
   });
 });
+
+describe('EventLifecycleScheduler and the order and reach of its reads', () => {
+  const lifecycle = () => ({
+    activateContestsPastCutoff: jest.fn().mockResolvedValue(0),
+    followPostponedStart: jest.fn().mockResolvedValue(0),
+    applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
+  });
+
+  it('starts an event at its earliest round and completes it at its latest round end, however the rounds are stored', async () => {
+    // Stored earliest start first, and latest end first: the opposite of what the other tests store.
+    const { sportEvents, rounds } = storeWith([
+      {
+        event: { id: 'evt-start', status: 'SCHEDULED', startDate: new Date('2026-06-05T00:00:00.000Z') },
+        rounds: [
+          { scheduledDate: new Date('2026-06-01T12:00:00.000Z'), scheduledEndAt: null },
+          { scheduledDate: new Date('2026-06-02T12:00:00.000Z'), scheduledEndAt: null },
+        ],
+      },
+      {
+        event: { id: 'evt-end', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') },
+        rounds: [
+          { scheduledDate: new Date('2026-06-01T00:00:00.000Z'), scheduledEndAt: new Date('2026-06-02T20:00:00.000Z') },
+          { scheduledDate: new Date('2026-06-02T00:00:00.000Z'), scheduledEndAt: new Date('2026-06-01T20:00:00.000Z') },
+        ],
+      },
+    ]);
+    const eventLifecycleService = lifecycle();
+    const scheduler = new EventLifecycleScheduler({
+      sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-02T13:00:00.000Z'),
+    });
+
+    await scheduler.runSweep();
+
+    // Due to start since 06-01 12:00; not due to complete until 06-02 20:00, the later of its ends.
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledTimes(1);
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: 'evt-start', toStatus: 'IN_PROGRESS' }));
+  });
+
+  it('reads an event the round read leaves out as having no rounds, so it starts on its own start date', async () => {
+    const { sportEvents } = storeWith([
+      { event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z') } },
+    ]);
+    const eventLifecycleService = lifecycle();
+    const scheduler = new EventLifecycleScheduler({
+      sportEvents,
+      rounds: { findBySportEvents: () => Promise.resolve(new Map()) },
+      eventLifecycleService,
+      jobLock: heldHere(),
+      logger: fakeLogger(),
+      now: () => new Date('2026-06-01T00:00:01.000Z'),
+    });
+
+    await scheduler.runSweep();
+
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: 'evt-1', toStatus: 'IN_PROGRESS' }));
+  });
+
+});
