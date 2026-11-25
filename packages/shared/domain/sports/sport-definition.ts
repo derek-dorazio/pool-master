@@ -44,12 +44,8 @@ export interface SportDefinition {
   defaultRounds: number;
   /** Selection types a commissioner may choose for this sport. Each has an engine. */
   selectionTypes: readonly [SelectionType, ...SelectionType[]];
-  /**
-   * Scoring definitions a contest in this sport may rank by; the first is the default. Empty while
-   * the sport's family has no scoring definition yet (head to head until #699): its events can be
-   * set up and released, but contest management refuses a contest on them.
-   */
-  scoringDefinitions: readonly ParticipantScoringDefinitionId[];
+  /** Scoring definitions a contest in this sport may rank by; the first is the default. */
+  scoringDefinitions: readonly [ParticipantScoringDefinitionId, ...ParticipantScoringDefinitionId[]];
   /**
    * The periods a game is played in, for a sport that plays matches and keeps a score at the end
    * of each one (American football's quarters). A sport league may play another layout

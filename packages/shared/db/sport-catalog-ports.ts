@@ -347,8 +347,14 @@ export interface SportEventRepository {
    * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED`,
    * `IN_PROGRESS` or `POSTPONED`, whose contests follow its start (#1792). Unordered.
    */
-  findAutoLifecycleCandidates(): Promise<SportEvent[]>;
+  findAutoLifecycleCandidates(): Promise<AutoLifecycleCandidate[]>;
 }
+
+/** A status the lifecycle scheduler moves an event on from. */
+export type AutoLifecycleStatus = typeof SportEventStatus.SCHEDULED | typeof SportEventStatus.IN_PROGRESS | typeof SportEventStatus.POSTPONED;
+
+/** An event the lifecycle scheduler may move on, its status narrowed so the scheduler's switch is checked whole. */
+export type AutoLifecycleCandidate = SportEvent & { status: AutoLifecycleStatus };
 
 export interface SportEventRoundSchedule {
   roundNumber: number;
