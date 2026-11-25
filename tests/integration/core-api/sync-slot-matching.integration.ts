@@ -213,4 +213,21 @@ describe('The events sync reads only a league its provider reads (#2005)', () =>
     expect(requests).toEqual([]);
     expect(await eventsWithSlots(league.id)).toEqual([]);
   });
+  it('resolves the league\'s open PROVIDER_LEAGUE_UNKNOWN finding when a later events sync of it completes', async () => {
+    const prisma = getPrisma();
+    const { league } = await footballLeague([{ code: 'REG:5' }]);
+    const provider = await prisma.provider.findFirstOrThrow({ where: { code: 'BALLDONTLIE' }, select: { id: true } });
+    const registry = new ProviderRegistry();
+    registry.register(new BalldontlieAdapter({
+      connection: () => ({ baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 600 }),
+      apiKey: 'test-api-key',
+      leagues: BALLDONTLIE_TEST_LEAGUES.filter((row) => row.code === 'pga'),
+    }));
+    await expect(runSync(buildSync(new ProviderSeasonScheduleReader(getAppPrisma(), registry)), league.id)).rejects.toMatchObject({ name: 'PermanentBackgroundJobError' });
+
+    await runSync(buildSync({ events: [] }), league.id);
+
+    expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.providerId, finding.status]))
+      .toEqual([[ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, provider.id, ProviderSyncFindingStatus.RESOLVED]]);
+  });
 });

@@ -49,7 +49,7 @@ test('every seeded event has a stable tour-season id, falls in its season, and c
       assert.equal(new Date(summary.startsAt).getUTCFullYear(), year);
       assert.ok(summary.endsAt && summary.endsAt > summary.startsAt);
       const event = store.getEvent(scenarioId, summary.eventId);
-      assert.equal(event.metadata?.tour, scenarioId.startsWith('lpga') ? 'LPGA Tour' : 'PGA TOUR');
+      assert.equal(event.metadata?.externalEventId, summary.eventId);
       assert.equal(event.status, 'scheduled');
     }
   }

@@ -88,7 +88,7 @@ function toPool(file: TourPlayersFile, source: string): readonly GolfPoolPlayerR
   });
 }
 
-function toEvent(tour: string, event: TourSeedEvent, source: string): ContestFeedEventRecord {
+function toEvent(event: TourSeedEvent, source: string): ContestFeedEventRecord {
   if (!isoDatePattern.test(event.startDate) || !isoDatePattern.test(event.endDate) || event.endDate < event.startDate) {
     throw new Error(`${source}: event ${event.eventId} needs startDate <= endDate as YYYY-MM-DD`);
   }
@@ -118,7 +118,6 @@ function toEvent(tour: string, event: TourSeedEvent, source: string): ContestFee
     metadata: {
       officialName: event.name,
       eventType: event.eventType ?? 'stroke_play',
-      tour,
       externalEventId: event.eventId,
       notes,
     },
@@ -159,7 +158,7 @@ export function loadTourSeedScenarios(scenarioDir: string): readonly TourSeedSce
           throw new Error(`${name}: duplicate eventId ${event.eventId}`);
         }
         eventIds.add(event.eventId);
-        return toEvent(file.tour, event, name);
+        return toEvent(event, name);
       });
       const scenario: ContestFeedScenarioRecord = {
         scenarioId: `${file.tourId}-${file.season}`,

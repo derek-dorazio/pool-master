@@ -318,9 +318,6 @@
                                   "eventType": {
                                     "type": "string"
                                   },
-                                  "tour": {
-                                    "type": "string"
-                                  },
                                   "externalEventId": {
                                     "type": "string"
                                   },
@@ -1023,9 +1020,6 @@
                               "type": "string"
                             },
                             "eventType": {
-                              "type": "string"
-                            },
-                            "tour": {
                               "type": "string"
                             },
                             "externalEventId": {
