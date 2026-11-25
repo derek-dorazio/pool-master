@@ -1,3 +1,4 @@
+import { LeagueMembershipStatus, LeagueRole, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import {
@@ -151,14 +152,14 @@ function useLeagueContextQuery(options: {
   const isRootAdmin = auth.user?.isRootAdmin === true;
 
   const viewer = useMemo<LeagueViewer>(() => {
-    const isMember = membership?.status === 'ACTIVE';
+    const isMember = membership?.status === LeagueMembershipStatus.ACTIVE;
     return {
       isRootAdmin,
       isMember,
-      isCommissioner: isMember && membership.role === 'COMMISSIONER',
+      isCommissioner: isMember && membership.role === LeagueRole.COMMISSIONER,
       membership,
       squadMembership,
-      mySquadId: squadMembership?.status === 'ACTIVE' ? squadMembership.squadId : null,
+      mySquadId: squadMembership?.status === SquadMembershipStatus.ACTIVE ? squadMembership.squadId : null,
     };
   }, [isRootAdmin, membership, squadMembership]);
 

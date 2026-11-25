@@ -147,7 +147,7 @@ const SPORT_SCENES: Record<Sport, SportScene> = {
       </>
     ),
   },
-  AMERICAN_FOOTBALL: {
+  FOOTBALL: {
     background: sky,
     label: 'A football and goalposts',
     art: (

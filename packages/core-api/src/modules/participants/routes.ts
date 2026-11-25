@@ -14,12 +14,13 @@ import {
   PrismaParticipantProviderMappingRepository,
 } from '../../adapters';
 import { ParticipantService } from './service';
+import type { DomainEventsModuleOptions } from '../domain-events';
 import { createParticipantHandlers } from './handler';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import { getAppPrisma } from '../../core/prisma-context';
 import { eventFieldCache } from '../events/wiring';
 
-export function participantsModule(fastify: FastifyInstance): void {
+export function participantsModule(fastify: FastifyInstance, opts: DomainEventsModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -29,6 +30,7 @@ export function participantsModule(fastify: FastifyInstance): void {
   const participantService = new ParticipantService(
     participantRepo,
     providerMappingRepo,
+    opts.domainEvents,
     fastify.log.child({ module: 'participants.service' }),
   );
 
@@ -50,6 +52,7 @@ export function participantsModule(fastify: FastifyInstance): void {
       summary: 'List participants',
       description:
         'The participant catalog, narrowed by text and filters and never paged. `sportLeagueId` or a `q` of at least 3 characters is required, so the list never reads every sport league\'s catalog: 400 SEARCH_TERM_REQUIRED otherwise. '
+        + 'It includes test participants (#2096), which no roster lists: the test-data loader finds its earlier ones here by name. '
         + 'Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise): a league reads an event\'s field by the event, never the catalog (#1348).',
       operationId: 'listParticipants',
       querystring: schemaRef('ParticipantListQuery'),
@@ -101,12 +104,16 @@ export function participantsModule(fastify: FastifyInstance): void {
       tags: ['Participants'],
       summary: 'Create a participant',
       description:
-        'Creates a participant in the shared participant catalog. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
+        'Creates a participant of a sport league. A provider-synced league takes one with its sync provider\'s feed id, written with its provider mapping in one transaction, or a test participant (isTestData) for a test event\'s field; anything else is 409 PARTICIPANT_FEED_ID_REQUIRED, since the sync would make a second participant beside an unmapped one. A league with no feed takes one without a feed id. '
+        + '404 SPORT_LEAGUE_NOT_FOUND; 409 PARTICIPANT_FEED_ID_TAKEN; 422 TEST_PARTICIPANT_FEED_ID for a test participant given a feed id, SPORT_LEAGUE_NOT_SYNCED for a feed id in a league with no feed. Root admin only (403 ROOT_ADMIN_ACCESS_REQUIRED otherwise).',
       operationId: 'createParticipant',
       body: schemaRef('CreateParticipantRequest'),
       response: {
         201: schemaRef('ParticipantResponse'),
         403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
+        422: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.createParticipant,
@@ -173,7 +180,7 @@ export function participantsModule(fastify: FastifyInstance): void {
     schema: {
       tags: ['Participants'],
       summary: 'Bind a provider identity to a participant',
-      description: 'How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider\'s identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. Root admin only.',
+      description: 'How a competitor the provider could not match (listUnmappedProviderParticipants) gets their synced data: binds the provider\'s identifier to this participant with MANUAL confidence. An identity already bound to another participant moves here. 422 TEST_PARTICIPANT_FEED_ID for a test participant, which never has one. Root admin only.',
       operationId: 'bindParticipantProviderMapping',
       params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
       body: schemaRef('BindParticipantProviderMappingRequest'),
@@ -182,6 +189,7 @@ export function participantsModule(fastify: FastifyInstance): void {
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
         404: schemaRef('ErrorEnvelope'),
+        422: schemaRef('ErrorEnvelope'),
       },
     },
     handler: handler.bindProviderMapping,

@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -6,9 +7,7 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -32,14 +31,14 @@ import {
   LeagueMembershipResponseSchema,
   SelectionStateResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A golf contest over two tournaments end to end over HTTP (#713). An admin builds two one-round
 // tournaments on a tour of their own, each with the same seven golfers, ranked so the default
@@ -89,13 +88,12 @@ async function cleanup(): Promise<void> {
   const leagueIds = [...created.sportLeagueIds];
   if (leagueIds.length) {
     await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
 }
 
@@ -107,23 +105,19 @@ afterAll(async () => {
 
 /**
  * Builds the two tournaments and the contest over both, with each team's roster submitted for each
- * tournament. `tag` keeps each test's tour, golfers and league apart. With `seriesTemplate` the
- * contest is made from a template of the tour's own covering both tournaments' series, as the
- * PGA TOUR's majors pool covers the majors, and the second tournament joins it on its release
- * rather than by the commissioner adding it.
+ * tournament. `tag` keeps each test's tour, golfers and league apart.
  */
 async function buildTwoTournamentContest(
   tag: string,
-  { memberSkipsOpen = false, seriesTemplate = false }: { memberSkipsOpen?: boolean; seriesTemplate?: boolean } = {},
+  { memberSkipsOpen = false }: { memberSkipsOpen?: boolean } = {},
 ) {
   const admin = await buildRegisteredUser({ displayName: 'Tour Director' });
   await promoteToRootAdmin(admin);
   const a = admin.client;
 
   // --- A tour, its two tournaments, and the same seven golfers in each -----------------------
-  const tour = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
-  expect(tour.response?.status).toBe(201);
-  const sportLeagueId = expectDefined(tour.data).sportLeague.id;
+  const tour = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.GOLF, name: `Two Majors Tour ${RUN}${tag}` });
+  const sportLeagueId = tour.id;
   created.sportLeagueIds.add(sportLeagueId);
   await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'PGA TOUR', toSportLeagueId: sportLeagueId });
 
@@ -136,9 +130,9 @@ async function buildTwoTournamentContest(
   }
 
   const buildTournament = async (name: string, startDate: string) => {
-    const event = await createEvent({
+    const event = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${name} ${RUN}${tag}`, startDate, rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${name} ${RUN}${tag}`, startDate, rounds: 1, autoLifecycleEnabled: false },
     });
     expect(event.response?.status).toBe(201);
     const eventId = expectDefined(event.data).event.id;
@@ -168,28 +162,10 @@ async function buildTwoTournamentContest(
 
   const templates = expectDefined((await listContestConfigTemplates({
     client: commissioner.client,
-    query: { sport: Sport.GOLF, sportLeagueId, active: true },
+    query: { sportLeagueId, active: true },
   })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
   const defaultTemplate = expectDefined(templates.find((template) => template.isDefault), 'the golf default template');
-  // Test data, as an admin's migration seeds the majors pool: the tour's own template naming the
-  // series each tournament takes the name of.
-  const tieredTemplate = seriesTemplate
-    ? await getFunctionalPrisma().contestConfigTemplate.create({
-      data: {
-        sport: Sport.GOLF,
-        sportLeagueId,
-        contestFormat: ContestFormat.ROSTER,
-        selectionType: SelectionType.TIERED,
-        templateKey: `two-majors-${RUN}${tag}`.replaceAll(' ', '-'),
-        name: `Two Majors pool ${RUN}${tag}`,
-        description: 'Both tournaments, each joining on its release',
-        sortOrder: 99,
-        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 },
-        eventSeriesNames: [`Harbour Open ${RUN}${tag}`, `Lakeside Classic ${RUN}${tag}`],
-      },
-    })
-    : defaultTemplate;
 
   const contest = await createContest({
     client: commissioner.client,
@@ -199,23 +175,21 @@ async function buildTwoTournamentContest(
       sportEventIds: [open.eventId],
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
-      templateId: tieredTemplate.id,
+      templateId: defaultTemplate.id,
     },
   });
   expect(contest.response?.status).toBe(201);
   const contestId = expectDefined(contest.data).contest.id;
 
   const classic = await buildTournament('Lakeside Classic', '2099-05-14T12:00:00.000Z');
-  if (!seriesTemplate) {
-    // The request names the later tournament first; the contest keeps its events in start order.
-    const replaced = await setContestSportEvents({
-      client: commissioner.client,
-      path: { id: league.id, contestId },
-      body: { sportEventIds: [classic.eventId, open.eventId] },
-    });
-    expect(replaced.response?.status).toBe(200);
-    expect(expectMatchesSchema(ContestManagementResponseSchema, replaced.data).contest.sportEvents.map((event) => event.sportEventId)).toEqual([open.eventId, classic.eventId]);
-  }
+  // The request names the later tournament first; the contest keeps its events in start order.
+  const replaced = await setContestSportEvents({
+    client: commissioner.client,
+    path: { id: league.id, contestId },
+    body: { sportEventIds: [classic.eventId, open.eventId] },
+  });
+  expect(replaced.response?.status).toBe(200);
+  expect(expectMatchesSchema(ContestManagementResponseSchema, replaced.data).contest.sportEvents.map((event) => event.sportEventId)).toEqual([open.eventId, classic.eventId]);
   expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
   const read = expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest;
   expect(read.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[open.eventId, 1], [classic.eventId, 2]]);
@@ -377,23 +351,6 @@ describe('SDK Functional: a golf contest over two tournaments (#713)', () => {
       [memberEntryId]: { totalScore: 32, displayPosition: '2', events: { [open.eventId]: [32, '2'] } },
     });
     expect(standingsOf(live.entries)).toEqual(standingsOf(settled.entries));
-  }, 60_000);
-
-  // #714: a majors pool's later majors join it as each is released, with no commissioner step.
-  it('adds the second tournament to a contest made from a template covering its series as the tournament is released, and settles over both', async () => {
-    const { open, classic, contestId, member, commissionerEntryId, memberEntryId, playTournament } =
-      await buildTwoTournamentContest(' template', { seriesTemplate: true });
-
-    const read = expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest;
-    expect(read.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[open.eventId, 1], [classic.eventId, 2]]);
-
-    await playTournament(open.eventId, OPEN_SCORES);
-    await playTournament(classic.eventId, CLASSIC_SCORES);
-
-    expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
-    const totals = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestId } });
-    expect(Object.fromEntries(totals.map((standing) => [standing.contestEntryId, standing.totalScore])))
-      .toEqual({ [memberEntryId]: -6, [commissionerEntryId]: -3 });
   }, 60_000);
 
   it('completes the contest on the first tournament alone when the second is called off after scores were posted, the second adding nothing to any total', async () => {

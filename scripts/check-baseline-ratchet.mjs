@@ -25,7 +25,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-/** A count per web app file: the text-style, titled-tile, card-corner, page-sections and button-style baselines. */
+/** A count per key: the text-style, titled-tile, card-corner, page-sections and button-style baselines per file, and the retired names per name. */
 function countsPerFile(text) {
   return new Map(Object.entries(JSON.parse(text)).filter(([key]) => !key.startsWith('$')));
 }
@@ -36,10 +36,50 @@ function countsPerPair(text) {
   return new Map(pairs.map((pair) => [[...pair.files].sort().join(' + '), pair.count]));
 }
 
-/** A grandfathered-files list: each quoted path on a line of its own counts one, in either quote. */
+/** A grandfathered list (files, or the frozen registry's entries): each quoted string on a line of its own counts one, in either quote. */
 function listedFiles(text) {
   return new Map([...text.matchAll(/^\s*(['"])([^'"]+)\1,?\s*$/gm)].map((match) => [match[2], 1]));
 }
+
+/**
+ * A coverage floor config (#2103), read so that going down in coverage is a raise: each floor is
+ * `<name>:lines` and `<name>:branches`, each exception `<name>:<file>:lines` and
+ * `<name>:<file>:branches`, valued 100 minus the percentage held. A lowered floor, a lowered
+ * exception and a new exception all count up and are refused; a raised or deleted exception
+ * counts down.
+ */
+function coverageFloors(text) {
+  const { floors = [] } = JSON.parse(text);
+  const entries = new Map();
+  // Lines and branches are separate keys, so lowering one and raising the other is still a raise.
+  const put = (key, held) => {
+    for (const metric of ['lines', 'branches']) entries.set(`${key}:${metric}`, 100 - held[metric]);
+  };
+  for (const floor of floors) {
+    put(floor.name, floor);
+    for (const [file, exception] of Object.entries(floor.exceptions ?? {})) {
+      put(`${floor.name}:${file}`, { lines: exception.lines ?? floor.lines, branches: exception.branches ?? floor.branches });
+    }
+  }
+  return entries;
+}
+
+/**
+ * The web app's shared-domain import baseline (#2107): a count per disallowed name, and each allow
+ * pattern as an entry of 1, so a new pattern (which would let a name through) counts as a raise.
+ */
+function webSharedImports(text) {
+  const entries = countsPerFile(text);
+  for (const { pattern } of JSON.parse(text).$allowed ?? []) entries.set(`$allowed:${pattern}`, 1);
+  return entries;
+}
+
+/** A list of entries each standing for itself, valued by its owner or reason (#2112): each key counts one, so a new one is a raise. */
+function listedEntries(text) {
+  return new Map(Object.keys(JSON.parse(text)).filter((key) => !key.startsWith('$')).map((key) => [key, 1]));
+}
+
+export { coverageFloors, listedEntries };
 
 /** Every ratcheted baseline and how its entries are read. A new baseline is added here. */
 export const BASELINES = [
@@ -49,7 +89,22 @@ export const BASELINES = [
   { file: 'scripts/duplicate-baseline.json', read: countsPerPair },
   { file: 'eslint-rules/query-states-baseline.mjs', read: listedFiles },
   { file: 'eslint-rules/button-style-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/clock-year-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/enum-string-literal-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/dto-shape-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/local-enum-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/positional-pick-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/raw-sql-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/name-match-baseline.json', read: countsPerFile },
   { file: 'scripts/page-sections-baseline.json', read: countsPerFile },
+  { file: 'scripts/retired-names.json', read: countsPerFile },
+  { file: 'scripts/sport-registry-frozen.json', read: listedFiles },
+  { file: 'scripts/coverage-floors.json', read: coverageFloors },
+  { file: 'scripts/coverage-floors-merged.json', read: coverageFloors },
+  { file: 'scripts/coverage-floors-web.json', read: coverageFloors },
+  { file: 'scripts/web-shared-imports-baseline.json', read: webSharedImports },
+  { file: 'scripts/dead-exports.json', read: countsPerFile },
+  { file: 'scripts/schema-shapes.json', read: listedEntries },
 ];
 
 /**

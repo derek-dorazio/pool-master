@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -6,9 +7,7 @@ import {
   autoAssignEventTiers,
   cancelEventMatch,
   createContest,
-  createEvent,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -41,7 +40,7 @@ import {
   SurvivorLeaderboardResponseSchema,
   type SurvivorLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -52,7 +51,8 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A two-week survivor season end to end over HTTP (#719). An admin releases two weeks, each four
 // unlinked basketball games between the same eight teams. A commissioner runs a survivor contest
@@ -81,8 +81,6 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -92,13 +90,12 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -113,9 +110,9 @@ type Side = 'home' | 'away';
 
 /** A released week on `sportLeagueId`: four unlinked games, Duke-Vermont, Houston-Texas, Purdue-Akron, Baylor-Colgate. */
 async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly string[], name: string, startDate: string, run = RUN) {
-  const event = await createEvent({
+  const event = await createTestEvent({
     client: a,
-    body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${name} ${run}`, startDate, rounds: 1, autoLifecycleEnabled: false },
+    body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${name} ${run}`, startDate, rounds: 1, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);
@@ -124,7 +121,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   expect((await applyEventParticipantUpload({
     client: a,
     path: { eventId },
-    body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${run}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
+    body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${run}`, seedNumber: index + 1 })) },
   })).response?.status).toBe(200);
   expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
   expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -181,7 +178,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Survivor Director' });
@@ -189,8 +186,8 @@ describe('SDK Functional: a survivor season (#719)', () => {
     const a = admin.client;
 
     // --- Two released weeks of the same four games -----------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Survivor Conference ${RUN}` } });
-    const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Survivor Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {
@@ -332,14 +329,14 @@ describe('SDK Functional: a survivor season (#719)', () => {
     const db = getFunctionalPrisma();
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Survivor Cancel Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` } });
-    const sportLeagueId = expectDefined(conference.data, JSON.stringify(conference.error)).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Survivor Conference ${run}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {

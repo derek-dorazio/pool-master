@@ -3,14 +3,15 @@ import { expect } from '@jest/globals';
 import {
   IngestionService,
   type IngestionServiceDependencies,
-  SportEventSyncScopeError,
+  SportEventNotSyncedError,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import { Sport } from '../../../packages/shared/domain';
+import { JobTrigger, ProviderCode, ProviderSyncKind, ProviderSyncRunStatus, Sport } from '../../../packages/shared/domain';
 import { fakeSportEventRepo } from '../../support/repo-fakes';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { stubInstance } from '../../support/stub-instance';
@@ -40,7 +41,6 @@ describe('IngestionService manual sync submission', () => {
     const registry = registryWith(fakeSportDataProvider({
       providerId: 'balldontlie',
       providerName: 'Mock Contest Feed Provider',
-      sportsCovered: [Sport.GOLF],
       getEventDetails: jest.fn(),
     }));
     const scheduler = stubInstance(IngestionScheduler, {
@@ -50,6 +50,8 @@ describe('IngestionService manual sync submission', () => {
         sport: Sport.GOLF,
         eventExternalId: 'golf-open-championship-2026',
         status: 'COMPLETED',
+        startedAt: new Date(),
+        completedAt: new Date(),
         recordsProcessed: 1,
         errors: 0,
         errorLog: [],
@@ -58,8 +60,7 @@ describe('IngestionService manual sync submission', () => {
       }]),
     });
     const service = new IngestionService({
-      // pool-master-cgb — no local SportEvent row exists yet for this
-      // manual sync target, so the syncScope guard is a permissive no-op.
+      // No local SportEvent row exists yet for this manual sync target, so its runs name none.
       ...ports({ syncRuns }),
       registry,
       scheduler,
@@ -77,7 +78,6 @@ describe('IngestionService manual sync submission', () => {
     expect(result.eventId).toBe('golf-open-championship-2026');
     expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
     expect(syncRuns.rows).toEqual([expect.objectContaining({
-      sport: Sport.GOLF,
       providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       providerName: 'BALLDONTLIE',
       status: 'SUBMITTED',
@@ -103,7 +103,7 @@ describe('IngestionService manual sync submission', () => {
     const syncRuns = inMemorySyncRuns();
     const completed = {
       jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: Sport.GOLF, eventExternalId: 'open-2026',
-      status: 'COMPLETED', recordsProcessed: 1, errors: 0, errorLog: [], warnings: [], stats: {},
+      status: 'COMPLETED', startedAt: new Date(), completedAt: new Date(), recordsProcessed: 1, errors: 0, errorLog: [], warnings: [], stats: {},
     };
     // Already due again, so the one drain runs the deferred try too.
     const refusal = new ProviderRateLimitedError('balldontlie', new Date(Date.now() - 1_000), 'its circuit is open');
@@ -112,7 +112,7 @@ describe('IngestionService manual sync submission', () => {
     });
     const service = new IngestionService({
       ...ports({ syncRuns }),
-      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie', sportsCovered: [Sport.GOLF] })),
+      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })),
       scheduler,
       logger: fakeLogger(),
       syncOrchestrator: new SyncOrchestrator({ now: () => new Date() }),
@@ -139,63 +139,72 @@ describe('IngestionService manual sync submission', () => {
     expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ status: 'SUCCEEDED', attempts: 1 })]);
   });
 
-  describe('pool-master-cgb: manual sync-trigger syncScope guard', () => {
-    function buildManualSyncService(findByProviderRef: jest.Mock) {
+  it('fails a submitted run whose kind no event feed serves, an events sync, without calling the provider, and runs the rest', async () => {
+    const syncRuns = inMemorySyncRuns();
+    const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
+    const service = new IngestionService({
+      ...ports({ syncRuns }),
+      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })),
+      scheduler,
+      logger: fakeLogger(),
+    });
+    const eventsRun = await syncRuns.create({
+      providerCode: ProviderCode.BALLDONTLIE, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.ADMIN,
+      sportLeagueId: null, sportEventId: null, backgroundJobId: null, status: ProviderSyncRunStatus.SUBMITTED,
+      startedAt: null, completedAt: null, ...syncRunOutcome(),
+    });
+
+    await service.runManualEventSync(
+      { syncRunIds: [eventsRun.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'open-2026' },
+      { attempt: 1, jobId: 'job-1' },
+    );
+
+    expect(scheduler.runEventSync).not.toHaveBeenCalled();
+    expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, summary: expect.stringContaining('Unsupported event sync kind: EVENTS') });
+  });
+
+  describe('a root admin\'s sync of one event, by its own id (#2004)', () => {
+    function buildEventSyncService(findById: jest.Mock) {
       const registry = registryWith(fakeSportDataProvider({
         providerId: 'balldontlie',
         providerName: 'Mock Contest Feed Provider',
-        sportsCovered: [Sport.GOLF],
-      }));
+        }));
       const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
-      return new IngestionService({
-        ...ports({ sportEvents: fakeSportEventRepo({ findByProviderRef }) }),
+      const syncRuns = inMemorySyncRuns();
+      const service = new IngestionService({
+        ...ports({ syncRuns, sportEvents: fakeSportEventRepo({ findById, findByProviderRef: jest.fn().mockResolvedValue(null) }) }),
         registry,
         scheduler,
         logger: fakeLogger(),
       });
+      return { service, syncRuns };
     }
-
-    it('pool-master-cgb: rejects every feed when the target event has syncScope NONE', async () => {
-      const service = buildManualSyncService(
-        jest.fn().mockResolvedValue({ syncScope: 'NONE' }),
-      );
-
-      await expect(
-        service.syncEventData(
-          { sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'manual-event-1', feeds: ['EVENTLIVESCORES'] },
-          'admin-1',
-          'admin@example.com',
-        ),
-      ).rejects.toBeInstanceOf(SportEventSyncScopeError);
+    const event = (overrides: Record<string, unknown> = {}) => ({
+      id: 'event-1', sport: Sport.GOLF, syncProviderId: 'balldontlie',
+      providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'golf-open-2026' }],
+      ...overrides,
     });
 
-    it('pool-master-5h3: allows EVENTPARTICIPANTS (not only EVENTLIVESCORES) when syncScope is SCORES_ONLY', async () => {
-      // EVENTPARTICIPANTS (the field feed) is gated by syncScope != 'NONE':
-      // the admin's Load/Refresh field action depends on it for a linked
-      // (SCORES_ONLY) tournament. Only NONE (covered above) rejects a
-      // manual-sync feed outright.
-      const service = buildManualSyncService(
-        jest.fn().mockResolvedValue({ syncScope: 'SCORES_ONLY' }),
-      );
-      await expect(
-        service.syncEventData(
-          { sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'linked-event', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
-          'admin-1',
-          'admin@example.com',
-        ),
-      ).resolves.toBeDefined();
+    it('queues the sync for the id its league\'s provider has for the event', async () => {
+      const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event()));
+
+      const result = await service.syncSportEvent('event-1', ['EVENTPARTICIPANTS'], 'admin-1', 'admin@example.com');
+
+      expect(result).toMatchObject({ sport: Sport.GOLF, eventId: 'golf-open-2026', requestedFeeds: ['EVENTPARTICIPANTS'] });
+      expect(syncRuns.rows).toEqual([expect.objectContaining({ kind: 'FIELD', status: 'SUBMITTED' })]);
     });
 
-    it('pool-master-cgb: is a permissive no-op when no local SportEvent row exists yet for the target', async () => {
-      const service = buildManualSyncService(jest.fn().mockResolvedValue(null));
+    it('refuses a test event, which its provider has no id for, with 409 EVENT_NOT_LINKED, and an unknown one with 404 EVENT_NOT_FOUND, queuing nothing', async () => {
+      const testEvent = buildEventSyncService(jest.fn().mockResolvedValue(event({ providerMappings: [] })));
+      const missing = buildEventSyncService(jest.fn().mockResolvedValue(null));
 
-      await expect(
-        service.syncEventData(
-          { sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'not-yet-persisted', feeds: ['EVENTPARTICIPANTS'] },
-          'admin-1',
-          'admin@example.com',
-        ),
-      ).resolves.toBeDefined();
+      await expect(testEvent.service.syncSportEvent('event-1', ['EVENTLIVESCORES'], 'admin-1', 'admin@example.com'))
+        .rejects.toThrow(SportEventNotSyncedError);
+      await expect(testEvent.service.syncSportEvent('event-1', ['EVENTLIVESCORES'], 'admin-1', 'admin@example.com'))
+        .rejects.toMatchObject({ code: 'EVENT_NOT_LINKED', statusCode: 409 });
+      await expect(missing.service.syncSportEvent('event-1', ['EVENTLIVESCORES'], 'admin-1', 'admin@example.com'))
+        .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+      expect([...testEvent.syncRuns.rows, ...missing.syncRuns.rows]).toEqual([]);
     });
   });
 

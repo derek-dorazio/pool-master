@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Sport } from '@poolmaster/shared/domain';
-import { leagueProfiles } from './league-profiles';
+import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
 
 /** What a participant's test sport league is named in each sport. */
@@ -19,7 +19,7 @@ export async function participantLeagueId(prisma: PrismaClient, sportId: string)
   try {
     const league = await prisma.sportLeague.upsert({
       where,
-      create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport), sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
+      create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport), sportId, name: TEST_PARTICIPANT_LEAGUE_NAME },
       update: {},
       select: { id: true },
     });

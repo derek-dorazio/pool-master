@@ -48,8 +48,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -59,7 +57,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -83,7 +80,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
     const seed = oneEventOf(FILE, 'NFL', 'NFL Playoffs', { withoutResults: true })(RUN, SEASON);
     await loadSportData(seed, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
     const played = playedSeedEvent(FILE, 'NFL', 'NFL Playoffs');
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((row) => row.name === 'NFL'), 'the NFL');
     const eventId = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id } })).data).events
       .find((row) => row.name === seed.sportLeagues[0].events[0].name), 'the playoffs').id;

@@ -126,6 +126,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const eventPicks = gamePicksQuery.data;
   const isPlayoff = isPlayoffSurvivor(eventPicks);
   const rounds = weekRounds(eventPicks);
+  // poolmaster-allow-position: weekRounds sorts round numbers ascending: the highest is the last round
   const roundCount = rounds.at(-1) ?? 1;
   const round = requestedRound !== null && rounds.includes(requestedRound) ? requestedRound : currentWeekRound(eventPicks);
   // A playoff round reads as a week of its own; any other event is one week.
@@ -146,6 +147,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     return round === undefined ? displayString('word.weekNumber', { n: weekNumber }) : roundLabel(round, roundCount);
   };
   const eliminatedIn = eliminatedRound !== null ? `the ${roundLabel(eliminatedRound, roundCount)}` : `week ${eliminatedInWeek ?? ''}`;
+  // poolmaster-allow-position: weekRounds sorts round numbers ascending: the lowest is the first round
   const roundNeedsPick = isPlayoff && round !== rounds.at(0) && canChangeWeek(gamePicks) && gamePicks.pickedCount === 0;
   const survivorTeam = isSurvivor ? survivorPickTeam(gamePicks) : null;
 
@@ -200,6 +202,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     savedTiebreaker: gamePicks.tiebreakerValue,
     submitFallback: 'We could not submit this week. Please try again.',
     submits,
+    tiebreakerMax: gamePicks.tiebreakerMax,
     writes: { saveMutation, submitMutation, tiebreakerDraft },
   });
   // What still blocks Submit, counting a tiebreaker typed but not yet saved: the button saves it first.
@@ -264,7 +267,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           : gamePicks.mode === PickEmMode.CONFIDENCE
           ? `${pickInstruction}, then rank your picks from ${gamePicks.gameCount}, the one you're surest of, down to 1. A correct pick scores its value. Each pick locks at its game's kickoff.`
           : `${pickInstruction}. Each correct pick scores 1 point. Each pick locks at its game's kickoff.`) : undefined}
-        helpLink={canChange ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) } : undefined}
+        helpLink={canChange ? { label: 'How to play', to: buildHowToPlayFormatPath(contest.sportUrlSegment ?? null, contest.selectionType) } : undefined}
         padded
         testId="pick-em-picks"
         title={canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}
@@ -308,6 +311,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
             <TiebreakerNumberField
               disabled={isFinishing}
               label={tiebreakerFieldLabel}
+              max={gamePicks.tiebreakerMax}
               onChange={setTiebreakerDraft}
               testId="pick-em-tiebreaker-input"
               text={tiebreakerText}

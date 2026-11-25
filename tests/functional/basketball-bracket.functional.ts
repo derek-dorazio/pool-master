@@ -1,11 +1,10 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
-  createEvent,
   createParticipant,
-  createSportLeague,
   getEventBracket,
   listEventParticipants,
   loadEventBracket,
@@ -22,7 +21,7 @@ import {
   SportEventRoundMatchResponseSchema,
   SportEventParticipantResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -32,7 +31,8 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
 // run's own league, with one place standing for a First Four pairing, loads its
@@ -42,7 +42,7 @@ import { sportPlay } from '../support/sport-play';
 
 const RUN = `basketball-${Date.now()}`;
 const PAIRING = 'Texas / Xavier';
-// Seeds, best first; the odds only order the field into its four tiers, one team to a tier.
+// Seeds, best first; the seeds also order the field into its four tiers, one team to a tier.
 const FIELD: readonly { name: string; seed: number }[] = [
   { name: 'Duke', seed: 1 },
   { name: 'Houston', seed: 2 },
@@ -60,21 +60,18 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -89,7 +86,7 @@ describe('SDK Functional: Basketball bracket', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -97,14 +94,13 @@ describe('SDK Functional: Basketball bracket', () => {
     const a = admin.client;
 
     // --- A league, a tournament in it, and its field --------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
-    expect(conference.response?.status).toBe(201);
-    const sportLeagueId = expectDefined(conference.data).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
 
-    const tournament = await createEvent({
+    const tournament = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Harbour Classic ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Harbour Classic ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
@@ -124,7 +120,7 @@ describe('SDK Functional: Basketball bracket', () => {
     const upload = await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: FIELD.map((team, index) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed, oddsToWin: 2 + index * 5 })) },
+      body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);

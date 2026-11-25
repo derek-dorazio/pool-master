@@ -185,4 +185,20 @@ describe('Team lifecycle dialogs', () => {
     await waitFor(() => expect(screen.queryByTestId('my-team-inactivate-dialog')).not.toBeInTheDocument());
     expect(inactivateLeagueSquadMock).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['inactivate', 'my-team-inactivate-dialog', 'my-team-confirm-inactivate', 'Inactivating...'],
+    ['delete', 'my-team-delete-dialog', 'my-team-confirm-delete', 'Deleting...'],
+  ] as const)('keeps the %s dialog open on Escape while its write is still running', async (dialog, dialogTestId, confirmTestId, pendingLabel) => {
+    inactivateLeagueSquadMock.mockReturnValue(new Promise(() => undefined));
+    deleteLeagueSquadMock.mockReturnValue(new Promise(() => undefined));
+    renderLifecycle({ team: buildTeam({ isActive: dialog === 'inactivate' }) });
+
+    fireEvent.click(screen.getByTestId(`open-${dialog}`));
+    fireEvent.click(await screen.findByTestId(confirmTestId));
+    await screen.findByText(pendingLabel);
+    fireEvent.keyDown(screen.getByTestId(dialogTestId), { key: 'Escape' });
+
+    expect(screen.getByTestId(dialogTestId)).toBeInTheDocument();
+  });
 });

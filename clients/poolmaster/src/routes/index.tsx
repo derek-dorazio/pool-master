@@ -43,18 +43,15 @@ import { LeagueStructureTab } from '@/features/root-admin/league-structure-tab';
 import { LeagueEventsTab } from '@/features/root-admin/league-events-tab';
 import { LeaguePageLayout } from '@/features/root-admin/league-page-layout';
 import { LeagueParticipantsTab } from '@/features/root-admin/league-participants-tab';
-import { LeagueToolsTab } from '@/features/root-admin/league-tools-tab';
 import { ParticipantLinkRedirect } from '@/features/root-admin/participant-link-redirect';
-import { RootAdminParticipantCreatePage } from '@/features/root-admin/root-admin-participant-create-page';
-import { RootAdminContentConfigurationDetailPage } from '@/features/root-admin/root-admin-content-configuration-detail-page';
 import { RootAdminSportEventCreatePage } from '@/features/root-admin/root-admin-sport-event-create-page';
 import { ManageSportEventRoute } from '@/features/root-admin/manage-sport-event-route';
 import { EventPageLayout } from '@/features/root-admin/event-page-layout';
 import { EventFieldTab } from '@/features/root-admin/event-field-tab';
 import { EventRoundsTab } from '@/features/root-admin/event-rounds-tab';
+import { EventSlotsTab } from '@/features/root-admin/event-slots-tab';
 import { EventContestsTab } from '@/features/root-admin/event-contests-tab';
 import { EventActivityTab } from '@/features/root-admin/event-activity-tab';
-import { EventToolsTab } from '@/features/root-admin/event-tools-tab';
 import { ManageSportRoute } from '@/features/root-admin/manage-sport-route';
 import { RootAdminSportsPage } from '@/features/root-admin/root-admin-sports-page';
 import { RootAdminProvidersPage } from '@/features/root-admin/root-admin-providers-page';
@@ -118,7 +115,7 @@ export const router = createBrowserRouter([
         element: <MovedPage />,
       },
       {
-        path: 'play/:sport/:pageSlug',
+        path: 'play/:sportUrlSegment/:urlSegment',
         element: <EventPage />,
       },
       {
@@ -383,13 +380,10 @@ export const router = createBrowserRouter([
                     element: <ManageLandingRedirect />,
                   },
                   {
-                    // The old contest template list; each league's templates are on its League page (#1866).
-                    path: 'content-configuration',
+                    // The old contest template pages; each league's templates are on its League
+                    // page's Contest templates dialog, the one place to edit them (#1866, #2010).
+                    path: 'content-configuration/*',
                     element: <Navigate replace to={SPORTS_PATH} />,
-                  },
-                  {
-                    path: 'content-configuration/:templateKey',
-                    element: <RootAdminContentConfigurationDetailPage />,
                   },
                   {
                     // The old event list; each league's events are on its League page (#1866).
@@ -420,7 +414,6 @@ export const router = createBrowserRouter([
                           { path: 'activity', element: <LeagueActivityTab /> },
                           { path: 'contest-templates', element: <LeagueContestTemplatesTab /> },
                           { path: 'structure', element: <LeagueStructureTab /> },
-                          { path: 'tools', element: <LeagueToolsTab /> },
                           // Its old edit page: the settings are the ⚙ dialog on the page now.
                           { path: 'edit', element: <Navigate replace to=".." relative="path" /> },
                         ],
@@ -438,10 +431,10 @@ export const router = createBrowserRouter([
                             children: [
                               { index: true, element: <Navigate replace to="field" /> },
                               { path: 'field', element: <EventFieldTab /> },
+                              { path: 'slots', element: <EventSlotsTab /> },
                               { path: 'rounds', element: <EventRoundsTab /> },
                               { path: 'contests', element: <EventContestsTab /> },
                               { path: 'activity', element: <EventActivityTab /> },
-                              { path: 'tools', element: <EventToolsTab /> },
                               // Its old tiers page: tiers and prices are on the Field tab, corrected per participant.
                               { path: 'tiers', element: <Navigate replace to="../field" relative="path" /> },
                               // Its old schedule page, kept as a redirect for old links: each round's ⤢ dialog reschedules it.
@@ -454,7 +447,6 @@ export const router = createBrowserRouter([
                           },
                         ],
                       },
-                      { path: 'participants/new', element: <RootAdminParticipantCreatePage /> },
                       // A participant's old page opens its league's Participants tab (#1866).
                       { path: 'participants/:participantId/*', element: <ParticipantLinkRedirect /> },
                       { path: 'participants', element: <Navigate replace to={SPORTS_PATH} /> },

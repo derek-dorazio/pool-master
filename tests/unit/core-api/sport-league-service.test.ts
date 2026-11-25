@@ -1,7 +1,8 @@
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
+import type { SportLeagueSeasonRepository } from '@poolmaster/shared/db';
 import { BracketAdvancement, ProviderCode, Sport } from '@poolmaster/shared/domain';
-import type { Participant, SportLeague } from '@poolmaster/shared/domain';
+import type { Participant, SportLeague, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
   fakeParticipantProviderMappingRepo,
@@ -17,14 +18,13 @@ import {
 
 const GOLF = { id: 'sport-golf', sport: Sport.GOLF } as never;
 const BASKETBALL = { id: 'sport-basketball', sport: Sport.BASKETBALL } as never;
-/** The profiles a new sport league names (#1844). */
-const PROFILES = { platformTierProfileId: 'tier-profile-1', platformPricingProfileId: 'pricing-profile-1' };
 
 function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
   return {
     id: 'sl-pga',
     sportId: 'sport-golf',
     name: 'PGA Tour',
+    urlSegment: 'pga-tour',
     bracketAdvancement: BracketAdvancement.FIXED,
     roundNames: [],
     platformTierProfileId: 'tier-profile-1',
@@ -50,11 +50,10 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
 interface TestProviderLeague { id: string; code: string; sport: Sport; isEnabled?: boolean; providerEnabled?: boolean }
 
 /**
- * The providers for the test: the provider leagues their rows list, and which providers run here,
- * by id, each with the sports it covers.
+ * The providers for the test: the provider leagues their rows list, and which provider leagues the
+ * adapters running here read, by Provider code and league code.
  */
-function registeredProviders(sportsById: Record<string, Sport[]>, leagues: TestProviderLeague[] = []): SportDataProviderLookup {
-  const covered = new Map(Object.entries(sportsById));
+function registeredProviders(readLeagues: Partial<Record<ProviderCode, readonly string[]>>, leagues: TestProviderLeague[] = []): SportDataProviderLookup {
   return {
     findLeague: (providerLeagueId) => {
       const league = leagues.find((candidate) => candidate.id === providerLeagueId);
@@ -63,10 +62,7 @@ function registeredProviders(sportsById: Record<string, Sport[]>, leagues: TestP
         league: { code: league.code, sport: league.sport, isEnabled: league.isEnabled ?? true },
       };
     },
-    getProviderById: (providerId) => {
-      const sportsCovered = covered.get(providerId);
-      return sportsCovered ? { sportsCovered } : null;
-    },
+    readsLeague: (providerCode, providerLeagueCode) => readLeagues[providerCode]?.includes(providerLeagueCode) ?? false,
   };
 }
 
@@ -87,9 +83,9 @@ function buildService(overrides: {
   participants?: Parameters<typeof fakeParticipantRepo>[0];
   mappings?: Parameters<typeof fakeParticipantProviderMappingRepo>[0];
   providers?: SportDataProviderLookup;
+  seasons?: Partial<Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot'>>;
   platformTierProfiles?: { findById: jest.Mock };
   platformPricingProfiles?: { findById: jest.Mock };
-  now?: () => Date;
 } = {}) {
   const deps = {
     sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), findAll: jest.fn().mockResolvedValue([GOLF, BASKETBALL]), ...overrides.sports }),
@@ -101,11 +97,11 @@ function buildService(overrides: {
     }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     participants: fakeParticipantRepo(overrides.participants),
+    seasons: { createTestSlot: jest.fn(), findSlot: jest.fn().mockResolvedValue(null), ...overrides.seasons },
     mappings: fakeParticipantProviderMappingRepo(overrides.mappings),
     providers: overrides.providers ?? registeredProviders({}),
     platformTierProfiles: overrides.platformTierProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10' })) },
     platformPricingProfiles: overrides.platformPricingProfiles ?? { findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: 'Standard' })) },
-    now: overrides.now,
   };
   return { service: new SportLeagueService(deps), deps };
 }
@@ -113,7 +109,7 @@ function buildService(overrides: {
 describe('SportLeagueService — sport leagues', () => {
   it('lists the sport\'s sport leagues with their sport and their participant and event counts, zero where there are none', async () => {
     const { service } = buildService({
-      sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour' })]) },
+      sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour', urlSegment: 'champions-tour' })]) },
       participants: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 144]])) },
       sportEvents: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 3]])) },
     });
@@ -132,37 +128,15 @@ describe('SportLeagueService — sport leagues', () => {
     await expect(service.listSportLeagues({ sport: Sport.GOLF })).rejects.toMatchObject({ code: 'SPORT_NOT_FOUND', statusCode: 404 });
   });
 
-  it('creates a sport league — adding the Champions Tour is one call, not a migration', async () => {
-    const { service } = buildService();
-
-    const created = await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York' });
-
-    expect(created).toMatchObject({ sportId: 'sport-golf', name: 'Champions Tour' });
-  });
-
-  it('rejects a sport league name already used for the sport with 409', async () => {
-    const { service } = buildService({ sportLeagues: { findBySportAndName: jest.fn().mockResolvedValue(sportLeague()) } });
-
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'PGA Tour', timeZone: 'America/New_York' }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NAME_ALREADY_EXISTS', statusCode: 409 });
-  });
 });
 
 describe('SportLeagueService — tier and pricing profiles', () => {
-  it('creates a sport league naming the tier and pricing profiles it is given', async () => {
-    const { service, deps } = buildService();
-
-    await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York' });
-
-    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining(PROFILES), expect.anything());
-  });
-
-  it('refuses a new sport league naming an unknown tier profile with 404 PLATFORM_TIER_PROFILE_NOT_FOUND, creating nothing', async () => {
+  it('refuses a move to an unknown tier profile with 404 PLATFORM_TIER_PROFILE_NOT_FOUND, updating nothing', async () => {
     const { service, deps } = buildService({ platformTierProfiles: { findById: jest.fn().mockResolvedValue(null) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York' }))
+    await expect(service.updateSportLeague('sl-pga', { platformTierProfileId: 'tier-profile-gone' }))
       .rejects.toMatchObject({ code: 'PLATFORM_TIER_PROFILE_NOT_FOUND', statusCode: 404 });
-    expect(deps.sportLeagues.create).not.toHaveBeenCalled();
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });
 
   it('refuses a move to an unknown pricing profile with 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, updating nothing', async () => {
@@ -183,22 +157,11 @@ describe('SportLeagueService — tier and pricing profiles', () => {
 
 describe('SportLeagueService — bracket advancement', () => {
 
-  it('creates a sport league fixed by default, and one that reseeds when its sport plays a bracket', async () => {
-    const { service } = buildService({ sports: { findBySport: jest.fn().mockResolvedValue(BASKETBALL) } });
-
-    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, ...sportPlay(Sport.BASKETBALL), name: 'Harbour Conference', timeZone: 'America/New_York' })).resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.FIXED });
-    await expect(service.createSportLeague(Sport.BASKETBALL, { ...PROFILES, ...sportPlay(Sport.BASKETBALL), name: 'Gridiron League', timeZone: 'America/New_York', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
-      .resolves.toMatchObject({ bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
-  });
-
-  it('refuses (422 SPORT_LEAGUE_NOT_BRACKET) a golf sport league that reseeds, on create and on update, writing nothing', async () => {
+  it('refuses (422 SPORT_LEAGUE_NOT_BRACKET) a golf sport league switched to reseeding, writing nothing', async () => {
     const { service, deps } = buildService({ sports: { findById: jest.fn().mockResolvedValue(GOLF) } });
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'America/New_York', bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
     await expect(service.updateSportLeague('sl-pga', { bracketAdvancement: BracketAdvancement.RESEED_BY_SEED }))
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_BRACKET', statusCode: 422 });
-    expect(deps.sportLeagues.create).not.toHaveBeenCalled();
     expect(deps.sportLeagues.update).not.toHaveBeenCalled();
   });
 
@@ -242,7 +205,7 @@ describe('SportLeagueService — event sync (ADR 0011)', () => {
     { id: 'pl-off', code: 'lpga', sport: Sport.GOLF, isEnabled: false },
     { id: 'pl-provider-off', code: 'pga', sport: Sport.GOLF, providerEnabled: false },
   ];
-  const golfProviders = registeredProviders({ balldontlie: [Sport.GOLF, Sport.BASKETBALL] }, leagues);
+  const golfProviders = registeredProviders({ [ProviderCode.BALLDONTLIE]: ['pga', 'nba'] }, leagues);
   const golfSport = { findById: jest.fn().mockResolvedValue(GOLF) };
 
   it('turns a league\'s event sync on with an enabled provider league of its sport whose provider runs here', async () => {
@@ -280,6 +243,13 @@ describe('SportLeagueService — event sync (ADR 0011)', () => {
       .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 422 });
   });
 
+  it('refuses a provider league its running adapter does not read, as one enabled since the task started, with 422 PROVIDER_NOT_FOUND', async () => {
+    const { service, deps } = buildService({ providers: registeredProviders({ [ProviderCode.BALLDONTLIE]: ['nba'] }, leagues), sports: golfSport });
+    await expect(service.updateSportLeague('sl-pga', { syncProviderLeagueId: 'pl-pga' }))
+      .rejects.toMatchObject({ code: 'PROVIDER_NOT_FOUND', statusCode: 422 });
+    expect(deps.sportLeagues.update).not.toHaveBeenCalled();
+  });
+
   it('turns sync off with null even once the provider is no longer running', async () => {
     const { service, deps } = buildService({
       providers: registeredProviders({}),
@@ -299,31 +269,13 @@ describe('SportLeagueService — event sync (ADR 0011)', () => {
   });
 });
 
-describe('SportLeagueService — the league\'s time zone (#2003)', () => {
-  it('refuses a new sport league whose time zone is not a known IANA zone with 400 TIME_ZONE_UNKNOWN, creating nothing', async () => {
-    const { service, deps } = buildService();
+describe('SportLeagueService — no sport league made outside a migration (#2075)', () => {
+  it('offers no way to add a sport league, so no league gains a Season except by migration', () => {
+    const { deps } = buildService();
 
-    await expect(service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'Mars/Olympus_Mons' }))
-      .rejects.toMatchObject({ code: 'TIME_ZONE_UNKNOWN', statusCode: 400 });
-    expect(deps.sportLeagues.create).not.toHaveBeenCalled();
-  });
-
-  it('creates a sport league in the time zone it is given', async () => {
-    const { service, deps } = buildService();
-
-    await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'Europe/London' });
-
-    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.objectContaining({ timeZone: 'Europe/London' }), expect.anything());
-  });
-
-  it('starts a new sport league with the calendar year\'s Season, named for it, as the journeys\' own leagues need until test slots land', async () => {
-    const { service, deps } = buildService({ now: () => new Date('2027-03-04T05:06:07.000Z') });
-
-    await service.createSportLeague(Sport.GOLF, { ...PROFILES, ...sportPlay(Sport.GOLF), name: 'Champions Tour', timeZone: 'UTC' });
-
-    expect(deps.sportLeagues.create).toHaveBeenCalledWith(expect.anything(), {
-      name: '2027', championshipYear: 2027, startsAt: new Date('2027-01-01T00:00:00.000Z'), endsAt: new Date('2027-12-31T23:59:59.999Z'),
-    });
+    // A test slot is the one thing the service makes; leagues and their Seasons come from migrations.
+    expect(Object.getOwnPropertyNames(SportLeagueService.prototype).filter((name) => name.startsWith('create'))).toEqual(['createTestSlot']);
+    expect(Object.keys(deps.sportLeagues).filter((name) => name.startsWith('create'))).toEqual([]);
   });
 });
 
@@ -334,7 +286,9 @@ describe('SportLeagueService — the sport league\'s participants', () => {
     const { service } = buildService({ participants: { findBySportLeague } });
 
     await expect(service.listParticipants('sl-pga')).resolves.toEqual(roster);
-    expect(findBySportLeague).toHaveBeenCalledWith('sl-pga');
+    expect(findBySportLeague).toHaveBeenCalledWith('sl-pga', false);
+    await service.listParticipants('sl-pga', true);
+    expect(findBySportLeague).toHaveBeenLastCalledWith('sl-pga', true);
 
     const { service: missing } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
     await expect(missing.listParticipants('missing')).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
@@ -466,5 +420,104 @@ describe('SportLeagueService — deleting a sport league (#1400)', () => {
     const { service } = buildService({ sportLeagues: { deleteUnlessUsed: jest.fn().mockResolvedValue(null) } });
 
     await expect(service.deleteSportLeague('sl-pga')).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('SportLeagueService — adding a test slot (#2004)', () => {
+  const input = { slotDefinitionId: 'def-1', label: 'QA 1', startsAt: new Date('2026-06-01T12:00:00Z'), endsAt: null };
+  const slot = { id: 'slot-1', label: 'QA 1', isTestData: true } as SportLeagueSeasonSlot;
+  const inSeason = { findById: jest.fn().mockResolvedValue(sportLeague({ currentSeasonId: 'season-2026' })) };
+
+  it('adds the slot to the league\'s current Season and answers it', async () => {
+    const createTestSlot = jest.fn().mockResolvedValue({ outcome: 'CREATED', slot });
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot } });
+    await expect(service.createTestSlot('sl-pga', input)).resolves.toBe(slot);
+    expect(createTestSlot).toHaveBeenCalledWith({ ...input, sportLeagueId: 'sl-pga', sportLeagueSeasonId: 'season-2026' });
+  });
+
+  it('refuses an unknown league with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
+    const { service } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
+    await expect(service.createTestSlot('sl-none', input)).rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses a league with no current Season with 422 SPORT_LEAGUE_HAS_NO_SEASON', async () => {
+    const { service } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(sportLeague({ currentSeasonId: null })) } });
+    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_SEASON', statusCode: 422 });
+  });
+
+  it('refuses a slot that ends before it starts with 422 TEST_SLOT_ENDS_BEFORE_START, adding nothing', async () => {
+    const createTestSlot = jest.fn();
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot } });
+    await expect(service.createTestSlot('sl-pga', { ...input, endsAt: new Date('2026-05-31T12:00:00Z') })).rejects.toMatchObject({ code: 'TEST_SLOT_ENDS_BEFORE_START', statusCode: 422 });
+    expect(createTestSlot).not.toHaveBeenCalled();
+  });
+
+  it('refuses a label the Season already has on that definition with 409 TEST_SLOT_LABEL_TAKEN', async () => {
+    const taken = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'LABEL_TAKEN' }) } });
+    await expect(taken.service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'TEST_SLOT_LABEL_TAKEN', statusCode: 409 });
+  });
+
+  it('refuses a definition that is not the league\'s with 404 SLOT_DEFINITION_NOT_FOUND', async () => {
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'DEFINITION_NOT_FOUND' }) } });
+    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SLOT_DEFINITION_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('refuses a definition whose phase the current Season lacks with 422 SLOT_PHASE_NOT_IN_SEASON', async () => {
+    const { service } = buildService({ sportLeagues: inSeason, seasons: { createTestSlot: jest.fn().mockResolvedValue({ outcome: 'PHASE_NOT_IN_SEASON' }) } });
+    await expect(service.createTestSlot('sl-pga', input)).rejects.toMatchObject({ code: 'SLOT_PHASE_NOT_IN_SEASON', statusCode: 422 });
+  });
+});
+
+describe('SportLeagueService — removing a test slot (#2075)', () => {
+  const testSlot = { id: 'slot-1', label: 'E2E run', isTestData: true } as SportLeagueSeasonSlot;
+  const found = (overrides: { slot?: SportLeagueSeasonSlot; sportLeagueId?: string; sportEventId?: string | null } = {}) => ({
+    slot: testSlot, sportLeagueId: 'sl-pga', sportLeagueSeasonId: 'season-2026', sportEventId: 'event-1', ...overrides,
+  });
+
+  it('removes the slot with its event and that field\'s orphaned test participants in one repository write', async () => {
+    const { service, deps } = buildService({
+      seasons: { findSlot: jest.fn().mockResolvedValue(found()) },
+      sportEvents: { countContests: jest.fn().mockResolvedValue(new Map([['event-1', 0]])), deleteTestSlot: jest.fn().mockResolvedValue(2) },
+    });
+
+    await service.deleteTestSlot('sl-pga', 'slot-1');
+
+    expect(deps.sportEvents.deleteTestSlot).toHaveBeenCalledWith('slot-1', 'event-1');
+    expect(deps.sportEvents.delete).not.toHaveBeenCalled();
+  });
+
+  it('removes a free test slot, with no event to remove', async () => {
+    const { service, deps } = buildService({ seasons: { findSlot: jest.fn().mockResolvedValue(found({ sportEventId: null })) } });
+
+    await service.deleteTestSlot('sl-pga', 'slot-1');
+
+    expect(deps.sportEvents.deleteTestSlot).toHaveBeenCalledWith('slot-1', null);
+    expect(deps.sportEvents.countContests).not.toHaveBeenCalled();
+  });
+
+  it('refuses a slot the sync keeps with 422 SEASON_SLOT_NOT_TEST, removing nothing', async () => {
+    const { service, deps } = buildService({ seasons: { findSlot: jest.fn().mockResolvedValue(found({ slot: { ...testSlot, isTestData: false, label: null } })) } });
+
+    await expect(service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_TEST', statusCode: 422 });
+    expect(deps.sportEvents.deleteTestSlot).not.toHaveBeenCalled();
+  });
+
+  it('refuses an unknown slot, and another league\'s, with 404 SEASON_SLOT_NOT_FOUND', async () => {
+    const unknown = buildService();
+    const elsewhere = buildService({ seasons: { findSlot: jest.fn().mockResolvedValue(found({ sportLeagueId: 'sl-other' })) } });
+
+    await expect(unknown.service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
+    await expect(elsewhere.service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
+    expect(elsewhere.deps.sportEvents.deleteTestSlot).not.toHaveBeenCalled();
+  });
+
+  it('refuses while a contest still covers the slot\'s event with 409 EVENT_HAS_CONTESTS, removing nothing', async () => {
+    const { service, deps } = buildService({
+      seasons: { findSlot: jest.fn().mockResolvedValue(found()) },
+      sportEvents: { countContests: jest.fn().mockResolvedValue(new Map([['event-1', 2]])) },
+    });
+
+    await expect(service.deleteTestSlot('sl-pga', 'slot-1')).rejects.toMatchObject({ code: 'EVENT_HAS_CONTESTS', statusCode: 409 });
+    expect(deps.sportEvents.deleteTestSlot).not.toHaveBeenCalled();
   });
 });

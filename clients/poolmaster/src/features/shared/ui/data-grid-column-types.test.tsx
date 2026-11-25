@@ -1,4 +1,7 @@
-import { Sport, SportOrder, alphabeticalOrder } from "@poolmaster/shared/domain";
+import { Sport, alphabeticalOrder, explicitOrder } from "@poolmaster/shared/domain";
+
+/** The sports' display order as the API gives it (SportDto.displayOrder). */
+const SPORT_DISPLAY_ORDER = explicitOrder<string>({ FOOTBALL: 0, BASKETBALL: 1, BASEBALL: 2, HOCKEY: 3, SOCCER: 4, GOLF: 5, AUTO_RACING: 6, TENNIS: 7, HORSE_RACING: 8, CYCLING: 9, RUNNING: 10 });
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -17,7 +20,7 @@ type Row = {
 const ROWS: Row[] = [
   { id: "a", name: "Alpha", members: 9, active: true, sport: Sport.GOLF, starts: "2026-11-02T15:00:00.000Z", season: { start: "2026-10-21", end: "2027-06-18" } },
   { id: "b", name: "Bravo", members: 120, active: false, sport: Sport.BASKETBALL, starts: "2026-11-18T14:00:00.000Z", season: { start: "2027-03-25", end: "2027-11-01" } },
-  { id: "c", name: "Charlie", members: 10, active: null, sport: Sport.AMERICAN_FOOTBALL, starts: null, season: { start: "2026-09-01", end: null } },
+  { id: "c", name: "Charlie", members: 10, active: null, sport: Sport.FOOTBALL, starts: null, season: { start: "2026-09-01", end: null } },
   { id: "d", name: "Delta", members: null, active: true, sport: Sport.HOCKEY, starts: "2026-12-05T00:30:00.000Z", season: null },
 ];
 
@@ -28,7 +31,7 @@ const COLUMNS: ColumnDef<Row, any>[] = [
   helper.accessor("name", { header: "Name", meta: { type: { kind: "text" } } }),
   helper.accessor("members", { header: "Members", meta: { type: { kind: "number" } } }),
   helper.accessor("active", { header: "Active", meta: { type: { kind: "boolean", nullable: true } } }),
-  helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: SportOrder } } }),
+  helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: SPORT_DISPLAY_ORDER } } }),
   helper.accessor("starts", { header: "Starts", meta: { type: { kind: "datetime", direction: "both" } } }),
   helper.accessor("season", { header: "Season", meta: { type: { kind: "dateRange", direction: "both" } } }),
   helper.display({ id: "actions", header: "Actions", cell: () => "…" }),
@@ -193,11 +196,11 @@ describe("enum columns", () => {
     expect(shownRows()).toEqual(["c", "b", "d", "a"]);
     openFilter("sport");
     const listed = screen.getAllByTestId(/^data-grid-filter-sport-option-/).map((box) => box.getAttribute("data-testid")?.slice(30));
-    expect(listed.slice(0, 4)).toEqual([Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.BASEBALL, Sport.HOCKEY]);
+    expect(listed.slice(0, 4)).toEqual([Sport.FOOTBALL, Sport.BASKETBALL, Sport.BASEBALL, Sport.HOCKEY]);
   });
 
   it("sort an alphabetical enum A to Z by its words", () => {
-    const words: Record<string, string> = { GOLF: "Zebra", BASKETBALL: "Apple", AMERICAN_FOOTBALL: "Mango", HOCKEY: "Kiwi" };
+    const words: Record<string, string> = { GOLF: "Zebra", BASKETBALL: "Apple", FOOTBALL: "Mango", HOCKEY: "Kiwi" };
     renderGrid([
       helper.accessor("sport", { header: "Sport", meta: { type: { kind: "enum", order: alphabeticalOrder("Sport"), label: (value) => words[value] } } }),
     ]);
@@ -278,6 +281,77 @@ describe("date and time columns", () => {
     apply("starts");
 
     expect(shownRows()).toEqual(["a"]);
+  });
+
+  it("clear the filter from Clear, showing every row again", () => {
+    renderGrid();
+
+    openFilter("starts");
+    fireEvent.click(screen.getByTestId("data-grid-filter-starts-period-today"));
+    apply("starts");
+    expect(shownRows()).toEqual(["b"]);
+
+    openFilter("starts");
+    fireEvent.click(screen.getByTestId("data-grid-filter-starts-clear"));
+
+    expect(shownRows()).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("choose no span from an N entry whose typed number is not a whole number above zero", () => {
+    renderGrid();
+
+    openFilter("starts");
+    fireEvent.change(screen.getByTestId("data-grid-filter-starts-amount-next-w-n"), { target: { value: "0" } });
+    fireEvent.click(screen.getByTestId("data-grid-filter-starts-quick-next-w-n"));
+
+    expect(screen.getByTestId("data-grid-filter-starts-apply")).toBeDisabled();
+  });
+
+  it("keep the span picked so far when the calendar's end is set before its start", () => {
+    renderGrid();
+
+    openFilter("starts");
+    fireEvent.click(screen.getByTestId("data-grid-filter-starts-pick"));
+    fireEvent.change(screen.getByTestId("data-grid-filter-starts-pick-from"), { target: { value: "2026-11-03T00:00" } });
+    const fromOnly = screen.getByTestId("data-grid-filter-starts-chip").textContent;
+    fireEvent.change(screen.getByTestId("data-grid-filter-starts-pick-to"), { target: { value: "2026-11-02T00:00" } });
+
+    expect(screen.getByTestId("data-grid-filter-starts-chip")).toHaveTextContent(fromOnly);
+    apply("starts");
+    expect(shownRows()).toEqual(["b", "d"]);
+  });
+
+  it("pick whole days on a date-only column, the end day counting to its last minute", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const columns: ColumnDef<Row, any>[] = [
+      helper.accessor("name", { header: "Name", meta: { type: { kind: "text" } } }),
+      helper.accessor("starts", { header: "Starts", meta: { type: { kind: "date", direction: "future" } } }),
+    ];
+    renderGrid(columns);
+
+    openFilter("starts");
+    expect(screen.getByTestId("data-grid-filter-starts-typed")).toHaveAttribute("placeholder", "2h, 3d, Dec 1 – Dec 31");
+    fireEvent.click(screen.getByTestId("data-grid-filter-starts-pick"));
+    expect(screen.getByTestId("data-grid-filter-starts-pick-from")).toHaveAttribute("type", "date");
+    fireEvent.change(screen.getByTestId("data-grid-filter-starts-pick-from"), { target: { value: "2026-11-18" } });
+    fireEvent.change(screen.getByTestId("data-grid-filter-starts-pick-to"), { target: { value: "2026-11-18" } });
+    apply("starts");
+
+    expect(shownRows()).toEqual(["b"]);
+  });
+
+  it("reopen on the span already applied, and forget an unapplied choice when closed", () => {
+    renderGrid();
+
+    openFilter("starts");
+    fireEvent.click(screen.getByTestId("data-grid-filter-starts-period-today"));
+    apply("starts");
+
+    openFilter("starts");
+    expect(screen.getByTestId("data-grid-filter-starts-chip")).toHaveTextContent("Today");
+    fireEvent.keyDown(screen.getByTestId("data-grid-filter-starts-typed"), { key: "Escape" });
+    expect(screen.queryByTestId("data-grid-filter-starts-typed")).not.toBeInTheDocument();
+    expect(shownRows()).toEqual(["b"]);
   });
 
   it("keep Apply off until a span is chosen", () => {

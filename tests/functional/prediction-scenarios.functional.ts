@@ -32,6 +32,8 @@ import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-go
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { withCurrentSeason } from '../support/event-edition';
+import { removeTestDefinition, TEST_DEFINITION_KEY, withTestDefinition } from '../support/test-slots';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { enterSeedRound, EVERY_GAME_PLAYED, oneEventOf, placeSeedRound, playedSeedEvent } from '../support/sport-test-seed';
@@ -70,16 +72,16 @@ interface PlayoffLeague {
 }
 
 const LEAGUES: readonly PlayoffLeague[] = [
-  { sport: Sport.AMERICAN_FOOTBALL, file: 'american-football-2025-cfp-test.json', league: 'College Football Playoff', event: 'College Football Playoff' },
-  { sport: Sport.AMERICAN_FOOTBALL, file: 'american-football-2026-nfl-playoffs-test.json', league: 'NFL', event: 'NFL Playoffs' },
+  { sport: Sport.FOOTBALL, file: 'american-football-2025-cfp-test.json', league: 'NCAA Men\'s Football', event: 'College Football Playoff' },
+  { sport: Sport.FOOTBALL, file: 'american-football-2026-nfl-playoffs-test.json', league: 'NFL', event: 'NFL Playoffs' },
   { sport: Sport.BASKETBALL, file: 'basketball-2025-nba-playoffs-test.json', league: 'NBA', event: 'NBA Playoffs' },
   { sport: Sport.BASKETBALL, file: 'basketball-2025-wnba-playoffs-test.json', league: 'WNBA', event: 'WNBA Playoffs' },
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament' },
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament' },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Basketball', event: 'NCAA Men\'s Tournament' },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Basketball', event: 'NCAA Women\'s Tournament' },
   { sport: Sport.HOCKEY, file: 'hockey-2026-nhl-playoffs-test.json', league: 'NHL', event: 'Stanley Cup Playoffs' },
   { sport: Sport.HOCKEY, file: 'hockey-2026-pwhl-playoffs-test.json', league: 'PWHL', event: 'Walter Cup Playoffs' },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament' },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament' },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Hockey', event: 'NCAA Men\'s Ice Hockey Tournament' },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Hockey', event: 'NCAA Women\'s Ice Hockey Tournament' },
   { sport: Sport.BASEBALL, file: 'baseball-2025-mlb-postseason-test.json', league: 'MLB', event: 'MLB Postseason' },
   { sport: Sport.SOCCER, file: 'soccer-2022-fifa-world-cup-test.json', league: 'FIFA World Cup', event: 'FIFA World Cup' },
   { sport: Sport.SOCCER, file: 'soccer-2023-fifa-womens-world-cup-test.json', league: 'FIFA Women\'s World Cup', event: 'FIFA Women\'s World Cup' },
@@ -88,8 +90,8 @@ const LEAGUES: readonly PlayoffLeague[] = [
   { sport: Sport.SOCCER, file: 'soccer-2026-uefa-champions-league-test.json', league: 'UEFA Champions League', event: 'UEFA Champions League' },
   { sport: Sport.SOCCER, file: 'soccer-2025-mls-cup-playoffs-test.json', league: 'MLS', event: 'MLS Cup Playoffs' },
   { sport: Sport.SOCCER, file: 'soccer-2025-nwsl-playoffs-test.json', league: 'NWSL', event: 'NWSL Playoffs' },
-  { sport: Sport.SOCCER, file: 'soccer-2025-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Soccer Tournament' },
-  { sport: Sport.SOCCER, file: 'soccer-2025-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Soccer Tournament' },
+  { sport: Sport.SOCCER, file: 'soccer-2025-ncaa-tournaments-test.json', league: 'NCAA Men\'s Soccer', event: 'NCAA Men\'s Soccer Tournament' },
+  { sport: Sport.SOCCER, file: 'soccer-2025-ncaa-tournaments-test.json', league: 'NCAA Women\'s Soccer', event: 'NCAA Women\'s Soccer Tournament' },
 ];
 
 /**
@@ -109,8 +111,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     const field = { sportEventParticipant: { sportEventId: { in: eventIds } } };
     await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
@@ -121,7 +121,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -134,18 +133,36 @@ beforeAll(async () => {
   await promoteToRootAdmin(admin);
 });
 
+/** Each league's current Season before this suite moved it, put back afterwards. */
+const originalSeasons = new Map<string, string | null>();
+/** The migration leagues this suite gave a test definition. */
+const testDefinitionLeagueIds = new Set<string>();
+
 afterAll(async () => {
   await cleanupFunctionalData();
   await cleanup();
+  const db = getFunctionalPrisma();
+  for (const sportLeagueId of testDefinitionLeagueIds) await removeTestDefinition(db, sportLeagueId);
+  for (const [id, currentSeasonId] of originalSeasons) await db.sportLeague.update({ where: { id }, data: { currentSeasonId } });
   await disconnectFunctionalPrisma();
 });
 
 /** Loads one copy of the row's event, tagged `tag`, and answers its id and its field by participant name. */
 async function loadCopy(row: PlayoffLeague, tag: string, season: number, withoutResults: boolean) {
   const file = oneEventOf(row.file, row.league, row.event, { withoutResults })(tag, season);
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: row.sport } })).data).sportLeagues
     .find((each) => each.name === row.league), row.league);
+  // A test event goes in its league's current Season (#2004), so each copy's year is made current
+  // first; a file event the league has no definition for yet is played on a test definition.
+  const db = getFunctionalPrisma();
+  if (!originalSeasons.has(sportLeague.id)) originalSeasons.set(sportLeague.id, sportLeague.currentSeasonId);
+  await withCurrentSeason(db, sportLeague.id, season);
+  for (const event of file.sportLeagues[0].events.filter((each) => each.slotKey === undefined)) {
+    await withTestDefinition(db, sportLeague.id);
+    testDefinitionLeagueIds.add(sportLeague.id);
+    event.slotKey = TEST_DEFINITION_KEY;
+  }
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const eventId = expectDefined(expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId: sportLeague.id } })).data).events
     .find((each) => each.name === file.sportLeagues[0].events[0].name), file.sportLeagues[0].events[0].name).id;
   const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId } })).data).participants;
@@ -308,7 +325,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
 
 describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
   it('scores a point for each game an entry called on week 1 as played: every point to the entry that picked the winners, the home teams\' wins to the other', async () => {
-    const week: PlayoffLeague = { sport: Sport.AMERICAN_FOOTBALL, file: 'american-football-2025-nfl-weeks-test.json', league: 'NFL', event: 'NFL Week 1' };
+    const week: PlayoffLeague = { sport: Sport.FOOTBALL, file: 'american-football-2025-nfl-weeks-test.json', league: 'NFL', event: 'NFL Week 1' };
     const tag = `${RUN}-nfl-week-1-pick-em`;
     const { eventId, field } = await loadCopy(week, tag, SEASON[SelectionType.PICK_EM], true);
     const seed = playedSeedEvent(week.file, week.league, week.event);

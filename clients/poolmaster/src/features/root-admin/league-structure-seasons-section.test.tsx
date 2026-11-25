@@ -9,7 +9,7 @@ function season(id: string, year: number, overrides: Partial<SportLeagueSeasonDt
   return {
     id, name: String(year), championshipYear: year,
     startsAt: `${year}-01-01T00:00:00.000Z`, endsAt: `${year}-12-31T23:59:59.999Z`,
-    isCurrent: false, providerMappings: [], phases: [], ...overrides,
+    isCurrent: false, providerMappings: [], phases: [], slotsNeedingDates: 0, ...overrides,
   };
 }
 
@@ -17,14 +17,14 @@ function slot(id: string, overrides: Partial<SportLeagueSeasonDto['phases'][numb
   return {
     id, slotDefinitionId: `def-${id}`, key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
     startsAt: null, endsAt: null, status: 'SCHEDULED', seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
-    isTestData: false, label: null, ...overrides,
+    isTestData: false, label: null, window: null, sportEventId: null, takesTestEvent: false, placedByWindow: false, needsDates: false, ...overrides,
   };
 }
 
 const CURRENT = season('s2026', 2026, {
   isCurrent: true,
   providerMappings: [{ id: 'm1', providerId: 'balldontlie', providerName: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerSeasonId: '2026' }],
-  phases: [{ id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [slot('synced'), slot('test', { isTestData: true, label: 'QA A' })] }],
+  phases: [{ id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [slot('synced'), slot('test', { isTestData: true, label: 'QA A' })], slotsNeedingDates: 0 }],
 });
 const EARLIER = season('s2025', 2025);
 
@@ -50,14 +50,15 @@ describe('LeagueStructureSeasonsSection', () => {
     expect(within(dialog).queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
   });
 
-  it('opens a Season with no provider id to read as not current, with no provider ids and no slots', async () => {
+  it('opens a Season with no provider id to read as not current, with no provider ids, no slots and none needing dates', async () => {
     renderIn(<LeagueStructureSeasonsSection seasons={[EARLIER]} timeZone="UTC" />);
 
     await userEvent.click(within(screen.getByTestId('root-admin-league-structure-season-2025')).getByRole('button', { name: /open/i }));
 
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('No')).toBeInTheDocument();
-    expect(within(dialog).getByText('None')).toBeInTheDocument();
+    // Provider ids and Needs dates both read None.
+    expect(within(dialog).getAllByText('None')).toHaveLength(2);
     expect(within(dialog).getByText('0')).toBeInTheDocument();
   });
 
@@ -65,6 +66,43 @@ describe('LeagueStructureSeasonsSection', () => {
     renderIn(<LeagueStructureSeasonsSection seasons={[]} timeZone="UTC" />);
 
     expect(screen.getByText('No Seasons for this league.')).toBeInTheDocument();
+  });
+});
+
+const WINDOWED = season('s2027', 2027, {
+  isCurrent: true,
+  slotsNeedingDates: 2,
+  phases: [{
+    id: 'p-post', phase: 'POSTSEASON', isSynced: true, slotsNeedingDates: 2,
+    slots: [
+      slot('first', { placedByWindow: true, needsDates: true, window: { startsAt: '2026-12-18T10:00:00.000Z', endsAt: '2026-12-20T12:00:00.000Z', status: 'TENTATIVE' } }),
+      slot('quarter', { placedByWindow: true, window: { startsAt: '2026-12-30T10:00:00.000Z', endsAt: '2027-01-02T12:00:00.000Z', status: 'CONFIRMED' } }),
+      slot('final', { placedByWindow: true, needsDates: true }),
+    ],
+  }],
+});
+
+describe('Slots that need dates', () => {
+  it('badges a Season with how many of its slots need dates, a dash for one with none, and names them by phase in its dialog', async () => {
+    renderIn(<LeagueStructureSeasonsSection seasons={[WINDOWED, EARLIER]} timeZone="UTC" />);
+
+    const windowed = screen.getByTestId('root-admin-league-structure-season-2027');
+    expect(within(windowed).getByText('Needs dates 2')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-league-structure-season-2025')).getByText('—')).toBeInTheDocument();
+
+    await userEvent.click(within(windowed).getByRole('button', { name: /open/i }));
+    expect(within(await screen.findByRole('dialog')).getByText('Postseason 2')).toBeInTheDocument();
+  });
+
+  it('badges each slot that needs dates and shows a slot\'s window status, blank for a slot with no window', () => {
+    renderIn(<LeagueStructureSeasonSlotsSection seasons={[WINDOWED]} />);
+
+    expect(screen.getByTestId('root-admin-league-structure-season-slot-first-needs-dates')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-league-structure-season-slot-final-needs-dates')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-league-structure-season-slot-quarter-needs-dates')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-league-structure-season-slot-first')).getByText('Tentative')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-league-structure-season-slot-quarter')).getByText('Confirmed')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-league-structure-season-slot-final')).queryByText(/Tentative|Confirmed/)).not.toBeInTheDocument();
   });
 });
 

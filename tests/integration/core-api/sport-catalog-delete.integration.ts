@@ -18,8 +18,10 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { recordStatements } from '../statement-log';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { keyedSlotDefinitionId } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 
 const SMALL = 2;
@@ -36,7 +38,6 @@ afterAll(async () => {
   await prisma.cup.deleteMany({ where: { leagueId: { in: [...made.leagueIds] } } });
   await prisma.league.deleteMany({ where: { id: { in: [...made.leagueIds] } } });
   await prisma.participantProviderMapping.deleteMany({ where: { participantId: { in: participantIds } } });
-  await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: sportLeagueIds } } });
   await prisma.participant.deleteMany({ where: { id: { in: participantIds } } });
   await prisma.sportLeague.deleteMany({ where: { id: { in: sportLeagueIds } } });
   await cleanupTestData();
@@ -46,14 +47,14 @@ afterAll(async () => {
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
 }
 
 async function tour(sportId: string): Promise<string> {
-  const row = await getPrisma().sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
+  const row = await getPrisma().sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sportId, name: `Delete Scaling Tour ${randomUUID().slice(0, 8)}` } });
   made.sportLeagueIds.add(row.id);
   return row.id;
 }
@@ -67,14 +68,14 @@ async function golfer(sportId: string): Promise<string> {
 }
 
 /**
- * A tour with `size` series that have no event. A tour with participants is in use and is not
- * deleted (#1853), so the tour holds none.
+ * A tour with `size` slot definitions that no event plays (#2010). A tour with participants is in
+ * use and is not deleted (#1853), so the tour holds none.
  */
-async function tourWithEmptySeries(size: number): Promise<string> {
+async function tourWithEmptySlots(size: number): Promise<string> {
   const prisma = getPrisma();
   const sportLeagueId = await tour(await golfSportId());
   for (let index = 0; index < size; index += 1) {
-    await prisma.eventSeries.create({ data: { sportLeagueId, name: `Emptied Classic ${index}` } });
+    await keyedSlotDefinitionId(prisma, sportLeagueId, `EMPTIED_CLASSIC_${index}`);
   }
   return sportLeagueId;
 }
@@ -98,10 +99,10 @@ function remove(url: string, admin: TestUserResult) {
 }
 
 describe('deleting a sport league or a participant costs fixed statements (#1400)', () => {
-  it(`DELETE a sport league: the same 14 statements with ${SMALL} empty series as with ${LARGE}, and every one is gone`, async () => {
+  it(`DELETE a sport league: the same 13 statements with ${SMALL} unplayed slot definitions as with ${LARGE}, and every one is gone`, async () => {
     const admin = await createTestUser({ isRootAdmin: true });
-    const small = await tourWithEmptySeries(SMALL);
-    const large = await tourWithEmptySeries(LARGE);
+    const small = await tourWithEmptySlots(SMALL);
+    const large = await tourWithEmptySlots(LARGE);
 
     const smallRun = await recordStatements(() => remove(`/api/v1/sport-leagues/${small}`, admin));
     const largeRun = await recordStatements(() => remove(`/api/v1/sport-leagues/${large}`, admin));
@@ -112,12 +113,12 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     expect(smallRun.statements).toHaveLength(SPORT_LEAGUE_DELETE_STATEMENTS);
     const prisma = getPrisma();
     expect(await prisma.sportLeague.count({ where: { id: { in: [small, large] } } })).toBe(0);
-    expect(await prisma.eventSeries.count({ where: { sportLeagueId: { in: [small, large] } } })).toBe(0);
+    expect(await prisma.sportLeaguePhaseSlot.count({ where: { sportLeagueId: { in: [small, large] } } })).toBe(0);
   });
 
   it('DELETE a sport league counts its own events, contest setups, event page offers and cups by their sport league, never by grouping every row of those tables', async () => {
     const admin = await createTestUser({ isRootAdmin: true });
-    const sportLeagueId = await tourWithEmptySeries(SMALL);
+    const sportLeagueId = await tourWithEmptySlots(SMALL);
 
     const run = await recordStatements(() => remove(`/api/v1/sport-leagues/${sportLeagueId}`, admin));
 
@@ -150,8 +151,8 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     const sportLeagueId = await tour(await golfSportId());
     const template = await getPrisma().contestConfigTemplate.create({
       data: {
-        sport: Sport.GOLF,
         sportLeagueId,
+        coverageMode: 'ONE_SLOT',
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateKey: `delete-guard-${randomUUID()}`,
@@ -216,9 +217,10 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
 });
 
 /**
- * Find; then one transaction: begin, lock the sport league, lock its series, its five uses (events,
- * contest setups, event page offers, cups, participants: one count each), series,
- * the leagues that muted it, the sport league, commit.
+ * Find; then one transaction: begin, lock the sport league, its five uses (events, contest setups,
+ * event page offers, cups, participants: one count each), its Seasons' slots and phases (#2004: a
+ * Season's phases and slots restrict their definitions' delete), the leagues that muted it, the
+ * sport league, commit. Its slot definitions go with it by cascade (#2010: no series left to lock).
  */
 const SPORT_LEAGUE_DELETE_STATEMENTS = 13;
 /** One transaction: begin, lock the participant, count their field rows, provider identities, the participant, commit. */

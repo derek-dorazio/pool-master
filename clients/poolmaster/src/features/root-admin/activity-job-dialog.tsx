@@ -71,7 +71,8 @@ export function ActivityJobDialog({
         ...(job.lastError === null ? [] : [{ id: 'message', label: 'Message', value: <span className="break-words">{job.lastError}</span> }]),
       ]}
       onCancel={onClose}
-      onOpenChange={(open) => (open ? undefined : onClose())}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={onClose}
       open
       testId={testId}
       title={jobTitle(job)}

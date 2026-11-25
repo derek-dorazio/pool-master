@@ -188,6 +188,8 @@ function buildLeague(overrides: Partial<SelectorLeague> = {}): SelectorLeague {
     cupName: 'League One Cup',
     cupPointsScale: 'STANDARD',
     cupCustomPoints: [],
+    cupCustomPointsMax: 1000,
+    cupCustomPointsMaxPlaces: 50,
     hallOfLameVisible: true,
     planEntitlements: buildPlanEntitlements(),
     planRenewsAt: '2027-04-24T00:00:00.000Z',

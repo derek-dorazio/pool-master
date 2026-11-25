@@ -1,14 +1,12 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
-  clearEventMatchResult,
   createContest,
-  createEvent,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -35,7 +33,7 @@ import {
   SelectionStateResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -45,7 +43,8 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // Knockout scoring end to end over HTTP (#699): an admin releases a four-team, two-round bracket, a
 // commissioner runs a contest scored by knockout round points (1 for a first-round win, 2 for the
@@ -77,8 +76,6 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -87,13 +84,12 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -108,7 +104,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -116,12 +112,12 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const a = admin.client;
 
     // --- A released two-round tournament ------------------------------------------------------
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
-    const sportLeagueId = expectDefined(conference.data).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
-    const tournament = await createEvent({
+    const tournament = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Harbour Classic ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Harbour Classic ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
@@ -137,7 +133,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: FIELD.map((team, index) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed, oddsToWin: 2 + index * 5 })) },
+      body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },
     });
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -236,13 +232,6 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const final = expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, afterFirstRound.data).matches.find((match) => match.matchNumber === 3));
     expect([nameOf(expectDefined(final.homeSportEventParticipantId)), nameOf(expectDefined(final.awaySportEventParticipantId))]).toEqual(['Duke', 'Vermont']);
 
-    // While the final is unplayed a first-round result can be taken back: Vermont leaves the
-    // final's away side, and the result goes in again.
-    const cleared = await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } });
-    const clearedFinal = expectDefined(expectMatchesSchema(SportEventBracketResponseSchema, cleared.data).matches.find((match) => match.matchNumber === 3));
-    expect(clearedFinal.awaySportEventParticipantId).toBeNull();
-    await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 71 } });
-
     // After the first round: Duke 1, Vermont 1 + (15 - 2) = 14, Houston and Texas 0; the best two count.
     const totalsOf = async () => Object.fromEntries(
       expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data).entries
@@ -269,10 +258,6 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // The final is decided, so a first-round winner can no longer change; its score still can.
     expectFunctionalError(
       await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 71, awayScore: 66 } }),
-      { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
-    );
-    expectFunctionalError(
-      await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } }),
       { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
     const corrected = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.AWAY, homeScore: 66, awayScore: 73 } });

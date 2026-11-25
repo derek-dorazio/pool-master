@@ -1,4 +1,3 @@
-import type { ContestTemplateEventType } from '@poolmaster/shared/domain';
 import type { GamePickPreviewRequest, RosterPickPreviewRequest } from '@poolmaster/shared/dto';
 
 type QueryKeyId = string | null | undefined;
@@ -76,7 +75,7 @@ export const QueryKeys = {
    */
   contestConfigTemplates: {
     all: ['poolmaster', 'contest-config-templates'] as const,
-    list: (filters: { sport?: QueryKeyId; sportLeagueId?: QueryKeyId; eventType?: ContestTemplateEventType; active?: boolean }) =>
+    list: (filters: { sportLeagueId?: QueryKeyId; slotDefinitionIds?: readonly QueryKeyId[]; active?: boolean }) =>
       ['poolmaster', 'contest-config-templates', filters] as const,
   },
   contestEntries: {
@@ -123,7 +122,7 @@ export const QueryKeys = {
   },
   /** The public event pages (#1007): one by its address, and the active ones of a sport or all. */
   eventPages: {
-    detail: (sport: string, pageSlug: string) => ['poolmaster', 'event-pages', sport, pageSlug] as const,
+    detail: (sportUrlSegment: string, urlSegment: string) => ['poolmaster', 'event-pages', sportUrlSegment, urlSegment] as const,
     list: (sport: string | null, upcoming: boolean) => ['poolmaster', 'event-pages', 'list', sport, upcoming] as const,
   },
   leagues: {
@@ -230,8 +229,10 @@ export const QueryKeys = {
       // A sport league's participants (#1853). Under the `participants` prefix, so a participant's
       // create or edit refreshes its league's roster, and NOT under `leagues`: a league rename
       // must not wipe every league's roster cache, since TanStack invalidation is prefix-match.
-      leagueRoster: (sportLeagueId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId] as const,
+      // Its test participants (#2096), which a test event's field takes, sit under the roster's key.
+      leagueRoster: (sportLeagueId: QueryKeyId, testData = false) => (testData
+        ? ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'test-data'] as const
+        : ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId] as const),
       // The League page's Participants grid (#1866), under `participants` like the roster.
       leagueParticipantOverviews: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participants', 'league', sportLeagueId, 'overview'] as const,
@@ -242,10 +243,6 @@ export const QueryKeys = {
       // The Structure tab's positions (#2001), under `leagues`.
       leaguePositions: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'positions', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
-      // Under the `events` prefix, so invalidating the list refreshes each league's too: one
-      // Season's events (#1251, #2003).
-      leagueEvents: (sportLeagueId: QueryKeyId, sportLeagueSeasonId: QueryKeyId) =>
-        ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, sportLeagueSeasonId] as const,
       // The League page's Events grid (#1866), every year, under `events` like each year's list.
       leagueEventOverviews: (sportLeagueId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'events', 'league', sportLeagueId, 'overview'] as const,
@@ -274,26 +271,6 @@ export const QueryKeys = {
       participantMappings: (participantId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'participant', participantId, 'provider-mappings'] as const,
     },
-    // plans/124 §6.4. `dateWindow` extends the documented (providerId, sport,
-    // search) signature: both callers (create browse, Home score-source picker)
-    // go through useProviderCatalog, which always passes a
-    // `${from}|${to}|${sportLeagueId}` string so the from/to/league filters are
-    // part of the cache identity, not just the search term.
-    providerCatalogEvents: (
-      providerId: QueryKeyId,
-      sport: QueryKeyId,
-      search: QueryKeyId,
-      dateWindow?: QueryKeyId,
-    ) =>
-      [
-        'poolmaster',
-        'root-admin',
-        'provider-catalog-events',
-        providerId,
-        sport,
-        search,
-        dateWindow ?? null,
-      ] as const,
     // Customers › Leagues (#1883): every league, which any league's plan or gift change refreshes.
     manageLeagues: ['poolmaster', 'root-admin', 'manage-leagues'] as const,
     providers: ['poolmaster', 'root-admin', 'providers'] as const,
@@ -310,6 +287,9 @@ export const QueryKeys = {
       ['poolmaster', 'root-admin', 'activity', scope, from, to] as const,
     // Every system email (#1872), under `settings`, so an EMAIL_CONFIG save refreshes its On/Off status.
     systemEmails: ['poolmaster', 'root-admin', 'settings', 'system-emails'] as const,
+    // The ingestion schedule read (#2086), with whether each sync runs and has a switch; under
+    // `settings`, so a schedule save refreshes it.
+    ingestionSchedule: ['poolmaster', 'root-admin', 'settings', 'ingestion-schedule'] as const,
     systemEmailLatestSend: (templateKey: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'settings', 'system-emails', templateKey, 'latest-send'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,
@@ -319,6 +299,8 @@ export const QueryKeys = {
     // The sync findings (#1999); one finding sits under the list's prefix, so a change refreshes both.
     syncFindings: ['poolmaster', 'root-admin', 'sync-findings'] as const,
     syncFinding: (findingId: QueryKeyId) => ['poolmaster', 'root-admin', 'sync-findings', findingId] as const,
+    // The slots a tournament name finding can be linked to (#2011), under its finding.
+    syncFindingSlotChoices: (findingId: QueryKeyId) => ['poolmaster', 'root-admin', 'sync-findings', findingId, 'slot-choices'] as const,
     // Customers › Users (#1883): every user, which any user's edit or account action refreshes.
     users: ['poolmaster', 'root-admin', 'users'] as const,
   },

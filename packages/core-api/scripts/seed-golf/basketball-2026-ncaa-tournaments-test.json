@@ -4,8 +4,8 @@
     "sport": "BASKETBALL",
     "season": 2026,
     "sportLeagues": [
-      "NCAA Division I Men",
-      "NCAA Division I Women"
+      "NCAA Men's Basketball",
+      "NCAA Women's Basketball"
     ],
     "participantType": "TEAM",
     "scoringFamily": "HEAD_TO_HEAD",
@@ -130,7 +130,7 @@
   },
   "sportLeagues": [
     {
-      "name": "NCAA Division I Men",
+      "name": "NCAA Men's Basketball",
       "players": [
         {
           "key": "ncaam-duke-blue-devils",
@@ -568,6 +568,7 @@
       "events": [
         {
           "key": "ncaam-tournament-2026",
+          "slotKey": "FINAL",
           "name": "NCAA Men's Tournament",
           "startDate": "2026-03-17",
           "endDate": "2026-04-06",
@@ -2103,7 +2104,7 @@
       ]
     },
     {
-      "name": "NCAA Division I Women",
+      "name": "NCAA Women's Basketball",
       "players": [
         {
           "key": "ncaaw-uconn-huskies",
@@ -2541,6 +2542,7 @@
       "events": [
         {
           "key": "ncaaw-tournament-2026",
+          "slotKey": "FINAL",
           "name": "NCAA Women's Tournament",
           "startDate": "2026-03-18",
           "endDate": "2026-04-05",

@@ -1,6 +1,6 @@
 ---
 name: add-event-page
-description: Adding an event page (/play/<sport>/<slug>) and its link preview tile — choose the page and its offers, seed them by migration, write the page's copy, draw its preview image, test, and check it on QA. Use when someone wants a landing page for an event such as the Super Bowl or the Final Four.
+description: Adding an event page (/play/<sport URL segment>/<page URL segment>) and its link preview tile — choose the page and its offers, seed them by migration, write the page's copy, draw its preview image, test, and check it on QA. Use when someone wants a landing page for an event such as the Super Bowl or the Final Four.
 user-invocable: true
 allowed-tools: [Read, Grep, Glob, Edit, Write, Bash]
 ---
@@ -20,7 +20,7 @@ Write this table in the ticket, each open point a question with a recommendation
 |---|---|
 | Event | The event a fan would name, and which sport it is under |
 | Slug | Lower case words joined by single dashes (`super-bowl`). Permanent: it lives in emails, ads and chats |
-| Offers | For each way to play: the sport league, the series its editions are loaded as, the template key, and a bracket starting round if it starts later than the template's |
+| Offers | For each way to play: the sport league, the slot definition (the key of a slot in its Season shape) whose event the offer is shown with, the template key, and a bracket starting round if it starts later than the template's |
 | Primary | The one offer whose edition dates the page, usually the one that opens first |
 | Order | `display_order` among the sport's pages: the calendar order of their events |
 | Copy | Name, eyebrow, hook line, when picks close, the league in the footer, and each offer's card |
@@ -30,8 +30,9 @@ Check each offer before writing anything:
 - The template exists, is active, and belongs to that sport league. Find it in the contest
   template reference migrations by its key. The offers insert joins the template to its league,
   so a template with no league seeds no offer.
-- The series name is exactly what the sport league's data files load its editions as. An offer
-  on a series with no upcoming edition is simply not shown, so a typo fails silently.
+- The slot definition key is one of that sport league's (`sport_league_phase_slots`), and the
+  template covers it. An offer whose definition has no Season slot left that is not over is
+  simply not shown, so a typo fails silently.
 - The page's hero is its sport's photo (`rules/ux-rules.md` §13 *Event Pages* item 6), already
   in `clients/poolmaster/public/email/sports/`. A sport without one shows its drawn How to Play
   scene; a better photo is a separate change, with its source note beside it, and can show the
@@ -44,16 +45,18 @@ applies: idempotent on the natural key, never an edit to an applied migration.
 
 1. Name it after main's latest migration (`ls packages/core-api/prisma/migrations | tail -3`
    on a fresh `origin/main`), with a timestamp no other open branch is using.
-2. Insert the page `ON CONFLICT ("sport", "slug") DO NOTHING`.
-3. Insert the offers from a `VALUES` list joined to `sports`, `sport_leagues` (by name) and
-   `contest_config_templates` (by key and league), as the Championship Weekend migration
+2. Insert the page with its `url_segment` (lower-case words joined by single hyphens; a check
+   constraint refuses anything else) `ON CONFLICT ("sport", "url_segment") DO NOTHING`.
+3. Insert the offers from a `VALUES` list joined to `sports`, `sport_leagues` (by name),
+   `sport_league_phase_slots` (by key and league) and `contest_config_templates` (by key and
+   league), as the Championship Weekend migration
    (`*_event_pages`) does, `ON CONFLICT ("event_page_id", "sort_order") DO NOTHING`. Exactly one
    row has `is_primary`; a starting round goes only on a bracket template.
 4. Run it on a scratch database with `prisma migrate deploy`, not a reset of the shared one.
 
 ## Step 3 — tests for the seed
 
-`tests/integration/core-api/event-pages.integration.ts` already checks every page's slug, its
+`tests/integration/core-api/event-pages.integration.ts` already checks every page's URL segment, its
 one primary offer, and that each offer's template is active, the page's sport and its league's.
 Add one test for the new page that names its offers in order, by template key and starting
 round, so a league or template the joins did not find (and so silently seeded no offer) fails.
@@ -61,7 +64,7 @@ round, so a league or template the joins did not find (and so silently seeded no
 ## Step 4 — the copy
 
 Add the page to `EVENT_PAGE_COPY` in `clients/poolmaster/src/features/event-pages/event-page-copy.ts`,
-under its sport and slug, with every offer's card keyed by its template key. Write the cards in
+under its sport's URL segment and its own (`'football'`, then `'championship-weekend'`), with every offer's card keyed by its template key. Write the cards in
 the offers' `sort_order`: the preview image's chips follow the copy's order, so the image and
 the page then agree. Follow
 `rules/ux-rules.md` §13 *Event Pages* items 3 and 4 for what the words may say. Read the
@@ -88,22 +91,22 @@ Run the `release-check` skill. A merge does not deploy QA: after it, run CI by h
 That deploy writes the page's shell on its own; no Terraform apply is needed. Then check:
 
 ```bash
-curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport>/<slug> | grep og:title
+curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport-url-segment>/<url-segment> | grep og:title
 ```
 
-and paste the link into Slack or iMessage. An offer shows only while its series has an edition
-on QA that is not over: the series' synced events, or its test seed through *Load test data*
+and paste the link into Slack or iMessage. An offer shows only while its slot definition has a
+Season slot on QA that is not over: the league's synced Season, or its test seed through *Load test data*
 on the user's say-so (`docs/SPORT-DATA-LOADING.md`), then read the page.
 
 ## Traps
 
-- **An offer that seeds nothing.** The offers insert joins by league name and template key, so
+- **An offer that seeds nothing.** The offers insert joins by league name, slot key and template key, so
   a misspelling inserts no row and raises no error. Only the page's own integration test
   catches it.
 - **A stale preview image.** The unit test checks that each page has an image, not that it
   matches the copy. Re-run the render script whenever a page's name, eyebrow, hook or offers
   change, and commit the new image.
-- **Changing a slug.** Never. Make the old page inactive and point its `redirect_to_page_id` at
+- **Changing a URL segment.** Never. Make the old page inactive and point its `redirect_to_page_id` at
   the new one, in a later migration.
 - **A migration timestamp another branch also took, or one main has passed.** Two migrations on
   the same timestamp break main once both merge, and one dated before main's latest runs in a
@@ -111,6 +114,6 @@ on the user's say-so (`docs/SPORT-DATA-LOADING.md`), then read the page.
   before merge (`npm run rules:check:migration-timestamps` catches both).
 - **Testing a card in a chat that saw the link before.** Chat apps cache a link's card. Add
   `?t=1` to see the new one.
-- **Offers missing on QA.** An offer is left out while its series has no edition that is not
-  over. A test seed's dates are moved forward when it loads, so loading the series' test seed
+- **Offers missing on QA.** An offer is left out while its slot definition has no Season slot
+  that is not over. A test seed's dates are moved forward when it loads, so loading the league's test seed
   (or its sync) brings the offer back; an old load whose dates have passed does not.

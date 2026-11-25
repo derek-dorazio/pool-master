@@ -4,7 +4,7 @@ import { MatchPeriodLayout, Sport, matchPeriodLayoutOf, matchPeriodsOf } from '@
 describe('matchPeriodsOf — the periods a sport league\'s games are played in (#786)', () => {
   it('plays a sport league with no layout of its own in its sport\'s quarters', () => {
     expect(matchPeriodsOf(Sport.BASKETBALL, null)).toEqual({ count: 4, label: { one: 'quarter', many: 'quarters' } });
-    expect(matchPeriodsOf(Sport.AMERICAN_FOOTBALL, null)).toEqual({ count: 4, label: { one: 'quarter', many: 'quarters' } });
+    expect(matchPeriodsOf(Sport.FOOTBALL, null)).toEqual({ count: 4, label: { one: 'quarter', many: 'quarters' } });
   });
 
   it('plays a sport league in its own layout when it has one: men\'s college basketball in two halves', () => {

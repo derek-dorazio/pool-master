@@ -74,7 +74,7 @@ describe('toActivityJobDto', () => {
 
   it('names a waiting event job\'s event and the event\'s league, and answers null for what it has not got yet: no league id of its own, no start, no duration, no changed rows, no error, no result', () => {
     const dto = toActivityJobDto(presented(
-      buildJob({ type: BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, sportEventId: EVENT_ID, trigger: JobTrigger.SYSTEM }),
+      buildJob({ type: BackgroundJobType.RELEASE_SPORT_EVENT, sportEventId: EVENT_ID, trigger: JobTrigger.SYSTEM }),
       [],
       { sportLeague: { id: LEAGUE_ID, name: 'PGA Tour' }, sportEvent: { id: EVENT_ID, name: 'The Sentry' } },
     ));

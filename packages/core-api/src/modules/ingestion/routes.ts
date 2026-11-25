@@ -9,7 +9,6 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { Sport } from '@poolmaster/shared/domain';
 // Registers ErrorEnvelope, which this module's error responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
@@ -19,12 +18,10 @@ import '@poolmaster/shared/dto/activity.dto';
 import type { LeagueEventsSyncRequest } from '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { requireRootAdmin } from '../../core/root-admin-guard';
-import { EventScoreSourceService } from '../events/event-score-source-service';
 import type { ProviderRegistry } from './core/provider-registry';
 import type { IngestionService } from './ingestion-service';
 import type { ProviderSettingsService } from './provider-settings-service';
 import { createIngestionHandlers } from './handler';
-import { getAppPrisma } from '../../core/prisma-context';
 import { requireAuthUser } from '../../plugins/auth-guard';
 import { toActivityJobDto } from '../../mappers';
 import type { LeagueEventsSync } from '../events/league-events-sync';
@@ -41,7 +38,6 @@ export interface IngestionModuleOptions {
   providerSettings: ProviderSettingsService;
 }
 
-const SPORT_PARAM = { type: 'string', enum: Object.values(Sport) };
 
 export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
@@ -53,7 +49,6 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
 
   const handler = createIngestionHandlers(
     opts.ingestionService,
-    new EventScoreSourceService(getAppPrisma(fastify), opts.providerRegistry, fastify.log),
     opts.providerSettings,
   );
 
@@ -72,8 +67,8 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'Change a provider\'s settings',
-      description: 'The Providers page\'s edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling, priority and the leagues read take effect when the server tasks next start. '
-        + '404 PROVIDER_NOT_FOUND when there is no such Provider row. 409 PROVIDER_PRIORITY_TAKEN when another provider has the priority. '
+      description: 'The Providers page\'s edit (#1997); omitted fields are left alone. The base URL, rate and poll intervals are taken by every task within a minute; enabling and the leagues read take effect when the server tasks next start. '
+        + '404 PROVIDER_NOT_FOUND when there is no such Provider row. '
         + '422 PROVIDER_WEBHOOK_SECRET_MISSING when webhooksEnabled is true while the provider\'s signing secret is not set in this environment. Root admin only.',
       operationId: 'updateProviderSettings',
       params: { type: 'object', required: ['providerId'], properties: { providerId: { type: 'string', format: 'uuid', description: 'The Provider row (ProviderSettingsDto.id).' } } },
@@ -132,16 +127,17 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     handler: handler.getSyncRun,
   });
 
-  fastify.post('/sports/:sport/events/:eventId/sync', {
+  fastify.post('/events/:eventId/sync', {
     schema: {
       tags: ['Ingestion'],
-      summary: 'Submit a manual event sync',
-      description: 'Submits one sync run per requested event-level feed for the provider event `eventId` of the provider `providerId` names, which must serve `sport` (404 otherwise). Refused with 409 when a feed is not allowed by the event\'s syncScope. The runs execute asynchronously after acceptance.',
+      summary: 'Sync an event now',
+      description: 'Queues one sync run per requested event-level feed for the event, read from its sport league\'s provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. '
+        + '404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.',
       operationId: 'submitEventSync',
       params: {
         type: 'object',
-        required: ['sport', 'eventId'],
-        properties: { sport: SPORT_PARAM, eventId: { type: 'string' } },
+        required: ['eventId'],
+        properties: { eventId: { type: 'string', format: 'uuid' } },
       },
       body: schemaRef('EventSyncRequest'),
       response: { 202: schemaRef('ProviderManualSyncSubmissionResponse'), ...errors(404, 409, 422) },
@@ -174,18 +170,5 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
       const [presented] = await opts.activity.present([job]);
       return reply.code(202).send({ job: toActivityJobDto(presented) });
     },
-  });
-
-  fastify.get('/providers/:providerId/catalog-events', {
-    schema: {
-      tags: ['Ingestion'],
-      summary: 'Browse a provider\'s live event catalog',
-      description: 'Calls the provider live — no dependency on any persisted SportEvent row or on schedule/field sync being enabled. Serves the tournament-creation browse mode and the score-source linking picker: a plain filtered list with no scoring or ranking.',
-      operationId: 'listProviderCatalogEvents',
-      params: { type: 'object', required: ['providerId'], properties: { providerId: { type: 'string' } } },
-      querystring: schemaRef('ProviderCatalogEventListQuery'),
-      response: { 200: schemaRef('ProviderCatalogEventListResponse'), ...errors(404) },
-    },
-    handler: handler.listProviderCatalogEvents,
   });
 }

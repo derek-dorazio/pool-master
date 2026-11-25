@@ -16,13 +16,11 @@ import type { ProviderWebhookSwitch } from './provider-webhook-switch';
 export type ProviderSettingsErrorCode =
   | 'PROVIDER_NOT_FOUND'
   | 'PROVIDER_LEAGUE_NOT_FOUND'
-  | 'PROVIDER_PRIORITY_TAKEN'
   | 'PROVIDER_WEBHOOK_SECRET_MISSING';
 
 const STATUS_BY_CODE: Record<ProviderSettingsErrorCode, number> = {
   PROVIDER_NOT_FOUND: 404,
   PROVIDER_LEAGUE_NOT_FOUND: 404,
-  PROVIDER_PRIORITY_TAKEN: 409,
   PROVIDER_WEBHOOK_SECRET_MISSING: 422,
 };
 
@@ -47,8 +45,8 @@ export class ProviderSettingsService {
   constructor(private readonly deps: ProviderSettingsServiceDeps) {}
 
   /**
-   * Saves a provider's settings, with whether its secret is set. 404 PROVIDER_NOT_FOUND; 409
-   * PROVIDER_PRIORITY_TAKEN; 422 PROVIDER_WEBHOOK_SECRET_MISSING when its webhooks would be
+   * Saves a provider's settings, with whether its secret is set. 404 PROVIDER_NOT_FOUND; 422
+   * PROVIDER_WEBHOOK_SECRET_MISSING when its webhooks would be
    * switched on while its signing secret is not set here.
    */
   async updateProvider(providerId: string, updates: ProviderSettingsUpdate): Promise<{ provider: ProviderSettings; webhookSecretSet: boolean }> {
@@ -68,9 +66,6 @@ export class ProviderSettingsService {
     }
     const saved = await this.deps.repository.update(providerId, updates);
     if (saved === 'NOT_FOUND') throw notFound(providerId);
-    if (saved === 'PRIORITY_TAKEN') {
-      throw new ProviderSettingsError(`Another provider already has priority ${String(updates.priority)}.`, 'PROVIDER_PRIORITY_TAKEN');
-    }
     this.deps.store.replace(saved);
     this.deps.logger?.info(
       { action: 'ingestion.providerSettings.updated', providerId, providerCode: saved.code, fields: Object.keys(updates) },

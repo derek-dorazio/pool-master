@@ -5,9 +5,7 @@ import type {
   AddSportEventParticipantsResponse,
   AutoAssignSportEventPricesRequest,
   AutoAssignSportEventTiersRequest,
-  CreateSportEventFromProviderEventRequest,
   CreateSportEventRequest,
-  LinkSportEventScoreSourceRequest,
   ReplaceSportEventTierAssignmentsRequest,
   ReplaceSportEventTiersRequest,
   SportEventListQuery,
@@ -39,14 +37,13 @@ import type {
   LoadSportEventBracketRequest,
   RecordSportEventMatchPeriodScoreRequest,
   RecordSportEventRoundMatchResultRequest,
-  ReplaceWithdrawnParticipantRequest,
   SetSportEventRoundMatchupsRequest,
   SportEventBracketResponse,
   SportEventRoundMatchResponse,
   SportEventRoundMatchupsResponse,
   UpdateSportEventRoundMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
-import { MatchResultSource, OFFERABLE_SPORT_EVENT_STATUSES, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { eventFeedRef, OFFERABLE_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapFieldUploadPreviewToDto,
@@ -61,12 +58,8 @@ import {
   toProviderManualSyncSubmissionResponse,
 } from '../../mappers';
 import type { IngestionService } from '../ingestion/ingestion-service';
-import {
-  SportEventSyncScopeError,
-  SportProviderNotFoundError,
-} from '../ingestion/ingestion-service';
+import { SportProviderNotFoundError } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
-import type { EventScoreSourceService } from './event-score-source-service';
 import { SportEventError } from './errors';
 import type { SportEventServices } from './wiring';
 import type { SportLeaguePageService } from '../sport-catalog/sport-league-page';
@@ -100,7 +93,6 @@ function isOfferableEventList(query: SportEventListQuery): boolean {
 export interface EventHandlerDeps {
   services: SportEventServices;
   eventLifecycle: EventLifecycleService;
-  scoreSource: EventScoreSourceService;
   ingestion: IngestionService;
   /** Settle again (#1890): the event's contests' boards rebuilt from the results stored now. */
   leaderboards: Pick<LeaderboardRebuilds, 'eventsChanged'>;
@@ -113,7 +105,7 @@ export interface EventHandlerDeps {
  * contract code and status and reaches the caller through the global error handler; only
  * the provider-sync errors, which carry neither, are mapped here.
  */
-export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion, leaderboards, eventOverviews }: EventHandlerDeps) {
+export function createEventHandlers({ services, eventLifecycle, ingestion, leaderboards, eventOverviews }: EventHandlerDeps) {
   const { sportEvents, rounds, field, tiers, golfScores, raceResults, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
@@ -168,28 +160,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     },
 
     createEvent: async (request: FastifyRequest<{ Body: CreateSportEventRequest }>, reply: FastifyReply) => {
-      const { body } = request;
-      const created = await sportEvents.createEvent({
-        ...body,
-        startDate: new Date(body.startDate),
-        endDate: body.endDate ? new Date(body.endDate) : undefined,
-      });
-      return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
-    },
-
-    createEventFromProviderEvent: async (
-      request: FastifyRequest<{ Body: CreateSportEventFromProviderEventRequest }>,
-      reply: FastifyReply,
-    ) => {
-      const { sportLeagueId, providerId, externalId, rounds: roundCount } = request.body;
-      const providerEvent = await scoreSource.getProviderEventDetail(providerId, externalId);
-      const created = await sportEvents.createEventFromProviderEvent({
-        sportLeagueId,
-        providerId,
-        externalId,
-        rounds: roundCount,
-        providerEvent,
-      });
+      const created = await sportEvents.createEvent(request.body);
       return reply.status(201).send({ event: mapSportEventToDto(created) } satisfies SportEventResponse);
     },
 
@@ -224,16 +195,6 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       return eventResponse(request.params.eventId);
     },
 
-    linkScoreSource: async (request: FastifyRequest<EventParams & { Body: LinkSportEventScoreSourceRequest }>): Promise<SportEventResponse> => {
-      await scoreSource.linkScoreSource(request.params.eventId, request.body);
-      return eventResponse(request.params.eventId);
-    },
-
-    unlinkScoreSource: async (request: FastifyRequest<EventParams>): Promise<SportEventResponse> => {
-      await scoreSource.unlinkScoreSource(request.params.eventId);
-      return eventResponse(request.params.eventId);
-    },
-
     /** Settle again (#1890): queues one rebuild of the event's contests' boards from the results stored now; 204. */
     rebuildEventLeaderboards: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const { eventId } = request.params;
@@ -247,19 +208,19 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const event = await sportEvents.requireEvent(request.params.eventId);
-      if (event.syncScope === SportEventSyncScope.NONE) {
-        return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} is not linked to a provider.`);
+      const feedRef = eventFeedRef(event);
+      if (feedRef === undefined) {
+        return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} has no id at its league's provider.`);
       }
       try {
         const result = await ingestion.syncEventData(
-          { sport: event.sport, providerId: event.providerId, eventId: event.externalId, feeds: ['EVENTPARTICIPANTS'] },
+          { sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, feeds: ['EVENTPARTICIPANTS'] },
           request.authUser?.userId ?? '',
           request.authUser?.email ?? '',
         );
         return reply.status(202).send(toProviderManualSyncSubmissionResponse(result));
       } catch (err) {
         if (err instanceof SportProviderNotFoundError) return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
-        if (err instanceof SportEventSyncScopeError) return sendError(reply, 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED', err.message);
         throw err;
       }
     },
@@ -379,7 +340,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     applyGolfRoundScores: async (
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await requireEvent(request.params.eventId);
+      await sportEvents.requireTestEvent(request.params.eventId);
       await golfScores.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return fieldResponse(request.params.eventId);
     },
@@ -394,7 +355,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     applyRaceResults: async (
       request: FastifyRequest<EventParams & { Body: RaceResultUploadRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
-      await requireEvent(request.params.eventId);
+      await sportEvents.requireTestEvent(request.params.eventId);
       await raceResults.applyResults(request.params.eventId, request.body);
       return fieldResponse(request.params.eventId);
     },
@@ -403,7 +364,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number; sportEventParticipantId: string }; Body: UpdateGolfRoundScoreRequest }>,
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, roundNumber, sportEventParticipantId } = request.params;
-      await requireEvent(eventId);
+      await sportEvents.requireTestEvent(eventId);
       await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
       return fieldRowResponse(eventId, sportEventParticipantId);
     },
@@ -417,6 +378,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     loadEventBracket: async (
       request: FastifyRequest<EventParams & { Body: LoadSportEventBracketRequest }>,
     ): Promise<SportEventBracketResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const matches = await bracket.loadBracket(request.params.eventId, request.body.matches.map((match) => ({
         ...match,
         scheduledDate: match.scheduledDate === null ? null : new Date(match.scheduledDate),
@@ -427,6 +389,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     updateEventBracketMatch: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: UpdateSportEventRoundMatchRequest }>,
     ): Promise<SportEventRoundMatchResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const { scheduledDate, ...edit } = request.body;
       const match = await bracket.updateMatch(request.params.eventId, request.params.matchNumber, {
         ...edit,
@@ -438,14 +401,8 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     recordEventMatchResult: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number }; Body: RecordSportEventRoundMatchResultRequest }>,
     ): Promise<SportEventBracketResponse> => {
-      const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body, MatchResultSource.ADMIN);
-      return { matches: matches.map(mapSportEventRoundMatchToDto) };
-    },
-
-    clearEventMatchResult: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
-    ): Promise<SportEventBracketResponse> => {
-      const matches = await matchResults.clearResult(request.params.eventId, request.params.matchNumber);
+      await sportEvents.requireTestEvent(request.params.eventId);
+      const matches = await matchResults.recordResult(request.params.eventId, request.params.matchNumber, request.body);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
@@ -453,29 +410,16 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number; periodNumber: number }; Body: RecordSportEventMatchPeriodScoreRequest }>,
     ): Promise<SportEventBracketResponse> => {
       const { eventId, matchNumber, periodNumber } = request.params;
+      await sportEvents.requireTestEvent(eventId);
       const matches = await matchResults.recordPeriodScore(eventId, matchNumber, periodNumber, request.body);
-      return { matches: matches.map(mapSportEventRoundMatchToDto) };
-    },
-
-    clearEventMatchPeriodScore: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number; periodNumber: number } }>,
-    ): Promise<SportEventBracketResponse> => {
-      const { eventId, matchNumber, periodNumber } = request.params;
-      const matches = await matchResults.clearPeriodScore(eventId, matchNumber, periodNumber);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
     cancelEventMatch: async (
       request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
     ): Promise<SportEventBracketResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const matches = await matchResults.cancelMatch(request.params.eventId, request.params.matchNumber);
-      return { matches: matches.map(mapSportEventRoundMatchToDto) };
-    },
-
-    postponeEventMatch: async (
-      request: FastifyRequest<{ Params: { eventId: string; matchNumber: number } }>,
-    ): Promise<SportEventBracketResponse> => {
-      const matches = await matchResults.postponeMatch(request.params.eventId, request.params.matchNumber);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
 
@@ -488,6 +432,7 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     setEventRoundMatchups: async (
       request: FastifyRequest<{ Params: { eventId: string; roundNumber: number }; Body: SetSportEventRoundMatchupsRequest }>,
     ): Promise<SportEventBracketResponse> => {
+      await sportEvents.requireTestEvent(request.params.eventId);
       const matches = await bracket.setRoundMatchups(request.params.eventId, request.params.roundNumber, request.body.matches);
       return { matches: matches.map(mapSportEventRoundMatchToDto) };
     },
@@ -496,16 +441,10 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
       request: FastifyRequest<{ Params: { eventId: string; sportEventParticipantId: string }; Body: FillPlayInSlotRequest }>,
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, sportEventParticipantId } = request.params;
+      await sportEvents.requireTestEvent(eventId);
       await bracket.fillPlayInSlot(eventId, sportEventParticipantId, request.body.participantId);
       return fieldRowResponse(eventId, sportEventParticipantId);
     },
 
-    replaceEventParticipant: async (
-      request: FastifyRequest<{ Params: { eventId: string; sportEventParticipantId: string }; Body: ReplaceWithdrawnParticipantRequest }>,
-    ): Promise<SportEventParticipantResponse> => {
-      const { eventId, sportEventParticipantId } = request.params;
-      const replacementId = await bracket.replaceWithdrawn(eventId, sportEventParticipantId, request.body.participantId);
-      return fieldRowResponse(eventId, replacementId);
-    },
   };
 }

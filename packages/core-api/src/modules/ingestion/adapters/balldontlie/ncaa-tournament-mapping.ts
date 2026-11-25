@@ -17,10 +17,8 @@
  * (#1571).
  *
  * Team ids are the provider's own (`participantFeedId`, #2040): the vendor numbers each league's
- * teams on its own, and a mapping is kept per sport league. Each team
- * carries its league's keyword in `metadata.tour`, so a school's men's and women's teams, which
- * share a name, each link to the site's own. Where the site keeps one row for the school,
- * affiliated with both leagues (as a sport data file loads it), that row takes both links.
+ * teams on its own, and a mapping is kept per sport league, so a school's men's and women's
+ * teams, which share a name, each map to their own league's participant.
  */
 
 import { MatchSide, Sport } from '@poolmaster/shared/domain';
@@ -31,17 +29,13 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import type { NcaaBracketGame, NcaaBracketTeam, NcaaTeam } from './ncaa-tournament-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 /** One of the vendor's NCAA basketball leagues and how its bracket numbers its rounds. */
 export interface NcaaTournamentLeague {
   /** The vendor's path segment (`/ncaab/v1/...`), and the prefix of its scope and team ids. */
   key: 'ncaab' | 'ncaaw';
   eventName: string;
-  /**
-   * The tour name its events and teams carry in `metadata.tour`, for display; a sport league
-   * finds them by their provider league code (#1997).
-   */
-  tour: string;
   firstFourRound: number;
   championshipRound: number;
   /**
@@ -54,7 +48,6 @@ export interface NcaaTournamentLeague {
 export const NCAA_MEN: NcaaTournamentLeague = {
   key: 'ncaab',
   eventName: 'NCAA Men\'s Tournament',
-  tour: 'NCAAM',
   firstFourRound: 1,
   championshipRound: 7,
   bracketRegions: true,
@@ -63,7 +56,6 @@ export const NCAA_MEN: NcaaTournamentLeague = {
 export const NCAA_WOMEN: NcaaTournamentLeague = {
   key: 'ncaaw',
   eventName: 'NCAA Women\'s Tournament',
-  tour: 'NCAAW',
   firstFourRound: 0,
   championshipRound: 6,
   bracketRegions: false,
@@ -132,7 +124,10 @@ export function toNcaaTournamentEvent(scope: NcaaTournamentScope, games: readonl
     rounds: tournamentRoundsOf(league),
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: league.tour, season: scope.season },
+    // A bracket game's code is the vendor's round, First Four included; an undated game has no place in time yet.
+    providerSlots: slotPlaysOf(games.flatMap((game) => (game.date && game.round !== undefined
+      ? [{ code: providerSlotCode(ProviderSeasonType.POSTSEASON, game.round), start: Date.parse(game.date) }]
+      : []))),
   };
 }
 
@@ -145,7 +140,7 @@ export function toNcaaTeamParticipant(league: NcaaTournamentLeague, team: NcaaTe
     sport: Sport.BASKETBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     active: true,
-    metadata: { tour: league.tour, ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}) },
+    metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }
 
@@ -178,7 +173,7 @@ export function toNcaaFieldParticipants(league: NcaaTournamentLeague, games: rea
         sport: Sport.BASKETBALL,
         name: team.full_name ?? required(team.name, bracketPathOf(league), `a team of ${gameName(game)}`, 'name'),
         active: true,
-        metadata: { tour: league.tour, ...(Number.isInteger(seed) ? { seed } : {}) },
+        metadata: Number.isInteger(seed) ? { seed } : {},
       });
     }
   }
@@ -263,7 +258,7 @@ export function toNcaaPlayInPlaces(scope: NcaaTournamentScope, games: readonly N
       sport: Sport.BASKETBALL,
       name: `${name(home)} / ${name(away)}`,
       active: true,
-      metadata: { tour: league.tour, seed, playInPlace: true },
+      metadata: { seed, playInPlace: true },
     }];
   });
 }

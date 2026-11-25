@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { Toaster } from '@/features/shared/ui';
@@ -105,5 +106,16 @@ describe('OpenContestAction', () => {
       expect.objectContaining({ action: 'contest.open.failed' }),
       expect.any(String),
     );
+  });
+
+  it('stays open on Escape while the contest is still being opened', async () => {
+    openContestMock.mockReturnValue(new Promise(() => undefined));
+
+    renderAction();
+    await confirmOpen();
+    await screen.findByText('Opening...');
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.getByTestId('contest-open-dialog')).toBeInTheDocument();
   });
 });

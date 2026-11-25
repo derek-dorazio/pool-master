@@ -46,4 +46,13 @@ describe("WebAddressBox", () => {
 
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("https://example.com/league/NEW"));
   });
+
+  it("leaves out the link and Copy test ids when no test id is given, live or not", () => {
+    const { rerender } = render(<WebAddressBox isLive url="https://example.com/league/NEW" />);
+    expect(screen.getByRole("link", { name: "example.com/league/NEW" })).not.toHaveAttribute("data-testid");
+    expect(screen.getByRole("button", { name: "Copy" })).not.toHaveAttribute("data-testid");
+
+    rerender(<WebAddressBox isLive={false} url="https://example.com/league/NEW" />);
+    expect(screen.getByText("example.com/league/NEW")).not.toHaveAttribute("data-testid");
+  });
 });

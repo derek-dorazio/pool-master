@@ -1,6 +1,6 @@
 ---
 name: review-a-pr
-description: Reviewing someone else's PoolMaster pull request — read the plan and the PR's disclosures, run the general correctness pass, apply every lens the diff has a surface for and always the hard-coded-rules lens, then post findings on the PR with a model home for each and a clear verdict. Use when asked to review a PR, or when a review thread is started for one.
+description: Reviewing someone else's PoolMaster pull request — read the plan, the ticket's checklist and the PR's disclosures, run the general correctness pass, apply every lens the diff has a surface for and always the hard-coded-rules lens, check every ticket line, test layer and retired name against the whole branch, then post findings on the PR with a model home for each and a clear verdict. Use when asked to review a PR, or when a review thread is started for one.
 user-invocable: true
 allowed-tools: [Read, Grep, Glob, Bash]
 ---
@@ -12,7 +12,9 @@ A review here is one pass with lenses, not a vote per lens (`rules/review-trigge
 do not spend the read on it). The failure this skill exists to stop: PRs that passed review
 while adding name matches, id strings built and parsed, positional lookups, per-league
 constant tables and second copies of a computed fact. Each hunk read as plausible; nobody
-read for the pattern. Step 4 is therefore never skipped.
+read for the pattern. Step 4 is therefore never skipped. The second failure: PRs that passed
+review while leaving undone what their ticket asked for, because the review read only the
+diff and a diff cannot show a file that should have changed. Step 5 is never skipped either.
 
 Never review your own PR: the context that wrote the code is the one that would miss its
 faults.
@@ -22,6 +24,10 @@ faults.
 - Read the linked issue and, if there is one, the plan it implements. Note the decision the
   plan records; scope creep is visible only against it (`rules/review-triggers.md` §7
   *Reviewing for architectural fit*).
+- Read the ticket **body and every comment on it**. Its *Scope*, *Retires*, *Readers* and
+  *Tests* lines are your checklist for step 5 (`rules/workflow-rules.md` §1 *A slice ticket is
+  a checklist*). Copy them into your notes now, one line each. If agreed review comments were
+  never folded into the body, read them as part of it and say so in the review.
 - Read the PR body's Review triggers section and blast-radius disclosure
   (`rules/review-triggers.md` §2 *The trigger list*). A trigger the diff plainly has and the
   body does not name is itself a finding.
@@ -90,7 +96,42 @@ rows set by migration, a provider mapping table, a field the API returns, or one
 helper beside its type (`rules/domain-model-conventions-rules.md` §17 *Rules Live In The
 Model, Not In Code*). "Hard-coded" alone gives the author nothing to do.
 
-## Step 5 — post the review
+## Step 5 — the ticket against the whole branch, always
+
+For every PR that implements a ticket, apply `rules/review-triggers.md` §10 *Reviewing
+against the ticket: omissions and leftovers*. Work from the checklist you copied in step 1:
+
+1. **Tick each Scope line** against the diff and the PR body's ticks. A line with no change
+   and no linked deferral ticket is blocking. Check the omissions as hard as the additions:
+   a "the web reads X from the DTO" line is done only when the web code that worked X out is
+   gone, and that file may not be in the diff at all.
+2. **Tick each Tests line** by opening the test file at the layer it names
+   (`rules/testing-rules.md` §2 *Each slice names its layers*). Confirm the pinned
+   query-count case for each list GET the slice adds or changes, and that a defect fix's
+   failing test came first. Coverage floors are CI's; do not re-measure them.
+3. **Search the PR's head for every retired name**, not the diff:
+
+```bash
+for name in <each name in the ticket's Retires section>; do
+  echo "== $name"; git grep -nw "$name" -- packages clients/poolmaster tests scripts docs rules .claude     ':!**/migrations/**' ':!packages/shared/generated/**'
+done
+```
+
+   Each hit outside a migration or a deliberate historical note is a leftover: blocking when
+   this slice owns it, a linked ticket when a later one does. Confirm the PR lowered or
+   deleted the name's entry in `scripts/retired-names.json` (`rules:check:retired-names`
+   fails a count that dropped without it, but not one the slice forgot to remove).
+4. **Search for the old computation by what it computes**, not by its name, for each fact
+   the slice moves into the model (`rules/review-triggers.md` §9 item 5).
+5. **Read every raise the PR declares** in `scripts/baseline-raises.json`. Each one lets a
+   baseline go up, and the reason must justify it. A new `poolmaster-allow-raw-sql` marker names
+   what Prisma cannot express (`rules/service-rules.md` §5 *Prisma and Persistence*). A raise
+   whose reason does not hold is blocking.
+
+Report the result as a table in the review, one row per checklist line: the line, ✓ or the
+finding, and the file or ticket that settles it.
+
+## Step 6 — post the review
 
 Post on the PR as one review comment (an agent's approval posts as a comment, since it
 shares the author's account):
@@ -103,6 +144,7 @@ shares the author's account):
 - **Follow-ups:** a pre-existing hard-coded rule the diff touches but cannot move without a
   model change. Ask for a linked ticket naming the model home; the PR must not add another
   copy of it.
+- The ticket checklist table from step 5.
 - What you checked and found clean, in one line per lens applied, so the owner can see the
   hard-coded-rules lens ran.
 
@@ -112,6 +154,9 @@ A re-review after fixes reads only the new commits, plus anything a merge from m
 
 - **Reviewing the hunk, not the codebase.** A constant that looks local may be the fourth
   copy. Search before accepting it.
+- **"Matches the ticket" without ticking it.** Writing that a PR matches its ticket is not a
+  check. Each line gets its tick or its finding; an unticked line is the one that ships
+  undone.
 - **Accepting "the provider sends a name" as the end of the story.** It is acceptable only
   inside the adapter, as an inclusion-only mapping table whose miss raises the finding
   `rules/domain-model-conventions-rules.md` §17 *Provider keys live only in ProviderMapping

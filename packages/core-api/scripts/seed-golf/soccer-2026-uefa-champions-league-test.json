@@ -191,6 +191,7 @@
       "events": [
         {
           "key": "uefa-champions-league-2025-26",
+          "slotKey": "FINAL",
           "name": "UEFA Champions League",
           "startDate": "2026-02-17",
           "endDate": "2026-05-30",

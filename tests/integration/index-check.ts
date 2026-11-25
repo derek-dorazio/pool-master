@@ -33,7 +33,7 @@ import { TABLE_SCAN_ALLOWANCES, type TableScanAllowance } from './table-scan-all
  * unique key and its index serve.
  */
 export const REFERENCE_TABLES = new Set([
-  '_prisma_migrations', 'sports', 'sport_leagues', 'event_series', 'contest_config_templates',
+  '_prisma_migrations', 'sports', 'sport_leagues', 'contest_config_templates',
   'event_pages', 'event_page_offers', 'platform_runtime_configs', 'platform_runtime_config_history',
   'platform_tier_profiles', 'platform_pricing_profiles', 'providers', 'provider_leagues', 'sport_league_provider_mappings',
 ]);
@@ -357,9 +357,18 @@ export async function planWholeScans(prisma: PrismaClient, sql: string, indexes:
     await tx.$executeRawUnsafe('SET LOCAL enable_seqscan = off');
     await tx.$executeRawUnsafe('SET LOCAL plan_cache_mode = force_generic_plan');
     await tx.$executeRawUnsafe(`PREPARE ${name} AS ${sql}`);
-    const [row] = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': Array<{ Plan: PlanNode }> }>>(`EXPLAIN (FORMAT JSON) EXECUTE ${name}${values}`);
+    // The plan comes back as text and is parsed here: a deep plan's JSON column overruns the
+    // Prisma engine's deserialiser recursion limit ("recursion limit exceeded"), JSON.parse's does not.
+    await tx.$executeRawUnsafe(
+      `CREATE OR REPLACE FUNCTION pg_temp.index_check_plan(statement text) RETURNS text LANGUAGE plpgsql AS $plan$
+        DECLARE plan text;
+        BEGIN EXECUTE 'EXPLAIN (FORMAT JSON) ' || statement INTO plan; RETURN plan; END
+      $plan$`,
+    );
+    const [row] = await tx.$queryRawUnsafe<Array<{ plan: string }>>('SELECT pg_temp.index_check_plan($1) AS plan', `EXECUTE ${name}${values}`);
     await tx.$executeRawUnsafe(`DEALLOCATE ${name}`);
-    return findWholeScans(row['QUERY PLAN'][0].Plan, indexes, { sql });
+    const [explained] = JSON.parse(row.plan) as Array<{ Plan: PlanNode }>;
+    return findWholeScans(explained.Plan, indexes, { sql });
   });
 }
 

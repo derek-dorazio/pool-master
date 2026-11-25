@@ -72,7 +72,7 @@ describe('NFL events', () => {
     expect(toNflSportEvent(WEEK_12, week12, 8)).toEqual({
       externalId: 'nfl-2026-week-12',
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       name: 'NFL Week 12',
       startDate: new Date('2026-11-26T17:30:00.000Z'),
       endDate: new Date('2026-12-01T01:15:00.000Z'),
@@ -80,13 +80,20 @@ describe('NFL events', () => {
       rounds: 1,
       participantCount: 8,
       fieldLocked: true,
-      metadata: { tour: 'NFL', season: 2026, seasonType: 2 },
+      providerSlots: [
+        { code: 'REG:12', startsAt: new Date('2026-11-26T17:30:00.000Z'), endsAt: new Date('2026-12-01T01:15:00.000Z') },
+      ],
     });
   });
 
   it('gives the playoffs their four rounds, and completes them only once all 13 games are done', () => {
     expect(toNflSportEvent(POSTSEASON_2025, postseason2025)).toMatchObject({ name: 'NFL Playoffs', status: 'COMPLETED', rounds: 4 });
     expect(toNflSportEvent(POSTSEASON_2025, postseason2025.slice(0, 6))).toMatchObject({ status: 'IN_PROGRESS' });
+  });
+
+  it('reduces each playoff game to the vendor\'s own postseason week, the Super Bowl\'s week 5 after the gap, and a week\'s games to REG and its week (#2005)', () => {
+    expect(toNflSportEvent(POSTSEASON_2025, postseason2025).providerSlots.map((play) => play.code)).toEqual(['POST:1', 'POST:2', 'POST:3', 'POST:5']);
+    expect(toNflSportEvent(WEEK_12, week12).providerSlots.map((play) => play.code)).toEqual(['REG:12']);
   });
 
   it('calls a week scheduled until a game starts, and postponed only when every game is', () => {
@@ -129,7 +136,7 @@ describe('NFL teams', () => {
     expect(team).toEqual({
       externalId: '25',
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       name: 'Detroit Lions',
       active: true,
       metadata: { abbreviation: 'DET', conference: 'NFC', division: 'NORTH' },

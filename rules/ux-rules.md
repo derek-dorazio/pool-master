@@ -497,13 +497,17 @@ administration area (root admin included), reusing the same shared components.
     `<Format>: <how you pick>, <how it scores>`, the format named as
     `formatSelectionTypeName` names it ("Tiered: 1 golfer per tier, best 4
     count", "Bracket: full bracket, doubling + upset bonus"), with digits, the
-    sport's own noun, under 60 characters and no full stop; a template covering
-    several events puts its scope after the format ("Tiered majors pool: …").
+    sport's own noun, under 60 characters and no full stop; a template whose
+    coverage is narrower than its format suggests puts its scope after the
+    format ("Survivor, playoffs: …").
     The description is one or two plain sentences of at most 220 characters,
     how an entry picks and then how it scores, with no setup words (template,
-    preset, config). Every sport league has exactly one default for each format
-    it can host on each kind of event it plays (`ContestTemplateEventType`:
-    a knockout, or a week of a season's games), so setup never starts blank; a
+    preset, config). A template lists the slots of its league's Season shape it
+    covers (`ContestConfigTemplateSlot`) and how a contest covers them
+    (`coverageMode`: one listed slot, all listed slots of one event, or every
+    listed slot from a chosen one on), and Create contest offers the templates
+    covering a slot the chosen event plays. Every sport league has exactly one
+    default for each format (selection type), so setup never starts blank; a
     variation is added only where there is something to vary (an upset bonus,
     a second-chance bracket), never for its own sake. A league starts on the
     format whose default sorts first. The seeded-template integration test
@@ -531,11 +535,13 @@ administration area (root admin included), reusing the same shared components.
     is no create or copy-from in the UI. An open card
     offers Create contest to a signed-in viewer who runs an active league, on
     the shown league's default (with every sport shown, the most popular sport's
-    first league's), asking which league when they run several (#1104). Sports run most popular first
-    (`SPORTS_BY_POPULARITY`, cycling and running last), and each sport's leagues
+    first league's), asking which league when they run several (#1104). Sports run in the sport
+    row's `displayOrder` (`SportDto.displayOrder`, carried on each sport league as
+    `sportDisplayOrder`: the major team sports first, cycling and running last), and each sport's leagues
     by their `displayOrder`: major professional leagues first, then the NCAA's.
-    A league whose name alone doesn't say the sport ("NCAA Division I Men") gets
-    a `displayName` with its reference data, and every seeded league gets a
+    A league is named for what it is, the sport included ("NCAA Men's Basketball", never
+    "NCAA Division I Men" or the name of its postseason); a league whose name still cannot say
+    the sport gets a `displayName` with its reference data, and every seeded league gets a
     `displayOrder` there (the seeded-template integration test checks it); a league's Contest
     types page shows every sport league's tiles, with "Create this contest"
     links for its commissioners. Both read the templates, so a new template or
@@ -632,17 +638,21 @@ administration area (root admin included), reusing the same shared components.
     leads to a page of its own (a sport league, an event), and in ⤢ when its
     details open in a dialog over the grid (a participant, a contest template,
     a job). A row never does both.
-16. **Correction tools only where no sync runs.** Once a provider syncs a sport
-    league, the sync owns its events and participants, so the League page shows
-    their data but offers no tool that adds or rewrites it by hand (clone an
-    event, upload a roster or ranks). Those tools live on the League page's
-    Tools tab, which shows only on a league no provider syncs. A dialog may
-    still edit what the feed never sends, such as a participant's short name.
+16. **Results and fields come from the feed; no page enters them.** Every active
+    league is provider-synced, so the League and Event pages show results,
+    participants and odds but offer no tool that adds or rewrites them by hand:
+    no result entry or correction, no postpone, no withdrawn-participant
+    replacement, no roster upload and no Tools tab (ADR 0013). A correction is a
+    Re-settle from the feed. Test events take their results through the admin
+    API on a test slot only, never from a screen. A dialog may still edit what
+    the feed never sends, such as a participant's short name, or a value the
+    platform sets (tier and price). The golf-round and race-order panels an
+    unsynced event still shows leave with #2008.
 
 ## 13. Event Pages
 
-An event page (`/play/<sport>/<slug>`) is the public page for one event a fan would name
-(Championship Weekend, the Super Bowl), whatever sport leagues and series run it. It is the
+An event page (`/play/<sport URL segment>/<page URL segment>`) is the public page for one event a fan would name
+(Championship Weekend, the Super Bowl), whatever sport leagues run it. It is the
 landing page that ads, emails and shared links point at.
 
 `/play/clutch-card` keeps its address (item 7) and shows as an inactive page linking to How to
@@ -651,15 +661,16 @@ Play until the Clutch Card returns as a contest type (#2054).
 1. **Hand-picked, not generated.** A page exists because someone chose it: its row and its
    offers are reference data in a migration (`rules/architecture-rules.md` §6 *Reference data
    goes in a migration*). Each offer is one contest setup (a template, found by its key in its
-   own sport league) on one series of that league, with an optional bracket starting round. One
-   offer is the primary, whose edition dates the page.
+   own sport league) on one slot of that league's Season shape (a slot definition), with an
+   optional bracket starting round. One offer is the primary, whose edition dates the page.
 2. **Each offer opens on its own.** An offer shows open, or "opens soon" with when, from Create
-   contest's own checks on the series' next edition; one with no edition left is left out. A
+   contest's own checks on the event that plays the definition's next Season slot not yet over;
+   one with no such slot left is left out. A
    page's words never claim an offer is open.
 3. **Words live in the web app.** A page's name, eyebrow, hook line, when picks close, the
    league named in its "not affiliated" footer, and each offer's card (contest type, one line,
-   two facts, when it opens) are in `EVENT_PAGE_COPY`, keyed by sport and the page's stored
-   slug. A page without copy still renders, its name from the slug, its hook from its sport's
+   two facts, when it opens) are in `EVENT_PAGE_COPY`, keyed by the sport's and the page's stored
+   URL segments. A page without copy still renders, its name from its URL segment, its hook from its sport's
    How to Play line and each card from the selection type's name and the template's
    description, but a page ships with copy.
 4. **Real names on our pages, generic names in ads.** Our pages name the real event. Copy
@@ -674,7 +685,7 @@ Play until the Clutch Card returns as a contest type (#2054).
    image, the same file the email about its events uses (`sportHeaderImagePath`), so one photo
    per sport serves both and a new sport's photo arrives with its email header. No other
    in-app page carries these photos: setup and league pages stay compact.
-7. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
+7. **Addresses are forever.** A sport's or a page's URL segment is never changed or reused, because it lives in emails,
    ads and other people's chats. A page that ends is made inactive, and may redirect to the
    page that replaces it.
 

@@ -5,6 +5,7 @@ import { extractErrorMessage } from '@/lib/errors';
 import { SyncScheduleDialog } from './sync-schedule-dialog';
 import { syncScheduleColumns } from './sync-schedule-columns';
 import { syncScheduleRows } from './sync-schedule-rows';
+import { useIngestionScheduleQuery } from './use-ingestion-schedule';
 import { useSettingsGroupQuery } from './use-settings-groups';
 
 /**
@@ -13,10 +14,13 @@ import { useSettingsGroupQuery } from './use-settings-groups';
  * last changed it.
  */
 export function SyncSchedulesSection() {
-  const scheduleQuery = useSettingsGroupQuery('INGESTION_SCHEDULE_CONFIG');
+  // The rows read the schedule as the API answers it (#2086); its settings group says who last changed it.
+  const scheduleQuery = useIngestionScheduleQuery();
+  const groupQuery = useSettingsGroupQuery('INGESTION_SCHEDULE_CONFIG');
   const [openKey, setOpenKey] = useState<ProviderSyncKind | null>(null);
-  const group = scheduleQuery.data;
-  const rows = useMemo(() => (group ? syncScheduleRows(group.value) : []), [group]);
+  const group = groupQuery.data;
+  const schedule = scheduleQuery.data;
+  const rows = useMemo(() => (schedule ? syncScheduleRows(schedule) : []), [schedule]);
   const openRow = rows.find((row) => row.key === openKey);
 
   return (

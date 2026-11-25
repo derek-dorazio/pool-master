@@ -10,7 +10,6 @@ import {
   PrismaContestConfigurationRepository,
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestRepository,
-  PrismaEventSeriesRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
   PrismaPlatformPricingProfileRepository,
@@ -47,6 +46,7 @@ import { EventFieldReader } from './event-field-reader';
 import { SportEventRoundService } from './sport-event-round-service';
 import { SportEventContestService } from './sport-event-contest-service';
 import { PrismaSportEventContestReader } from '../../adapters/prisma-sport-event-contest-reader';
+import { PrismaSportLeagueSeasonRepository } from '../../adapters/prisma-sport-league-season-repository';
 import { SportEventTierService } from './sport-event-tier-service';
 
 export function createSportEventTierService(prisma: PrismaClient, logger?: FastifyBaseLogger): SportEventTierService {
@@ -238,9 +238,9 @@ export function createSportEventServices(
   const bracket = createSportEventBracketService(prisma, domainEvents, logger);
   const sportEventService = new SportEventService({
     sportEvents: events,
-    eventSeries: new PrismaEventSeriesRepository(prisma),
     sportLeagues,
     sports,
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     rounds,
     tiers,
     bracket,
@@ -268,22 +268,23 @@ export function createSportEventServices(
     golfScores: createGolfScoreService(prisma, domainEvents, logger),
     raceResults: createRaceResultService(prisma, domainEvents, logger),
     matchResults: createMatchResultService(prisma, domainEvents, lifecycle, logger),
-    sportLeagues: createSportLeagueService(prisma, logger, providers),
+    sportLeagues: buildSportLeagueService(prisma, logger, providers),
   };
 }
 
 /** The sport league admin's service: its settings, its sync switch and its rankings. */
-export function createSportLeagueService(
+export function buildSportLeagueService(
   prisma: PrismaClient,
-  logger?: FastifyBaseLogger,
-  /** The provider leagues a sport league's event sync may name (ADR 0011, #1997); none, turning a league's sync on is refused. */
-  providers: SportDataProviderLookup = NO_PROVIDERS,
+  logger: FastifyBaseLogger | undefined,
+  /** The provider leagues a sport league's event sync may name (ADR 0011, #1997). */
+  providers: SportDataProviderLookup,
 ): SportLeagueService {
   return new SportLeagueService({
     sports: new PrismaSportRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     providers,
     platformTierProfiles: new PrismaPlatformTierProfileRepository(prisma),

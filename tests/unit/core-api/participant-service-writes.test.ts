@@ -1,3 +1,4 @@
+import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { ParticipantStatus, InjuryStatusCode } from '@poolmaster/shared/domain';
 import type { ParticipantRepository } from '@poolmaster/shared/db';
@@ -38,10 +39,7 @@ describe('participant service', () => {
       create: mockFn<ParticipantRepository['create']>(async (input) => ({ ...buildParticipant(), ...input })),
     };
 
-    const service = new ParticipantService(
-      participantRepo as never,
-      {} as never,
-    );
+    const service = new ParticipantService(participantRepo as never, { findSyncProviderId: jest.fn().mockResolvedValue(null) } as never, testDomainEvents());
 
     const participant = await service.create({
       sportLeagueId: 'league-1',
@@ -63,10 +61,7 @@ describe('participant service', () => {
       findById: jest.fn().mockResolvedValue(null),
     };
 
-    const service = new ParticipantService(
-      participantRepo as never,
-      {} as never,
-    );
+    const service = new ParticipantService(participantRepo as never, {} as never, testDomainEvents());
 
     await expect(service.update('missing-participant', { name: 'Updated' })).rejects.toBeInstanceOf(
       ParticipantNotFoundError,
@@ -88,7 +83,7 @@ describe('participant service', () => {
     it('binds the provider identity to an existing participant, in its own sport league and of its own kind', async () => {
       const participantRepo = { findById: jest.fn().mockResolvedValue(buildParticipant()) };
       const mappingRepo = { bind: jest.fn().mockResolvedValue(mapping) };
-      const service = new ParticipantService(participantRepo as never, mappingRepo as never);
+      const service = new ParticipantService(participantRepo as never, mappingRepo as never, testDomainEvents());
 
       await expect(service.bindProviderMapping('participant-1', PROVIDER_ROW_ID, 'golfer-77'))
         .resolves.toEqual(mapping);
@@ -100,13 +95,26 @@ describe('participant service', () => {
         providerId: PROVIDER_ROW_ID,
         externalId: 'golfer-77',
         mappedAt: expect.any(Date),
-      });
+      }, expect.any(Array));
+    });
+
+    it('writes the job that resolves the mapped feed id\'s unmapped participant finding with the mapping', async () => {
+      const participantRepo = { findById: jest.fn().mockResolvedValue(buildParticipant()) };
+      const mappingRepo = { bind: jest.fn().mockResolvedValue(mapping) };
+      const service = new ParticipantService(participantRepo as never, mappingRepo as never, testDomainEvents());
+
+      await service.bindProviderMapping('participant-1', PROVIDER_ROW_ID, 'golfer-77');
+
+      expect(mappingRepo.bind).toHaveBeenCalledWith(expect.anything(), [expect.objectContaining({
+        type: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
+        payload: { sportLeagueId: 'league-1', providerId: PROVIDER_ROW_ID, externalIds: ['golfer-77'] },
+      })]);
     });
 
     it('refuses with ProviderNotFoundError a provider id that names no Provider row', async () => {
       const participantRepo = { findById: jest.fn().mockResolvedValue(buildParticipant()) };
       const mappingRepo = { bind: jest.fn().mockResolvedValue(null) };
-      const service = new ParticipantService(participantRepo as never, mappingRepo as never);
+      const service = new ParticipantService(participantRepo as never, mappingRepo as never, testDomainEvents());
 
       await expect(service.bindProviderMapping('participant-1', PROVIDER_ROW_ID, 'golfer-77'))
         .rejects.toBeInstanceOf(ProviderNotFoundError);
@@ -114,10 +122,7 @@ describe('participant service', () => {
 
     it('refuses to bind to a participant that does not exist', async () => {
       const mappingRepo = { bind: jest.fn() };
-      const service = new ParticipantService(
-        { findById: jest.fn().mockResolvedValue(null) } as never,
-        mappingRepo as never,
-      );
+      const service = new ParticipantService({ findById: jest.fn().mockResolvedValue(null) } as never, mappingRepo as never, testDomainEvents());
 
       await expect(service.bindProviderMapping('missing', PROVIDER_ROW_ID, 'golfer-77'))
         .rejects.toBeInstanceOf(ParticipantNotFoundError);

@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   acceptInvitation,
-  clearEventMatchPeriodScore,
   createContest,
   enterContest,
   generateInviteLink,
@@ -14,6 +13,15 @@ import {
   listSportLeagues,
   openContest,
   recordEventMatchPeriodScore,
+  recordEventMatchResult,
+  loadEventBracket,
+  updateEventBracketMatch,
+  cancelEventMatch,
+  setEventRoundMatchups,
+  setEventPlayInWinner,
+  applyEventGolfRoundScores,
+  updateEventParticipantGolfRoundScore,
+  applyEventRaceResults,
   submitContestEntry,
   selectContestPick,
   transitionEvent,
@@ -22,10 +30,11 @@ import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, inCurrentSeason, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // American football end to end over HTTP (#702): the NFL playoffs test seed loads into the seeded
 // NFL sport league, played out, with its Divisional round placed by the reseed. A commissioner
@@ -34,6 +43,7 @@ import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 // for the games it won; a bye scores nothing.
 
 const RUN = `nfl-${Date.now()}`;
+const ANY_UUID = '00000000-0000-4000-8000-000000000000';
 const SEED_FILE = join(__dirname, '../../packages/core-api/scripts/seed-golf/american-football-2026-nfl-playoffs-test.json');
 
 const created = { sportEventIds: new Set<string>() };
@@ -45,8 +55,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -55,7 +63,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -71,8 +78,8 @@ describe('SDK Functional: American football', () => {
   it('scores and settles an entry on the played NFL playoffs from the NFL\'s default tiered template, a bye scoring nothing', async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });
@@ -87,10 +94,12 @@ describe('SDK Functional: American football', () => {
     for (const player of file.sportLeagues[0].players) player.key = expectDefined(tagged(player.key));
     for (const entry of playoffs.field) entry.player = expectDefined(tagged(entry.player));
     for (const match of playoffs.matches ?? []) Object.assign(match, { home: tagged(match.home), away: tagged(match.away) });
+    // The loader makes the event in the NFL's current Season; another suite may have moved it.
+    await inCurrentSeason((await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { name: 'NFL', displayOrder: { not: null } }, select: { id: true } })).id, 2026);
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
     const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));
@@ -117,10 +126,56 @@ describe('SDK Functional: American football', () => {
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(4), body: { homeScore: 0, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_INVALID');
     const outsider = await buildRegisteredUser({ displayName: 'Scoreboard Stranger' });
     expect((await recordEventMatchPeriodScore({ client: outsider.client, path: superBowlQuarter(1), body: { homeScore: 0, awayScore: 3 } })).response?.status).toBe(403);
-    // Cleared and entered again, the half's score reads as before.
-    expect(expectDefined((await clearEventMatchPeriodScore({ client: a, path: superBowlQuarter(2) })).data).matches[12].periodScores.map((score) => score.periodNumber)).toEqual([1, 3]);
+    // Entered again, the half's score reads as before.
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
     expect((await superBowlOf()).periodScores).toEqual(asLoaded);
+
+    // Results come only from the feed (#2074): the routes that cleared a result or a quarter's score,
+    // postponed a game or replaced a withdrawn participant are gone, so even a root admin gets 404.
+    const removedRoutes = await Promise.all([
+      a.delete({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result', path: { eventId: event.id, matchNumber: 13 } }),
+      a.delete({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}', path: superBowlQuarter(2) }),
+      a.post({ url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone', path: { eventId: event.id, matchNumber: 13 } }),
+      a.put({
+        url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/replacement',
+        path: { eventId: event.id, sportEventParticipantId: superBowl.homeSportEventParticipantId },
+        body: {},
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ]);
+    expect(removedRoutes.map((removed) => removed.response?.status)).toEqual([404, 404, 404, 404]);
+    expect((await superBowlOf()).periodScores).toEqual(asLoaded);
+
+    // The kept admin result routes write only on a test event (#2074): the loader scored this one
+    // because it covers a test slot. Cut loose from its test slot, every kept write is
+    // 409 SPORT_EVENT_NOT_TEST_DATA and changes nothing; linked again, the write goes through.
+    const db = getFunctionalPrisma();
+    // The season already holds the synced slot beside the test one, so the event is cut loose from
+    // its test slots instead: an event covering no test slot is one the feed scores.
+    const links = await db.sportEventSlot.findMany({
+      where: { sportEventId: event.id },
+      select: { sportEventId: true, sportLeagueSeasonId: true, sportLeagueSeasonPhaseSlotId: true },
+    });
+    expect(links.length).toBeGreaterThan(0);
+    await db.sportEventSlot.deleteMany({ where: { sportEventId: event.id } });
+    const seahawks = rowOf('Seattle Seahawks');
+    const matchPath = { eventId: event.id, matchNumber: 13 };
+    const refused = await Promise.all([
+      loadEventBracket({ client: a, path: { eventId: event.id }, body: { matches: [{ matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: false, scheduledDate: null, advancesTo: null }] } }),
+      updateEventBracketMatch({ client: a, path: matchPath, body: { isNeutralSite: true } }),
+      recordEventMatchResult({ client: a, path: matchPath, body: { winnerSide: 'AWAY', homeScore: 13, awayScore: 29 } }),
+      recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } }),
+      cancelEventMatch({ client: a, path: matchPath }),
+      setEventRoundMatchups({ client: a, path: { eventId: event.id, roundNumber: 2 }, body: { matches: [{ matchNumber: 7, homeSportEventParticipantId: seahawks, awaySportEventParticipantId: rowOf('Los Angeles Rams') }] } }),
+      setEventPlayInWinner({ client: a, path: { eventId: event.id, sportEventParticipantId: seahawks }, body: { participantId: ANY_UUID } }),
+      applyEventGolfRoundScores({ client: a, path: { eventId: event.id, roundNumber: 1 }, body: { rows: [{ participantId: ANY_UUID, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }] } }),
+      updateEventParticipantGolfRoundScore({ client: a, path: { eventId: event.id, roundNumber: 1, sportEventParticipantId: seahawks }, body: { strokes: 70 } }),
+      applyEventRaceResults({ client: a, path: { eventId: event.id }, body: { isOfficial: true, rows: [{ participantId: ANY_UUID, resultStatus: 'FINISHED', finishPosition: 1, startPosition: null, riderName: null }] } }),
+    ]);
+    expect(refused.map((reply) => [reply.response?.status, reply.error?.error.code])).toEqual(refused.map(() => [409, 'SPORT_EVENT_NOT_TEST_DATA']));
+    expect(await superBowlOf()).toMatchObject({ isNeutralSite: superBowl.isNeutralSite, status: superBowl.status, periodScores: asLoaded });
+    await db.sportEventSlot.createMany({ data: links });
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
 
     // --- A contest from the NFL's default template ----------------------------------------------
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Playoff Commissioner', leagueName: `Gridiron ${RUN}` });
@@ -130,7 +185,7 @@ describe('SDK Functional: American football', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: nfl.id, active: true },
+      query: { sportLeagueId: nfl.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([

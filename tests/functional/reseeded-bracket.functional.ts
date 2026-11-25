@@ -1,12 +1,10 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
-  clearEventMatchResult,
-  createEvent,
   createParticipant,
-  createSportLeague,
   getEventBracket,
   listEventParticipants,
   loadEventBracket,
@@ -19,7 +17,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { BracketAdvancement, MatchSide, MatchStatus, ParticipantStandingStatus, Sport } from '@poolmaster/shared/domain';
 import { SportEventBracketResponseSchema, SportEventRoundMatchupsResponseSchema } from '@poolmaster/shared/dto';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -29,7 +27,8 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A reseeded bracket end to end over HTTP (#722), shaped like one NFL conference: seven seeds, the
 // 1 seed on a bye, Wild Card games that link nowhere, a Divisional round the admin places by seed,
@@ -50,8 +49,6 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -59,13 +56,12 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -80,7 +76,7 @@ describe('SDK Functional: Reseeded bracket', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });
@@ -88,13 +84,12 @@ describe('SDK Functional: Reseeded bracket', () => {
     const a = admin.client;
 
     // --- A league that reseeds, and its playoff -------------------------------------------------
-    const league = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED } });
-    expect(league.data?.sportLeague.bracketAdvancement).toBe(BracketAdvancement.RESEED_BY_SEED);
-    const sportLeagueId = expectDefined(league.data).sportLeague.id;
+    const league = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Gridiron Conference ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
+    const sportLeagueId = league.id;
     created.sportLeagueIds.add(sportLeagueId);
-    const playoff = await createEvent({
+    const playoff = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Conference Playoff ${RUN}`, startDate: '2099-01-09T18:00:00.000Z', rounds: 3, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Conference Playoff ${RUN}`, startDate: '2099-01-09T18:00:00.000Z', rounds: 3, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(playoff.data).event.id;
     created.sportEventIds.add(eventId);
@@ -110,7 +105,7 @@ describe('SDK Functional: Reseeded bracket', () => {
     await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: SEEDS.map((seed) => ({ playerName: `Seed ${seed} ${RUN}`, seedNumber: seed, oddsToWin: seed * 3 })) },
+      body: { rows: SEEDS.map((seed) => ({ playerName: `Seed ${seed} ${RUN}`, seedNumber: seed })) },
     });
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -202,7 +197,6 @@ describe('SDK Functional: Reseeded bracket', () => {
       await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } }),
       { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' },
     );
-    expectFunctionalError(await clearEventMatchResult({ client: a, path: { eventId, matchNumber: 2 } }), { status: 409, code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED' });
     expectFunctionalError(
       await setEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 }, body: { matches: proposal } }),
       { status: 409, code: 'BRACKET_ROUND_ALREADY_PLAYED' },

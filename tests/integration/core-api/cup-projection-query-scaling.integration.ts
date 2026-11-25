@@ -55,8 +55,8 @@ async function seedLiveCup(contests: number, seedContest: LiveContestSeed) {
 }
 
 /** The season and sports league an event counts in. */
-async function cupOf(event: { eventSeriesId: string; startDate: Date }): Promise<Omit<LiveContest, 'contestId'>> {
-  const { sportLeagueId } = await getPrisma().eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+async function cupOf(event: { sportLeagueId: string; startDate: Date }): Promise<Omit<LiveContest, 'contestId'>> {
+  const { sportLeagueId } = event;
   return { sportLeagueId, seasonYear: event.startDate.getUTCFullYear() };
 }
 
@@ -122,8 +122,8 @@ function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?:
       });
       entryIds.push(entry.id);
       await prisma.contestEntryPick.createMany({
-        data: field.slice(2 * team, 2 * team + 2).map((row, slot) => ({
-          entryId: entry.id, sportEventParticipantId: row.id, contestFormat: 'ROSTER' as const, slot: slot + 1, pickedAt: new Date(),
+        data: field.slice(2 * team, 2 * team + 2).map((row) => ({
+          entryId: entry.id, sportEventParticipantId: row.id, pickedAt: new Date(),
           isAutoPicked: selectionType === SelectionType.RANDOM_DRAW,
         })),
       });

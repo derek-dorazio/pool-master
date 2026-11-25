@@ -56,7 +56,11 @@ describe('a World Cup knockout bracket as an event', () => {
       status: 'COMPLETED',
       participantCount: 8,
       fieldLocked: true,
-      metadata: { tour: 'FIFAWC', season: 2022 },
+      providerSlots: [
+        { code: 'POST:2', startsAt: new Date('2022-12-03T15:00:00.000Z'), endsAt: new Date('2022-12-05T15:00:00.000Z') },
+        { code: 'POST:5', startsAt: new Date('2022-12-17T15:00:00.000Z'), endsAt: new Date('2022-12-17T15:00:00.000Z') },
+        { code: 'POST:6', startsAt: new Date('2022-12-18T15:00:00.000Z'), endsAt: new Date('2022-12-18T15:00:00.000Z') },
+      ],
     });
   });
 
@@ -92,9 +96,9 @@ describe('World Cup teams', () => {
       sport: Sport.SOCCER,
       name: 'Argentina',
       active: true,
-      metadata: { tour: 'FIFAWC', abbreviation: 'ARG' },
+      metadata: { abbreviation: 'ARG' },
     });
-    expect(toWorldCupTeamParticipant({ id: 99, name: 'Wales', abbreviation: null }, '/fifa/worldcup/v1/teams').metadata).toEqual({ tour: 'FIFAWC' });
+    expect(toWorldCupTeamParticipant({ id: 99, name: 'Wales', abbreviation: null }, '/fifa/worldcup/v1/teams').metadata).toEqual({});
   });
 
   it('refuses a team with no id or no name', () => {

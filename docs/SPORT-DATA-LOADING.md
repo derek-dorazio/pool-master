@@ -104,6 +104,17 @@ outside the scope: an event outside the season, a league the scope does not name
 that does not say `testData: true`. The filename is for people and is never read. The shape is
 in `packages/core-api/scripts/seed-golf/sport-data-file.ts`.
 
+**Each event names its slot definition.** A test event is made on a test slot of its league's
+current Season (#2004), so each file event carries `slotKey`, the key of the league's slot
+definition it plays (`MASTERS`, `FINAL`, `WEEK_3`; the League page's Structure tab lists them).
+The run adds a test slot of that definition labelled with the event's key, on the event's
+rolled dates, and makes the event on it; a second event of the same key gets its own slot,
+labelled with the next number. An event whose `slotKey` the league has no definition of, or
+that has none, is reported as a conflict and not loaded: most NASCAR and IndyCar races,
+Milano-Sanremo and the Women's World Cup matchdays wait for their definitions. A slotted event
+keeps its slot's dates, so a later run does not re-date it. `build-golf-2026.ts` does not write
+`slotKey` yet; the committed `golf-2026.json` has it.
+
 ### Writing a test data file
 
 Every sport league has a test data file of its last season as played (`rules/architecture-rules.md`
@@ -164,7 +175,7 @@ beside the real ones and always lie just ahead (#1524). The rule is
 - **Named "Test- ..."**: every event a test seed creates is named `Test- <event name>`
   ("Test- Super Bowl LX"), so it reads as test data in every picker. The loader never matches a
   test event with a synced one, and the sync never touches a `Test-` event, which carries no
-  provider link (#1850).
+  provider link (#1850) and sits on a test slot (#2004).
 - **Two per sport league**: each league gets its next 2 events not yet on the site, in file
   order (`events_per_league` on the workflow, `--events-per-league` locally). Once every event
   of the file is on the site, the league starts over with numbered copies ("Test- Super Bowl LX
@@ -342,8 +353,8 @@ Test a contest on either as for the NFL seed above. Running a file again tops it
 ## Seeded March Madness
 
 `basketball-2026-ncaa-tournaments-test.json` is a test seed of the 2026 NCAA Division I men's and
-women's tournaments as they went, one event each in the `NCAA Division I Men` and `NCAA Division I
-Women` sport leagues that the migrations create. Each is six rounds of 63 games over 64 places,
+women's tournaments as they went, one event each in the `NCAA Men's Basketball` and `NCAA Women's
+Basketball` sport leagues that the migrations create. Each is six rounds of 63 games over 64 places,
 seeded 1 to 16 in four regions (East, South, West and Midwest for the men; Fort Worth 1 and 3 and
 Sacramento 2 and 4 for the women). Seeds, pairings, tip-offs and scores are real; the odds are made
 up by seed. Load it with `mode` `apply` like any file. Because its envelope says `testData`:

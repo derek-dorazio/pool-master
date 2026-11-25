@@ -24,11 +24,12 @@ import { SquaresBoardResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, inCurrentSeason, promoteToRootAdmin, seasonEvents } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // Super Bowl squares end to end over HTTP (#711): the NFL playoffs test seed loads with its Super
 // Bowl still to play. A commissioner runs a squares contest on it from the NFL's squares preset,
@@ -49,8 +50,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestSquaresGame.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -59,7 +58,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -75,8 +73,8 @@ describe('SDK Functional: Super Bowl squares', () => {
   it('runs a squares contest on the Super Bowl from claiming boxes to settled winners, each quarter\'s box winning', async () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Squares Director' });
@@ -94,9 +92,11 @@ describe('SDK Functional: Super Bowl squares', () => {
     const superBowlRow = expectDefined((playoffs.matches ?? []).find((match) => match.matchNumber === SUPER_BOWL));
     delete superBowlRow.result;
     delete superBowlRow.periodScores;
+    // The loader makes the event in the NFL's current Season; another suite may have moved it.
+    await inCurrentSeason((await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { name: 'NFL', displayOrder: { not: null } }, select: { id: true } })).id, 2026);
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
     const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));
@@ -114,7 +114,7 @@ describe('SDK Functional: Super Bowl squares', () => {
     }
     const [preset] = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AMERICAN_FOOTBALL, sportLeagueId: nfl.id, active: true },
+      query: { sportLeagueId: nfl.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.SQUARES);
     expect([preset.templateKey, preset.isDefault]).toEqual(['nfl-squares', true]);
@@ -225,10 +225,10 @@ describe('SDK Functional: Super Bowl squares', () => {
 // sport's. Each test seed loads with every game played but the final; one entry holds the top
 // row, the other the left column, and every scoring moment lands in the top row.
 const LEAGUE_FINALS = [
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: MatchPeriodLayout.HALVES },
-  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS, leagueLayout: null },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Men', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
-  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Division I Women', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Basketball', event: 'NCAA Men\'s Tournament', templateKey: 'ncaa-men-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: MatchPeriodLayout.HALVES },
+  { sport: Sport.BASKETBALL, file: 'basketball-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Basketball', event: 'NCAA Women\'s Tournament', templateKey: 'ncaa-women-squares', layout: MatchPeriodLayout.QUARTERS, leagueLayout: null },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Men\'s Hockey', event: 'NCAA Men\'s Ice Hockey Tournament', templateKey: 'ncaa-men-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
+  { sport: Sport.HOCKEY, file: 'hockey-2026-ncaa-tournaments-test.json', league: 'NCAA Women\'s Hockey', event: 'NCAA Women\'s Ice Hockey Tournament', templateKey: 'ncaa-women-hockey-squares', layout: MatchPeriodLayout.THREE_PERIODS, leagueLayout: null },
   { sport: Sport.SOCCER, file: 'soccer-2022-fifa-world-cup-test.json', league: 'FIFA World Cup', event: 'FIFA World Cup', templateKey: 'world-cup-squares', layout: MatchPeriodLayout.HALVES, leagueLayout: null },
 ] as const;
 
@@ -265,7 +265,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
       await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
       const preset = expectDefined(expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
-        query: { sport: row.sport, sportLeagueId: sportLeague.id, active: true },
+        query: { sportLeagueId: sportLeague.id, active: true },
       })).data).templates.find((template) => template.contestFormat === ContestFormat.SQUARES && template.sportLeagueId === sportLeague.id), `${row.league}'s squares preset`);
       expect([preset.templateKey, preset.isDefault]).toEqual([row.templateKey, true]);
       const contest = await createContest({

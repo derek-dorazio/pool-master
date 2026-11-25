@@ -4,14 +4,16 @@ import {
   getSportDefinition,
   MatchStatus,
   providerCodeOfSourceId,
+  providerSourceIdOf,
   SportEventStatus,
-  SportEventSyncScope,
   TournamentFormat,
+  type ProviderCode,
   type Sport,
 } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './provider-registry';
 import type { IngestionScheduledEventReader, LiveScoreEventRef } from './ingestion-scheduler';
 import type { EventSyncFeed } from './sync-orchestrator';
+import { sportEventSportWhere } from '../../../adapters/sport-of';
 
 /** How many upcoming events per provider a field sync pass loads. */
 const FIELD_EVENTS_PER_PROVIDER = 2;
@@ -20,8 +22,8 @@ const FIELD_EVENTS_PER_PROVIDER = 2;
 export const ROUND_WITHOUT_END_UNDERWAY_MS = 14 * 60 * 60 * 1000;
 
 export interface ScheduledEventReaderDependencies {
-  prisma: Pick<PrismaClient, 'sportEvent'>;
-  registry: Pick<ProviderRegistry, 'getProvidersForSport'>;
+  prisma: Pick<PrismaClient, 'sportEvent' | 'sport'>;
+  registry: Pick<ProviderRegistry, 'all'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -31,7 +33,7 @@ export function createScheduledEventReader({
   logger,
 }: ScheduledEventReaderDependencies): IngestionScheduledEventReader {
   return {
-    async listEventsForFeed({ sport, feed, from, now, to, syncedLeaguesOnly = false }) {
+    async listEventsForFeed({ sport, feed, from, now, to }) {
       logger?.debug({
         sport,
         feed,
@@ -40,36 +42,40 @@ export function createScheduledEventReader({
         to: to?.toISOString() ?? null,
       }, 'Listing sport events for scheduled ingestion feed');
 
-      // Every provider serving the sport syncs the events linked to it (#1495).
+      // Each running provider syncs the events of the leagues whose selected mapping names it (#2073).
       const providerIds = servingProviderIds(sport, feed);
       // Each provider loads the fields of its own next two events, so one provider's earlier
       // events never hold another's back.
-      const rows = (await Promise.all(providerIds.map((providerId) => {
-        // A league's sync names a provider by its row (#1997); a provider with none syncs no league.
-        const syncCode = providerCodeOfSourceId(providerId);
-        if (syncedLeaguesOnly && syncCode === undefined) return Promise.resolve([]);
-        // poolmaster-allow-query-in-loop: once per provider serving the sport, one or two
-        return prisma.sportEvent.findMany({
+      const rows = (await Promise.all(providerIds.map(async (providerId) => {
+        // Events and leagues name a provider by its row (#1997, #2004); a provider with none syncs no event.
+        const code = providerCodeOfSourceId(providerId);
+        if (code === undefined) return [];
+        // poolmaster-allow-query-in-loop: once per running provider, one or two
+        const events = await prisma.sportEvent.findMany({
           where: {
-            sport,
-            providerId: { in: [providerId] },
-            externalId: { not: '' },
+            providerMappings: { some: { provider: { code } } },
             // A field loads while the event is a draft or released and not yet started (#431).
             status: { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] },
             startDate: {
               gte: from ?? now,
               ...(to ? { lte: to } : {}),
             },
-            syncScope: SportEventSyncScope.SCORES_ONLY,
-            // A synced league's sync names this provider (ADR 0011, #1726).
-            ...(syncedLeaguesOnly && syncCode !== undefined && {
-              eventSeries: { sportLeague: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: syncCode } } } } } },
-            }),
+            // The sport's events (#2042), of a synced league only: its sync names this provider
+            // (ADR 0011, #1726, #2086). Both through the event's Season (#2004), in one clause, so
+            // neither filter replaces the other.
+            sportLeagueSeason: {
+              sportLeague: {
+                sport: { sport },
+                isActive: true,
+                selectedProviderMapping: { is: { providerLeague: { provider: { code } } } },
+              },
+            },
           },
-          orderBy: [{ startDate: 'asc' }, { externalId: 'asc' }],
+          orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
           take: FIELD_EVENTS_PER_PROVIDER,
-          select: { providerId: true, externalId: true },
+          select: { providerMappings: { where: { provider: { code } }, select: { externalId: true } } },
         });
+        return events.flatMap((event) => event.providerMappings.map((mapping) => ({ providerId, externalId: mapping.externalId })));
       }))).flat();
       logger?.debug({
         sport,
@@ -85,16 +91,25 @@ export function createScheduledEventReader({
       const feed = 'EVENTLIVESCORES';
       const providerIds = servingProviderIds(sport, feed);
       if (providerIds.length === 0) return [];
-      // Scores poll every in-progress event at once.
+      const codes = providerIds.flatMap((providerId) => {
+        const code = providerCodeOfSourceId(providerId);
+        return code === undefined ? [] : [code];
+      });
+      if (codes.length === 0) return [];
+      // Scores poll every in-progress event at once, by each running provider's id for it.
       const where = {
-        sport,
-        providerId: { in: providerIds },
-        externalId: { not: '' },
+        ...sportEventSportWhere(sport),
+        providerMappings: { some: { provider: { code: { in: codes } } } },
         status: SportEventStatus.IN_PROGRESS,
         sportEventParticipants: { some: {} },
-        syncScope: SportEventSyncScope.SCORES_ONLY,
       };
-      const identity = { providerId: true, externalId: true, lastProviderNotificationAt: true } as const;
+      const identity = {
+        lastProviderNotificationAt: true,
+        providerMappings: {
+          where: { provider: { code: { in: codes } } },
+          select: { externalId: true, provider: { select: { code: true } }, sportLeagueProviderMapping: { select: { providerLeague: { select: { code: true } } } } },
+        },
+      } as const;
       // A sport played in matches is in play during a match: the one in progress longest. One
       // played without them, such as golf, is in play during a round: the round started last,
       // the one under way if any is.
@@ -111,7 +126,7 @@ export function createScheduledEventReader({
                 select: { scheduledDate: true, scheduledEndAt: true },
               },
             },
-          })).map(({ roundSchedule, ...event }) => ({ ...event, playedInRounds, playUnderwaySince: roundUnderwaySince(roundSchedule, now) }))
+          })).flatMap(({ roundSchedule, providerMappings, ...event }) => refsOf(providerMappings).map((ref) => ({ ...event, ...ref, playedInRounds, playUnderwaySince: roundUnderwaySince(roundSchedule, now) })))
         : (await prisma.sportEvent.findMany({
             where,
             select: {
@@ -123,19 +138,46 @@ export function createScheduledEventReader({
                 select: { scheduledDate: true },
               },
             },
-          })).map(({ matches, ...event }) => ({ ...event, playedInRounds, playUnderwaySince: matchUnderwaySince(matches) }));
+          })).flatMap(({ matches, providerMappings, ...event }) => refsOf(providerMappings).map((ref) => ({ ...event, ...ref, playedInRounds, playUnderwaySince: matchUnderwaySince(matches) })));
       logger?.debug({ sport, feed, providerIds, eventCount: events.length, events }, 'Listed sport events for scheduled ingestion feed');
       return events;
     },
+
+    async listSyncedSports({ providerCodes }) {
+      const rows = await prisma.sport.findMany({
+        where: {
+          sportLeagues: {
+            some: { isActive: true, selectedProviderMapping: { is: { providerLeague: { provider: { code: { in: [...providerCodes] } } } } } },
+          },
+        },
+        select: { sport: true },
+        orderBy: { displayOrder: 'asc' },
+      });
+      return rows.map((row) => row.sport);
+    },
   };
 
+  /** The running providers' ids, as their feeds name them: each syncs only the leagues that select it. */
   function servingProviderIds(sport: Sport, feed: EventSyncFeed): string[] {
-    const providerIds = registry.getProvidersForSport(sport).map((provider) => provider.providerId);
+    const providerIds = registry.all().map((provider) => provider.providerId);
     if (providerIds.length === 0) {
-      logger?.warn({ sport, feed }, 'Skipping scheduled event feed because no provider is registered for sport');
+      logger?.warn({ sport, feed }, 'Skipping scheduled event feed because no provider is running');
     }
     return providerIds;
   }
+}
+
+/** An event's ids at the providers serving its sport, as the adapters key them, with the provider league each is under. */
+function refsOf(mappings: ReadonlyArray<{
+  externalId: string;
+  provider: { code: ProviderCode };
+  sportLeagueProviderMapping: { providerLeague: { code: string } };
+}>): Array<{ providerId: string; externalId: string; providerLeagueCode: string }> {
+  return mappings.map((mapping) => ({
+    providerId: providerSourceIdOf(mapping.provider.code),
+    externalId: mapping.externalId,
+    providerLeagueCode: mapping.sportLeagueProviderMapping.providerLeague.code,
+  }));
 }
 
 /**
@@ -143,6 +185,7 @@ export function createScheduledEventReader({
  * until its scheduled end, or `ROUND_WITHOUT_END_UNDERWAY_MS` after its start with none recorded.
  */
 function roundUnderwaySince(rounds: { scheduledDate: Date; scheduledEndAt: Date | null }[], now: Date): Date | null {
+  // poolmaster-allow-position: the query takes the one latest started round (roundNumber desc, take 1)
   const round = rounds.at(0);
   if (round === undefined) return null;
   const endsAt = round.scheduledEndAt ?? new Date(round.scheduledDate.getTime() + ROUND_WITHOUT_END_UNDERWAY_MS);
@@ -154,6 +197,7 @@ function roundUnderwaySince(rounds: { scheduledDate: Date; scheduledEndAt: Date 
  * progress, or none has a scheduled start, since a row's last change is not when play began.
  */
 function matchUnderwaySince(matches: { scheduledDate: Date | null }[]): Date | null {
+  // poolmaster-allow-position: the query takes the one match in progress longest (scheduledDate asc, take 1)
   const match = matches.at(0);
   return match?.scheduledDate ?? null;
 }

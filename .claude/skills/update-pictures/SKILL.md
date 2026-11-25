@@ -11,9 +11,9 @@ Three kinds of picture, each made a different way and each committed as a file:
 
 | Picture | Where it lives | How it is made | What checks it |
 |---|---|---|---|
-| Sport photo | `clients/poolmaster/public/email/sports/<sport>.jpg`, 1200 by 480, with `<sport>.source.md` beside it | A licensed photo, checked and cropped by hand | `email-illustrations.test.ts`: every sport has a file, and every photo its source note |
-| Contest type picture | `clients/poolmaster/public/email/formats/`, and a sport's drawn scene in `public/email/sports/` while it has no photo | `scripts/render-email-images.mjs` draws the How to Play illustrations | The same test, against `public/email/drawn.json`: a changed illustration not redrawn fails |
-| Link preview image | `clients/poolmaster/public/og/<sport>-<slug>.jpg`, 1200 by 630 | `scripts/render-link-preview-images.mjs` draws each event page's tile from its copy | `link-preview.test.ts`: every event page with copy has an image |
+| Sport photo | `clients/poolmaster/public/email/sports/<sport URL segment>.jpg` (the sport row's stored `urlSegment`, such as `football`), 1200 by 480, with `<sport URL segment>.source.md` beside it | A licensed photo, checked and cropped by hand | `email-illustrations.test.ts`: every photo has its source note |
+| Contest type picture | `clients/poolmaster/public/email/formats/`; sports are never drawn, a new sport arrives with its photo | `scripts/render-email-images.mjs` draws the How to Play illustrations | The same test, against `public/email/drawn.json`: a changed illustration not redrawn fails |
+| Link preview image | `clients/poolmaster/public/og/<sport URL segment>-<page URL segment>.jpg`, 1200 by 630 | `scripts/render-link-preview-images.mjs` draws each event page's tile from its copy | `link-preview.test.ts`: every event page with copy has an image |
 
 What a picture may show is `rules/ux-rules.md` §14 *System Email* item 5 (*Pictures are ours or
 generic*); where the photo appears is `rules/ux-rules.md` §13 *Event Pages* item 6 (*The hero
@@ -61,7 +61,7 @@ redraws every page into `public/og/`. Commit only the pages whose copy changed, 
 each: the text must fit the card, the fonts must be the real ones, and the file must stay under
 about 300 KB for WhatsApp.
 
-Only event pages (`/play/<sport>/<slug>`) have link previews. The deploy writes each page's
+Only event pages (`/play/<sport URL segment>/<page URL segment>`) have link previews. The deploy writes each page's
 shell with its Open Graph tags, and the CloudFront function in
 `infrastructure/terraform/cloudfront-functions/spa-rewrite.js` serves that shell to link-preview
 crawlers only. A preview for any other address, or a change to the crawler list, is a change to
@@ -73,8 +73,8 @@ A merge does not deploy QA. After it, deploy `main` (Actions -> CI -> Run workfl
 or the GitHub tools' workflow trigger with `ci.yml`); the run takes about 30 minutes. Then:
 
 ```bash
-curl -sI https://qa.ultimateofficepoolmanager.com/email/sports/<sport>.jpg | head -1
-curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport>/<slug> | grep og:image
+curl -sI https://qa.ultimateofficepoolmanager.com/email/sports/<sport-url-segment>.jpg | head -1
+curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport-url-segment>/<url-segment> | grep og:image
 ```
 
 This container cannot reach QA, so ask the user to open the picture, or paste the page's link in

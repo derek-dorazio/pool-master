@@ -22,8 +22,8 @@ export interface SportLeagueProviderMapping {
   providerCode: ProviderCode;
   providerName: string;
   /**
-   * The id the provider's events and participants carry (`SportEvent.providerId`): the
-   * provider's adapter id, read through `providerSourceIdOf`.
+   * The provider's adapter id, as its feed's events and participants name it, read through
+   * `providerSourceIdOf`.
    */
   providerId: string;
 }
@@ -32,6 +32,8 @@ export interface SportLeagueProviderMapping {
 export interface SportLeague extends DomainEntity {
   sportId: string;
   name: string;
+  /** Its name in addresses within its sport (#2042): `?league=wnba`. Stored, never built from the name. */
+  urlSegment: string;
   /**
    * Its current Season (#2003): recomputed once a day by `currentSeasonOf`, never set by hand.
    * Null only for a league no migration has given a Season.
@@ -85,7 +87,8 @@ export interface SportLeague extends DomainEntity {
   noun: SportLeagueNoun | null;
   /**
    * What screens call it away from its sport's own pages, when its name alone does not say the
-   * sport ("NCAA Men's Basketball" for basketball's NCAA Division I Men); null shows the name.
+   * sport; null shows the name, as for every seeded league, each named with its sport
+   * ("NCAA Men's Basketball").
    * Reference data, set where the league is seeded.
    */
   displayName: string | null;
@@ -132,17 +135,6 @@ export interface SportEventParticipantStanding extends DomainEntity {
   status: ParticipantStandingStatus;
   asOf: Date | null;
   currentRound: number | null;
-}
-
-/**
- * A recurring, named competition within a sport league — "The Masters" — that each
- * year's SportEvent edition resolves to. Found or created by (sportLeagueId, name).
- */
-export interface EventSeries extends DomainEntity {
-  sportLeagueId: string;
-  name: string;
-  /** False retires the series; its past editions are untouched. */
-  isActive: boolean;
 }
 
 /** A pick tier an event's field is divided into. Cross-sport: nothing here is golf. */
@@ -260,8 +252,8 @@ export interface SportEventRoundMatch extends DomainEntity {
    */
   homeSpread: number | null;
   /**
-   * The provider game the match takes its score from (#1496), on its event's own provider (the
-   * event's `providerId`); null until an admin links it.
+   * The provider game the match takes its score from (#1496), at the provider its event is
+   * mapped to (`SportEvent.providerMappings`); null until the sync or an admin links it.
    */
   externalGameId: string | null;
   /**

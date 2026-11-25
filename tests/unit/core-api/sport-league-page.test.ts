@@ -16,7 +16,6 @@ import {
   SportEventReleaseAtKind,
   SportEventReleaseMode,
   SportEventStatus,
-  SportEventSyncScope,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
@@ -64,7 +63,7 @@ function run(kind: ProviderSyncKind, overrides: Partial<SportLeaguePageRun> = {}
 function pageEvent(overrides: Partial<SportLeaguePageEvent> = {}): SportLeaguePageEvent {
   return {
     id: 'e1', name: 'Opening Day', sportLeagueSeasonId: '6e1d2c3b-4a5f-4e6d-8c7b-9a0b1c2d3e4f', startDate: at('2027-04-20T17:00:00.000Z'), endDate: null,
-    status: SportEventStatus.DRAFT, providerId: 'balldontlie', syncScope: SportEventSyncScope.SCORES_ONLY, releasedAt: null, lastReleaseCheck: null,
+    status: SportEventStatus.DRAFT, isTestData: false, releasedAt: null, lastReleaseCheck: null,
     ...overrides,
   };
 }
@@ -78,7 +77,7 @@ function fieldRow(overrides: Partial<SportEventPageFieldRow> = {}): SportEventPa
 }
 
 function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEventPageFacts {
-  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPageSlug: null, ...overrides };
+  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPagePath: null, ...overrides };
 }
 
 const context = { webhookProviderIds: [] as string[], now: NOW };
@@ -133,7 +132,7 @@ describe('buildSportLeagueEvents', () => {
     const [auto, manual] = buildSportLeagueEvents(eventFacts({
       events: [
         pageEvent({ status: SportEventStatus.SCHEDULED, releasedAt }),
-        pageEvent({ id: 'e2', status: SportEventStatus.SCHEDULED, releasedAt, syncScope: SportEventSyncScope.NONE }),
+        pageEvent({ id: 'e2', status: SportEventStatus.SCHEDULED, releasedAt, isTestData: true }),
       ],
     }), NOW);
 
@@ -143,7 +142,7 @@ describe('buildSportLeagueEvents', () => {
 
   it('gives a manual draft, and an event released before release times were kept, no release date', () => {
     const [unsynced, offLeague, oldRelease] = [
-      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ syncScope: SportEventSyncScope.NONE })] }), NOW)[0],
+      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ isTestData: true })] }), NOW)[0],
       buildSportLeagueEvents(eventFacts({ league: league({ autoReleaseDaysBeforeStart: null }) }), NOW)[0],
       buildSportLeagueEvents(eventFacts({ events: [pageEvent({ status: SportEventStatus.COMPLETED })] }), NOW)[0],
     ];
@@ -210,8 +209,8 @@ describe('buildSportEventOverview', () => {
     expect(fresh).toMatchObject({ syncHealth: SportLeagueSyncHealth.NOT_RUN_YET, issues: [] });
   });
 
-  it('reads every sync OFF for an event no provider syncs, as one an admin made in a synced league', () => {
-    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ providerId: 'manual-admin', syncScope: SportEventSyncScope.NONE }) }), context);
+  it('reads every sync OFF for an event no provider syncs, as a test event in a synced league', () => {
+    const overview = buildSportEventOverview(eventPageFacts({ event: pageEvent({ isTestData: true }) }), context);
 
     expect(overview.syncHealth).toBe(SportLeagueSyncHealth.OFF);
     expect(overview.syncs.map((sync) => sync.health)).toEqual([SportLeagueSyncHealth.OFF, SportLeagueSyncHealth.OFF]);
@@ -268,9 +267,9 @@ describe('buildSportEventOverview', () => {
     ]);
   });
 
-  it('carries the slug of the event page offering its series, and null when no page offers it', () => {
-    expect(buildSportEventOverview(eventPageFacts({ eventPageSlug: 'world-series' }), context).eventPageSlug).toBe('world-series');
-    expect(buildSportEventOverview(eventPageFacts(), context).eventPageSlug).toBeNull();
+  it('carries the path of the event page offering its series, and null when no page offers it', () => {
+    expect(buildSportEventOverview(eventPageFacts({ eventPagePath: '/play/baseball/world-series' }), context).eventPagePath).toBe('/play/baseball/world-series');
+    expect(buildSportEventOverview(eventPageFacts(), context).eventPagePath).toBeNull();
   });
 
   it('sends the overview in the shape the contract declares', () => {
@@ -312,7 +311,7 @@ describe('SportLeaguePageService', () => {
     const season = (id: string, year: number) => ({
       id, sportLeagueId: 'mlb', name: String(year), championshipYear: year,
       startsAt: new Date(Date.UTC(year, 2, 1)), endsAt: new Date(Date.UTC(year, 10, 1)),
-      isCurrent: false, providerMappings: [], phases: [],
+      isCurrent: false, readBySync: false, providerMappings: [], phases: [],
     });
     const reader = { ...makeReader([]), readSeasons: () => Promise.resolve([season('s2025', 2025), season('s2026', 2026)]) };
     const seasons = await new SportLeaguePageService({ reader, webhookProviderIds: () => [], now: () => NOW }).listSeasons('mlb');

@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
 import { z } from 'zod';
 import { DateDisplay, DetailEditModal, FormField, HelpTip, Select, showToast } from '@/features/shared/ui';
 import { SettingsSaveError } from '@/features/root-admin/settings-save-error';
+import { useSettingsGroupDialog } from '@/features/root-admin/use-settings-group-dialog';
 import { useSettingsGroupForm } from '@/features/root-admin/use-settings-group-form';
 import type { BillingSettingsGroup } from './billing-settings-group';
 
@@ -16,20 +16,28 @@ type PaymentsForm = z.infer<typeof PaymentsFormSchema>;
  * someone else saved first it offers to load theirs.
  */
 export function PaymentsDialog({ group, onClose }: { group: BillingSettingsGroup; onClose: () => void }) {
-  const [mode, setMode] = useState<'view' | 'edit'>('view');
   const testId = 'root-admin-payments-dialog';
   const toForm = (value: BillingSettingsGroup['value']): PaymentsForm => ({ payments: value.paymentsEnabled ? 'on' : 'off' });
-  const { conflicted, form, loadLatest, saveMutation } = useSettingsGroupForm<BillingSettingsGroup, PaymentsForm>({
+  const settings = useSettingsGroupForm<BillingSettingsGroup, PaymentsForm>({
     group,
     resolver: zodResolver(PaymentsFormSchema),
     subject: 'Payments settings',
     toForm,
     toValue: (values) => ({ ...group.value, paymentsEnabled: values.payments === 'on' }),
   });
+  const { conflicted, form, loadLatest, saveMutation } = settings;
+  const { mode, modalProps } = useSettingsGroupDialog({
+    group,
+    onClose,
+    onSaved: (saved) => showToast({ title: saved.value.paymentsEnabled ? 'Payments are on' : 'Payments are off', tone: 'success' }),
+    settings,
+    testId,
+    toForm,
+  });
 
   return (
     <DetailEditModal
-      canSave={form.formState.isDirty}
+      {...modalProps}
       facts={[
         { id: 'payments', label: 'Payments', value: group.value.paymentsEnabled ? 'On' : 'Off', testId: `${testId}-payments` },
         {
@@ -41,29 +49,6 @@ export function PaymentsDialog({ group, onClose }: { group: BillingSettingsGroup
           testId: `${testId}-last-changed`,
         },
       ]}
-      isPending={saveMutation.isPending}
-      mode={mode}
-      onCancel={onClose}
-      onCancelEdit={() => {
-        saveMutation.reset();
-        setMode('view');
-      }}
-      onEdit={() => {
-        form.reset(toForm(group.value));
-        saveMutation.reset();
-        setMode('edit');
-      }}
-      onOpenChange={(open) => (open ? undefined : onClose())}
-      onSave={() => void form.handleSubmit((values) => saveMutation.mutate(values, {
-        onSuccess: (saved) => {
-          showToast({ title: saved.value.paymentsEnabled ? 'Payments are on' : 'Payments are off', tone: 'success' });
-          setMode('view');
-        },
-      }))()}
-      open
-      pendingLabel="Saving..."
-      saveLabel="Save"
-      testId={testId}
       title={(
         <span className="inline-flex items-center gap-2">
           {mode === 'view' ? 'Payments' : 'Payments · Edit'}

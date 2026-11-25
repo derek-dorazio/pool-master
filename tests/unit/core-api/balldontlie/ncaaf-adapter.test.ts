@@ -16,20 +16,18 @@ const API_KEY = 'test-api-key';
 /** Mid-November 2026: the 2025 playoff is over and the 2026 one not yet started. */
 const NOW = Date.UTC(2026, 10, 13);
 
-const gameRow = z.looseObject({ id: z.number(), date: z.string() });
+const gameRow = z.looseObject({ id: z.number(), date: z.string(), season: z.number() });
 const gamesIn = (file: string) => z.object({ data: z.array(gameRow) }).parse(readBalldontlieFixture('ncaaf', file)).data;
 const games = [...gamesIn('games-2025-season.json'), ...gamesIn('games-2026-season-partial.json')];
 
 /**
- * Games as the vendor might filter them by date: on the UTC calendar date of the kickoff, both
- * bounds inclusive. So a Saturday night kickoff in the US is "on" the Sunday, and the adapter
- * must not count on the date filter alone to keep conference championship games out.
+ * Games as the vendor filters them: by season, and by the UTC calendar date of the kickoff. A
+ * Saturday night kickoff in the US is "on" the Sunday.
  */
 const gamesRoute: FakeRoute = pagedRoute(games, (row, query) => {
-  const day = row.date.slice(0, 10);
-  const start = query.get('start_date');
-  const end = query.get('end_date');
-  return (start === null || day >= start) && (end === null || day <= end);
+  const seasons = query.getAll('seasons[]');
+  const dates = query.getAll('dates[]');
+  return (seasons.length === 0 || seasons.includes(String(row.season))) && (dates.length === 0 || dates.includes(row.date.slice(0, 10)));
 });
 
 const defaultRoutes: Record<string, FakeRoute> = {
@@ -74,21 +72,21 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
   afterEach(() => restore?.());
 
   describe('getUpcomingEvents', () => {
-    it('lists each season\'s playoff starting in the range beside the NFL\'s events, reading each season\'s window by date', async () => {
+    it('lists each season\'s playoff starting in the range, reading only college football and each season\'s games by season', async () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('2025-06-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, { from: new Date('2025-06-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'ncaaf' });
 
-      expect(events.filter((event) => event.metadata.tour === 'CFP').map((event) => [event.externalId, event.name, event.status])).toEqual([
-        ['ncaaf-2025-cfp', 'College Football Playoff', 'COMPLETED'],
-        ['ncaaf-2026-cfp', 'College Football Playoff', 'IN_PROGRESS'],
+      expect(events.map((event) => [event.externalId, event.name, event.status, event.providerLeagueCode])).toEqual([
+        ['ncaaf-2025-cfp', 'College Football Playoff', 'COMPLETED', 'ncaaf'],
+        ['ncaaf-2026-cfp', 'College Football Playoff', 'IN_PROGRESS', 'ncaaf'],
       ]);
-      expect(events.some((event) => event.externalId === 'nfl-2025-postseason')).toBe(true);
+      expect(harness.api.requests.some((request) => request.path.startsWith('/nfl/'))).toBe(false);
       expect(collegeRequests(harness.api)).toEqual([
-        '/ncaaf/v1/games?start_date=2024-12-08&end_date=2025-02-01&per_page=100',
-        '/ncaaf/v1/games?start_date=2025-12-07&end_date=2026-02-01&per_page=100',
-        '/ncaaf/v1/games?start_date=2026-12-06&end_date=2027-02-01&per_page=100',
+        '/ncaaf/v1/games?seasons[]=2024&per_page=100',
+        '/ncaaf/v1/games?seasons[]=2025&per_page=100',
+        '/ncaaf/v1/games?seasons[]=2026&per_page=100',
       ]);
     });
 
@@ -96,33 +94,33 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
+      await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'ncaaf' });
 
-      expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual([]);
+      expect(collegeRequests(harness.api)).toEqual([]);
     });
 
-    it('reads only the provider season it is asked for, whatever the clock says, its playoff still under way in mid-January', async () => {
+    it('reads only the provider season it is asked for, whatever the clock says, every game of it a play for the sync to place by date window', async () => {
       const harness = setup(defaultRoutes, Date.UTC(2026, 0, 15));
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL, undefined, { providerSeasonId: '2025' });
+      const [event] = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, undefined, { providerLeagueCode: 'ncaaf', providerSeasonId: '2025' });
 
-      expect(collegeRequests(harness.api).map((line) => /start_date=(\d{4})/.exec(line)?.[1])).toEqual(['2025']);
-      // Its window is still open in mid-January, so it is not over yet.
-      expect(events.find((event) => event.externalId === 'ncaaf-2025-cfp')?.status).toBe('IN_PROGRESS');
+      expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/games?seasons[]=2025&per_page=100']);
+      expect(event.providerSlots).toHaveLength(gamesIn('games-2025-season.json').length);
+      expect(event.providerSlots.every((play) => play.code === null)).toBe(true);
     });
   });
 
   describe('getEventDetails', () => {
-    it('gives a playoff with every team playing in its window, never the regular season\'s or conference title day\'s', async () => {
+    it('gives a playoff with the teams its season\'s games have and no field size, since the field is the seeds placed on it', async () => {
       const harness = setup();
       restore = harness.restore;
 
       const detail = await harness.adapter.getEventDetails('ncaaf-2025-cfp');
 
-      expect(detail).toMatchObject({ externalId: 'ncaaf-2025-cfp', sport: Sport.AMERICAN_FOOTBALL, participantCount: 14, status: 'COMPLETED' });
-      expect(detail?.participants.map((team) => team.name)).not.toContain('Michigan Wolverines');
-      expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/games?start_date=2025-12-07&end_date=2026-02-01&per_page=100']);
+      expect(detail).toMatchObject({ externalId: 'ncaaf-2025-cfp', sport: Sport.FOOTBALL, participantCount: undefined, status: 'COMPLETED' });
+      expect(detail?.participants.map((team) => team.name)).toContain('Navy Midshipmen');
+      expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/games?seasons[]=2025&per_page=100']);
     });
 
     it('gives nothing for a season the vendor has no game in yet', async () => {
@@ -134,32 +132,21 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
   });
 
   describe('getLiveScores', () => {
-    it('never hands over the 2025 Big Ten title game between two playoff teams, which the date filter lets through, so it cannot link to a later playoff match', async () => {
-      const harness = setup();
-      restore = harness.restore;
-
-      const result = await harness.adapter.getLiveScores('ncaaf-2025-cfp');
-
-      expect(result).toMatchObject({ category: 'GAME', externalEventId: 'ncaaf-2025-cfp' });
-      // The vendor's reply held it: it kicked off on the Sunday in UTC.
-      expect(harness.api.requests).toHaveLength(1);
-      expect(gameIdsOf(result)).not.toContain('5002');
-      expect(gameIdsOf(result)).toEqual(['5003', '5011', '5012', '5013', '5014', '5021', '5022', '5023', '5024', '5031', '5032', '5041']);
-    });
-
-    it('gives a playoff under way its live and scheduled games, leaving out the season\'s own title game', async () => {
-      const harness = setup();
+    it('reads the games of yesterday, today and tomorrow in UTC, with their live and scheduled states, leaving out a game whose state is unknown', async () => {
+      const harness = setup(defaultRoutes, Date.UTC(2026, 11, 19, 3));
       restore = harness.restore;
 
       const result = await harness.adapter.getLiveScores('ncaaf-2026-cfp');
 
+      expect(result).toMatchObject({ category: 'GAME', externalEventId: 'ncaaf-2026-cfp' });
+      expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/games?dates[]=2026-12-18&dates[]=2026-12-19&dates[]=2026-12-20&per_page=100']);
       expect(result.category === 'GAME' ? result.games.map((game) => [game.externalGameId, game.state]) : []).toEqual([
         ['6011', ProviderGameState.IN_PROGRESS],
         ['6012', ProviderGameState.SCHEDULED],
       ]);
     });
 
-    it('reads every page of the window\'s games', async () => {
+    it('reads every page of the day\'s games', async () => {
       const [first] = gamesIn('games-2025-season.json').slice(2);
       const many = Array.from({ length: 101 }, (_, index) => ({ ...first, id: 900000 + index }));
       const harness = setup({ ...defaultRoutes, '/ncaaf/v1/games': pagedRoute(many) });
@@ -172,15 +159,14 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
     });
   });
 
-  it('lists every college football team beside the NFL\'s, each toured CFP', async () => {
+  it('lists every college football team after the NFL\'s', async () => {
     const harness = setup();
     restore = harness.restore;
 
-    const teams = await harness.adapter.getParticipants(Sport.AMERICAN_FOOTBALL);
+    const teams = await harness.adapter.getParticipants(Sport.FOOTBALL);
 
-    const college = teams.filter((team) => team.metadata.tour === 'CFP');
-    expect(college.map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
-    expect(teams.some((team) => team.metadata.tour === undefined)).toBe(true);
+    expect(teams.slice(-5).map((team) => team.name)).toEqual(['Indiana Hoosiers', 'Ohio State Buckeyes', 'Oregon Ducks', 'Miami Hurricanes', 'Navy Midshipmen']);
+    expect(teams.length).toBeGreaterThan(5);
     expect(collegeRequests(harness.api)).toEqual(['/ncaaf/v1/teams?']);
   });
 });

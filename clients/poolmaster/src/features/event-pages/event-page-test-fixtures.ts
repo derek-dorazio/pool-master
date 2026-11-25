@@ -6,12 +6,12 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
     id: `offer-${templateKey}`,
     sportLeagueId: 'nfl',
     sportLeagueName: 'NFL',
-    eventSeriesName: 'NFL Playoffs',
+    sportLeaguePhaseSlotId: 'slot-conference',
     template: {
       id: `template-${templateKey}`,
-      sport: 'AMERICAN_FOOTBALL',
       sportLeagueId: 'nfl',
-      eventType: null,
+      coverageMode: 'ONE_SLOT',
+      slots: [],
       contestFormat: 'SQUARES',
       selectionType: 'SQUARES',
       templateKey,
@@ -27,7 +27,7 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
     sortOrder: 1,
     isPrimary: false,
     state: 'OPEN',
-    edition: { sportEventId: `event-${templateKey}`, name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-09T18:00:00.000Z', endDate: null },
+    nextSlot: { seasonSlotId: `season-slot-${templateKey}`, sportEventId: `event-${templateKey}`, name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-09T18:00:00.000Z', endDate: null },
     ...overrides,
   };
 }
@@ -36,20 +36,22 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
 export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}): EventPageDto {
   return {
     id: 'page-cw',
-    sport: 'AMERICAN_FOOTBALL',
-    slug: 'championship-weekend',
+    sport: 'FOOTBALL',
+    sportName: 'Football',
+    sportUrlSegment: 'football',
+    urlSegment: 'championship-weekend',
+    path: '/play/football/championship-weekend',
     displayOrder: 20,
     isActive: true,
     redirectTo: null,
     offers: [
       offerFixture('nfl-bracket-second-chance-doubling', {
         sportLeagueName: 'NFL',
-        eventSeriesName: 'NFL Playoffs',
         isPrimary: true,
         state: 'NOT_YET',
         startsAtRound: 3,
         sortOrder: 2,
-        edition: { sportEventId: 'event-cw', name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-24T20:00:00.000Z', endDate: null },
+        nextSlot: { seasonSlotId: 'season-slot-cw', sportEventId: 'event-cw', name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-24T20:00:00.000Z', endDate: null },
       }),
       offerFixture('nfl-squares', { sortOrder: 3 }),
     ],

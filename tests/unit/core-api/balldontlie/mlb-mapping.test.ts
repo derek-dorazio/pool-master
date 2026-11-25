@@ -2,7 +2,7 @@ import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { mlbGameListSchema, mlbTeamListSchema, type MlbGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-contract';
 import { isMlbClub, MLB_POSTSEASON, toMlbPlayoffGame, toMlbPlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-mapping';
-import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
+import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { toPlayoffsEvent } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
@@ -29,7 +29,7 @@ const dodgers = rowAt(mlbTeamListSchema.parse(readBalldontlieFixture('mlb', 'tea
 
 describe('MLB postseason league', () => {
   it('is baseball\'s postseason, played in the season\'s own year, ending in a best-of-seven World Series', () => {
-    expect(MLB_POSTSEASON).toMatchObject({ key: 'mlb', tour: 'MLB', sport: Sport.BASEBALL, playoffYearOffset: 0 });
+    expect(MLB_POSTSEASON).toMatchObject({ key: 'mlb', sport: Sport.BASEBALL, playoffYearOffset: 0 });
     expect(MLB_POSTSEASON.rounds.at(-1)).toMatchObject({ name: 'World Series', seriesLength: 7 });
   });
 
@@ -112,8 +112,13 @@ describe('toMlbPlayoffGame', () => {
       status: 'COMPLETED',
       startDate: new Date('2025-09-30T23:08:00.000Z'),
       endDate: new Date('2025-10-30T23:08:00.000Z'),
-      metadata: { tour: 'MLB', season: 2025 },
     });
+  });
+
+  it('reduces each postseason game to its series\' round as POST codes, the Wild Card Series POST:1 to the World Series POST:4 (#2005)', () => {
+    const event = toPlayoffsEvent(MLB_POSTSEASON, 2025, postseason2025.map(toMlbPlayoffGame));
+    expect(event.providerSlots.map((play) => play.code)).toEqual(['POST:1', 'POST:2', 'POST:3', 'POST:4']);
+    expect(event.providerSlots.at(-1)?.endsAt).toEqual(new Date('2025-10-30T23:08:00.000Z'));
   });
 
   it('keeps the postseason in progress after the Division Series, with every listed game final but no World Series yet', () => {

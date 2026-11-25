@@ -149,7 +149,7 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
     renderWelcomePage();
 
     const card = await screen.findByTestId('welcome-coming-up-championship-weekend');
-    expect(card).toHaveAttribute('href', '/play/american-football/championship-weekend');
+    expect(card).toHaveAttribute('href', '/play/football/championship-weekend');
     expect(card).toHaveTextContent('Championship Weekend');
   });
 

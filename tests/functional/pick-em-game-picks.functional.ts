@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -6,9 +7,7 @@ import {
   autoAssignEventTiers,
   clearGamePick,
   createContest,
-  createEvent,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getGamePicks,
@@ -31,7 +30,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -41,7 +40,8 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // A confidence pick'em week end to end over HTTP (#716). An admin builds a four-team basketball
 // event and releases it; its final, whose teams are still to be decided, is called off, so the
@@ -70,8 +70,6 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -80,13 +78,12 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -102,7 +99,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Pickem Director' });
@@ -112,12 +109,12 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     // --- An event of two first-round games and a final, released ----------------------------
     const firstKickoff = new Date(Date.now() + 2 * DAY);
     const secondKickoff = new Date(firstKickoff.getTime() + DAY);
-    const conference = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `Pickem Conference ${RUN}` } });
-    const sportLeagueId = expectDefined(conference.data).sportLeague.id;
+    const conference = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `Pickem Conference ${RUN}` });
+    const sportLeagueId = conference.id;
     created.sportLeagueIds.add(sportLeagueId);
-    const tournament = await createEvent({
+    const tournament = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Pickem Classic ${RUN}`, startDate: firstKickoff.toISOString(), rounds: 2, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Pickem Classic ${RUN}`, startDate: firstKickoff.toISOString(), rounds: 2, autoLifecycleEnabled: false },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
@@ -135,7 +132,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     expect((await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: TEAMS.map((name, index) => ({ playerName: `${name} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
+      body: { rows: TEAMS.map((name, index) => ({ playerName: `${name} ${RUN}`, seedNumber: index + 1 })) },
     })).response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);

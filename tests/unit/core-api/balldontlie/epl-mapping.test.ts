@@ -62,7 +62,9 @@ describe('a Premier League matchweek as an event', () => {
       rounds: 1,
       participantCount: 10,
       fieldLocked: true,
-      metadata: { tour: 'EPL', season: 2026 },
+      providerSlots: [
+        { code: 'REG:11', startsAt: new Date('2026-11-21T12:30:00.000Z'), endsAt: new Date('2026-11-23T20:00:00.000Z') },
+      ],
     });
   });
 
@@ -102,9 +104,9 @@ describe('Premier League teams', () => {
       sport: Sport.SOCCER,
       name: 'Arsenal',
       active: true,
-      metadata: { tour: 'EPL', abbreviation: 'ARS' },
+      metadata: { abbreviation: 'ARS' },
     });
-    expect(toEplTeamParticipant({ id: 99, name: 'Newcomers FC', abbreviation: null }).metadata).toEqual({ tour: 'EPL' });
+    expect(toEplTeamParticipant({ id: 99, name: 'Newcomers FC', abbreviation: null }).metadata).toEqual({});
   });
 
   it('refuses a team with no id or no name', () => {

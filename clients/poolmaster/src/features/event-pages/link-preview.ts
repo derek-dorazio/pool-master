@@ -1,4 +1,4 @@
-import { buildEventPagePath, PRODUCT_NAME, Sport } from '@poolmaster/shared/domain';
+import { buildEventPagePath, PRODUCT_NAME } from '@poolmaster/shared/domain';
 import { EVENT_PAGE_COPY, type EventPageCopy } from './event-page-copy';
 
 /** Where the preview images sit in `public/`, and so in each release. */
@@ -6,7 +6,7 @@ export const LINK_PREVIEW_IMAGE_DIR = 'og';
 
 /** What a chat app or social site draws when an event page's link is pasted (#1010). */
 export interface LinkPreview {
-  /** The page's path, `/play/american-football/championship-weekend`. */
+  /** The page's path, `/play/football/championship-weekend`. */
   path: string;
   title: string;
   description: string;
@@ -19,15 +19,15 @@ export interface LinkPreview {
 }
 
 /**
- * `american-football-championship-weekend.jpg`: one 1200 by 630 JPEG per event page, kept small
+ * `football-championship-weekend.jpg`: one 1200 by 630 JPEG per event page, kept small
  * because WhatsApp drops a preview image over about 300 KB.
  */
 export function linkPreviewImageFile(path: string): string {
   return `${path.replace(/^\/play\//, '').replaceAll('/', '-')}.jpg`;
 }
 
-function linkPreview(sport: Sport, slug: string, copy: EventPageCopy): LinkPreview {
-  const path = buildEventPagePath(sport, slug);
+function linkPreview(sportUrlSegment: string, urlSegment: string, copy: EventPageCopy): LinkPreview {
+  const path = buildEventPagePath({ sportUrlSegment, urlSegment });
   return {
     path,
     title: copy.name,
@@ -43,8 +43,8 @@ function linkPreview(sport: Sport, slug: string, copy: EventPageCopy): LinkPrevi
  * its link still opens, with no card.
  */
 export function eventPageLinkPreviews(): LinkPreview[] {
-  return Object.values(Sport).flatMap((sport) =>
-    Object.entries(EVENT_PAGE_COPY[sport] ?? {}).map(([slug, copy]) => linkPreview(sport, slug, copy)));
+  return Object.entries(EVENT_PAGE_COPY).flatMap(([sportUrlSegment, pages]) =>
+    Object.entries(pages).map(([urlSegment, copy]) => linkPreview(sportUrlSegment, urlSegment, copy)));
 }
 
 function escapeHtml(text: string): string {

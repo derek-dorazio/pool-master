@@ -1,5 +1,4 @@
-import { Sport, SportOrder, type SelectionType } from '../enums';
-import { sortByEnumOrder } from '../enum-order';
+import { Sport, type SelectionType } from '../enums';
 import { americanFootballSportDefinition } from './american-football';
 import { autoRacingSportDefinition } from './auto-racing';
 import { baseballSportDefinition } from './baseball';
@@ -25,7 +24,7 @@ export const SPORT_DEFINITIONS: Readonly<Record<Sport, SportDefinition>> = {
   [Sport.CYCLING]: cyclingSportDefinition,
   [Sport.RUNNING]: runningSportDefinition,
   [Sport.BASKETBALL]: basketballSportDefinition,
-  [Sport.AMERICAN_FOOTBALL]: americanFootballSportDefinition,
+  [Sport.FOOTBALL]: americanFootballSportDefinition,
   [Sport.HOCKEY]: hockeySportDefinition,
   [Sport.BASEBALL]: baseballSportDefinition,
   [Sport.SOCCER]: soccerSportDefinition,
@@ -35,9 +34,6 @@ export const SPORT_DEFINITIONS: Readonly<Record<Sport, SportDefinition>> = {
 /** Every supported sport, in enum order. */
 export const SUPPORTED_SPORTS: readonly Sport[] = Object.values(Sport);
 
-/** Every supported sport, the most popular first (`SportOrder`). */
-export const SPORTS_BY_POPULARITY: readonly Sport[] = sortByEnumOrder(SUPPORTED_SPORTS, SportOrder);
-
 export function getSportDefinition(sport: Sport): SportDefinition {
   return SPORT_DEFINITIONS[sport];
 }
@@ -45,13 +41,4 @@ export function getSportDefinition(sport: Sport): SportDefinition {
 /** Whether a commissioner may run a contest of this selection type in the definition's sport. */
 export function sportAllowsSelectionType(definition: SportDefinition, selectionType: SelectionType): boolean {
   return definition.selectionTypes.includes(selectionType);
-}
-
-/**
- * A sport as a URL segment, as the root admin's Manage pages and the emails linking to them
- * spell it: `GOLF` reads `golf`, `HORSE_RACING` reads `horse-racing`. Derived from the enum
- * value, so every sport has one and no two share one.
- */
-export function sportPathSegment(sport: Sport): string {
-  return sport.toLowerCase().replace(/_/g, '-');
 }

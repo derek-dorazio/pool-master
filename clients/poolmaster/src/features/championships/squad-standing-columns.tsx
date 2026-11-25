@@ -1,18 +1,13 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import type { TeamIconKey } from '@poolmaster/shared/domain';
+import type { CupStandingRowDto } from '@/lib/api';
 import { formatCupPoints, Text } from '@/features/shared/ui';
 import { TeamName } from '@/features/teams/team-name';
 
-/** A standings row: one squad, placed, with its points. */
-export type SquadStandingRow = {
-  displayPosition: string;
-  points: number;
-  position: number;
-  squadIconKey?: TeamIconKey;
-  squadId: string;
-  squadIsActive: boolean;
-  squadName: string;
-};
+/** A standings row: one squad, placed, with its points. Cup and championship rows both carry these. */
+export type SquadStandingRow = Pick<
+  CupStandingRowDto,
+  'displayPosition' | 'points' | 'position' | 'squadIconKey' | 'squadId' | 'squadIsActive' | 'squadName'
+>;
 
 export type SquadStandingColumn<Row> = ColumnDef<Row, string | number>;
 

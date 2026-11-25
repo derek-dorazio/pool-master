@@ -11,6 +11,7 @@
  *   const res = await app.inject({ method: 'GET', url: '/api/v1/leagues', headers });
  */
 
+import { COVERING_TEMPLATE_KEY } from '../support/sync-slots';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
@@ -92,7 +93,6 @@ import { testDomainEvents } from '../support/domain-events';
 import { createContestService, createContestSettlementService } from '../../packages/core-api/src/modules/contests/wiring';
 import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService, createReleasedEditionContests } from '../../packages/core-api/src/modules/contest-management/wiring';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { ProviderSettingsStore } from '../../packages/core-api/src/modules/ingestion/provider-settings-store';
@@ -114,15 +114,16 @@ import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
   PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../packages/core-api/src/modules/events/league-events-sync';
-import { EventScoreSourceService } from '../../packages/core-api/src/modules/events/event-score-source-service';
+import { ProviderSeasonScheduleReader } from '../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import { createSportEventServices } from '../../packages/core-api/src/modules/events/wiring';
 import { activityModule } from '../../packages/core-api/src/modules/activity/routes';
 import { syncFindingsModule } from '../../packages/core-api/src/modules/ingestion/findings/routes';
 import { ProviderSyncFindingService } from '../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
+import { resolveMappedParticipantFindingsJobHandler } from '../../packages/core-api/src/modules/ingestion/findings/mapped-participant-findings-job';
+import { PrismaSlotNamePatternRepository } from '../../packages/core-api/src/adapters/prisma-slot-name-pattern-repository';
 import { PrismaProviderSyncFindingRepository } from '../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
 import { PrismaSportLeagueSeasonRepository } from '../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { ParticipantService } from '../../packages/core-api/src/modules/participants/service';
@@ -134,14 +135,6 @@ import { NO_SETTLE_JOBS } from '../support/event-settlement';
 
 const JWT_SECRET = 'poolmaster-dev-secret-change-in-production';
 const INTEGRATION_TEST_EMAIL_DOMAIN = '@integration.test';
-const INTEGRATION_TEST_PROVIDER_IDS = [
-  'integration-test',
-  'TEST_PROVIDER',
-  'contract-provider',
-  'contract-events-provider',
-  'PGA',
-] as const;
-
 /**
  * League codes that integration tests insert DIRECTLY with `prisma.league.create`, giving
  * them no membership and therefore no link to a test user.
@@ -263,7 +256,8 @@ export function integrationSyncFindings(
   return new ProviderSyncFindingService({
     repository: new PrismaProviderSyncFindingRepository(prisma),
     providers,
-    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma)),
+    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), testDomainEvents()),
+    slotNamePatterns: new PrismaSlotNamePatternRepository(prisma),
   });
 }
 
@@ -357,10 +351,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   // A write's boards are rebuilt by a job per event or contest, as in index.ts (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs.queue);
   const leaderboardRebuilder = createContestService(prisma, testApp.log, { planEntitlements });
-  // What follows each change (#1946), as in index.ts. A released edition joins its template
-  // contests by a job per contest (#1318), which contest management runs.
-  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, releasedEditionContests: createReleasedEditionContests(prisma, testApp.log), sportEventChanged: contestNotices });
-  const contestManagement = createContestManagementService(prisma, testApp.log, planEntitlements, { domainEvents });
+  // What follows each change (#1946), as in index.ts.
+  const domainEvents = new DomainEvents({ queue: backgroundJobs.queue, sportEventChanged: contestNotices });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: testApp.log,
@@ -387,8 +379,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
-    scoreSource: new EventScoreSourceService(prisma, providerRegistry, testApp.log),
+    seasonSchedule: new ProviderSeasonScheduleReader(prisma, providerRegistry),
     sportEvents: createSportEventServices(prisma, testApp.log, eventLifecycleService, domainEvents, providers).sportEvents,
     findings: integrationSyncFindings(prisma, providerSettings),
     syncRuns: providerSyncRuns,
@@ -406,7 +397,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-    ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
+    RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(integrationSyncFindings(prisma)),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });
@@ -440,7 +431,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   testApp.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
   testApp.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
   testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
-  testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
+  testApp.register(participantsModule, { prefix: '/api/v1/participants', domainEvents });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, {
     prefix: '/api/v1/events', eventLifecycleService, ingestionService, providerRegistry, cdn, domainEvents, leaderboards, webhookProviderIds,
@@ -830,15 +821,6 @@ async function cleanupContestArtifacts(
       },
     },
   });
-  await database.contestPrizeDefinition.deleteMany({
-    where: {
-      contestConfiguration: {
-        contestId: {
-          in: contestIds,
-        },
-      },
-    },
-  });
   await database.contestConfiguration.deleteMany({
     where: {
       contestId: {
@@ -943,14 +925,8 @@ export async function cleanupTestData(): Promise<void> {
     select: { id: true },
   });
   const userIds = users.map((user) => user.id);
-  const providerSportEvents = await prisma.sportEvent.findMany({
-    where: {
-      providerId: {
-        in: [...INTEGRATION_TEST_PROVIDER_IDS],
-      },
-    },
-    select: { id: true },
-  });
+  // Every event goes below, so every contest on one goes first.
+  const providerSportEvents = await prisma.sportEvent.findMany({ select: { id: true } });
   const providerSportEventIds = providerSportEvents.map((event) => event.id);
   const providerSportEventParticipants = providerSportEventIds.length
     ? await prisma.sportEventParticipant.findMany({
@@ -1058,14 +1034,22 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.contestEntryEvent.deleteMany();
   await prisma.contestSportEvent.deleteMany();
   await prisma.sportEvent.deleteMany();
-  await prisma.eventSeries.deleteMany();
   // A sport league that a contest template names is reference data (auto racing's series, seeded
   // with their points presets), and the template's foreign key restricts its delete: it stays.
   // So does every seeded league, which alone has a display order (the API sets none): US
   // Thoroughbred has no template of its own, only horse racing's every-race ones (#1716).
   // Sport rows are migration reference data too and always stay: without them a functional suite
   // run after this lane on the same database finds no sport to load into.
-  await prisma.sportLeague.deleteMany({ where: { contestConfigTemplates: { none: {} }, displayOrder: null } });
+  // A test's league goes with its Seasons, whose slots and phases hold RESTRICT foreign keys to
+  // the league's slot and phase definitions, so they clear first (#2010: tests put events in
+  // Season slots). A test's Season slot in a seeded league goes too.
+  // A test's synced-slot template (`syncSlotsFor`) is no reference data: it goes, so its league does.
+  await prisma.contestConfigTemplate.deleteMany({ where: { templateKey: COVERING_TEMPLATE_KEY } });
+  const testLeagues = { contestConfigTemplates: { none: {} }, displayOrder: null };
+  const testLeagueIds = (await prisma.sportLeague.findMany({ where: testLeagues, select: { id: true } })).map(({ id }) => id);
+  await prisma.sportLeagueSeasonPhaseSlot.deleteMany({ where: { OR: [{ isTestData: true }, { sportLeagueId: { in: testLeagueIds } }] } });
+  await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
+  await prisma.sportLeague.deleteMany({ where: { id: { in: testLeagueIds } } });
 
   await prisma.platformRuntimeConfig.deleteMany();
   await prisma.platformRuntimeConfigHistory.deleteMany();

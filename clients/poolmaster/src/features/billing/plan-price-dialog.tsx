@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { X } from 'lucide-react';
-import { useState } from 'react';
 import { useFieldArray } from 'react-hook-form';
 import {
   Button,
@@ -21,6 +20,7 @@ import {
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { SettingsSaveError } from '@/features/root-admin/settings-save-error';
+import { useSettingsGroupDialog } from '@/features/root-admin/use-settings-group-dialog';
 import { useSettingsGroupForm } from '@/features/root-admin/use-settings-group-form';
 import {
   MAX_EXPANSION_BANDS,
@@ -50,21 +50,30 @@ export function PlanPriceDialog({
   row: PlanPriceRow;
 }) {
   const { locale } = useDisplayPreferences();
-  const [mode, setMode] = useState<'view' | 'edit'>('view');
   const testId = 'root-admin-plan-price-dialog';
-  const { conflicted, form, loadLatest, saveMutation } = useSettingsGroupForm<BillingSettingsGroup, PlanPriceForm>({
+  const toForm = (value: BillingSettingsGroup['value']) => planPriceForm(value, row.plan);
+  const settings = useSettingsGroupForm<BillingSettingsGroup, PlanPriceForm>({
     group,
     resolver: zodResolver(PlanPriceFormSchema),
     subject: 'Payments settings',
-    toForm: (value) => planPriceForm(value, row.plan),
+    toForm,
     toValue: (values) => withPlanPrices(group.value, row.plan, values),
+  });
+  const { conflicted, form, loadLatest, saveMutation } = settings;
+  const { mode, modalProps } = useSettingsGroupDialog({
+    group,
+    onClose,
+    onSaved: () => showToast({ title: `Saved ${row.label}'s prices`, tone: 'success' }),
+    settings,
+    testId,
+    toForm,
   });
   const bands = useFieldArray({ control: form.control, name: 'bands' });
   const errors = form.formState.errors;
 
   return (
     <DetailEditModal
-      canSave={form.formState.isDirty}
+      {...modalProps}
       facts={[
         { id: 'yearly', label: 'Yearly', value: formatMoneyCents(row.yearlyCents, locale), testId: `${testId}-yearly` },
         { id: 'monthly', label: 'Monthly', value: formatMoneyCents(row.monthlyCents, locale), testId: `${testId}-monthly` },
@@ -77,29 +86,6 @@ export function PlanPriceDialog({
         },
       ]}
       factsTitle="Subscription"
-      isPending={saveMutation.isPending}
-      mode={mode}
-      onCancel={onClose}
-      onCancelEdit={() => {
-        saveMutation.reset();
-        setMode('view');
-      }}
-      onEdit={() => {
-        form.reset(planPriceForm(group.value, row.plan));
-        saveMutation.reset();
-        setMode('edit');
-      }}
-      onOpenChange={(open) => (open ? undefined : onClose())}
-      onSave={() => void form.handleSubmit((values) => saveMutation.mutate(values, {
-        onSuccess: () => {
-          showToast({ title: `Saved ${row.label}'s prices`, tone: 'success' });
-          setMode('view');
-        },
-      }))()}
-      open
-      pendingLabel="Saving..."
-      saveLabel="Save"
-      testId={testId}
       title={mode === 'view' ? row.label : `${row.label} · Edit`}
       viewContent={(
         <div className="grid gap-2">

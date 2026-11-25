@@ -24,6 +24,7 @@ import type {
 import type { BackgroundJobOutcome, Contest, SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
+  eventFeedRef,
   SelectionType,
   SportEventStatus,
   isDeclaredSportEventTransition,
@@ -185,12 +186,12 @@ export class EventLifecycleService {
     // (its latency or a retry), a planned contest stays live, since the event has started by then.
     const postponing = input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED;
     const reopenPlan = postponing ? await this.contestsToReopen({ ...before, status: SportEventStatus.POSTPONED }, now) : undefined;
-    // What follows the change (settlement, a release into template contests, the postponed
+    // What follows the change (settlement, the postponed
     // notices, the boards' rebuild) is written with the status (#1946), so a change that fails or
     // loses a race queues nothing and one that lands always has its jobs.
     const followUps = await this.domainEvents.collect({
       type: DomainEventType.SPORT_EVENT_STATUS_CHANGED,
-      sportEvent: { id: before.id, startDate: before.startDate, eventSeriesId: before.eventSeriesId, sportLeagueSeasonId: before.sportLeagueSeasonId },
+      sportEvent: { id: before.id, startDate: before.startDate },
       from: fromStatus,
       to: input.toStatus,
       // A cancelled event has no end date of its own, and its start may still be ahead, so its
@@ -479,8 +480,7 @@ export class EventLifecycleService {
         const logged = {
           contestId: contest.id,
           sportEventId: sportEvent.id,
-          providerId: sportEvent.providerId,
-          eventExternalId: sportEvent.externalId,
+          eventFeedRef: eventFeedRef(sportEvent) ?? null,
         };
         if (!activated.has(contest.id)) {
           this.logger?.debug(logged, 'Skipped contest started email because contest was already active');

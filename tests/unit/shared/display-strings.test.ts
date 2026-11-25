@@ -1,13 +1,11 @@
 import {
   createDisplayStrings,
   displayString,
-  displayStringLocaleFor,
   DISPLAY_STRING_MODULES,
   enumLabel,
   enUS,
   flattenDisplayStrings,
   hasDisplayString,
-  pluralBaseKey,
   GENERIC_SPORT_WORD_ROLES,
   SOURCE_LOCALE,
   SPORT_WORD_ROLES,
@@ -22,7 +20,7 @@ const frFR: DisplayStringsModule = {
   enum: {
     ...enUS.enum,
     ContestStatus: { ...enUS.enum.ContestStatus, ACTIVE: 'En direct' },
-    Sport: { ...enUS.enum.Sport, AMERICAN_FOOTBALL: 'Football américain' },
+    Sport: { ...enUS.enum.Sport, FOOTBALL: 'Football américain' },
   },
   error: { ...enUS.error, CONTEST_FULL: 'Ce concours est complet.' },
   word: { ...enUS.word, roundCount_one: '{{count}} manche', roundCount_other: '{{count}} manches', participant_one: 'concurrent', participant_other: 'concurrents' },
@@ -32,7 +30,7 @@ const frFR: DisplayStringsModule = {
 /** The source language with words the real module does not have yet: a short form, a placeholder and a plural. */
 const enWithWords: DisplayStringsModule = {
   ...enUS,
-  enum: { ...enUS.enum, Sport: { ...enUS.enum.Sport, AMERICAN_FOOTBALL: { name: 'American football', short: 'Football' } } },
+  enum: { ...enUS.enum, Sport: { ...enUS.enum.Sport, FOOTBALL: { name: 'American football', short: 'Football' } } },
   word: { ...enUS.word, roundCount_one: '{{count}} round', roundCount_other: '{{count}} rounds', championship: { name: 'Championship', short: 'Champ' } },
   sport: { ...enUS.sport, GOLF: { ...enUS.sport.GOLF, eventStart: { name: 'first tee time', short: 'tee time' } } },
 };
@@ -57,27 +55,27 @@ describe('display string lookups', () => {
   });
 
   it('give a screen\'s own wording of an error code under error.<CODE>.<context>, with its placeholders filled', () => {
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'tour', event: 'tournament' }))
-      .toBe('This tour already has this tournament in its current Season.');
-    expect(flattenDisplayStrings(enUS)['error.EVENT_EDITION_ALREADY_EXISTS.createEvent']).toBe(enUS.errorContext.EVENT_EDITION_ALREADY_EXISTS.createEvent);
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { participant: 'team' }))
+      .toBe('You picked that team in another week or round. Each team can be picked once.');
+    expect(flattenDisplayStrings(enUS)['error.PREDICTION_TEAM_ALREADY_USED.pickEm']).toBe(enUS.errorContext.PREDICTION_TEAM_ALREADY_USED.pickEm);
   });
 
   it('say whether a key built at run time has words, so a screen\'s context is tried before the code\'s own message', () => {
-    expect(hasDisplayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toBe(true);
+    expect(hasDisplayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL.createEvent')).toBe(false);
     expect(hasDisplayString('error.CONTEST_FULL')).toBe(true);
     expect(hasDisplayString('error.CONTEST_FULL', 'fr-CA')).toBe(true);
   });
 
   it('give the short form when asked, and the name for an entry that has no short form', () => {
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short' })).toBe('Football');
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL)).toBe('American football');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL, { form: 'short' })).toBe('Football');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL)).toBe('American football');
     expect(strings.enumLabel('Sport', Sport.GOLF, { form: 'short' })).toBe(enUS.enum.Sport.GOLF);
   });
 
   it('give a French reader the French name, not the English short form, when the French entry has no short form', () => {
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short', locale: 'fr-FR' })).toBe('Football américain');
-    expect(strings.enumLabel('Sport', Sport.AMERICAN_FOOTBALL, { form: 'short', locale: 'en-US' })).toBe('Football');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL, { form: 'short', locale: 'fr-FR' })).toBe('Football américain');
+    expect(strings.enumLabel('Sport', Sport.FOOTBALL, { form: 'short', locale: 'en-US' })).toBe('Football');
   });
 
   it('give any key\'s short form through displayString when asked, and the name otherwise', () => {
@@ -100,7 +98,6 @@ describe('display string lookups', () => {
     expect(strings.moduleLocaleFor(null)).toBe(SOURCE_LOCALE);
     expect(strings.enumLabel('ContestStatus', ContestStatus.ACTIVE, { locale: 'de-DE' })).toBe(enUS.enum.ContestStatus.ACTIVE);
     expect(lookup('word.weekNumber', { n: 3 }, 'fr-FR')).toBe('Week 3');
-    expect(displayStringLocaleFor('es-MX')).toBe(SOURCE_LOCALE);
   });
 
   it('fill placeholders and choose plurals by each language\'s rules: French counts 0 as one, English as other', () => {
@@ -129,13 +126,13 @@ describe('display string lookups', () => {
   });
 
   it('refuse at compile time a screen\'s error wording without its placeholder values, and fill them when given', () => {
-    // @ts-expect-error The create-event wording needs its sportLeague and event.
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent')).toContain('{{sportLeague}}');
-    // @ts-expect-error The placeholder is event, not game.
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', game: 'game' }))
-      .toContain('{{event}}');
-    expect(displayString('error.EVENT_EDITION_ALREADY_EXISTS.createEvent', { sportLeague: 'league', event: 'game' }))
-      .toBe('This league already has this game in its current Season.');
+    // @ts-expect-error The pick'em wording needs its participant.
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm')).toContain('{{participant}}');
+    // @ts-expect-error The placeholder is participant, not team.
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { team: 'team' }))
+      .toContain('{{participant}}');
+    expect(displayString('error.PREDICTION_TEAM_ALREADY_USED.pickEm', { participant: 'player' }))
+      .toBe('You picked that player in another week or round. Each player can be picked once.');
   });
 
   it('refuse at compile time a key the modules do not hold', () => {
@@ -148,19 +145,13 @@ describe('display string lookups', () => {
   it('flatten a module to i18next keys, with a short form under its entry\'s key plus .short', () => {
     const flat = flattenDisplayStrings(enWithWords);
 
-    expect(flat['enum.Sport.AMERICAN_FOOTBALL']).toBe('American football');
-    expect(flat['enum.Sport.AMERICAN_FOOTBALL.short']).toBe('Football');
+    expect(flat['enum.Sport.FOOTBALL']).toBe('American football');
+    expect(flat['enum.Sport.FOOTBALL.short']).toBe('Football');
     expect(flat['enum.Sport.GOLF.short']).toBeUndefined();
     expect(flat['word.roundCount_other']).toBe('{{count}} rounds');
     expect(flat['sport.GOLF.participant_one']).toBe('golfer');
     expect(flat['sport.GOLF.eventStart.short']).toBe('tee time');
     expect(flat['error.CONTEST_FULL']).toBe(enUS.error.CONTEST_FULL);
-  });
-
-  it('take the plural suffix off a key, and leave a key without one as it is', () => {
-    expect(pluralBaseKey('word.roundCount_one')).toBe('word.roundCount');
-    expect(pluralBaseKey('word.roundCount_other')).toBe('word.roundCount');
-    expect(pluralBaseKey('word.weekNumber')).toBe('word.weekNumber');
   });
 
   it('ship en-US as the source language', () => {

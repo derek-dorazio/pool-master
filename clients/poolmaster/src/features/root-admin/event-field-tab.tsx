@@ -4,11 +4,9 @@ import { Button, QueryState, refetchFailed } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { EventFieldAddParticipantsModal } from './event-field-add-participants-modal';
 import { EventFieldGridCard } from './event-field-grid-card';
-import { EventFieldRefreshAction } from './event-field-refresh-action';
 import { useEventPage } from './event-page-context';
 import { EventSyncsCard } from './event-syncs-card';
 import { PriceAssignAction } from './price-assign-action';
-import { sportEventHasScoreSync } from './sport-admin-utils';
 import { TierAutoAssignActions } from './tier-auto-assign-actions';
 import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
 
@@ -47,15 +45,9 @@ export function EventFieldTab() {
         </>
       )}
       {isSynced ? null : (
-        <>
-          <Button data-testid="root-admin-event-field-add" onClick={() => setAddOpen(true)} size="sm">
-            Add more participants
-          </Button>
-          {sportEventHasScoreSync(event.syncScope) ? (
-            // poolmaster-allow-list-lookup: counts the event's field, which this tab shows in full
-            <EventFieldRefreshAction eventId={event.id} fieldCount={entries.length} />
-          ) : null}
-        </>
+        <Button data-testid="root-admin-event-field-add" onClick={() => setAddOpen(true)} size="sm">
+          Add more participants
+        </Button>
       )}
     </span>
   );
@@ -82,6 +74,7 @@ export function EventFieldTab() {
           onClose={() => setAddOpen(false)}
           sport={event.sport}
           sportLeagueId={event.sportLeagueId}
+          testEvent={event.isTestData}
         />
       ) : null}
     </div>

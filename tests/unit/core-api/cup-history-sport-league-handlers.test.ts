@@ -28,7 +28,7 @@ import type { PlanEntitlements } from '../../../packages/core-api/src/modules/pl
 import type { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import { SportLeagueOverviewService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-overview';
 import { SportLeaguePageService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-page';
-import { createSportLeagueHandlers } from '../../../packages/core-api/src/modules/sport-leagues/handler';
+import { buildSportLeagueHandlers } from '../../../packages/core-api/src/modules/sport-leagues/handler';
 import { authUser, callHandler, stubRequest } from '../../support/handler-call';
 
 const boom = new Error('database down');
@@ -218,7 +218,7 @@ describe('history handlers', () => {
 
 describe('sport league handlers', () => {
   const AT = new Date('2026-01-01T00:00:00.000Z');
-  const sportLeague = { id: 'sl1', roundNames: [], createdAt: AT, updatedAt: AT };
+  const sportLeague = { id: 'sl1', sport: Sport.GOLF, roundNames: [], createdAt: AT, updatedAt: AT };
   const participant = {
     id: 'p1', sportLeagueId: 'sl1', ranking: 1, name: 'One', participantType: 'INDIVIDUAL', status: 'ACTIVE', externalIds: {},
     injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT,
@@ -226,7 +226,6 @@ describe('sport league handlers', () => {
   const service = {
     listSportLeagues: jest.fn((..._args: unknown[]) => Promise.resolve([sportLeague])),
     getSportLeague: jest.fn((id: string) => Promise.resolve(id === 'sl1' ? sportLeague : null)),
-    createSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve(sportLeague)),
     updateSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve(sportLeague)),
     deleteSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve()),
     listParticipants: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
@@ -237,7 +236,7 @@ describe('sport league handlers', () => {
   const overviews = new SportLeagueOverviewService({
     reader: {
       readFacts: async () => ({
-        leagues: [{ id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true }],
+        leagues: [{ id: 'sl1', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true }],
         latestSyncRuns: [],
         heldEvents: [],
         eventCounts: new Map([['sl1', 2]]),
@@ -264,12 +263,12 @@ describe('sport league handlers', () => {
       readStructure: (sportLeagueId) => known(sportLeagueId, []),
       readSeasons: (sportLeagueId) => known(sportLeagueId, [{
         id: 'season-2026', sportLeagueId: 'sl1', name: '2026', championshipYear: 2026, startsAt: AT, endsAt: new Date('2026-12-31T23:59:59.999Z'),
-        isCurrent: true, providerMappings: [], phases: [],
+        isCurrent: true, readBySync: true, providerMappings: [], phases: [],
       }]),
       readEventFacts: (sportLeagueId) => known(sportLeagueId, {
         league: pageLeague,
         events: [{
-          id: 'e1', name: 'The Open', sportLeagueSeasonId: 'season-2026', startDate: AT, endDate: null, status: 'SCHEDULED' as const, providerId: 'balldontlie', syncScope: 'SCORES_ONLY' as const, releasedAt: null, lastReleaseCheck: null,
+          id: 'e1', name: 'The Open', sportLeagueSeasonId: 'season-2026', startDate: AT, endDate: null, status: 'SCHEDULED' as const, isTestData: false, releasedAt: null, lastReleaseCheck: null,
         }],
         fieldSizes: new Map(),
         latestRunsByEvent: new Map(),
@@ -283,7 +282,7 @@ describe('sport league handlers', () => {
     webhookProviderIds: () => [],
     now: () => AT,
   });
-  const handlers = createSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews, page);
+  const handlers = buildSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews, page);
   const params = { sportLeagueId: 'sl1' };
 
   it('answers the root admin\'s overview with every sport league mapped to its row', async () => {
@@ -291,7 +290,7 @@ describe('sport league handlers', () => {
 
     expect(listed.body).toEqual({
       sportLeagues: [{
-        id: 'sl1', sport: Sport.GOLF, name: 'PGA Tour', providerId: 'balldontlie', providerName: 'BALLDONTLIE', isActive: true,
+        id: 'sl1', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour', providerId: 'balldontlie', providerName: 'BALLDONTLIE', isActive: true,
         syncHealth: 'NOT_RUN_YET', issues: [], season: null, nextEventStartsAt: null, eventCount: 2,
       }],
     });
@@ -314,22 +313,22 @@ describe('sport league handlers', () => {
     expect(missing).toMatchObject({ statusCode: 404, body: { error: { code: 'SPORT_LEAGUE_NOT_FOUND' } } });
   });
 
-  it('creates a sport league for the sport the body names with 201, and updates and deletes one', async () => {
-    const created = await callHandler(handlers.createSportLeague, stubRequest({ body: { sport: Sport.GOLF, name: 'PGA Tour' } }));
+  it('updates a sport league and deletes one with 204', async () => {
     const updated = await callHandler(handlers.updateSportLeague, stubRequest({ params, body: { name: 'PGA' } }));
     const deleted = await callHandler(handlers.deleteSportLeague, stubRequest({ params }));
 
-    expect(service.createSportLeague).toHaveBeenCalledWith(Sport.GOLF, { name: 'PGA Tour' });
-    expect(created).toMatchObject({ statusCode: 201, body: { sportLeague: { id: 'sl1' } } });
     expect(updated.body).toMatchObject({ sportLeague: { id: 'sl1' } });
     expect(deleted.statusCode).toBe(204);
   });
 
   it('lists and re-ranks a sport league\'s own participants', async () => {
-    const listed = await callHandler(handlers.listParticipants, stubRequest({ params }));
+    const listed = await callHandler(handlers.listParticipants, stubRequest({ params, query: {} }));
+    await callHandler(handlers.listParticipants, stubRequest({ params, query: { testData: true } }));
     const ranked = await callHandler(handlers.updateParticipantRankings, stubRequest({ params, body: { rankings: [{ participantId: 'p1', ranking: 1 }] } }));
 
     expect(listed.body).toMatchObject({ participants: [{ id: 'p1', sportLeagueId: 'sl1' }] });
+    expect(service.listParticipants).toHaveBeenNthCalledWith(1, 'sl1', false);
+    expect(service.listParticipants).toHaveBeenNthCalledWith(2, 'sl1', true);
     expect(service.updateRankings).toHaveBeenCalledWith('sl1', [{ participantId: 'p1', ranking: 1 }]);
     expect(ranked.body).toMatchObject({ participants: [{ ranking: 1 }] });
   });
@@ -352,7 +351,7 @@ describe('sport league handlers', () => {
     expect(seasons.body).toEqual({
       seasons: [{
         id: 'season-2026', name: '2026', championshipYear: 2026, startsAt: AT.toISOString(), endsAt: '2026-12-31T23:59:59.999Z',
-        isCurrent: true, providerMappings: [], phases: [],
+        isCurrent: true, providerMappings: [], phases: [], slotsNeedingDates: 0,
       }],
     });
     for (const missing of [missingStructure, missingSeasons]) {

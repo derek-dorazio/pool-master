@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { DefaultValues, FieldValues, Resolver, UseFormReturn } from 'react-hook-form';
 import type { SettingsGroup } from '@/lib/api';
 import { DetailEditModal, type Fact } from '@/features/shared/ui';
 import { SettingsSaveError } from './settings-save-error';
+import { useSettingsGroupDialog } from './use-settings-group-dialog';
 import { useSettingsGroupForm } from './use-settings-group-form';
 
 export type PlanSettingsGroup = Extract<SettingsGroup, { key: 'PLAN_CONFIG' }>;
@@ -37,36 +38,20 @@ export function PlanRowDialog<V extends FieldValues>({
   /** The whole record with this row's values put in. */
   toValue: (values: V) => PlanSettingsGroup['value'];
 }) {
-  const [mode, setMode] = useState<'view' | 'edit'>('view');
-  const { conflicted, form, loadLatest, saveMutation } = useSettingsGroupForm<PlanSettingsGroup, V>({
+  const settings = useSettingsGroupForm<PlanSettingsGroup, V>({
     group,
     resolver,
     subject: 'Plans settings',
     toForm,
     toValue,
   });
+  const { conflicted, form, loadLatest, saveMutation } = settings;
+  const { mode, modalProps } = useSettingsGroupDialog({ group, onClose, settings, testId, toForm });
 
   return (
     <DetailEditModal
-      canSave={form.formState.isDirty}
+      {...modalProps}
       facts={facts}
-      isPending={saveMutation.isPending}
-      mode={mode}
-      onCancel={onClose}
-      onCancelEdit={() => {
-        saveMutation.reset();
-        setMode('view');
-      }}
-      onEdit={() => {
-        form.reset(toForm(group.value));
-        setMode('edit');
-      }}
-      onOpenChange={(open) => (open ? undefined : onClose())}
-      onSave={() => void form.handleSubmit((values) => saveMutation.mutate(values, { onSuccess: () => setMode('view') }))()}
-      open
-      pendingLabel="Saving..."
-      saveLabel="Save"
-      testId={testId}
       title={mode === 'view' ? name : `${name} · Edit`}
     >
       <div className="grid gap-4">

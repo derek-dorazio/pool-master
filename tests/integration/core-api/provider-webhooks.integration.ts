@@ -7,8 +7,9 @@ import { expectMatchesSchema } from '../../support/expect-matches-schema';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { BALLDONTLIE_WEBHOOK_PAYLOADS as PAYLOADS, signedBalldontlieDelivery } from '../../support/balldontlie-webhooks';
 import { cleanupTestData, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
-import { seriesSeasonId } from '../../support/event-edition';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
+import { mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // BALLDONTLIE's webhook notifications reach POST /api/v1/provider-webhooks/balldontlie (#1498),
@@ -29,9 +30,13 @@ function post(delivery: { headers: Record<string, string>; payload: string }) {
   return getApp().inject({ method: 'POST', url: URL, headers: delivery.headers, payload: delivery.payload });
 }
 
-/** A BALLDONTLIE-linked event, one match of it linked to `gameId` when one is named. */
+/**
+ * A BALLDONTLIE-linked event under the provider league `providerLeagueCode`, one match of it
+ * linked to `gameId` when one is named.
+ */
 async function linkedEvent(input: {
   sport: Sport;
+  providerLeagueCode: string;
   externalId: string;
   status?: SportEventStatus;
   gameId?: string;
@@ -41,24 +46,20 @@ async function linkedEvent(input: {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: input.sport },
-    create: { sport: input.sport, tournamentFormat: input.sport === Sport.GOLF ? 'STROKE_PLAY_TOURNAMENT' : 'MATCHES' },
+    create: { sport: input.sport, ...sportRowKeys(input.sport), tournamentFormat: input.sport === Sport.GOLF ? 'STROKE_PLAY_TOURNAMENT' : 'MATCHES' },
     update: {},
   });
-  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League ${randomUUID()}` } });
-  const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Series ${randomUUID()}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League ${randomUUID()}` } });
   const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
-    eventSeriesId: eventSeries.id,
-    sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2026),
-    externalId: input.externalId,
-    providerId: PROVIDER,
-    sport: input.sport,
+    sportLeagueId: sportLeague.id,
+    sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026),
     name: input.externalId,
     startDate: input.startDate ?? new Date('2026-11-12T18:00:00.000Z'),
     status: input.status ?? SportEventStatus.IN_PROGRESS,
     rounds: 1,
-    syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: input.autoLifecycleEnabled ?? false,
   });
+  await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId: input.externalId }, input.providerLeagueCode);
   if (input.gameId !== undefined) {
     await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
     const round = await prisma.sportEventRound.findFirstOrThrow({ where: { sportEventId: event.id } });
@@ -76,15 +77,15 @@ async function queuedSyncs() {
 
 describe('BALLDONTLIE webhook receiver', () => {
   it('queues one live-score sync, a minute out, of the in-progress event whose match is linked to the ended game, and a reconciling one ten minutes out, both recorded as started by the webhook', async () => {
-    const week = await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-postseason' });
+    const week = await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-postseason' });
 
     const response = await post(signedBalldontlieDelivery(PAYLOADS.nflGameEnded));
 
     expect(response.statusCode).toBe(200);
     expectMatchesSchema(SuccessResponseSchema, response.json());
     const syncs = await queuedSyncs();
-    const payload = { sport: Sport.AMERICAN_FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11', sportEventId: week.id };
+    const payload = { sport: Sport.FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11', sportEventId: week.id };
     expect(syncs).toEqual([
       expect.objectContaining({ payload, dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
       expect.objectContaining({ payload, dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
@@ -97,12 +98,13 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('syncs every in-progress event of the league while no match is linked to the game yet', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11' });
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-postseason' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-postseason' });
     // Another league's live event, and the league's own event not yet started, are not the game's.
-    await linkedEvent({ sport: Sport.SOCCER, externalId: 'epl-2026-matchweek-11' });
+    await linkedEvent({ sport: Sport.SOCCER, providerLeagueCode: 'epl', externalId: 'epl-2026-matchweek-11' });
     await linkedEvent({
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
+      providerLeagueCode: 'nfl',
       externalId: 'nfl-2026-week-12',
       status: SportEventStatus.SCHEDULED,
       startDate: new Date(Date.now() + 24 * 60 * 60_000),
@@ -118,7 +120,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('queues a golf tournament\'s sync when its round starts', async () => {
-    const tournament = await linkedEvent({ sport: Sport.GOLF, externalId: '1133' });
+    const tournament = await linkedEvent({ sport: Sport.GOLF, providerLeagueCode: 'pga', externalId: '1133' });
 
     expect((await post(signedBalldontlieDelivery(PAYLOADS.pgaRoundStarted))).statusCode).toBe(200);
 
@@ -128,7 +130,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('accepts a delivery with non-ASCII text, signed over its bytes, whose header also carries a retiring secret\'s signature', async () => {
-    await linkedEvent({ sport: Sport.SOCCER, externalId: 'epl-2026-matchweek-11' });
+    await linkedEvent({ sport: Sport.SOCCER, providerLeagueCode: 'epl', externalId: 'epl-2026-matchweek-11' });
     const body = { ...PAYLOADS.eplGameHalftime, game: { ...PAYLOADS.eplGameHalftime.game, home_team: { id: 13, name: 'Atlético São Paulo ⚽' } } };
     const at = new Date();
     const current = signedBalldontlieDelivery(body, { at });
@@ -144,7 +146,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('shares one waiting sync among a burst of notifications and a duplicate delivery of the same one, the game\'s end adding its one reconciling sync', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
     const delivery = signedBalldontlieDelivery(PAYLOADS.nflGamePeriodEnded);
 
     const answers = [
@@ -163,7 +165,8 @@ describe('BALLDONTLIE webhook receiver', () => {
   it('syncs an event still SCHEDULED past its start when its game starts, six minutes out once the lifecycle sweep has moved it, and records the notification on it', async () => {
     const started = new Date(Date.now() - 2 * 60_000);
     await linkedEvent({
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
+      providerLeagueCode: 'nfl',
       externalId: 'nfl-2026-week-11',
       status: SportEventStatus.SCHEDULED,
       startDate: started,
@@ -171,7 +174,7 @@ describe('BALLDONTLIE webhook receiver', () => {
       gameId: '424095',
     });
     // Its admin holds this one's status by hand, so the lifecycle never moves it.
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11-held', status: SportEventStatus.SCHEDULED, startDate: started });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11-held', status: SportEventStatus.SCHEDULED, startDate: started });
 
     const before = Date.now();
     expect((await post(signedBalldontlieDelivery(PAYLOADS.nflGameStarted))).statusCode).toBe(200);
@@ -181,18 +184,17 @@ describe('BALLDONTLIE webhook receiver', () => {
     const delayMs = (syncs[0]?.runAt.getTime() ?? 0) - (syncs[0]?.createdAt.getTime() ?? 0);
     expect(delayMs).toBeGreaterThanOrEqual(355_000);
     expect(delayMs).toBeLessThanOrEqual(365_000);
-    const events = await getPrisma().sportEvent.findMany({
-      where: { providerId: PROVIDER },
-      select: { externalId: true, lastProviderNotificationAt: true },
+    const events = await getPrisma().sportEventProviderMapping.findMany({
+      select: { externalId: true, sportEvent: { select: { lastProviderNotificationAt: true } } },
       orderBy: { externalId: 'asc' },
     });
-    expect(events[0]?.lastProviderNotificationAt?.getTime()).toBeGreaterThanOrEqual(before - 1000);
-    expect(events[1]).toEqual({ externalId: 'nfl-2026-week-11-held', lastProviderNotificationAt: null });
+    expect(events[0]?.sportEvent.lastProviderNotificationAt?.getTime()).toBeGreaterThanOrEqual(before - 1000);
+    expect(events[1]).toEqual({ externalId: 'nfl-2026-week-11-held', sportEvent: { lastProviderNotificationAt: null } });
   });
 
   it('syncs the NBA playoffs\' in-progress events when an NBA game ends, as for every league with a reader', async () => {
-    await linkedEvent({ sport: Sport.BASKETBALL, externalId: 'nba-2025-postseason-round-1' });
-    await linkedEvent({ sport: Sport.BASKETBALL, externalId: 'ncaab-2025-tournament' });
+    await linkedEvent({ sport: Sport.BASKETBALL, providerLeagueCode: 'nba', externalId: 'nba-2025-postseason-round-1' });
+    await linkedEvent({ sport: Sport.BASKETBALL, providerLeagueCode: 'ncaab', externalId: 'ncaab-2025-tournament' });
 
     expect((await post(signedBalldontlieDelivery(PAYLOADS.nbaGameEnded))).statusCode).toBe(200);
 
@@ -203,7 +205,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('acknowledges a notification about nothing linked, or of a kind it does not act on, and queues nothing', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
 
     const answers = [
       await post(signedBalldontlieDelivery(PAYLOADS.pgaTournamentStarted)),
@@ -219,7 +221,7 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('refuses with 403, queueing nothing, a delivery signed with another secret, one signed too long ago, and one with no signature', async () => {
-    await linkedEvent({ sport: Sport.AMERICAN_FOOTBALL, externalId: 'nfl-2026-week-11', gameId: '424095' });
+    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
     const unsigned = signedBalldontlieDelivery(PAYLOADS.nflGameEnded);
     const headersWithoutSignature = Object.fromEntries(Object.entries(unsigned.headers)
       .filter(([name]) => name !== 'x-bdl-webhook-signature'));

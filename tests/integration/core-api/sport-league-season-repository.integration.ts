@@ -5,13 +5,15 @@
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport, SportEventSyncScope } from '@poolmaster/shared/domain';
+import { Sport } from '@poolmaster/shared/domain';
 import { PrismaSportLeaguePageReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-page-reader';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { mapEventToProvider } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { linkTestSlot, testSlotDefinitionId, testSlotIdIn } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -25,23 +27,23 @@ async function seasonedLeague() {
   const prisma = getPrisma();
   const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASKETBALL }, select: { id: true } });
   const league = await prisma.sportLeague.create({
-    data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `Season League ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `Season League ${randomUUID().slice(0, 8)}` },
   });
   const mappingId = await syncLeagueTo(prisma, league.id, 'nba');
   const [s2025, s2026, s2027] = await syncSeasonsTo(prisma, league.id, mappingId, [2025, 2026, 2027]);
   return { league, mappingId, s2025, s2026, s2027 };
 }
 
-/** One event in `seasonId`, synced unless `syncScope` says otherwise. */
-async function eventIn(sportLeagueId: string, seasonId: string, syncScope: SportEventSyncScope) {
+/** One event in `seasonId`, kept under the provider's id for it as the sync makes one when `synced`, else a test event with none. */
+async function eventIn(sportLeagueId: string, seasonId: string, synced: boolean) {
   const prisma = getPrisma();
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID().slice(0, 8)}` } });
-  await prisma.sportEvent.create({
+  const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: seasonId, syncScope, sport: Sport.BASKETBALL, name: series.name,
-      startDate: new Date('2026-03-01T00:00:00.000Z'), providerId: 'integration-test', externalId: `season-repo-${randomUUID()}`,
+      sportLeagueId: sportLeagueId, sportLeagueSeasonId: seasonId, name: `Season event ${randomUUID()}`,
+      startDate: new Date('2026-03-01T00:00:00.000Z'),
     },
   });
+  if (synced) await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: `season-${event.id}` }, 'nba');
 }
 
 describe('PrismaSportLeagueSeasonRepository', () => {
@@ -69,8 +71,8 @@ describe('PrismaSportLeagueSeasonRepository', () => {
 
   it('reads each league\'s current Season and its Seasons\' spans, marking only a Season the sync has made an event in', async () => {
     const { league, s2025, s2026, s2027 } = await seasonedLeague();
-    await eventIn(league.id, s2026, SportEventSyncScope.SCORES_ONLY);
-    await eventIn(league.id, s2027, SportEventSyncScope.NONE);
+    await eventIn(league.id, s2026, true);
+    await eventIn(league.id, s2027, false);
     const repository = new PrismaSportLeagueSeasonRepository(getPrisma());
 
     const facts = (await repository.findCurrentSeasonFacts()).find((row) => row.sportLeagueId === league.id);
@@ -95,6 +97,51 @@ describe('PrismaSportLeagueSeasonRepository', () => {
     ]);
 
     expect([await current(first.league.id), await current(second.league.id)]).toEqual([first.s2026, null]);
+  });
+});
+
+describe('PrismaSportLeagueSeasonRepository test slots (#2004)', () => {
+  const STARTS = new Date('2026-05-01T12:00:00.000Z');
+
+  it('adds a labelled test slot to the Season on one of the league\'s definitions, copying its series format, and refuses a label the Season already has on that definition', async () => {
+    const { league, s2026 } = await seasonedLeague();
+    const prisma = getPrisma();
+    const slotDefinitionId = await testSlotDefinitionId(prisma, league.id, s2026);
+    const repository = new PrismaSportLeagueSeasonRepository(prisma);
+    const input = { sportLeagueId: league.id, sportLeagueSeasonId: s2026, slotDefinitionId, label: 'QA 1', startsAt: STARTS, endsAt: null };
+
+    const created = await repository.createTestSlot(input);
+    if (created.outcome !== 'CREATED') throw new Error(`Expected CREATED, got ${created.outcome}`);
+    expect(created.slot).toMatchObject({ slotDefinitionId, isTestData: true, label: 'QA 1', startsAt: STARTS, endsAt: null, seriesFormat: 'SINGLE_GAME', seriesGames: 1 });
+    await expect(repository.createTestSlot(input)).resolves.toEqual({ outcome: 'LABEL_TAKEN' });
+    await expect(repository.createTestSlot({ ...input, label: 'QA 2' })).resolves.toMatchObject({ outcome: 'CREATED' });
+  });
+
+  it('refuses a definition of another league as not found, and one whose phase the Season lacks as not in the Season', async () => {
+    const { league, s2026, s2027 } = await seasonedLeague();
+    const other = await seasonedLeague();
+    const prisma = getPrisma();
+    const slotDefinitionId = await testSlotDefinitionId(prisma, league.id, s2026);
+    const otherDefinitionId = await testSlotDefinitionId(prisma, other.league.id, other.s2026);
+    await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueSeasonId: s2027 } });
+    const repository = new PrismaSportLeagueSeasonRepository(prisma);
+    const input = { sportLeagueId: league.id, sportLeagueSeasonId: s2026, label: 'QA', startsAt: STARTS, endsAt: null };
+
+    await expect(repository.createTestSlot({ ...input, slotDefinitionId: otherDefinitionId })).resolves.toEqual({ outcome: 'DEFINITION_NOT_FOUND' });
+    await expect(repository.createTestSlot({ ...input, sportLeagueSeasonId: s2027, slotDefinitionId })).resolves.toEqual({ outcome: 'PHASE_NOT_IN_SEASON' });
+  });
+
+  it('finds a slot with its league and Season, with no event while free and its event once one covers it, and null for an id no slot has', async () => {
+    const { league, s2026 } = await seasonedLeague();
+    const prisma = getPrisma();
+    const freeSlotId = await testSlotIdIn(prisma, league.id, s2026, STARTS);
+    const event = await prisma.sportEvent.create({ data: { sportLeagueId: league.id, sportLeagueSeasonId: s2026, name: `Event ${randomUUID().slice(0, 8)}`, startDate: STARTS } });
+    const takenSlotId = await linkTestSlot(prisma, event);
+    const repository = new PrismaSportLeagueSeasonRepository(prisma);
+
+    await expect(repository.findSlot(freeSlotId)).resolves.toMatchObject({ sportLeagueId: league.id, sportLeagueSeasonId: s2026, sportEventId: null, slot: { id: freeSlotId, isTestData: true } });
+    await expect(repository.findSlot(takenSlotId)).resolves.toMatchObject({ sportEventId: event.id, slot: { id: takenSlotId } });
+    await expect(repository.findSlot(randomUUID())).resolves.toBeNull();
   });
 });
 

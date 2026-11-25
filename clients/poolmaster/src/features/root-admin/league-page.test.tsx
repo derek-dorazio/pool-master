@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Navigate, Route, Routes, useLocation } from 'react-router';
@@ -21,7 +21,7 @@ import { LeagueEventsTab } from './league-events-tab';
 import { LeaguePageLayout } from './league-page-layout';
 import { LeagueParticipantsTab } from './league-participants-tab';
 import { LeagueStructureTab } from './league-structure-tab';
-import { providerMappingFixture, sportLeagueFixture } from './sport-test-fixtures';
+import { providerMappingFixture, sportLeagueFixture, sportsQueryClient } from './sport-test-fixtures';
 
 // The root admin's League page (#1866): the header, the tab set, and each tab's grid and dialog.
 
@@ -93,6 +93,8 @@ function overview(overrides: Partial<SportLeagueOverviewDto>): SportLeagueOvervi
   return {
     id: 'nba',
     sport: 'BASKETBALL',
+    sportUrlSegment: 'basketball',
+    sportDisplayOrder: 1,
     name: 'NBA',
     providerId: 'balldontlie',
     providerName: 'BALLDONTLIE',
@@ -115,7 +117,7 @@ function season(id: string, year: number, overrides: Partial<SportLeagueSeasonDt
   return {
     id, name: `${year - 1}-${String(year).slice(2)}`, championshipYear: year,
     startsAt: `${year - 1}-10-01T00:00:00.000Z`, endsAt: `${year}-06-30T00:00:00.000Z`,
-    isCurrent: false, providerMappings: [], phases: [], ...overrides,
+    isCurrent: false, providerMappings: [], phases: [], slotsNeedingDates: 0, ...overrides,
   };
 }
 
@@ -127,8 +129,9 @@ const SEASONS = [
       id: 'p-reg', phase: 'REGULAR', isSynced: true, slots: [{
         id: 'slot-week-1', slotDefinitionId: 'def-week-1', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, name: null,
         startsAt: '2026-10-20T00:00:00.000Z', endsAt: '2026-10-26T00:00:00.000Z', status: 'SCHEDULED',
-        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null,
+        seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: false, label: null, window: null, sportEventId: null, takesTestEvent: false, placedByWindow: false, needsDates: false,
       }],
+      slotsNeedingDates: 0,
     }],
   }),
   season('s2026', 2026),
@@ -178,9 +181,9 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto>): Spo
 function template(overrides: Partial<ContestConfigTemplateDto> = {}): ContestConfigTemplateDto {
   return {
     id: '00000000-0000-4000-8000-00000000c001',
-    sport: 'BASKETBALL',
     sportLeagueId: 'nba',
-    eventType: 'KNOCKOUT',
+    coverageMode: 'ALL_LISTED',
+    slots: [],
     contestFormat: 'PREDICTION',
     selectionType: 'BRACKET',
     templateKey: 'nba-bracket',
@@ -258,13 +261,13 @@ const POSITIONS: SportLeaguePositionDto[] = [
   { id: '00000000-0000-4000-8000-00000000f002', code: 'K', displayOrder: 2, isFieldEligible: false, providerCodes: [] },
 ];
 
-function renderLeaguePage(path: string) {
+function renderLeaguePage(path: string, seasons: SportLeagueSeasonDto[] = SEASONS) {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [NBA, SUMMER] } });
   listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: OVERVIEWS } });
-  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE', sportsCovered: ['BASKETBALL'] }] } });
+  listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'balldontlie', providerName: 'BALLDONTLIE' }] } });
   listSportLeagueSyncsMock.mockResolvedValue({ data: { syncs: [sync('EVENTS'), sync('FIELD'), sync('SCORES')] } });
-  listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons: SEASONS } });
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  listSportLeagueSeasonsMock.mockResolvedValue({ data: { seasons } });
+  const queryClient = sportsQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
@@ -276,7 +279,6 @@ function renderLeaguePage(path: string) {
             <Route element={<LeagueActivityTab />} path="activity" />
             <Route element={<LeagueContestTemplatesTab />} path="contest-templates" />
             <Route element={<LeagueStructureTab />} path="structure" />
-            <Route element={<LocationProbe />} path="tools" />
           </Route>
           <Route element={<LocationProbe />} path="/manage/sports/:sport/events/:eventId" />
         </Routes>
@@ -299,7 +301,7 @@ describe('League page', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('heads a synced league with its name, On, sync health and provider, opens on Events, and leaves out the Tools tab', async () => {
+  it('heads a synced league with its name, On, sync health and provider, opens on Events, with no Tools tab', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba');
 
@@ -313,20 +315,30 @@ describe('League page', () => {
     await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-events')).toHaveAttribute('aria-current', 'page'));
   });
 
-  it('adds the Tools tab on a league no provider syncs, and offers no Sync now there', async () => {
+  it('warns above every tab while a Season has slots that need dates, and leads to the Structure tab', async () => {
+    listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/events', [{ ...SEASONS[0], slotsNeedingDates: 1 }, SEASONS[1]]);
+
+    expect(await screen.findByTestId('root-admin-league-slot-dates-notice')).toHaveTextContent('2026-27 (1)');
+    await userEvent.click(screen.getByTestId('root-admin-league-slot-dates-open'));
+    await waitFor(() => expect(screen.getByTestId('root-admin-league-tab-structure')).toHaveAttribute('aria-current', 'page'));
+  });
+
+  it('shows no slot dates warning on a league whose Seasons have every date they need', async () => {
+    listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/events');
+
+    await screen.findByTestId('root-admin-league-sync-EVENTS');
+    expect(screen.queryByTestId('root-admin-league-slot-dates-notice')).not.toBeInTheDocument();
+  });
+
+  it('shows the same tabs on a league no provider syncs, with no Tools tab, and offers no Sync now there', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/summer/events');
 
     await screen.findByTestId('root-admin-league-sync-EVENTS');
-    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure', 'Tools']);
+    expect(tabLabels()).toEqual(['Events', 'Participants', 'Activity', 'Contest templates', 'Structure']);
     expect(screen.queryByTestId('root-admin-league-sync-now')).not.toBeInTheDocument();
-  });
-
-  it('sends a synced league\'s old Tools link to its Events tab', async () => {
-    listSportLeagueEventOverviewsMock.mockResolvedValue({ data: { events: [] } });
-    renderLeaguePage('/manage/sports/basketball/leagues/nba/tools');
-
-    expect(await screen.findByTestId('root-admin-league-events-tab')).toBeInTheDocument();
   });
 
   it('shows the three syncs by name and queues the event list on Sync now', async () => {
@@ -343,7 +355,7 @@ describe('League page', () => {
     await waitFor(() => expect(syncLeagueEventsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'nba' } })));
   });
 
-  it('opens the Events grid on the current season, with every column, and a row leads to its event page', async () => {
+  it('opens the Events grid on the current season, with every column and a link to make a test event in the league, and a row leads to its event page', async () => {
     listSportLeagueEventOverviewsMock.mockResolvedValue({
       data: { events: [event({ id: 'evt-old', name: 'NBA Cup 2026', sportLeagueSeasonId: 's2026', status: 'COMPLETED', releaseMode: 'MANUAL', releaseAtKind: 'ACTUAL' }), event({})] },
     });
@@ -353,6 +365,7 @@ describe('League page', () => {
     expect(screen.queryByTestId('root-admin-league-event-evt-old')).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-league-events-filter-summary')).toHaveTextContent('Season');
     expect(screen.getByTestId('root-admin-league-events-count')).toHaveTextContent('2 events');
+    expect(screen.getByTestId('root-admin-league-events-new-test-event')).toHaveAttribute('href', '/manage/sports/basketball/events/new?sportLeagueId=nba');
     expect(columnHeaders('root-admin-league-events-table')).toEqual(
       expect.arrayContaining(['Event', 'Season', 'Starts', 'Status', 'Release', 'Release date', 'Field', 'Issues', 'Last synced']),
     );
@@ -542,6 +555,39 @@ describe('League page', () => {
 
     expect(await screen.findByTestId('root-admin-league-structure-state-error')).toBeInTheDocument();
     expect(await screen.findByTestId('root-admin-league-structure-position-QB')).toBeInTheDocument();
+  });
+
+  it('shows the league default switched off as Default and Off, keeps the dialog open with the refusal when its save is refused, and closes on Escape', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [template({ isDefault: true, active: false })] } });
+    updateContestConfigTemplateMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', message: 'Contest template not found.' } },
+      response: { status: 404 },
+    });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/contest-templates');
+
+    const row = await screen.findByTestId('root-admin-league-contest-template-nba-bracket');
+    expect(within(row).getByText('Default')).toBeInTheDocument();
+    expect(within(row).getByText('Off')).toBeInTheDocument();
+
+    await userEvent.click(within(row).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-contest-template');
+    expect(within(dialog).getByTestId('root-admin-league-contest-template-default')).toHaveTextContent('Yes');
+    expect(within(dialog).getByTestId('root-admin-league-contest-template-status')).toHaveTextContent('Off');
+
+    await userEvent.click(within(dialog).getByTestId('root-admin-league-contest-template-edit'));
+    await userEvent.selectOptions(within(dialog).getByTestId('root-admin-league-contest-template-status-input'), 'on');
+    await userEvent.click(within(dialog).getByTestId('root-admin-league-contest-template-save'));
+
+    await waitFor(() => expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'leaguePage.contestTemplate.failed' }),
+      'Contest template update was refused',
+    ));
+    expect(updateContestConfigTemplateMock).toHaveBeenCalledWith(expect.objectContaining({ body: { active: true } }));
+    expect(screen.getByTestId('root-admin-league-contest-template')).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-contest-template')).not.toBeInTheDocument());
   });
 
   it('saves a contest template\'s Default alone', async () => {

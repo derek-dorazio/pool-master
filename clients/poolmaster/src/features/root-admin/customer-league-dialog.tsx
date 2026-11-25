@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { LEAGUE_PLANS } from '@poolmaster/shared/domain';
+import { explicitOrderValues, LeaguePlanOrder } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { extendLeaguePlanRenewal, updateLeaguePlan, type CustomerLeagueDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
@@ -123,7 +123,7 @@ export function CustomerLeagueDialog({ league, onClose }: { league: CustomerLeag
       <div className="grid gap-4">
         <FormField label="Plan">
           <Select data-testid={`${testId}-plan-input`} {...form.register('plan')}>
-            {LEAGUE_PLANS.map((plan) => <option key={plan} value={plan}>{enumLabel('LeaguePlan', plan)}</option>)}
+            {explicitOrderValues(LeaguePlanOrder).map((plan) => <option key={plan} value={plan}>{enumLabel('LeaguePlan', plan)}</option>)}
           </Select>
         </FormField>
         <FormField help="Moves the end of the free Premium preview to the months picked from today. An end already later stays as it is." label="Premium preview ends">

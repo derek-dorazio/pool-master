@@ -2,9 +2,16 @@
  * Prisma adapter for ParticipantRepository port.
  */
 
-import type { Prisma, PrismaClient } from '@prisma/client';
-import type { ParticipantMatchQuery, ParticipantRanking, ParticipantRepository, ParticipantSearchFilters } from '@poolmaster/shared/db';
-import type { Participant, InjuryStatus, ParticipantType, ParticipantStatus } from '@poolmaster/shared/domain';
+import { Prisma, type PrismaClient } from '@prisma/client';
+import type {
+  ParticipantFeedId,
+  ParticipantMatchQuery,
+  ParticipantRanking,
+  ParticipantRepository,
+  ParticipantSearchFilters,
+} from '@poolmaster/shared/db';
+import type { BackgroundJobRequest, Participant, InjuryStatus, ParticipantType, ParticipantStatus } from '@poolmaster/shared/domain';
+import { backgroundJobsInsert } from './prisma-background-job-repository';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -40,6 +47,8 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     const rows = await this.prisma.participant.findMany({
       where: {
         sportLeagueId,
+        // A ranking upload ranks the roster; a test participant is on none (#2096).
+        isTestData: false,
         OR: queries.map((query) => ({
           ...(query.id !== undefined && { id: query.id }),
           // A feed id is the provider's, kept only on the participant's provider mappings (#2040).
@@ -52,9 +61,10 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return rows.map(mapToParticipant);
   }
 
-  async findBySportLeague(sportLeagueId: string): Promise<Participant[]> {
+  async findBySportLeague(sportLeagueId: string, testData = false): Promise<Participant[]> {
     const rows = await this.prisma.participant.findMany({
-      where: { sportLeagueId },
+      // The roster holds no test participant (#2096); a test event's field picks from the test ones.
+      where: { sportLeagueId, isTestData: testData },
       orderBy: [{ ranking: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
     });
     return rows.map(mapToParticipant);
@@ -73,6 +83,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     const ids = latest.map((entry) => entry.participantId);
     const ranks = latest.map((entry) => entry.ranking);
     await this.prisma.$transaction(async (tx) => {
+      // poolmaster-allow-raw-sql: a set-based update from unnest arrays: Prisma can't update many rows to different values in one statement
       const updated = await tx.$executeRaw`
         UPDATE "participants" AS participant
         SET "ranking" = ranked.ranking, "updated_at" = now()
@@ -87,7 +98,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
   async countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>> {
     const groups = await this.prisma.participant.groupBy({
       by: ['sportLeagueId'],
-      where: { sportLeagueId: { in: [...sportLeagueIds] } },
+      where: { sportLeagueId: { in: [...sportLeagueIds] }, isTestData: false },
       _count: { _all: true },
     });
     const counts = new Map(sportLeagueIds.map((id) => [id, 0]));
@@ -104,6 +115,36 @@ export class PrismaParticipantRepository implements ParticipantRepository {
   async create(participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>): Promise<Participant> {
     const row = await this.prisma.participant.create({ data: toParticipantCreateData(participant) });
     return mapToParticipant(row);
+  }
+
+
+  async createWithProviderMapping(
+    participant: Omit<Participant, 'id' | 'createdAt' | 'updatedAt'>,
+    feedId: ParticipantFeedId,
+    jobs: readonly BackgroundJobRequest[] = [],
+  ): Promise<Participant | null> {
+    try {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.participant.create({ data: toParticipantCreateData(participant) });
+        await tx.participantProviderMapping.create({
+          data: {
+            participantId: created.id,
+            sportLeagueId: participant.sportLeagueId,
+            participantType: participant.participantType,
+            providerId: feedId.providerId,
+            externalId: feedId.externalId,
+            mappedAt: new Date(),
+          },
+        });
+        if (jobs.length > 0) await backgroundJobsInsert(tx, jobs);
+        return created;
+      });
+      return mapToParticipant(row);
+    } catch (error) {
+      // P2002: another participant of the league already holds the feed id.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return null;
+      throw error;
+    }
   }
 
   async update(id: string, updates: Partial<Participant>): Promise<Participant> {
@@ -132,6 +173,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return this.prisma.$transaction(async (tx) => {
       // FOR UPDATE conflicts with the FOR KEY SHARE a field row's insert takes on the participant:
       // one added meanwhile either committed first and is counted, or waits and then fails.
+      // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "participants" WHERE id = ${id}::uuid FOR UPDATE`;
       if (locked.length === 0) return null;
       const fieldEntries = await tx.sportEventParticipant.count({ where: { participantId: id } });
@@ -159,6 +201,7 @@ export function mapToParticipant(row: {
   injuryStatus: unknown;
   photoUrl: string | null;
   photoLastUpdated: Date | null;
+  isTestData: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): Participant {
@@ -178,6 +221,7 @@ export function mapToParticipant(row: {
     injuryStatus: toInjuryStatus(row.injuryStatus),
     photoUrl: row.photoUrl ?? undefined,
     photoLastUpdated: row.photoLastUpdated ?? undefined,
+    isTestData: row.isTestData,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -214,5 +258,6 @@ function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdA
     injuryStatus: participant.injuryStatus as object,
     photoUrl: participant.photoUrl,
     photoLastUpdated: participant.photoLastUpdated,
+    isTestData: participant.isTestData,
   };
 }

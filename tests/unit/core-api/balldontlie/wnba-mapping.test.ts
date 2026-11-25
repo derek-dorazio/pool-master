@@ -2,7 +2,7 @@ import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { wnbaGameListSchema, wnbaTeamListSchema, type WnbaGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-contract';
 import { isWnbaFranchise, toWnbaPlayoffGame, toWnbaPlayoffTeam, WNBA_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-mapping';
-import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
+import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { toPlayoffsEvent } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
@@ -29,7 +29,7 @@ const aces = rowAt(wnbaTeamListSchema.parse(readBalldontlieFixture('wnba', 'team
 
 describe('WNBA playoffs league', () => {
   it('is basketball\'s WNBA playoffs, played in the season\'s own year, ending in best-of-seven Finals', () => {
-    expect(WNBA_PLAYOFFS).toMatchObject({ key: 'wnba', tour: 'WNBA', sport: Sport.BASKETBALL, playoffYearOffset: 0 });
+    expect(WNBA_PLAYOFFS).toMatchObject({ key: 'wnba', sport: Sport.BASKETBALL, playoffYearOffset: 0 });
     expect(WNBA_PLAYOFFS.rounds.at(-1)).toMatchObject({ name: 'WNBA Finals', seriesLength: 7 });
   });
 
@@ -106,7 +106,6 @@ describe('toWnbaPlayoffGame', () => {
       status: 'COMPLETED',
       startDate: new Date('2025-09-14T23:30:00.000Z'),
       endDate: new Date('2025-10-09T23:30:00.000Z'),
-      metadata: { tour: 'WNBA', season: 2025 },
     });
   });
 });

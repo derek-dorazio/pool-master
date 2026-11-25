@@ -126,13 +126,8 @@ export function OpenContestDialog({
       isPending={openContestMutation.isPending}
       onCancel={closeDialog}
       onConfirm={() => void openContestMutation.mutateAsync().catch(() => undefined)}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          onOpenChange(true);
-          return;
-        }
-        closeDialog();
-      }}
+      // Opened from outside the dialog, so the one change it reports is a close (Escape).
+      onOpenChange={closeDialog}
       open={open}
       pendingLabel="Opening..."
       testId="contest-open-dialog"

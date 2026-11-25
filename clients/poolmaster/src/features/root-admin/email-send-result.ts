@@ -1,5 +1,6 @@
 import { EmailMessageStatus, EmailSkipReason, assertNever } from '@poolmaster/shared/domain';
 import type { ToastMessage } from '@/features/shared/ui';
+import type { EmailTestResponse } from '@/lib/api';
 
 /**
  * Why a send was skipped, as a sentence telling the admin what to do. These are page sentences
@@ -24,13 +25,11 @@ function skipReasonText(reason: EmailSkipReason): string {
   }
 }
 
-/** Where an email the admin sent themselves stands: the test email, or a copy of a send. */
-export type EmailSendResult = {
-  status: EmailMessageStatus;
-  skipReason: EmailSkipReason | null;
-  /** What the email provider said about a failed try, when there was one. */
-  error?: string | null;
-};
+/**
+ * Where an email the admin sent themselves stands: the test email, or a copy of a send, which
+ * carries no provider error.
+ */
+export type EmailSendResult = Pick<EmailTestResponse, 'skipReason' | 'status'> & Partial<Pick<EmailTestResponse, 'error'>>;
 
 /** What happened to an email the admin sent themselves, in the admin's words. */
 export function emailSendResultText(result: EmailSendResult): { tone: 'success' | 'warning' | 'danger'; text: string } {

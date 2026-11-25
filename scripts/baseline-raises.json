@@ -1,4 +1,137 @@
 {
   "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md §5 Shared-Component and Helper Adoption Gate.",
-  "raises": []
+  "raises": [
+    {
+      "file": "scripts/retired-names.json",
+      "key": "clearEventMatchResult",
+      "now": 0,
+      "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "clearEventMatchPeriodScore",
+      "now": 0,
+      "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "postponeEventMatch",
+      "now": 0,
+      "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "replaceEventParticipant",
+      "now": 0,
+      "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "replaceWithdrawn",
+      "now": 0,
+      "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "deletePeriodScore",
+      "now": 0,
+      "reason": "retired by #2074"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PGA_TOUR_NAME",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "NFL_LEAGUE_NAME",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "EPL_TOUR",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "FIFA_WC_TOUR",
+      "now": 0,
+      "reason": "retired by #2005"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "NFL_POSTSEASON_ROUNDS",
+      "now": 4,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "NFL_POSTSEASON_GAMES",
+      "now": 2,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "firstFourRound",
+      "now": 14,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "championshipRound",
+      "now": 5,
+      "reason": "retired by #2006"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseNflScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parsePlayoffsScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseCfpScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseEplScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseWorldCupScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseNcaaTournamentScope",
+      "now": 3,
+      "reason": "retired by #2007"
+    },
+    {
+      "file": "scripts/dead-exports.json",
+      "key": "own:packages/shared/dto/sync-findings.dto.ts",
+      "now": 10,
+      "reason": "#2011: ProviderSyncFindingSlotChoiceListResponseSchema is exported for the slot-choices contract verification, as the file's other response schemas are"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "AMERICAN_FOOTBALL",
+      "now": 0,
+      "reason": "retired by #2143"
+    }
+  ]
 }

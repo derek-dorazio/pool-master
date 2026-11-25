@@ -1,7 +1,7 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport } from '@poolmaster/shared/domain';
-import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository, PrismaSportRepository } from '../../../packages/core-api/src/adapters';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
@@ -9,14 +9,17 @@ import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/mod
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { heldHere } from '../../support/job-locks';
-import { leagueProfiles } from '../../support/league-profiles';
-import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
+import { testSlotId } from '../../support/test-slots';
+import { syncSlotsFor } from '../../support/sync-slots';
 
 // A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
 // Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
 // them, and they write the league's events; a second sweep writes nothing. The provider's tour list is the one stand-in: which provider events
-// belong to a league's tour is EventScoreSourceService's, tested on its own.
+// belong to a league's tour is ProviderSeasonScheduleReader's, tested on its own.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -25,7 +28,6 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-const PROVIDER_ID = SYNCED_PROVIDER_ID;
 const NOW = new Date('2027-03-01T12:00:00Z');
 
 /** A golf league named for its tour, synced from BALLDONTLIE's PGA TOUR unless `synced` is false. */
@@ -33,34 +35,45 @@ async function golfLeague({ synced = true, isActive = true }: { synced?: boolean
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Synced Tour ${randomUUID().slice(0, 8)}`, isActive } });
   // A migration's league has its Seasons mapped to the provider's; this year's is current (#2003).
-  if (synced) await syncSeasonsTo(prisma, league.id, await syncLeagueTo(prisma, league.id, 'pga'), [2027, 2028]);
+  if (synced) {
+    const sportLeagueProviderMappingId = await syncLeagueTo(prisma, league.id, 'pga');
+    const seasonIds = await syncSeasonsTo(prisma, league.id, sportLeagueProviderMappingId, [2027, 2028]);
+    // Each Season's tournament has its slot, mapped by the provider's id for it and listed by a template (#2005).
+    for (const [index, year] of [2027, 2028].entries()) {
+      await syncSlotsFor(prisma, { sportLeagueId: league.id, sportLeagueProviderMappingId, code: tourEventId(league.name, year), seasonIds: [seasonIds[index]] });
+    }
+  }
   return league;
 }
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/** The provider's id for a tour's tournament in a year, which is also the code it names the tournament's place by. */
+const tourEventId = (tour: string, year: number) => `${tour}-${year}`;
+
 /** The provider's events for a tour and Season: one tournament a year, named by its tour, moved by `shiftDays`. */
 function tourEvent(tour: string, year: number, shiftDays = 0, name = `${tour} Open`) {
   const startDate = new Date(Date.UTC(year, 5, 10, 12) + shiftDays * DAY);
-  return { externalId: `${tour}-${year}`, name, venue: 'Course', startDate, endDate: new Date(Date.UTC(year, 5, 13, 12) + shiftDays * DAY) };
+  const endDate = new Date(Date.UTC(year, 5, 13, 12) + shiftDays * DAY);
+  const externalId = tourEventId(tour, year);
+  return { externalId, name, venue: 'Course', startDate, endDate, providerSlots: [{ code: externalId, startsAt: startDate, endsAt: endDate }] };
 }
 
 function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays: 0 }) {
   const prisma = getAppPrisma();
-  const listSeasonEvents = jest.fn(async (_providerId: string, sportLeagueId: string, providerSeasonId: string) => {
+  const listSeasonEvents = jest.fn(async (sportLeagueId: string, providerSeasonId: string) => {
     const league = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId } });
     return [tourEvent(league.name, Number(providerSeasonId), feed.shiftDays, feed.name)];
   });
   const backgroundJobs = integrationBackgroundJobs(prisma);
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
-    scoreSource: { listSeasonEvents },
+    seasonSchedule: { listSeasonEvents },
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
     findings: integrationSyncFindings(prisma),
     sportEvents: integrationSportEventServices(prisma).sportEvents,
@@ -94,15 +107,16 @@ describe('Synced event creation (ADR 0011)', () => {
     await scheduler.runSweep();
 
     const events = await getPrisma().sportEvent.findMany({
-      where: { eventSeries: { sportLeagueId: { in: [synced.id, unsynced.id, inactive.id] } } },
-      include: { eventSeries: true, sportLeagueSeason: true },
+      where: { sportLeagueId: { in: [synced.id, unsynced.id, inactive.id] } },
+      include: { sportLeagueSeason: true, providerMappings: { select: { externalId: true, provider: { select: { code: true } }, sportLeagueProviderMapping: { select: { selectedBy: { select: { id: true } } } } } } },
       orderBy: { startDate: 'asc' },
     });
-    expect(events.map((event) => [event.eventSeries.sportLeagueId, event.sportLeagueSeason.championshipYear, event.providerId, event.externalId, event.status, event.syncScope])).toEqual([
-      [synced.id, 2027, PROVIDER_ID, `${synced.name}-2027`, 'DRAFT', 'SCORES_ONLY'],
-      [synced.id, 2028, PROVIDER_ID, `${synced.name}-2028`, 'DRAFT', 'SCORES_ONLY'],
+    // Each created event is kept under the provider's id for it, through the league's selected mapping (#2004).
+    expect(events.map((event) => [event.sportLeagueId, event.sportLeagueSeason.championshipYear, event.providerMappings, event.status])).toEqual([
+      [synced.id, 2027, [{ externalId: `${synced.name}-2027`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
+      [synced.id, 2028, [{ externalId: `${synced.name}-2028`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { selectedBy: { id: synced.id } } }], 'DRAFT'],
     ]);
-    expect(new Set(listSeasonEvents.mock.calls.map(([, sportLeagueId]) => sportLeagueId))).toEqual(new Set([synced.id]));
+    expect(new Set(listSeasonEvents.mock.calls.map(([sportLeagueId]) => sportLeagueId))).toEqual(new Set([synced.id]));
   });
 
   it('creates nothing on a second sweep: the events are already linked', async () => {
@@ -112,7 +126,7 @@ describe('Synced event creation (ADR 0011)', () => {
     await scheduler.runSweep();
     await scheduler.runSweep();
 
-    expect(await getPrisma().sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id } } })).toBe(2);
+    expect(await getPrisma().sportEvent.count({ where: { sportLeagueId: synced.id } })).toBe(2);
   });
 
   it('moves a released event and its rounds when the provider moves it, renames it, and leaves a completed one as it was (#1727)', async () => {
@@ -121,7 +135,7 @@ describe('Synced event creation (ADR 0011)', () => {
     const { scheduler } = buildScheduler(feed);
     await scheduler.runSweep();
     const prisma = getPrisma();
-    const [released, completed] = await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: synced.id } }, orderBy: { startDate: 'asc' } });
+    const [released, completed] = await prisma.sportEvent.findMany({ where: { sportLeagueId: synced.id }, orderBy: { startDate: 'asc' } });
     await prisma.sportEvent.update({ where: { id: released.id }, data: { status: 'SCHEDULED' } });
     await prisma.sportEvent.update({ where: { id: completed.id }, data: { status: 'COMPLETED' } });
 
@@ -140,21 +154,20 @@ describe('Synced event creation (ADR 0011)', () => {
     ]);
   });
 
-  it('reads each created event as provider-synced, and an admin-authored event of the same league as not (#1729)', async () => {
+  it('reads each event the sync created as synced, and a test event on a test slot of the same league as a test event (#1729, #2004)', async () => {
     const synced = await golfLeague();
     const { scheduler } = buildScheduler();
     await scheduler.runSweep();
     const { sportEvents } = integrationSportEventServices();
     const manual = await sportEvents.createEvent({
-      sportLeagueId: synced.id,
+      seasonSlotId: await testSlotId(getPrisma(), synced.id, new Date('2027-08-01T12:00:00Z')),
       name: 'Members Cup',
-      startDate: new Date('2027-08-01T12:00:00Z'),
     });
 
-    const events = await getPrisma().sportEvent.findMany({ where: { eventSeries: { sportLeagueId: synced.id } }, select: { id: true } });
+    const events = await getPrisma().sportEvent.findMany({ where: { sportLeagueId: synced.id }, select: { id: true } });
     const flags = await Promise.all(events.map(async ({ id }) => {
       const read = mapSportEventToDto(await sportEvents.requireAdminSummary(id));
-      return [read.name, read.providerSynced] as const;
+      return [read.name, !read.isTestData] as const;
     }));
     const byName = (a: readonly [string, boolean], b: readonly [string, boolean]) => a[0].localeCompare(b[0]);
     expect([...flags].sort(byName)).toEqual(([
@@ -162,6 +175,6 @@ describe('Synced event creation (ADR 0011)', () => {
       [`${synced.name} Open`, true],
       [`${synced.name} Open`, true],
     ] as const).slice().sort(byName));
-    expect(manual.event.providerId).not.toBe(PROVIDER_ID);
+    expect(manual.event.providerMappings).toEqual([]);
   });
 });

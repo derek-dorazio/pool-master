@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -21,11 +22,14 @@ function LeagueDestination() {
 
 function renderLeaveLeague({
   isActive = true,
+  leagueListCached = true,
   remainingLeagues = [] as ReturnType<typeof buildLeague>[],
 } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const league = buildLeague({ isActive });
-  queryClient.setQueryData(QueryKeys.leagues.list, listLeaguesData([league, ...remainingLeagues]));
+  if (leagueListCached) {
+    queryClient.setQueryData(QueryKeys.leagues.list, listLeaguesData([league, ...remainingLeagues]));
+  }
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -116,5 +120,25 @@ describe('Leave league', () => {
 
     expect(screen.getByRole('button', { name: 'Leave league' })).toBeDisabled();
     expect(screen.getByText('You cannot leave while the league is inactive.')).toBeInTheDocument();
+  });
+
+  it('sends the member to the welcome page when no league list was read yet', async () => {
+    leaveLeagueMock.mockResolvedValue(apiSuccess({ success: true }));
+    renderLeaveLeague({ leagueListCached: false });
+
+    await confirmLeave();
+
+    expect(await screen.findByTestId('welcome-page')).toBeInTheDocument();
+  });
+
+  it('closes the confirm on Escape without leaving', async () => {
+    renderLeaveLeague();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Leave league' }));
+    await screen.findByRole('dialog', { name: 'Leave Big Dawgs?' });
+    await userEvent.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(leaveLeagueMock).not.toHaveBeenCalled();
   });
 });

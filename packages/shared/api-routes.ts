@@ -32,7 +32,6 @@ export const API_ROUTES = {
     login: '/api/v1/auth/login',
     register: '/api/v1/auth/register',
     refresh: '/api/v1/auth/refresh',
-    logout: '/api/v1/auth/logout',
   },
 
   // Users — #202 step 3.4. One operation set. `me` resolves to the authenticated caller, so
@@ -42,14 +41,10 @@ export const API_ROUTES = {
   users: {
     detail: (userId: string) => `/api/v1/users/${userId}`,
     profile: (userId: string) => `/api/v1/users/${userId}/profile`,
-    username: (userId: string) => `/api/v1/users/${userId}/username`,
     preferences: (userId: string) => `/api/v1/users/${userId}/preferences`,
     password: (userId: string) => `/api/v1/users/${userId}/password`,
-    resetPassword: (userId: string) => `/api/v1/users/${userId}/reset-password`,
     disable: (userId: string) => `/api/v1/users/${userId}/disable`,
     enable: (userId: string) => `/api/v1/users/${userId}/enable`,
-    revokeSessions: (userId: string) => `/api/v1/users/${userId}/revoke-sessions`,
-    rootAdmin: (userId: string) => `/api/v1/users/${userId}/root-admin`,
   },
 
   // Leagues
@@ -62,13 +57,9 @@ export const API_ROUTES = {
     activate: (id: string) => `/api/v1/leagues/${id}/activate`,
     plan: (id: string) => `/api/v1/leagues/${id}/plan`,
     byCode: (leagueCode: string) => `/api/v1/leagues/code/${leagueCode}`,
-    members: (id: string) => `/api/v1/leagues/${id}/members`,
-    leave: (id: string) => `/api/v1/leagues/${id}/members/me`,
-    memberRole: (id: string, uid: string) => `/api/v1/leagues/${id}/members/${uid}/role`,
     removeMember: (id: string, uid: string) => `/api/v1/leagues/${id}/members/${uid}`,
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
     contests: (id: string) => `/api/v1/leagues/${id}/contests/`,
-    squads: (id: string) => `/api/v1/leagues/${id}/squads/`,
   },
 
   plans: {
@@ -77,17 +68,11 @@ export const API_ROUTES = {
 
   squads: {
     list: (id: string) => `/api/v1/leagues/${id}/squads/`,
-    create: (id: string) => `/api/v1/leagues/${id}/squads/`,
     detail: (id: string, squadId: string) => `/api/v1/leagues/${id}/squads/${squadId}`,
     inactivate: (id: string, squadId: string) =>
       `/api/v1/leagues/${id}/squads/${squadId}/inactivate`,
-    ownerInvitations: (id: string) => `/api/v1/leagues/${id}/squads/owner-invitations`,
     createOwnerInvitation: (id: string, squadId: string) =>
       `/api/v1/leagues/${id}/squads/${squadId}/owner-invitations`,
-    replaceOwner: (id: string, squadId: string, userId: string) =>
-      `/api/v1/leagues/${id}/squads/${squadId}/owners/${userId}/replace`,
-    revokeOwnerInvitation: (id: string, invitationId: string) =>
-      `/api/v1/leagues/${id}/squads/owner-invitations/${invitationId}`,
     addMember: (id: string, squadId: string) => `/api/v1/leagues/${id}/squads/${squadId}/members`,
     removeMember: (id: string, squadId: string, userId: string) =>
       `/api/v1/leagues/${id}/squads/${squadId}/members/${userId}`,
@@ -95,19 +80,12 @@ export const API_ROUTES = {
 
   // Invitations
   invitations: {
-    preview: (inviteCode: string) => `/api/v1/invitations/${inviteCode}`,
     accept: '/api/v1/invitations/accept',
-  },
-
-  teamInvitations: {
-    preview: (inviteCode: string) => `/api/v1/team-invitations/${inviteCode}`,
-    accept: '/api/v1/team-invitations/accept',
   },
 
   // Contests
   contests: {
     detail: (contestId: string) => `/api/v1/contests/${contestId}`,
-    entries: (contestId: string) => `/api/v1/contests/${contestId}/entries`,
     myEntry: (contestId: string) => `/api/v1/contests/${contestId}/entries/me`,
   },
 

@@ -37,6 +37,8 @@ import { freshEventEdition } from '../../support/event-edition';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { expectDefined } from '../../support/expect-defined';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
+import { linkTestSlot } from '../../support/test-slots';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -65,14 +67,21 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
   ['INSERT sport_event_participant_standings', 1],
   ['SELECT contests', 1],
-  ['SELECT event_series', 1],
   ['SELECT sport_event_match_period_scores', 1],
   ['SELECT sport_event_participant_standings', 1],
+  ['SELECT sport_event_provider_mappings', 1],
   ['SELECT sport_event_round_matches', 1],
   ['SELECT sport_event_rounds', 1],
+  ['SELECT sport_event_slots', 1], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_events', 1],
+  // The event covers a test slot, as every event an admin scores does (#2074): its slot, the slot's
+  // definition and phase are read once each.
+  ['SELECT sport_league_phase_slots', 1],
+  ['SELECT sport_league_phases', 1],
+  ['SELECT sport_league_season_phase_slots', 1],
   ['SELECT sport_league_seasons', 1],
   ['SELECT sport_leagues', 1],
+  ['SELECT sports', 1], // a sport is read through its event's Season and league since #2042 (#2089)
   ['UPDATE sport_event_round_matches', 1],
 ];
 
@@ -85,12 +94,15 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
 const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
   ['SELECT contest_sport_events', 1],
-  ['SELECT event_series', 2],
   ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 2],
+  ['SELECT sport_league_season_phase_slots', 1], // the answer's event slots (#2004)
   ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
+  ['SELECT sports', 2], // a sport is read through its event's Season and league since #2042 (#2089)
   ['UPDATE sport_events', 1],
 ];
 
@@ -263,15 +275,12 @@ async function tieredGolfEvent(name: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `read-once-${randomUUID()}`,
-      providerId: 'integration-test',
-      sport: Sport.GOLF,
       name,
       startDate: buildContestEligibleEventTiming().startDate,
       status: 'SCHEDULED',
@@ -334,17 +343,18 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT contest_squares_draws', 2],
       ['SELECT contest_squares_games', 2],
       ['SELECT contests', 2],
-      ['SELECT event_series', 1],
       ['SELECT league_memberships', 1], // the commissioner's own membership is kept from creating the contest (#1438)
       ['SELECT leagues', 1],
       ['SELECT participant_contest_scoring_rules', 1],
       ['SELECT sport_event_participant_valuations', 2],
       ['SELECT sport_event_participants', 3],
+      ['SELECT sport_event_provider_mappings', 1],
+      ['SELECT sport_event_slots', 1], // the slot definitions the event plays, read with it (#2010)
       ['SELECT sport_event_tiers', 3],
       ['SELECT sport_events', 3],
-      ['SELECT sport_league_seasons', 1],
-      ['SELECT sport_leagues', 2],
-      ['SELECT sports', 1],
+  ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
+      ['SELECT sport_leagues', 4],
+      ['SELECT sports', 4],
       ['SELECT users', 1],
       ['UPDATE contests', 1],
     ]);
@@ -357,26 +367,25 @@ describe('Opening a contest (#1355)', () => {
  * final result is already in, as an event finished after its last game would have it.
  */
 async function squaresContestUnderWay(options: { gameFinished: boolean; contests?: number }) {
+  // A game whose result an admin saves is on a test event: the admin result routes write only there (#2074).
   const prisma = getPrisma();
   const { commissioner, leagueId, squadId } = await leagueWithTeam();
   const admin = await createTestUser({ isRootAdmin: true });
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
-    where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+    where: { sport: Sport.FOOTBALL },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      externalId: `read-once-squares-${suffix}`,
-      providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL,
+      ...(await freshEventEdition(prisma, { sport: Sport.FOOTBALL })),
       name: `Read Once Bowl ${suffix}`,
       startDate: new Date(Date.now() - 3 * 60 * 60 * 1000),
       status: 'IN_PROGRESS',
     },
   });
+  if (!options.gameFinished) await linkTestSlot(prisma, event);
   const [home, away] = await Promise.all(['Home', 'Away'].map(async (side) => {
     const team = await prisma.participant.create({
       data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `Read Once ${side} ${suffix}`, participantType: 'TEAM', status: 'ACTIVE' },
@@ -513,27 +522,6 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
     expect(statuses.map(({ status }) => status)).toEqual(Array(4).fill(ContestStatus.COMPLETED));
   });
 
-  it('keeps a squares contest open when its game\'s result is cleared before the job runs, and settles it with winners once the result is saved again', async () => {
-    const { admin, eventId, contestId } = await squaresContestUnderWay({ gameFinished: false });
-    const resultUrl = `/api/v1/events/${eventId}/bracket/matches/1/result`;
-    const saveResult: InjectOptions = { method: 'PUT', url: resultUrl, headers: admin.headers, payload: { winnerSide: 'AWAY', homeScore: 27, awayScore: 31 } };
-
-    await measureRequest(saveResult);
-    const cleared = await measureRequest({ method: 'DELETE', url: resultUrl, headers: withoutJsonBodyHeaders(admin.headers) });
-    expect(cleared.response.statusCode).toBe(200);
-    await drainBackgroundJobs();
-
-    // The job found the game undecided, so the contest waits for its result.
-    await expect(contestStatuses([contestId])).resolves.toEqual([[contestId, ContestStatus.ACTIVE]]);
-    await expect(getPrisma().contestSquaresWinner.count({ where: { contestId } })).resolves.toBe(0);
-
-    await measureRequest(saveResult);
-    await drainBackgroundJobs();
-
-    await expect(contestStatuses([contestId])).resolves.toEqual([[contestId, ContestStatus.COMPLETED]]);
-    await expect(getPrisma().contestSquaresWinner.count({ where: { contestId } })).resolves.toBeGreaterThan(0);
-  });
-
   it('leaves no squares contest half settled when the game\'s job fails part way: the retry completes the rest once', async () => {
     const { admin, eventId, contestIds } = await squaresContestUnderWay({ gameFinished: false, contests: 2 });
     const [first, second] = contestIds;
@@ -665,10 +653,7 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
   const suffix = randomUUID().slice(0, 8);
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { sport: Sport.AMERICAN_FOOTBALL })),
-      externalId: `read-once-changed-${suffix}`,
-      providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL,
+      ...(await freshEventEdition(prisma, { sport: Sport.FOOTBALL })),
       name: `Read Once Changed ${suffix}`,
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: 'SCHEDULED',
@@ -724,12 +709,15 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 2],
-  ['SELECT event_series', 2],
   ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_slots', 2], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 3],
-  ['SELECT sport_league_seasons', 2],
-  ['SELECT sport_leagues', 2],
+  ['SELECT sport_league_season_phase_slots', 1], // the answer's event slots (#2004)
+  ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)
+  ['SELECT sport_leagues', 3],
+  ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
 ];
 
@@ -744,13 +732,16 @@ const PINNED_MOVE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 1],
-  ['SELECT event_series', 3],
   ['SELECT sport_event_participants', 3],
+  ['SELECT sport_event_provider_mappings', 3],
   ['SELECT sport_event_rounds', 1],
+  ['SELECT sport_event_slots', 3], // the slot definitions the event plays, read with it (#2010)
   ['SELECT sport_event_tiers', 2],
   ['SELECT sport_events', 4],
-  ['SELECT sport_league_seasons', 3],
-  ['SELECT sport_leagues', 3],
+  ['SELECT sport_league_season_phase_slots', 2], // whether the event has slots (its dates are theirs), and the answer's (#2004)
+  ['SELECT sport_league_seasons', 4], // a sport is read through its event's Season and league (#2042, #2004)
+  ['SELECT sport_leagues', 4],
+  ['SELECT sports', 4],
   ['UPDATE contests', 1],
   ['UPDATE sport_events', 1],
 ];

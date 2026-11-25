@@ -31,8 +31,11 @@ import {
 } from '../helpers';
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedTiers } from '../list-route-seeds';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
-import { leagueProfiles } from '../../support/league-profiles';
-import { seriesSeasonId } from '../../support/event-edition';
+import { recordStatements, statementCounts } from '../statement-log';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
+import { fixtureSeasonId } from '../../support/event-edition';
+import { linkTestSlot } from '../../support/test-slots';
 import { sportPlay } from '../../support/sport-play';
 
 // No mocks.
@@ -55,7 +58,7 @@ beforeEach(() => cleanupTestData());
 async function golf() {
   return getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 }
@@ -65,12 +68,11 @@ async function seedSportLeague(participants: number) {
   const prisma = getPrisma();
   const sport = await golf();
   const suffix = randomUUID().slice(0, 8);
-  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Catalog Tour ${suffix}` } });
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Catalog Open ${suffix}` } });
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Catalog Tour ${suffix}` } });
   await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, new Date().getUTCFullYear()), externalId: `scaling-${suffix}`, providerId: 'integration-test',
-      sport: Sport.GOLF, name: `Scaling Catalog Open ${suffix}`, startDate: new Date(Date.now() + 30 * DAY),
+      sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, new Date().getUTCFullYear()), 
+      name: `Scaling Catalog Open ${suffix}`, startDate: new Date(Date.now() + 30 * DAY),
     },
   });
   for (let index = 0; index < participants; index += 1) {
@@ -97,12 +99,11 @@ async function seedSportLeagueEvents(events: number) {
   const prisma = getPrisma();
   const sportLeague = await seedSportLeague(0);
   for (let index = 0; index < events; index += 1) {
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${sportLeague.name} Event ${String(index)}` } });
     const startDate = new Date(Date.now() + (31 + index) * DAY);
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), externalId: `scaling-${randomUUID()}`, providerId: 'integration-test',
-        sport: Sport.GOLF, name: `${sportLeague.name} Event ${String(index)}`, startDate,
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, startDate.getUTCFullYear()), 
+        name: `${sportLeague.name} Event ${String(index)}`, startDate,
       },
     });
     const field = [];
@@ -113,6 +114,10 @@ async function seedSportLeagueEvents(events: number) {
       field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } }));
     }
     await seedTiers(event.id, field, 1);
+  }
+  // Each event covers a slot, the league's own event included, so the list reads every event's slots (#2004).
+  for (const event of await prisma.sportEvent.findMany({ where: { sportLeagueId: sportLeague.id }, select: { id: true, sportLeagueSeasonId: true, startDate: true } })) {
+    await linkTestSlot(prisma, event);
   }
   return { sportLeague, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
@@ -138,19 +143,18 @@ async function seedReseededRound(matchups: number) {
   const prisma = getPrisma();
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
-    where: { sport: Sport.AMERICAN_FOOTBALL },
-    create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+    where: { sport: Sport.FOOTBALL },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.create({
-    data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Reseed League ${suffix}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Reseed League ${suffix}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
   });
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Scaling Reseed Playoffs ${suffix}` } });
   const startDate = new Date(Date.now() + 7 * DAY);
   const event = await prisma.sportEvent.create({
     data: {
-      eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()), externalId: `scaling-${suffix}`, providerId: 'integration-test',
-      sport: Sport.AMERICAN_FOOTBALL, name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
+      sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, startDate.getUTCFullYear()), 
+      name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
     },
   });
   const rounds = [];
@@ -237,8 +241,26 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       route: 'GET /api/v1/events/',
       seed: seedSportLeagueEvents,
       call: ({ sportLeague, rootAdmin }) => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin),
-      rowsShown: (response) => okBody(response, SportEventListResponseSchema).events.length,
+      rowsShown: (response) => {
+        const { events } = okBody(response, SportEventListResponseSchema);
+        // Every event lists the slot it covers, so a read that skipped one would show here.
+        for (const event of events) expect(event.slots).toHaveLength(1);
+        return events.length;
+      },
     });
+  });
+
+  it("GET a sport league's events: one event with its slot costs a fixed set of statements, its slots in two reads and its slot definitions in two more", async () => {
+    // The league's own event only.
+    const { sportLeague, rootAdmin } = await seedSportLeagueEvents(0);
+    const { result, statements } = await recordStatements(() => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin));
+    expect(okBody(result, SportEventListResponseSchema).events.map((each) => each.slots.length)).toEqual([1]);
+    // The listed slots are read once (#2004); the event read carries the slot definitions it
+    // covers (#2010) through the same tables, a second read #2089 folds into the first.
+    expect(statementCounts(statements).filter(([statement]) => statement.includes('sport_league_season_phase_slots') || statement.includes('sport_league_phase_slots'))).toEqual([
+      ['SELECT sport_league_phase_slots', 2],
+      ['SELECT sport_league_season_phase_slots', 2],
+    ]);
   });
 
   it('GET an event: the same statements for a field of 2 as for 20', async () => {

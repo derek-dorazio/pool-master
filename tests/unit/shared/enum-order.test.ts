@@ -6,7 +6,6 @@ import {
   compareByEnumOrder,
   explicitOrder,
   explicitOrderValues,
-  sortByEnumOrder,
   type EnumOrder,
 } from '@poolmaster/shared/domain/enum-order';
 import { enumLabel } from '@poolmaster/shared/display-strings';
@@ -15,8 +14,6 @@ import {
   ContestStatusOrder,
   LEAGUE_PLANS,
   LeaguePlan,
-  Sport,
-  SPORTS_BY_POPULARITY,
   SportEventStatus,
   SportEventStatusOrder,
   Severity,
@@ -29,12 +26,12 @@ const ToneOrder = explicitOrder<Tone>({ [Tone.QUIET]: 0, [Tone.MIDDLE]: 1, [Tone
 
 describe('enum orders', () => {
   it('sorts an explicit order by each value\'s place, whatever the values are called', () => {
-    expect(sortByEnumOrder([Tone.LOUD, Tone.QUIET, Tone.MIDDLE], ToneOrder)).toEqual(['QUIET', 'MIDDLE', 'LOUD']);
+    expect([Tone.LOUD, Tone.QUIET, Tone.MIDDLE].sort(compareByEnumOrder(ToneOrder))).toEqual(['QUIET', 'MIDDLE', 'LOUD']);
   });
 
   it('sorts an alphabetical order A to Z by the display strings, not by the codes', () => {
     const values = Object.values(enums.RecordType);
-    const sorted = sortByEnumOrder(values, enums.RecordTypeOrder);
+    const sorted = [...values].sort(compareByEnumOrder(enums.RecordTypeOrder));
 
     const words = sorted.map((value) => enumLabel('RecordType', value));
     expect(words).toEqual([...words].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' })));
@@ -44,15 +41,7 @@ describe('enum orders', () => {
   it('sorts an alphabetical order by a given label instead, ignoring case, where a screen still keeps its own words', () => {
     const labels: Record<string, string> = { TEAM: 'apple', INDIVIDUAL: 'Banana' };
 
-    expect(sortByEnumOrder(['INDIVIDUAL', 'TEAM'], alphabeticalOrder('ParticipantType'), (value) => labels[value])).toEqual(['TEAM', 'INDIVIDUAL']);
-  });
-
-  it('leaves the given array as it was', () => {
-    const values: Tone[] = [Tone.LOUD, Tone.QUIET];
-
-    sortByEnumOrder(values, ToneOrder);
-
-    expect(values).toEqual(['LOUD', 'QUIET']);
+    expect([enums.ParticipantType.INDIVIDUAL, enums.ParticipantType.TEAM].sort(compareByEnumOrder(alphabeticalOrder('ParticipantType'), (value) => labels[value]))).toEqual(['TEAM', 'INDIVIDUAL']);
   });
 
   it('compares two values as a sort callback would: negative, zero or positive', () => {
@@ -92,10 +81,23 @@ function sharedEnums(): [string, Record<string, string>][] {
   });
 }
 
+/** An enum whose order is a column on its own reference row, so no order sits beside it in code. */
+const ORDERED_BY_ROW: Readonly<Record<string, string>> = {
+  Sport: 'each sport row carries its displayOrder (#2042), and every list of sports sorts by it',
+};
+
 describe('every shared enum declares its order', () => {
+  it('declares no order in code for an enum its reference rows order', () => {
+    const declared = enums as unknown as Record<string, unknown>;
+    for (const name of Object.keys(ORDERED_BY_ROW)) {
+      expect(declared[`${name}Order`]).toBeUndefined();
+    }
+  });
+
+
   const declared = enums as unknown as Record<string, unknown>;
 
-  it.each(sharedEnums())('%s has an order beside it: a place for every value, or the alphabetical marker', (name, values) => {
+  it.each(sharedEnums().filter(([name]) => !(name in ORDERED_BY_ROW)))('%s has an order beside it: a place for every value, or the alphabetical marker', (name, values) => {
     const order = declared[`${name}Order`] as EnumOrder<string> | undefined;
 
     expect(order).toBeDefined();
@@ -113,13 +115,6 @@ describe('every shared enum declares its order', () => {
 });
 
 describe('the orders Derek settled (#1841)', () => {
-  it('lists sports most popular first, everywhere', () => {
-    expect(SPORTS_BY_POPULARITY).toEqual([
-      Sport.AMERICAN_FOOTBALL, Sport.BASKETBALL, Sport.BASEBALL, Sport.HOCKEY, Sport.SOCCER, Sport.GOLF,
-      Sport.AUTO_RACING, Sport.TENNIS, Sport.HORSE_RACING, Sport.CYCLING, Sport.RUNNING,
-    ]);
-  });
-
   it('puts a postponed event beside the scheduled ones and a cancelled one last', () => {
     expect(explicitOrderValues(SportEventStatusOrder)).toEqual([
       SportEventStatus.DRAFT, SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED,
@@ -144,7 +139,6 @@ describe('the orders Derek settled (#1841)', () => {
  * enum's order, no read sorts by it in SQL: the read sorts in code with `compareByEnumOrder`.
  */
 const SORTED_IN_CODE: Readonly<Partial<Record<string, string>>> = {
-  Sport: 'Sport lists and event pages sort in code (prisma-sport-catalog-repositories, prisma-event-page-repository)',
   ParticipantStatus: 'no read orders by participant status',
   MatchStatus: 'no read orders by match status',
   SportEventStatus: 'no read orders by event status',
@@ -180,9 +174,9 @@ describe('database enums declare their values in the shared order', () => {
   const declared = enums as unknown as Record<string, unknown>;
   const database = prismaEnums();
   const pairs = sharedEnums().flatMap(([name]) => {
-    const order = declared[`${name}Order`] as EnumOrder<string>;
+    const order = declared[`${name}Order`] as EnumOrder<string> | undefined;
     const prismaName = [PRISMA_NAME[name], `Prisma${name}`, name].find((candidate) => candidate && database.has(candidate));
-    return order.kind === 'explicit' && prismaName ? [{ name, prismaName, order }] : [];
+    return order?.kind === 'explicit' && prismaName ? [{ name, prismaName, order }] : [];
   });
 
   it.each(pairs)('$prismaName matches $name\'s order, or its reads sort in code', ({ name, prismaName, order }) => {

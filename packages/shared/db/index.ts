@@ -1,5 +1,6 @@
 export type {
   ContestConfigTemplateRepository,
+  ContestConfigTemplateUpdate,
   ContestConfigurationRepository,
   ContestEntryEventPick,
   ContestEntryPickParticipant,
@@ -24,7 +25,6 @@ export type {
   ContestUpdate,
   ContestStatusFilter,
   PendingDrawReceipts,
-  ReleasedEdition,
   ContestStatusTransition,
   ReminderCheck,
   ContestCreateResult,
@@ -58,6 +58,7 @@ export type {
   MembershipTransaction,
   ParticipantProviderMappingRepository,
   ProviderMappingScope,
+  ParticipantFeedId,
   ParticipantRepository,
   ParticipantSearchFilters,
   SquadDetails,
@@ -106,7 +107,6 @@ export type {
   SportEventRoundMatchWrite,
 } from './match-ports';
 export type {
-  EventSeriesRepository,
   ParticipantMatchQuery,
   ParticipantRanking,
   ParticipantRoundView,
@@ -116,7 +116,6 @@ export type {
   PlatformPricingProfileWrite,
   ProfileRepository,
   ProfileTaken,
-  ReplacementValuation,
   SportEventCreate,
   SportEventFilters,
   SportEventParticipantCreate,
@@ -156,6 +155,14 @@ export type {
   SyncableSportLeagueSeason,
   SportLeagueCurrentSeasonFacts,
   SportLeagueSeasonRepository,
+  SeasonSlotWithEvent,
+  SyncedSlotsRecord,
+  NameMatchedSlotsRecord,
+  SlotNamePatternRepository,
+  SlotNamePatternChoices,
+  SlotNamePatternChoice,
+  TestSeasonSlotCreate,
+  TestSlotCreateResult,
   SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
   SportLeagueOverviewLeague,
@@ -168,6 +175,8 @@ export type {
   TierAssignment,
   PlatformTierProfileRepository,
   PlatformTierProfileWrite,
+  AutoLifecycleCandidate,
+  AutoLifecycleStatus,
 } from './sport-catalog-ports';
 export type {
   CustomerLeagueCommissioner,
@@ -203,7 +212,7 @@ export type {
   CupRepository,
 } from './cup-ports';
 export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
-export type { EventPageRepository, EventPageSeries } from './event-page-ports';
+export type { EventPageRepository } from './event-page-ports';
 export type {
   ContestExpansionRepository,
   ContestExpansionState,

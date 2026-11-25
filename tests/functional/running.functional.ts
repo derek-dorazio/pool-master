@@ -6,7 +6,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
   enterContest,
   generateInviteLink,
@@ -22,7 +21,7 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -60,8 +59,6 @@ async function cleanup(): Promise<void> {
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
     // The seeded series stays: only this run's event series goes with its race.
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -69,7 +66,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
@@ -93,9 +89,9 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     expect(series.map((league) => league.name).sort()).toEqual(['World Marathon Majors (men)', 'World Marathon Majors (women)']);
     const majorsMen = expectDefined(series.find((league) => league.name === 'World Marathon Majors (men)'));
 
-    const race = await createEvent({
+    const race = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(majorsMen.id, 2099), name: `Harbour Marathon ${RUN}`, startDate: '2099-04-19T13:30:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: majorsMen.id, championshipYear: 2099, name: `Harbour Marathon ${RUN}`, startDate: '2099-04-19T13:30:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
@@ -149,7 +145,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     // The series' own templates, never the women's series'.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.RUNNING, sportLeagueId: majorsMen.id, active: true },
+      query: { sportLeagueId: majorsMen.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([

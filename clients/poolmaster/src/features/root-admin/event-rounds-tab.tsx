@@ -63,7 +63,7 @@ export function EventRoundsTab() {
         </QueryState>
       </SectionCard>
       {eventPlaysMatches(event) ? <EventMatchesCard event={event} /> : null}
-      {isSynced ? null : <ResultsPanel event={event} />}
+      {isSynced || ResultsPanel === null ? null : <ResultsPanel event={event} />}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   type ContestScoringSettings,
   MatchSide,
   MatchStatus,
+  getDefaultTournamentFormatForSport,
   type ParticipantContestScoringRule,
   type ParticipantType,
   PickEmMode,
@@ -14,9 +15,9 @@ import {
   SelectionType,
   Sport,
   SportEventStatus,
+  TemplateCoverageMode,
   TournamentFormat,
   LeaguePlan,
-  JobErrorType,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -37,6 +38,7 @@ import {
   CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
   CONTEST_SCORING_ROUNDS_MISMATCH,
   CONTEST_SCORING_SETTINGS_REQUIRED,
+  CONTEST_SELECTION_TYPE_NOT_ALLOWED,
   CONTEST_SQUARES_GAME_INVALID,
   CONTEST_SQUARES_GAME_REQUIRED,
   CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD,
@@ -51,7 +53,6 @@ import type {
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import {
-  ContestEventsChangedError,
   ContestManagementError,
   ContestManagementService,
   type ContestCreateSportEventReader,
@@ -60,24 +61,22 @@ import {
 import type { ContestOpenedNotice } from '../../../packages/core-api/src/modules/notifications';
 import type { CupService } from '../../../packages/core-api/src/modules/cups/service';
 import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
-import { createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
+import { createBatchedContestOpeningReader, createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/contest-sport-event-reader';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestRepo,
   fakeParticipantContestScoringRuleRepo,
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
-import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
-import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
 import { expectDefined } from '../../support/expect-defined';
-import { EIGHT_SEEDS, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
+import { EIGHT_SEEDS, bracketMatches, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
 import { buildLeague } from '../../factories';
+import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import { testDomainEvents } from '../../support/domain-events';
-import { releasedEditionContests } from '../../../packages/core-api/src/modules/contest-management/released-edition-contests';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 /** What a Platinum league's contests are made and moved under: its 50 sports leagues a year (#947, #986). */
@@ -167,8 +166,9 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
 function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
-    sport: Sport.GOLF,
     sportLeagueId: PGA_TOUR_LEAGUE_ID,
+    coverageMode: TemplateCoverageMode.ONE_SLOT,
+    slots: [],
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
     templateKey: 'golf-tiered-pick-6',
@@ -183,7 +183,6 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
       picksPerTier: 1,
       countedScores: 4,
     },
-    eventSeriesNames: [],
     schemaVersion: 1,
     createdAt: new Date('2026-04-07T12:00:00.000Z'),
     updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -197,6 +196,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
       ...updates,
       updatedAt: new Date('2026-04-07T12:00:01.000Z'),
     })),
+    findSlotDefinitions: jest.fn().mockResolvedValue([]),
   };
 }
 
@@ -1484,6 +1484,45 @@ describe('ContestManagementService', () => {
         .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
     });
 
+    it('refuses a new entry limit on an open squares contest before its draw with 409 CONTEST_CONFIGURATION_LOCKED: only the box limit still changes', async () => {
+      const contestRepo = createContestRepo();
+      const contest = await contestRepo.findById('contest-1');
+      (contestRepo.findById as jest.Mock).mockResolvedValue({ ...contest, selectionType: SelectionType.SQUARES, status: ContestStatus.OPEN });
+      const { service, configurationRepo } = build({ contestRepo });
+
+      await expect(service.updateContestConfiguration('contest-1', { ...expectDefined(CREATE.configuration), maxEntriesPerSquad: 2 }))
+        .rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 CONTEST_NOT_FOUND when a settings change finds the configuration gone on its read back', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      const stored = await configurationRepo.findByContest('contest-1');
+      (configurationRepo.findByContest as jest.Mock).mockReset().mockResolvedValueOnce(stored).mockResolvedValueOnce(null);
+
+      await expect(build({ configurationRepo }).service.updateContestConfiguration('contest-1', expectDefined(CREATE.configuration)))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+    });
+
+    it('answers 404 CONTEST_NOT_FOUND changing the events of a contest with no configuration, changing nothing', async () => {
+      const configurationRepo = createContestConfigurationRepo();
+      (configurationRepo.findByContest as jest.Mock).mockResolvedValue(null);
+      const contestRepo = createContestRepo();
+      const { service } = build({ configurationRepo, contestRepo });
+
+      await expect(service.setContestSportEvents('league-1', 'contest-1', [EVENT_ID]))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    });
+
+    it('lists the sports leagues the league\'s contests use in a season as the repository counts them', async () => {
+      const contestRepo = createContestRepo();
+      (contestRepo.findSportLeagueIdsBySeason as jest.Mock).mockResolvedValue([PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]);
+
+      await expect(build({ contestRepo }).service.listSportLeaguesUsed('league-1', 2026)).resolves.toEqual([PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]);
+      expect(contestRepo.findSportLeagueIdsBySeason).toHaveBeenCalledWith('league-1', 2026);
+    });
+
     it('refuses a settings change on a contest with no sport event, with 404 SPORT_EVENT_NOT_FOUND and nothing stored', async () => {
       const contestRepo = createContestRepo();
       const contest = await contestRepo.findById('contest-1');
@@ -1762,8 +1801,9 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     const templateRepo = createContestConfigTemplateRepo();
     jest.mocked(templateRepo.findById).mockResolvedValue({
       id: '99999999-9999-4999-8999-999999999999',
-      sport: Sport.HORSE_RACING,
       sportLeagueId: PGA_TOUR_LEAGUE_ID,
+      coverageMode: TemplateCoverageMode.ONE_SLOT,
+      slots: [],
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.RANDOM_DRAW,
       templateKey: 'horse-racing-random-draw-win-place-show',
@@ -1773,7 +1813,6 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       isDefault: false,
       active: true,
       configJson: { ...drawRules, scoring: WIN_PLACE_SHOW },
-      eventSeriesNames: [],
       schemaVersion: 1,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -1842,7 +1881,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  function basketballService(rounds: number, bracketProblem: string | null = null) {
+  function basketballService(rounds: number | null, bracketProblem: string | null = null) {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService({
@@ -1924,6 +1963,61 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     await service.updateContestConfiguration('contest-1', { ...tieredRules, scoring });
 
     expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring }));
+  });
+
+  it('keeps a draft\'s first active scoring rule by its order when a rules update sends no scoring, passing over an inactive one', async () => {
+    const { scoringRuleRepo, service } = raceService();
+    const rule = (id: string, sortOrder: number, active: boolean, pointsTable: number[]): ParticipantContestScoringRule => ({
+      id,
+      contestConfigurationId: 'config-1',
+      sortOrder,
+      scoring: { success: true, data: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable, didNotFinishPoints: 0 } } },
+      active,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    jest.mocked(scoringRuleRepo.findByContestConfiguration).mockResolvedValue([
+      rule('rule-second', 2, true, [2]),
+      rule('rule-first', 1, true, [1]),
+      rule('rule-retired', 0, false, [9]),
+    ]);
+
+    await service.updateContestConfiguration('contest-1', tieredRules);
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      scoring: { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [1], didNotFinishPoints: 0 } },
+    }));
+  });
+
+  it('refuses a rules update sending no scoring on a draft whose stored points table no longer reads as valid with 422 CONTEST_SCORING_SETTINGS_REQUIRED, rather than keeping it', async () => {
+    const { scoringRuleRepo, service } = raceService();
+    jest.mocked(scoringRuleRepo.findByContestConfiguration).mockResolvedValue([{
+      id: 'rule-old',
+      contestConfigurationId: 'config-1',
+      sortOrder: 1,
+      scoring: { success: false, reason: 'SETTINGS_INVALID', participantScoringDefinitionId: 'FINISH_POSITION_POINTS' },
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }]);
+
+    await expect(service.updateContestConfiguration('contest-1', tieredRules))
+      .rejects.toMatchObject({ code: CONTEST_SCORING_SETTINGS_REQUIRED, statusCode: 422 });
+    expect(scoringRuleRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses knockout round values on an event with no rounds with 422 CONTEST_SCORING_ROUNDS_MISMATCH, saying the event has no rounds', async () => {
+    const { contestCoreRepo, service } = basketballService(null);
+
+    await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
+      name: 'Bracket Pool',
+      configuration: { ...drawRules, scoring: knockoutScoring([1, 2]) },
+    }))).rejects.toMatchObject({
+      code: CONTEST_SCORING_ROUNDS_MISMATCH,
+      statusCode: 422,
+      message: expect.stringContaining('the event has no rounds'),
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });
 
@@ -2034,10 +2128,6 @@ describe('ContestManagementService — a contest of several events', () => {
       cups: createCupKeeper(cupsAsked),
       planEntitlements: options.planEntitlements ?? platinumEntitlements(),
       logger,
-    });
-    jest.mocked(contestRepo.findJoinableByReleasedEdition).mockImplementation(async () => {
-      const contest = await contestRepo.findById('contest-1');
-      return contest ? [contest] : [];
     });
     return { service, contestRepo, configurationRepo, cupsAsked, logger };
   }
@@ -2221,103 +2311,46 @@ describe('ContestManagementService — a contest of several events', () => {
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
   });
 
+  describe('swapping a budget contest onto an event priced against another salary cap', () => {
+    const CAP_READER_EVENTS = [
+      { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
+      { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+    ];
+    const STORED_BUDGET = { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 } as const;
+
+    it('stores the new event\'s salary cap on a draft, so its entries are built under it', async () => {
+      const { service, contestRepo, configurationRepo } = build({
+        reader: multiEventReader(CAP_READER_EVENTS),
+        contest: { status: ContestStatus.DRAFT, selectionType: SelectionType.BUDGET_PICK },
+        storedConfigJson: STORED_BUDGET,
+      });
+
+      await service.setContestSportEvents('league-1', 'contest-1', [PGA]);
+
+      expect(configurationRepo.update).toHaveBeenCalledWith('config-1', { configJson: expect.objectContaining({ salaryCap: 200 }) });
+      expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [PGA]);
+    });
+
+    it('refuses it on an open contest, whose entries were built under the old cap, with 409 CONTEST_BUDGET_SALARY_CAP_MISMATCH, changing nothing', async () => {
+      const { service, contestRepo, configurationRepo } = build({
+        reader: multiEventReader(CAP_READER_EVENTS),
+        contest: { status: ContestStatus.OPEN, selectionType: SelectionType.BUDGET_PICK },
+        storedConfigJson: STORED_BUDGET,
+      });
+
+      await expect(service.setContestSportEvents('league-1', 'contest-1', [PGA]))
+        .rejects.toMatchObject({ code: 'CONTEST_BUDGET_SALARY_CAP_MISMATCH', statusCode: 409 });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    });
+  });
+
   it('answers 404 CONTEST_NOT_FOUND for another league\'s contest, changing nothing', async () => {
     const { service, contestRepo } = build({ contest: {} });
 
     await expect(service.setContestSportEvents('league-2', 'contest-1', [MASTERS, PGA]))
       .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
-  });
-
-  describe('a released edition joining the contests made from a template covering its series (#714, #1318)', () => {
-    const PGA_EDITION = { id: PGA, eventSeriesId: 'series-pga-championship', sportLeagueSeasonId: 'season-2026' };
-    const startedMasters = multiEventReader([
-      { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
-      { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
-    ]);
-    const jobs = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(() => CONTEST_MANAGEMENT_TEST_NOW), currentStart: testCurrentJobStart });
-
-    it('answers one job per joinable pool for the release to write, and changes no contest', async () => {
-      const { contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
-      jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([
-        { id: 'contest-1', leagueId: 'league-1', sportEventIds: [MASTERS] },
-        { id: 'contest-2', leagueId: 'league-2', sportEventIds: [MASTERS] },
-      ] as Awaited<ReturnType<typeof contestRepo.findJoinableByReleasedEdition>>);
-
-      const requests = await releasedEditionContests({ contests: contestRepo }).releasedEditionJobs(PGA_EDITION, jobs);
-
-      expect(contestRepo.findJoinableByReleasedEdition).toHaveBeenCalledWith(PGA_EDITION);
-      expect(requests).toEqual(['contest-1', 'contest-2'].map((contestId) => ({
-        type: 'ADD_RELEASED_EDITION_TO_CONTEST',
-        payload: { contestId, sportEventId: PGA },
-        sportEventId: PGA,
-        runAt: undefined,
-        start: TEST_JOB_START,
-        dedupeKey: `ADD_RELEASED_EDITION_TO_CONTEST:${contestId}:${PGA}`,
-      })));
-      expect(contestRepo.findById).not.toHaveBeenCalled();
-      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
-    });
-
-    it('answers no job when no template covers the released event\'s series', async () => {
-      const { contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
-      jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([]);
-
-      await expect(releasedEditionContests({ contests: contestRepo }).releasedEditionJobs(PGA_EDITION, jobs)).resolves.toEqual([]);
-    });
-
-    it('a pool\'s job adds the released major to a live majors pool of its year, after the majors it already has, and reports the one contest it changed', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
-
-      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toEqual({ changedCount: 1 });
-
-      expect(contestRepo.findById).toHaveBeenCalledTimes(1);
-      expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA], { replacing: [MASTERS] });
-    });
-
-    it('a pool\'s job writes nothing and throws, for the runner to retry from a fresh read, when another edition joined the pool since its read', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
-      jest.mocked(contestRepo.replaceSportEvents).mockResolvedValue(false);
-
-      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).rejects.toBeInstanceOf(ContestEventsChangedError);
-      expect(contestRepo.recheckReminders).not.toHaveBeenCalled();
-    });
-
-    it('a pool\'s job leaves alone a pool that already has the major, so a retry after the add changes nothing', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE, sportEventIds: [MASTERS, PGA] } });
-
-      await service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA });
-
-      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
-    });
-
-    it('a pool\'s job succeeds without adding anything, and reports no change, when the pool is gone', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters });
-
-      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).resolves.toMatchObject({ changedCount: 0 });
-
-      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
-    });
-
-    it('a pool\'s job skips, and logs, a pool whose rules refuse the major (a random draw keeps one event) without failing, so it is not retried, and reports it held back as CHECK_FAILED', async () => {
-      const { service, contestRepo, logger } = build({ reader: startedMasters, contest: { selectionType: SelectionType.RANDOM_DRAW } });
-
-      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA }))
-        .resolves.toEqual({ changedCount: 0, heldBack: JobErrorType.CHECK_FAILED });
-
-      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalledWith(
-        expect.objectContaining({ contestId: 'contest-1', sportEventId: PGA, code: 'CONTEST_DRAW_SINGLE_EVENT' }),
-        expect.any(String),
-      );
-    });
-
-    it('a pool\'s job throws on any other failure, for the runner to retry', async () => {
-      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
-      jest.mocked(contestRepo.replaceSportEvents).mockRejectedValue(new Error('connection lost'));
-
-      await expect(service.addReleasedEditionToContest({ contestId: 'contest-1', sportEventId: PGA })).rejects.toThrow('connection lost');
-    });
   });
 });
 
@@ -2357,7 +2390,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const reader = createSportEventReader({
-      sport: options.sport ?? Sport.AMERICAN_FOOTBALL,
+      sport: options.sport ?? Sport.FOOTBALL,
       tournamentFormat: options.tournamentFormat ?? TournamentFormat.MATCHES,
       rounds: options.rounds ?? 4,
       gameCount: options.gameCount,
@@ -2396,6 +2429,14 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
       configuration: { ...pickEmRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
     }))).rejects.toMatchObject({ code: 'CONTEST_SCORING_DEFINITION_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a pick\'em contest on a sport that offers no pick\'em (baseball) with 422 CONTEST_SELECTION_TYPE_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = pickEmService({ gameCount: 3, sport: Sport.BASEBALL });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules })))
+      .rejects.toMatchObject({ code: CONTEST_SELECTION_TYPE_NOT_ALLOWED, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
@@ -2833,7 +2874,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   ) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const reader = createSportEventReader({ sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
+    const reader = createSportEventReader({ sport: Sport.FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
     reader.findGame.mockImplementation(async (sportEventId: string, sportEventRoundMatchId: string) =>
       sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
     const service = new ContestManagementService({
@@ -2891,6 +2932,39 @@ describe('ContestManagementService squares rules (#711)', () => {
     await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxEntriesPerSquad: 2, maxSquaresPerEntry: 10 }))
       .rejects.toMatchObject({ code: CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, statusCode: 422 });
     expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+  });
+
+  describe('an open squares contest before its draw', () => {
+    async function openSquares() {
+      const built = squaresService();
+      await built.service.createContest({ leagueId: 'league-1' }, squaresRequest());
+      (built.contestCoreRepo.findById as jest.Mock).mockResolvedValue({
+        ...(await built.contestCoreRepo.findById('contest-1')),
+        status: ContestStatus.OPEN,
+        contestFormat: ContestFormat.SQUARES,
+        selectionType: SelectionType.SQUARES,
+        squaresGameMatchId: GAME_ID,
+      });
+      return built;
+    }
+
+    it('refuses settings that leave out its entry limit with 409 CONTEST_CONFIGURATION_LOCKED, since only the box limit still changes', async () => {
+      const { contestConfigurationRepo, service } = await openSquares();
+
+      await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 5 }))
+        .rejects.toMatchObject({ code: CONTEST_CONFIGURATION_LOCKED, statusCode: 409 });
+      expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses a box limit change on one stored with no entry limit with 422 CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, since a squares contest takes one entry per squad', async () => {
+      const { contestConfigurationRepo, service } = await openSquares();
+      const stored = await contestConfigurationRepo.findByContest('contest-1');
+      jest.mocked(contestConfigurationRepo.findByContest).mockResolvedValue({ ...expectDefined(stored), maxEntriesPerSquad: null });
+
+      await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 5 }))
+        .rejects.toMatchObject({ code: CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD, statusCode: 422 });
+      expect(contestConfigurationRepo.update).not.toHaveBeenCalled();
+    });
   });
 
   it('refuses a squares contest sent no game with CONTEST_SQUARES_GAME_REQUIRED, writing nothing', async () => {
@@ -3011,6 +3085,37 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
     expect(configurations.create).not.toHaveBeenCalled();
     expect(cupsAsked).toEqual([]);
   });
+
+  it('names a plan of one sports league a year in the singular when it refuses', async () => {
+    const { service, contests } = serviceForFullFreeLeague();
+    jest.mocked(contests.create).mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 1, sportLeagueCount: 1 });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST))
+      .rejects.toMatchObject({ code: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED', message: expect.stringContaining('allows 1 sports league a year') });
+  });
+
+  it('asks the repository for no sports league check when the league\'s plan has no yearly limit', async () => {
+    const contests = createContestRepo();
+    const defaults = PLAN_SETTINGS.defaults({});
+    const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
+      contests,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+      planEntitlements: planEntitlementsOver(
+        { findById: async (id) => buildLeague({ id, plan: LeaguePlan.PLATINUM }) },
+        () => ({ ...defaults, caps: { ...defaults.caps, SPORTS_LEAGUES_PER_YEAR: { ...defaults.caps.SPORTS_LEAGUES_PER_YEAR, PLATINUM: null } } }),
+      ),
+    });
+
+    await service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST);
+
+    expect(contests.create).toHaveBeenCalledWith(expect.objectContaining({ leagueId: 'league-1' }), { sportLeaguesPerYear: null });
+  });
 });
 
 describe('createContestSportEventReader.findByIds (#1355)', () => {
@@ -3035,5 +3140,178 @@ describe('createContestSportEventReader.findByIds (#1355)', () => {
       [golf.id, TournamentFormat.RACE],
       [tennis.id, TournamentFormat.STROKE_PLAY_TOURNAMENT],
     ]);
+  });
+});
+
+describe('createContestSportEventReader field, game and price reads', () => {
+  const EVENT = 'event-1';
+  function readerOver(ports: { entries?: unknown[]; valuations?: unknown[]; games?: unknown[] }) {
+    const store = new InMemorySportEvents();
+    return createContestSportEventReader({
+      sportEvents: store.sportEventRepo(),
+      sports: store.sportRepo(),
+      field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
+      valuations: { findBySportEvent: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
+      matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
+    });
+  }
+
+  it('answers null for an event it cannot find', async () => {
+    await expect(readerOver({}).findById('missing')).resolves.toBeNull();
+  });
+
+  it('lists the prices of the active field only, leaving out a withdrawn golfer and an unpriced one', async () => {
+    const reader = readerOver({
+      entries: [{ id: 'in', isActive: true }, { id: 'out', isActive: false }, { id: 'unpriced', isActive: true }],
+      valuations: [
+        { sportEventParticipantId: 'in', price: 9000 },
+        { sportEventParticipantId: 'out', price: 8000 },
+        { sportEventParticipantId: 'unpriced', price: null },
+      ],
+    });
+
+    await expect(reader.findActiveFieldPrices(EVENT)).resolves.toEqual([9000]);
+  });
+
+  it('counts the games without a spread, leaving out a cancelled one, and finds a game by id or null', async () => {
+    const reader = readerOver({
+      games: [
+        { id: 'g1', status: MatchStatus.SCHEDULED, roundNumber: 1, homeSpread: null },
+        { id: 'g2', status: MatchStatus.SCHEDULED, roundNumber: 2, homeSpread: -3.5 },
+        { id: 'g3', status: MatchStatus.CANCELLED, roundNumber: 1, homeSpread: null },
+      ],
+    });
+
+    await expect(reader.countGamesWithoutSpread(EVENT)).resolves.toBe(1);
+    await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2 });
+    await expect(reader.findGame(EVENT, 'missing')).resolves.toBeNull();
+  });
+});
+
+describe('createContestSportEventReader event and game counts', () => {
+  function readerOn(store: InMemorySportEvents, countParticipants?: () => Promise<Map<string, number>>) {
+    const sportEvents = store.sportEventRepo();
+    return createContestSportEventReader({
+      sportEvents: countParticipants ? { ...sportEvents, countParticipants } : sportEvents,
+      sports: store.sportRepo(),
+      field: store.fieldRepo(),
+      valuations: store.valuationRepo(),
+      matches: store.matchRepo(),
+    });
+  }
+
+  function addGame(store: InMemorySportEvents, sportEventId: string, game: {
+    id: string; roundNumber: number; status?: MatchStatus; scheduledDate?: Date | null; home?: string | null; away?: string | null;
+  }) {
+    const [row] = bracketMatches(sportEventId, [{
+      matchNumber: store.matchRows.length + 1,
+      round: game.roundNumber,
+      home: game.home === undefined ? 'home' : game.home,
+      away: game.away === undefined ? 'away' : game.away,
+    }]);
+    store.matchRows.push({ ...expectDefined(row, 'game row'), id: game.id, status: game.status ?? MatchStatus.SCHEDULED, scheduledDate: game.scheduledDate ?? null });
+  }
+
+  it('falls back to the sport\'s default tournament format when its sport has no stored row', async () => {
+    const store = new InMemorySportEvents();
+    const golf = store.addEvent({ sport: Sport.GOLF });
+
+    const state = await readerOn(store).findById(golf.id);
+
+    expect(state?.tournamentFormat).toBe(getDefaultTournamentFormatForSport(Sport.GOLF));
+  });
+
+  it('reads an event the participant count leaves out as having no loaded field', async () => {
+    const store = new InMemorySportEvents();
+    store.addSport(Sport.GOLF);
+    const golf = store.addEvent({ sport: Sport.GOLF });
+
+    const state = await readerOn(store, async () => new Map()).findById(golf.id);
+
+    expect(state?.loadedParticipantCount).toBe(0);
+  });
+
+  it('counts the games that are not cancelled, and the undecided ones in the whole event or its opening round only', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({});
+    addGame(store, event.id, { id: 'set', roundNumber: 1 });
+    addGame(store, event.id, { id: 'no-home', roundNumber: 1, home: null });
+    addGame(store, event.id, { id: 'no-away', roundNumber: 2, away: null });
+    addGame(store, event.id, { id: 'cancelled', roundNumber: 1, home: null, status: MatchStatus.CANCELLED });
+    const reader = readerOn(store);
+
+    await expect(reader.countGames(event.id)).resolves.toBe(3);
+    await expect(reader.countUndecidedGames(event.id)).resolves.toBe(2);
+    await expect(reader.countUndecidedGames(event.id, { openingRoundOnly: true })).resolves.toBe(1);
+  });
+});
+
+describe('createBatchedContestOpeningReader', () => {
+  const NOW = new Date('2026-09-10T12:00:00Z');
+
+  function openingReaderOn(store: InMemorySportEvents, overrides: { countParticipants?: () => Promise<Map<string, number>> } = {}) {
+    const sportEvents = store.sportEventRepo();
+    const sports = store.sportRepo();
+    const sportReads = { count: 0 };
+    return {
+      sportReads,
+      reader: createBatchedContestOpeningReader({
+        sportEvents: { ...sportEvents, ...overrides },
+        sports: { ...sports, findAll: () => { sportReads.count += 1; return sports.findAll(); } },
+        field: store.fieldRepo(),
+        valuations: store.valuationRepo(),
+        matches: store.matchRepo(),
+      }),
+    };
+  }
+
+  function addGame(store: InMemorySportEvents, sportEventId: string, id: string, roundNumber: number, scheduledDate: Date, status: MatchStatus = MatchStatus.SCHEDULED) {
+    const [row] = bracketMatches(sportEventId, [{ matchNumber: store.matchRows.length + 1, round: roundNumber, home: 'home', away: 'away' }]);
+    store.matchRows.push({ ...expectDefined(row, 'game row'), id, status, scheduledDate });
+  }
+
+  it('reads the sport rows once for every event asked about on one page', async () => {
+    const store = new InMemorySportEvents();
+    store.addSport(Sport.GOLF);
+    const first = store.addEvent({ sport: Sport.GOLF });
+    const second = store.addEvent({ sport: Sport.GOLF });
+    const { reader, sportReads } = openingReaderOn(store);
+
+    await reader.findById(first.id);
+    await reader.findById(second.id);
+
+    expect(sportReads.count).toBe(1);
+  });
+
+  it('reads an event the participant count leaves out as having no loaded field', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({});
+    const { reader } = openingReaderOn(store, { countParticipants: async () => new Map() });
+
+    await expect(reader.findById(event.id)).resolves.toEqual(expect.objectContaining({ loadedParticipantCount: 0 }));
+  });
+
+  it('finds the earliest squares kickoff still to come, leaving out cancelled, started and earlier-round games', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({ squaresFromRound: 2, startDate: new Date('2026-09-09T00:00:00Z') });
+    addGame(store, event.id, 'earlier-round', 1, new Date('2026-09-11T00:00:00Z'));
+    addGame(store, event.id, 'cancelled', 2, new Date('2026-09-11T01:00:00Z'), MatchStatus.CANCELLED);
+    addGame(store, event.id, 'started', 2, new Date('2026-09-10T11:00:00Z'));
+    addGame(store, event.id, 'later', 3, new Date('2026-09-13T00:00:00Z'));
+    addGame(store, event.id, 'next', 2, new Date('2026-09-12T00:00:00Z'));
+    const { reader } = openingReaderOn(store);
+    const state = expectDefined(await reader.findById(event.id), 'event state');
+
+    await expect(reader.nextSquaresKickoff(state, NOW)).resolves.toEqual(new Date('2026-09-12T00:00:00Z'));
+  });
+
+  it('answers no squares kickoff when every game has started', async () => {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({ startDate: new Date('2026-09-09T00:00:00Z') });
+    addGame(store, event.id, 'started', 1, new Date('2026-09-10T11:00:00Z'));
+    const { reader } = openingReaderOn(store);
+    const state = expectDefined(await reader.findById(event.id), 'event state');
+
+    await expect(reader.nextSquaresKickoff(state, NOW)).resolves.toBeNull();
   });
 });

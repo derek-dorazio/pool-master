@@ -356,18 +356,18 @@ describe('platform config services on the settings registry', () => {
     return { repository, settings };
   }
 
-  it('ingestion config defaults the scheduled field sync to off, keeps live scores on, syncs event lists every six hours, and has no per-sport overrides', async () => {
+  it('ingestion config gives the field sync no switch, keeps live scores on, syncs event lists every six hours, and has no per-sport overrides', async () => {
     const { settings } = await loaded();
     const service = new IngestionConfigService(settings, fakeLogger());
 
     const config = await service.getConfig();
 
-    expect(config.FIELD.enabled).toBe(false);
+    expect(config.FIELD).toEqual({ intervalMinutes: 360, lookaheadDays: 14 });
     expect(config.SCORES.enabled).toBe(true);
     expect(config.EVENTS).toEqual({ enabled: true, intervalMinutes: 360 });
     expect(Object.keys(config).sort()).toEqual(['EVENTS', 'FIELD', 'SCORES']);
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
-      FIELD: expect.objectContaining({ enabled: false }),
+      FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
     }));
   });
 
@@ -383,7 +383,7 @@ describe('platform config services on the settings registry', () => {
     ).resolves.toEqual(expect.objectContaining({
       SCORES: { enabled: true, intervalSeconds: 45 },
       EVENTS: { enabled: true, intervalMinutes: 120 },
-      FIELD: { enabled: false, intervalMinutes: 360, lookaheadDays: 14 },
+      FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
     }));
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(
       expect.objectContaining({
@@ -409,7 +409,7 @@ describe('platform config services on the settings registry', () => {
     }));
   });
 
-  it('a stored config loads with its sync settings intact, drops keys the schedule no longer names (the health check, per-sport overrides, the sports list), takes the default for a sync it lacks, and is not rewritten on boot', async () => {
+  it('a stored config loads with its sync settings intact, drops keys the schedule no longer names (the health check, per-sport overrides, the sports list, the field sync\'s old switch), takes the default for a sync it lacks, and is not rewritten on boot', async () => {
     const repository = inMemoryRuntimeConfigs();
     repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
       scheduledSports: ['GOLF'],
@@ -423,7 +423,7 @@ describe('platform config services on the settings registry', () => {
 
     await expect(service.getConfig()).resolves.toEqual({
       EVENTS: { enabled: true, intervalMinutes: 360 },
-      FIELD: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
+      FIELD: { intervalMinutes: 720, lookaheadDays: 21 },
       SCORES: { enabled: true, intervalSeconds: 45 },
     });
     expect(repository.history).toHaveLength(0);

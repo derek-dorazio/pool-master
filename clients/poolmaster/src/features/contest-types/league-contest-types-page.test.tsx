@@ -3,9 +3,10 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
-import { openingsUnderWay, withEventOpenings } from '@/features/contests/test/contest-admin-fixtures';
+import { WEEK_SLOT_ID, openingsUnderWay, sportSlotId, templateSlotFixture, withEventOpenings } from '@/features/contests/test/contest-admin-fixtures';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { LeagueContestTypesPage } from './league-contest-types-page';
+import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 
 const { getLeagueByCodeMock, listContestConfigTemplatesMock, listEventsMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -42,9 +43,9 @@ const NBA = '80300000-0000-4000-8000-000000000002';
 function template(templateKey: string, overrides: Record<string, unknown>) {
   return {
     id: `80300000-0000-4000-8000-0000000001${String(templateKey.length).padStart(2, '0')}`,
-    sport: 'AMERICAN_FOOTBALL',
+    coverageMode: 'ONE_SLOT',
+    slots: [templateSlotFixture(sportSlotId('FOOTBALL'))],
     sportLeagueId: NFL,
-    eventType: 'KNOCKOUT',
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     templateKey,
@@ -62,14 +63,15 @@ function template(templateKey: string, overrides: Record<string, unknown>) {
 const TEMPLATES = [
   template('nfl-tiered-doubling', { id: 'tpl-nfl-tiered' }),
   template('nfl-tiered-doubling-upset-bonus', { id: 'tpl-nfl-tiered-upset', isDefault: false, sortOrder: 2 }),
-  template('nfl-pick-em-straight-up', { id: 'tpl-nfl-pick-em', eventType: 'WEEK', contestFormat: 'PREDICTION', selectionType: 'PICK_EM', configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false, maxEntriesPerSquad: 1 } }),
-  template('nba-tiered-doubling', { id: 'tpl-nba-tiered', sport: 'BASKETBALL', sportLeagueId: NBA }),
+  template('nfl-pick-em-straight-up', { id: 'tpl-nfl-pick-em', slots: [templateSlotFixture(WEEK_SLOT_ID)], contestFormat: 'PREDICTION', selectionType: 'PICK_EM', configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false, maxEntriesPerSquad: 1 } }),
+  template('nba-tiered-doubling', { id: 'tpl-nba-tiered', slots: [templateSlotFixture(sportSlotId('BASKETBALL'))], sportLeagueId: NBA }),
 ];
 
 /** An NFL week coming up, which takes the NFL's week templates; no NFL playoffs and no NBA events yet. */
 const NFL_WEEK = {
   id: 'nfl-week-1',
-  sport: 'AMERICAN_FOOTBALL',
+  sport: 'FOOTBALL',
+  slotDefinitionIds: [WEEK_SLOT_ID],
   name: 'NFL Week 1',
   status: 'SCHEDULED',
   startDate: '2099-09-10T17:00:00.000Z',
@@ -91,9 +93,9 @@ function primeMocks(role: 'COMMISSIONER' | 'MEMBER', { isActive = true }: { isAc
     },
   });
   listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: TEMPLATES } });
-  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NFL, name: 'NFL', sport: 'AMERICAN_FOOTBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', isActive: true }, { id: NBA, name: 'NBA', sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', isActive: true }] } });
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: NFL, name: 'NFL', sport: 'FOOTBALL' }), sportLeagueFixture({ id: NBA, name: 'NBA', sport: 'BASKETBALL' })] } });
   listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
-    data: { events: options.query?.sport === 'AMERICAN_FOOTBALL' ? [NFL_WEEK] : [] },
+    data: { events: options.query?.sport === 'FOOTBALL' ? [NFL_WEEK] : [] },
   }));
 }
 
@@ -121,8 +123,8 @@ describe('League › Contest types', () => {
     primeMocks('MEMBER');
     renderPage();
 
-    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
-    expect(within(football).getByText('American football')).toBeInTheDocument();
+    const football = await screen.findByTestId('contest-types-sport-FOOTBALL');
+    expect(within(football).getByText('Football')).toBeInTheDocument();
     expect(within(football).getByText('NFL')).toBeInTheDocument();
     const tiered = within(football).getByTestId('contest-type-nfl-nfl-tiered-doubling');
     expect(tiered).toHaveTextContent('nfl-tiered-doubling name');
@@ -135,7 +137,7 @@ describe('League › Contest types', () => {
     const PGA = '80300000-0000-4000-8000-000000000011';
     const LPGA = '80300000-0000-4000-8000-000000000012';
     const THOROUGHBRED = '80300000-0000-4000-8000-000000000013';
-    const golfOn = (sportLeagueId: string, templateKey: string, overrides: Record<string, unknown>) => template(templateKey, { sport: 'GOLF', sportLeagueId, eventType: null, ...overrides });
+    const golfOn = (sportLeagueId: string, templateKey: string, overrides: Record<string, unknown>) => template(templateKey, { slots: [templateSlotFixture(sportSlotId('GOLF'))], sportLeagueId, ...overrides });
     /** Each tour's copy of one setup (#1825): the PGA TOUR's keeps `id`, the LPGA Tour's has its own. */
     const golf = (templateKey: string, overrides: { id: string } & Record<string, unknown>) => [
       golfOn(PGA, templateKey, overrides),
@@ -146,16 +148,16 @@ describe('League › Contest types', () => {
       ...golf('golf-tiered-pick-12', { id: 'tpl-golf-tiered-12', isDefault: false, sortOrder: 2 }),
       ...golf('golf-budget-pick-6-best-4', { id: 'tpl-golf-budget', selectionType: 'BUDGET_PICK', configuration: { selectionType: 'BUDGET_PICK', picks: 6, countedScores: 4, maxEntriesPerSquad: 1 } }),
       ...golf('golf-quick-pick-6', { id: 'tpl-golf-quick', selectionType: 'RANDOM_DRAW', configuration: { selectionType: 'RANDOM_DRAW', picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 } }),
-      golfOn(PGA, 'pga-tour-majors-tiered', { id: 'tpl-pga-majors', isDefault: false, sortOrder: 10 }),
-      template('horse-racing-tiered', { id: 'tpl-horse-tiered', sport: 'HORSE_RACING', sportLeagueId: THOROUGHBRED, eventType: null }),
+      golfOn(PGA, 'pga-tour-tiered-top-four-tiers', { id: 'tpl-pga-top-four', isDefault: false, sortOrder: 10 }),
+      template('horse-racing-tiered', { id: 'tpl-horse-tiered', slots: [templateSlotFixture(sportSlotId('HORSE_RACING'))], sportLeagueId: THOROUGHBRED }),
     ];
     const GOLF_LEAGUES = [
-      { id: PGA, name: 'PGA TOUR', sport: 'GOLF', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', isActive: true, displayOrder: 10 },
-      { id: LPGA, name: 'LPGA Tour', sport: 'GOLF', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', isActive: true, displayOrder: 20 },
-      { id: THOROUGHBRED, name: 'US Thoroughbred', sport: 'HORSE_RACING', participantType: 'INDIVIDUAL', scoringFamily: 'FINISH_POSITION', isActive: true, displayOrder: 10 },
+      sportLeagueFixture({ id: PGA, name: 'PGA TOUR', sport: 'GOLF', displayOrder: 10 }),
+      sportLeagueFixture({ id: LPGA, name: 'LPGA Tour', sport: 'GOLF', displayOrder: 20 }),
+      sportLeagueFixture({ id: THOROUGHBRED, name: 'US Thoroughbred', sport: 'HORSE_RACING', displayOrder: 10 }),
     ];
     /** A PGA TOUR tournament coming up; nothing on the LPGA Tour yet. */
-    const PGA_EVENT = { ...NFL_WEEK, id: 'pga-event', sport: 'GOLF', name: 'The Players', participantCount: 144, rounds: 4, sportLeagueId: PGA };
+    const PGA_EVENT = { ...NFL_WEEK, id: 'pga-event', sport: 'GOLF', slotDefinitionIds: [sportSlotId('GOLF')], name: 'The Players', participantCount: 144, rounds: 4, sportLeagueId: PGA };
 
     function primeGolf(role: 'COMMISSIONER' | 'MEMBER') {
       primeMocks(role);
@@ -173,7 +175,7 @@ describe('League › Contest types', () => {
       const golfSection = await screen.findByTestId('contest-types-sport-GOLF');
       expect(golfSection).not.toHaveTextContent('Every tournament');
       expect(golfSection).not.toHaveTextContent('LPGA Tour');
-      expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-tiered-pick-6-variations')).toHaveTextContent('pga-tour-majors-tiered name');
+      expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-tiered-pick-6-variations')).toHaveTextContent('pga-tour-tiered-top-four-tiers name');
       expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-budget-pick-6-best-4')).toBeInTheDocument();
       expect(within(golfSection).getByTestId('contest-type-pga-tour-golf-quick-pick-6')).toBeInTheDocument();
     });
@@ -216,58 +218,59 @@ describe('League › Contest types', () => {
     renderPage('/league/BIGDAWGS/admin/contest-types?sport=basketball');
 
     expect(await screen.findByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
-    expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-types-sport-FOOTBALL')).not.toBeInTheDocument();
     const column = screen.getByRole('navigation', { name: 'Sports and leagues' });
-    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Basketball 1', 'NBA', 'American football 2']);
+    expect(within(column).getAllByRole('link').map((link) => link.textContent)).toEqual(['All sports', 'Football 2', 'Basketball 1', 'NBA']);
     expect(within(column).getByRole('link', { current: 'page' })).toHaveTextContent('Basketball');
 
-    fireEvent.click(screen.getByTestId('contest-types-leagues-column-american-football'));
+    fireEvent.click(screen.getByTestId('contest-types-leagues-column-football'));
     fireEvent.click(within(column).getByRole('link', { name: 'NFL' }));
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
+    expect(screen.getByTestId('contest-types-sport-FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
     expect(screen.queryByTestId('contest-types-sport-BASKETBALL')).not.toBeInTheDocument();
 
     fireEvent.click(within(column).getByRole('link', { name: 'All sports' }));
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-types-sport-FOOTBALL')).toBeInTheDocument();
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
   });
 
   it('switches sport on a phone with the same chip row and "Every league you can run" card as How to Play', async () => {
     primeMocks('MEMBER');
-    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football&league=nfl');
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=football&league=nfl');
 
-    expect(await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
+    expect(await screen.findByTestId('contest-types-sport-FOOTBALL')).toHaveTextContent('nfl-tiered-doubling name');
     const chips = screen.getByRole('navigation', { name: 'Sport' });
     fireEvent.click(within(chips).getByRole('link', { name: 'Clear NFL' }));
-    expect(within(screen.getByRole('navigation', { name: 'Sport' })).getByRole('link', { current: 'page' })).toHaveTextContent('American football');
+    expect(within(screen.getByRole('navigation', { name: 'Sport' })).getByRole('link', { current: 'page' })).toHaveTextContent('Football');
 
     fireEvent.click(within(screen.getByTestId('contest-types-every-league')).getByRole('link', { name: 'NBA' }));
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toBeInTheDocument();
-    expect(screen.queryByTestId('contest-types-sport-AMERICAN_FOOTBALL')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-types-sport-FOOTBALL')).not.toBeInTheDocument();
   });
 
-  it('names the kind of event beside the format where a league offers one format on both, so the weekly and playoff Survivor read apart', async () => {
+  it('shows one Survivor tile on a league that offers Survivor on weeks and in the playoffs, the playoff setup among its variations, with no kind of event named', async () => {
     primeMocks('MEMBER');
     const survivor = { contestFormat: 'PREDICTION', selectionType: 'SURVIVOR', configuration: { selectionType: 'SURVIVOR', maxEntriesPerSquad: 1 } };
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [
       ...TEMPLATES,
-      template('nfl-survivor', { id: 'tpl-nfl-survivor', eventType: 'WEEK', ...survivor }),
-      template('nfl-playoff-survivor', { id: 'tpl-nfl-playoff-survivor', eventType: 'KNOCKOUT', ...survivor }),
+      template('nfl-survivor', { id: 'tpl-nfl-survivor', slots: [templateSlotFixture(WEEK_SLOT_ID)], ...survivor }),
+      template('nfl-playoff-survivor', { id: 'tpl-nfl-playoff-survivor', isDefault: false, sortOrder: 2, ...survivor }),
     ] } });
-    renderPage('/league/BIGDAWGS/admin/contest-types?sport=american-football');
+    renderPage('/league/BIGDAWGS/admin/contest-types?sport=football');
 
-    expect(await screen.findByTestId('contest-type-nfl-nfl-survivor')).toHaveTextContent('Survivor · Weekly');
-    expect(screen.getByTestId('contest-type-nfl-nfl-playoff-survivor')).toHaveTextContent('Survivor · Playoffs');
-    expect(screen.getByTestId('contest-type-nfl-nfl-tiered-doubling')).not.toHaveTextContent('·');
+    const tile = await screen.findByTestId('contest-type-nfl-nfl-survivor');
+    expect(tile).toHaveTextContent('nfl-playoff-survivor name');
+    expect(tile).not.toHaveTextContent('·');
+    expect(screen.queryByTestId('contest-type-nfl-nfl-playoff-survivor')).not.toBeInTheDocument();
   });
 
   it('keeps each sport\'s line behind its section\'s (?), and shows no inactive notice on an active league', async () => {
     primeMocks('COMMISSIONER');
     renderPage();
 
-    const football = await screen.findByTestId('contest-types-sport-AMERICAN_FOOTBALL');
-    expect(football).not.toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    const football = await screen.findByTestId('contest-types-sport-FOOTBALL');
+    expect(football).not.toHaveTextContent(SPORT_BLURBS.FOOTBALL);
     fireEvent.click(within(football).getByRole('button', { name: 'How this section works' }));
-    expect(screen.getByTestId('contest-types-sport-AMERICAN_FOOTBALL-help-callout')).toHaveTextContent(SPORT_BLURBS.AMERICAN_FOOTBALL);
+    expect(screen.getByTestId('contest-types-sport-FOOTBALL-help-callout')).toHaveTextContent(SPORT_BLURBS.FOOTBALL);
     expect(screen.queryByTestId('contest-types-inactive')).not.toBeInTheDocument();
   });
 
@@ -307,16 +310,16 @@ describe('League › Contest types', () => {
     const NCAA_MEN = '80300000-0000-4000-8000-000000000003';
     const BRACKETS = [
       template('ncaa-men-bracket-doubling', {
-        id: 'tpl-full-bracket', sport: 'BASKETBALL', sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
+        id: 'tpl-full-bracket', slots: [templateSlotFixture(sportSlotId('BASKETBALL'))], sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
         configuration: { selectionType: 'BRACKET', startsAtRound: 1, maxEntriesPerSquad: 1 },
       }),
       template('ncaa-men-bracket-second-chance', {
-        id: 'tpl-second-chance', sport: 'BASKETBALL', sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
+        id: 'tpl-second-chance', slots: [templateSlotFixture(sportSlotId('BASKETBALL'))], sportLeagueId: NCAA_MEN, contestFormat: 'PREDICTION', selectionType: 'BRACKET',
         isDefault: false, sortOrder: 2, configuration: { selectionType: 'BRACKET', startsAtRound: 3, maxEntriesPerSquad: 1 },
       }),
     ];
     const MARCH_MADNESS = {
-      ...NFL_WEEK, id: 'march-madness', sport: 'BASKETBALL', name: 'March Madness', participantCount: 64, rounds: 6, sportLeagueId: NCAA_MEN,
+      ...NFL_WEEK, id: 'march-madness', sport: 'BASKETBALL', slotDefinitionIds: [sportSlotId('BASKETBALL')], name: 'March Madness', participantCount: 64, rounds: 6, sportLeagueId: NCAA_MEN,
     };
     const MARCH_MADNESS_UNDER_WAY = {
       ...MARCH_MADNESS, status: 'IN_PROGRESS', readinessStatus: 'EVENT_STARTED', readinessReasons: ['EVENT_STARTED'], contestEligible: false,
@@ -326,7 +329,7 @@ describe('League › Contest types', () => {
     function primeBrackets(event: Record<string, unknown>) {
       primeMocks('COMMISSIONER');
       listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BRACKETS } });
-      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NCAA_MEN, name: 'NCAA Men', sport: 'BASKETBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', isActive: true }] } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [sportLeagueFixture({ id: NCAA_MEN, name: 'NCAA Men', sport: 'BASKETBALL' })] } });
       listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
         data: { events: options.query?.sport === 'BASKETBALL' ? [event] : [] },
       }));

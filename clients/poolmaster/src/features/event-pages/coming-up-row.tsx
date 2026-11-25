@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router';
-import { buildEventPagePath, type Sport } from '@poolmaster/shared/domain';
+import type { Sport } from '@poolmaster/shared/domain';
 import { Eyebrow, Heading, SectionCard, Text, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy, formatStartsIn } from './event-page-copy';
 import { withPrimaryOffer } from './event-page-offers';
@@ -11,7 +11,7 @@ const ALL_SPORTS_LIMIT = 3;
 
 /**
  * How to Play's and the welcome page's Coming up row (#1007, board 4): a card per event page with
- * an edition coming, saying when, its contest types, and linking to the page. Nothing while the
+ * a slot coming, saying when, its contest types, and linking to the page. Nothing while the
  * pages load, fail or have nothing coming: the row is a way in, never in the way.
  */
 export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; testId?: string }) {
@@ -29,12 +29,12 @@ export function ComingUpRow({ sport, testId = 'coming-up' }: { sport?: Sport; te
           return (
             <Link
               className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              data-testid={`${testId}-${page.slug}`}
+              data-testid={`${testId}-${page.urlSegment}`}
               key={page.id}
-              to={buildEventPagePath(page.sport, page.slug)}
+              to={page.path}
             >
               <Tile className={index === 0 ? 'h-full space-y-2 border-primary' : 'h-full space-y-2'} padding="md" variant="interactive">
-                <Eyebrow tone="muted">{formatStartsIn(primary.edition.startDate, now)}</Eyebrow>
+                <Eyebrow tone="muted">{formatStartsIn(primary.nextSlot.startDate, now)}</Eyebrow>
                 <Heading level={3} variant="card" size="xl">{copy.name}</Heading>
                 <Text as="p" variant="meta">{page.offers.map((offer) => eventPageOfferCopy(copy, offer).contestType).join(' · ')}</Text>
                 <Text as="p" variant="strong" weight="semibold">See ways to play ›</Text>

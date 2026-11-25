@@ -4,8 +4,8 @@
     "sport": "TENNIS",
     "season": 2025,
     "sportLeagues": [
-      "NCAA Division I Men",
-      "NCAA Division I Women"
+      "NCAA Men's Tennis",
+      "NCAA Women's Tennis"
     ],
     "participantType": "INDIVIDUAL",
     "scoringFamily": "HEAD_TO_HEAD",
@@ -42,7 +42,7 @@
   },
   "sportLeagues": [
     {
-      "name": "NCAA Division I Men",
+      "name": "NCAA Men's Tennis",
       "players": [
         {
           "key": "ncaam-tennis-jay-friend",
@@ -432,6 +432,7 @@
       "events": [
         {
           "key": "ncaam-tennis-singles-2025",
+          "slotKey": "FINAL",
           "name": "NCAA Men's Singles Championship",
           "startDate": "2025-11-18",
           "endDate": "2025-11-23",
@@ -1896,7 +1897,7 @@
       ]
     },
     {
-      "name": "NCAA Division I Women",
+      "name": "NCAA Women's Tennis",
       "players": [
         {
           "key": "ncaaw-tennis-valerie-glozman",
@@ -2286,6 +2287,7 @@
       "events": [
         {
           "key": "ncaaw-tennis-singles-2025",
+          "slotKey": "FINAL",
           "name": "NCAA Women's Singles Championship",
           "startDate": "2025-11-18",
           "endDate": "2025-11-23",

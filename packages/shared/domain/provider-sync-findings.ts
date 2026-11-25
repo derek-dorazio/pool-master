@@ -77,6 +77,14 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS]: [],
   [ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES]: [],
   [ProviderSyncFindingKind.GAMES_NOT_SYNCED]: [],
+  [ProviderSyncFindingKind.SLOT_VALUE_UNMAPPED]: [],
+  [ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN]: [],
+  [ProviderSyncFindingKind.SLOT_NAME_UNMATCHED]: [ProviderSyncFindingAction.LINK_SLOT],
+  [ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS]: [],
+  [ProviderSyncFindingKind.SLOT_SEASON_PHASE_MISSING]: [],
+  [ProviderSyncFindingKind.SLOT_OUTSIDE_SEASON]: [],
+  [ProviderSyncFindingKind.GAMES_UNPLACED]: [],
+  [ProviderSyncFindingKind.SLOT_DATES_NEEDED]: [],
 };
 
 /**

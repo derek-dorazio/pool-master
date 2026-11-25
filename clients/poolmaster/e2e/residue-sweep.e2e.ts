@@ -1,14 +1,18 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { adminApiHeaders, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
+import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
 import { readAdminCredentials } from './helpers/admin-session';
+import { listTestSlots } from './helpers/journey-teardown';
 import { sweepE2eResidue } from './helpers/residue-sweep';
+import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './helpers/test-event';
 import { e2eEmail, e2eLeagueCode, e2eName, e2eUsername, newRunId } from './helpers/test-marker';
 import { generatePassword } from './helpers/user-session';
 
 /**
  * #1401 — the QA residue sweep removes a run that never reached its teardown. This spec makes
  * such a run through the API, the way a cancelled journey leaves one: a commissioner's league, a
- * golf tour with a tournament and two players on its field, and the commissioner. It skips its
+ * tournament on a labelled test slot of the seeded PGA TOUR (#2004) with two test players on its
+ * field (#2096), and the commissioner. The seeded tour is never swept; the slot goes, and with it
+ * the tournament and both players (#2075). It skips its
  * own teardown and runs the sweep on its run id alone (parallel specs' live runs are never
  * touched), then reads each thing back.
  *
@@ -20,32 +24,25 @@ async function postJson<T>(api: APIRequestContext, headers: AuthHeaders, path: s
   return (await (await expectOk(api.post(path, { headers, data }), `POST ${path}`)).json()) as T;
 }
 
-test('the residue sweep removes a run left behind, league first and users last, and nothing of it remains', async ({ playwright }, testInfo) => {
+test('the residue sweep removes a run left behind, league first, then its labelled test slot with the event and test players, users last, and nothing of it remains', async ({ playwright }, testInfo) => {
   const api = await playwright.request.newContext({ baseURL: testInfo.project.use.baseURL });
   try {
     const admin = await adminApiHeaders(api, readAdminCredentials());
     if (!admin) throw new Error('admin login failed');
     const runId = newRunId();
-    const tourName = e2eName('Sweep Tour', runId);
     const tournamentName = e2eName('Sweep Open', runId);
     const playerNames = [1, 2].map((number) => `${e2eName('Sweep Golfer', runId)} ${number}`);
     const leagueCode = e2eLeagueCode('W', runId);
     const commissioner = { username: e2eUsername('wc', runId), email: e2eEmail('wc', runId) };
 
     // --- The run a cancelled journey leaves behind ---------------------------------------
-    const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, admin, '/api/v1/sport-leagues/', {
-      sport: 'GOLF',
-      timeZone: 'UTC',
-      name: tourName,
-      ...(await sportLeagueProfileIds(api, admin, 'TIERS_6_OF_10')),
-      participantType: 'INDIVIDUAL',
-      scoringFamily: 'STROKE_PLAY',
-    });
-    const { event } = await postJson<{ event: { id: string } }>(api, admin, '/api/v1/events/', {
+    const sportLeague = await findSeededSportLeagueThroughApi(api, admin, 'GOLF', 'pga');
+    const event = await createTestEventThroughApi(api, admin, {
       sportLeagueId: sportLeague.id,
+      slotKind: 'TOURNAMENT',
+      slotLabel: tournamentName,
       name: tournamentName,
-      startDate: '2099-07-16T08:00:00.000Z',
-      rounds: 1,
+      startsAt: '2099-07-16T08:00:00.000Z',
       autoLifecycleEnabled: false,
     });
     const participantIds: string[] = [];
@@ -54,6 +51,7 @@ test('the residue sweep removes a run left behind, league first and users last, 
         sportLeagueId: sportLeague.id,
         participantType: 'INDIVIDUAL',
         name,
+        isTestData: true,
       });
       participantIds.push(participant.id);
     }
@@ -79,14 +77,15 @@ test('the residue sweep removes a run left behind, league first and users last, 
     expect(report.failures).toEqual([]);
     expect(report).toMatchObject({
       leagues: [leagueCode],
-      events: [tournamentName],
-      tours: [tourName],
+      testSlots: [tournamentName],
+      // The players were on the slot's field alone, so they went with it.
+      players: [],
       users: [commissioner.username],
     });
-    expect([...report.players].sort()).toEqual(playerNames);
     expect((await api.get(`/api/v1/leagues/code/${leagueCode}`, { headers: admin })).status()).toBe(404);
     expect((await api.get(`/api/v1/events/${event.id}`, { headers: admin })).status()).toBe(404);
-    expect((await api.get(`/api/v1/sport-leagues/${sportLeague.id}`, { headers: admin })).status()).toBe(404);
+    expect((await listTestSlots(api, admin, sportLeague.id)).some((slot) => slot.label === tournamentName)).toBe(false);
+    expect((await api.get(`/api/v1/sport-leagues/${sportLeague.id}`, { headers: admin })).status()).toBe(200);
     for (const participantId of participantIds) {
       expect((await api.get(`/api/v1/participants/${participantId}`, { headers: admin })).status()).toBe(404);
     }

@@ -6,6 +6,8 @@
 import { expect, jest } from '@jest/globals';
 import {
   currentSeasonOf,
+  eventDatesFromSlots,
+  testEventSlotRefusal,
   LeaguePhase,
   orderSportLeagueSeasons,
   SeasonSlotStatus,
@@ -13,9 +15,11 @@ import {
   SeriesFormat,
   SlotKind,
   SlotPairing,
+  slotNeedsDates,
+  SlotWindowStatus,
   type CurrentSeasonCandidate,
   type SportLeagueSeasonDetail,
-  type SportLeagueSeasonSlot,
+  type SportLeagueSeasonPhaseSlot,
 } from '@poolmaster/shared/domain';
 import type { SportLeagueCurrentSeasonFacts } from '@poolmaster/shared/db';
 import { SportLeagueSeasonListResponseSchema } from '@poolmaster/shared/dto/sport-catalog.dto';
@@ -72,11 +76,11 @@ describe('seasonsToSync', () => {
   });
 });
 
-function slot(key: string, overrides: Partial<SportLeagueSeasonSlot> = {}): SportLeagueSeasonSlot {
+function slot(key: string, overrides: Partial<SportLeagueSeasonPhaseSlot> = {}): SportLeagueSeasonPhaseSlot {
   return {
     id: `slot-${key}`, slotDefinitionId: `def-${key}`, key, slotKind: SlotKind.WEEK, weekNumber: null, name: null,
     startsAt: null, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1,
-    pairing: SlotPairing.FIXED, isTestData: false, label: null, ...overrides,
+    pairing: SlotPairing.FIXED, isTestData: false, label: null, window: null, sportEventId: null, placedByWindow: false, ...overrides,
   };
 }
 
@@ -84,7 +88,7 @@ function season(id: string, year: number, overrides: Partial<SportLeagueSeasonDe
   return {
     id, sportLeagueId: 'league', name: String(year), championshipYear: year,
     startsAt: at(`${year}-01-01T00:00:00Z`), endsAt: at(`${year}-12-31T00:00:00Z`),
-    isCurrent: false, providerMappings: [], phases: [], ...overrides,
+    isCurrent: false, readBySync: false, providerMappings: [], phases: [], ...overrides,
   };
 }
 
@@ -202,5 +206,103 @@ describe('mapSportLeagueSeasonToDto', () => {
       providerMappings: [{ providerSeasonId: '2026', providerLeagueCode: 'nfl' }],
       phases: [{ slots: [{ startsAt: '2026-09-10T00:00:00.000Z', endsAt: '2026-09-15T00:00:00.000Z' }, { startsAt: null, endsAt: null }] }],
     });
+  });
+});
+
+describe('the slots that still need dates (#2012, #1924)', () => {
+  const window = (status: SlotWindowStatus) => ({ startsAt: at('2026-12-30T10:00:00Z'), endsAt: at('2027-01-02T12:00:00Z'), status });
+
+  it('needs dates for a slot placed by date window with no window, or only a tentative one, and none once its window is confirmed', () => {
+    expect(slotNeedsDates({ placedByWindow: true, window: null })).toBe(true);
+    expect(slotNeedsDates({ placedByWindow: true, window: window(SlotWindowStatus.TENTATIVE) })).toBe(true);
+    expect(slotNeedsDates({ placedByWindow: true, window: window(SlotWindowStatus.CONFIRMED) })).toBe(false);
+  });
+
+  it('never needs dates for a slot its provider places by code, window or none', () => {
+    expect(slotNeedsDates({ placedByWindow: false, window: null })).toBe(false);
+  });
+
+  it('flags each needing slot of a Season the sync reads, with counts per phase and Season, sends its window, and flags none in a Season the sync no longer reads', () => {
+    const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+    const playoff = (readBySync: boolean) => season(id(1), 2026, {
+      readBySync,
+      phases: [{
+        id: id(2), phase: LeaguePhase.POSTSEASON, isSynced: true, slots: [
+          { ...slot('ROUND_OF_16', { placedByWindow: true, window: window(SlotWindowStatus.TENTATIVE) }), id: id(3), slotDefinitionId: id(4) },
+          { ...slot('QUARTERFINAL', { placedByWindow: true, window: window(SlotWindowStatus.CONFIRMED) }), id: id(5), slotDefinitionId: id(6) },
+          { ...slot('FINAL', { placedByWindow: true }), id: id(7), slotDefinitionId: id(8) },
+        ],
+      }],
+    });
+
+    const open = mapSportLeagueSeasonToDto(playoff(true));
+    expect(SportLeagueSeasonListResponseSchema.parse({ seasons: [open] })).toEqual({ seasons: [open] });
+    expect(open.slotsNeedingDates).toBe(2);
+    expect(open.phases[0].slotsNeedingDates).toBe(2);
+    expect(open.phases[0].slots.map((each) => [each.key, each.needsDates])).toEqual([['ROUND_OF_16', true], ['QUARTERFINAL', false], ['FINAL', true]]);
+    expect(open.phases[0].slots[0].window).toEqual({ startsAt: '2026-12-30T10:00:00.000Z', endsAt: '2027-01-02T12:00:00.000Z', status: SlotWindowStatus.TENTATIVE });
+
+    const ended = mapSportLeagueSeasonToDto(playoff(false));
+    expect(ended.slotsNeedingDates).toBe(0);
+    expect(ended.phases[0].slots.some((each) => each.needsDates)).toBe(false);
+  });
+});
+
+describe('eventDatesFromSlots', () => {
+  const span = (startsAt: string | null, endsAt: string | null) => ({ startsAt: startsAt === null ? null : at(startsAt), endsAt: endsAt === null ? null : at(endsAt) });
+
+  it('takes the earliest start and the latest end of several slots, whatever their order', () => {
+    expect(eventDatesFromSlots([
+      span('2026-03-20T00:00:00Z', '2026-03-22T00:00:00Z'),
+      span('2026-03-13T00:00:00Z', '2026-03-15T00:00:00Z'),
+      span('2026-03-27T00:00:00Z', '2026-03-29T00:00:00Z'),
+    ])).toEqual({ startDate: at('2026-03-13T00:00:00Z'), endDate: at('2026-03-29T00:00:00Z') });
+  });
+
+  it('leaves the end null while any slot has no end, keeping the earliest start', () => {
+    expect(eventDatesFromSlots([span('2026-03-13T00:00:00Z', '2026-03-15T00:00:00Z'), span('2026-03-20T00:00:00Z', null)]))
+      .toEqual({ startDate: at('2026-03-13T00:00:00Z'), endDate: null });
+  });
+
+  it('starts from the slots that have a start, and is null when none has one yet', () => {
+    expect(eventDatesFromSlots([span(null, null), span('2026-03-20T00:00:00Z', '2026-03-22T00:00:00Z')]))
+      .toEqual({ startDate: at('2026-03-20T00:00:00Z'), endDate: null });
+    expect(eventDatesFromSlots([span(null, null), span(null, null)])).toBeNull();
+  });
+
+  it('is null for an event with no slots, which keeps the feed\'s dates', () => {
+    expect(eventDatesFromSlots([])).toBeNull();
+  });
+});
+
+describe('testEventSlotRefusal', () => {
+  it('lets a free test slot of the current Season take a test event', () => {
+    expect(testEventSlotRefusal({ isTestData: true, sportEventId: null }, true)).toBeNull();
+  });
+
+  it('refuses a slot the sync keeps first, then a test slot outside the current Season, then one already taken', () => {
+    expect(testEventSlotRefusal({ isTestData: false, sportEventId: 'event-1' }, false)).toBe('SEASON_SLOT_NOT_TEST');
+    expect(testEventSlotRefusal({ isTestData: true, sportEventId: 'event-1' }, false)).toBe('SEASON_SLOT_NOT_CURRENT');
+    expect(testEventSlotRefusal({ isTestData: true, sportEventId: 'event-1' }, true)).toBe('SEASON_SLOT_TAKEN');
+  });
+});
+
+describe('mapSportLeagueSeasonToDto: which slots take a test event', () => {
+  it('says a free test slot of the current Season takes one, and a taken, synced or past-Season slot does not', () => {
+    const phaseOf = (slots: SportLeagueSeasonPhaseSlot[]) => [{ id: 'p', phase: LeaguePhase.REGULAR, isSynced: true, slots }];
+    const current = mapSportLeagueSeasonToDto(season('s-now', 2026, {
+      isCurrent: true,
+      phases: phaseOf([
+        slot('free', { isTestData: true, label: 'QA 1' }),
+        slot('taken', { isTestData: true, label: 'QA 2', sportEventId: 'event-1' }),
+        slot('synced'),
+      ]),
+    }));
+    const past = mapSportLeagueSeasonToDto(season('s-past', 2025, { phases: phaseOf([slot('old', { isTestData: true, label: 'QA 3' })]) }));
+
+    expect(current.phases.flatMap((phase) => phase.slots).map((each) => [each.key, each.takesTestEvent])).toEqual([
+      ['free', true], ['taken', false], ['synced', false],
+    ]);
+    expect(past.phases.flatMap((phase) => phase.slots).map((each) => each.takesTestEvent)).toEqual([false]);
   });
 });

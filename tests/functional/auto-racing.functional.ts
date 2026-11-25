@@ -6,7 +6,6 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
   enterContest,
   generateInviteLink,
@@ -23,7 +22,7 @@ import {
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -33,7 +32,7 @@ import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 
 // Auto racing end to end over HTTP (#624): an admin builds a race in the seeded NASCAR Cup Series
-// and loads its field's odds by upload, a commissioner runs a contest from the series' default
+// and loads its field's rankings by upload, a commissioner runs a contest from the series' default
 // tiered template (its NASCAR points table comes with it), two entries pick one driver from each
 // of the five tiers, the admin enters the official finishing order, and the board and the settled
 // contest score each entry by NASCAR Cup Series points. Then Formula 1 (#625): a race set to four
@@ -41,7 +40,7 @@ import { standardEventPricing } from '../support/budget-pricing';
 
 const RUN = `auto-${Date.now()}`;
 const NASCAR_CUP_POINTS = [40, 35, ...Array.from({ length: 34 }, (_, index) => 34 - index), 1, 1, 1, 1];
-// Six drivers, shortest odds first. Tiered from odds one to a tier, the fifth tier takes the last
+// Six drivers, best ranked first. Tiered from ranking one to a tier, the fifth tier takes the last
 // two, so the two entries differ only in Elliott or Hamlin.
 const DRIVERS = ['Larson', 'Byron', 'Bell', 'Blaney', 'Elliott', 'Hamlin'];
 // Larson wins (40), Byron second (35), Blaney third (34), Hamlin fourth (33), Elliott fifth (32),
@@ -58,8 +57,6 @@ async function cleanup(): Promise<void> {
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
     // The seeded series stays: only this run's event series goes with its race.
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -67,7 +64,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
@@ -91,9 +87,9 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     expect(series.map((league) => league.name).sort()).toEqual(['Formula 1', 'IndyCar', 'NASCAR Cup Series']);
     const nascar = expectDefined(series.find((league) => league.name === 'NASCAR Cup Series'));
 
-    const race = await createEvent({
+    const race = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(nascar.id, 2099), name: `Harbour 400 ${RUN}`, startDate: '2099-02-15T19:30:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: nascar.id, championshipYear: 2099, name: `Harbour 400 ${RUN}`, startDate: '2099-02-15T19:30:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
@@ -110,11 +106,11 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     }
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: driverIds } })).data?.added).toBe(6);
 
-    // The admin uploads each driver's odds, then tiers and prices follow from them.
+    // The admin uploads each driver's ranking (odds come only from the feed), then tiers and prices follow from it.
     const upload = await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, oddsToWin: 4 + index * 2 })) },
+      body: { rows: DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, ranking: index + 1 })) },
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
@@ -137,7 +133,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     // The series' own templates, never IndyCar's.
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AUTO_RACING, sportLeagueId: nascar.id, active: true },
+      query: { sportLeagueId: nascar.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
@@ -216,7 +212,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
 });
 
 const FORMULA_1_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-// Eight drivers, shortest odds first, so the first is priced highest and the last five lowest.
+// Eight drivers, best ranked first, so the first is priced highest and the last five lowest.
 const F1_DRIVERS = ['Verstappen', 'Leclerc', 'Norris', 'Piastri', 'Hamilton', 'Russell', 'Sainz', 'Alonso'];
 // Norris wins (25), Piastri second (18), Verstappen third (15), Leclerc fourth (12), Russell
 // fifth (10), Alonso sixth (8), Hamilton seventh (6), and Sainz does not finish (0).
@@ -233,9 +229,9 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     const formula1 = expectDefined(series.find((league) => league.name === 'Formula 1'), 'the seeded Formula 1 series');
 
     // --- A grand prix, its field, four tiers and prices -------------------------------------------
-    const race = await createEvent({
+    const race = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(formula1.id, 2099), name: `Harbour Grand Prix ${RUN}`, startDate: '2099-05-24T13:00:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: formula1.id, championshipYear: 2099, name: `Harbour Grand Prix ${RUN}`, startDate: '2099-05-24T13:00:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
@@ -252,7 +248,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     expect((await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: F1_DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, oddsToWin: 2 + index * 3 })) },
+      body: { rows: F1_DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, ranking: index + 1 })) },
     })).response?.status).toBe(200);
 
     // A Formula 1 race is set to four tiers on the event's Tiers card, over the sport's five.
@@ -279,7 +275,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.AUTO_RACING, sportLeagueId: formula1.id, active: true },
+      query: { sportLeagueId: formula1.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([

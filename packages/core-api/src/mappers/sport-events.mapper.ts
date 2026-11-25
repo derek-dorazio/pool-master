@@ -5,7 +5,8 @@
  */
 
 import {
-  isProviderSyncedEvent,
+  getSportDefinition,
+  isTestEvent,
   ReleaseCheckKey,
   type ReleaseCheck,
   SPORT_EVENT_STATUS_TRANSITIONS,
@@ -14,13 +15,16 @@ import {
   type SportEventTier,
   eventProviderNameOf,
 } from '@poolmaster/shared/domain';
-import type {
-  ReleaseCheckDto,
-  SportEventContestListResponse,
-  SportEventDto,
-  SportEventRoundDto,
-  SportEventTierDto,
+import {
+  ROUNDS_PAR_MAX,
+  ROUNDS_PAR_MIN,
+  type ReleaseCheckDto,
+  type SportEventContestListResponse,
+  type SportEventDto,
+  type SportEventRoundDto,
+  type SportEventTierDto,
 } from '@poolmaster/shared/dto/events.dto';
+import { mapSportLeagueSeasonSlotToDto } from './sport-catalog.mapper';
 import { eventContestOpenings } from '../modules/contest-management/contest-opening';
 import { evaluateEventOperationalState } from '../modules/events/operational-timing';
 import { areTiersAndPricesEditable } from '../modules/events/sport-event-tier-service';
@@ -43,6 +47,7 @@ export function mapSportEventToDto({
   tierCount,
   adminCounts,
   releaseChecks,
+  slots,
 }: SportEventSummary): SportEventDto {
   const now = new Date();
   const operationalState = evaluateEventOperationalState({
@@ -54,10 +59,10 @@ export function mapSportEventToDto({
 
   return {
     id: event.id,
-    externalId: event.externalId,
-    providerId: event.providerId,
+    providerMappings: event.providerMappings.map((mapping) => ({ providerCode: mapping.providerCode, providerName: mapping.providerName, externalId: mapping.externalId })),
     providerName: eventProviderNameOf(event),
     sport: event.sport,
+    sportUrlSegment: event.sportUrlSegment,
     name: event.name,
     venue: event.venue ?? null,
     location: event.location ?? null,
@@ -66,6 +71,8 @@ export function mapSportEventToDto({
     endDate: event.endDate?.toISOString() ?? null,
     rounds: event.rounds ?? null,
     roundsPar: event.roundsPar ?? null,
+    roundsParMin: ROUNDS_PAR_MIN,
+    roundsParMax: ROUNDS_PAR_MAX,
     participantCount: event.participantCount ?? null,
     loadedParticipantCount,
     pricing: event.pricingConfig ?? null,
@@ -75,14 +82,15 @@ export function mapSportEventToDto({
     contestEligible: operationalState.contestEligible,
     contestOpenings: eventContestOpenings({ ...event, loadedParticipantCount }, now),
     tiersLocked: !areTiersAndPricesEditable(event),
-    eventSeriesId: event.eventSeriesId,
+    slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
     sportLeagueSeasonId: event.sportLeagueSeasonId,
     championshipYear: event.championshipYear,
     sportLeagueId: event.sportLeagueId,
     participantType: event.participantType,
     scoringFamily: event.scoringFamily,
-    syncScope: event.syncScope,
-    providerSynced: isProviderSyncedEvent(event),
+    shootout: getSportDefinition(event.sport).shootout,
+    isTestData: isTestEvent(slots),
+    slots: slots.map(mapSportLeagueSeasonSlotToDto),
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
     lastAutoReleaseCheck: event.autoReleaseCheck

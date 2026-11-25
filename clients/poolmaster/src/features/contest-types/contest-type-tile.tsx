@@ -1,6 +1,5 @@
 import type { ContestConfigTemplateDto } from '@/lib/api';
 import { formatSelectionTypeName } from '@poolmaster/shared/domain';
-import { enumLabel } from '@poolmaster/shared/display-strings';
 import { SELECTION_TYPE_ICONS } from '@/features/contests/selection-type-icons';
 import { Eyebrow, Heading, HelpTip, LinkButton, Text, Tile } from '@/features/shared/ui';
 import type { ContestTypeTile } from './contest-catalog';
@@ -25,9 +24,7 @@ export function ContestTypeTileCard({ tile, createPathFor, testId }: ContestType
     <Tile className="flex h-full flex-col gap-3" data-testid={`${testId}-${featured.templateKey}`} padding="sm">
       <Eyebrow className="flex items-center gap-2" tone="muted">
         <Icon aria-hidden="true" className="h-4 w-4" />
-        {tile.sharesFormat && featured.eventType
-          ? `${formatSelectionTypeName(tile.selectionType)} · ${enumLabel('ContestTemplateEventType', featured.eventType, { form: 'short' })}`
-          : formatSelectionTypeName(tile.selectionType)}
+        {formatSelectionTypeName(tile.selectionType)}
       </Eyebrow>
       <div className="space-y-1">
         <Heading level={4} variant="subtitle">{featured.name}</Heading>

@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -5,9 +6,7 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
-  createEvent,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getContest,
@@ -23,7 +22,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -33,7 +32,8 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
 import { standardEventPricing } from '../support/budget-pricing';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // Horse racing end to end over HTTP (#622, #623): an admin builds a race and its field, a
 // commissioner runs a Win/Place/Show contest from the sport's template, the draw deals each entry
@@ -67,14 +67,13 @@ async function cleanup(): Promise<void> {
   }
   const leagueIds = [...created.sportLeagueIds];
   if (leagueIds.length) {
-    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
 }
 
@@ -89,7 +88,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.HORSE_RACING },
-      create: { sport: Sport.HORSE_RACING, tournamentFormat: 'RACE' },
+      create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING), tournamentFormat: 'RACE' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Race Admin' });
@@ -97,15 +96,14 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const a = admin.client;
 
     // --- The race and its field ------------------------------------------------------------
-    const circuit = await createSportLeague({ client: a, body: { ...(await sportLeagueProfiles(a, Sport.HORSE_RACING)), ...sportPlay(Sport.HORSE_RACING), timeZone: 'UTC', sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
-    expect(circuit.response?.status).toBe(201);
-    const sportLeagueId = expectDefined(circuit.data).sportLeague.id;
+    const circuit = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` });
+    const sportLeagueId = circuit.id;
     created.sportLeagueIds.add(sportLeagueId);
     await copyContestSetups(getFunctionalPrisma(), { fromSportLeagueName: 'US Thoroughbred', toSportLeagueId: sportLeagueId });
 
-    const race = await createEvent({
+    const race = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Harbour Stakes ${RUN}`, startDate: '2099-05-02T22:00:00.000Z', autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Harbour Stakes ${RUN}`, startDate: '2099-05-02T22:00:00.000Z', autoLifecycleEnabled: false },
     });
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
@@ -159,7 +157,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
-      query: { sport: Sport.HORSE_RACING, sportLeagueId, active: true },
+      query: { sportLeagueId, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     const drawTemplate = expectDefined(templates.find((template) => template.selectionType === SelectionType.RANDOM_DRAW), 'the random-draw template');

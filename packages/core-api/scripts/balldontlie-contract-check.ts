@@ -81,17 +81,17 @@ async function checkSpec(league: League): Promise<boolean> {
  * check runs without a database, so it names them here; a league the migration adds is added too.
  */
 const BALLDONTLIE_CONTRACT_CHECK_LEAGUES = [
-  { code: 'pga', sport: Sport.GOLF },
-  { code: 'nfl', sport: Sport.AMERICAN_FOOTBALL },
-  { code: 'ncaaf', sport: Sport.AMERICAN_FOOTBALL },
-  { code: 'nba', sport: Sport.BASKETBALL },
-  { code: 'ncaab', sport: Sport.BASKETBALL },
-  { code: 'ncaaw', sport: Sport.BASKETBALL },
-  { code: 'wnba', sport: Sport.BASKETBALL },
-  { code: 'nhl', sport: Sport.HOCKEY },
-  { code: 'mlb', sport: Sport.BASEBALL },
-  { code: 'epl', sport: Sport.SOCCER },
-  { code: 'worldcup', sport: Sport.SOCCER },
+  { code: 'pga', sport: Sport.GOLF, name: 'PGA TOUR' },
+  { code: 'nfl', sport: Sport.FOOTBALL, name: 'NFL' },
+  { code: 'ncaaf', sport: Sport.FOOTBALL, name: 'College Football' },
+  { code: 'nba', sport: Sport.BASKETBALL, name: 'NBA' },
+  { code: 'ncaab', sport: Sport.BASKETBALL, name: 'NCAA Men\'s Basketball' },
+  { code: 'ncaaw', sport: Sport.BASKETBALL, name: 'NCAA Women\'s Basketball' },
+  { code: 'wnba', sport: Sport.BASKETBALL, name: 'WNBA' },
+  { code: 'nhl', sport: Sport.HOCKEY, name: 'NHL' },
+  { code: 'mlb', sport: Sport.BASEBALL, name: 'MLB' },
+  { code: 'epl', sport: Sport.SOCCER, name: 'Premier League' },
+  { code: 'worldcup', sport: Sport.SOCCER, name: 'FIFA World Cup' },
 ] as const;
 
 async function checkLiveApi(apiKey: string): Promise<boolean> {
@@ -101,22 +101,19 @@ async function checkLiveApi(apiKey: string): Promise<boolean> {
     // Every league the adapter reads, as the seeded Provider rows list them.
     leagues: BALLDONTLIE_CONTRACT_CHECK_LEAGUES,
   });
+  const year = new Date().getUTCFullYear();
+  const thisYear = { from: new Date(Date.UTC(year, 0, 1)), to: new Date(Date.UTC(year, 11, 31)) };
+  // One events read per league, by its code (#2005), and one participants read per sport.
+  const sports = [...new Set(BALLDONTLIE_CONTRACT_CHECK_LEAGUES.map((league) => league.sport))];
   const checks: Array<[string, () => Promise<string>]> = [
-    ['this season\'s tournaments', async () => {
-      const year = new Date().getUTCFullYear();
-      const events = await adapter.getUpcomingEvents(Sport.GOLF, { from: new Date(Date.UTC(year, 0, 1)), to: new Date(Date.UTC(year, 11, 31)) });
-      return `${String(events.length)} tournaments`;
-    }],
-    ['this season\'s NFL events and the last and next College Football Playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.AMERICAN_FOOTBALL)).length)} weeks, postseasons and playoffs`],
-    ['NFL and college football teams', async () => `${String((await adapter.getParticipants(Sport.AMERICAN_FOOTBALL)).length)} teams`],
-    ['the last and next NCAA men\'s and women\'s tournaments and NBA and WNBA playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.BASKETBALL)).length)} tournaments and playoffs`],
-    ['NBA, WNBA and Division I basketball teams, men\'s and women\'s', async () => `${String((await adapter.getParticipants(Sport.BASKETBALL)).length)} teams`],
-    ['Premier League matchweeks and the current World Cup bracket', async () => `${String((await adapter.getUpcomingEvents(Sport.SOCCER)).length)} events`],
-    ['Premier League teams and World Cup nations', async () => `${String((await adapter.getParticipants(Sport.SOCCER)).length)} teams`],
-    ['the last and next NHL playoffs', async () => `${String((await adapter.getUpcomingEvents(Sport.HOCKEY)).length)} postseasons`],
-    ['NHL teams', async () => `${String((await adapter.getParticipants(Sport.HOCKEY)).length)} teams`],
-    ['the last and next MLB postseasons', async () => `${String((await adapter.getUpcomingEvents(Sport.BASEBALL)).length)} postseasons`],
-    ['MLB teams', async () => `${String((await adapter.getParticipants(Sport.BASEBALL)).length)} teams`],
+    ...BALLDONTLIE_CONTRACT_CHECK_LEAGUES.map((league): [string, () => Promise<string>] => [
+      `${league.name} events this year`,
+      async () => `${String((await adapter.getUpcomingEvents(league.sport, thisYear, { providerLeagueCode: league.code })).length)} events`,
+    ]),
+    ...sports.map((sport): [string, () => Promise<string>] => [
+      `${sport} participants`,
+      async () => `${String((await adapter.getParticipants(sport)).length)} participants`,
+    ]),
   ];
   const tournamentId = values.tournament;
   if (tournamentId) {

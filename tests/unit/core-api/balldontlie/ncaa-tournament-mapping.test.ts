@@ -62,7 +62,11 @@ describe('an NCAA men\'s tournament as an event', () => {
       rounds: 6,
       participantCount: 68,
       fieldLocked: true,
-      metadata: { tour: NCAA_MEN.tour, season: 2025 },
+      providerSlots: [
+        { code: 'POST:1', startsAt: new Date('2026-03-17T23:40:00.000Z'), endsAt: new Date('2026-03-17T23:40:00.000Z') },
+        { code: 'POST:2', startsAt: new Date('2026-03-19T16:15:00.000Z'), endsAt: new Date('2026-03-19T19:00:00.000Z') },
+        { code: 'POST:7', startsAt: new Date('2026-04-07T01:20:00.000Z'), endsAt: new Date('2026-04-07T01:20:00.000Z') },
+      ],
     });
   });
 
@@ -98,7 +102,7 @@ describe('NCAA men\'s basketball teams', () => {
       sport: Sport.BASKETBALL,
       name: 'Duke Blue Devils',
       active: true,
-      metadata: { tour: 'NCAAM', abbreviation: 'DUKE' },
+      metadata: { abbreviation: 'DUKE' },
     });
   });
 
@@ -110,11 +114,11 @@ describe('NCAA men\'s basketball teams', () => {
   it('lists the bracket\'s decided teams once each, each with its seed, leaving out both First Four teams', () => {
     const field = toNcaaFieldParticipants(NCAA_MEN, bracket2025);
     expect(field.map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-      ['150', 'Duke Blue Devils', { tour: 'NCAAM', seed: 1 }],
-      ['2561', 'Siena Saints', { tour: 'NCAAM', seed: 16 }],
-      ['194', 'Ohio State Buckeyes', { tour: 'NCAAM', seed: 8 }],
-      ['2628', 'TCU Horned Frogs', { tour: 'NCAAM', seed: 9 }],
-      ['57', 'Florida Gators', { tour: 'NCAAM', seed: 1 }],
+      ['150', 'Duke Blue Devils', { seed: 1 }],
+      ['2561', 'Siena Saints', { seed: 16 }],
+      ['194', 'Ohio State Buckeyes', { seed: 8 }],
+      ['2628', 'TCU Horned Frogs', { seed: 9 }],
+      ['57', 'Florida Gators', { seed: 1 }],
     ]);
   });
 
@@ -131,7 +135,7 @@ describe('NCAA men\'s basketball teams', () => {
   it('names no team for a side still to be decided, and takes the short name or no seed when that is all the bracket gives', () => {
     const tbdGame: NcaaBracketGame = { ...halfDecided2026, home_team: { id: 9, name: 'Wildcats', full_name: null, seed: null } };
     expect(toNcaaFieldParticipants(NCAA_MEN, [tbdGame, championship2026]).map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-      ['9', 'Wildcats', { tour: 'NCAAM' }],
+      ['9', 'Wildcats', {}],
     ]);
   });
 
@@ -201,7 +205,7 @@ describe('NCAA men\'s tournament game scores', () => {
 });
 
 describe('the NCAA women\'s tournament, whose bracket numbers the First Four round 0 and the championship round 6', () => {
-  it('is an event of its own, six rounds long, carrying the women\'s tour and complete once its round 6 championship is final', () => {
+  it('is an event of its own, six rounds long, and complete once its round 6 championship is final', () => {
     expect(toNcaaTournamentEvent(WOMENS_2025, womens2025, 64)).toEqual({
       externalId: 'ncaaw-2025-tournament',
       providerId: 'balldontlie',
@@ -213,7 +217,11 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
       rounds: 6,
       participantCount: 64,
       fieldLocked: true,
-      metadata: { tour: 'NCAAW', season: 2025 },
+      providerSlots: [
+        { code: 'POST:0', startsAt: new Date('2026-03-18T23:00:00.000Z'), endsAt: new Date('2026-03-18T23:00:00.000Z') },
+        { code: 'POST:1', startsAt: new Date('2026-03-20T19:00:00.000Z'), endsAt: new Date('2026-03-20T21:30:00.000Z') },
+        { code: 'POST:6', startsAt: new Date('2026-04-05T19:00:00.000Z'), endsAt: new Date('2026-04-05T19:00:00.000Z') },
+      ],
     });
   });
 
@@ -224,16 +232,16 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
 
   it('lists a women\'s team under the feed\'s raw id with the women\'s tour, apart from the men\'s team of the same school', () => {
     const [, duke] = ncaaTeamListSchema.parse(readBalldontlieFixture('ncaaw', 'teams.json')).data;
-    expect(toNcaaTeamParticipant(NCAA_WOMEN, duke)).toMatchObject({ externalId: '150', name: 'Duke Blue Devils', metadata: { tour: 'NCAAW', abbreviation: 'DUKE' } });
+    expect(toNcaaTeamParticipant(NCAA_WOMEN, duke)).toMatchObject({ externalId: '150', name: 'Duke Blue Devils', metadata: { abbreviation: 'DUKE' } });
   });
 
   it('leaves out both round 0 First Four teams from the field, keeping every round 1 team with its seed', () => {
     expect(toNcaaFieldParticipants(NCAA_WOMEN, womens2025).map((team) => [team.externalId, team.metadata])).toEqual([
-      ['41', { tour: 'NCAAW', seed: 1 }],
-      ['2636', { tour: 'NCAAW', seed: 16 }],
-      ['150', { tour: 'NCAAW', seed: 3 }],
-      ['2655', { tour: 'NCAAW', seed: 14 }],
-      ['2579', { tour: 'NCAAW', seed: 1 }],
+      ['41', { seed: 1 }],
+      ['2636', { seed: 16 }],
+      ['150', { seed: 3 }],
+      ['2655', { seed: 14 }],
+      ['2579', { seed: 1 }],
     ]);
   });
 
@@ -261,7 +269,7 @@ describe('an NCAA men\'s bracket from the vendor\'s (#1728)', () => {
 
   it('gives each First Four pairing a play-in place by region and seed, named for its two teams, while its game is unplayed', () => {
     expect(toNcaaPlayInPlaces(SEASON_2025, whole)).toEqual([
-      expect.objectContaining({ externalId: 'ncaab-2025-east-11-seed-play-in', name: 'School 111 Team 111 / School 151 Team 151', metadata: { tour: 'NCAAM', seed: 11, playInPlace: true } }),
+      expect.objectContaining({ externalId: 'ncaab-2025-east-11-seed-play-in', name: 'School 111 Team 111 / School 151 Team 151', metadata: { seed: 11, playInPlace: true } }),
       expect.objectContaining({ externalId: 'ncaab-2025-south-16-seed-play-in', metadata: expect.objectContaining({ seed: 16, playInPlace: true }) as unknown }),
     ]);
     expect(toNcaaPlayInPlaces(SEASON_2025, firstFourPlayed)).toEqual([]);

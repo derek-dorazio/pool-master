@@ -76,6 +76,7 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     const firstKeys = [...claim.firstTemplateKeys];
     return this.prisma.$transaction(async (tx) => {
       // SKIP LOCKED: two senders (prod runs two tasks) never claim the same row.
+      // poolmaster-allow-raw-sql: claims due rows with FOR UPDATE SKIP LOCKED: Prisma can't lock rows or skip locked ones
       const due = await tx.$queryRaw<{ id: string }[]>`
         SELECT "id" FROM "email_messages"
         WHERE "status" IN ('QUEUED', 'SENDING') AND "next_attempt_at" <= ${now}

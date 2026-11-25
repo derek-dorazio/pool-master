@@ -4,17 +4,17 @@
  * JPG or PNG file, and email links to it by absolute URL on the web host. One copy of each path,
  * so the web app's render script, the email renderers and the event page cannot disagree.
  */
-import type { SelectionType, Sport } from './enums';
-import { sportPathSegment } from './sports/registry';
+import type { SelectionType } from './enums';
 
 /**
  * A sport's picture at the top of an email about one of its events, and of its event pages, 1200
  * by 480: a generic licensed photo where the sport has one (its source note sits beside it),
  * otherwise its How to Play scene rendered to JPG, so no email or event page goes without one.
- * The path stays under `/email/` because emails already sent link to it.
+ * The path stays under `/email/` because emails already sent link to it. The file is named by the
+ * sport's stored URL segment (`football.jpg`).
  */
-export function sportHeaderImagePath(sport: Sport): string {
-  return `/email/sports/${sportPathSegment(sport)}.jpg`;
+export function sportHeaderImagePath(sportUrlSegment: string): string {
+  return `/email/sports/${sportUrlSegment}.jpg`;
 }
 
 /** A way to play's How to Play picture, rendered to PNG at twice its 160 by 100 size. */

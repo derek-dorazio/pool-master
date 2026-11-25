@@ -1,6 +1,6 @@
 import { expect, jest } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
-import { BackgroundJobType, MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SlotWindowStatus, Sport, SportEventStatus, type SportEvent, type SportLeague } from '@poolmaster/shared/domain';
 import type { ContestRepository } from '@poolmaster/shared/db';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
@@ -12,7 +12,6 @@ import { SportLeaguePageService } from '../../../packages/core-api/src/modules/s
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
-import { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -30,6 +29,7 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
 import { fakeLogger } from '../../support/fake-logger';
+import { expectDefined } from '../../support/expect-defined';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
@@ -45,7 +45,7 @@ const NOW = new Date('2026-01-15T12:00:00.000Z');
 /** The leagues' notices among the jobs the store's writes carried, leaving out the boards' rebuilds. */
 const noticeJobs = (store: InMemorySportEvents) => store.backgroundJobs.filter((job) => job.type === BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS);
 
-function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, domainEvents?: RecordingDomainEvents, logger?: ReturnType<typeof fakeLogger>) {
+function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice, domainEvents?: RecordingDomainEvents, logger?: ReturnType<typeof fakeLogger>, seasons?: (store: InMemorySportEvents) => ReturnType<InMemorySportEvents['seasonRepo']>) {
   const store = new InMemorySportEvents();
   const reminderRechecks = jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined);
   const sport = store.addSport(sportName);
@@ -65,9 +65,9 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
   );
   const service = new SportEventService({
     sportEvents,
-    eventSeries: store.eventSeriesRepo(),
     sportLeagues: store.sportLeagueRepo(),
     sports: store.sportRepo(),
+    seasons: seasons?.(store) ?? store.seasonRepo(),
     rounds: new SportEventRoundService({ rounds: store.roundRepo() }),
     tiers: new SportEventTierService({ sportEvents, tiers: store.tierRepo(), valuations: store.valuationRepo(), field: store.fieldRepo(), participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() }),
     bracket: new SportEventBracketService({ domainEvents: testDomainEvents(),
@@ -99,221 +99,524 @@ const MANUAL_INPUT = {
   startDate: new Date('2026-06-04T12:00:00.000Z'),
 };
 
-describe('SportEventService.createEvent', () => {
-  it('creates a golf event with the manual identity, as a DRAFT, no provider data, four rounds and six tiers', async () => {
-    const { store, service, sportLeague } = setup();
+/** What `setup` gives that an event made by a test needs. */
+type EventContext = Pick<ReturnType<typeof setup>, 'store' | 'service' | 'sportLeague'>;
 
-    const created = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
+/**
+ * An event with no Season slots yet, as a synced golf event has until slice 12 matches them: its
+ * dates are its own, and an edit can move them. Made through createEvent on a test slot, then
+ * unlinked from it; a round count below its league's default trims the rounds the create scheduled.
+ */
+async function slotlessEvent({ store, service, sportLeague }: EventContext, input: { name?: string; startDate?: Date; rounds?: number } = {}) {
+  const startDate = input.startDate ?? MANUAL_INPUT.startDate;
+  const created = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, startDate), name: input.name ?? MANUAL_INPUT.name });
+  const eventId = created.event.id;
+  store.slotsByEvent.delete(eventId);
+  const { rounds } = input;
+  if (rounds !== undefined) {
+    store.roundRows = store.roundRows.filter((round) => round.sportEventId !== eventId || round.roundNumber <= rounds);
+    await store.sportEventRepo().update(eventId, { rounds });
+  }
+  return { ...created, event: expectDefined(await store.sportEventRepo().findById(eventId)) };
+}
+
+/** The provider the slate tests import from: BALLDONTLIE's adapter id, the only provider with a row. */
+const FEED = 'balldontlie';
+
+/** The provider's id for an event, from its one mapping. */
+function feedIdOf(event: SportEvent): string | undefined {
+  return event.providerMappings[0]?.externalId;
+}
+
+describe('SportEventService.createEvent', () => {
+  it('creates a test event on a test slot as a DRAFT with no provider ids, its league\'s four golf rounds, six tiers and the slot\'s dates', async () => {
+    const { store, service, sportLeague } = setup();
+    const endsAt = new Date('2026-06-07T23:00:00.000Z');
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { endsAt });
+
+    const created = await service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name });
 
     expect(created.event).toMatchObject({
       sport: Sport.GOLF,
-      providerId: MANUAL_ADMIN_PROVIDER_ID,
+      providerMappings: [],
       status: SportEventStatus.DRAFT,
-      syncScope: 'NONE',
       rounds: 4,
+      startDate: MANUAL_INPUT.startDate,
+      endDate: endsAt,
       sportLeagueId: sportLeague.id,
       sportLeagueSeasonId: IN_MEMORY_SEASON_ID,
       championshipYear: 2026,
     });
-    expect(created.event.externalId).toMatch(/^manual-/);
+    expect(created.slots.map((slot) => slot.id)).toEqual([seasonSlotId]);
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
     // The summary is read after the rounds and tiers exist, so its counts include them.
     expect(created.tierCount).toBe(6);
   });
 
-  it('resolves the event to its sport league\'s series by name, creating the series once', async () => {
+  it('puts each event in its sport league\'s current Season, the league\'s own, so a year later the same event goes in the new Season', async () => {
     const { store, service, sportLeague } = setup();
 
-    const first = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
+    const first = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
     store.seasonYears.set('season-2027', 2027);
     sportLeague.currentSeasonId = 'season-2027';
-    const second = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 2 });
+    const second = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
 
-    expect(second.event.eventSeriesId).toBe(first.event.eventSeriesId);
-    expect(second.event.sportLeagueSeasonId).toBe('season-2027');
-    expect(store.eventSeriesRows).toHaveLength(1);
+    expect([first.event.sportLeagueId, second.event.sportLeagueId]).toEqual([sportLeague.id, sportLeague.id]);
+    expect([first.event.sportLeagueSeasonId, second.event.sportLeagueSeasonId]).toEqual([IN_MEMORY_SEASON_ID, 'season-2027']);
   });
 
-  it('refuses an event for a sport league with no current Season with 422 SPORT_LEAGUE_HAS_NO_SEASON, creating nothing', async () => {
+  it('refuses a slot the sync keeps with 422 SEASON_SLOT_NOT_TEST, creating nothing', async () => {
     const { store, service, sportLeague } = setup();
-    sportLeague.currentSeasonId = null;
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { isTestData: false, label: null });
 
-    await expect(service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_HAS_NO_SEASON', statusCode: 422 });
+    await expect(service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_TEST', statusCode: 422 });
     expect(store.events).toHaveLength(0);
   });
 
-  // plans/147 decision 5 — one edition of a series per year. The store raises the database's
-  // unique violation; the service turns it into a 409 rather than a 500.
-  it('refuses a second edition of a series in one Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
+  it('refuses a test slot outside its league\'s current Season with 422 SEASON_SLOT_NOT_CURRENT, creating nothing', async () => {
     const { store, service, sportLeague } = setup();
-    await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { sportLeagueSeasonId: 'season-2025' });
 
-    await expect(service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409, message: `"${MANUAL_INPUT.name}" already has an edition in this Season.` });
+    await expect(service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_CURRENT', statusCode: 422 });
+    expect(store.events).toHaveLength(0);
+  });
+
+  it('refuses a test slot that already has an event with 409 SEASON_SLOT_TAKEN, creating nothing more', async () => {
+    const { store, service, sportLeague } = setup();
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate);
+    await service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name });
+
+    await expect(service.createEvent({ seasonSlotId, name: 'Another Open' }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_TAKEN', statusCode: 409 });
     expect(store.events).toHaveLength(1);
   });
 
-  it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
+  it('refuses the second of two creates racing for one slot with 409 SEASON_SLOT_TAKEN when the database\'s slot key raises', async () => {
+    // The other create wrote its slot row after this one read the slot as free.
+    const { store, service, sportLeague } = setup(Sport.GOLF, undefined, undefined, undefined, (world) => ({
+      ...world.seasonRepo(),
+      findSlot: async (id) => {
+        const { sportLeagueId, sportLeagueSeasonId, ...slot } = expectDefined(world.seasonSlots.find((each) => each.id === id));
+        return { slot, sportLeagueId, sportLeagueSeasonId, sportEventId: null };
+      },
+    }));
+    const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate);
+    store.slotsByEvent.set('racing-event', [expectDefined(store.seasonSlots.at(0))]);
+
+    await expect(service.createEvent({ seasonSlotId, name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_TAKEN', statusCode: 409 });
+  });
+
+  it('fails with 404 SEASON_SLOT_NOT_FOUND for an unknown slot', async () => {
     const { service } = setup();
 
-    await expect(service.createEvent({ sportLeagueId: 'missing', ...MANUAL_INPUT }))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+    await expect(service.createEvent({ seasonSlotId: 'missing', name: MANUAL_INPUT.name }))
+      .rejects.toMatchObject({ code: 'SEASON_SLOT_NOT_FOUND', statusCode: 404 });
   });
 });
 
-describe('SportEventService.createEventFromProviderEvent', () => {
-  const providerEvent = {
-    name: 'Provider Classic',
-    venue: 'Links',
-    startDate: new Date('2026-07-16T12:00:00.000Z'),
-    endDate: new Date('2026-07-19T12:00:00.000Z'),
-  };
-
-  it('creates the event as a DRAFT linked to its provider for scores, with the schedule the provider dates imply', async () => {
+describe('SportEventService.requireTestEvent (#2074)', () => {
+  it('answers a test event, one covering a test slot, so the admin result routes may write to it', async () => {
     const { store, service, sportLeague } = setup();
+    const created = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
 
-    const created = await service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, providerId: 'feed', externalId: 'ev-1', providerEvent });
-
-    expect(created.event).toMatchObject({
-      providerId: 'feed',
-      externalId: 'ev-1',
-      syncScope: 'SCORES_ONLY',
-      status: SportEventStatus.DRAFT,
-      name: 'Provider Classic',
-      rounds: 4,
-    });
-    expect(store.roundRows.map((round) => round.scheduledDate.toISOString().slice(0, 10)))
-      .toEqual(['2026-07-16', '2026-07-17', '2026-07-18', '2026-07-19']);
+    await expect(service.requireTestEvent(created.event.id)).resolves.toBeUndefined();
   });
 
-  it('uses sequential days from the start when a round count is given', async () => {
-    const { store, service, sportLeague } = setup();
+  it('refuses an event covering only slots the sync keeps, or no slot, with 409 SPORT_EVENT_NOT_TEST_DATA', async () => {
+    const context = setup();
+    const { store, service, sportLeague } = context;
+    const synced = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
+    store.slotsByEvent.set(synced.event.id, [{ ...expectDefined(store.seasonSlots.at(0)), isTestData: false }]);
+    const slotless = await slotlessEvent(context, { name: 'Slotless Open' });
 
-    const created = await service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, providerId: 'feed', externalId: 'ev-1', rounds: 2, providerEvent });
-
-    expect(created.event.rounds).toBe(2);
-    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2]);
+    for (const eventId of [synced.event.id, slotless.event.id]) {
+      await expect(service.requireTestEvent(eventId)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_TEST_DATA', statusCode: 409 });
+    }
   });
 
-  it('refuses a provider identity another event already holds with 409 EXTERNAL_EVENT_ALREADY_LINKED', async () => {
-    const { store, service, sportLeague } = setup();
-    store.addEvent({ providerId: 'feed', externalId: 'ev-1' });
+  it('answers 404 EVENT_NOT_FOUND for an unknown event', async () => {
+    const { service } = setup();
 
-    await expect(service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, providerId: 'feed', externalId: 'ev-1', providerEvent }))
-      .rejects.toMatchObject({ code: 'EXTERNAL_EVENT_ALREADY_LINKED', statusCode: 409 });
+    await expect(service.requireTestEvent('missing')).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('SportEventService.updateEvent on an event with Season slots', () => {
+  it('refuses a new start or end with 422 EVENT_DATES_FROM_SLOTS, since its dates are its slots\'', async () => {
+    const { store, service, sportLeague } = setup();
+    const { event } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
+
+    await expect(service.updateEvent(event.id, { startDate: new Date('2026-06-11T12:00:00.000Z') }, TELL))
+      .rejects.toMatchObject({ code: 'EVENT_DATES_FROM_SLOTS', statusCode: 422 });
+    await expect(service.updateEvent(event.id, { endDate: null }, TELL))
+      .rejects.toMatchObject({ code: 'EVENT_DATES_FROM_SLOTS', statusCode: 422 });
+    expect(expectDefined(await store.sportEventRepo().findById(event.id)).startDate).toEqual(MANUAL_INPUT.startDate);
   });
 
-  it('refuses a provider event whose start has already passed with 409 SPORT_EVENT_ALREADY_STARTED, creating nothing', async () => {
+  it('still takes an edit that moves no date, such as its name', async () => {
     const { store, service, sportLeague } = setup();
-    const started = { ...providerEvent, startDate: new Date(NOW.getTime() - 60 * 1000), endDate: new Date(NOW.getTime() + 3 * 24 * 60 * 60 * 1000) };
+    const { event } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
 
-    await expect(service.createEventFromProviderEvent({ sportLeagueId: sportLeague.id, providerId: 'feed', externalId: 'ev-1', providerEvent: started }))
-      .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 409 });
-    expect(await store.sportEventRepo().findByProviderRef('feed', 'ev-1')).toBeNull();
+    const edited = await service.updateEvent(event.id, { name: 'Renamed Open' }, TELL);
+
+    expect(edited.event.name).toBe('Renamed Open');
   });
+});
+
+/** A provider event's one place, by `code`, its games spanning its dates. */
+function playOf(code: string, startDate: Date, endDate: Date | null) {
+  return { code, startsAt: startDate, endsAt: endDate ?? startDate };
+}
+
+/** A provider event whose games are all in one place, coded by its own id. */
+function providerEvent(externalId: string, name: string, venue: string | null, startDate: Date, endDate: Date | null) {
+  return { externalId, name, venue, startDate, endDate, providerSlots: [playOf(externalId, startDate, endDate)] };
+}
+
+/** A synced slot for each provider event, mapped by its code and listed by a template. */
+function slotsFor(store: InMemorySportEvents, sportLeague: SportLeague, events: ReadonlyArray<{ providerSlots: ReadonlyArray<{ code: string }> }>): string[] {
+  return events.flatMap((event) => event.providerSlots.map((play) => store.addSyncSlot(sportLeague, play.code)));
+}
+
+/** The import's input for the in-memory league's Season. */
+const importOf = (sportLeague: SportLeague, providerEvents: ReadonlyArray<Parameters<SportEventService['importProviderSeason']>[0]['providerEvents'][number]>) => ({
+  sportLeagueId: sportLeague.id,
+  sportLeagueSeasonId: IN_MEMORY_SEASON_ID,
+  providerId: FEED,
+  sportLeagueProviderMappingId: 'provider-mapping',
+  providerEvents,
 });
 
 // #385: a tour's provider slate for a Season, imported in one action and safe to run again.
 describe('SportEventService.importProviderSeason', () => {
   const slate = [
-    { externalId: 'pga-2026-a', name: 'Alpha Open', venue: 'A Links', startDate: new Date('2026-03-05T12:00:00.000Z'), endDate: new Date('2026-03-08T23:00:00.000Z') },
-    { externalId: 'pga-2026-b', name: 'Bravo Classic', venue: null, startDate: new Date('2026-04-09T12:00:00.000Z'), endDate: new Date('2026-04-12T23:00:00.000Z') },
-    { externalId: 'pga-2026-c', name: 'Harbour Open', venue: null, startDate: new Date('2026-06-04T12:00:00.000Z'), endDate: new Date('2026-06-07T23:00:00.000Z') },
+    providerEvent('pga-2026-a', 'Alpha Open', 'A Links', new Date('2026-03-05T12:00:00.000Z'), new Date('2026-03-08T23:00:00.000Z')),
+    providerEvent('pga-2026-b', 'Bravo Classic', null, new Date('2026-04-09T12:00:00.000Z'), new Date('2026-04-12T23:00:00.000Z')),
+    providerEvent('pga-2026-c', 'Harbour Open', null, new Date('2026-06-04T12:00:00.000Z'), new Date('2026-06-07T23:00:00.000Z')),
   ];
 
   it('creates every provider event the tour lacks, each linked to its provider event for scores with four rounds', async () => {
-    const { service, sportLeague } = setup();
+    const { store, service, sportLeague } = setup();
+    slotsFor(store, sportLeague, slate);
 
-    const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: slate });
+    const result = await service.importProviderSeason(importOf(sportLeague, slate));
 
     expect(result.skipped).toEqual([]);
-    expect(result.created.map(({ event }) => ({ externalId: event.externalId, syncScope: event.syncScope, sportLeagueSeasonId: event.sportLeagueSeasonId, rounds: event.rounds })))
-      .toEqual(slate.map(({ externalId }) => ({ externalId, syncScope: 'SCORES_ONLY', sportLeagueSeasonId: IN_MEMORY_SEASON_ID, rounds: 4 })));
+    expect(result.unmatched).toEqual([]);
+    expect(result.created.map(({ event }) => ({ externalId: feedIdOf(event), sportLeagueSeasonId: event.sportLeagueSeasonId, rounds: event.rounds })))
+      .toEqual(slate.map(({ externalId }) => ({ externalId, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, rounds: 4 })));
   });
 
-  it('skips an event already linked to the provider event and a series that already has an edition that Season, creating only the rest', async () => {
+  it('puts each created event on the Season slot its code maps to, and gives the slot its games\' dates', async () => {
+    const { store, service, sportLeague, sportEvents } = setup();
+    const [slotId] = slotsFor(store, sportLeague, [slate[0]]);
+
+    const { created } = await service.importProviderSeason(importOf(sportLeague, [slate[0]]));
+
+    const eventId = created[0].event.id;
+    const slots = expectDefined((await sportEvents.findSlots([eventId])).get(eventId));
+    expect(slots.map((slot) => ({ id: slot.id, startsAt: slot.startsAt, endsAt: slot.endsAt })))
+      .toEqual([{ id: slotId, startsAt: slate[0].startDate, endsAt: slate[0].endDate }]);
+    expect(created[0].event).toEqual(expect.objectContaining({ startDate: slate[0].startDate, endDate: slate[0].endDate }));
+  });
+
+  it('takes an event\'s dates from the slots its games matched, leaving out games whose code no mapping includes', async () => {
     const { store, service, sportLeague } = setup();
-    store.addEvent({ providerId: 'feed', externalId: 'pga-2026-a' });
-    await service.createEvent({ ...MANUAL_INPUT, sportLeagueId: sportLeague.id });
+    const playoffs = {
+      ...providerEvent('nfl-2026-postseason', 'NFL Playoffs', null, new Date('2026-03-07T18:00:00.000Z'), new Date('2026-04-02T18:00:00.000Z')),
+      providerSlots: [
+        playOf('POST:1', new Date('2026-03-07T18:00:00.000Z'), new Date('2026-03-08T18:00:00.000Z')),
+        playOf('POST:4', new Date('2026-04-02T18:00:00.000Z'), new Date('2026-04-02T18:00:00.000Z')),
+      ],
+    };
+    store.addSyncSlot(sportLeague, 'POST:1');
 
-    const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: slate });
+    const result = await service.importProviderSeason(importOf(sportLeague, [playoffs]));
 
-    expect(result.created.map(({ event }) => event.externalId)).toEqual(['pga-2026-b']);
-    expect(result.skipped).toEqual([
-      { externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'ALREADY_LINKED' },
-      { externalId: 'pga-2026-c', name: 'Harbour Open', reason: 'EDITION_EXISTS' },
-    ]);
+    expect(result.created[0].event).toEqual(expect.objectContaining({ startDate: new Date('2026-03-07T18:00:00.000Z'), endDate: new Date('2026-03-08T18:00:00.000Z') }));
+    expect(result.unmatched).toEqual([{ code: 'POST:4', eventName: 'NFL Playoffs' }]);
+  });
+
+  it('creates no event for a provider event whose code no mapping includes, and reports the code once however many events carry it', async () => {
+    const { service, sportLeague } = setup();
+    const preseason = [
+      { ...providerEvent('nfl-2026-pre-1', 'Preseason Week 1', null, slate[0].startDate, slate[0].endDate), providerSlots: [playOf('PRE:1', slate[0].startDate, slate[0].endDate)] },
+      { ...providerEvent('nfl-2026-pre-1b', 'Preseason Week 1 again', null, slate[1].startDate, slate[1].endDate), providerSlots: [playOf('PRE:1', slate[1].startDate, slate[1].endDate)] },
+    ];
+
+    const result = await service.importProviderSeason(importOf(sportLeague, preseason));
+
+    expect(result.created).toEqual([]);
+    expect(result.skipped.map((row) => row.reason)).toEqual(['NO_SLOT', 'NO_SLOT']);
+    expect(result.unmatched).toEqual([{ code: 'PRE:1', eventName: 'Preseason Week 1' }]);
+  });
+
+  it('creates no event for a slot no contest template lists, though the slot still takes its games\' dates (ADR 0011)', async () => {
+    const { store, service, sportLeague } = setup();
+    const slotId = store.addSyncSlot(sportLeague, slate[0].externalId, { covered: false });
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [slate[0]]));
+
+    expect(result.created).toEqual([]);
+    expect(result.skipped).toEqual([{ externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'NO_TEMPLATE' }]);
+    expect(store.seasonSlots.find((slot) => slot.id === slotId)).toEqual(expect.objectContaining({ startsAt: slate[0].startDate, endsAt: slate[0].endDate }));
+  });
+
+  it('creates no second event on a slot another event already plays', async () => {
+    const { store, service, sportLeague } = setup();
+    slotsFor(store, sportLeague, [slate[0]]);
+    const twin = { ...slate[0], externalId: 'pga-2026-a-twin' };
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [slate[0], twin]));
+
+    expect(result.created.map(({ event }) => feedIdOf(event))).toEqual(['pga-2026-a']);
+    expect(result.skipped).toEqual([{ externalId: 'pga-2026-a-twin', name: 'Alpha Open', reason: 'SLOT_TAKEN' }]);
+  });
+
+  it('gives an event already linked the slots its games reach since, such as a playoff\'s later rounds', async () => {
+    const { store, service, sportLeague, sportEvents } = setup();
+    const [firstRound, secondRound] = [store.addSyncSlot(sportLeague, 'POST:1'), store.addSyncSlot(sportLeague, 'POST:2')];
+    const roundOne = playOf('POST:1', slate[0].startDate, slate[0].startDate);
+    const playoffs = { ...providerEvent('nba-2026-postseason', 'NBA Playoffs', null, slate[0].startDate, slate[0].startDate), providerSlots: [roundOne] };
+    const { created } = await service.importProviderSeason(importOf(sportLeague, [playoffs]));
+    const eventId = created[0].event.id;
+
+    const again = await service.importProviderSeason(importOf(sportLeague, [{ ...playoffs, providerSlots: [roundOne, playOf('POST:2', slate[1].startDate, slate[1].endDate)] }]));
+
+    expect(again.skipped.map((row) => row.reason)).toEqual(['ALREADY_LINKED']);
+    expect(expectDefined((await sportEvents.findSlots([eventId])).get(eventId)).map((slot) => slot.id)).toEqual([firstRound, secondRound]);
+    expect(store.seasonSlots.find((slot) => slot.id === secondRound)).toEqual(expect.objectContaining({ startsAt: slate[1].startDate, endsAt: slate[1].endDate }));
+  });
+
+  it('skips an event already linked to the provider event, and creates one whose name a hand-made event of the Season shares, telling events apart by feed id, never by name', async () => {
+    const { store, service, sportLeague } = setup();
+    slotsFor(store, sportLeague, slate);
+    store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-a' } });
+    await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, MANUAL_INPUT.startDate), name: MANUAL_INPUT.name });
+
+    const result = await service.importProviderSeason(importOf(sportLeague, slate));
+
+    expect(result.created.map(({ event }) => feedIdOf(event))).toEqual(['pga-2026-b', 'pga-2026-c']);
+    expect(result.skipped).toEqual([{ externalId: 'pga-2026-a', name: 'Alpha Open', reason: 'ALREADY_LINKED' }]);
   });
 
   it('creates the provider\'s event beside a "Test- " event the test data loaded with its name and dates, and leaves the test event as it was (#1850)', async () => {
-    const { service, sportLeague, sportEvents } = setup();
-    const { event: testEvent } = await service.createEvent({ sportLeagueId: sportLeague.id, name: 'Test- Alpha Open', startDate: slate[0].startDate });
+    const { store, service, sportLeague, sportEvents } = setup();
+    slotsFor(store, sportLeague, [slate[0]]);
+    const { event: testEvent } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, slate[0].startDate), name: 'Test- Alpha Open' });
     const before = await sportEvents.findById(testEvent.id);
 
-    const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: [slate[0]] });
+    const result = await service.importProviderSeason(importOf(sportLeague, [slate[0]]));
 
-    expect(result.created.map(({ event }) => ({ name: event.name, externalId: event.externalId }))).toEqual([{ name: 'Alpha Open', externalId: 'pga-2026-a' }]);
+    expect(result.created.map(({ event }) => ({ name: event.name, externalId: feedIdOf(event) }))).toEqual([{ name: 'Alpha Open', externalId: 'pga-2026-a' }]);
     expect(result.skipped).toEqual([]);
     expect(await sportEvents.findById(testEvent.id)).toEqual(before);
   });
 
   it('creates nothing on a second run, reporting every event as already linked', async () => {
-    const { service, sportLeague } = setup();
-    await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: slate });
+    const { store, service, sportLeague } = setup();
+    slotsFor(store, sportLeague, slate);
+    await service.importProviderSeason(importOf(sportLeague, slate));
 
-    const again = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: slate });
+    const again = await service.importProviderSeason(importOf(sportLeague, slate));
 
     expect(again.created).toEqual([]);
     expect(again.skipped.map((row) => row.reason)).toEqual(['ALREADY_LINKED', 'ALREADY_LINKED', 'ALREADY_LINKED']);
   });
 
   it('creates only the provider events that have not started, reporting each one that already started as skipped', async () => {
-    const { service, sportLeague } = setup();
-    const past = { externalId: 'pga-2026-past', name: 'Winter Open', venue: null, startDate: new Date('2026-01-08T12:00:00.000Z'), endDate: new Date('2026-01-11T23:00:00.000Z') };
-    const startingNow = { externalId: 'pga-2026-now', name: 'Noon Open', venue: null, startDate: NOW, endDate: new Date('2026-01-18T23:00:00.000Z') };
+    const { store, service, sportLeague } = setup();
+    const past = providerEvent('pga-2026-past', 'Winter Open', null, new Date('2026-01-08T12:00:00.000Z'), new Date('2026-01-11T23:00:00.000Z'));
+    const startingNow = providerEvent('pga-2026-now', 'Noon Open', null, NOW, new Date('2026-01-18T23:00:00.000Z'));
     const future = slate[0];
+    slotsFor(store, sportLeague, [past, startingNow, future]);
 
-    const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: [past, startingNow, future] });
+    const result = await service.importProviderSeason(importOf(sportLeague, [past, startingNow, future]));
 
-    expect(result.created.map(({ event }) => event.externalId)).toEqual(['pga-2026-a']);
+    expect(result.created.map(({ event }) => feedIdOf(event))).toEqual(['pga-2026-a']);
     expect(result.skipped).toEqual([
       { externalId: 'pga-2026-past', name: 'Winter Open', reason: 'ALREADY_STARTED' },
       { externalId: 'pga-2026-now', name: 'Noon Open', reason: 'ALREADY_STARTED' },
     ]);
   });
 
+  it('judges a start by the first game its slots hold, creating an event for a slate begun long before its slots\' games (#2012)', async () => {
+    const { store, service, sportLeague } = setup();
+    store.addSyncSlot(sportLeague, 'POST:1');
+    const seasonLong = {
+      ...providerEvent('ncaaf-2026-cfp', 'College Football Playoff', null, new Date('2026-01-03T18:00:00.000Z'), slate[0].endDate),
+      providerSlots: [
+        playOf('REG:1', new Date('2026-01-03T18:00:00.000Z'), new Date('2026-01-03T18:00:00.000Z')),
+        playOf('POST:1', slate[0].startDate, slate[0].endDate),
+      ],
+    };
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [seasonLong]));
+
+    expect(result.skipped).toEqual([]);
+    expect(result.created[0].event).toEqual(expect.objectContaining({ startDate: slate[0].startDate }));
+  });
+
+  it('places a game with no code in the window that holds it, confirms a tentative window and dates its slot only by a game between two seeds on the event\'s field, and names the date-window slots still needing dates (#2012)', async () => {
+    const { store, service, sportLeague } = setup();
+    const kickoff = slate[0].startDate;
+    const window = (status: SlotWindowStatus) => ({ startsAt: new Date(kickoff.getTime() - 60_000), endsAt: new Date(kickoff.getTime() + 60_000), status });
+    const firstRound = store.addWindowSlot(sportLeague, 'ROUND_OF_16', window(SlotWindowStatus.TENTATIVE));
+    store.addWindowSlot(sportLeague, 'FINAL', null);
+    const playoffOf = (...teams: string[][]) => ({
+      ...providerEvent('ncaaf-2026-cfp', 'College Football Playoff', null, kickoff, kickoff),
+      providerSlots: teams.map((pair) => ({ code: null, startsAt: kickoff, endsAt: kickoff, teams: pair })),
+    });
+    const slotOf = () => store.seasonSlots.find((slot) => slot.id === firstRound);
+
+    // Made before its seeds are placed: on the slot, but no game is the event's own yet.
+    const made = await service.importProviderSeason(importOf(sportLeague, [playoffOf(['1', '2'])]));
+    expect(made.created).toHaveLength(1);
+    expect(store.slotWindows.get(firstRound)?.status).toBe(SlotWindowStatus.TENTATIVE);
+    expect(slotOf()?.startsAt).toBeNull();
+    expect(made.slotsNeedingDates).toEqual(['ROUND_OF_16', 'FINAL']);
+
+    // Seeds placed: another bowl in the window, between unseeded schools, still confirms nothing.
+    const eventId = made.created[0].event.id;
+    for (const feedId of ['1', '2']) store.addToField(eventId, store.addParticipant(sportLeague.sportId, `Seed ${feedId}`, { externalId: feedId }).id);
+    store.addParticipant(sportLeague.sportId, 'Unseeded', { externalId: '9' });
+    const bowl = await service.importProviderSeason(importOf(sportLeague, [playoffOf(['9', '8'])]));
+    expect(store.slotWindows.get(firstRound)?.status).toBe(SlotWindowStatus.TENTATIVE);
+    expect(bowl.slotsNeedingDates).toEqual(['ROUND_OF_16', 'FINAL']);
+
+    // The game between the two seeds confirms the window and dates the slot.
+    const seeded = await service.importProviderSeason(importOf(sportLeague, [playoffOf(['9', '8'], ['1', '2'])]));
+    expect(store.slotWindows.get(firstRound)?.status).toBe(SlotWindowStatus.CONFIRMED);
+    expect(slotOf()?.startsAt).toEqual(kickoff);
+    expect(seeded.slotsNeedingDates).toEqual(['FINAL']);
+  });
+
+  it('names no slot needing dates for a Season with no slot placed by date window', async () => {
+    const { store, service, sportLeague } = setup();
+    slotsFor(store, sportLeague, slate);
+
+    expect((await service.importProviderSeason(importOf(sportLeague, slate))).slotsNeedingDates).toBeNull();
+  });
+
   it('reports a started provider event that is already linked as already linked, so the linked event keeps updating', async () => {
     const { store, service, sportLeague } = setup();
-    store.addEvent({ providerId: 'feed', externalId: 'pga-2026-past' });
-    const past = { externalId: 'pga-2026-past', name: 'Winter Open', venue: null, startDate: new Date('2026-01-08T12:00:00.000Z'), endDate: null };
+    store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-past' } });
+    const past = providerEvent('pga-2026-past', 'Winter Open', null, new Date('2026-01-08T12:00:00.000Z'), null);
 
-    const result = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: [past] });
+    const result = await service.importProviderSeason(importOf(sportLeague, [past]));
 
     expect(result.created).toEqual([]);
     expect(result.skipped).toEqual([{ externalId: 'pga-2026-past', name: 'Winter Open', reason: 'ALREADY_LINKED' }]);
   });
 });
 
+// #2011: an open phase's tournaments match their Season slot by name the first time, then by code.
+describe('SportEventService.importProviderSeason by tournament name', () => {
+  const masters = providerEvent('17', 'Masters Tournament 2027', 'Augusta National', new Date('2026-04-09T12:00:00.000Z'), new Date('2026-04-12T23:00:00.000Z'));
+
+  it('creates the Season slot of the one definition the tournament\'s name matches, links it to the tournament\'s code, and puts the new event on it', async () => {
+    const { store, service, sportLeague, sportEvents } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+    store.templateCoveredDefinitionIds.add('masters');
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    const created = store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters');
+    expect(created).toHaveLength(1);
+    expect(store.slotLinks.get(created[0].id)).toBe('17');
+    expect(result.unmatched).toEqual([]);
+    expect(result.unplacedNames).toEqual([]);
+    const eventId = result.created[0].event.id;
+    expect(expectDefined((await sportEvents.findSlots([eventId])).get(eventId)).map((slot) => slot.id)).toEqual([created[0].id]);
+  });
+
+  it('matches a linked tournament by its code on the next sync even after its name changed, creating no second slot', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+    store.templateCoveredDefinitionIds.add('masters');
+    await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    const renamed = await service.importProviderSeason(importOf(sportLeague, [{ ...masters, name: 'The Masters presented by Someone' }]));
+
+    expect(store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters')).toHaveLength(1);
+    expect(renamed.unplacedNames).toEqual([]);
+    expect(renamed.skipped).toEqual([{ externalId: '17', name: 'The Masters presented by Someone', reason: 'ALREADY_LINKED' }]);
+  });
+
+  it('places nothing for a name no pattern matches, and reports it once by its normalized name rather than as an unmapped code', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [
+      providerEvent('40', 'The New Open 2027', null, new Date('2026-05-01T12:00:00.000Z'), null),
+      providerEvent('41', 'The New Open', null, new Date('2027-05-01T12:00:00.000Z'), null),
+    ]));
+
+    expect(result.created).toEqual([]);
+    expect(result.unmatched).toEqual([]);
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'the new open', name: 'The New Open 2027', reason: 'UNMATCHED' }]);
+    expect(store.seasonSlots.filter((slot) => !slot.isTestData)).toEqual([]);
+  });
+
+  it('reports a name the patterns of two definitions match as ambiguous, and links it to neither', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'twin-a', pattern: 'twin championship' }, { slotDefinitionId: 'twin-b', pattern: 'twin championship' });
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [providerEvent('50', 'Twin Championship', null, new Date('2026-05-01T12:00:00.000Z'), null)]));
+
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'twin championship', name: 'Twin Championship', reason: 'AMBIGUOUS' }]);
+    expect(store.slotLinks.size).toBe(0);
+  });
+
+  it('reports a name whose matched slot has no phase in the Season, creating no slot and raising no unmapped code, rather than dropping it', async () => {
+    const { store, service, sportLeague } = setup();
+    store.slotNamePatterns.push({ slotDefinitionId: 'masters', pattern: 'masters tournament' });
+    store.templateCoveredDefinitionIds.add('masters');
+    store.definitionsWithoutSeasonPhase.add('masters');
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    expect(result.unplacedNames).toEqual([{ normalizedName: 'masters tournament', name: 'Masters Tournament 2027', reason: 'SEASON_PHASE_MISSING' }]);
+    expect(result.created).toEqual([]);
+    expect(result.unmatched).toEqual([]);
+    expect(store.seasonSlots.filter((slot) => slot.slotDefinitionId === 'masters')).toEqual([]);
+  });
+
+  it('matches by name only in a league with NAME_PATTERN mappings: elsewhere a code no mapping includes is an unmapped code', async () => {
+    const { service, sportLeague } = setup();
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [masters]));
+
+    expect(result.unmatched).toEqual([{ code: '17', eventName: 'Masters Tournament 2027' }]);
+    expect(result.unplacedNames).toEqual([]);
+  });
+});
+
 describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
   const DAY = 24 * 60 * 60 * 1000;
-  const listed = { externalId: 'pga-2026-a', name: 'Alpha Open', venue: 'A Links', startDate: new Date('2026-03-05T12:00:00.000Z'), endDate: new Date('2026-03-08T23:00:00.000Z') };
+  const listed = providerEvent('pga-2026-a', 'Alpha Open', 'A Links', new Date('2026-03-05T12:00:00.000Z'), new Date('2026-03-08T23:00:00.000Z'));
+  const listedEnd = expectDefined(listed.endDate);
 
   async function linkedEvent(status?: SportEventStatus, sportName?: Sport, notice?: SportEventChangedNotice) {
     const built = setup(sportName, notice);
-    const { created } = await built.service.importProviderSeason({ sportLeagueId: built.sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: [listed] });
+    slotsFor(built.store, built.sportLeague, [listed]);
+    const { created } = await built.service.importProviderSeason(importOf(built.sportLeague, [listed]));
     const { event } = created[0];
     if (status) await built.store.sportEventRepo().update(event.id, { status });
     return { ...built, eventId: event.id };
   }
 
-  it('writes a released event\'s new provider name, venue and dates over the admin\'s, moving its rounds and telling its leagues of the moved start', async () => {
+  it('writes a released event\'s new provider name, venue and dates over the admin\'s, moving its rounds and telling its leagues of the moved start, though its dates come from its slots', async () => {
     const notice = recordingSportEventChangedNotice();
     const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED, Sport.GOLF, notice);
     await service.updateEvent(eventId, { name: 'Admin Renamed Open' }, TELL);
-    const moved = { ...listed, name: 'Alpha Invitational', venue: 'B Links', startDate: new Date(listed.startDate.getTime() + 7 * DAY), endDate: new Date(listed.endDate.getTime() + 7 * DAY) };
+    const moved = providerEvent('pga-2026-a', 'Alpha Invitational', 'B Links', new Date(listed.startDate.getTime() + 7 * DAY), new Date(listedEnd.getTime() + 7 * DAY));
+    await service.importProviderSeason(importOf(sportLeague, [moved]));
 
-    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [moved] });
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [moved] });
 
     expect(changes).toEqual([{ sportEventId: eventId, externalId: 'pga-2026-a', changed: ['name', 'venue', 'startDate', 'endDate'] }]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Invitational', venue: 'B Links', startDate: moved.startDate, endDate: moved.endDate }));
@@ -322,19 +625,46 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
 
   it('changes only the name, venue and end of an event under way, never the start that already happened', async () => {
     const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.IN_PROGRESS);
-    const delayed = { ...listed, venue: 'Rain Links', startDate: new Date(listed.startDate.getTime() + DAY), endDate: new Date(listed.endDate.getTime() + DAY) };
+    const delayed = providerEvent('pga-2026-a', 'Alpha Open', 'Rain Links', new Date(listed.startDate.getTime() + DAY), new Date(listedEnd.getTime() + DAY));
+    await service.importProviderSeason(importOf(sportLeague, [delayed]));
 
-    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [delayed] });
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [delayed] });
 
     expect(changes.map((change) => change.changed)).toEqual([['venue', 'endDate']]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'Rain Links', startDate: listed.startDate, endDate: delayed.endDate }));
+  });
+
+  it('keeps a slotted event\'s dates on its slots\' when the provider event\'s own dates differ, so they are worked out one way', async () => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED);
+    const before = await sportEvents.findById(eventId);
+
+    const changes = await service.keepProviderEventsCurrent({
+      sportLeagueId: sportLeague.id,
+      providerId: FEED,
+      providerEvents: [{ ...listed, startDate: new Date(listed.startDate.getTime() - DAY), endDate: new Date(listedEnd.getTime() + DAY) }],
+    });
+
+    expect(changes).toEqual([]);
+    expect(await sportEvents.findById(eventId)).toEqual(before);
+  });
+
+  it('moves a slotted event\'s dates with its slots on a later sync, after the import gave the slots the games\' new dates', async () => {
+    const { store, service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED);
+    const rescheduled = providerEvent('pga-2026-a', 'Alpha Open', 'A Links', new Date(listed.startDate.getTime() + 2 * DAY), new Date(listedEnd.getTime() + 3 * DAY));
+    await service.importProviderSeason(importOf(sportLeague, [rescheduled]));
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [{ ...rescheduled, endDate: null }] });
+
+    expect(changes.map((change) => change.changed)).toEqual([['startDate', 'endDate']]);
+    const slot = expectDefined(store.seasonSlots.find((each) => each.startsAt?.getTime() === rescheduled.startDate.getTime()));
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ startDate: slot.startsAt, endDate: slot.endsAt }));
   });
 
   it.each([SportEventStatus.COMPLETED, SportEventStatus.CANCELLED])('leaves a %s event exactly as it is, whatever the provider now says', async (status) => {
     const { service, sportLeague, sportEvents, eventId } = await linkedEvent(status);
     const before = await sportEvents.findById(eventId);
 
-    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Renamed', startDate: new Date(listed.startDate.getTime() + DAY) }] });
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [{ ...listed, name: 'Renamed', startDate: new Date(listed.startDate.getTime() + DAY) }] });
 
     expect(changes).toEqual([]);
     expect(await sportEvents.findById(eventId)).toEqual(before);
@@ -343,18 +673,18 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
   it('keeps the venue and end when the provider stops sending them, and changes nothing when the details still match', async () => {
     const { service, sportLeague, sportEvents, eventId } = await linkedEvent();
 
-    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, venue: null, endDate: null }, { ...listed, externalId: 'not-linked' }] });
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [{ ...listed, venue: null, endDate: null }, { ...listed, externalId: 'not-linked' }] });
 
     expect(changes).toEqual([]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ venue: 'A Links', endDate: listed.endDate }));
   });
 
   it('never changes a "Test- " event, which no provider event is linked to, though the provider sends an event of its name (#1850)', async () => {
-    const { service, sportLeague, sportEvents } = setup();
-    const { event: testEvent } = await service.createEvent({ sportLeagueId: sportLeague.id, name: 'Test- Alpha Open', startDate: listed.startDate });
+    const { store, service, sportLeague, sportEvents } = setup();
+    const { event: testEvent } = await service.createEvent({ seasonSlotId: store.addTestSlot(sportLeague, listed.startDate), name: 'Test- Alpha Open' });
     const before = await sportEvents.findById(testEvent.id);
 
-    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Test- Alpha Open', startDate: new Date(listed.startDate.getTime() + DAY) }] });
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [{ ...listed, name: 'Test- Alpha Open', startDate: new Date(listed.startDate.getTime() + DAY) }] });
 
     expect(changes).toEqual([]);
     expect(await sportEvents.findById(testEvent.id)).toEqual(before);
@@ -362,19 +692,20 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
 
   it('logs an event whose update fails and still keeps the league\'s other events current', async () => {
     const logger = fakeLogger();
-    const { service, sportLeague, sportEvents } = setup(Sport.GOLF, undefined, undefined, logger);
-    const second = { ...listed, externalId: 'pga-2026-b', name: 'Bravo Classic', startDate: new Date('2026-04-09T12:00:00.000Z'), endDate: new Date('2026-04-12T23:00:00.000Z') };
-    const { created } = await service.importProviderSeason({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, providerId: 'feed', providerEvents: [listed, second] });
+    const { store, service, sportLeague, sportEvents } = setup(Sport.GOLF, undefined, undefined, logger);
+    const second = providerEvent('pga-2026-b', 'Bravo Classic', 'A Links', new Date('2026-04-09T12:00:00.000Z'), new Date('2026-04-12T23:00:00.000Z'));
+    slotsFor(store, sportLeague, [listed, second]);
+    const { created } = await service.importProviderSeason(importOf(sportLeague, [listed, second]));
     const [failing, kept] = created.map(({ event }) => event.id);
-    const realUpdate = service.updateEvent.bind(service);
-    jest.spyOn(service, 'updateEvent').mockImplementation(async (id, updates, options) => {
+    const realUpdate = sportEvents.update.bind(sportEvents);
+    jest.spyOn(sportEvents, 'update').mockImplementation(async (id, updates, options) => {
       if (id === failing) throw new Error('round shift refused');
       return realUpdate(id, updates, options);
     });
 
     const changes = await service.keepProviderEventsCurrent({
       sportLeagueId: sportLeague.id,
-      providerId: 'feed',
+      providerId: FEED,
       providerEvents: [{ ...listed, name: 'Alpha Renamed' }, { ...second, name: 'Bravo Renamed' }],
     });
 
@@ -390,7 +721,7 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
     const { service, store, sportEvents, eventId } = await linkedEvent();
     const otherLeague = store.addSportLeague(store.sportLeagues[0].sportId, 'Other Tour');
 
-    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: otherLeague.id, providerId: 'feed', providerEvents: [{ ...listed, name: 'Renamed' }] });
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: otherLeague.id, providerId: FEED, providerEvents: [{ ...listed, name: 'Renamed' }] });
 
     expect(changes).toEqual([]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Open' }));
@@ -654,9 +985,9 @@ describe('SportEventService — read, update, delete', () => {
     expect(updated.event).toMatchObject({ name: 'Renamed', venue: undefined });
   });
 
-  it('edits an event linked to a provider for scores, since every event is admin-owned, and 404s an unknown one', async () => {
+  it('edits an event the provider has an id for, and 404s an unknown one', async () => {
     const { store, service } = setup();
-    const linked = store.addEvent({ syncScope: 'SCORES_ONLY' });
+    const linked = store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-linked' } });
 
     await expect(service.updateEvent(linked.id, { name: 'Renamed Open' }, TELL)).resolves.toMatchObject({ event: { name: 'Renamed Open' } });
     await expect(service.updateEvent('missing', { name: 'x' }, TELL)).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
@@ -688,7 +1019,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('schedules the added rounds a day apart when an admin raises the round count, so their live scores are kept', async () => {
     const { store, service, sportLeague } = setup();
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 3 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 3 });
 
     await service.updateEvent(event.id, { rounds: 4 }, TELL);
 
@@ -702,7 +1033,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('moves every round by the same amount when an admin moves the start date, so automatic lifecycle starts it on the new date', async () => {
     const { store, service, sportLeague } = setup();
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 2 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 2 });
     // An irregular schedule the admin set: round 2 two days after round 1.
     await new SportEventRoundService({ rounds: store.roundRepo() }).reschedule(event.id, [
       { roundNumber: 2, scheduledDate: new Date(MANUAL_INPUT.startDate.getTime() + 2 * DAY) },
@@ -719,8 +1050,8 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
   it('tells the leagues on a released event its previous start when an admin moves it, but not for a draft or an unchanged start', async () => {
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
-    const { event: draft } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, name: 'Released Open' });
+    const { event: draft } = await slotlessEvent({ store, service, sportLeague });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { name: 'Released Open' });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
     const moved = new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY);
 
@@ -743,7 +1074,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
     const moved = new Date(MANUAL_INPUT.startDate.getTime() + DAY);
     for (const status of [SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
-      const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, name: `${status} Open` });
+      const { event } = await slotlessEvent({ store, service, sportLeague }, { name: `${status} Open` });
       await store.sportEventRepo().update(event.id, { status });
 
       // poolmaster-allow-query-in-loop: one in-memory edit per status under test
@@ -758,7 +1089,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     const notice = recordingSportEventChangedNotice();
     notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
 
     await expect(service.updateEvent(released.id, { startDate: new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY) }, TELL))
@@ -771,7 +1102,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
   it('moves a released event\'s start and its rounds without telling its leagues when the edit is a data correction', async () => {
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
     // Noon UTC, the date-only placeholder, filled in with the real first tee time that day.
     const realStart = new Date('2026-06-04T11:45:00.000Z');
@@ -786,7 +1117,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice);
     const realStart = new Date('2026-06-04T11:45:00.000Z');
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, startDate: realStart, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { startDate: realStart, rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
 
     await expect(service.updateEvent(released.id, { startDate: new Date(realStart.getTime() + DAY) }, { tellMembers: false }))
@@ -798,7 +1129,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('has the reminder sweep look again at the event\'s contests when its start moves, even quietly, but not when the start stays (#1170)', async () => {
     const { store, service, sportLeague, reminderRechecks } = setup();
-    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event: released } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
 
     await service.updateEvent(released.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate }, TELL);
@@ -810,7 +1141,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
 
   it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {
     const { store, service, sportLeague } = setup();
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 2 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 2 });
     const before = roundsOf(store, event.id);
 
     await service.updateEvent(event.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate, rounds: 2 }, TELL);
@@ -840,7 +1171,6 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
         providerGames: stubInstance(ProviderGameSlateService, {}),
       },
       eventLifecycle: lifecycle,
-      scoreSource: stubInstance(EventScoreSourceService, {}),
       ingestion: stubInstance(IngestionService, {}),
       leaderboards: new RecordingLeaderboardRebuilds(),
       eventOverviews: stubInstance(SportLeaguePageService, {}),
@@ -849,7 +1179,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
   }
 
   async function releasedPlaceholderEvent({ store, service, sportLeague }: ReturnType<typeof setupHandlers>) {
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT });
+    const { event } = await slotlessEvent({ store, service, sportLeague });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
     return event;
   }
@@ -911,7 +1241,6 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
         providerGames: stubInstance(ProviderGameSlateService, {}),
       },
       eventLifecycle: context.lifecycle,
-      scoreSource: stubInstance(EventScoreSourceService, {}),
       ingestion: stubInstance(IngestionService, {}),
       leaderboards: new RecordingLeaderboardRebuilds(),
       eventOverviews: stubInstance(SportLeaguePageService, {}),
@@ -986,7 +1315,7 @@ describe('SportEventService — leaderboard rebuild (#1466)', () => {
     const domainEvents = new RecordingDomainEvents();
     const notice = recordingSportEventChangedNotice();
     const { store, service, sportLeague } = setup(Sport.GOLF, notice, domainEvents);
-    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, ...MANUAL_INPUT, rounds: 1 });
+    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 1 });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
 
     await service.updateEvent(event.id, { name: 'Renamed Open' }, TELL);

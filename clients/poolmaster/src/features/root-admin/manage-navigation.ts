@@ -1,4 +1,5 @@
-import { getSportDefinition, type Sport, sportPathSegment, sportVocabulary, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { type Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import type { PageLinkTab } from '@/features/shared/ui';
 import { upperFirst } from '@/lib/upper-first';
 
@@ -14,32 +15,35 @@ type ManageSectionDefinition = {
   paths: readonly string[];
 };
 
-export function parseSportPathSegment(segment: string | undefined): Sport | null {
-  return SUPPORTED_SPORTS.find((sport) => sportPathSegment(sport) === segment) ?? null;
-}
-
 /**
  * Every sport's Manage pages sit under one path (plans/racing-sports.md Q9.6): its events,
  * their field, tiers and results, its participants and its sport leagues. One copy of each
- * page serves every sport; the page reads the sport's words from its definition.
+ * page serves every sport; the page reads the sport's words from its definition. A sport is
+ * addressed by its stored URL segment (SportDto.urlSegment), which every DTO that links to one
+ * carries.
  */
 export const SPORTS_PATH = '/manage/sports';
 
-export function buildSportPath(sport: Sport) {
-  return `${SPORTS_PATH}/${sportPathSegment(sport)}`;
+export function buildSportPath(sportUrlSegment: string) {
+  return `${SPORTS_PATH}/${sportUrlSegment}`;
 }
 
-export function buildSportEventListPath(sport: Sport) {
-  return `${buildSportPath(sport)}/events`;
+function buildSportEventListPath(sportUrlSegment: string) {
+  return `${buildSportPath(sportUrlSegment)}/events`;
 }
 
-export function buildSportEventPath(sport: Sport, eventId: string) {
-  return `${buildSportEventListPath(sport)}/${eventId}`;
+export function buildSportEventPath(sportUrlSegment: string, eventId: string) {
+  return `${buildSportEventListPath(sportUrlSegment)}/${eventId}`;
+}
+
+/** The New test event page (#2004), opening on this sport league. */
+export function buildTestEventCreatePath(sportUrlSegment: string, sportLeagueId: string) {
+  return `${buildSportEventListPath(sportUrlSegment)}/new?${new URLSearchParams({ sportLeagueId }).toString()}`;
 }
 
 /** A sport league's page; the sport's leagues are listed together on the Sports page (#1848). */
-export function buildSportLeaguePath(sport: Sport, sportLeagueId: string) {
-  return `${buildSportPath(sport)}/leagues/${sportLeagueId}`;
+export function buildSportLeaguePath(sportUrlSegment: string, sportLeagueId: string) {
+  return `${buildSportPath(sportUrlSegment)}/leagues/${sportLeagueId}`;
 }
 
 /** The platform's tier and pricing profiles (#1849), the Sports page's second tab. */
@@ -47,12 +51,6 @@ export const PROFILES_PATH = `${SPORTS_PATH}/profiles`;
 
 /** Every system email and the email settings (#1872). */
 export const NOTIFICATIONS_PATH = '/manage/notifications';
-
-/**
- * The old settings page's path, gone since every group moved to its own page (#1886). It redirects
- * to Pricing, the last group to leave it.
- */
-export const SETTINGS_PATH = '/manage/settings';
 
 /** The providers and the one sync schedule every sport league follows (#1873). */
 export const PROVIDERS_PATH = '/manage/providers';
@@ -163,15 +161,22 @@ function isSportListSegment(segment: string): segment is keyof typeof SPORT_LIST
   return Object.hasOwn(SPORT_LIST_LABELS, segment);
 }
 
+/** A sport as an address names it: the platform's sports, as `listSports` gives them. */
+export interface SportAddress {
+  sport: Sport;
+  urlSegment: string;
+}
+
 /**
  * The label of the segment at `index` of a path under `/manage`. Under `sports/<sport>/`, the
- * sport reads its name and its lists read the sport's words.
+ * sport, found among `sports` by its URL segment, reads its name and its lists read the sport's
+ * words.
  */
-export function getManageBreadcrumbLabel(segments: readonly string[], index: number): string {
+export function getManageBreadcrumbLabel(segments: readonly string[], index: number, sports: readonly SportAddress[] = []): string {
   const segment = segments[index];
-  const sport = segments[0] === 'sports' ? parseSportPathSegment(segments[1]) : null;
+  const sport = segments[0] === 'sports' ? sports.find((candidate) => candidate.urlSegment === segments[1])?.sport ?? null : null;
   if (sport && index === 1) {
-    return getSportDefinition(sport).name;
+    return enumLabel('Sport', sport);
   }
   if (sport && index === 2 && isSportListSegment(segment)) {
     return SPORT_LIST_LABELS[segment](sport);

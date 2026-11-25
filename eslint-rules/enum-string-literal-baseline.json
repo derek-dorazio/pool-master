@@ -1,0 +1,12 @@
+{
+  "$comment": "#2107 -- enum string literals (a shared enum value compared, used as a case label or written as a literal type) each web production file may still have. Read by poolmaster/no-enum-string-literals (eslint.config.js). Counts only fall: a file that removes one lowers its entry in the same PR, and rules:check:baseline-ratchet refuses a raise unless scripts/baseline-raises.json declares it. Fix: name the enum member or use the enum's type.",
+  "clients/poolmaster/src/features/contests/bracket-leaderboard.tsx": 1,
+  "clients/poolmaster/src/features/contests/contest-status.ts": 2,
+  "clients/poolmaster/src/features/root-admin/event-release-checks-dialog.tsx": 1,
+  "clients/poolmaster/src/features/root-admin/event-release-checks-text.ts": 9,
+  "clients/poolmaster/src/features/root-admin/event-tiers-form.ts": 1,
+  "clients/poolmaster/src/features/root-admin/provider-facts.ts": 1,
+  "clients/poolmaster/src/features/root-admin/sport-admin-utils.ts": 4,
+  "clients/poolmaster/src/features/root-admin/sport-league-issue-chips.tsx": 4,
+  "clients/poolmaster/src/features/root-admin/sync-run-status.ts": 5
+}

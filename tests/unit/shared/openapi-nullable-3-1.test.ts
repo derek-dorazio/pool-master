@@ -127,6 +127,45 @@ describe('pool-master-m32 — rewriteNullableToOpenApi31', () => {
     });
   });
 
+  it('appends "null" to a type array that lacks it', () => {
+    const node: Record<string, unknown> = { type: ['string', 'number'], nullable: true };
+    rewriteNullableToOpenApi31(node);
+    expect(node).toEqual({ type: ['string', 'number', 'null'] });
+  });
+
+  it('leaves a nullable node whose type is already "null" as that one type', () => {
+    const node: Record<string, unknown> = { type: 'null', nullable: true };
+    rewriteNullableToOpenApi31(node);
+    expect(node).toEqual({ type: 'null' });
+  });
+
+  it('wraps a single-member allOf around a $ref in anyOf with a null branch, since the ref has no type to extend', () => {
+    const node: Record<string, unknown> = { allOf: [{ $ref: '#/components/schemas/Thing' }], nullable: true };
+    rewriteNullableToOpenApi31(node);
+    expect(node).toEqual({ anyOf: [{ $ref: '#/components/schemas/Thing' }, { type: 'null' }] });
+  });
+
+  it('flattens a single-member allOf around a nullable composition to that composition, without wrapping it twice', () => {
+    const node: Record<string, unknown> = {
+      allOf: [{ oneOf: [{ type: 'string' }, { type: 'number' }], nullable: true }],
+      nullable: true,
+    };
+    rewriteNullableToOpenApi31(node);
+    expect(node).toEqual({ anyOf: [{ oneOf: [{ type: 'string' }, { type: 'number' }] }, { type: 'null' }] });
+  });
+
+  it('gives a nullable object described only by its properties the type ["object", "null"]', () => {
+    const node: Record<string, unknown> = { properties: { a: { type: 'string' } }, nullable: true };
+    rewriteNullableToOpenApi31(node);
+    expect(node).toEqual({ properties: { a: { type: 'string' } }, type: ['object', 'null'] });
+  });
+
+  it('gives a nullable node with no type, composition or properties the type ["null"]', () => {
+    const node: Record<string, unknown> = { nullable: true };
+    rewriteNullableToOpenApi31(node);
+    expect(node).toEqual({ type: ['null'] });
+  });
+
   it('pool-master-m32: leaves non-nullable nodes untouched', () => {
     const node = { type: 'string', enum: ['A', 'B'], description: 'plain' };
     rewriteNullableToOpenApi31(node);

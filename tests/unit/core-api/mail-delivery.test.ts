@@ -11,6 +11,7 @@ import {
   formatMailAddress,
   readApplicationBaseUrl,
   readMailDeliveryConfig,
+  readSesEventsTopicArn,
 } from '../../../packages/core-api/src/modules/email';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -370,5 +371,11 @@ describe('mail delivery provider from the environment', () => {
 
   it('serves links from the local web app when no base URL is set', () => {
     expect(readApplicationBaseUrl({})).toBe('http://localhost:5173');
+  });
+
+  it('accepts SES delivery events from the trimmed topic set, and from no topic when it is unset or blank', () => {
+    expect(readSesEventsTopicArn({ SES_EVENTS_TOPIC_ARN: ' arn:aws:sns:us-east-1:123456789012:ses-events ' })).toBe('arn:aws:sns:us-east-1:123456789012:ses-events');
+    expect(readSesEventsTopicArn({ SES_EVENTS_TOPIC_ARN: '   ' })).toBeUndefined();
+    expect(readSesEventsTopicArn({})).toBeUndefined();
   });
 });

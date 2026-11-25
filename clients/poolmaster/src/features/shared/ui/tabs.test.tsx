@@ -2,45 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import {
-  SegmentedControl,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "./tabs";
+import { SegmentedControl } from "./tabs";
 
 describe("pool-master-3lo.13: shared Tabs and SegmentedControl primitives", () => {
-  it("rule: renders tab triggers and content", () => {
-    render(
-      <Tabs defaultValue="active">
-        <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-        <TabsContent value="active">Active contests</TabsContent>
-      </Tabs>,
-    );
-
-    expect(screen.getByRole("tab", { name: "Active" })).toBeInTheDocument();
-    expect(screen.getByText("Active contests")).toBeInTheDocument();
-  });
-
-  it("marks the selected tab in the selected-tab blue with white text, and leaves the others plain", () => {
-    render(
-      <Tabs defaultValue="active">
-        <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-      </Tabs>,
-    );
-
-    expect(screen.getByRole("tab", { name: "Active" })).toHaveClass("data-[state=active]:bg-selected");
-    expect(screen.getByRole("tab", { name: "Active" })).toHaveAttribute("data-state", "active");
-    expect(screen.getByRole("tab", { name: "History" })).toHaveAttribute("data-state", "inactive");
-  });
-
   it("marks the chosen segment in the selected-tab blue with white text", () => {
     render(
       <SegmentedControl

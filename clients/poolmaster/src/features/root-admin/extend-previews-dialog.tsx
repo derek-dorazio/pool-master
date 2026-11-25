@@ -64,7 +64,8 @@ export function ExtendPreviewsButton() {
         isPending={extendMutation.isPending}
         onCancel={close}
         onConfirm={() => extendMutation.mutate(months)}
-        onOpenChange={(next) => (next ? undefined : close())}
+        // Opened from outside, so the one change the dialog reports is a close.
+        onOpenChange={close}
         open={open}
         pendingLabel="Extending..."
         testId={`${TEST_ID}-dialog`}

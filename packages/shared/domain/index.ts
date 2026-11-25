@@ -22,6 +22,7 @@ export * from './provider-sync-findings';
 export * from './sport-catalog-types';
 export * from './sport-rows';
 export * from './tournament-format';
+export * from './template-coverage';
 export * from './sports';
 export * from './squares';
 export * from './predicted-choice';
@@ -29,6 +30,7 @@ export * from './cup-points';
 export * from './championship';
 export * from './league-plans';
 export * from './event-pages';
+export * from './url-segment';
 export * from './time-zones';
 export * from './brand';
 export * from './event-overdue';
@@ -38,6 +40,7 @@ export * from './sport-league-overview';
 export * from './sport-league-page';
 export * from './sport-league-structure';
 export * from './sport-league-seasons';
+export * from './slot-matching';
 export { assertNever, type AssertTrue } from './assert-never';
 export {
   compareScores,
@@ -78,6 +81,8 @@ export type {
   SportEventReadinessReason,
   SportEventReadinessStatus,
   SportEventParticipant,
+  SportEventSlotDefinition,
+  ContestTemplateSlot,
 } from './contest-management-types';
 export type {
   Contest,

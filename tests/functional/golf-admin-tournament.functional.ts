@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
@@ -6,12 +7,11 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createEvent,
+  createTestSlot,
   createParticipant,
-  createSportLeague,
   getEvent,
   listEventParticipants,
   listEventRounds,
-  listEvents,
   listEventTiers,
   previewEventGolfRoundScores,
   previewEventParticipantUpload,
@@ -24,7 +24,7 @@ import {
   updateEventParticipants,
   updateSportLeague,
 } from '@poolmaster/shared/generated/hey-api';
-import { buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   disconnectFunctionalPrisma,
   expectFunctionalError,
@@ -32,8 +32,9 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
+import { sportRowKeys } from '../support/sport-rows';
 import { Sport } from '@poolmaster/shared/domain';
-import { sportPlay } from '../support/sport-play';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // plans/124 §8 — pool-master-z3l. End-to-end golf-admin authoring journey through
 // the generated SDK: tour -> players -> roster upload -> tournament in an event
@@ -52,6 +53,7 @@ async function ensureGolfSportRow(): Promise<void> {
     where: { sport: 'GOLF' },
     create: {
       sport: 'GOLF',
+      ...sportRowKeys('GOLF'),
       tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
@@ -60,7 +62,7 @@ async function ensureGolfSportRow(): Promise<void> {
 
 // Track everything this suite creates so it can be torn down child-first — the
 // shared functional cleanup keys off @functional.test users / test provider ids
-// and does not know about manual-admin golf rows.
+// and does not know about this suite's own golf rows.
 const created = {
   sportEventIds: new Set<string>(),
   sportLeagueIds: new Set<string>(),
@@ -111,14 +113,11 @@ async function cleanup(): Promise<void> {
     const pids = [...created.participantIds];
     await db.participantProviderMapping.deleteMany({ where: { participantId: { in: pids } } });
   }
-  if (leagueIds.length) {
-    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-  }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (leagueIds.length) {
-    await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+    await deleteTestSportLeagues(db, leagueIds);
   }
   if (created.userIds.size) {
     await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });
@@ -143,19 +142,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const c = admin.client;
 
     // --- Sport league (tour) ------------------------------------------------------
-    const league = await createSportLeague({
-      client: c,
-      body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `PGA Tour ${RUN}` },
-    });
-    expect(league.response?.status).toBe(201);
-    const sportLeagueId = expectDefined(league.data).sportLeague.id;
+    const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.GOLF, name: `PGA Tour ${RUN}` });
     created.sportLeagueIds.add(sportLeagueId);
-    // A league made through the API starts with this calendar year's Season as its current one (#2003).
-    expect(expectDefined(league.data).sportLeague.currentSeasonId).toBe(
-      (await getFunctionalPrisma().sportLeagueSeason.findUniqueOrThrow({
-        where: { sportLeagueId_championshipYear: { sportLeagueId, championshipYear: new Date().getUTCFullYear() } },
-      })).id,
-    );
 
     // --- 20 participants of the tour + a ranking upload (incl. a tied ranking pair) ------
     const players: Array<{ id: string; rank: number }> = [];
@@ -179,7 +167,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(expectDefined(rosterApply.data).participants.length).toBe(20);
 
     // --- Event: seeds 4 rounds + 6 default tiers --------------------------------
-    const tournament = await createEvent({
+    const tournament = await createTestEvent({
       client: c,
       body: {
         name: `The ${RUN} Open`,
@@ -188,15 +176,15 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         // Far future so the release step below never meets a start that has passed.
         startDate: '2099-07-16T08:00:00.000Z',
         endDate: '2099-07-19T20:00:00.000Z',
-        rounds: 4,
-        sportLeagueId: await inCurrentSeason(sportLeagueId, 2026),
+        sportLeagueId,
+        championshipYear: 2026,
         autoLifecycleEnabled: false,
       },
     });
     expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
-    expect(expectDefined(tournament.data).event).toMatchObject({ syncScope: 'NONE', sportLeagueId, championshipYear: 2026 });
+    expect(expectDefined(tournament.data).event).toMatchObject({ providerMappings: [], isTestData: true, sportLeagueId, championshipYear: 2026, startDate: '2099-07-16T08:00:00.000Z', endDate: '2099-07-19T20:00:00.000Z' });
 
     const rounds = await listEventRounds({ client: c, path: { eventId } });
     expect(expectDefined(rounds.data).rounds.length).toBe(4);
@@ -236,8 +224,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(wd.response?.status).toBe(200);
 
     // --- 21st participant, of another tour, added straight to the field -------
-    const guestTour = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `LIV ${RUN}` } });
-    const guestTourId = expectDefined(guestTour.data).sportLeague.id;
+    const guestTour = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.GOLF, name: `LIV ${RUN}` });
+    const guestTourId = guestTour.id;
     created.sportLeagueIds.add(guestTourId);
     const guest = await createParticipant({
       client: c,
@@ -296,6 +284,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     });
     expect(uploadPreview.response?.status).toBe(200);
     expect(expectDefined(uploadPreview.data).rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
+    expect(expectDefined(uploadPreview.data).rows[0].after).not.toHaveProperty('oddsToWin');
     expect(expectDefined(uploadPreview.data).rows[1]).toMatchObject({ sportEventParticipantId: upB.id, after: { ranking: null } });
     expect(expectDefined(uploadPreview.data).rows[2].message).toMatch(/refresh the field from the provider first/);
 
@@ -309,7 +298,8 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const uploaded = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows: uploadRows } });
     expect(uploaded.response?.status).toBe(200);
     expect(expectDefined(uploaded.data).participants).toHaveLength(expectDefined(field.data).participants.length);
-    expect(expectDefined(uploaded.data).participants.find((e) => e.id === upA.id)).toMatchObject({ ranking: 1, oddsToWin: 3.5 });
+    // Odds come only from the feed (#2081): an odds value sent in an upload row is dropped, and the field keeps its odds.
+    expect(expectDefined(uploaded.data).participants.find((e) => e.id === upA.id)).toMatchObject({ ranking: 1, oddsToWin: upA.oddsToWin ?? null });
     expect(expectDefined(expectDefined(uploaded.data).participants.find((e) => e.id === upB.id)).ranking).toBeNull();
 
     expectFunctionalError(
@@ -436,43 +426,6 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expect(corrected.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });
   }, 60_000);
 
-  // @@unique([eventSeriesId, sportLeagueSeasonId]): there is one edition of a series a Season.
-  // Driven through createEvent, so it proves the constraint reaches the caller as a 409 rather
-  // than a 500, and that the same series in another Season is still allowed.
-  it('BR-EVENT-EDITION-UNIQUE: refuses a second edition of a series in one Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
-    await ensureGolfSportRow();
-    const admin = await buildRegisteredUser({ displayName: 'Golf Admin Editions' });
-    created.userIds.add(admin.userId);
-    await promoteToRootAdmin(admin);
-    const c = admin.client;
-    const league = await createSportLeague({ client: c, body: { ...(await sportLeagueProfiles(c, 'GOLF')), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Editions Tour ${RUN}` } });
-    const sportLeagueId = expectDefined(league.data).sportLeague.id;
-    created.sportLeagueIds.add(sportLeagueId);
-    // A new event goes in the league's current Season, so each edition first makes its year's current.
-    const edition = async (championshipYear: number) => createEvent({
-      client: c,
-      body: {
-        sportLeagueId: await inCurrentSeason(sportLeagueId, championshipYear),
-        name: `The ${RUN} Masters`,
-        startDate: `${championshipYear}-04-09T12:00:00.000Z`,
-      },
-    });
-
-    const first = await edition(2026);
-    expect(first.response?.status).toBe(201);
-    created.sportEventIds.add(expectDefined(first.data).event.id);
-
-    expectFunctionalError(await edition(2026), { status: 409, code: 'EVENT_EDITION_ALREADY_EXISTS' });
-
-    const nextYear = await edition(2027);
-    expect(nextYear.response?.status).toBe(201);
-    created.sportEventIds.add(expectDefined(nextYear.data).event.id);
-    expect(expectDefined(nextYear.data).event.eventSeriesId).toBe(expectDefined(first.data).event.eventSeriesId);
-
-    const editions = await listEvents({ client: c, query: { sportLeagueId } });
-    expect(expectDefined(editions.data).events.map((event) => event.championshipYear).sort((a, b) => a - b)).toEqual([2026, 2027]);
-  });
-
   it('BR-GOLF-ADMIN-AUTHZ: every golf administration write rejects a non-root-admin caller with 403, before validating its input', async () => {
     const member = await buildRegisteredUser({ displayName: 'Golf Non Admin' });
     created.userIds.add(member.userId);
@@ -480,7 +433,6 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const deny = { status: 403, code: 'ROOT_ADMIN_ACCESS_REQUIRED' };
 
     // Deliberately malformed ids and bodies: the refusal must not depend on — or reveal — the input's shape.
-    expectFunctionalError(await createSportLeague({ client: c, body: { sport: 'GOLF', timeZone: 'UTC', name: `denied-${RUN}`, participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', platformTierProfileId: 'x', platformPricingProfileId: 'x' } }), deny);
     expectFunctionalError(await updateSportLeague({ client: c, path: { sportLeagueId: 'x' }, body: { name: 'x' } }), deny);
     expectFunctionalError(await rebuildEventLeaderboards({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
@@ -493,7 +445,12 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,
-      body: { sportLeagueId: ANY_UUID, name: 'x', startDate: '2030-01-01T00:00:00.000Z' },
+      body: { seasonSlotId: ANY_UUID, name: 'x' },
+    }), deny);
+    expectFunctionalError(await createTestSlot({
+      client: c,
+      path: { sportLeagueId: ANY_UUID },
+      body: { slotDefinitionId: ANY_UUID, label: 'x', startsAt: '2030-01-01T00:00:00.000Z' },
     }), deny);
     expectFunctionalError(await createParticipant({ client: c, body: { sportLeagueId: ANY_UUID, participantType: 'INDIVIDUAL', name: `denied-${RUN}` } }), deny);
   });

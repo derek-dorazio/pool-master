@@ -1,34 +1,30 @@
 /**
- * plans/147, #2003 — every SportEvent is one edition of an EventSeries, in one Season of its
- * league, and a series has at most one edition per Season. A test that writes an event row
- * directly needs both, and usually does not care about either.
- *
- * `freshEventEdition` gives each such event a series of its own on a shared fixture tour, so
- * two fixtures never collide on the one-edition-per-Season constraint by accident. A test about
- * series, Seasons or that constraint builds its own series instead.
+ * #2003, #2010 — every SportEvent is one sport league's, in one Season of that league (a composite
+ * key). A test that writes an event row directly needs both, and usually does not care about
+ * either: `freshEventEdition` gives the shared fixture tour (or the league named) and its Season.
  *
  * The fixture tour hangs off a real sport row (GOLF unless the test names another) because the
  * sport list validates names against the Sport enum; a made-up sport row would break any contract
  * test that lists sports. Each sport has its own fixture tour, playing as that sport's leagues are
- * seeded, since an event is scored by its league's family (#2001).
+ * seeded, since an event is scored by its league's family (#2001), and an event reads its sport
+ * through its Season's league (#2042, #2004): a test about another sport's event names that sport.
  */
-import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
-import { getDefaultTournamentFormatForSport, Sport } from '@poolmaster/shared/domain';
-import { leagueProfiles } from './league-profiles';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import { getDefaultTournamentFormatForSport, requireProviderCodeOfSourceId, Sport } from '@poolmaster/shared/domain';
+import { sportLeagueRowDefaults } from './league-profiles';
 import { sportPlay } from './sport-play';
+import { sportRowKeys } from './sport-rows';
 
 export const FIXTURE_TOUR_NAME = 'Fixture Tour (plans/147 test editions)';
-/** Starts every fixture series' name, so its cleanup finds the ones on the PGA TOUR too. */
-const FIXTURE_SERIES_PREFIX = 'Fixture edition: ';
 
 const LINKED_EVENT_ROUNDS = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'sportLeagueSeason' | 'eventSeries' | 'platformTierProfile' | 'platformPricingProfile'>;
+type Db = Pick<PrismaClient, 'sport' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeaguePhaseSlot' | 'sportLeagueSeason' | 'platformTierProfile' | 'platformPricingProfile'>;
 
+/** What an event row needs to be one league's (#2010): spread it into `sportEvent.create`. */
 export interface EventEdition {
-  eventSeriesId: string;
+  sportLeagueId: string;
   sportLeagueSeasonId: string;
 }
 
@@ -71,40 +67,37 @@ export async function fixtureSeasonId(
  * the API (a new event goes in the current Season).
  */
 export async function withCurrentSeason(
-  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeague'>,
+  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeague' | 'sportLeaguePhase' | 'sportLeagueSeasonPhase'>,
   sportLeagueId: string,
   championshipYear = new Date().getUTCFullYear(),
 ): Promise<string> {
   const seasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
+  // A Season a migration adds has every phase of its league; one a fixture made is given them, so
+  // a test slot of any of the league's definitions can be added to it.
+  const phases = await prisma.sportLeaguePhase.findMany({ where: { sportLeagueId }, select: { id: true } });
+  await prisma.sportLeagueSeasonPhase.createMany({
+    data: phases.map((phase) => ({ sportLeagueId, sportLeagueSeasonId: seasonId, sportLeaguePhaseId: phase.id })),
+    skipDuplicates: true,
+  });
   await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { currentSeasonId: seasonId } });
   return seasonId;
 }
 
-/** The Season named for `championshipYear` of the league `eventSeriesId` belongs to. */
-export async function seriesSeasonId(
-  prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'eventSeries'>,
-  eventSeriesId: string,
-  championshipYear: number,
-): Promise<string> {
-  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: eventSeriesId }, select: { sportLeagueId: true } });
-  return fixtureSeasonId(prisma, sportLeagueId, championshipYear);
-}
-
 export async function freshEventEdition(
   prisma: Db,
-  options: { name?: string; championshipYear?: number; onPgaTour?: boolean; sport?: Sport } = {},
+  options: { championshipYear?: number; onPgaTour?: boolean; sport?: Sport; sportLeagueId?: string } = {},
 ): Promise<EventEdition> {
   const sport = await sportRow(prisma, options.sport ?? Sport.GOLF);
   // Every contest setup is one sport league's (#1825), and the fixture tour has none: an event a
-  // contest is made from a seeded setup on goes on the PGA TOUR, the migrations' own league.
-  const tour = options.onPgaTour
-    ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
-    : { id: await fixtureTourId(prisma, sport.sport) };
-  const series = await prisma.eventSeries.create({
-    data: { sportLeagueId: tour.id, name: `${FIXTURE_SERIES_PREFIX}${options.name ?? 'Fixture series'} ${randomUUID()}` },
-  });
+  // contest is made from a seeded setup on goes on the PGA TOUR, the migrations' own league. An
+  // event is in its Season's league (#2004), so a test wanting a league of its own names it here.
+  const tour = options.sportLeagueId !== undefined
+    ? { id: options.sportLeagueId }
+    : options.onPgaTour
+      ? await prisma.sportLeague.findUniqueOrThrow({ where: { sportId_name: { sportId: sport.id, name: 'PGA TOUR' } } })
+      : { id: await fixtureTourId(prisma, sport.sport) };
   const sportLeagueSeasonId = await fixtureSeasonId(prisma, tour.id, options.championshipYear ?? new Date().getUTCFullYear());
-  return { eventSeriesId: series.id, sportLeagueSeasonId };
+  return { sportLeagueId: tour.id, sportLeagueSeasonId };
 }
 
 /**
@@ -120,7 +113,7 @@ export async function fixtureTourId(prisma: Db, sportCode: Sport = Sport.GOLF): 
   try {
     sportLeagueId = (await prisma.sportLeague.upsert({
       where,
-      create: { ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME, timeZone: TEST_LEAGUE_TIME_ZONE },
+      create: { ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: FIXTURE_TOUR_NAME, timeZone: TEST_LEAGUE_TIME_ZONE },
       update: {},
       select: { id: true },
     })).id;
@@ -155,47 +148,141 @@ async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<
   });
 }
 
-/** Removes the fixture series, on the fixture tour or the PGA TOUR, that no event uses any more. */
-/** A sport's row, made on first use (cleanupTestData clears the sports table). */
-function sportRow(prisma: Db, sport: Sport) {
-  return prisma.sport.upsert({ where: { sport }, create: { sport, tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
+/** The fixture tour's one slot definition: the slot a `freshEventEdition` event can be put in. */
+export async function fixtureTourSlotId(prisma: Db, sportCode: Sport = Sport.GOLF): Promise<string> {
+  const sportLeagueId = await fixtureTourId(prisma, sportCode);
+  return (await prisma.sportLeaguePhaseSlot.findUniqueOrThrow({ where: { sportLeagueId_key: { sportLeagueId, key: FIXTURE_TOUR_SLOT_KEY } }, select: { id: true } })).id;
 }
 
-export async function cleanupFreshEventEditions(prisma: Pick<PrismaClient, 'eventSeries'>): Promise<void> {
-  await prisma.eventSeries.deleteMany({
-    where: {
-      OR: [{ sportLeague: { name: FIXTURE_TOUR_NAME } }, { name: { startsWith: FIXTURE_SERIES_PREFIX } }],
-      sportEvents: { none: {} },
+/**
+ * A slot definition of the league's own, on its regular season, keyed `key` (made on first use):
+ * a test that needs two events in different slots, or a template covering one of them (#2010).
+ */
+export async function keyedSlotDefinitionId(prisma: Db, sportLeagueId: string, key: string, options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: 'TOURNAMENT' | 'WEEK' | 'SEMIFINAL' | 'FINAL'; name?: string } = {}): Promise<string> {
+  const phase = options.phase ?? 'REGULAR';
+  await prisma.sportLeaguePhase.createMany({ data: [{ sportLeagueId, phase, isSynced: true }], skipDuplicates: true });
+  const phaseRow = await prisma.sportLeaguePhase.findUniqueOrThrow({ where: { sportLeagueId_phase: { sportLeagueId, phase } }, select: { id: true } });
+  await prisma.sportLeaguePhaseSlot.createMany({
+    data: [{
+      sportLeagueId, sportLeaguePhaseId: phaseRow.id, key, slotKind: options.slotKind ?? 'TOURNAMENT', name: options.name ?? null,
+      awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+      ...(await fixtureSlotPlay(prisma, sportLeagueId)),
+    }],
+    skipDuplicates: true,
+  });
+  return (await prisma.sportLeaguePhaseSlot.findUniqueOrThrow({ where: { sportLeagueId_key: { sportLeagueId, key } }, select: { id: true } })).id;
+}
+
+/**
+ * Puts the event in a Season slot of the definition (#2010): a test slot of its Season, labelled
+ * by the event, so several tests' events can share one definition in one Season. Returns the
+ * Season slot's id.
+ */
+export async function putEventInSlot(
+  prisma: Pick<PrismaClient, 'sportEvent' | 'sportLeaguePhaseSlot' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonPhaseSlot' | 'sportEventSlot'>,
+  sportEventId: string,
+  sportLeaguePhaseSlotId: string,
+): Promise<string> {
+  const event = await prisma.sportEvent.findUniqueOrThrow({ where: { id: sportEventId }, select: { sportLeagueId: true, sportLeagueSeasonId: true } });
+  const definition = await prisma.sportLeaguePhaseSlot.findUniqueOrThrow({
+    where: { id: sportLeaguePhaseSlotId },
+    select: { sportLeaguePhaseId: true, seriesFormat: true, seriesGames: true, pairing: true },
+  });
+  const seasonPhase = await prisma.sportLeagueSeasonPhase.upsert({
+    where: { sportLeagueSeasonId_sportLeaguePhaseId: { sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId } },
+    create: { sportLeagueId: event.sportLeagueId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeaguePhaseId: definition.sportLeaguePhaseId },
+    update: {},
+    select: { id: true },
+  });
+  const seasonSlot = await prisma.sportLeagueSeasonPhaseSlot.create({
+    data: {
+      sportLeagueId: event.sportLeagueId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonPhaseId: seasonPhase.id,
+      sportLeaguePhaseSlotId, seriesFormat: definition.seriesFormat, seriesGames: definition.seriesGames, pairing: definition.pairing,
+      isTestData: true, label: `event ${sportEventId}`,
     },
+    select: { id: true },
+  });
+  await prisma.sportEventSlot.create({ data: { sportEventId, sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueSeasonPhaseSlotId: seasonSlot.id } });
+  return seasonSlot.id;
+}
+
+/** A sport's row, made on first use (cleanupTestData clears the sports table). */
+function sportRow(prisma: Db, sport: Sport) {
+  return prisma.sport.upsert({ where: { sport }, create: { sport, ...sportRowKeys(sport), tournamentFormat: getDefaultTournamentFormatForSport(sport) }, update: {} });
+}
+
+/**
+ * The events made on the fixture tour: a shared cleanup's own. An event a test makes on the PGA
+ * TOUR is that test's to remove: other suites running beside it hold PGA TOUR events with rounds
+ * and contests, which a sweep of the whole tour would reach (#2010; the series that once told a
+ * fixture edition apart are gone).
+ */
+export const FIXTURE_EDITION_EVENTS: Prisma.SportEventWhereInput = {
+  sportLeague: { name: FIXTURE_TOUR_NAME },
+};
+
+/**
+ * The events the provider with this adapter id knows by `externalId` (#2004): through their
+ * provider mappings, since an event holds no provider id of its own.
+ */
+export function providerEventWhere(providerId: string, externalId: string | Prisma.StringFilter): Prisma.SportEventWhereInput {
+  return { providerMappings: { some: { provider: { code: requireProviderCodeOfSourceId(providerId) }, externalId } } };
+}
+
+/**
+ * Gives an event its provider's id for it (#2004), as the sync writes it: a mapping under the
+ * event's league's mapping to the provider league `providerLeagueCode` names (BALLDONTLIE's
+ * `pga` unless a test names another), made on first use and not selected, so the league's own
+ * sync stays as the test left it.
+ */
+export async function mapEventToProvider(
+  prisma: Pick<PrismaClient, 'sportEvent' | 'providerLeague' | 'sportLeagueProviderMapping' | 'sportEventProviderMapping'>,
+  sportEventId: string,
+  ref: { providerId: string; externalId: string },
+  providerLeagueCode = 'pga',
+): Promise<void> {
+  const { sportLeagueId } = await prisma.sportEvent.findUniqueOrThrow({
+    where: { id: sportEventId },
+    select: { sportLeagueId: true },
+  });
+  const providerLeague = await prisma.providerLeague.findFirstOrThrow({
+    where: { code: providerLeagueCode, provider: { code: requireProviderCodeOfSourceId(ref.providerId) } },
+    select: { id: true, providerId: true },
+  });
+  const leagueMapping = await prisma.sportLeagueProviderMapping.upsert({
+    where: { sportLeagueId_providerLeagueId: { sportLeagueId, providerLeagueId: providerLeague.id } },
+    create: { sportLeagueId, providerLeagueId: providerLeague.id },
+    update: {},
+    select: { id: true },
+  });
+  await prisma.sportEventProviderMapping.create({
+    data: { sportEventId, providerId: providerLeague.providerId, sportLeagueProviderMappingId: leagueMapping.id, externalId: ref.externalId },
   });
 }
 
 /**
- * plans/147 — sync updates only an event already linked to the provider event; it never
- * creates one. This is the row a sync test starts from: an event in a fresh series, holding
- * the provider identity, as an admin creating and linking it would leave it, already released
- * (the column default, SCHEDULED). Like an admin-created event it is
- * linked for scores (SCORES_ONLY) and has a four-round schedule, a round a day from the start,
- * because a feed never creates a round (#435).
+ * plans/147 — sync updates only an event already holding the provider's id for it; it never
+ * creates one. This is the row a sync test starts from: an event on the fixture tour, mapped to the
+ * provider's event (#2004) as the sync leaves it, already released (the column default,
+ * SCHEDULED), with a four-round schedule, a round a day from the start, because a feed never
+ * creates a round (#435).
  */
 export async function linkedProviderEvent(
-  prisma: Db & Pick<PrismaClient, 'sportEvent'>,
+  prisma: Db & Pick<PrismaClient, 'sportEvent' | 'providerLeague' | 'sportLeagueProviderMapping' | 'sportEventProviderMapping'>,
   input: {
     providerId: string;
     externalId: string;
     name: string;
     startDate: Date;
+    /** The event's sport league, the fixture tour unless named. */
+    sportLeagueId?: string;
   },
 ) {
-  return prisma.sportEvent.create({
+  const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma, { name: input.name, championshipYear: input.startDate.getUTCFullYear() })),
-      providerId: input.providerId,
-      externalId: input.externalId,
-      sport: 'GOLF',
+      ...(await freshEventEdition(prisma, { championshipYear: input.startDate.getUTCFullYear(), sportLeagueId: input.sportLeagueId })),
       name: input.name,
       startDate: input.startDate,
-      syncScope: 'SCORES_ONLY',
       rounds: LINKED_EVENT_ROUNDS,
       roundSchedule: {
         create: Array.from({ length: LINKED_EVENT_ROUNDS }, (_, index) => ({
@@ -204,5 +291,29 @@ export async function linkedProviderEvent(
         })),
       },
     },
+  });
+  await mapEventToProvider(prisma, event.id, { providerId: input.providerId, externalId: input.externalId });
+  return event;
+}
+
+/**
+ * Makes every template of the league cover every slot its events play (#2010), putting an event
+ * that plays none in a test slot of one definition (TEST_TOURNAMENT) first. Templates are offered
+ * by the slots an event plays, and until the sync gives events their slots (slice 8) a test's
+ * loaded events play none, or only the test slot they were made on.
+ */
+export async function coverLeagueEventsWithTestSlot(prisma: PrismaClient, sportLeagueId: string): Promise<void> {
+  const definitionId = await keyedSlotDefinitionId(prisma, sportLeagueId, 'TEST_TOURNAMENT');
+  const unslotted = await prisma.sportEvent.findMany({ where: { sportLeagueId, slots: { none: {} } }, select: { id: true } });
+  for (const event of unslotted) await putEventInSlot(prisma, event.id, definitionId);
+  const played = await prisma.sportLeagueSeasonPhaseSlot.findMany({
+    where: { sportLeagueId, eventSlot: { isNot: null } },
+    select: { sportLeaguePhaseSlotId: true },
+    distinct: ['sportLeaguePhaseSlotId'],
+  });
+  const templates = await prisma.contestConfigTemplate.findMany({ where: { sportLeagueId }, select: { id: true } });
+  await prisma.contestConfigTemplateSlot.createMany({
+    data: templates.flatMap((template) => played.map((slot) => ({ sportLeagueId, templateId: template.id, sportLeaguePhaseSlotId: slot.sportLeaguePhaseSlotId }))),
+    skipDuplicates: true,
   });
 }

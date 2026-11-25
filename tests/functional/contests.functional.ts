@@ -33,11 +33,12 @@ import {
   getSdkClient,
 } from './setup';
 import { randomUUID } from 'node:crypto';
-import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
+import { freshEventEdition } from '../support/event-edition';
 import { seededSportLeagueId } from '../support/contest-setups';
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
+import { sportRowKeys } from '../support/sport-rows';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -112,7 +113,6 @@ async function cleanupContestArtifacts(): Promise<void> {
         },
       },
     });
-    await cleanupFreshEventEditions(prisma);
     createdSportEventIds.length = 0;
   }
 
@@ -132,7 +132,6 @@ async function cleanupContestArtifacts(): Promise<void> {
 async function seedImportedGolfEvent(options: {
   eventName: string;
   participantCount: number;
-  providerId?: string;
   /** How many tiers the field is split across, round-robin. Defaults to one tier. */
   tierCount?: number;
 }) {
@@ -141,16 +140,13 @@ async function seedImportedGolfEvent(options: {
   const startDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
   const sport = await prisma.sport.upsert({
     where: { sport: 'GOLF' },
-    create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
 
   const sportEvent = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma, { onPgaTour: true })),
-      externalId: `managed-contest-event-${randomUUID().slice(0, 8)}`,
-      providerId: options.providerId ?? 'functional-test',
-      sport: Sport.GOLF,
       name: options.eventName,
       startDate,
       status: 'SCHEDULED',
@@ -249,7 +245,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
       query: {
-        sport: Sport.GOLF,
         sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
@@ -360,7 +355,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
       query: {
-        sport: Sport.GOLF,
         sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
@@ -464,7 +458,9 @@ describe('SDK Functional: Contests and Entries', () => {
 
     expect(response.response?.status).toBe(200);
     const templates = expectDefined(response.data).templates;
-    expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(Object.values(Sport)));
+    const sportLeagues = expectDefined((await listSportLeagues({ client: getSdkClient() })).data).sportLeagues;
+    const sportOf = new Map(sportLeagues.map((sportLeague) => [sportLeague.id, sportLeague.sport]));
+    expect(new Set(templates.map((template) => sportOf.get(template.sportLeagueId)))).toEqual(new Set(Object.values(Sport)));
     expect(templates.every((template) => template.active && template.name.length > 0 && template.description.length > 0)).toBe(true);
   });
 
@@ -474,9 +470,9 @@ describe('SDK Functional: Contests and Entries', () => {
     expect(response.response?.status).toBe(200);
     const sportLeagues = expectDefined(response.data).sportLeagues;
     const named = (sport: Sport, name: string) => sportLeagues.find((sportLeague) => sportLeague.sport === sport && sportLeague.name === name);
-    expect(named(Sport.AMERICAN_FOOTBALL, 'NFL')?.displayName).toBeNull();
-    expect(named(Sport.BASKETBALL, 'NCAA Division I Women')?.displayName).toBe('NCAA Women\'s Basketball');
-    expect(named(Sport.HOCKEY, 'NCAA Division I Men')?.displayName).toBe('NCAA Men\'s Hockey');
+    expect(named(Sport.FOOTBALL, 'NFL')?.displayName).toBeNull();
+    expect(named(Sport.BASKETBALL, 'NCAA Women\'s Basketball')?.displayName).toBeNull();
+    expect(named(Sport.HOCKEY, 'NCAA Men\'s Hockey')?.displayName).toBeNull();
   });
 
   it('still refuses a signed-out visitor one sport league\'s own read with 401', async () => {
@@ -498,7 +494,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const templatesResponse = await listContestConfigTemplates({
       client: commissioner.client,
       query: {
-        sport: Sport.GOLF,
         sportLeagueId: await seededSportLeagueId(getFunctionalPrisma(), 'GOLF', 'PGA TOUR'),
         active: true,
       },
@@ -926,7 +921,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -944,9 +939,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `entry-detail-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
-        sport: Sport.GOLF,
         name: 'Entry Detail Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -980,7 +972,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         entryId: entryId as string,
         sportEventParticipantId: sportEventParticipant.id,
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });
@@ -1090,7 +1081,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -1108,9 +1099,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `functional-contest-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
-        sport: Sport.GOLF,
         name: 'Functional Contest Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -1239,7 +1227,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -1257,9 +1245,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `visibility-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
-        sport: Sport.GOLF,
         name: 'Visibility Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -1291,7 +1276,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         entryId: memberEntryId as string,
         sportEventParticipantId: sportEventParticipant.id,
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });
@@ -1386,7 +1370,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
 
@@ -1404,9 +1388,6 @@ describe('SDK Functional: Contests and Entries', () => {
     const sportEvent = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `list-visibility-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'functional-test',
-        sport: Sport.GOLF,
         name: 'List Visibility Event',
         startDate: new Date('2099-04-10T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -1441,7 +1422,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         entryId: commissionerEntryId,
         sportEventParticipantId: sportEventParticipant.id,
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });
@@ -1449,7 +1429,6 @@ describe('SDK Functional: Contests and Entries', () => {
       data: {
         entryId: memberEntryId,
         sportEventParticipantId: sportEventParticipant.id,
-        contestFormat: 'ROSTER',
         isAutoPicked: false,
       },
     });

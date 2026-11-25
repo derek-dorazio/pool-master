@@ -10,7 +10,6 @@ import type { SportEventTierGroup, SportEventTierService } from '../events/sport
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type { DomainEvents } from '../domain-events';
 import { ContestLifecycle } from '../contests/contest-lifecycle';
-import type { AddReleasedEditionToContestJobPayload } from './released-edition-job-requests';
 import type { CupService } from '../cups/service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type {
@@ -68,14 +67,12 @@ import type {
   TournamentFormat,
   Sport,
   CupWeight,
-  BackgroundJobOutcome,
   OneEventSelectionType,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
   MatchStatus,
   SelectionType,
-  assertNever,
   canFillBudgetRoster,
   coversOneEvent,
   eventSportDefinition,
@@ -88,7 +85,6 @@ import {
   UpsetBonusRule,
   PlanCap,
   survivorLivesOf,
-  JobErrorType,
   hasSportEventStarted,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
@@ -107,7 +103,7 @@ export interface ContestCreateSportEventState {
   status: SportEventStatus;
   startDate: Date;
   sport: Sport;
-  /** The event's sport league, read through its series. */
+  /** The event's sport league, read through its Season. */
   sportLeagueId: string;
   /** Its Season's championship year (#2003): a majors pool's events share one (#714). */
   championshipYear: number;
@@ -298,7 +294,7 @@ export class ContestManagementService {
     const sportEventIds = orderContestEvents(sportEvents);
     // Its season is its first event's Season's championship year (#841, #2003): a pick'em season's
     // January playoff weeks keep the season's year, because they are in the same Season.
-    const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.championshipYear ?? sportEvent.championshipYear;
+    const seasonYear = firstContestEvent(sportEvents, sportEvent).championshipYear;
     const limits = await this.seasonLimits(context.leagueId, sportEvent.sportLeagueId);
     const created = await this.contestRepo.create({
       leagueId: context.leagueId,
@@ -324,10 +320,7 @@ export class ContestManagementService {
       templateVersion: resolvedConfiguration.template?.schemaVersion,
       selectionType,
       configJson,
-      maxEntriesPerSquad:
-        resolvedConfiguration.configuration.maxEntriesPerSquad === null
-          ? null
-          : resolvedConfiguration.configuration.maxEntriesPerSquad,
+      maxEntriesPerSquad: resolvedConfiguration.configuration.maxEntriesPerSquad,
     });
 
     await syncDerivedScoring(
@@ -445,8 +438,7 @@ export class ContestManagementService {
 
     await this.contestConfigurationRepo.update(configuration.id, {
       configJson,
-      maxEntriesPerSquad:
-        input.maxEntriesPerSquad === null ? null : input.maxEntriesPerSquad,
+      maxEntriesPerSquad: input.maxEntriesPerSquad,
     });
 
     const refreshedConfiguration =
@@ -585,13 +577,8 @@ export class ContestManagementService {
     return this.getContest(contestId);
   }
 
-  /**
-   * Gives `contest`, as read, these events, under the rules a commissioner's edit keeps. With
-   * `onlyIfUnchanged`, the events are written only if the contest still has the ones it was read
-   * with, checked under its row lock; otherwise it throws ContestEventsChangedError and writes
-   * nothing, for a caller that cannot let a concurrent change be overwritten (#1318).
-   */
-  private async changeSportEvents(contest: Contest, sportEventIds: readonly string[], options: { onlyIfUnchanged?: boolean } = {}): Promise<void> {
+  /** Gives `contest`, as read, these events, under the rules a commissioner's edit keeps. */
+  private async changeSportEvents(contest: Contest, sportEventIds: readonly string[]): Promise<void> {
     const contestId = contest.id;
     const { leagueId } = contest;
     if (contest.status === ContestStatus.COMPLETED || contest.drawnAt !== undefined) {
@@ -631,8 +618,7 @@ export class ContestManagementService {
     );
     const sportEvents = [...kept, ...added];
     // The contest's league is its first event's; the new list must keep to it.
-    const first = current.at(0);
-    this.assertOneSportLeague(first ? [first, ...sportEvents] : sportEvents);
+    this.assertOneSportLeague([...current.slice(0, 1), ...sportEvents]);
     this.assertEventCountFitsSelectionType(contest.selectionType, sportEvents.length);
 
     const storedRules = ensureTypedConfiguration(configuration);
@@ -668,13 +654,7 @@ export class ContestManagementService {
         throw sportsLeagueLimitError(moved.sportLeaguesPerYear, newFirst.championshipYear, moved.sportLeagueCount, `This contest can't move into ${newFirst.championshipYear}.`);
       }
     }
-    const replaced = options.onlyIfUnchanged
-      ? await this.contestRepo.replaceSportEvents(contestId, orderedIds, { replacing: contest.sportEventIds })
-      : await this.contestRepo.replaceSportEvents(contestId, orderedIds);
-    if (!replaced) {
-      this.logger.warn({ contestId, read: contest.sportEventIds, sportEventIds: orderedIds }, 'contest management set sport events found the events changed since they were read');
-      throw new ContestEventsChangedError(contestId);
-    }
+    await this.contestRepo.replaceSportEvents(contestId, orderedIds);
     // New events move the reminders of a contest already open (#1170).
     await this.contestRepo.recheckReminders({ contestIds: [contestId] }, this.now());
     if (movesSeason) {
@@ -687,40 +667,6 @@ export class ContestManagementService {
       addedCount: added.length,
       removedCount: removed.length,
     }, 'contest management set sport events completed');
-  }
-
-  /**
-   * The ADD_RELEASED_EDITION_TO_CONTEST job (#1318): adds the edition to one template contest.
-   * A contest gone, or already holding the edition (a retry after the add), is left alone. One
-   * whose rules refuse it now (another salary cap, a draw dealt or the contest finished since the
-   * release) is logged and skipped, so the job succeeds and is not retried; any other failure
-   * throws, for the runner to retry. That includes another edition's job adding its own edition
-   * to the pool between this job's read and its write: the write is refused rather than drop the
-   * other edition, and the retry reads both. Reports the one contest it changed, or none (#1861);
-   * a refusal by the contest's rules is held back as CHECK_FAILED.
-   */
-  async addReleasedEditionToContest(payload: AddReleasedEditionToContestJobPayload): Promise<BackgroundJobOutcome> {
-    const { contestId, sportEventId } = payload;
-    const contest = await this.contestRepo.findById(contestId);
-    if (!contest || contest.sportEventIds.includes(sportEventId)) {
-      this.logger.info({ contestId, sportEventId, found: contest !== null }, 'contest management left a released edition out of a contest that is gone or already has it');
-      return { changedCount: 0 };
-    }
-    try {
-      await this.changeSportEvents(contest, [...contest.sportEventIds, sportEventId], { onlyIfUnchanged: true });
-      this.logger.info({ contestId, sportEventId }, 'contest management added a released edition to a template contest');
-      return { changedCount: 1 };
-    } catch (error) {
-      if (!(error instanceof ContestManagementError)) {
-        throw error;
-      }
-      this.logger.warn({
-        contestId,
-        sportEventId,
-        code: error.code,
-      }, 'contest management left a released edition out of a template contest its rules refuse');
-      return { changedCount: 0, heldBack: JobErrorType.CHECK_FAILED };
-    }
   }
 
   /** The contest's events in its sequence order, read together (#1355); each must still exist. */
@@ -1179,17 +1125,7 @@ export class ContestManagementService {
     if (kept && offered(kept.participantScoringDefinitionId)) {
       return kept;
     }
-    const defaultDefinitionId = definition.scoringDefinitions.at(0);
-    if (defaultDefinitionId === undefined) {
-      this.logger.warn({
-        sportEventId: sportEvent.id,
-        sport: sportEvent.sport,
-      }, 'contest management scoring refused: the sport offers no scoring definition yet');
-      throw new ContestManagementError(
-        `A ${sportEvent.sport} contest can't be scored yet.`,
-        CONTEST_SCORING_DEFINITION_NOT_ALLOWED,
-      );
-    }
+    const [defaultDefinitionId] = definition.scoringDefinitions;
     const defaults = defaultContestScoringSettings(defaultDefinitionId);
     if (!defaults) {
       this.logger.warn({
@@ -1248,8 +1184,6 @@ export class ContestManagementService {
           CONTEST_SCORING_ROUNDS_MISMATCH,
         );
       }
-      default:
-        return assertNever(scoring);
     }
   }
 
@@ -1377,18 +1311,6 @@ export class ContestManagementError extends Error {
 }
 
 /**
- * A contest's events changed between the read a change was built from and its write (#1318), so
- * nothing was written. Not a ContestManagementError: the change is not refused, only to be made
- * again from a fresh read, as a background job's retry does.
- */
-export class ContestEventsChangedError extends Error {
-  constructor(readonly contestId: string) {
-    super(`Contest ${contestId}'s events changed while this change was made`);
-    this.name = 'ContestEventsChangedError';
-  }
-}
-
-/**
  * Tiers are event-owned (plans/124 §4.6) and every tier takes the contest's
  * picksPerTier (#479), so the roster is the event's tier count (or the contest's
  * tiersUsed, the first ones only) times picksPerTier. What is left to validate
@@ -1463,8 +1385,6 @@ function defaultContestScoringSettings(
     case 'FINISH_POSITION_POINTS':
     case 'KNOCKOUT_ROUND_POINTS':
       return null;
-    default:
-      return assertNever(participantScoringDefinitionId);
   }
 }
 
@@ -1483,11 +1403,21 @@ function currentScoring(rules: readonly ParticipantContestScoringRule[]): Contes
   return rule?.scoring.success ? rule.scoring.data : null;
 }
 
-/** The contest's events in sequence order: by start date, then id, so the order is stable. */
-function orderContestEvents(sportEvents: readonly Pick<ContestCreateSportEventState, 'id' | 'startDate'>[]): string[] {
-  return [...sportEvents]
-    .sort((left, right) => left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id))
-    .map((sportEvent) => sportEvent.id);
+type ContestEventOrderKey = Pick<ContestCreateSportEventState, 'id' | 'startDate'>;
+
+/** Contest event sequence order: by start date, then id, so the order is stable. */
+function compareContestEvents(left: ContestEventOrderKey, right: ContestEventOrderKey): number {
+  return left.startDate.getTime() - right.startDate.getTime() || left.id.localeCompare(right.id);
+}
+
+/** The contest's events in sequence order. */
+function orderContestEvents(sportEvents: readonly ContestEventOrderKey[]): string[] {
+  return [...sportEvents].sort(compareContestEvents).map((sportEvent) => sportEvent.id);
+}
+
+/** The contest's first event in sequence order, starting the search from one of its events. */
+function firstContestEvent<T extends ContestEventOrderKey>(sportEvents: readonly T[], anyEvent: T): T {
+  return sportEvents.reduce((first, event) => (compareContestEvents(event, first) < 0 ? event : first), anyEvent);
 }
 
 function buildContestManagementDetail(

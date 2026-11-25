@@ -20,7 +20,6 @@ import type { PlayoffsSource } from './series-playoffs-reader';
 
 export const WNBA_PLAYOFFS: PlayoffsLeague = {
   key: 'wnba',
-  tour: 'WNBA',
   sport: Sport.BASKETBALL,
   eventName: 'WNBA Playoffs',
   rounds: [

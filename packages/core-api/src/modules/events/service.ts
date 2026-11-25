@@ -3,9 +3,8 @@
  * delete one event. Before #236 this was split between `listEvents` here and eleven
  * golf-named operations over the same rows in `GolfTournamentService`.
  *
- * An event is one edition of an EventSeries, in one event year (plans/147). Its sport
- * comes from the series' sport league (series → sport league → sport), never from the
- * caller. Creation is where the sport matters: golf seeds four rounds (or the rounds its
+ * An event is one sport league's, in one of its Seasons (#2003, #2010). Its sport comes from
+ * the sport league, never from the caller. Creation is where the sport matters: golf seeds four rounds (or the rounds its
  * provider schedule implies) and six default tiers. Any other sport is refused with 422
  * rather than created as if it were golf.
  *
@@ -15,27 +14,35 @@
  * the event is ready first.
  */
 
-import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ContestRepository,
-  EventSeriesRepository,
   SportEventCreate,
   SportEventRoundSchedule,
   SportEventFilters,
   SportEventRepository,
   SportEventUpdate,
   SportLeagueRepository,
+  SportLeagueSeasonRepository,
   SportRepository,
+  SyncedSlotsRecord,
 } from '@poolmaster/shared/db';
 import {
   AutoReleaseCheckOutcome,
   blocksManualRelease,
+  eventDatesFromSlots,
+  testEventSlotRefusal,
+  type TestEventSlotRefusal,
   eventPlaysMatches,
   eventSportDefinition,
   isProviderSyncedEvent,
   isWithinAutoReleaseWindow,
-  MANUAL_ADMIN_PROVIDER_ID,
+  matchProviderSlots,
+  placeSlotsByName,
+  providerSourceIdOf,
+  type ProviderSlotPlay,
+  slotNeedsDates,
+  SlotWindowStatus,
   ReleaseAttemptOutcome,
   type ReleaseAttemptResult,
   ReleaseAttemptSkipReason,
@@ -44,10 +51,13 @@ import {
   type Sport,
   type SportEvent,
   SportEventStatus,
-  SportEventSyncScope,
   type SportLeague,
+  type SportLeagueSeasonSlot,
+  slotDatesChange,
   sportLeagueDefinitionOf,
   sportVocabulary,
+  type SlotNamePattern,
+  type SyncSeasonSlot,
 } from '@poolmaster/shared/domain';
 import { SportEventError } from './errors';
 import { describeFailedReleaseCheck, evaluateReleaseChecks, failedReleaseChecks } from './release-checks';
@@ -78,6 +88,8 @@ export interface SportEventSummary {
   event: SportEvent;
   loadedParticipantCount: number;
   tierCount: number;
+  /** The Season slots it covers (#2004), in play order; empty for an event with none yet. */
+  slots: SportLeagueSeasonSlot[];
   /** Null unless the read asked for them: see `SportEventAdminCounts`. */
   adminCounts: SportEventAdminCounts | null;
   /**
@@ -96,16 +108,13 @@ export interface SportEventReadOptions {
   adminCounts: boolean;
 }
 
+/** A test event (#2004): made by hand on a free test slot of its league's current Season. */
 export interface CreateSportEventInput {
-  /** The tour; the event's series is found or created in it by the event's name. */
-  sportLeagueId: string;
+  /** The test slot it covers; its Season and league are the event's, and its dates the event's. */
+  seasonSlotId: string;
   name: string;
   venue?: string;
   location?: string;
-  startDate: Date;
-  endDate?: Date;
-  rounds?: number;
-  roundsPar?: number;
   autoLifecycleEnabled?: boolean;
 }
 
@@ -114,12 +123,37 @@ export interface ProviderEventDetail {
   venue: string | null;
   startDate: Date;
   endDate: Date | null;
+  /** The places its games are in, by the provider's code (#2005). */
+  providerSlots: readonly ProviderSlotPlay[];
 }
 
-/** What a provider Season import (#385, #2003) created, and what it left alone and why. */
+/**
+ * Why a provider Season import left a provider event alone: it is linked already, it has started,
+ * its games matched no slot, no template lists a slot they matched, or those slots have an event.
+ */
+export type ProviderEventSkipReason = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'NO_SLOT' | 'NO_TEMPLATE' | 'SLOT_TAKEN';
+
+/** What a provider Season import (#385, #2003, #2005) created, what it left alone and why, and the codes it could not place. */
 export interface ProviderSeasonImport {
   created: SportEventAdminSummary[];
-  skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'EDITION_EXISTS' }>;
+  skipped: Array<{ externalId: string; name: string; reason: ProviderEventSkipReason }>;
+  /** Each code no slot mapping includes, once, with the name of an event whose games carry it. */
+  unmatched: Array<{ code: string; eventName: string }>;
+  /** Each place the slot mappings placed games in, with the name of the event they are in (#2012). */
+  placed: Array<ProviderSlotPlay & { eventName: string }>;
+  /** Each game with no code that no slot's window holds, with its event's name: not synced (#2012). */
+  unplaced: Array<ProviderSlotPlay & { eventName: string }>;
+  /**
+   * The keys of the slots placed by date window that still need their dates after this import
+   * (#2012, #1924); null when the Season has no slot placed by date window.
+   */
+  slotsNeedingDates: string[] | null;
+  /**
+   * Each tournament name no NAME_PATTERN mapping placed (#2011), once per normalized name: matched
+   * by none, ambiguous (more than one slot, or a slot another tournament already has), or matched
+   * to a slot whose phase the Season lacks.
+   */
+  unplacedNames: Array<{ normalizedName: string; name: string; reason: 'UNMATCHED' | 'AMBIGUOUS' | 'SEASON_PHASE_MISSING' }>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -143,24 +177,25 @@ const PROVIDER_DETAILS_BY_STATUS: Readonly<Record<SportEventStatus, ReadonlyArra
   [SportEventStatus.CANCELLED]: [],
 };
 
-/**
- * The database refusing a second edition of a series in one Season — the
- * (eventSeriesId, sportLeagueSeasonId) unique constraint, recognised by Prisma's P2002 and the
- * column it names. Duck-typed so the service does not depend on the Prisma client.
- */
-function isEditionConflict(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) return false;
+/** A Prisma unique violation's target, or null. Duck-typed so the service does not depend on the Prisma client. */
+function uniqueViolationTarget(error: unknown): string | null {
+  if (typeof error !== 'object' || error === null) return null;
   const { code, meta } = error as { code?: unknown; meta?: { target?: unknown } };
-  if (code !== 'P2002') return false;
-  const target = JSON.stringify(meta?.target ?? '');
-  return target.includes('sport_league_season_id') || target.includes('sportLeagueSeasonId');
+  return code === 'P2002' ? JSON.stringify(meta?.target ?? '') : null;
+}
+
+/** The database refusing a second event on one Season slot (#2004): the slot's unique key. */
+function isSlotConflict(error: unknown): boolean {
+  const target = uniqueViolationTarget(error);
+  return target !== null && (target.includes('sport_league_season_phase_slot_id') || target.includes('sportLeagueSeasonPhaseSlotId') || target.includes('sport_event_slots_season_slot_key'));
 }
 
 export interface SportEventServiceDeps {
   sportEvents: SportEventRepository;
-  eventSeries: EventSeriesRepository;
   sportLeagues: SportLeagueRepository;
   sports: SportRepository;
+  /** The Season slot a test event is made on (#2004). */
+  seasons: Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'>;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
@@ -173,16 +208,13 @@ export interface SportEventServiceDeps {
   now?: () => Date;
 }
 
-/**
- * The Season a new event goes in: its league's current Season (#2003). 422
- * SPORT_LEAGUE_HAS_NO_SEASON for a league with none, since an event belongs to a Season.
- */
-function currentSeasonIdOf(sportLeague: SportLeague): string {
-  if (sportLeague.currentSeasonId === null) {
-    throw new SportEventError(`${sportLeague.name} has no Season to create an event in.`, 'SPORT_LEAGUE_HAS_NO_SEASON', 422);
-  }
-  return sportLeague.currentSeasonId;
-}
+/** The error each test-slot refusal answers with (#2004). */
+const TEST_EVENT_SLOT_REFUSALS: Readonly<Record<TestEventSlotRefusal, (seasonSlotId: string, sportLeagueName: string) => SportEventError>> = {
+  SEASON_SLOT_NOT_TEST: () => new SportEventError('Only a test slot takes an event made by hand; the sync makes every other.', 'SEASON_SLOT_NOT_TEST', 422),
+  SEASON_SLOT_NOT_CURRENT: (seasonSlotId, sportLeagueName) =>
+    new SportEventError(`Season slot ${seasonSlotId} is not in ${sportLeagueName}'s current Season.`, 'SEASON_SLOT_NOT_CURRENT', 422),
+  SEASON_SLOT_TAKEN: (seasonSlotId) => new SportEventError(`Season slot ${seasonSlotId} already has an event.`, 'SEASON_SLOT_TAKEN', 409),
+};
 
 /** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
 function isDateOnlyPlaceholder(start: Date): boolean {
@@ -209,135 +241,158 @@ export class SportEventService {
   }
 
   /**
-   * An admin-authored event: the reserved manual identity, DRAFT, accepting no provider data, in
-   * its league's current Season (#2003).
+   * A test event on a test slot (#2004, plan §2): only a test slot takes an event made by hand,
+   * since the sync makes every other. The slot must be free and in its league's current Season;
+   * the event's dates are the slot's, and it gets its league's default round count. 404
+   * SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST, SEASON_SLOT_NOT_CURRENT; 409
+   * SEASON_SLOT_TAKEN.
    */
   async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
-    const sportLeagueSeasonId = currentSeasonIdOf(sportLeague);
-    const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
-    const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
+    const found = await this.deps.seasons.findSlot(input.seasonSlotId);
+    if (found === null) throw new SportEventError(`Season slot ${input.seasonSlotId} was not found.`, 'SEASON_SLOT_NOT_FOUND', 404);
+    const { slot } = found;
+    const { sportLeague, sport } = await this.resolveSportLeague(found.sportLeagueId);
+    const refusal = testEventSlotRefusal(
+      { isTestData: slot.isTestData, sportEventId: found.sportEventId },
+      found.sportLeagueSeasonId === sportLeague.currentSeasonId,
+    );
+    if (refusal !== null) throw TEST_EVENT_SLOT_REFUSALS[refusal](slot.id, sportLeague.name);
+    // A test slot is always made with a start (createTestSlot), so its dates are never null.
+    const dates = eventDatesFromSlots([slot]);
+    if (dates === null) throw new Error(`Season slot ${slot.id} has no start.`);
+    const rounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
       event: {
-        externalId: `manual-${randomUUID()}`,
-        providerId: MANUAL_ADMIN_PROVIDER_ID,
-        sport,
         name: input.name,
         venue: input.venue,
         location: input.location,
-        startDate: input.startDate,
-        endDate: input.endDate,
+        startDate: dates.startDate,
+        endDate: dates.endDate ?? undefined,
         status: SportEventStatus.DRAFT,
         rounds,
-        roundsPar: input.roundsPar,
-        eventSeriesId: seriesIdOf(seriesIdByName, input.name),
-        sportLeagueSeasonId,
-        syncScope: SportEventSyncScope.NONE,
+        sportLeagueId: sportLeague.id,
+        sportLeagueSeasonId: found.sportLeagueSeasonId,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
+        seasonSlotIds: [slot.id],
       },
-      rounds: dailyRoundSchedule(rounds, input.startDate),
-    }]));
+      rounds: dailyRoundSchedule(rounds, dates.startDate),
+    }], [slot]));
 
     this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventSeriesId: summary.event.eventSeriesId, sportLeagueSeasonId, rounds },
-      'Created sport event',
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId: found.sportLeagueSeasonId, seasonSlotId: slot.id, rounds },
+      'Created test sport event',
     );
     return summary;
   }
 
   /**
-   * An event created straight from a browsed provider event (plans/124 §4.4a), pre-linked
-   * to that provider for scores (SCORES_ONLY). The field is not touched; loading it is
-   * its own action. 409 EXTERNAL_EVENT_ALREADY_LINKED when another event holds the identity;
-   * 409 SPORT_EVENT_ALREADY_STARTED when the provider event's start has passed (#1821), since
-   * an event nobody can release or play is never created from a provider. It goes in the league's
-   * current Season (#2003).
-   */
-  async createEventFromProviderEvent(input: {
-    sportLeagueId: string;
-    providerId: string;
-    externalId: string;
-    rounds?: number;
-    providerEvent: ProviderEventDetail;
-  }): Promise<SportEventAdminSummary> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
-    const sportLeagueSeasonId = currentSeasonIdOf(sportLeague);
-    if (await this.deps.sportEvents.findByProviderRef(input.providerId, input.externalId)) {
-      throw new SportEventError(
-        `Another sport event is already linked to ${input.providerId}/${input.externalId}.`,
-        'EXTERNAL_EVENT_ALREADY_LINKED',
-        409,
-      );
-    }
-    if (providerEventStarted(input.providerEvent, this.now())) {
-      throw new SportEventError(
-        `Provider event ${input.providerId}/${input.externalId} started at ${input.providerEvent.startDate.toISOString()}; an event is created from a provider only before it starts.`,
-        'SPORT_EVENT_ALREADY_STARTED',
-        409,
-      );
-    }
-    const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
-    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId, sportLeagueSeasonId });
-    const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
-
-    this.deps.logger?.info(
-      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, sportLeagueSeasonId, providerId: input.providerId, externalId: input.externalId, rounds: edition.rounds.length },
-      'Created sport event from provider event',
-    );
-    return summary;
-  }
-
-  /**
-   * #385, #2003 — one Season's provider slate, created in that Season in one action, in a fixed number of
-   * queries however long the slate (#1253). Each event is created and linked exactly as a single
-   * browse-and-create would be. Events PoolMaster already has are skipped rather than refused,
-   * so the import can be run again: one already linked to the provider event, or a series that
-   * already has an edition that Season (an admin-authored one, say, or an earlier event of the
-   * same name in this slate). A provider event whose start has passed is skipped too (#1821):
-   * created now it would be a draft nobody can release or play. One already linked is still
-   * reported as linked, and keeps updating through `keepProviderEventsCurrent`. An edition another admin creates while the import runs is not
-   * skipped: it refuses the whole import with 409, and running it again skips that event.
+   * #385, #2003, #2005 — one Season's provider slate, created in that Season in one action, in a
+   * fixed number of queries however long the slate (#1253), each with the provider's id for it
+   * (#2004). Each provider event's games are matched to the Season's slots by the code the
+   * provider names their place by, through the league's slot provider mappings
+   * (`matchProviderSlots`): an event is created only for the slots it matches that are free, and
+   * only when one of them is listed by one of the league's active contest templates, so no event
+   * nobody can play is made (ADR 0011). Its dates are those slots'. A code no mapping includes is
+   * synced nowhere and comes back in `unmatched`, for the sync's finding.
+   *
+   * Events PoolMaster already has are skipped rather than refused, so the import can be run again:
+   * one already linked to the provider event is reported as linked, takes any slot its games now
+   * reach that no event plays yet (a playoff's later rounds), and keeps updating through
+   * `keepProviderEventsCurrent`. Events are told apart by the provider's id, never by name (#2010).
+   * A provider event whose start has passed is skipped too (#1821): created now it would be a
+   * draft nobody can release or play. Every matched slot takes its dates from its games. Nothing is
+   * ever deleted: a page that lists fewer events or games leaves the rest as they are.
+   *
+   * A league whose provider mapping has NAME_PATTERN mappings (an open phase, #2011) places a
+   * tournament no code places by its normalized name, once: its Season slot is created, or the
+   * existing one linked, to the tournament's code, which matches it from then on. A name that
+   * matches nothing, or more than one slot, places nothing and is reported in `unplacedNames`.
    */
   async importProviderSeason(input: {
     sportLeagueId: string;
     sportLeagueSeasonId: string;
     providerId: string;
+    /** The league's selected provider mapping, whose slot provider mappings name the codes. */
+    sportLeagueProviderMappingId: string;
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderSeasonImport> {
-    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
     const now = this.now();
-    const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
-      input.providerId,
-      input.providerEvents.map((providerEvent) => providerEvent.externalId),
-    )).map((event) => event.externalId));
-    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId) && !providerEventStarted(providerEvent, now));
-    const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
-    const seriesWithEdition = new Set(unlinked.length === 0
-      ? []
-      : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, sportLeagueSeasonId: input.sportLeagueSeasonId })).map((event) => event.eventSeriesId));
+    const [linkedEvents, seasonSlots, namePatterns] = await Promise.all([
+      this.deps.sportEvents.findByProviderRefs(input.providerId, input.providerEvents.map((providerEvent) => providerEvent.externalId)),
+      this.deps.seasons.findSyncSlots(input.sportLeagueSeasonId, input.sportLeagueProviderMappingId),
+      this.deps.seasons.findSlotNamePatterns(input.sportLeagueProviderMappingId),
+    ]);
+    const named = await this.placeByName(input, seasonSlots, namePatterns);
+    const slots = named.slots;
+    const linkedIdByExternalId = new Map(linkedEvents.flatMap((event) => externalIdsAt(event, input.providerId).map((externalId) => [externalId, event.id] as const)));
+    // A window takes dates only from games between teams on its event's field (#2012): one read of
+    // the linked events' fields, and none for a Season with no window.
+    const fields = linkedEvents.length === 0 || !slots.some((slot) => slot.window !== null)
+      ? new Map<string, ReadonlySet<string>>()
+      : await this.deps.sportEvents.findFieldFeedIds(input.providerId, input.sportLeagueId, linkedEvents.map((event) => event.id));
 
     const editions: NewEdition[] = [];
     const skipped: ProviderSeasonImport['skipped'] = [];
+    const unmatched = new Map<string, ProviderSeasonImport['unmatched'][number]>();
+    const eventSlots: SyncedSlotsRecord['eventSlots'][number][] = [];
+    const slotDates: SyncedSlotsRecord['slotDates'][number][] = [];
+    const confirmedWindows = new Set<string>();
+    const placed: ProviderSeasonImport['placed'] = [];
+    const unplaced: ProviderSeasonImport['unplaced'] = [];
+    /** Slots an event of this slate takes, so a second provider event cannot take one too. */
+    const taken = new Set(slots.flatMap((slot) => (slot.sportEventId === null ? [] : [slot.seasonSlotId])));
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
-      if (linked.has(externalId)) {
+      const linkedId = linkedIdByExternalId.get(externalId);
+      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots, linkedId === undefined ? undefined : fields.get(linkedId));
+      for (const play of missed) {
+        // A tournament name matching handled is reported by its name, not again by its code.
+        if (!unmatched.has(play.code) && !named.handledCodes.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
+      }
+      unplaced.push(...unplacedGames.map((game) => ({ ...game, eventName: name })));
+      for (const { slot, play, fromGames } of matched) {
+        placed.push({ ...play, eventName: name });
+        // A window holding no game of the event's own teams is no evidence of its dates (#2012).
+        if (!fromGames) continue;
+        const change = slotDatesChange(slot, play);
+        if (change !== null) slotDates.push({ seasonSlotId: slot.seasonSlotId, ...change });
+        // The feed placed the event's own game in a best-guess window: the window is now the feed's.
+        if (slot.window?.status === SlotWindowStatus.TENTATIVE) confirmedWindows.add(slot.seasonSlotId);
+      }
+      const free = matched.filter(({ slot }) => !taken.has(slot.seasonSlotId));
+      if (linkedId !== undefined) {
+        for (const { slot } of free) {
+          taken.add(slot.seasonSlotId);
+          eventSlots.push({ sportEventId: linkedId, sportLeagueSeasonId: input.sportLeagueSeasonId, seasonSlotId: slot.seasonSlotId });
+        }
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;
       }
-      if (providerEventStarted(providerEvent, now)) {
-        skipped.push({ externalId, name, reason: 'ALREADY_STARTED' });
+      const reason = unplayableReason(providerEvent, matched, free.map(({ slot }) => slot), now);
+      if (reason !== null) {
+        skipped.push({ externalId, name, reason });
         continue;
       }
-      const eventSeriesId = seriesIdOf(seriesIdByName, name);
-      if (seriesWithEdition.has(eventSeriesId)) {
-        skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
-        continue;
-      }
-      seriesWithEdition.add(eventSeriesId);
-      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, sportLeagueSeasonId: input.sportLeagueSeasonId, providerId: input.providerId }));
+      for (const { slot } of free) taken.add(slot.seasonSlotId);
+      editions.push(providerEdition({
+        ...providerEvent,
+        sportLeagueId: sportLeague.id,
+        sportLeagueSeasonId: input.sportLeagueSeasonId,
+        providerId: input.providerId,
+        plays: free.map(({ slot, play }) => ({ seasonSlotId: slot.seasonSlotId, startsAt: play.startsAt, endsAt: play.endsAt })),
+      }));
     }
-    const created = await this.createEditions(sportLeague, editions);
+    const written = await this.createEditions(sportLeague, editions);
+    await this.deps.seasons.recordSyncedSlots({ eventSlots, slotDates, confirmedWindows: [...confirmedWindows] });
+    // The new events' slots as they now stand, with the dates just written: one read for them all.
+    const slotsByEvent = written.length === 0 ? new Map<string, SportLeagueSeasonSlot[]>() : await this.deps.sportEvents.findSlots(written.map(({ event }) => event.id));
+    const created = written.map((summary) => ({ ...summary, slots: slotsByEvent.get(summary.event.id) ?? [] }));
+    // A window this import confirmed no longer needs its dates.
+    const slotsNeedingDates = !slots.some((slot) => slot.placedByWindow) ? null : slots
+      .filter((slot) => slotNeedsDates(confirmedWindows.has(slot.seasonSlotId) && slot.window !== null ? { ...slot, window: { ...slot.window, status: SlotWindowStatus.CONFIRMED } } : slot))
+      .map((slot) => slot.key);
 
     this.deps.logger?.info(
       {
@@ -347,10 +402,71 @@ export class SportEventService {
         createdCount: created.length,
         skippedCount: skipped.length,
         alreadyStartedCount: skipped.filter((row) => row.reason === 'ALREADY_STARTED').length,
+        slotsLinkedCount: eventSlots.length,
+        slotDatesChangedCount: slotDates.length,
+        unmatchedCodes: [...unmatched.keys()],
+        // Provider events whose games carry no place at all, which no slot mapping can place.
+        noCodeCount: input.providerEvents.filter((providerEvent) => providerEvent.providerSlots.length === 0).length,
+        unplacedGameCount: unplaced.length,
+        windowsConfirmedCount: confirmedWindows.size,
+        slotsNeedingDates,
       },
       'Imported provider Season',
     );
-    return { created, skipped };
+    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates, unplacedNames: named.unplaced };
+  }
+
+  /**
+   * The name step of a Season import (#2011): each provider event of one play that no code places
+   * is placed by its normalized name (`placeSlotsByName`), the slots it places are written, and
+   * the Season's slots read again so the import matches them by code. Nothing is read or written
+   * for a league with no NAME_PATTERN mapping.
+   */
+  private async placeByName(
+    input: { sportLeagueId: string; sportLeagueSeasonId: string; sportLeagueProviderMappingId: string; providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }> },
+    seasonSlots: SyncSeasonSlot[],
+    namePatterns: readonly SlotNamePattern[],
+  ): Promise<{ slots: SyncSeasonSlot[]; handledCodes: Set<string>; unplaced: ProviderSeasonImport['unplacedNames'] }> {
+    const unplacedEvents = namePatterns.length === 0 ? [] : input.providerEvents.flatMap((providerEvent) => {
+      const [play] = providerEvent.providerSlots;
+      if (providerEvent.providerSlots.length !== 1 || play.code === null) return [];
+      const { code } = play;
+      return matchProviderSlots([play], seasonSlots).matched.length === 0
+        ? [{ name: providerEvent.name, play: { ...play, code } }]
+        : [];
+    });
+    if (unplacedEvents.length === 0) return { slots: seasonSlots, handledCodes: new Set(), unplaced: [] };
+    const placements = placeSlotsByName(unplacedEvents, seasonSlots, namePatterns);
+    const links = placements.flatMap((placement) => (placement.outcome === 'LINK' ? [{ seasonSlotId: placement.seasonSlotId, code: placement.play.code }] : []));
+    const creates = placements.flatMap((placement) => (placement.outcome === 'CREATE' ? [{ slotDefinitionId: placement.slotDefinitionId, code: placement.play.code }] : []));
+    const unplaced = new Map<string, ProviderSeasonImport['unplacedNames'][number]>();
+    for (const placement of placements) {
+      if ((placement.outcome === 'UNMATCHED' || placement.outcome === 'AMBIGUOUS') && !unplaced.has(placement.normalizedName)) {
+        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: placement.outcome });
+      }
+    }
+    const { phaseMissing } = await this.deps.seasons.linkNameMatchedSlots({
+      sportLeagueId: input.sportLeagueId,
+      sportLeagueSeasonId: input.sportLeagueSeasonId,
+      sportLeagueProviderMappingId: input.sportLeagueProviderMappingId,
+      links,
+      creates,
+    });
+    // A matched slot whose phase the Season lacks got no Season slot: said, never dropped silently.
+    const missing = new Set(phaseMissing);
+    for (const placement of placements) {
+      if (placement.outcome === 'CREATE' && missing.has(placement.slotDefinitionId)) {
+        unplaced.set(placement.normalizedName, { normalizedName: placement.normalizedName, name: placement.name, reason: 'SEASON_PHASE_MISSING' });
+      }
+    }
+    this.deps.logger?.info(
+      { sportLeagueId: input.sportLeagueId, sportLeagueSeasonId: input.sportLeagueSeasonId, linkedCount: links.length, createdCount: creates.length, unplacedNames: [...unplaced.keys()] },
+      'Placed provider tournaments on Season slots by name',
+    );
+    const slots = links.length + creates.length === missing.size
+      ? seasonSlots
+      : await this.deps.seasons.findSyncSlots(input.sportLeagueSeasonId, input.sportLeagueProviderMappingId);
+    return { slots, handledCodes: new Set(unplacedEvents.map(({ play }) => play.code)), unplaced: [...unplaced.values()] };
   }
 
   /**
@@ -359,8 +475,10 @@ export class SportEventService {
    * still lets change (`PROVIDER_DETAILS_BY_STATUS`) are written where they differ, through
    * `updateEvent`: the admin's own path, so a moved start shifts the rounds and tells the
    * leagues as an admin's move would, and the lifecycle scheduler then moves the status on the new
-   * dates. The provider wins over an admin's edit (`rules/architecture-rules.md` §4). A venue or end
-   * the provider does not send is left as it is, not cleared. One read for the events, then one
+   * dates. The provider wins over an admin's edit (`rules/architecture-rules.md` §4). An event that
+   * plays Season slots takes its dates from those slots (`eventDatesFromSlots`), read after the
+   * import wrote them, never from the provider event (#2005). A venue or end the provider does not
+   * send is left as it is, not cleared. One read for the events, then one
    * update per event that changed; an update that fails is logged and the rest still go.
    */
   async keepProviderEventsCurrent(input: {
@@ -373,20 +491,24 @@ export class SportEventService {
       input.providerEvents.map((providerEvent) => providerEvent.externalId),
     );
     const providerEventById = new Map(input.providerEvents.map((providerEvent) => [providerEvent.externalId, providerEvent]));
+    // An event that plays Season slots takes its dates from them, the one computation (#2005).
+    const slotsByEvent = linked.length === 0 ? new Map<string, SportLeagueSeasonSlot[]>() : await this.deps.sportEvents.findSlots(linked.map((event) => event.id));
     const changes: ProviderEventDetailsChange[] = [];
     for (const event of linked) {
-      const providerEvent = providerEventById.get(event.externalId);
-      if (!providerEvent || event.sportLeagueId !== input.sportLeagueId) continue;
-      const updates = providerDetailUpdates(event, providerEvent);
+      const externalId = externalIdsAt(event, input.providerId).at(0);
+      const providerEvent = externalId === undefined ? undefined : providerEventById.get(externalId);
+      if (externalId === undefined || !providerEvent || event.sportLeagueId !== input.sportLeagueId) continue;
+      const slotDates = eventDatesFromSlots(slotsByEvent.get(event.id) ?? []);
+      const updates = providerDetailUpdates(event, slotDates === null ? providerEvent : { ...providerEvent, ...slotDates });
       const changed = PROVIDER_DETAILS_BY_STATUS[event.status].filter((field) => updates[field] !== undefined);
       if (changed.length === 0) continue;
       try {
-        await this.updateEvent(event.id, Object.fromEntries(changed.map((field) => [field, updates[field]])), { tellMembers: true });
-        changes.push({ sportEventId: event.id, externalId: event.externalId, changed });
+        await this.applyEventUpdate(event.id, Object.fromEntries(changed.map((field) => [field, updates[field]])), { tellMembers: true });
+        changes.push({ sportEventId: event.id, externalId, changed });
       } catch (error) {
         // One event's refused update must not hold back the rest; the next sweep tries it again.
         this.deps.logger?.error(
-          { sportLeagueId: input.sportLeagueId, sportEventId: event.id, externalId: event.externalId, changed, error: error instanceof Error ? error.message : String(error) },
+          { sportLeagueId: input.sportLeagueId, sportEventId: event.id, externalId, changed, error: error instanceof Error ? error.message : String(error) },
           'Could not keep a synced event current with its provider',
         );
       }
@@ -411,6 +533,22 @@ export class SportEventService {
    * never moves without telling the leagues.
    */
   async updateEvent(
+    sportEventId: string,
+    updates: SportEventUpdate,
+    options: { tellMembers: boolean },
+  ): Promise<SportEventAdminSummary> {
+    if ((updates.startDate !== undefined || updates.endDate !== undefined)
+      && ((await this.deps.sportEvents.findSlots([sportEventId])).get(sportEventId) ?? []).length > 0) {
+      throw new SportEventError('This event\'s dates come from its Season slots.', 'EVENT_DATES_FROM_SLOTS', 422);
+    }
+    return this.applyEventUpdate(sportEventId, updates, options);
+  }
+
+  /**
+   * An event edit, the admin's and the sync's one path. On an event that plays Season slots the
+   * sync writes only the dates its slots give (#2005), so it may move them where an admin may not.
+   */
+  private async applyEventUpdate(
     sportEventId: string,
     updates: SportEventUpdate,
     options: { tellMembers: boolean },
@@ -499,10 +637,12 @@ export class SportEventService {
         422,
       );
     }
-    await this.release(sportEventId);
+    const released = await this.release(sportEventId);
     // The admin's judgement replaces the automatic one: no stored hold outlives the release.
     await this.deps.sportEvents.recordAutoReleaseCheck(sportEventId, null);
-    return this.requireAdminSummary(sportEventId);
+    // A release moves only the status (its follow-ups are jobs), so the counts and slots read for
+    // its checks still hold: the answer is the released event with them, not a second read.
+    return { ...summary, event: { ...released, autoReleaseCheck: undefined } };
   }
 
   /**
@@ -554,14 +694,16 @@ export class SportEventService {
   }
 
   /** DRAFT → SCHEDULED through the one status path, whether a root admin or the sweep released it. */
-  private async release(sportEventId: string): Promise<void> {
-    await this.deps.lifecycle.applySportEventStatusTransition({
+  /** Releases the draft; answers the event as the release left it. */
+  private async release(sportEventId: string): Promise<SportEvent> {
+    const { sportEvent } = await this.deps.lifecycle.applySportEventStatusTransition({
       sportEventId,
       toStatus: SportEventStatus.SCHEDULED,
       actor: { type: 'ROOT_ADMIN' },
       release: true,
     });
     this.deps.logger?.info({ sportEventId }, 'Released sport event for contests');
+    return sportEvent;
   }
 
   /**
@@ -662,46 +804,55 @@ export class SportEventService {
     return event;
   }
 
-  /** The sport league's series of these names, each created on first use, by name. */
-  private async resolveSeries(sportLeague: SportLeague, names: readonly string[]): Promise<Map<string, string>> {
-    const series = await this.deps.eventSeries.findOrCreateMany(sportLeague.id, [...new Set(names)]);
-    return new Map(series.map((row) => [row.name, row.id]));
+  /**
+   * The event, when it is a test event (#2074, ADR 0013): one that covers a test slot. Results,
+   * pairings and scores come only from the feed, so the admin result routes write them only on a
+   * test event, which the test-data loader and the journeys score through them. One read: 404
+   * EVENT_NOT_FOUND for no event, 409 SPORT_EVENT_NOT_TEST_DATA on any other event.
+   */
+  async requireTestEvent(sportEventId: string): Promise<void> {
+    const isTest = await this.deps.sportEvents.isTestEvent(sportEventId);
+    if (isTest === null) {
+      throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
+    }
+    if (!isTest) {
+      throw new SportEventError(
+        `Sport event ${sportEventId} covers no test slot: its results come only from the feed.`,
+        'SPORT_EVENT_NOT_TEST_DATA',
+        409,
+      );
+    }
   }
 
   /**
    * Creates new editions in a fixed number of queries, however many (#1253): the events in one
    * insert, then every event's rounds and default tiers in one insert each. A new event has no
    * field, no contests and every tier empty, so its summary is built from what was written
-   * rather than read back. 409 EVENT_EDITION_ALREADY_EXISTS when a series already has an
-   * edition in the Season; then none of the events is created.
+   * rather than read back.
    */
-  private async createEditions(sportLeague: SportLeague, editions: readonly NewEdition[]): Promise<SportEventAdminSummary[]> {
+  private async createEditions(
+    sportLeague: SportLeague,
+    editions: readonly NewEdition[],
+    /** The Season slots the editions cover (a test event's one), for their summaries. */
+    slots: readonly SportLeagueSeasonSlot[] = [],
+  ): Promise<SportEventAdminSummary[]> {
     if (editions.length === 0) return [];
     let events: SportEvent[];
     try {
       events = await this.deps.sportEvents.createMany(editions.map((edition) => edition.event));
     } catch (error) {
-      if (isEditionConflict(error)) {
-        // Every caller creates editions of one Season.
-        const [first] = editions;
-        throw new SportEventError(
-          editions.length === 1
-            ? `"${first.event.name}" already has an edition in this Season.`
-            : 'One of these events already has an edition in this Season; none were created.',
-          'EVENT_EDITION_ALREADY_EXISTS',
-          409,
-        );
-      }
+      if (isSlotConflict(error)) throw new SportEventError('That slot already has an event.', 'SEASON_SLOT_TAKEN', 409);
       throw error;
     }
     await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
     const tiersByEvent = await this.deps.tiers.createDefaultTiers(sportLeague, events.map((event) => event.id));
-    return events.map((event): SportEventAdminSummary => {
+    return events.map((event, index): SportEventAdminSummary => {
       const tiers = tiersByEvent.get(event.id) ?? [];
       return {
         event,
         loadedParticipantCount: 0,
         tierCount: tiers.length,
+        slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
         adminCounts: {
           untieredParticipantCount: 0,
           unpricedParticipantCount: 0,
@@ -729,17 +880,19 @@ export class SportEventService {
     return this.deps.now?.() ?? new Date();
   }
 
-  /** The counts every reader of an event needs: two grouped counts for the whole list. */
+  /** The counts every reader of an event needs, and its slots: three grouped reads for the whole list. */
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, tiers] = await Promise.all([
+    const [participants, tiers, slots] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
       this.deps.sportEvents.countTiers(ids),
+      this.deps.sportEvents.findSlots(ids),
     ]);
     return events.map((event) => ({
       event,
       loadedParticipantCount: participants.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
+      slots: slots.get(event.id) ?? [],
       adminCounts: null,
     }));
   }
@@ -772,11 +925,9 @@ interface NewEdition {
   rounds: readonly SportEventRoundSchedule[];
 }
 
-/** The id of the series of this name, which `resolveSeries` found or created. */
-function seriesIdOf(seriesIdByName: ReadonlyMap<string, string>, name: string): string {
-  const id = seriesIdByName.get(name);
-  if (id === undefined) throw new Error(`No event series "${name}" was found or created.`);
-  return id;
+/** The event's ids at one provider, as the adapter keys it: one at most, since an event has one id per provider. */
+function externalIdsAt(event: SportEvent, providerId: string): string[] {
+  return event.providerMappings.filter((mapping) => providerSourceIdOf(mapping.providerCode) === providerId).map((mapping) => mapping.externalId);
 }
 
 /** The one summary of a single-edition create. */
@@ -787,36 +938,66 @@ function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminS
 }
 
 /**
- * A provider event as a new edition, pre-linked to its provider for scores (SCORES_ONLY). The
- * rounds follow its dates unless a round count is given, which falls back to sequential days, so
- * `rounds` always matches the rounds created.
+ * A provider event as a new edition, with the provider's id for it (#2004), on the Season slots its
+ * games matched (#2005): its dates are those slots', which are their games'. The rounds follow the
+ * dates unless a round count is given, which falls back to sequential days, so `rounds` always
+ * matches the rounds created.
  */
 function providerEdition(
-  sport: Sport,
-  seriesIdByName: ReadonlyMap<string, string>,
-  input: ProviderEventDetail & { externalId: string; sportLeagueSeasonId: string; providerId: string; rounds?: number },
+  input: ProviderEventDetail & {
+    externalId: string;
+    sportLeagueId: string;
+    sportLeagueSeasonId: string;
+    providerId: string;
+    rounds?: number;
+    /** The free slots its games matched, at least one, each with its games' span. */
+    plays: ReadonlyArray<{ seasonSlotId: string; startsAt: Date; endsAt: Date }>;
+  },
 ): NewEdition {
+  const dates = eventDatesFromSlots(input.plays);
+  if (dates === null) throw new Error(`Provider event ${input.externalId} matched no slot.`);
   const schedule = input.rounds === undefined
-    ? providerEventRoundSchedule(input.startDate, input.endDate)
-    : dailyRoundSchedule(input.rounds, input.startDate);
+    ? providerEventRoundSchedule(dates.startDate, dates.endDate)
+    : dailyRoundSchedule(input.rounds, dates.startDate);
   return {
     event: {
-      externalId: input.externalId,
-      providerId: input.providerId,
-      sport,
+      providerRef: { providerId: input.providerId, externalId: input.externalId },
       name: input.name,
       venue: input.venue ?? undefined,
-      startDate: input.startDate,
-      endDate: input.endDate ?? undefined,
+      startDate: dates.startDate,
+      endDate: dates.endDate ?? undefined,
       status: SportEventStatus.DRAFT,
       rounds: schedule.length,
-      eventSeriesId: seriesIdOf(seriesIdByName, input.name),
+      sportLeagueId: input.sportLeagueId,
       sportLeagueSeasonId: input.sportLeagueSeasonId,
-      syncScope: SportEventSyncScope.SCORES_ONLY,
       autoLifecycleEnabled: true,
+      seasonSlotIds: input.plays.map((play) => play.seasonSlotId),
     },
     rounds: schedule,
   };
+}
+
+/**
+ * Why a provider event not yet linked makes no event (#1821, #2005), or null when it makes one:
+ * its start has passed; its games matched no slot; no template lists a slot they matched; or every
+ * listed slot they matched already has an event. An event starts at its slots' first game, so
+ * once its games match a slot its start is theirs, not the provider event's: a slate whose games
+ * are placed by date window starts long before its first windowed game (#2012).
+ */
+function unplayableReason(
+  providerEvent: Pick<ProviderEventDetail, 'startDate'>,
+  matched: ReadonlyArray<{ slot: SyncSeasonSlot; play: Pick<ProviderSlotPlay, 'startsAt'> }>,
+  free: readonly SyncSeasonSlot[],
+  now: Date,
+): ProviderSeasonImport['skipped'][number]['reason'] | null {
+  const startDate = matched.length === 0
+    ? providerEvent.startDate
+    : new Date(Math.min(...matched.map(({ play }) => play.startsAt.getTime())));
+  if (providerEventStarted({ startDate }, now)) return 'ALREADY_STARTED';
+  if (matched.length === 0) return 'NO_SLOT';
+  if (!matched.some(({ slot }) => slot.coveredByTemplate)) return 'NO_TEMPLATE';
+  if (!free.some((slot) => slot.coveredByTemplate)) return 'SLOT_TAKEN';
+  return null;
 }
 
 /** The provider's details that differ from the event's; a venue or end it does not send is no change. */
@@ -825,6 +1006,7 @@ function providerDetailUpdates(
   providerEvent: ProviderEventDetail,
 ): Pick<SportEventUpdate, 'name' | 'venue' | 'startDate' | 'endDate'> {
   return {
+    // poolmaster-allow-name-match: the sync compares the feed's name with the stored one to update it, not to find a row
     ...(providerEvent.name !== event.name && { name: providerEvent.name }),
     ...(providerEvent.venue !== null && providerEvent.venue !== (event.venue ?? null) && { venue: providerEvent.venue }),
     ...(providerEvent.startDate.getTime() !== event.startDate.getTime() && { startDate: providerEvent.startDate }),

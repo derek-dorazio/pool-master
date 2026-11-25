@@ -7,16 +7,16 @@ import {
 } from './helpers/admin-session';
 import { correctFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
-import { createJourneySportLeague } from './helpers/admin-api';
-import { addLeagueParticipants, expectLeagueParticipants } from './helpers/league-participants';
+import { addTestParticipants } from './helpers/test-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
+import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
  * #749 — the knockout journey, on the 2025 WNBA playoffs as they were played (seeds and series
  * results from `basketball-2025-wnba-playoffs-test.json`): the root admin builds the playoffs on
- * the shared Manage pages (a league, the eight teams, the tournament, its field with seeds, tiers
+ * the shared Manage pages (a seeded league, the eight teams, the tournament, its field with seeds, tiers
  * from those seeds, prices), loads the bracket with one pairing still open, completes
  * that pairing on the bracket tab, and releases it (act 1); a new commissioner creates a
  * basketball contest on it scored 1, 2, 4 a round with the seed-difference upset bonus (act 2);
@@ -146,7 +146,7 @@ function teamName(run: JourneyRun, seed: number): string {
   return `${run.playerNamePrefix} ${TEAMS[seed - 1].name}`;
 }
 
-test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight teams, the tournament, its seeded field, tiers and prices — loads the bracket, completes its open pairing on the bracket tab, and releases it', async ({ page }) => {
+test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight teams, the tournament, its seeded field, tiers and prices — loads the bracket, completes its open pairing through the API, and releases it', async ({ page }) => {
   test.setTimeout(180_000);
   const credentials = readAdminCredentials();
   admin = credentials;
@@ -155,7 +155,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourName: e2eName('Playoff League', runId),
+    tourUrlSegment: 'ncaamb',
     playerNamePrefix: e2eName('Team', runId),
     tournamentName: e2eName('Playoffs', runId),
     commissioner: {
@@ -186,41 +186,42 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     await expect(page.getByTestId('root-admin-sports-table')).toBeVisible();
   });
 
-  const leagueId = await test.step('create a basketball league', async () => {
-    // A league is added by migration, so a journey makes its own through the API.
-    const id = await createJourneySportLeague(page, { sport: 'BASKETBALL', name: run.tourName, participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', platformTierProfileCode: 'TIERS_4_OF_16' });
-    // The Sports page's one grid lists every sport league, the new one too.
+  const leagueId = await test.step('find the seeded basketball league on the Sports page', async () => {
+    // A league is added by migration, so a journey plays in a seeded one (#2004): one whose
+    // knockout games are single games, as the bracket below names one winner a pairing.
+    const { id } = await findSeededSportLeague(page, 'BASKETBALL', run.tourUrlSegment);
     await page.goto('/manage/sports');
     await expect(page.getByTestId(`root-admin-sports-row-${id}`)).toBeVisible();
     return id;
   });
 
-  const teamIds = await test.step(`create the ${TEAMS.length} teams`, async () => {
-    const ids = await addLeagueParticipants(page, 'basketball', leagueId, TEAMS.map((team) => teamName(run, team.seed)));
-    await expectLeagueParticipants(page, 'basketball', leagueId, ids);
-    return ids;
+  const teamIds = await test.step(`create the ${TEAMS.length} test teams`, async () => {
+    // Test participants (#2096): the league's real teams come only from its feed.
+    return addTestParticipants(page.request, { 'x-csrf-token': await readCsrfToken(page) }, leagueId, 'TEAM', TEAMS.map((team) => teamName(run, team.seed)));
   });
   journey.teamIds = teamIds;
 
   const eventId = await test.step(`create the ${ROUND_COUNT}-round tournament on the league, a week out`, async () => {
     const start = addDays(new Date(), 7);
     start.setHours(19, 0, 0, 0);
-    await page.goto('/manage/sports/basketball/events/new');
-    await page.getByTestId('root-admin-sport-event-create-tour').selectOption(leagueId);
-    await page.getByTestId('root-admin-sport-event-create-name').fill(run.tournamentName);
-    await page.getByTestId('root-admin-sport-event-create-start').fill(dateTimeInput(start));
-    // The form starts from March Madness's six rounds; three series make the WNBA playoffs.
-    await expect(page.getByTestId('root-admin-sport-event-create-rounds')).toHaveValue('6');
-    await page.getByTestId('root-admin-sport-event-create-rounds').fill(String(ROUND_COUNT));
-    const created = await submitAndRead<{ event: { id: string; sport: string } }>(
-      page,
-      'root-admin-sport-event-create-submit',
-      'POST',
-      '/api/v1/events',
-    );
-    expect(created.event.sport).toBe('BASKETBALL');
-    await expect(page).toHaveURL(new RegExp(`/manage/sports/basketball/events/${created.event.id}/field$`));
-    return created.event.id;
+    // Eight teams start at the quarterfinals.
+    const created = await createTestEvent(page, {
+      sportUrlSegment: 'basketball',
+      sportLeagueId: leagueId,
+      slotKind: 'QUARTERFINAL',
+      slotLabel: run.tournamentName,
+      startsAt: start,
+      name: run.tournamentName,
+    });
+    expect(created.sport).toBe('BASKETBALL');
+    // The event starts from basketball's six rounds; three series make the WNBA playoffs.
+    await page.getByTestId('root-admin-event-settings').click();
+    await expect(page.getByTestId('root-admin-event-settings-dialog-rounds')).toContainText('6');
+    await page.getByTestId('root-admin-event-settings-dialog-edit').click();
+    await page.getByTestId('root-admin-sport-event-edit-rounds').fill(String(ROUND_COUNT));
+    const edited = await submitAndRead<{ event: { rounds: number } }>(page, 'root-admin-event-settings-dialog-save', 'PATCH', `/api/v1/events/${created.id}`);
+    expect(edited.event.rounds).toBe(ROUND_COUNT);
+    return created.id;
   });
   journey.eventId = eventId;
 
@@ -292,29 +293,16 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     expect(response.ok(), `PUT the bracket answered ${response.status()} ${await response.text()}`).toBe(true);
   });
 
-  await test.step('the bracket tab shows each round by the sport\'s names and the teams by seed; the open pairing is completed there', async () => {
-    await page.goto(`/manage/sports/basketball/events/${eventId}/results`);
-    for (let roundNumber = 1; roundNumber <= ROUND_COUNT; roundNumber += 1) {
-      await expect(page.getByTestId(`root-admin-bracket-round-${roundNumber}`)).toBeVisible();
-    }
-    // Not released, so pairings can still change and no winner can be named.
-    await expect(page.getByTestId('root-admin-bracket-help')).toContainText('Pairings can change');
-    await expect(page.getByTestId('root-admin-bracket-pairing-1')).toHaveText(`(8) ${teamName(run, 8)} @ (1) ${teamName(run, 1)}`);
-    await expect(page.getByTestId('root-admin-bracket-pairing-5')).toHaveText('Winner of game 2 @ Winner of game 1');
-    await expect(page.getByTestId('root-admin-bracket-winner-1-HOME')).toHaveCount(0);
-
+  await test.step('the open pairing is completed through the API, as the test-data loader completes one; the bracket then names both teams', async () => {
+    // A head-to-head event's results come only from the feed (#2074): the root admin has no
+    // bracket editor, so a test event's bracket is written through the API, as the loader does.
     const { matchNumber, side, seed } = OPEN_PAIRING;
-    await expect(page.getByTestId(`root-admin-bracket-pairing-${matchNumber}`)).toContainText('To be decided');
-    await page.getByTestId(`root-admin-bracket-edit-${matchNumber}`).click();
-    await page.getByTestId(`root-admin-bracket-side-${matchNumber}-${side}`).selectOption(fieldEntryIds[seed - 1]);
-    await submitAndRead(
-      page,
-      `root-admin-bracket-save-${matchNumber}`,
-      'PATCH',
-      `/api/v1/events/${eventId}/bracket/matches/${matchNumber}`,
-    );
-    await expect(page.getByTestId(`root-admin-bracket-pairing-${matchNumber}`))
-      .toHaveText(`(7) ${teamName(run, 7)} @ (2) ${teamName(run, 2)}`);
+    const response = await page.request.patch(`/api/v1/events/${eventId}/bracket/matches/${matchNumber}`, {
+      headers: { 'x-csrf-token': await readCsrfToken(page) },
+      data: side === 'HOME' ? { homeSportEventParticipantId: fieldEntryIds[seed - 1] } : { awaySportEventParticipantId: fieldEntryIds[seed - 1] },
+    });
+    expect(response.ok(), `PATCH match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
+    expect(await pairingOf(page, eventId, matchNumber)).toEqual({ home: fieldEntryIds[1], away: fieldEntryIds[6] });
   });
 
   await test.step('release the tournament for contests', async () => {
@@ -360,12 +348,19 @@ test('act 2: a new commissioner creates a basketball contest on the playoffs, on
     await expect(eventChoice).toContainText(run.tournamentName);
     await eventChoice.click();
     await expect(eventChoice).toBeChecked();
+    // The seeded league's default setup fills the rules once its presets arrive; the commissioner
+    // waits for it, then sets every rule by hand on Custom.
+    const custom = page.getByTestId('contest-template-custom');
+    await expect(custom).toHaveAttribute('aria-checked', 'false');
+    await custom.click();
+    await expect(custom).toHaveAttribute('aria-checked', 'true');
     await page.getByTestId('contest-tiered-picks-per-tier').fill('1');
     await page.getByTestId('contest-tiered-counted-scores').fill('4');
   });
 
   await test.step(`score a win ${ROUND_VALUES.join(', ')} by round, add the seed-difference upset bonus, name the contest, and create it`, async () => {
     await page.getByTestId('contest-scoring-round-values').fill(ROUND_VALUES.join(', '));
+    await expect(page.getByTestId('contest-scoring-round-values')).toHaveValue(ROUND_VALUES.join(', '));
     await page.getByTestId('contest-scoring-upset-bonus').selectOption('SEED_DIFFERENCE');
     await expect(page.getByTestId('contest-scoring-upset-bonus-multiplier')).toHaveValue('1');
     await page.getByTestId('contest-name').fill(run.contestName);
@@ -460,7 +455,7 @@ test('act 3: a new member joins by the link and submits one team from each tier,
   });
 });
 
-test('act 4: the root admin starts the playoffs and names each series\' winner on the bracket tab; the knockout leaderboard follows round by round, and completing the tournament settles the contest', async ({ page }) => {
+test('act 4: the root admin starts the playoffs and names each series\' winner through the API; the knockout leaderboard follows round by round, and completing the tournament settles the contest', async ({ page }) => {
   test.setTimeout(180_000);
   const state = requireJourney();
   const { run } = state;
@@ -471,14 +466,12 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
   });
 
   await test.step('name the four first-round winners; each moves on to its semifinal', async () => {
-    await page.goto(`/manage/sports/basketball/events/${state.eventId}/results`);
-    await expect(page.getByTestId('root-admin-bracket-help')).toContainText('Choose the team that won each game');
     for (const match of BRACKET.filter((candidate) => candidate.roundNumber === 1)) {
       await recordWinner(page, state.eventId, match.matchNumber, match.winner);
     }
     // The semifinals as they were played: the Lynx host the Mercury, the Aces host the Fever.
-    await expect(page.getByTestId('root-admin-bracket-pairing-5')).toHaveText(`(4) ${teamName(run, 4)} @ (1) ${teamName(run, 1)}`);
-    await expect(page.getByTestId('root-admin-bracket-pairing-6')).toHaveText(`(6) ${teamName(run, 6)} @ (2) ${teamName(run, 2)}`);
+    expect(await pairingOf(page, state.eventId, 5)).toEqual({ home: state.fieldEntryIds[0], away: state.fieldEntryIds[3] });
+    expect(await pairingOf(page, state.eventId, 6)).toEqual({ home: state.fieldEntryIds[1], away: state.fieldEntryIds[5] });
   });
 
   await test.step(`after the first round the entry has ${EXPECTED_TOTAL_AFTER_ROUND_1}, the Fever's upset of the 3 seed among it, and the Storm is out`, async () => {
@@ -504,11 +497,10 @@ test('act 4: the root admin starts the playoffs and names each series\' winner o
   });
 
   await test.step('name the semifinal and final winners: the Mercury upset the Lynx, and the Aces win it all', async () => {
-    await page.goto(`/manage/sports/basketball/events/${state.eventId}/results`);
     for (const match of BRACKET.filter((candidate) => candidate.roundNumber > 1)) {
       await recordWinner(page, state.eventId, match.matchNumber, match.winner);
     }
-    await expect(page.getByTestId('root-admin-bracket-pairing-7')).toHaveText(`(4) ${teamName(run, 4)} @ (2) ${teamName(run, 2)}`);
+    expect(await pairingOf(page, state.eventId, 7)).toEqual({ home: state.fieldEntryIds[1], away: state.fieldEntryIds[3] });
   });
 
   await test.step('complete the tournament, which settles the contest', async () => {
@@ -593,17 +585,26 @@ function pointsBySeed(read: KnockoutLeaderboardRead, fieldEntryIds: readonly str
   ]));
 }
 
-/** Names one match's winner with its button on the bracket tab, which is already open. */
+/**
+ * Names one match's winner through the API, as the test-data loader enters a test event's result:
+ * a head-to-head event's results come only from the feed, so the root admin has no winner buttons
+ * (#2074).
+ */
 async function recordWinner(page: Page, eventId: string, matchNumber: number, winner: Side) {
-  const button = page.getByTestId(`root-admin-bracket-winner-${matchNumber}-${winner}`);
-  await expect(button).toBeEnabled();
-  await submitAndRead(
-    page,
-    `root-admin-bracket-winner-${matchNumber}-${winner}`,
-    'PUT',
-    `/api/v1/events/${eventId}/bracket/matches/${matchNumber}/result`,
-  );
-  await expect(button).toHaveAttribute('aria-pressed', 'true');
+  const response = await page.request.put(`/api/v1/events/${eventId}/bracket/matches/${matchNumber}/result`, {
+    headers: { 'x-csrf-token': await readCsrfToken(page) },
+    data: { winnerSide: winner, homeScore: null, awayScore: null },
+  });
+  expect(response.ok(), `PUT the result of match ${matchNumber} answered ${response.status()} ${await response.text()}`).toBe(true);
+}
+
+/** The field rows on both sides of one match, as the event's bracket read gives them. */
+async function pairingOf(page: Page, eventId: string, matchNumber: number): Promise<{ home: string | null; away: string | null }> {
+  const response = await page.request.get(`/api/v1/events/${eventId}/bracket`);
+  expect(response.ok(), `GET the bracket answered ${response.status()}`).toBe(true);
+  const { matches } = (await response.json()) as { matches: { matchNumber: number; homeSportEventParticipantId: string | null; awaySportEventParticipantId: string | null }[] };
+  const match = matches.find((candidate) => candidate.matchNumber === matchNumber);
+  return { home: match?.homeSportEventParticipantId ?? null, away: match?.awaySportEventParticipantId ?? null };
 }
 
 async function moveTournamentTo(page: Page, eventId: string, status: 'IN_PROGRESS' | 'COMPLETED') {
@@ -625,8 +626,3 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
-const pad = (value: number) => String(value).padStart(2, '0');
-
-function dateTimeInput(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}

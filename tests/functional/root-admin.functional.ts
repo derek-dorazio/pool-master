@@ -10,7 +10,6 @@ import {
   submitEventSync,
   setUserRootAdmin,
   listContestConfigTemplates,
-  listProviderCatalogEvents,
   listProviderSyncRuns,
   resetUserPassword,
   getUser,
@@ -88,14 +87,8 @@ describe('SDK Functional: Root Admin', () => {
 
     const prepareSyncResponse = await submitEventSync({
       client: user.client,
-      path: {
-        sport: 'GOLF',
-        eventId: 'masters-2026',
-      },
-      body: {
-        providerId: 'balldontlie',
-        feeds: ['EVENTLIVESCORES'],
-      },
+      path: { eventId: randomUUID() },
+      body: { feeds: ['EVENTLIVESCORES'] },
     });
 
     expectFunctionalError(prepareSyncResponse, {
@@ -298,6 +291,8 @@ describe('SDK Functional: Root Admin', () => {
     const providerId = BALLDONTLIE_TEST_PROVIDER_ID;
     const submittedAt = new Date(Date.UTC(2001, 0, 1) + Math.floor(Math.random() * 365 * 24 * 3_600_000));
     const completedRunId = randomUUID();
+    // A run's sport is its sport league's (#2042), so the runs go on the seeded PGA TOUR.
+    const { id: sportLeagueId } = await getFunctionalPrisma().sportLeague.findFirstOrThrow({ where: { sport: { sport: 'GOLF' }, urlSegment: 'pga' }, select: { id: true } });
 
     await getFunctionalPrisma().providerSyncRun.createMany({
       data: [
@@ -306,7 +301,7 @@ describe('SDK Functional: Root Admin', () => {
           trigger: 'SCHEDULE',
           id: completedRunId,
           providerId,
-          sport: 'GOLF',
+          sportLeagueId,
           createdAt: submittedAt,
           status: 'COMPLETED',
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
@@ -325,7 +320,7 @@ describe('SDK Functional: Root Admin', () => {
           trigger: 'SCHEDULE',
           id: randomUUID(),
           providerId,
-          sport: 'GOLF',
+          sportLeagueId,
           createdAt: submittedAt,
           status: 'FAILED',
           startedAt: new Date('2026-04-08T10:00:00.000Z'),
@@ -363,28 +358,6 @@ describe('SDK Functional: Root Admin', () => {
     await getFunctionalPrisma().providerSyncRun.deleteMany({ where: { providerId, createdAt: submittedAt } });
   });
 
-  it('answers 404 PROVIDER_NOT_FOUND when a root admin browses an unknown provider\'s catalog', async () => {
-    const user = await buildRegisteredUser({
-      displayName: 'Root Admin Provider Error User',
-    });
-    await promoteToRootAdmin(user);
-
-    const catalogResponse = await listProviderCatalogEvents({
-      client: user.client,
-      path: {
-        providerId: 'missing-provider',
-      },
-      query: {
-        sport: 'GOLF',
-      },
-    });
-
-    expectFunctionalError(catalogResponse, {
-      status: 404,
-      code: 'PROVIDER_NOT_FOUND',
-    });
-  });
-
   it('lets a promoted root-admin user change the live score and event list intervals of the one ingestion schedule', async () => {
     const user = await buildRegisteredUser({
       displayName: 'Root Admin Config User',
@@ -410,7 +383,7 @@ describe('SDK Functional: Root Admin', () => {
       client: user.client,
       body: { EVENTS: { intervalMinutes: 120 } },
     });
-    expect(eventListUpdate.data?.EVENTS).toEqual({ enabled: true, intervalMinutes: 120 });
+    expect(eventListUpdate.data?.EVENTS).toEqual({ enabled: true, intervalMinutes: 120, runs: true, switchable: true });
     expect(eventListUpdate.data?.SCORES.intervalSeconds).toBe(45);
   });
 
@@ -467,7 +440,6 @@ describe('SDK Functional: Root Admin', () => {
     const listResponse = await listContestConfigTemplates({
       client: user.client,
       query: {
-        sport: 'GOLF',
       },
     });
 
@@ -494,7 +466,6 @@ describe('SDK Functional: Root Admin', () => {
     const plainListResponse = await listContestConfigTemplates({
       client: plainUser.client,
       query: {
-        sport: 'GOLF',
       },
     });
     expect(plainListResponse.data?.templates.map((entry) => entry.id)).toContain(template.id);
@@ -538,6 +509,46 @@ describe('SDK Functional: Root Admin', () => {
           configJson: originalTemplate.configuration,
         },
       });
+    }
+  });
+
+  it("lists templates by the slot definitions they cover, refuses a bracket on a week or ALL_LISTED across two events' slots, and moves a default by unsetting the old one (#2010)", async () => {
+    const user = await buildRegisteredUser({ displayName: 'Root Admin Template Coverage User' });
+    await promoteToRootAdmin(user);
+    const prisma = getFunctionalPrisma();
+    const nfl = await prisma.sportLeague.findFirstOrThrow({ where: { name: 'NFL' } });
+    const definition = (slotKind: 'WEEK' | 'FINAL') => prisma.sportLeaguePhaseSlot.findFirstOrThrow({ where: { sportLeagueId: nfl.id, slotKind }, orderBy: { key: 'asc' } });
+    const week = await definition('WEEK');
+    const final = await definition('FINAL');
+    const templateOf = (templateKey: string) => prisma.contestConfigTemplate.findUniqueOrThrow({ where: { sportLeagueId_templateKey: { sportLeagueId: nfl.id, templateKey } } });
+
+    const onWeek = await listContestConfigTemplates({ client: user.client, query: { sportLeagueId: nfl.id, slotDefinitionIds: [week.id] } });
+    const keys = onWeek.data?.templates.map((template) => template.templateKey) ?? [];
+    expect(keys).toEqual(expect.arrayContaining(['nfl-pick-em-straight-up', 'nfl-survivor', 'nfl-squares']));
+    expect(keys.filter((key) => key.startsWith('nfl-bracket'))).toEqual([]);
+    expect(onWeek.data?.templates.every((template) => template.slots.some((slot) => slot.id === week.id))).toBe(true);
+
+    const bracket = await templateOf('nfl-bracket-doubling');
+    expectFunctionalError(
+      await updateContestConfigTemplate({ client: user.client, path: { templateId: bracket.id }, body: { slotDefinitionIds: [week.id] } }),
+      { status: 422, code: 'CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT' },
+    );
+    const tiered = await templateOf('nfl-tiered-doubling');
+    expectFunctionalError(
+      await updateContestConfigTemplate({ client: user.client, path: { templateId: tiered.id }, body: { slotDefinitionIds: [week.id, final.id] } }),
+      { status: 422, code: 'CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS' },
+    );
+
+    const upsetBonus = await templateOf('nfl-bracket-doubling-upset-bonus');
+    const oldDefault = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { sportLeagueId: nfl.id, selectionType: upsetBonus.selectionType, isDefault: true } });
+    try {
+      const moved = await updateContestConfigTemplate({ client: user.client, path: { templateId: upsetBonus.id }, body: { isDefault: true } });
+
+      expect(moved.data?.template.isDefault).toBe(true);
+      expect((await prisma.contestConfigTemplate.findUniqueOrThrow({ where: { id: oldDefault.id } })).isDefault).toBe(false);
+    } finally {
+      await prisma.contestConfigTemplate.update({ where: { id: upsetBonus.id }, data: { isDefault: false } });
+      await prisma.contestConfigTemplate.update({ where: { id: oldDefault.id }, data: { isDefault: true } });
     }
   });
 

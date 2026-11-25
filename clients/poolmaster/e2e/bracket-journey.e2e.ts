@@ -1,8 +1,9 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { adminApiHeaders, expectOk, sportLeagueProfileIds, type AuthHeaders } from './helpers/admin-api';
+import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
 import { logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
+import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
@@ -106,7 +107,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
   const run: JourneyRun = {
     runId,
     sport: 'BASKETBALL',
-    tourName: e2eName('Conference', runId),
+    tourUrlSegment: 'ncaawb',
     playerNamePrefix: e2eName('Team', runId),
     tournamentName: e2eName('Bracket Classic', runId),
     commissioner: {
@@ -137,18 +138,15 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
       throw new Error('the root admin could not sign in to the API');
     }
 
-    const { sportLeague } = await postJson<{ sportLeague: { id: string } }>(api, headers, '/api/v1/sport-leagues/', {
-      sport: 'BASKETBALL',
-      timeZone: 'UTC',
-      name: run.tourName,
-      ...(await sportLeagueProfileIds(api, headers, 'TIERS_4_OF_16')),
-      participantType: 'TEAM',
-      scoringFamily: 'HEAD_TO_HEAD',
-    });
-    const { event } = await postJson<{ event: { id: string } }>(api, headers, '/api/v1/events/', {
+    // A league is added by migration, so a journey plays in a seeded one, on its own test slots (#2004).
+    const sportLeague = await findSeededSportLeagueThroughApi(api, headers, 'BASKETBALL', run.tourUrlSegment);
+    // Four teams start at the semifinals.
+    const event = await createTestEventThroughApi(api, headers, {
       sportLeagueId: sportLeague.id,
+      slotKind: 'SEMIFINAL',
+      slotLabel: run.tournamentName,
       name: run.tournamentName,
-      startDate: TOURNAMENT_START,
+      startsAt: TOURNAMENT_START,
       rounds: 2,
       autoLifecycleEnabled: false,
     });
@@ -158,6 +156,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
     const participantIds: string[] = [];
     for (const { name } of FIELD) {
       const { participant } = await postJson<{ participant: { id: string } }>(api, headers, '/api/v1/participants/', {
+          isTestData: true,
         sportLeagueId: sportLeague.id,
         participantType: 'TEAM',
         name: teamName(run, name),

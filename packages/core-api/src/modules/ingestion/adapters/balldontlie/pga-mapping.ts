@@ -1,7 +1,9 @@
 /**
- * Pure mappings from BALLDONTLIE's PGA TOUR responses to the provider port's shapes. No I/O:
- * the adapter fetches, these reshape. Anything the documented data cannot answer is a
- * `BalldontlieContractError`, never a guess.
+ * Pure mappings from BALLDONTLIE's golf endpoints (`/pga/v2/...`) to the provider port's shapes. No
+ * I/O: the adapter fetches, these reshape. Anything the documented data cannot answer is a
+ * `BalldontlieContractError`, never a guess. Nothing here places a tournament on a slot or names a
+ * tour: a tournament's code is the vendor's id, and its slot comes from the league's NAME_PATTERN
+ * mappings (#2011, `placeSlotsByName`).
  */
 
 import { ParticipantRoundStatus, Sport, JobErrorType } from '@poolmaster/shared/domain';
@@ -22,11 +24,6 @@ import {
 
 export const BALLDONTLIE_PROVIDER_ID = 'balldontlie';
 
-/**
- * The tour name events carry in `metadata.tour`, for display. A sport league's events are found
- * by the provider league code each event carries (`pga`), never by this name (#1997).
- */
-export const PGA_TOUR_NAME = 'PGA TOUR';
 
 /**
  * The port's event status for each vendor lifecycle state. `unknown` has none: the vendor
@@ -76,11 +73,8 @@ export function toSportEvent(tournament: PgaTournament, participantCount?: numbe
     participantCount,
     // Once play starts the field cannot change.
     fieldLocked: tournament.status_state !== PgaStatusState.SCHEDULED,
-    metadata: {
-      tour: PGA_TOUR_NAME,
-      season: tournament.season,
-      formatType: tournament.format_type,
-    },
+    // A tournament's code is the vendor's id for it.
+    providerSlots: [{ code: String(tournament.id), startsAt: toUtcDate(tournament.start_date), endsAt: toUtcDate(tournament.end_date ?? tournament.start_date) }],
   };
 }
 

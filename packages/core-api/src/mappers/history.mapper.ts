@@ -1,4 +1,4 @@
-import { TrophyKind } from '@poolmaster/shared/domain';
+import { TrophyKind, isHallOfLameRecord } from '@poolmaster/shared/domain';
 import type { ContestResultSummaryDto, HistorySummaryDto, PerpetualTrophyDto, RecordDto, RecordStandDto, SquadHistoryDto, SquadYearDto, YearReviewDto } from '@poolmaster/shared/dto';
 import { formatUserName } from '../modules/email/email-content';
 import type { ContestResultView, HistorySummaryView, PerpetualTrophyView, RecordStandView, RecordView, SquadHistoryView, SquadYearView } from '../modules/history/service';
@@ -98,7 +98,7 @@ export function toYearReviewDto(view: YearReviewView): YearReviewDto {
 }
 
 export function toRecordDto(view: RecordView): RecordDto {
-  return { type: view.type, best: toRecordStandDto(view.best), nextBest: view.nextBest === null ? null : toRecordStandDto(view.nextBest) };
+  return { type: view.type, isHallOfLame: isHallOfLameRecord(view.type), best: toRecordStandDto(view.best), nextBest: view.nextBest === null ? null : toRecordStandDto(view.nextBest) };
 }
 
 function toRecordStandDto(view: RecordStandView): RecordStandDto {
@@ -115,8 +115,8 @@ function toRecordStandDto(view: RecordStandView): RecordStandDto {
 
 export function toPerpetualTrophyDto(view: PerpetualTrophyView): PerpetualTrophyDto {
   return {
-    eventSeriesId: view.eventSeriesId,
-    seriesName: view.seriesName,
+    trophyId: view.trophyId,
+    name: view.name,
     sportLeagueName: view.sportLeagueName,
     selectionType: view.selectionType,
     plates: view.plates.map((plate) => ({

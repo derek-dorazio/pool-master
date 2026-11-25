@@ -13,6 +13,7 @@ import type {
   PlatformPricingProfileRepository,
   SportEventRepository,
   SportLeagueRepository,
+  SportLeagueSeasonRepository,
   SportLeagueUpdate,
   SportLeagueUses,
   SportRepository,
@@ -22,16 +23,15 @@ import type {
 import {
   BracketAdvancement,
   getSportDefinition,
-  isKnownTimeZone,
-  providerSourceIdOf,
   sportPlaysMatches,
   type Participant,
+  type ProviderCode,
   type ProviderLeagueSettings,
   type ProviderSettings,
   type Sport,
-  type SportLeaguePlay,
+  type SportConfig,
   type SportLeague,
-  type SportLeagueSeasonSpan,
+  type SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
@@ -40,8 +40,11 @@ import { feedIdsOfCandidates, matchAmong, participantMatchQuery, resolveParticip
 /** A sport league with its sport and the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
   sport: Sport;
+  /** Its sport's stored URL segment and display order (#2042), read from the sport row. */
+  sportUrlSegment: string;
+  sportDisplayOrder: number;
   participantCount: number;
-  /** Events across every series of the sport league, every year. */
+  /** Events of the sport league, every year. */
   sportEventCount: number;
 }
 
@@ -64,11 +67,12 @@ export interface RankingUploadPreviewRow {
 /**
  * The providers as far as a sport league's event sync needs them (#1997): a provider league by id
  * with its provider (the `ProviderSettingsStore`), and whether that provider is running here and
- * covers a sport (the app's `ProviderRegistry`).
+ * reads that league (the app's `ProviderRegistry`, by Provider code, #2073).
  */
 export interface SportDataProviderLookup {
   findLeague(providerLeagueId: string): { provider: Pick<ProviderSettings, 'code' | 'name' | 'isEnabled'>; league: Pick<ProviderLeagueSettings, 'sport' | 'isEnabled' | 'code'> } | undefined;
-  getProviderById(providerId: string): { sportsCovered: readonly Sport[] } | null;
+  /** Whether the Provider's adapter is running here and reads its league with this code. */
+  readsLeague(providerCode: ProviderCode, providerLeagueCode: string): boolean;
 }
 
 export interface SportLeagueServiceDeps {
@@ -76,6 +80,8 @@ export interface SportLeagueServiceDeps {
   sportLeagues: SportLeagueRepository;
   sportEvents: SportEventRepository;
   participants: ParticipantRepository;
+  /** Where a labelled test slot is added (#2004) and removed (#2075). */
+  seasons: Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot'>;
   /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
   mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
   /** Which providers can sync a sport league's events (ADR 0011). */
@@ -84,8 +90,6 @@ export interface SportLeagueServiceDeps {
   platformTierProfiles: Pick<PlatformTierProfileRepository, 'findById'>;
   platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findById'>;
   logger?: FastifyBaseLogger;
-  /** The clock a new sport league's first Season is read from; the system clock by default. */
-  now?: () => Date;
 }
 
 /** The two profiles a sport league names (#1844). */
@@ -109,42 +113,61 @@ export class SportLeagueService {
   }
 
   /**
-   * 422 SPORT_LEAGUE_NOT_BRACKET for a reseeded sport league of a sport not played as a bracket;
-   * 404 PLATFORM_TIER_PROFILE_NOT_FOUND or PLATFORM_PRICING_PROFILE_NOT_FOUND for a profile that does not exist;
-   * 400 TIME_ZONE_UNKNOWN for a time zone the runtime does not know (#2003). It starts with this
-   * calendar year's Season as its current one, so an event can be made on it; every later Season
-   * is added by migration. That first Season is a stopgap for the browser journeys' own leagues and
-   * goes when they move to test slots (#2004).
+   * A labelled test slot of one of the league's slot definitions, in its current Season (#2004,
+   * plan §2): QA's test events are made on these, and the sync never reads or writes them. 404
+   * SPORT_LEAGUE_NOT_FOUND, SLOT_DEFINITION_NOT_FOUND; 422 SPORT_LEAGUE_HAS_NO_SEASON,
+   * TEST_SLOT_ENDS_BEFORE_START, SLOT_PHASE_NOT_IN_SEASON; 409 TEST_SLOT_LABEL_TAKEN.
    */
-  async createSportLeague(
-    sport: Sport,
-    input: { name: string; timeZone: string; bracketAdvancement?: BracketAdvancement } & SportLeaguePlay & SportLeagueProfileIds,
-  ): Promise<SportLeagueSummary> {
-    if (!isKnownTimeZone(input.timeZone)) {
-      throw new SportCatalogError(`Unknown time zone: ${input.timeZone}.`, 'TIME_ZONE_UNKNOWN', 400);
+  async createTestSlot(
+    sportLeagueId: string,
+    input: { slotDefinitionId: string; label: string; startsAt: Date; endsAt: Date | null },
+  ): Promise<SportLeagueSeasonSlot> {
+    const sportLeague = await this.deps.sportLeagues.findById(sportLeagueId);
+    if (!sportLeague) throw new SportCatalogError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    if (sportLeague.currentSeasonId === null) {
+      throw new SportCatalogError(`${sportLeague.name} has no current Season.`, 'SPORT_LEAGUE_HAS_NO_SEASON', 422);
     }
-    const sportRow = await requireSport(this.deps.sports, sport);
-    this.assertAdvancementFits(sport, input.bracketAdvancement);
-    await this.assertProfilesExist(input);
-    if (await this.deps.sportLeagues.findBySportAndName(sportRow.id, input.name)) {
-      throw new SportCatalogError(
-        `A sport league named "${input.name}" already exists for ${sport}.`,
-        'SPORT_LEAGUE_NAME_ALREADY_EXISTS',
-        409,
-      );
+    if (input.endsAt !== null && input.endsAt.getTime() <= input.startsAt.getTime()) {
+      throw new SportCatalogError('A test slot must end after it starts.', 'TEST_SLOT_ENDS_BEFORE_START', 422);
     }
-    const sportLeague = await this.deps.sportLeagues.create({
-      sportId: sportRow.id,
-      name: input.name,
-      participantType: input.participantType,
-      scoringFamily: input.scoringFamily,
-      timeZone: input.timeZone,
-      bracketAdvancement: input.bracketAdvancement ?? BracketAdvancement.FIXED,
-      platformTierProfileId: input.platformTierProfileId,
-      platformPricingProfileId: input.platformPricingProfileId,
-    }, calendarYearSeason((this.deps.now ?? (() => new Date()))()));
-    this.deps.logger?.info({ sportLeagueId: sportLeague.id, sport, name: input.name }, 'Created sport league');
-    return (await this.summarize([sportLeague]))[0];
+    const created = await this.deps.seasons.createTestSlot({ ...input, sportLeagueId, sportLeagueSeasonId: sportLeague.currentSeasonId });
+    if (created.outcome === 'LABEL_TAKEN') {
+      throw new SportCatalogError(`The current Season already has a test slot labelled "${input.label}" on that definition.`, 'TEST_SLOT_LABEL_TAKEN', 409);
+    }
+    if (created.outcome === 'DEFINITION_NOT_FOUND') {
+      throw new SportCatalogError(`Slot definition ${input.slotDefinitionId} is not one of ${sportLeague.name}'s.`, 'SLOT_DEFINITION_NOT_FOUND', 404);
+    }
+    if (created.outcome === 'PHASE_NOT_IN_SEASON') {
+      throw new SportCatalogError(`${sportLeague.name}'s current Season does not have the phase slot definition ${input.slotDefinitionId} is in.`, 'SLOT_PHASE_NOT_IN_SEASON', 422);
+    }
+    const { slot } = created;
+    this.deps.logger?.info({ sportLeagueId, sportLeagueSeasonId: sportLeague.currentSeasonId, seasonSlotId: slot.id, label: input.label }, 'Created test slot');
+    return slot;
+  }
+
+  /**
+   * Removes a test slot (#2075) in one transaction: the test event on it, the slot, and each test
+   * participant on that event's field that no other field holds (#2096); no other participant. How a browser journey cleans up after itself, and
+   * the residue sweep after a journey that could not. 404 SEASON_SLOT_NOT_FOUND for a slot that is
+   * not the league's; 422 SEASON_SLOT_NOT_TEST for one the sync keeps; 409 EVENT_HAS_CONTESTS while
+   * a contest still covers its event, which goes first. A slot holds at most one event.
+   */
+  async deleteTestSlot(sportLeagueId: string, seasonSlotId: string): Promise<void> {
+    const found = await this.deps.seasons.findSlot(seasonSlotId);
+    if (found === null || found.sportLeagueId !== sportLeagueId) {
+      throw new SportCatalogError(`Season slot ${seasonSlotId} is not one of sport league ${sportLeagueId}'s.`, 'SEASON_SLOT_NOT_FOUND', 404);
+    }
+    if (!found.slot.isTestData) {
+      throw new SportCatalogError('Only a test slot can be removed; the sync keeps every other.', 'SEASON_SLOT_NOT_TEST', 422);
+    }
+    if (found.sportEventId !== null) {
+      const contests = (await this.deps.sportEvents.countContests([found.sportEventId])).get(found.sportEventId) ?? 0;
+      if (contests > 0) {
+        throw new SportCatalogError(`The test slot's event has ${contests} contest(s); remove them first.`, 'EVENT_HAS_CONTESTS', 409);
+      }
+    }
+    const testParticipants = await this.deps.sportEvents.deleteTestSlot(seasonSlotId, found.sportEventId);
+    this.deps.logger?.info({ sportLeagueId, seasonSlotId, sportEventId: found.sportEventId, testParticipants }, 'Removed test slot');
   }
 
   /**
@@ -223,8 +246,7 @@ export class SportLeagueService {
         422,
       );
     }
-    const running = this.deps.providers.getProviderById(providerSourceIdOf(found.provider.code));
-    if (!found.provider.isEnabled || !found.league.isEnabled || !running?.sportsCovered.includes(sportRow.sport)) {
+    if (!found.provider.isEnabled || !found.league.isEnabled || !this.deps.providers.readsLeague(found.provider.code, found.league.code)) {
       throw new SportCatalogError(
         `${found.provider.name}'s ${found.league.code} is switched off or not running, so it cannot sync ${sportLeague.name}'s events.`,
         'PROVIDER_NOT_FOUND',
@@ -234,7 +256,7 @@ export class SportLeagueService {
   }
 
   /**
-   * Deletes a sport league nothing uses any more (#1400), with its series that have no events.
+   * Deletes a sport league nothing uses any more (#1400).
    * 404 SPORT_LEAGUE_NOT_FOUND; 409 SPORT_LEAGUE_IN_USE, naming what still uses it, while it has an
    * event, a contest setup, an event page offer, a league's cup, or a participant (#1853: a participant belongs to one sport league).
    */
@@ -298,10 +320,14 @@ export class SportLeagueService {
     }
   }
 
-  /** The sport league's participants, best rank first. 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league. */
-  async listParticipants(sportLeagueId: string): Promise<Participant[]> {
+  /**
+   * The sport league's participants, best rank first: its roster, or with `testData` only its test
+   * participants, which a test event's field takes (#2096). 404 SPORT_LEAGUE_NOT_FOUND for an
+   * unknown sport league.
+   */
+  async listParticipants(sportLeagueId: string, testData = false): Promise<Participant[]> {
     await this.requireSportLeague(sportLeagueId);
-    return this.deps.participants.findBySportLeague(sportLeagueId);
+    return this.deps.participants.findBySportLeague(sportLeagueId, testData);
   }
 
   async updateRankings(
@@ -371,23 +397,28 @@ export class SportLeagueService {
       this.deps.participants.countBySportLeagues(ids),
       this.deps.sportEvents.countBySportLeagues(ids),
     ]);
-    const sportsById = new Map(sportRows.map((sportRow) => [sportRow.id, sportRow.sport]));
-    return sportLeagues.map((sportLeague) => ({
-      ...sportLeague,
-      sport: requireSportOf(sportsById, sportLeague),
-      participantCount: participantCounts.get(sportLeague.id) ?? 0,
-      sportEventCount: eventCounts.get(sportLeague.id) ?? 0,
-    }));
+    const sportsById = new Map(sportRows.map((sportRow) => [sportRow.id, sportRow]));
+    return sportLeagues.map((sportLeague) => {
+      const sportRow = requireSportOf(sportsById, sportLeague);
+      return {
+        ...sportLeague,
+        sport: sportRow.sport,
+        sportUrlSegment: sportRow.urlSegment,
+        sportDisplayOrder: sportRow.displayOrder,
+        participantCount: participantCounts.get(sportLeague.id) ?? 0,
+        sportEventCount: eventCounts.get(sportLeague.id) ?? 0,
+      };
+    });
   }
 }
 
 /** A sport league's sport, read from its sport row; every sport league has one (a foreign key). */
-function requireSportOf(sportsById: ReadonlyMap<string, Sport>, sportLeague: SportLeague): Sport {
-  const sport = sportsById.get(sportLeague.sportId);
-  if (sport === undefined) {
+function requireSportOf(sportsById: ReadonlyMap<string, SportConfig>, sportLeague: SportLeague): SportConfig {
+  const sportRow = sportsById.get(sportLeague.sportId);
+  if (sportRow === undefined) {
     throw new SportCatalogError(`No Sport row exists for sport league ${sportLeague.id}.`, 'SPORT_NOT_FOUND', 404);
   }
-  return sport;
+  return sportRow;
 }
 
 function sportLeagueNotFound(sportLeagueId: string): SportCatalogError {
@@ -406,18 +437,3 @@ export function describeSportLeagueUses(uses: SportLeagueUses): string[] {
   ];
 }
 
-/**
- * The one Season a sport league made through the admin API starts with (#2003): `now`'s calendar
- * year in UTC, named for it. Every other Season is added by migration. A stopgap for the browser
- * journeys, which make their own leagues, kept private to this service so nothing else builds a
- * Season from the clock; slice 7 (#2004) deletes it when the journeys move to test slots.
- */
-function calendarYearSeason(now: Date): SportLeagueSeasonSpan {
-  const championshipYear = now.getUTCFullYear();
-  return {
-    name: String(championshipYear),
-    championshipYear,
-    startsAt: new Date(Date.UTC(championshipYear, 0, 1)),
-    endsAt: new Date(Date.UTC(championshipYear + 1, 0, 1) - 1),
-  };
-}

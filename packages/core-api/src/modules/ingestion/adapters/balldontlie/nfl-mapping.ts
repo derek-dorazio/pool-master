@@ -18,12 +18,8 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import { NflSeasonType, type NflGame, type NflStanding, type NflTeam } from './nfl-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
-/**
- * The tour name events carry in `metadata.tour`, for display; the NFL
- * sport league finds them by their provider league code, `nfl` (#1997).
- */
-export const NFL_LEAGUE_NAME = 'NFL';
 
 /**
  * Games in a full NFL postseason: six Wild Card, four Divisional, two Conference Championship
@@ -106,7 +102,7 @@ export function toNflSportEvent(scope: NflScope, games: readonly NflGame[], part
   return {
     externalId: nflScopeId(scope),
     providerId: BALLDONTLIE_PROVIDER_ID,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     name: scope.kind === NflScopeKind.POSTSEASON ? 'NFL Playoffs' : `NFL Week ${String(scope.week)}`,
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
@@ -115,8 +111,14 @@ export function toNflSportEvent(scope: NflScope, games: readonly NflGame[], part
     rounds: scope.kind === NflScopeKind.WEEK ? 1 : NFL_POSTSEASON_ROUNDS,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: NFL_LEAGUE_NAME, season: scope.season, seasonType: seasonTypeOf(scope) },
+    providerSlots: slotPlaysOf(games.map((game, index) => ({ code: nflSlotCodeOf(game), start: times[index] }))),
   };
+}
+
+/** A game's code (#2005): its season type and the vendor's own week, which numbers the postseason too. */
+function nflSlotCodeOf(game: NflGame): string {
+  const seasonType = required(game.postseason, game.id, 'postseason') ? ProviderSeasonType.POSTSEASON : ProviderSeasonType.REGULAR_SEASON;
+  return providerSlotCode(seasonType, required(game.week, game.id, 'week'));
 }
 
 /** Every scope the games cover, as one event each, earliest first. */
@@ -141,7 +143,7 @@ export function toNflTeamParticipant(team: NflTeam, path: string): ProviderParti
   return {
     externalId: participantFeedId(team.id),
     providerId: BALLDONTLIE_PROVIDER_ID,
-    sport: Sport.AMERICAN_FOOTBALL,
+    sport: Sport.FOOTBALL,
     name: team.full_name,
     active: true,
     metadata: { abbreviation: team.abbreviation, conference: team.conference, division: team.division },

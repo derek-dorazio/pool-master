@@ -13,7 +13,7 @@
  * `addParticipants` adds anyone to the field (a LIV golfer at a PGA event): a field is never
  * constrained to its sport league's roster.
  *
- * The field upload (#128) adjusts rankings, odds, seeds and withdrawals of participants
+ * The field upload (#128) adjusts rankings, seeds and withdrawals of participants
  * already on the field; it never adds one. Live scores reach a participant only through a
  * provider mapping, so the field comes from the provider first and the upload resolves
  * rows against the field alone, with the shared participant-row resolver. Its apply goes
@@ -71,14 +71,13 @@ export interface FieldEntryUpdate extends SportEventParticipantPatch {
 }
 
 /** One uploaded row: who it names, and the values to set. Omitted leaves a value alone; null clears it. */
-export interface FieldUploadRowInput extends ParticipantRowIdentifiers, SportEventParticipantPatch {}
+export interface FieldUploadRowInput extends ParticipantRowIdentifiers, Omit<SportEventParticipantPatch, 'oddsToWin'> {}
 
 /** The values an upload can change on a field row, each as stored (null when unset). */
 export interface FieldUploadValues {
   isActive: boolean;
   inactiveReason: ParticipantInactiveReason | null;
   ranking: number | null;
-  oddsToWin: number | null;
   seedNumber: number | null;
 }
 
@@ -105,14 +104,13 @@ export interface FieldUploadPreviewRow {
   message: string | null;
 }
 
-const FIELD_UPLOAD_VALUE_KEYS = ['isActive', 'inactiveReason', 'ranking', 'oddsToWin', 'seedNumber'] as const;
+const FIELD_UPLOAD_VALUE_KEYS = ['isActive', 'inactiveReason', 'ranking', 'seedNumber'] as const;
 
 function fieldUploadValues(entry: SportEventParticipant): FieldUploadValues {
   return {
     isActive: entry.isActive,
     inactiveReason: entry.inactiveReason ?? null,
     ranking: entry.ranking ?? null,
-    oddsToWin: entry.oddsToWin ?? null,
     seedNumber: entry.seedNumber ?? null,
   };
 }
@@ -124,7 +122,7 @@ function changedValues(entry: SportEventParticipant, patch: SportEventParticipan
   if (patch.isActive !== undefined && patch.isActive !== before.isActive) changed.isActive = patch.isActive;
   if (patch.inactiveReason !== undefined && patch.inactiveReason !== before.inactiveReason) changed.inactiveReason = patch.inactiveReason;
   if (patch.ranking !== undefined && patch.ranking !== before.ranking) changed.ranking = patch.ranking;
-  if (patch.oddsToWin !== undefined && patch.oddsToWin !== before.oddsToWin) changed.oddsToWin = patch.oddsToWin;
+  if (patch.oddsToWin !== undefined && patch.oddsToWin !== (entry.oddsToWin ?? null)) changed.oddsToWin = patch.oddsToWin;
   if (patch.seedNumber !== undefined && patch.seedNumber !== before.seedNumber) changed.seedNumber = patch.seedNumber;
   if (patch.isPlayInPlace !== undefined && patch.isPlayInPlace !== entry.isPlayInPlace) changed.isPlayInPlace = patch.isPlayInPlace;
   return changed;
@@ -136,7 +134,6 @@ function fieldUploadPatch(row: FieldUploadRowInput): SportEventParticipantPatch 
   if (row.isActive !== undefined) patch.isActive = row.isActive;
   if (row.inactiveReason !== undefined) patch.inactiveReason = row.inactiveReason;
   if (row.ranking !== undefined) patch.ranking = row.ranking;
-  if (row.oddsToWin !== undefined) patch.oddsToWin = row.oddsToWin;
   if (row.seedNumber !== undefined) patch.seedNumber = row.seedNumber;
   return patch;
 }
@@ -216,11 +213,15 @@ export class SportEventParticipantService implements EventFieldReads {
     return row;
   }
 
-  /** Adds any participants to the field; idempotent for ones already on it. */
+  /**
+   * Adds any participants to the field; idempotent for ones already on it. A test participant
+   * joins only a test slot's event (#2096): 422 TEST_PARTICIPANT_NOT_ON_TEST_SLOT otherwise.
+   */
   async addParticipants(sportEventId: string, participantIds: readonly string[]): Promise<AddFieldResult> {
     await this.requireEvent(sportEventId);
     const onField = new Set((await this.deps.field.findBySportEvent(sportEventId)).map((entry) => entry.participantId));
     const toAdd = [...new Set(participantIds)].filter((participantId) => !onField.has(participantId));
+    if (toAdd.length > 0) await this.assertTestParticipantsFit(sportEventId, toAdd);
     if (toAdd.length > 0) {
       const rebuild = await this.rebuild(sportEventId);
       await this.deps.field.createMany(sportEventId, toAdd.map((participantId) => ({ participantId })), rebuild.jobs);
@@ -483,6 +484,18 @@ export class SportEventParticipantService implements EventFieldReads {
   /** The job rebuilding the event's boards, written with a field write that may change them (#1466, #1946). */
   private rebuild(sportEventId: string): Promise<JobsForWrite> {
     return this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
+  }
+
+  /** A test participant joins only a test slot's event (#2096); the event is read only when one is added. */
+  private async assertTestParticipantsFit(sportEventId: string, participantIds: readonly string[]): Promise<void> {
+    const testParticipants = (await this.deps.participants.findByIds(participantIds)).filter((participant) => participant.isTestData);
+    if (testParticipants.length === 0 || await this.deps.sportEvents.isTestEvent(sportEventId) === true) return;
+    this.deps.logger?.warn({ sportEventId, testParticipants: testParticipants.length }, 'Refused a test participant on an event the sync keeps');
+    throw new SportEventError(
+      'A test participant can only join the field of an event on a test slot.',
+      'TEST_PARTICIPANT_NOT_ON_TEST_SLOT',
+      422,
+    );
   }
 
   private async requireEvent(sportEventId: string): Promise<SportEvent> {

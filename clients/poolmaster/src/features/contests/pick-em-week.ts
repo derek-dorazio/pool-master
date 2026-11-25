@@ -23,7 +23,7 @@ export type PickEmTeam = NonNullable<PickEmGame['home']>;
  */
 export type PickEmWeek = Pick<
   GamePicksResponse,
-  'againstTheSpread' | 'gameCount' | 'mode' | 'ownEntry' | 'selectionType' | 'survivor' | 'tiePicksOffered' | 'tiebreakerMatchId' | 'tiebreakerValue'
+  'againstTheSpread' | 'gameCount' | 'mode' | 'ownEntry' | 'selectionType' | 'survivor' | 'tiePicksOffered' | 'tiebreakerMatchId' | 'tiebreakerMax' | 'tiebreakerValue'
 > & { games: PickEmGame[] };
 type GamePickWrite = SaveGamePicksRequest['picks'][number];
 
@@ -257,6 +257,7 @@ export function isPlayoffSurvivor(gamePicks: Pick<GamePicksResponse, 'games' | '
  */
 export function currentWeekRound(gamePicks: Pick<GamePicksResponse, 'games'>): number {
   const rounds = weekRounds(gamePicks);
+  // poolmaster-allow-position: weekRounds sorts round numbers ascending: the highest is the last round
   return rounds.find((round) => gamePicks.games.some((game) => game.roundNumber === round && !game.locked)) ?? rounds.at(-1) ?? 1;
 }
 

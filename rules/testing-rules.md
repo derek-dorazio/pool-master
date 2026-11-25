@@ -90,6 +90,25 @@ The floors are measured with Babel, the provider CI's `service-unit-tests` job u
 floor as coverage grows; never lower one to pass. Meet a floor with tests that prove behavior
 (§1A), never with application code shaped for a test (§1B).
 
+**Every file has its own floor (#2103).** On top of the floors above, which stay as they are,
+every file is held per file to at least **80% of lines and 80% of branches**:
+
+- **Backend and shared:** every file under `packages/core-api/src` and `packages/shared`
+  (generated clients aside), judged on the unit and integration runs merged, so a file counts
+  as covered by whichever suite proves it (`scripts/coverage-floors-merged.json`).
+- **Job code at 100% of lines and 96% of branches**, scoring's floor, in the same merged report:
+  the job bodies, the runner and queue, domain events, the schedulers and the job lock. Jobs
+  settle contests and move workflow status, so they decide outcomes the way scoring does. The
+  job lock is a Postgres lock, so only the integration suite can prove it; a mock proves nothing.
+- **Web:** every file in `clients/poolmaster/src` (`scripts/coverage-floors-web.json`), beside
+  the folder floors below.
+
+A file under its floor when the floor came in is a named exception at its number then, rounded
+down. An exception only tightens: the check fails when the file improves until the exception is
+raised, and when it reaches the floor until the exception is deleted. A new or lowered exception
+fails `rules:check:baseline-ratchet` unless `scripts/baseline-raises.json` declares it, so a new
+file always lands at the floor.
+
 The webapp enforces per-folder coverage floors on top of its whole-suite floor:
 every `clients/poolmaster/src/features/*` folder and every `src/lib` folder must
 keep 90% of its lines and 85% of its branches covered (`vitest.config.ts`,
@@ -471,6 +490,16 @@ Do not set a count as a goal in either direction. Let it fall out, then explain 
 | Unit | presentational components, utilities | mocked only if network irrelevant |
 | Integration | hooks/pages/user flows | MSW |
 | Browser E2E | deployed browser flows | real deployed API |
+
+### Each slice names its layers
+
+Coverage floors (§1 *Coverage Floors*) say how much of a file runs; they do not say a behaviour
+is proven at the layer that can see it. A route's query count, a migration applying to real
+rows, or a journey reaching settlement only shows up in its own suite. So each slice ticket's
+*Tests* section names, for every scope line, the layers from the tables above that prove it
+(`workflow-rules.md` §1 *A slice ticket is a checklist*), and the PR ticks each with the test
+file. A layer the ticket names and the PR lacks is a blocking review finding; a layer the
+slice skips is stated with its reason. The floors stay as CI gates beside this.
 
 ---
 

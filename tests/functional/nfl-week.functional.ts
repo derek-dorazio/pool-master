@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -7,15 +8,12 @@ import {
   autoAssignEventTiers,
   cancelEventMatch,
   createContest,
-  createEvent,
   createParticipant,
-  createSportLeague,
   getEventBracket,
   listEventParticipants,
   listEvents,
   listSportLeagues,
   loadEventBracket,
-  postponeEventMatch,
   recordEventMatchResult,
   releaseEvent,
   transitionEvent,
@@ -32,7 +30,7 @@ import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -44,7 +42,8 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // An NFL regular-season week end to end over HTTP (#715). The week is its own event of one round,
 // its field the eight teams playing, and its four games link nowhere: they form no bracket, even
@@ -75,8 +74,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -85,7 +82,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
@@ -93,7 +89,7 @@ async function cleanup(): Promise<void> {
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -104,12 +100,12 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: an NFL regular-season week (#715)', () => {
-  it('loads a week whose games link nowhere, releases it, cancels its postponed game, takes a tie on a game, completes it on the other three results, and refuses knockout round points on it', async () => {
+  it('loads a week whose games link nowhere, releases it, cancels a game, takes a tie on a game, completes it on the other three results, and refuses knockout round points on it', async () => {
     const db = getFunctionalPrisma();
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Week Director' });
@@ -117,11 +113,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const a = admin.client;
 
     // --- A league that reseeds its playoffs, and a week of three games --------------------------
-    const nfl = await createSportLeague({
-      client: a,
-      body: { ...(await sportLeagueProfiles(a, Sport.AMERICAN_FOOTBALL)), ...sportPlay(Sport.AMERICAN_FOOTBALL), timeZone: 'UTC', sport: Sport.AMERICAN_FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED },
-    });
-    const sportLeagueId = expectDefined(nfl.data, JSON.stringify(nfl.error)).sportLeague.id;
+    const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.FOOTBALL, name: `Week League ${RUN}`, bracketAdvancement: BracketAdvancement.RESEED_BY_SEED });
     created.sportLeagueIds.add(sportLeagueId);
     const teamIds: string[] = [];
     for (const team of TEAMS) {
@@ -130,9 +122,9 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
       created.participantIds.add(id);
       teamIds.push(id);
     }
-    const event = await createEvent({
+    const event = await createTestEvent({
       client: a,
-      body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `Week 1 ${RUN}`, startDate: '2099-09-10T17:00:00.000Z', rounds: 1, autoLifecycleEnabled: false },
+      body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `Week 1 ${RUN}`, startDate: '2099-09-10T17:00:00.000Z', rounds: 1, autoLifecycleEnabled: false },
     });
     const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
     created.sportEventIds.add(eventId);
@@ -141,7 +133,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     expect((await applyEventParticipantUpload({
       client: a,
       path: { eventId },
-      body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
+      body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },
     })).response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: {} })).response?.status).toBe(200);
     expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -193,11 +185,8 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
       },
     }), { status: 422, code: 'CONTEST_EVENT_NOT_A_BRACKET' });
 
-    // Eagles-Giants is postponed first, still to be played; then it is called off for this week:
-    // cancelled here, it would be added to the week it moves to.
-    const postponed = await postponeEventMatch({ client: a, path: { eventId, matchNumber: 4 } });
-    expect(expectMatchesSchema(SportEventBracketResponseSchema, postponed.data).matches.map((game) => [game.matchNumber, game.status]))
-      .toEqual([[1, MatchStatus.SCHEDULED], [2, MatchStatus.SCHEDULED], [3, MatchStatus.SCHEDULED], [4, MatchStatus.POSTPONED]]);
+    // Eagles-Giants is called off for this week: cancelled here, it would be added to the week it
+    // moves to. Only the feed postpones a game (#2074).
     const cancelled = await cancelEventMatch({ client: a, path: { eventId, matchNumber: 4 } });
     expect([cancelled.error, cancelled.response?.status]).toEqual([undefined, 200]);
     const statusOf = (matches: readonly { matchNumber: number; status: string }[]) => matches.map((game) => [game.matchNumber, game.status]);
@@ -223,9 +212,8 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const packersWin = await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
     expect(expectMatchesSchema(SportEventBracketResponseSchema, packersWin.data).matches.map((game) => [game.matchNumber, game.status, game.winnerSide]))
       .toEqual([[1, MatchStatus.COMPLETED, MatchSide.HOME], [2, MatchStatus.COMPLETED, MatchSide.AWAY], [3, MatchStatus.COMPLETED, MatchSide.HOME], [4, MatchStatus.CANCELLED, null]]);
-    // A played game is not cancelled: its result is cleared first.
+    // A played game is not cancelled.
     expectFunctionalError(await cancelEventMatch({ client: a, path: { eventId, matchNumber: 1 } }), { status: 409, code: 'MATCH_ALREADY_PLAYED' });
-    expectFunctionalError(await postponeEventMatch({ client: a, path: { eventId, matchNumber: 1 } }), { status: 409, code: 'MATCH_ALREADY_PLAYED' });
 
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
   });
@@ -248,7 +236,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
 
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
     const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id } })).data).events
       .find((row) => row.name === week.name));

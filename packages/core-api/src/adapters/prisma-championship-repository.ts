@@ -4,7 +4,10 @@
 
 import type { PrismaClient } from '@prisma/client';
 import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
-import { ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
+
+/** A slot definition with what puts it in play order. */
+const TROPHY_DEFINITION_SELECT = { id: true, key: true, name: true, slotKind: true, weekNumber: true, phase: { select: { phase: true } } } as const;
 
 const FINISH_SELECT = {
   leagueId: true,
@@ -77,7 +80,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         name: true,
         selectionType: true,
         endsAt: true,
-        sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { eventSeries: { select: { sportLeague: { select: { name: true } } } } } } } },
+        sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { sportLeagueSeason: { select: { sportLeague: { select: { name: true } } } } } } } },
       },
     });
     // Every event of a contest is one sports league's, so the first event names it.
@@ -87,7 +90,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         id: row.id,
         name: row.name,
         selectionType: row.selectionType,
-        sportLeagueName: firstEvent.sportEvent.eventSeries.sportLeague.name,
+        sportLeagueName: firstEvent.sportEvent.sportLeagueSeason.sportLeague.name,
         completedAt: row.endsAt,
       }];
     });
@@ -107,8 +110,10 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
             sportEvent: {
               select: {
                 id: true,
-                sportLeagueSeason: { select: { championshipYear: true } },
-                eventSeries: { select: { id: true, name: true, sportLeague: { select: { name: true } } } },
+                name: true,
+                sportLeagueSeason: { select: { championshipYear: true, sportLeague: { select: { name: true } } } },
+                // The slot definitions the event covers key its trophy until #2024 (#2010).
+                slots: { select: { seasonSlot: { select: { definition: { select: TROPHY_DEFINITION_SELECT } } } } },
               },
             },
           },
@@ -138,12 +143,18 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       id: row.id,
       selectionType: row.selectionType,
       cupWeight: row.cupWeight,
-      eventSeriesId: event.eventSeries.id,
-      seriesName: event.eventSeries.name,
-      sportLeagueName: event.eventSeries.sportLeague.name,
+      ...coveredDefinitions(event.slots.map(({ seasonSlot }) => ({ ...seasonSlot.definition, phase: seasonSlot.definition.phase.phase }))),
+      eventName: event.name,
+      sportLeagueName: event.sportLeagueSeason.sportLeague.name,
       championshipYear: event.sportLeagueSeason.championshipYear,
       completedAt: row.endsAt,
       games: gamesByEvent.get(event.id) ?? { count: 0, roundCount: 0, sendingWinnerOn: 0 },
     }));
   }
+}
+
+/** An event's slot definitions in play order, and the first one's proper name. */
+function coveredDefinitions(definitions: (Parameters<typeof compareCoveredSlots>[0] & { id: string; name: string | null })[]): Pick<SeriesContest, 'slotDefinitionIds' | 'slotName'> {
+  const inPlayOrder = [...definitions].sort(compareCoveredSlots);
+  return { slotDefinitionIds: inPlayOrder.map((definition) => definition.id), slotName: inPlayOrder[0]?.name ?? null };
 }

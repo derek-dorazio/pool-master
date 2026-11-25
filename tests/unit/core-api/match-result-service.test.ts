@@ -71,7 +71,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
       return `match-${sequence}`;
     },
   });
-  if (sport === Sport.BASKETBALL || sport === Sport.AMERICAN_FOOTBALL || sport === Sport.SOCCER) {
+  if (sport === Sport.BASKETBALL || sport === Sport.FOOTBALL || sport === Sport.SOCCER) {
     await brackets.loadBracket(event.id, [
       { matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: duke.id, awaySportEventParticipantId: vermont.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.HOME } },
       { matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: houston.id, awaySportEventParticipantId: texas.id, isNeutralSite: true, scheduledDate: null, advancesTo: { matchNumber: 3, side: MatchSide.AWAY } },
@@ -89,8 +89,8 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
 /** A released week of two games that form no bracket, as an NFL regular-season week is. */
 async function week() {
   const store = new InMemorySportEvents();
-  const sportRow = store.addSport(Sport.AMERICAN_FOOTBALL);
-  const event = store.addEvent({ sport: Sport.AMERICAN_FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
+  const sportRow = store.addSport(Sport.FOOTBALL);
+  const event = store.addEvent({ sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
   const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
     store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
@@ -131,50 +131,44 @@ describe('MatchResultService.recordResult', () => {
   it('completes the match with its winner and scores and puts the winner on its side of the next match', async () => {
     const { service, event, vermont } = await setup();
 
-    const bracket = await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, awayWins);
 
     expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 });
     expect(bracket.find((match) => match.matchNumber === 3)).toMatchObject({ homeSportEventParticipantId: vermont.id, awaySportEventParticipantId: null });
   });
 
-  it('records who set the result, keeps it while the result stands, and forgets it when the result is cleared (#1531)', async () => {
+  it('records every result as the feed\'s, a correction included: the feed is the only writer of a synced event\'s results (#2074)', async () => {
     const { store, service, event } = await setup();
     const sourceOf = async () => (await store.matchRepo().findBySportEvent(event.id)).find((match) => match.matchNumber === 1)?.resultSource;
 
-    await service.recordResult(event.id, 1, awayWins, MatchResultSource.PROVIDER);
-    const fromProvider = await sourceOf();
-    await service.recordResult(event.id, 1, { ...awayWins, awayScore: 81 }, MatchResultSource.ADMIN);
-    const corrected = await sourceOf();
-    await service.clearResult(event.id, 1);
+    await service.recordResult(event.id, 1, awayWins);
+    const first = await sourceOf();
+    await service.recordResult(event.id, 1, { ...awayWins, awayScore: 81 });
 
-    expect([fromProvider, corrected, await sourceOf()]).toEqual([MatchResultSource.PROVIDER, MatchResultSource.ADMIN, null]);
+    expect([first, await sourceOf()]).toEqual([MatchResultSource.PROVIDER, MatchResultSource.PROVIDER]);
   });
 
-  it('records when the result came in, moves it with a correction, and clears it with the result (#1889)', async () => {
+  it('records when the result came in, and moves it with a correction (#1889)', async () => {
     const { store, event } = await setup();
     const completedAtOf = async () => (await store.matchRepo().findBySportEvent(event.id)).find((match) => match.matchNumber === 1)?.completedAt;
     const corrected = new Date(AS_OF.getTime() + 60_000);
     let now = AS_OF;
     const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => now });
 
-    await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, awayWins);
     const recorded = await completedAtOf();
     now = corrected;
-    await service.recordResult(event.id, 1, { ...awayWins, awayScore: 81 }, MatchResultSource.ADMIN);
-    const afterCorrection = await completedAtOf();
-    await service.clearResult(event.id, 1);
+    await service.recordResult(event.id, 1, { ...awayWins, awayScore: 81 });
 
-    expect([recorded, afterCorrection, await completedAtOf()]).toEqual([AS_OF, corrected, null]);
+    expect([recorded, await completedAtOf()]).toEqual([AS_OF, corrected]);
   });
 
-  it('gives a cancelled or postponed game no completion time (#1889)', async () => {
+  it('gives a cancelled game no completion time (#1889)', async () => {
     const { service, event } = await week();
 
     const cancelled = await service.cancelMatch(event.id, 1);
-    const postponed = await service.postponeMatch(event.id, 2);
 
     expect(cancelled.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.CANCELLED, completedAt: null });
-    expect(postponed.find((match) => match.matchNumber === 2)).toMatchObject({ status: MatchStatus.POSTPONED, completedAt: null });
   });
 
   it('answers with the bracket as it wrote it, reading the bracket once and not again after the write (#1355)', async () => {
@@ -183,7 +177,7 @@ describe('MatchResultService.recordResult', () => {
     const findBySportEvent = jest.spyOn(matches, 'findBySportEvent');
     const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches, now: () => AS_OF });
 
-    const bracket = await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, awayWins);
 
     expect(findBySportEvent).toHaveBeenCalledTimes(1);
     expect(bracket).toEqual(await store.matchRepo().findBySportEvent(event.id));
@@ -195,7 +189,7 @@ describe('MatchResultService.recordResult', () => {
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
     const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
 
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
     expect(activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: event.id, status: SportEventStatus.IN_PROGRESS }), AS_OF, writtenBracketWithResult);
   });
@@ -205,7 +199,7 @@ describe('MatchResultService.recordResult', () => {
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
     const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
 
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
     expect(activateContestsPastCutoff).not.toHaveBeenCalled();
   });
@@ -223,7 +217,7 @@ describe('MatchResultService.recordResult', () => {
       now: () => AS_OF,
     });
 
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
     expect(settlement.decided(event.id, 'match-1')).toHaveLength(1);
     expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ jobs: [settleGameJob(event.id, 'match-1'), eventRebuildJob(event.id)] }));
@@ -244,7 +238,7 @@ describe('MatchResultService.recordResult', () => {
       now: () => AS_OF,
     });
 
-    await expect(service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN)).rejects.toThrow('connection lost');
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toThrow('connection lost');
 
     expect(settlement.queued).not.toHaveBeenCalled();
   });
@@ -252,7 +246,7 @@ describe('MatchResultService.recordResult', () => {
   it('accepts a result with no scores', async () => {
     const { service, event } = await setup();
 
-    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null }, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null });
 
     expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: null, awayScore: null });
   });
@@ -260,7 +254,7 @@ describe('MatchResultService.recordResult', () => {
   it('rewrites the standings: the winner ahead, the teams still to play tied behind it, the loser eliminated last, each at the latest round it has a match in', async () => {
     const context = await setup();
 
-    await context.service.recordResult(context.event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await context.service.recordResult(context.event.id, 1, homeWins);
 
     expect(context.standingOf(context.duke.id)).toMatchObject({ position: 1, displayPosition: '1', status: ParticipantStandingStatus.ACTIVE, currentRound: 2, asOf: AS_OF });
     expect(context.standingOf(context.houston.id)).toMatchObject({ position: 2, displayPosition: 'T2', status: ParticipantStandingStatus.ACTIVE, currentRound: 1 });
@@ -269,10 +263,10 @@ describe('MatchResultService.recordResult', () => {
 
   it('ranks the champion first, the runner-up second and the teams out in the first round tied below them', async () => {
     const context = await setup();
-    await context.service.recordResult(context.event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await context.service.recordResult(context.event.id, 2, awayWins, MatchResultSource.ADMIN);
+    await context.service.recordResult(context.event.id, 1, homeWins);
+    await context.service.recordResult(context.event.id, 2, awayWins);
 
-    await context.service.recordResult(context.event.id, 3, awayWins, MatchResultSource.ADMIN);
+    await context.service.recordResult(context.event.id, 3, awayWins);
 
     expect(context.standingOf(context.texas.id)).toMatchObject({ position: 1, displayPosition: '1', status: ParticipantStandingStatus.COMPLETE });
     expect(context.standingOf(context.duke.id)).toMatchObject({ position: 2, displayPosition: '2', status: ParticipantStandingStatus.ELIMINATED });
@@ -282,22 +276,22 @@ describe('MatchResultService.recordResult', () => {
 
   it('changes a winner while the next match has no result, moving the new winner into its place', async () => {
     const { service, event, vermont } = await setup();
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
-    const bracket = await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, awayWins);
 
     expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(vermont.id);
   });
 
   it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new winner once the next match has a result, but still fixes the scores', async () => {
     const { service, event } = await setup();
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 2, homeWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
+    await service.recordResult(event.id, 2, homeWins);
+    await service.recordResult(event.id, 3, homeWins);
 
-    await expect(service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN))
+    await expect(service.recordResult(event.id, 1, awayWins))
       .rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
-    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 81, awayScore: 70 }, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 81, awayScore: 70 });
     expect(bracket.find((match) => match.matchNumber === 1)?.homeScore).toBe(81);
   });
 
@@ -309,7 +303,7 @@ describe('MatchResultService.recordResult', () => {
   ])('refuses (422 MATCH_RESULT_INVALID) %s and saves nothing', async (_label, input) => {
     const { service, event, store } = await setup();
 
-    await expect(service.recordResult(event.id, 1, input, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+    await expect(service.recordResult(event.id, 1, input)).rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
     expect(store.matchRows.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
     expect(store.standingRows).toEqual([]);
   });
@@ -317,35 +311,35 @@ describe('MatchResultService.recordResult', () => {
   it('refuses (422 MATCH_SIDES_NOT_SET) a match still waiting for a team', async () => {
     const { service, event } = await setup();
 
-    await expect(service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'MATCH_SIDES_NOT_SET', statusCode: 422 });
+    await expect(service.recordResult(event.id, 3, homeWins)).rejects.toMatchObject({ code: 'MATCH_SIDES_NOT_SET', statusCode: 422 });
   });
 
   it('refuses (404 BRACKET_MATCH_NOT_FOUND) a match number the bracket does not have', async () => {
     const { service, event } = await setup();
 
-    await expect(service.recordResult(event.id, 9, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'BRACKET_MATCH_NOT_FOUND', statusCode: 404 });
+    await expect(service.recordResult(event.id, 9, homeWins)).rejects.toMatchObject({ code: 'BRACKET_MATCH_NOT_FOUND', statusCode: 404 });
   });
 
   it('refuses (409 SPORT_EVENT_NOT_RELEASED) a draft, whose pairings can still change', async () => {
     const { service, event } = await setup({ status: SportEventStatus.DRAFT });
 
-    await expect(service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
   });
 
   it('refuses (422 SPORT_EVENT_NOT_BRACKET) an event whose sport is not played as a bracket, and 404 EVENT_NOT_FOUND an unknown event', async () => {
     const { service, event } = await setup({ sport: Sport.GOLF });
 
-    await expect(service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
-    await expect(service.recordResult('no-such-event', 1, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_BRACKET', statusCode: 422 });
+    await expect(service.recordResult('no-such-event', 1, homeWins)).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 });
 
 // #772 review: quarter scores belong to the two teams playing, so a game with any is under way.
 describe('MatchResultService once the next game has quarter scores', () => {
   async function scoredFinal() {
-    const context = await setup({ sport: Sport.AMERICAN_FOOTBALL });
-    await context.service.recordResult(context.event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await context.service.recordResult(context.event.id, 2, homeWins, MatchResultSource.ADMIN);
+    const context = await setup({ sport: Sport.FOOTBALL });
+    await context.service.recordResult(context.event.id, 1, homeWins);
+    await context.service.recordResult(context.event.id, 2, homeWins);
     await context.service.recordPeriodScore(context.event.id, 3, 1, { homeScore: 7, awayScore: 3 });
     return context;
   }
@@ -353,21 +347,16 @@ describe('MatchResultService once the next game has quarter scores', () => {
   it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new winner for a game whose winner is playing a game with quarter scores', async () => {
     const { service, event } = await scoredFinal();
 
-    await expect(service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.recordResult(event.id, 1, awayWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
   });
 
-  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) clearing the result of a game whose winner is playing a game with quarter scores', async () => {
-    const { service, event } = await scoredFinal();
-
-    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
-  });
 });
 
 describe('MatchResultService shoot-outs (#791)', () => {
   it('saves a soccer bracket match level after extra time with its shoot-out, the shoot-out\'s winner moving on', async () => {
     const { service, event, vermont } = await setup({ sport: Sport.SOCCER });
 
-    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4 }, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4 });
 
     expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({
       status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4,
@@ -378,14 +367,14 @@ describe('MatchResultService shoot-outs (#791)', () => {
   it('refuses (422 MATCH_RESULT_INVALID) a soccer bracket match left level with no shoot-out', async () => {
     const { service, event } = await setup({ sport: Sport.SOCCER });
 
-    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 }, MatchResultSource.ADMIN))
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 }))
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
   });
 
   it('refuses (422 MATCH_RESULT_INVALID) shoot-out scores in a sport whose knockouts never end level, and saves nothing', async () => {
     const { service, event, store } = await setup();
 
-    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 70, homeShootoutScore: 4, awayShootoutScore: 3 }, MatchResultSource.ADMIN))
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 70, homeShootoutScore: 4, awayShootoutScore: 3 }))
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
     expect(store.matchRows.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
   });
@@ -393,20 +382,11 @@ describe('MatchResultService shoot-outs (#791)', () => {
   it('saves a result sent without shoot-out scores as having no shoot-out', async () => {
     const { service, event } = await setup();
 
-    const bracket = await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, homeWins);
 
     expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ homeShootoutScore: null, awayShootoutScore: null });
   });
 
-  it('clears a match\'s shoot-out with its result', async () => {
-    const { service, event, store } = await setup();
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-    Object.assign(store.matchRows[0], { homeShootoutScore: 4, awayShootoutScore: 3 });
-
-    const bracket = await service.clearResult(event.id, 1);
-
-    expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.SCHEDULED, homeShootoutScore: null, awayShootoutScore: null });
-  });
 });
 
 describe('describeScoreProblem with shoot-outs (#791)', () => {
@@ -454,7 +434,7 @@ describe('MatchResultService matches that ended early (#704)', () => {
   it('saves a retirement whose winner trailed when it stopped, sends the winner on and puts the player who retired out', async () => {
     const { service, event, duke, vermont, standingOf } = await setup();
 
-    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 0, ending: MatchEnding.RETIREMENT }, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 0, ending: MatchEnding.RETIREMENT });
 
     expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 0, ending: MatchEnding.RETIREMENT });
     expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(vermont.id);
@@ -464,7 +444,7 @@ describe('MatchResultService matches that ended early (#704)', () => {
   it('saves a walkover with no score as a full win that sends its winner on', async () => {
     const { service, event, duke } = await setup();
 
-    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER }, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
 
     expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
     expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBe(duke.id);
@@ -473,42 +453,39 @@ describe('MatchResultService matches that ended early (#704)', () => {
   it('saves a result sent without an ending as played to its end', async () => {
     const { service, event } = await setup();
 
-    const bracket = await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    const bracket = await service.recordResult(event.id, 1, homeWins);
 
     expect(bracket.find((match) => match.matchNumber === 1)?.ending).toBe(MatchEnding.PLAYED);
   });
 
-  it('puts a match back to played when a result that ended early is re-sent without an ending, and when it is cleared', async () => {
+  it('puts a match back to played when a result that ended early is re-sent without an ending', async () => {
     const { service, event } = await setup();
-    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.DEFAULT }, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.DEFAULT });
 
-    const resent = await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 2, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER }, MatchResultSource.ADMIN);
-    const cleared = await service.clearResult(event.id, 2);
+    const resent = await service.recordResult(event.id, 1, homeWins);
 
     expect(resent.find((match) => match.matchNumber === 1)?.ending).toBe(MatchEnding.PLAYED);
-    expect(cleared.find((match) => match.matchNumber === 2)).toMatchObject({ status: MatchStatus.SCHEDULED, ending: MatchEnding.PLAYED });
   });
 
   it('refuses (422 MATCH_RESULT_INVALID) a walkover with a score, and saves nothing', async () => {
     const { service, event, store } = await setup();
 
-    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 0, ending: MatchEnding.WALKOVER }, MatchResultSource.ADMIN))
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 0, ending: MatchEnding.WALKOVER }))
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
     expect(store.matchRows.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
   });
 
   it('refuses (422 MATCH_RESULT_INVALID) a walkover for a game that already has quarter scores', async () => {
-    const { service, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+    const { service, event } = await setup({ sport: Sport.FOOTBALL });
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
 
-    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER }, MatchResultSource.ADMIN))
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER }))
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
   });
 
   it('refuses (422 MATCH_PERIOD_SCORE_INVALID) a quarter score for a game that was a walkover', async () => {
-    const { service, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
-    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER }, MatchResultSource.ADMIN);
+    const { service, event } = await setup({ sport: Sport.FOOTBALL });
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending: MatchEnding.WALKOVER });
 
     await expect(service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 }))
       .rejects.toMatchObject({ code: 'MATCH_PERIOD_SCORE_INVALID', statusCode: 422 });
@@ -540,45 +517,15 @@ describe('describeScoreProblem for matches that ended early (#704)', () => {
   });
 });
 
-describe('MatchResultService.clearResult', () => {
-  it('schedules the match again, empties the side its winner filled and restores the loser\'s standing', async () => {
-    const context = await setup();
-    await context.service.recordResult(context.event.id, 1, homeWins, MatchResultSource.ADMIN);
-
-    const bracket = await context.service.clearResult(context.event.id, 1);
-
-    expect(bracket.find((match) => match.matchNumber === 1)).toMatchObject({ status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null });
-    expect(bracket.find((match) => match.matchNumber === 3)?.homeSportEventParticipantId).toBeNull();
-    expect(context.standingOf(context.vermont.id)).toMatchObject({ status: ParticipantStandingStatus.ACTIVE, position: 1 });
-  });
-
-  it('changes nothing for a match with no result', async () => {
-    const { service, event, store } = await setup();
-
-    await service.clearResult(event.id, 1);
-
-    expect(store.standingRows).toEqual([]);
-  });
-
-  it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) once the next match has a result', async () => {
-    const { service, event } = await setup();
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 2, homeWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN);
-
-    await expect(service.clearResult(event.id, 2)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
-  });
-});
-
 // #715: a postponed regular-season game is cancelled in its week and added to the week it moves to.
 describe('MatchResultService.cancelMatch', () => {
-  it('cancels a game of a released week that has not been played, as the admin\'s doing, leaving the week\'s other game as it was', async () => {
+  it('cancels a game of a released week that has not been played, as the feed\'s doing, leaving the week\'s other game as it was', async () => {
     const { service, event } = await week();
 
     const games = await service.cancelMatch(event.id, 1);
 
     expect(games.map((game) => [game.matchNumber, game.status, game.winnerSide, game.resultSource])).toEqual([
-      [1, MatchStatus.CANCELLED, null, MatchResultSource.ADMIN],
+      [1, MatchStatus.CANCELLED, null, MatchResultSource.PROVIDER],
       [2, MatchStatus.SCHEDULED, null, null],
     ]);
   });
@@ -614,7 +561,7 @@ describe('MatchResultService.cancelMatch', () => {
 
   it('refuses (409 MATCH_ALREADY_PLAYED) a game with a result: its result is cleared first', async () => {
     const { service, event } = await week();
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
     await expect(service.cancelMatch(event.id, 1)).rejects.toMatchObject({ code: 'MATCH_ALREADY_PLAYED', statusCode: 409 });
   });
@@ -631,78 +578,6 @@ describe('MatchResultService.cancelMatch', () => {
     event.status = SportEventStatus.DRAFT;
 
     await expect(service.cancelMatch(event.id, 1)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
-  });
-});
-
-describe('MatchResultService.postponeMatch', () => {
-  it('postpones a released game not yet started, leaving it unplayed and the week\'s other game as it was', async () => {
-    const { service, event } = await week();
-
-    const games = await service.postponeMatch(event.id, 1);
-
-    expect(games.map((game) => [game.matchNumber, game.status, game.winnerSide, game.homeScore, game.resultSource])).toEqual([
-      [1, MatchStatus.POSTPONED, null, null, null],
-      [2, MatchStatus.SCHEDULED, null, null, null],
-    ]);
-  });
-
-  it('postpones a bracket game, which is put off rather than called off', async () => {
-    const { service, event } = await setup();
-
-    const games = await service.postponeMatch(event.id, 1);
-
-    expect(games.find((game) => game.matchNumber === 1)?.status).toBe(MatchStatus.POSTPONED);
-  });
-
-  it('writes the event\'s board rebuild with the postponement, so the boards show it', async () => {
-    const { store, event } = await week();
-    const matches = store.matchRepo();
-    const applyResult = jest.spyOn(matches, 'applyResult');
-    const { domainEvents, queued } = gameSettlement();
-    const service = new MatchResultService({
-      sportEvents: store.sportEventRepo(),
-      matches,
-      contestActivation: NO_CONTEST_ACTIVATION,
-      domainEvents,
-      now: () => AS_OF,
-    });
-
-    await service.postponeMatch(event.id, 1);
-
-    // A postponed game is not decided: its squares contests wait for it.
-    expect(applyResult).toHaveBeenCalledWith(expect.objectContaining({ result: expect.objectContaining({ status: MatchStatus.POSTPONED }), jobs: [eventRebuildJob(event.id)] }));
-    expect(queued).toHaveBeenCalledTimes(1);
-  });
-
-  it('changes nothing when the game is already postponed, and a result still completes it', async () => {
-    const { service, event } = await week();
-    await service.postponeMatch(event.id, 1);
-
-    const again = await service.postponeMatch(event.id, 1);
-    const played = await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-
-    expect(again.find((game) => game.matchNumber === 1)?.status).toBe(MatchStatus.POSTPONED);
-    expect(played.find((game) => game.matchNumber === 1)?.status).toBe(MatchStatus.COMPLETED);
-  });
-
-  it('refuses a game with a result (409 MATCH_ALREADY_PLAYED), a cancelled game (409 MATCH_CANCELLED) and a game with a quarter score (409 MATCH_ALREADY_STARTED)', async () => {
-    const { service, event } = await week();
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await expect(service.postponeMatch(event.id, 1)).rejects.toMatchObject({ code: 'MATCH_ALREADY_PLAYED', statusCode: 409 });
-
-    await service.cancelMatch(event.id, 2);
-    await expect(service.postponeMatch(event.id, 2)).rejects.toMatchObject({ code: 'MATCH_CANCELLED', statusCode: 409 });
-
-    const other = await week();
-    await other.service.recordPeriodScore(other.event.id, 1, 1, { homeScore: 3, awayScore: 0 });
-    await expect(other.service.postponeMatch(other.event.id, 1)).rejects.toMatchObject({ code: 'MATCH_ALREADY_STARTED', statusCode: 409 });
-  });
-
-  it('refuses (409 SPORT_EVENT_NOT_RELEASED) a game of a draft week', async () => {
-    const { service, event } = await week();
-    event.status = SportEventStatus.DRAFT;
-
-    await expect(service.postponeMatch(event.id, 1)).rejects.toMatchObject({ code: 'SPORT_EVENT_NOT_RELEASED', statusCode: 409 });
   });
 });
 
@@ -725,7 +600,7 @@ describe('MatchResultService period scores', () => {
   it('replaces a quarter\'s score when it is entered again, and corrects it after the game is final', async () => {
     const { service, event } = await week();
     await service.recordPeriodScore(event.id, 1, 3, { homeScore: 14, awayScore: 3 });
-    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 }, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 });
 
     const games = await service.recordPeriodScore(event.id, 1, 3, { homeScore: 17, awayScore: 3 });
 
@@ -747,7 +622,7 @@ describe('MatchResultService period scores', () => {
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
     expect(savePeriodScore).toHaveBeenLastCalledWith('game-1', { periodNumber: 1, homeScore: 7, awayScore: 0 }, [eventRebuildJob(event.id)]);
     expect(settlement.decided(event.id, 'game-1')).toHaveLength(0);
-    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 }, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 });
     settlement.queued.mockClear();
 
     await service.recordPeriodScore(event.id, 1, 3, { homeScore: 17, awayScore: 3 });
@@ -758,16 +633,6 @@ describe('MatchResultService period scores', () => {
     expect(settlement.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('clears a quarter\'s score, and changes nothing for a quarter not entered', async () => {
-    const { service, event } = await week();
-    await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
-
-    await service.clearPeriodScore(event.id, 1, 2);
-    const games = await service.clearPeriodScore(event.id, 1, 1);
-
-    expect(games.find((game) => game.matchNumber === 1)?.periodScores).toEqual([]);
-  });
-
   it('refuses (422 MATCH_PERIOD_SCORE_INVALID) a score below an earlier quarter\'s or above a later quarter\'s or the final score', async () => {
     const { service, event } = await week();
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 3 });
@@ -776,7 +641,7 @@ describe('MatchResultService period scores', () => {
 
     await expect(service.recordPeriodScore(event.id, 1, 2, { homeScore: 7, awayScore: 0 })).rejects.toMatchObject(refused);
     await expect(service.recordPeriodScore(event.id, 1, 2, { homeScore: 17, awayScore: 3 })).rejects.toMatchObject(refused);
-    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 21, awayScore: 10 }, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 21, awayScore: 10 });
     await expect(service.recordPeriodScore(event.id, 1, 3, { homeScore: 24, awayScore: 10 })).rejects.toMatchObject(refused);
   });
 
@@ -784,7 +649,7 @@ describe('MatchResultService period scores', () => {
     const { service, event } = await week();
     await service.recordPeriodScore(event.id, 1, 3, { homeScore: 14, awayScore: 10 });
 
-    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 13, awayScore: 10 }, MatchResultSource.ADMIN))
+    await expect(service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 13, awayScore: 10 }))
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
   });
 
@@ -837,7 +702,7 @@ describe('MatchResultService period scores — refusals and clock', () => {
     const before = Date.now();
 
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
     await service.cancelMatch(event.id, 2);
 
     const after = Date.now();
@@ -852,7 +717,7 @@ describe('MatchResultService on a week of games that form no bracket', () => {
   it('ranks no team on a week\'s result: both teams of the played game COMPLETE with no place, the teams still to play ACTIVE', async () => {
     const { service, event, bills, jets, chiefs, raiders, standingOf } = await week();
 
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
     for (const team of [bills, jets]) {
       expect(standingOf(team.id)).toMatchObject({ position: null, displayPosition: null, status: ParticipantStandingStatus.COMPLETE, currentRound: 1 });
@@ -865,25 +730,16 @@ describe('MatchResultService on a week of games that form no bracket', () => {
   it('crowns no champion once every game of the week is played', async () => {
     const { service, event, bills, jets, chiefs, raiders, standingOf } = await week();
 
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 2, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
+    await service.recordResult(event.id, 2, awayWins);
 
     expect([bills, jets, chiefs, raiders].map((team) => standingOf(team.id)?.position ?? null)).toEqual([null, null, null, null]);
-  });
-
-  it('puts a cleared game\'s teams back to ACTIVE', async () => {
-    const { service, event, bills, jets, standingOf } = await week();
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
-
-    await service.clearResult(event.id, 1);
-
-    expect([standingOf(bills.id)?.status, standingOf(jets.id)?.status]).toEqual([ParticipantStandingStatus.ACTIVE, ParticipantStandingStatus.ACTIVE]);
   });
 
   it('records a tie (#792): the game COMPLETED with no winner and its level scores, both teams COMPLETE with no place', async () => {
     const { service, event, bills, jets, standingOf } = await week();
 
-    const games = await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 20, awayScore: 20 }, MatchResultSource.ADMIN);
+    const games = await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 20, awayScore: 20 });
 
     expect(games.find((game) => game.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 20, awayScore: 20 });
     for (const team of [bills, jets]) {
@@ -893,10 +749,10 @@ describe('MatchResultService on a week of games that form no bracket', () => {
 
   it('changes a tie to a win and back, since a week\'s game sends nobody on', async () => {
     const { service, event } = await week();
-    await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 20, awayScore: 20 }, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 20, awayScore: 20 });
 
-    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 23, awayScore: 20 }, MatchResultSource.ADMIN);
-    const games = await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 23, awayScore: 23 }, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, { winnerSide: MatchSide.HOME, homeScore: 23, awayScore: 20 });
+    const games = await service.recordResult(event.id, 1, { winnerSide: null, homeScore: 23, awayScore: 23 });
 
     expect(games.find((game) => game.matchNumber === 1)).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: null, homeScore: 23, awayScore: 23 });
   });
@@ -908,7 +764,7 @@ describe('MatchResultService on a week of games that form no bracket', () => {
   ])('refuses (422 MATCH_RESULT_INVALID) a tie %s and saves nothing', async (_label, input) => {
     const { service, event, store } = await week();
 
-    await expect(service.recordResult(event.id, 1, input, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
+    await expect(service.recordResult(event.id, 1, input)).rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
     expect(store.matchRows.every((match) => match.status === MatchStatus.SCHEDULED)).toBe(true);
   });
 
@@ -966,7 +822,7 @@ describe('MatchResultService on a reseeded bracket', () => {
   it('leaves a first-round winner unplaced but counts it into the next round, still alive', async () => {
     const { service, event, six, three, standingOf, matchOf } = await reseeded();
 
-    await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, awayWins);
 
     expect([matchOf(3).awaySportEventParticipantId, matchOf(4).awaySportEventParticipantId]).toEqual([null, null]);
     expect(standingOf(six.id)).toMatchObject({ status: ParticipantStandingStatus.ACTIVE, currentRound: 2 });
@@ -975,54 +831,44 @@ describe('MatchResultService on a reseeded bracket', () => {
 
   it('swaps the placed team when a first-round winner changes before the next round is played', async () => {
     const { service, event, three, six, matchOf } = await reseeded();
-    await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, awayWins);
     matchOf(3).awaySportEventParticipantId = six.id;
 
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
     expect(matchOf(3).awaySportEventParticipantId).toBe(three.id);
   });
 
-  it('empties the placed team\'s side when its first-round result is cleared', async () => {
-    const { service, event, six, matchOf } = await reseeded();
-    await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
-    matchOf(3).awaySportEventParticipantId = six.id;
-
-    await service.clearResult(event.id, 1);
-
-    expect(matchOf(3).awaySportEventParticipantId).toBeNull();
-  });
-
   it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new first-round winner once the match it was placed in has a result', async () => {
     const { service, event, six, matchOf } = await reseeded();
-    await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, awayWins);
     matchOf(3).awaySportEventParticipantId = six.id;
-    await service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 3, homeWins);
 
-    await expect(service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
   });
 
   it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new first-round winner once its next-round game is played, even when the final is numbered first', async () => {
     const { service, event, six, matchOf } = await reseeded({ finalFirst: true });
-    await service.recordResult(event.id, 3, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 3, awayWins);
     matchOf(5).awaySportEventParticipantId = six.id;
-    await service.recordResult(event.id, 5, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 5, awayWins);
     expect(matchOf(1).homeSportEventParticipantId).toBe(six.id);
 
-    await expect(service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
+    await expect(service.recordResult(event.id, 3, homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
     expect([matchOf(5).awaySportEventParticipantId, matchOf(1).homeSportEventParticipantId]).toEqual([six.id, six.id]);
   });
 
   it('crowns the winner of the one match in the last round, not a first-round winner that links nowhere', async () => {
     const { service, event, one, two, six, five, standingOf, matchOf } = await reseeded();
-    await service.recordResult(event.id, 1, awayWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 2, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, awayWins);
+    await service.recordResult(event.id, 2, awayWins);
     Object.assign(matchOf(3), { awaySportEventParticipantId: six.id });
     Object.assign(matchOf(4), { awaySportEventParticipantId: five.id });
-    await service.recordResult(event.id, 3, homeWins, MatchResultSource.ADMIN);
-    await service.recordResult(event.id, 4, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 3, homeWins);
+    await service.recordResult(event.id, 4, homeWins);
 
-    await service.recordResult(event.id, 5, awayWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 5, awayWins);
 
     expect(standingOf(two.id)).toMatchObject({ position: 1, status: ParticipantStandingStatus.COMPLETE });
     expect(standingOf(one.id)).toMatchObject({ position: 2, status: ParticipantStandingStatus.ELIMINATED });
@@ -1042,38 +888,35 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
     const { store, event } = await setup();
     const { service, domainEvents } = rebuilding(store);
 
-    await service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN);
+    await service.recordResult(event.id, 1, homeWins);
 
     expect(store.backgroundJobs).toEqual([settleGameJob(event.id, 'match-1'), eventRebuildJob(event.id)]);
     expect(domainEvents.changedSportEventIds).toEqual([event.id]);
   });
 
-  it('writes the rebuild job with a cleared result and with a cancelled game', async () => {
+  it('writes the rebuild job with a result and with a cancelled game', async () => {
     const context = await setup();
     const { service, domainEvents } = rebuilding(context.store);
-    await service.recordResult(context.event.id, 1, homeWins, MatchResultSource.ADMIN);
-    await service.clearResult(context.event.id, 1);
+    await service.recordResult(context.event.id, 1, homeWins);
     const games = await week();
     const weekly = rebuilding(games.store);
     await weekly.service.cancelMatch(games.event.id, 1);
 
     // The result and the cancellation decide their games, so each also settles the game's squares contests.
-    expect(context.store.backgroundJobs).toEqual([settleGameJob(context.event.id, 'match-1'), eventRebuildJob(context.event.id), eventRebuildJob(context.event.id)]);
-    expect(domainEvents.changedSportEventIds).toEqual([context.event.id, context.event.id]);
+    expect(context.store.backgroundJobs).toEqual([settleGameJob(context.event.id, 'match-1'), eventRebuildJob(context.event.id)]);
+    expect(domainEvents.changedSportEventIds).toEqual([context.event.id]);
     expect(games.store.backgroundJobs).toEqual([settleGameJob(games.event.id, 'game-1'), eventRebuildJob(games.event.id)]);
     expect(weekly.domainEvents.changedSportEventIds).toEqual([games.event.id]);
   });
 
-  it('writes the rebuild job with a quarter score saved and with one cleared, and none for clearing a quarter never scored', async () => {
-    const { store, event } = await setup({ sport: Sport.AMERICAN_FOOTBALL });
+  it('writes the rebuild job with a quarter score saved', async () => {
+    const { store, event } = await setup({ sport: Sport.FOOTBALL });
     const { service, domainEvents } = rebuilding(store);
 
     await service.recordPeriodScore(event.id, 1, 1, { homeScore: 7, awayScore: 0 });
-    await service.clearPeriodScore(event.id, 1, 1);
-    await service.clearPeriodScore(event.id, 1, 2);
 
-    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id), eventRebuildJob(event.id)]);
-    expect(domainEvents.changedSportEventIds).toEqual([event.id, event.id]);
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id)]);
+    expect(domainEvents.changedSportEventIds).toEqual([event.id]);
   });
 
   it('wakes no runner when the result write carrying the rebuild fails', async () => {
@@ -1082,7 +925,7 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
     const domainEvents = new RecordingDomainEvents();
     const service = new MatchResultService({ contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches, domainEvents, now: () => AS_OF });
 
-    await expect(service.recordResult(event.id, 1, homeWins, MatchResultSource.ADMIN)).rejects.toThrow('result write failed');
+    await expect(service.recordResult(event.id, 1, homeWins)).rejects.toThrow('result write failed');
     expect(domainEvents.handedOutSportEventIds).toEqual([event.id]);
     expect(domainEvents.changedSportEventIds).toEqual([]);
   });

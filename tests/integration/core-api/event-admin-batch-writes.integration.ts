@@ -26,6 +26,7 @@ import { recordStatements, statementCounts, type RecordedStatement } from '../st
 import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The root-admin event tools' batch writes against real Postgres (#1252): each writes a whole
 // field in a fixed number of queries, however big the field, and leaves the rows as the
@@ -47,17 +48,14 @@ async function golfEvent() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const edition = await freshEventEdition(prisma);
-  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
+  const { sportLeagueId } = edition;
   const event = await prisma.sportEvent.create({
     data: {
       ...edition,
-      externalId: `batch-writes-${randomUUID()}`,
-      providerId: 'integration-test',
-      sport: Sport.GOLF,
       name: `Batch Writes Open ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,
@@ -341,7 +339,7 @@ describe('Entering a bracket match\'s result (#1252)', () => {
       });
 
       await measure(() => new PrismaSportEventRoundMatchRepository(getAppPrisma()).applyResult({
-        result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.ADMIN, completedAt: AS_OF },
+        result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.PROVIDER, completedAt: AS_OF },
         sideFill: null,
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, currentRound: 1, asOf: AS_OF })),
       }));

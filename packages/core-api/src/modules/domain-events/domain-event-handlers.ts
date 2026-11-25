@@ -8,7 +8,6 @@
  * docs/BACKGROUND-JOBS.md is generated from it (`npm run docs:domain-events`).
  */
 
-import { releaseIntoTemplateContestsHandler } from '../contest-management/released-edition-job-requests';
 import {
   rebuildChangedResultsLeaderboardsHandler,
   rebuildContestLeaderboardsHandler,
@@ -28,6 +27,7 @@ import {
 } from '../notifications/contest-email-job-requests';
 import { activateEventContestsHandler, followPostponedEventContestsHandler } from '../events/event-contests-job-requests';
 import { syncGamesThenTierFieldHandler } from '../events/synced-field-follow-up-job';
+import { resolveMappedParticipantFindingsHandler } from '../ingestion/findings/mapped-participant-findings-job';
 import { DomainEventType } from './domain-event';
 import type { DomainEventHandlerMap } from './domain-event-handler';
 
@@ -36,7 +36,6 @@ export const DOMAIN_EVENT_HANDLERS = {
     activateEventContestsHandler,
     followPostponedEventContestsHandler,
     settleFinishedEventContestsHandler,
-    releaseIntoTemplateContestsHandler,
     tellLeaguesEventPostponedHandler,
     tellLeaguesEventCancelledHandler,
     rebuildEventLeaderboardsHandler,
@@ -55,4 +54,5 @@ export const DOMAIN_EVENT_HANDLERS = {
     rebuildMovedContestLeaderboardsHandler,
   ],
   [DomainEventType.SPORT_EVENT_FIELD_SYNCED]: [syncGamesThenTierFieldHandler],
+  [DomainEventType.PARTICIPANT_PROVIDER_MAPPED]: [resolveMappedParticipantFindingsHandler],
 } as const satisfies DomainEventHandlerMap;

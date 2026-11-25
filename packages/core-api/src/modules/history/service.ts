@@ -284,7 +284,7 @@ export class HistoryService {
 
   /**
    * The league's perpetual trophies (#874): every contest of one event it has run in two or more
-   * years, the same series and selection type, with a plate per year naming its winners. A week of
+   * years, on the same slot definitions and selection type (#2010), with a plate per year naming its winners. A week of
    * games and a contest not counted earn none. A squad that has since gone inactive keeps its plates.
    */
   async getPerpetualTrophies(leagueId: string): Promise<PerpetualTrophyView[]> {

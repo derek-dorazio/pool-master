@@ -52,9 +52,8 @@ export function EmailSettingsDialog({ group, onClose }: { group: EmailSettingsGr
         settings.form.reset(emailSettingsFormValues(group));
         setMode('edit');
       }}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) dismiss();
-      }}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={dismiss}
       onSave={() => void settings.form.handleSubmit((values) => settings.saveMutation.mutate(values, { onSuccess: () => setMode('view') }))()}
       open
       pendingLabel="Saving..."

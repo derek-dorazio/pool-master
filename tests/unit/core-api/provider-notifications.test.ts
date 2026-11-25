@@ -17,12 +17,12 @@ const NOW = new Date('2026-11-15T18:00:00.000Z');
 
 const nflPeriodEnded: ProviderNotification = {
   providerId: 'balldontlie',
-  sport: Sport.AMERICAN_FOOTBALL,
+  sport: Sport.FOOTBALL,
   notificationType: 'nfl.game.period_ended',
   phase: 'PROGRESS',
   subject: 'GAME',
   gameId: '424095',
-  eventIdPrefix: 'nfl-',
+  providerLeagueCode: 'nfl',
 };
 
 const golfRoundStarted: ProviderNotification = {
@@ -64,21 +64,21 @@ function setup(
 describe('provider notifications (#1498)', () => {
   it('queues one live-score sync of the event whose match is linked to the notified game, due a minute out under its event key', async () => {
     const { jobs, service, findLiveNotifiedEvents } = setup([
-      liveEvent('nfl-2026-week-11', Sport.AMERICAN_FOOTBALL, true),
-      liveEvent('nfl-2026-postseason', Sport.AMERICAN_FOOTBALL),
+      liveEvent('nfl-2026-week-11', Sport.FOOTBALL, true),
+      liveEvent('nfl-2026-postseason', Sport.FOOTBALL),
     ]);
 
     await expect(service.receive(nflPeriodEnded)).resolves.toEqual({ events: 1, queued: 1 });
 
     expect(findLiveNotifiedEvents).toHaveBeenCalledWith({
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
-      externalIdPrefix: 'nfl-',
+      sport: Sport.FOOTBALL,
+      providerLeagueCode: 'nfl',
       gameId: '424095',
     });
     expect(jobs.rows).toEqual([expect.objectContaining({
       type: BackgroundJobType.PROVIDER_EVENT_SYNC,
-      payload: { sport: Sport.AMERICAN_FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
+      payload: { sport: Sport.FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
       sportEventId: LIVE_EVENT_ID,
       runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_COALESCE_MS),
       dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11',
@@ -87,8 +87,8 @@ describe('provider notifications (#1498)', () => {
 
   it('syncs every in-progress event of the game\'s league while no match is linked to the game yet, such as a playoff series', async () => {
     const { jobs, service } = setup([
-      liveEvent('nfl-2026-week-11', Sport.AMERICAN_FOOTBALL),
-      liveEvent('nfl-2026-postseason', Sport.AMERICAN_FOOTBALL),
+      liveEvent('nfl-2026-week-11', Sport.FOOTBALL),
+      liveEvent('nfl-2026-postseason', Sport.FOOTBALL),
     ]);
 
     await expect(service.receive(nflPeriodEnded)).resolves.toEqual({ events: 2, queued: 2 });
@@ -117,7 +117,7 @@ describe('provider notifications (#1498)', () => {
   });
 
   it('coalesces a burst and a duplicate delivery into the one sync already waiting for the event', async () => {
-    const { jobs, service } = setup([liveEvent('nfl-2026-week-11', Sport.AMERICAN_FOOTBALL, true)]);
+    const { jobs, service } = setup([liveEvent('nfl-2026-week-11', Sport.FOOTBALL, true)]);
 
     await service.receive(nflPeriodEnded);
     await expect(service.receive(nflPeriodEnded)).resolves.toEqual({ events: 1, queued: 0 });
@@ -148,7 +148,7 @@ describe('provider notifications (#1498)', () => {
 describe('provider notifications as play starts and ends (#1499)', () => {
   it('also finds the events still SCHEDULED past their start when play starts, and waits for the lifecycle sweep before syncing one', async () => {
     const { jobs, service, findLiveNotifiedEvents } = setup([
-      liveEvent('nfl-2026-week-11', Sport.AMERICAN_FOOTBALL, true, false),
+      liveEvent('nfl-2026-week-11', Sport.FOOTBALL, true, false),
     ]);
 
     await expect(service.receive({ ...nflPeriodEnded, notificationType: 'nfl.game.started', phase: 'START' })).resolves.toEqual({ events: 1, queued: 1 });
@@ -180,7 +180,7 @@ describe('provider notifications as play starts and ends (#1499)', () => {
   });
 
   it('queues a reconciling sync ten minutes after play ends, beside the coalesced one, once per event however often the end is sent', async () => {
-    const { jobs, service } = setup([liveEvent('nfl-2026-week-11', Sport.AMERICAN_FOOTBALL, true)]);
+    const { jobs, service } = setup([liveEvent('nfl-2026-week-11', Sport.FOOTBALL, true)]);
 
     await expect(service.receive(nflGameEnded)).resolves.toEqual({ events: 1, queued: 2 });
     await expect(service.receive(nflGameEnded)).resolves.toEqual({ events: 1, queued: 0 });
@@ -192,7 +192,7 @@ describe('provider notifications as play starts and ends (#1499)', () => {
       }),
       expect.objectContaining({
         type: BackgroundJobType.PROVIDER_EVENT_SYNC,
-        payload: { sport: Sport.AMERICAN_FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
+        payload: { sport: Sport.FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
         sportEventId: LIVE_EVENT_ID,
         runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_RECONCILE_DELAY_MS),
         dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11',
@@ -215,8 +215,8 @@ describe('provider notifications as play starts and ends (#1499)', () => {
 
   it('records when the notification arrived on every event it is about, so a quiet event can be told apart', async () => {
     const { service, recordProviderNotification } = setup([
-      liveEvent('nfl-2026-week-11', Sport.AMERICAN_FOOTBALL),
-      liveEvent('nfl-2026-postseason', Sport.AMERICAN_FOOTBALL),
+      liveEvent('nfl-2026-week-11', Sport.FOOTBALL),
+      liveEvent('nfl-2026-postseason', Sport.FOOTBALL),
     ]);
 
     await service.receive(nflPeriodEnded);

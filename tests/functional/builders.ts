@@ -1,9 +1,8 @@
-import { createLeague, createSportLeague, listEvents, listPlatformPricingProfiles, listPlatformTierProfiles, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createEvent, createLeague, createTestSlot, listEvents, updateEvent, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
-import { SPORT_PLATFORM_TIER_PROFILE_CODE, STANDARD_PLATFORM_PRICING_PROFILE_CODE } from '../support/league-profiles';
 import { fixtureSeasonId, withCurrentSeason } from '../support/event-edition';
-import { sportPlay } from '../support/sport-play';
+import { testSlotDefinitionId, uniqueTestSlotLabel } from '../support/test-slots';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
@@ -11,6 +10,7 @@ import {
   getFunctionalPrisma,
   getSdkClient,
 } from './setup';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 function describeSdkFailure(result: {
   response?: Response | undefined;
@@ -274,32 +274,17 @@ export async function attachContestEvent(contestId: string, sportEventId: string
 }
 
 /**
- * The profile ids a functional test's new sport league names (#1844), read through the API as an
- * admin would: its sport's tier layout (`SPORT_PLATFORM_TIER_PROFILE_CODE`) and Standard pricing.
- */
-export async function sportLeagueProfiles(client: Client, sport: Sport): Promise<{ platformTierProfileId: string; platformPricingProfileId: string }> {
-  const [tiers, prices] = await Promise.all([listPlatformTierProfiles({ client }), listPlatformPricingProfiles({ client })]);
-  const platformTierProfile = tiers.data?.platformTierProfiles.find((profile) => profile.code === SPORT_PLATFORM_TIER_PROFILE_CODE[sport]);
-  const platformPricingProfile = prices.data?.platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE);
-  if (!platformTierProfile || !platformPricingProfile) {
-    throw new Error(`The ${SPORT_PLATFORM_TIER_PROFILE_CODE[sport]} tier profile or the Standard pricing profile is missing.`);
-  }
-  return { platformTierProfileId: platformTierProfile.id, platformPricingProfileId: platformPricingProfile.id };
-}
-
-/**
  * A run's own sport league, standing in for one a migration adds: a test data file loads into a
  * league the site has and never creates one, so a suite that loads a file under a tagged league
  * name adds that league first, playing as its sport's leagues do. Returns its id.
  */
-export async function addRunSportLeague(client: Client, sport: Sport, name: string): Promise<string> {
-  const created = await createSportLeague({ client, body: { ...(await sportLeagueProfiles(client, sport)), ...sportPlay(sport), timeZone: 'UTC', sport, name } });
-  if (!created.data) {
-    throw new Error(`Could not add the sport league ${name}: ${JSON.stringify(created.error)}`);
-  }
-  // A migration adds a league with its Seasons; this year's stands in for them, made current.
-  await withCurrentSeason(getFunctionalPrisma(), created.data.sportLeague.id);
-  return created.data.sportLeague.id;
+export async function addRunSportLeague(sport: Sport, name: string): Promise<string> {
+  // A migration adds a league with its Seasons and slot definitions; this year's Season stands in
+  // for them, made current, with one definition (TEST_EVENT) a test slot can play.
+  const { id } = await insertTestSportLeague(getFunctionalPrisma(), { sport, name });
+  const seasonId = await withCurrentSeason(getFunctionalPrisma(), id);
+  await testSlotDefinitionId(getFunctionalPrisma(), id, seasonId);
+  return id;
 }
 
 /**
@@ -309,8 +294,46 @@ export async function addRunSportLeague(client: Client, sport: Sport, name: stri
  * league's current Season reaches no other test. Returns the league id.
  */
 export async function inCurrentSeason(sportLeagueId: string, championshipYear: number): Promise<string> {
-  await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  const seasonId = await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  await testSlotDefinitionId(getFunctionalPrisma(), sportLeagueId, seasonId);
   return sportLeagueId;
+}
+
+/** What a test makes a test event with: its league and Season year, and the slot's dates. */
+export interface TestEventBody {
+  sportLeagueId: string;
+  /** The Season it is made in, made the league's current one (`inCurrentSeason`). */
+  championshipYear: number;
+  name: string;
+  venue?: string;
+  location?: string;
+  startDate: string;
+  endDate?: string;
+  /** A round count other than its league's default, set by an edit after the create. */
+  rounds?: number;
+  autoLifecycleEnabled?: boolean;
+}
+
+/**
+ * A test event through the API as QA makes one (#2004): a labelled test slot in the league's
+ * current Season (`createTestSlot`), then the event on it (`createEvent`). Answers the create's
+ * result; a round count is set by an edit, and the result then carries the edited event.
+ */
+export async function createTestEvent({ client, body }: { client: Client; body: TestEventBody }) {
+  const { sportLeagueId, championshipYear, startDate, endDate, rounds, ...event } = body;
+  const sportLeagueSeasonId = await withCurrentSeason(getFunctionalPrisma(), sportLeagueId, championshipYear);
+  const slotDefinitionId = await testSlotDefinitionId(getFunctionalPrisma(), sportLeagueId, sportLeagueSeasonId);
+  const slot = await createTestSlot({
+    client,
+    path: { sportLeagueId },
+    body: { slotDefinitionId, label: uniqueTestSlotLabel(), startsAt: startDate, ...(endDate !== undefined && { endsAt: endDate }) },
+  });
+  if (!slot.data) throw new Error(`Could not add a test slot: ${JSON.stringify(slot.error)}`);
+  const created = await createEvent({ client, body: { ...event, seasonSlotId: slot.data.slot.id } });
+  if (rounds === undefined || !created.data || created.data.event.rounds === rounds) return created;
+  const edited = await updateEvent({ client, path: { eventId: created.data.event.id }, body: { rounds } });
+  if (!edited.data) throw new Error(`Could not set the test event's rounds: ${JSON.stringify(edited.error)}`);
+  return { ...created, data: edited.data };
 }
 
 /** The events of the league's Season named for `championshipYear`, as an admin lists one Season (#2003). */

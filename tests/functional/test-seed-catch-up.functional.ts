@@ -7,6 +7,7 @@ import { buildRegisteredUser, promoteToRootAdmin, seasonEvents } from './builder
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { oneEventOf } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // A test seed's results go in as its games are played (#1720): the load leaves every game still to
 // kick off open, so a squares board or a pick can still be made on it, and a later run catches the
@@ -24,8 +25,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -33,7 +32,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -54,8 +52,8 @@ function asLoaded(file: SportDataFile): SportDataFile {
 describe('SDK Functional: a test seed\'s results as its games are played', () => {
   it('loads the NFL playoffs with no game played, then a later run enters the games played since and moves the event to In Progress, and to Completed once the Super Bowl is in', async () => {
     await getFunctionalPrisma().sport.upsert({
-      where: { sport: Sport.AMERICAN_FOOTBALL },
-      create: { sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: 'MATCHES' },
+      where: { sport: Sport.FOOTBALL },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Catch-up Loader' });
@@ -69,7 +67,7 @@ describe('SDK Functional: a test seed\'s results as its games are played', () =>
     // Release refuses an event that has started by the server's clock, so the seed is dated from today.
     await loadSportData(loaded, { getClient, now: new Date(), mode: LoadMode.APPLY });
 
-    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AMERICAN_FOOTBALL } })).data).sportLeagues
+    const nfl = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
       .find((league) => league.name === 'NFL'));
     const readEvent = async () => expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === eventName), eventName);

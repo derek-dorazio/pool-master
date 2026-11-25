@@ -19,17 +19,9 @@ export function getLastSignedInUserId() {
 }
 
 export function rememberSignedInUserId(userId: string) {
-  if (typeof document === 'undefined') {
-    return;
-  }
-
   document.cookie = `${SIGNED_IN_USER_COOKIE}=${encodeURIComponent(userId)}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
 }
 
 export function forgetSignedInUserId() {
-  if (typeof document === 'undefined') {
-    return;
-  }
-
   document.cookie = `${SIGNED_IN_USER_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 }

@@ -17,7 +17,7 @@ import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository
 import { ParticipantService } from '../../../packages/core-api/src/modules/participants/service';
 import type { ProviderParticipant, SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { linkedProviderEvent } from '../../support/event-edition';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 
 // A feed's participants are mapped to its Provider row (#2040), so the suite syncs as BALLDONTLIE.
@@ -29,12 +29,12 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   const prisma = getPrisma();
-  await prisma.sportEventParticipant.deleteMany({ where: { sportEvent: { providerId: PROVIDER } } });
-  await prisma.sportEventRound.deleteMany({ where: { sportEvent: { providerId: PROVIDER } } });
-  await prisma.sportEvent.deleteMany({ where: { providerId: PROVIDER } });
+  const ownEvents = { sportLeagueSeason: { sportLeague: { name: { startsWith: NAME_PREFIX } } } };
+  await prisma.sportEventParticipant.deleteMany({ where: { sportEvent: ownEvents } });
+  await prisma.sportEventRound.deleteMany({ where: { sportEvent: ownEvents } });
+  await prisma.sportEvent.deleteMany({ where: ownEvents });
   await prisma.participantProviderMapping.deleteMany({ where: { participant: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.participant.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
-  await prisma.eventSeries.deleteMany({ where: { sportLeague: { name: { startsWith: NAME_PREFIX } } } });
   await prisma.sportLeague.deleteMany({ where: { name: { startsWith: NAME_PREFIX } } });
   await teardownIntegrationTests();
 });
@@ -53,13 +53,12 @@ async function fieldOf(overrides: Partial<ProviderParticipant> = {}) {
     startDate: new Date('2027-07-15T12:00:00.000Z'),
     status: 'SCHEDULED',
     fieldLocked: false,
-    metadata: {},
+    providerSlots: [],
     participants: [golfer],
   };
-  const event = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: detail.externalId, name: detail.name, startDate: detail.startDate });
   // Each event on a sport league of its own, so a test sees only the participants it makes.
-  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
-  await prisma.eventSeries.update({ where: { id: event.eventSeriesId }, data: { sportLeagueId: league.id } });
+  const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `${NAME_PREFIX}league ${suffix}` } });
+  const event = await linkedProviderEvent(prisma, { providerId: PROVIDER, externalId: detail.externalId, name: detail.name, startDate: detail.startDate, sportLeagueId: league.id });
   return { golfer, detail, event, sportLeagueId: league.id, suffix };
 }
 
@@ -151,7 +150,7 @@ describe('the sync matches feed participants by feed id only, within the event\'
     const { golfer, detail, event, sportLeagueId } = await fieldOf();
     // As the loader writes a test player: created in its league under the file's spelling, then its feed id bound.
     const seeded = await prisma.participant.create({ data: { sportLeagueId, name: `${golfer.name} (test spelling)`, participantType: 'INDIVIDUAL' } });
-    const participants = new ParticipantService(new PrismaParticipantRepository(getAppPrisma()), new PrismaParticipantProviderMappingRepository(getAppPrisma()));
+    const participants = new ParticipantService(new PrismaParticipantRepository(getAppPrisma()), new PrismaParticipantProviderMappingRepository(getAppPrisma()), testDomainEvents());
     await participants.bindProviderMapping(seeded.id, BALLDONTLIE_TEST_PROVIDER_ID, golfer.externalId);
 
     await sync(detail);

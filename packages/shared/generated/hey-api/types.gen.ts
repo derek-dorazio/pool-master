@@ -398,6 +398,20 @@ export type PasswordResetRequest = {
 };
 
 /**
+ * The answer to a password reset request, the same whether or not an account matched.
+ */
+export type PasswordResetRequestedResponse = {
+    /**
+     * The request was taken. It reads the same whether or not an account matched.
+     */
+    success: true;
+    /**
+     * How many minutes an emailed reset link works, for the confirmation screen to quote.
+     */
+    linkValidMinutes: number;
+};
+
+/**
  * Sets a new password with a reset link. Every session of the account is signed out.
  */
 export type PasswordResetConfirmRequest = {
@@ -976,10 +990,6 @@ export type IngestionScheduleConfigPatch = {
      */
     EVENTS?: {
         /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
         intervalMinutes?: number;
@@ -991,15 +1001,15 @@ export type IngestionScheduleConfigPatch = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
-    };
-    /**
-     * Partial feed-scheduling update payload.
-     */
-    FIELD?: {
         /**
          * Whether the feed should be scheduled automatically.
          */
         enabled?: boolean;
+    };
+    /**
+     * Partial scheduling update for a sync kind with no switch.
+     */
+    FIELD?: {
         /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
@@ -1018,10 +1028,6 @@ export type IngestionScheduleConfigPatch = {
      */
     SCORES?: {
         /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled?: boolean;
-        /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
         intervalMinutes?: number;
@@ -1033,6 +1039,10 @@ export type IngestionScheduleConfigPatch = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
+        /**
+         * Whether the feed should be scheduled automatically.
+         */
+        enabled?: boolean;
     };
 };
 
@@ -1045,10 +1055,6 @@ export type IngestionScheduleConfig = {
      */
     EVENTS: {
         /**
-         * Whether the feed should be scheduled automatically.
-         */
-        enabled: boolean;
-        /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
         intervalMinutes?: number;
@@ -1060,15 +1066,15 @@ export type IngestionScheduleConfig = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
-    };
-    /**
-     * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-     */
-    FIELD: {
         /**
          * Whether the feed should be scheduled automatically.
          */
         enabled: boolean;
+    };
+    /**
+     * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+     */
+    FIELD: {
         /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
@@ -1087,9 +1093,62 @@ export type IngestionScheduleConfig = {
      */
     SCORES: {
         /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+        /**
          * Whether the feed should be scheduled automatically.
          */
         enabled: boolean;
+    };
+};
+
+/**
+ * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+ */
+export type IngestionSyncSchedule = {
+    /**
+     * How often the feed should run, in minutes, for interval-driven orchestration.
+     */
+    intervalMinutes?: number;
+    /**
+     * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+     */
+    intervalSeconds?: number;
+    /**
+     * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+     */
+    lookaheadDays?: number;
+    /**
+     * The sync's switch; absent for a sync with none.
+     */
+    enabled?: boolean;
+    /**
+     * Whether the sync runs on its interval now.
+     */
+    runs: boolean;
+    /**
+     * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+     */
+    switchable: boolean;
+};
+
+/**
+ * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
+ */
+export type IngestionSchedule = {
+    /**
+     * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+     */
+    EVENTS: {
         /**
          * How often the feed should run, in minutes, for interval-driven orchestration.
          */
@@ -1102,6 +1161,76 @@ export type IngestionScheduleConfig = {
          * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
          */
         lookaheadDays?: number;
+        /**
+         * The sync's switch; absent for a sync with none.
+         */
+        enabled?: boolean;
+        /**
+         * Whether the sync runs on its interval now.
+         */
+        runs: boolean;
+        /**
+         * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+         */
+        switchable: boolean;
+    };
+    /**
+     * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+     */
+    FIELD: {
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+        /**
+         * The sync's switch; absent for a sync with none.
+         */
+        enabled?: boolean;
+        /**
+         * Whether the sync runs on its interval now.
+         */
+        runs: boolean;
+        /**
+         * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+         */
+        switchable: boolean;
+    };
+    /**
+     * One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch.
+     */
+    SCORES: {
+        /**
+         * How often the feed should run, in minutes, for interval-driven orchestration.
+         */
+        intervalMinutes?: number;
+        /**
+         * How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.
+         */
+        intervalSeconds?: number;
+        /**
+         * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
+         */
+        lookaheadDays?: number;
+        /**
+         * The sync's switch; absent for a sync with none.
+         */
+        enabled?: boolean;
+        /**
+         * Whether the sync runs on its interval now.
+         */
+        runs: boolean;
+        /**
+         * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+         */
+        switchable: boolean;
     };
 };
 
@@ -2481,6 +2610,14 @@ export type LeagueDto = {
      */
     cupCustomPoints: Array<number>;
     /**
+     * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+     */
+    cupCustomPointsMax: number;
+    /**
+     * The most places a CUSTOM table can list; a save with more is refused with 400.
+     */
+    cupCustomPointsMaxPlaces: number;
+    /**
      * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
      */
     hallOfLameVisible: boolean;
@@ -2796,6 +2933,14 @@ export type LeagueResponse = {
          */
         cupCustomPoints: Array<number>;
         /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
+        /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
         hallOfLameVisible: boolean;
@@ -2900,6 +3045,14 @@ export type LeagueContextResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
         /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
@@ -3186,6 +3339,14 @@ export type LeagueListResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * The most whole points one place can earn on a CUSTOM table; a save above it is refused with 400.
+         */
+        cupCustomPointsMax: number;
+        /**
+         * The most places a CUSTOM table can list; a save with more is refused with 400.
+         */
+        cupCustomPointsMaxPlaces: number;
         /**
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
@@ -4828,6 +4989,44 @@ export type ContestManagementDetailDto = {
 };
 
 /**
+ * One slot definition a contest template covers (#2010), with the facts screens show.
+ */
+export type ContestTemplateSlotDto = {
+    /**
+     * The slot definition's id (SportLeaguePhaseSlot).
+     */
+    id: string;
+    /**
+     * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+     */
+    key: string;
+    /**
+     * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+     */
+    name: string | null;
+    /**
+     * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+     */
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * For a WEEK slot, its week; null otherwise.
+     */
+    weekNumber: number | null;
+    /**
+     * The phase the slot is in.
+     */
+    sportLeaguePhaseId: string;
+    /**
+     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+     */
+    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+    /**
+     * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+     */
+    matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+};
+
+/**
  * Seeded commissioner-facing contest configuration template.
  */
 export type ContestConfigTemplateDto = {
@@ -4836,17 +5035,50 @@ export type ContestConfigTemplateDto = {
      */
     id: string;
     /**
-     * Sport this template applies to.
-     */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
      * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
      */
     sportLeagueId: string;
     /**
-     * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+     * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
      */
-    eventType?: 'KNOCKOUT' | 'WEEK' | null;
+    coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+    /**
+     * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+     */
+    slots: Array<{
+        /**
+         * The slot definition's id (SportLeaguePhaseSlot).
+         */
+        id: string;
+        /**
+         * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+         */
+        key: string;
+        /**
+         * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+         */
+        name: string | null;
+        /**
+         * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+         */
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * For a WEEK slot, its week; null otherwise.
+         */
+        weekNumber: number | null;
+        /**
+         * The phase the slot is in.
+         */
+        sportLeaguePhaseId: string;
+        /**
+         * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+         */
+        phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+        /**
+         * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+         */
+        matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+    }>;
     /**
      * Contest type that may use the template.
      */
@@ -5566,17 +5798,13 @@ export type ContestManagementResponse = {
  */
 export type ListContestConfigTemplatesQuery = {
     /**
-     * Only templates for this sport.
-     */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
      * Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
      */
     sportLeagueId?: string;
     /**
-     * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
+     * Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds).
      */
-    eventType?: 'KNOCKOUT' | 'WEEK';
+    slotDefinitionIds?: Array<string>;
     /**
      * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
      */
@@ -5593,17 +5821,50 @@ export type ContestConfigTemplateListResponse = {
          */
         id: string;
         /**
-         * Sport this template applies to.
-         */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
         sportLeagueId: string;
         /**
-         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+         * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
          */
-        eventType?: 'KNOCKOUT' | 'WEEK' | null;
+        coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+        /**
+         * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+         */
+        slots: Array<{
+            /**
+             * The slot definition's id (SportLeaguePhaseSlot).
+             */
+            id: string;
+            /**
+             * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The phase the slot is in.
+             */
+            sportLeaguePhaseId: string;
+            /**
+             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            /**
+             * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+             */
+            matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+        }>;
         /**
          * Contest type that may use the template.
          */
@@ -6087,7 +6348,7 @@ export type UpdateContestConfigTemplateRequest = {
      */
     sortOrder?: number;
     /**
-     * Whether this template should be the default choice for future create flows in its scope.
+     * Whether this template should be the default choice for future create flows of its sport league and selection type. Setting it unsets the one that was the default.
      */
     isDefault?: boolean;
     /**
@@ -6521,6 +6782,14 @@ export type UpdateContestConfigTemplateRequest = {
             };
         };
     };
+    /**
+     * How future contests from the template cover its slots (#2010). Refused when the listed slots do not fit it: ALL_LISTED needs one event's slots.
+     */
+    coverageMode?: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+    /**
+     * The slot definitions the template covers from now on, each of its own sport league (#2010). Contests already made keep the slots they copied. A bracket lists only knockout slots.
+     */
+    slotDefinitionIds?: Array<string>;
 };
 
 /**
@@ -6536,17 +6805,50 @@ export type ContestConfigTemplateResponse = {
          */
         id: string;
         /**
-         * Sport this template applies to.
-         */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
         sportLeagueId: string;
         /**
-         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+         * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
          */
-        eventType?: 'KNOCKOUT' | 'WEEK' | null;
+        coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+        /**
+         * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+         */
+        slots: Array<{
+            /**
+             * The slot definition's id (SportLeaguePhaseSlot).
+             */
+            id: string;
+            /**
+             * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The phase the slot is in.
+             */
+            sportLeaguePhaseId: string;
+            /**
+             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            /**
+             * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+             */
+            matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+        }>;
         /**
          * Contest type that may use the template.
          */
@@ -7488,7 +7790,7 @@ export type ParticipantResponse = {
 };
 
 /**
- * A new participant for the shared catalog.
+ * A new participant of a sport league.
  */
 export type CreateParticipantRequest = {
     /**
@@ -7531,6 +7833,14 @@ export type CreateParticipantRequest = {
      * Current team affiliation.
      */
     teamAffiliation?: string;
+    /**
+     * The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.
+     */
+    feedId?: string;
+    /**
+     * A test participant (QA only), for a test event's field: it joins only a test slot's event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted.
+     */
+    isTestData?: boolean;
 };
 
 /**
@@ -7615,7 +7925,15 @@ export type SportDto = {
     /**
      * The sport.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given.
+     */
+    urlSegment: string;
+    /**
+     * Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.
+     */
+    displayOrder: number;
     /**
      * Structural format of the sport's events; decides which contest formats are valid.
      */
@@ -7635,7 +7953,7 @@ export type SportDto = {
  */
 export type SportListResponse = {
     /**
-     * Every sport, ordered by sport.
+     * Every sport, in display order.
      */
     sports: Array<{
         /**
@@ -7645,7 +7963,15 @@ export type SportListResponse = {
         /**
          * The sport.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The sport's name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given.
+         */
+        urlSegment: string;
+        /**
+         * Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.
+         */
+        displayOrder: number;
         /**
          * Structural format of the sport's events; decides which contest formats are valid.
          */
@@ -7710,11 +8036,31 @@ export type SportLeagueDto = {
     /**
      * The sport this sport league belongs to, as the sport enum.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
+     */
+    sportUrlSegment: string;
+    /**
+     * Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.
+     */
+    sportDisplayOrder: number;
+    /**
+     * Its sport's name, such as "Football", as screens title the sport (#2107).
+     */
+    sportName: string;
+    /**
+     * The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats.
+     */
+    selectionTypes: Array<'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES'>;
     /**
      * Sport league name, e.g. "PGA Tour".
      */
     name: string;
+    /**
+     * The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.
+     */
+    urlSegment: string;
     /**
      * The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.
      */
@@ -7793,7 +8139,7 @@ export type SportLeagueDto = {
      */
     noun: 'LEAGUE' | null;
     /**
-     * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+     * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
      */
     displayName: string | null;
     /**
@@ -7833,11 +8179,21 @@ export type SportLeagueListQuery = {
     /**
      * Only sport leagues of this sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Only active, or only inactive, sport leagues.
      */
     isActive?: boolean;
+};
+
+/**
+ * Which of a sport league's participants to list.
+ */
+export type SportLeagueParticipantListQuery = {
+    /**
+     * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+     */
+    testData?: boolean;
 };
 
 /**
@@ -7859,11 +8215,31 @@ export type SportLeagueListResponse = {
         /**
          * The sport this sport league belongs to, as the sport enum.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
+         */
+        sportUrlSegment: string;
+        /**
+         * Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.
+         */
+        sportDisplayOrder: number;
+        /**
+         * Its sport's name, such as "Football", as screens title the sport (#2107).
+         */
+        sportName: string;
+        /**
+         * The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats.
+         */
+        selectionTypes: Array<'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES'>;
         /**
          * Sport league name, e.g. "PGA Tour".
          */
         name: string;
+        /**
+         * The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.
+         */
+        urlSegment: string;
         /**
          * The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.
          */
@@ -7942,7 +8318,7 @@ export type SportLeagueListResponse = {
          */
         noun: 'LEAGUE' | null;
         /**
-         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
          */
         displayName: string | null;
         /**
@@ -7995,11 +8371,31 @@ export type SportLeagueResponse = {
         /**
          * The sport this sport league belongs to, as the sport enum.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * Its sport's URL segment (SportDto.urlSegment), such as basketball: the ?sport= of a link to the league.
+         */
+        sportUrlSegment: string;
+        /**
+         * Its sport's display order (SportDto.displayOrder): lists that group leagues by sport put the sports in this order, lower first.
+         */
+        sportDisplayOrder: number;
+        /**
+         * Its sport's name, such as "Football", as screens title the sport (#2107).
+         */
+        sportName: string;
+        /**
+         * The ways of picking a contest in the sport league may use, in the order screens list them (#2107): its sport's formats.
+         */
+        selectionTypes: Array<'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES'>;
         /**
          * Sport league name, e.g. "PGA Tour".
          */
         name: string;
+        /**
+         * The sport league's name in web addresses within its sport, such as wnba (How to Play's ?sport=basketball&league=wnba). Stored, never built from the name, and kept forever.
+         */
+        urlSegment: string;
         /**
          * The sport league's current Season (SportLeagueSeasonDto): the Season under way; between Seasons the next once the sync has made an event in it, otherwise the one that ended last. Recomputed once a day, never set by a request. Null only for a sport league no migration has given a Season.
          */
@@ -8078,7 +8474,7 @@ export type SportLeagueResponse = {
          */
         noun: 'LEAGUE' | null;
         /**
-         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport. Null shows the name, as it does for every seeded league, each named with its sport ("NCAA Men's Basketball"). Set with the league's reference data, never by a request.
          */
         displayName: string | null;
         /**
@@ -8110,44 +8506,6 @@ export type SportLeagueResponse = {
          */
         updatedAt: string;
     };
-};
-
-/**
- * A new sport league. It has no Season until a migration adds one.
- */
-export type CreateSportLeagueRequest = {
-    /**
-     * The sport the new sport league belongs to.
-     */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
-     * Unique within the sport.
-     */
-    name: string;
-    /**
-     * Who competes in its events: teams or individuals. Fixed once set.
-     */
-    participantType: 'INDIVIDUAL' | 'TEAM';
-    /**
-     * How its events are scored. Fixed once set.
-     */
-    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
-    /**
-     * FIXED when omitted. RESEED_BY_SEED only for a sport played as a bracket: 422 SPORT_LEAGUE_NOT_BRACKET otherwise.
-     */
-    bracketAdvancement?: 'FIXED' | 'RESEED_BY_SEED';
-    /**
-     * The tier profile the sport league names. 404 PLATFORM_TIER_PROFILE_NOT_FOUND for one that does not exist.
-     */
-    platformTierProfileId: string;
-    /**
-     * The pricing profile the sport league names. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND for one that does not exist.
-     */
-    platformPricingProfileId: string;
-    /**
-     * The IANA time zone its calendar weeks break in, such as America/New_York. 400 TIME_ZONE_UNKNOWN for one the runtime does not know.
-     */
-    timeZone: string;
 };
 
 /**
@@ -8183,7 +8541,15 @@ export type UpdateSportLeagueRequest = {
  */
 export type SportLeagueOverviewDto = {
     id: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by.
+     */
+    sportUrlSegment: string;
+    /**
+     * Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it.
+     */
+    sportDisplayOrder: number;
     name: string;
     /**
      * The provider that syncs its events. Null when none does.
@@ -8360,7 +8726,15 @@ export type SportLeagueOverviewListResponse = {
      */
     sportLeagues: Array<{
         id: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * Its sport's URL segment (SportDto.urlSegment): what a link to the league's Manage page names the sport by.
+         */
+        sportUrlSegment: string;
+        /**
+         * Its sport's place wherever sports are listed together, lower first (the sport row's displayOrder): sort the sport column by it.
+         */
+        sportDisplayOrder: number;
         name: string;
         /**
          * The provider that syncs its events. Null when none does.
@@ -9225,9 +9599,9 @@ export type SportEventOverviewDto = {
         lastInFeedAt: string | null;
     }>;
     /**
-     * The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.
+     * The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.
      */
-    eventPageSlug: string | null;
+    eventPagePath: string | null;
 };
 
 /**
@@ -9450,9 +9824,9 @@ export type SportEventOverviewResponse = {
             lastInFeedAt: string | null;
         }>;
         /**
-         * The slug of the active event page offering the event's series, its address /play/<sport>/<slug>; the first by display order when several do. Null when none does.
+         * The web address of the active event page offering the event's series, /play/<sport URL segment>/<page URL segment>, built by the API from the stored segments; the first by display order when several do. Null when none does.
          */
-        eventPageSlug: string | null;
+        eventPagePath: string | null;
     };
 };
 
@@ -9911,6 +10285,24 @@ export type SportLeagueSeasonProviderMappingDto = {
 };
 
 /**
+ * The dates a provider that names no place for its games has them placed by (DATE_WINDOW), kept apart from the dates its Games give.
+ */
+export type SlotWindowDto = {
+    /**
+     * ISO 8601 datetime string.
+     */
+    startsAt: string;
+    /**
+     * Exclusive.
+     */
+    endsAt: string;
+    /**
+     * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+     */
+    status: 'TENTATIVE' | 'CONFIRMED';
+};
+
+/**
  * One slot of one Season.
  */
 export type SportLeagueSeasonSlotDto = {
@@ -9952,6 +10344,188 @@ export type SportLeagueSeasonSlotDto = {
      * A test slot's label, unique per Season and definition; null on a synced slot.
      */
     label: string | null;
+    /**
+     * Its date window, set as data (#2012); null when it has none.
+     */
+    window: {
+        /**
+         * ISO 8601 datetime string.
+         */
+        startsAt: string;
+        /**
+         * Exclusive.
+         */
+        endsAt: string;
+        /**
+         * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+         */
+        status: 'TENTATIVE' | 'CONFIRMED';
+    } | null;
+};
+
+/**
+ * One slot of one Season, as its Season lists it.
+ */
+export type SportLeagueSeasonPhaseSlotDto = {
+    id: string;
+    /**
+     * The slot definition it plays (SportLeagueSlotDefinitionDto).
+     */
+    slotDefinitionId: string;
+    /**
+     * Its definition's key.
+     */
+    key: string;
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    weekNumber: number | null;
+    /**
+     * Its definition's proper name; null when screens show the word for its kind.
+     */
+    name: string | null;
+    /**
+     * The earliest start of its Games; null until the sync has matched one.
+     */
+    startsAt: string | null;
+    /**
+     * The latest end of its Games; null until the sync has matched one.
+     */
+    endsAt: string | null;
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    /**
+     * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+     */
+    seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+    seriesGames: number;
+    pairing: 'FIXED' | 'RESEEDED';
+    /**
+     * A test slot: QA only, never read or written by the sync.
+     */
+    isTestData: boolean;
+    /**
+     * A test slot's label, unique per Season and definition; null on a synced slot.
+     */
+    label: string | null;
+    /**
+     * Its date window, set as data (#2012); null when it has none.
+     */
+    window: {
+        /**
+         * ISO 8601 datetime string.
+         */
+        startsAt: string;
+        /**
+         * Exclusive.
+         */
+        endsAt: string;
+        /**
+         * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+         */
+        status: 'TENTATIVE' | 'CONFIRMED';
+    } | null;
+    /**
+     * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+     */
+    sportEventId: string | null;
+    /**
+     * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+     */
+    takesTestEvent: boolean;
+    /**
+     * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+     */
+    placedByWindow: boolean;
+    /**
+     * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+     */
+    needsDates: boolean;
+};
+
+/**
+ * A labelled test slot for the league's current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season.
+ */
+export type CreateTestSlotRequest = {
+    /**
+     * The slot definition it plays (SportLeagueSlotDefinitionDto), one of the league's: 404 SLOT_DEFINITION_NOT_FOUND otherwise.
+     */
+    slotDefinitionId: string;
+    /**
+     * Tells it apart from the Season's other test slots of that definition: 409 TEST_SLOT_LABEL_TAKEN when one already has it.
+     */
+    label: string;
+    /**
+     * When its test event starts.
+     */
+    startsAt: string;
+    /**
+     * When its test event ends: 422 TEST_SLOT_ENDS_BEFORE_START when not after startsAt. Omitted, the end is not known.
+     */
+    endsAt?: string;
+};
+
+/**
+ * One Season slot.
+ */
+export type SportLeagueSeasonSlotResponse = {
+    /**
+     * One slot of one Season.
+     */
+    slot: {
+        id: string;
+        /**
+         * The slot definition it plays (SportLeagueSlotDefinitionDto).
+         */
+        slotDefinitionId: string;
+        /**
+         * Its definition's key.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        weekNumber: number | null;
+        /**
+         * Its definition's proper name; null when screens show the word for its kind.
+         */
+        name: string | null;
+        /**
+         * The earliest start of its Games; null until the sync has matched one.
+         */
+        startsAt: string | null;
+        /**
+         * The latest end of its Games; null until the sync has matched one.
+         */
+        endsAt: string | null;
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        /**
+         * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+         */
+        seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+        seriesGames: number;
+        pairing: 'FIXED' | 'RESEEDED';
+        /**
+         * A test slot: QA only, never read or written by the sync.
+         */
+        isTestData: boolean;
+        /**
+         * A test slot's label, unique per Season and definition; null on a synced slot.
+         */
+        label: string | null;
+        /**
+         * Its date window, set as data (#2012); null when it has none.
+         */
+        window: {
+            /**
+             * ISO 8601 datetime string.
+             */
+            startsAt: string;
+            /**
+             * Exclusive.
+             */
+            endsAt: string;
+            /**
+             * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+             */
+            status: 'TENTATIVE' | 'CONFIRMED';
+        } | null;
+    };
 };
 
 /**
@@ -10006,7 +10580,44 @@ export type SportLeagueSeasonPhaseDto = {
          * A test slot's label, unique per Season and definition; null on a synced slot.
          */
         label: string | null;
+        /**
+         * Its date window, set as data (#2012); null when it has none.
+         */
+        window: {
+            /**
+             * ISO 8601 datetime string.
+             */
+            startsAt: string;
+            /**
+             * Exclusive.
+             */
+            endsAt: string;
+            /**
+             * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+             */
+            status: 'TENTATIVE' | 'CONFIRMED';
+        } | null;
+        /**
+         * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+         */
+        sportEventId: string | null;
+        /**
+         * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+         */
+        takesTestEvent: boolean;
+        /**
+         * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+         */
+        placedByWindow: boolean;
+        /**
+         * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+         */
+        needsDates: boolean;
     }>;
+    /**
+     * How many of its slots need dates (needsDates).
+     */
+    slotsNeedingDates: number;
 };
 
 /**
@@ -10102,8 +10713,49 @@ export type SportLeagueSeasonDto = {
              * A test slot's label, unique per Season and definition; null on a synced slot.
              */
             label: string | null;
+            /**
+             * Its date window, set as data (#2012); null when it has none.
+             */
+            window: {
+                /**
+                 * ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 */
+                status: 'TENTATIVE' | 'CONFIRMED';
+            } | null;
+            /**
+             * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+             */
+            sportEventId: string | null;
+            /**
+             * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+             */
+            takesTestEvent: boolean;
+            /**
+             * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+             */
+            placedByWindow: boolean;
+            /**
+             * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+             */
+            needsDates: boolean;
         }>;
+        /**
+         * How many of its slots need dates (needsDates).
+         */
+        slotsNeedingDates: number;
     }>;
+    /**
+     * How many of its slots need dates (needsDates), across its phases.
+     */
+    slotsNeedingDates: number;
 };
 
 /**
@@ -10203,8 +10855,49 @@ export type SportLeagueSeasonListResponse = {
                  * A test slot's label, unique per Season and definition; null on a synced slot.
                  */
                 label: string | null;
+                /**
+                 * Its date window, set as data (#2012); null when it has none.
+                 */
+                window: {
+                    /**
+                     * ISO 8601 datetime string.
+                     */
+                    startsAt: string;
+                    /**
+                     * Exclusive.
+                     */
+                    endsAt: string;
+                    /**
+                     * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                     */
+                    status: 'TENTATIVE' | 'CONFIRMED';
+                } | null;
+                /**
+                 * The event covering it; null while it is free, as a test slot is before its test event is made on it.
+                 */
+                sportEventId: string | null;
+                /**
+                 * Whether a test event can be made on it now (createEvent): a free test slot of its league's current Season.
+                 */
+                takesTestEvent: boolean;
+                /**
+                 * Whether the league's selected provider places its games by date window (DATE_WINDOW).
+                 */
+                placedByWindow: boolean;
+                /**
+                 * Whether it still needs its dates (#1924): placed by date window, with no window or only a tentative one, in a Season the sync reads (the current one or a later one).
+                 */
+                needsDates: boolean;
             }>;
+            /**
+             * How many of its slots need dates (needsDates).
+             */
+            slotsNeedingDates: number;
         }>;
+        /**
+         * How many of its slots need dates (needsDates), across its phases.
+         */
+        slotsNeedingDates: number;
     }>;
 };
 
@@ -10423,6 +11116,24 @@ export type SportEventAutoReleaseCheckDto = {
 };
 
 /**
+ * The provider's id for an event, written by the events sync when it created the event from the provider's schedule. (Admin-only: operational detail no member surface reads.)
+ */
+export type SportEventProviderMappingDto = {
+    /**
+     * The provider that has this id for the event.
+     */
+    providerCode: 'BALLDONTLIE';
+    /**
+     * That provider's name.
+     */
+    providerName: string;
+    /**
+     * The provider's own id for the event, as it sends it.
+     */
+    externalId: string;
+};
+
+/**
  * A real-world event a contest can be run on — a golf tournament, a race, a match.
  */
 export type SportEventDto = {
@@ -10431,21 +11142,34 @@ export type SportEventDto = {
      */
     id: string;
     /**
-     * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
+     * The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)
      */
-    externalId: string;
+    providerMappings: Array<{
+        /**
+         * The provider that has this id for the event.
+         */
+        providerCode: 'BALLDONTLIE';
+        /**
+         * That provider's name.
+         */
+        providerName: string;
+        /**
+         * The provider's own id for the event, as it sends it.
+         */
+        externalId: string;
+    }>;
     /**
-     * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
-     */
-    providerId: string;
-    /**
-     * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+     * The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)
      */
     providerName: string | null;
     /**
      * Sport the event belongs to.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
+     */
+    sportUrlSegment: string;
     /**
      * Event name shown in contest and event selectors.
      */
@@ -10478,6 +11202,14 @@ export type SportEventDto = {
      * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
      */
     roundsPar: number | null;
+    /**
+     * The lowest par per round an update takes; a lower one is refused with 400.
+     */
+    roundsParMin: number;
+    /**
+     * The highest par per round an update takes; a higher one is refused with 400.
+     */
+    roundsParMax: number;
     /**
      * Field size the provider reports, when it reports one; null otherwise.
      */
@@ -10574,9 +11306,9 @@ export type SportEventDto = {
      */
     tiersLocked: boolean;
     /**
-     * The recurring tournament (event series) this is one edition of. One edition of a series per Season.
+     * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
      */
-    eventSeriesId: string;
+    slotDefinitionIds: Array<string>;
     /**
      * The Season the event is played in (SportLeagueSeasonDto).
      */
@@ -10586,25 +11318,85 @@ export type SportEventDto = {
      */
     championshipYear: number;
     /**
-     * The sport league the event's series belongs to. Read through the series, not stored on the event.
+     * The sport league the event belongs to; its Season is the same league's.
      */
     sportLeagueId: string;
     /**
-     * Who competes: teams or individuals. Read through the series' sport league.
+     * Who competes: teams or individuals. Read through the sport league.
      */
     participantType: 'INDIVIDUAL' | 'TEAM';
     /**
-     * How the event is scored. Read through the series' sport league.
+     * How the event is scored. Read through the sport league.
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     /**
-     * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
+     * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
      */
-    syncScope: 'NONE' | 'SCORES_ONLY';
+    shootout: boolean;
     /**
-     * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+     * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
      */
-    providerSynced: boolean;
+    isTestData: boolean;
+    /**
+     * The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.
+     */
+    slots: Array<{
+        id: string;
+        /**
+         * The slot definition it plays (SportLeagueSlotDefinitionDto).
+         */
+        slotDefinitionId: string;
+        /**
+         * Its definition's key.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        weekNumber: number | null;
+        /**
+         * Its definition's proper name; null when screens show the word for its kind.
+         */
+        name: string | null;
+        /**
+         * The earliest start of its Games; null until the sync has matched one.
+         */
+        startsAt: string | null;
+        /**
+         * The latest end of its Games; null until the sync has matched one.
+         */
+        endsAt: string | null;
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        /**
+         * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+         */
+        seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+        seriesGames: number;
+        pairing: 'FIXED' | 'RESEEDED';
+        /**
+         * A test slot: QA only, never read or written by the sync.
+         */
+        isTestData: boolean;
+        /**
+         * A test slot's label, unique per Season and definition; null on a synced slot.
+         */
+        label: string | null;
+        /**
+         * Its date window, set as data (#2012); null when it has none.
+         */
+        window: {
+            /**
+             * ISO 8601 datetime string.
+             */
+            startsAt: string;
+            /**
+             * Exclusive.
+             */
+            endsAt: string;
+            /**
+             * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+             */
+            status: 'TENTATIVE' | 'CONFIRMED';
+        } | null;
+    }>;
     /**
      * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
      */
@@ -10756,13 +11548,13 @@ export type SportEventListQuery = {
     /**
      * Only events of this sport.
      */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
      */
     status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
     /**
-     * Only events of this sport league's series.
+     * Only events of this sport league.
      */
     sportLeagueId?: string;
     /**
@@ -10788,21 +11580,34 @@ export type SportEventListResponse = {
          */
         id: string;
         /**
-         * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
+         * The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)
          */
-        externalId: string;
+        providerMappings: Array<{
+            /**
+             * The provider that has this id for the event.
+             */
+            providerCode: 'BALLDONTLIE';
+            /**
+             * That provider's name.
+             */
+            providerName: string;
+            /**
+             * The provider's own id for the event, as it sends it.
+             */
+            externalId: string;
+        }>;
         /**
-         * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
-         */
-        providerId: string;
-        /**
-         * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+         * The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)
          */
         providerName: string | null;
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
+         */
+        sportUrlSegment: string;
         /**
          * Event name shown in contest and event selectors.
          */
@@ -10835,6 +11640,14 @@ export type SportEventListResponse = {
          * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
          */
         roundsPar: number | null;
+        /**
+         * The lowest par per round an update takes; a lower one is refused with 400.
+         */
+        roundsParMin: number;
+        /**
+         * The highest par per round an update takes; a higher one is refused with 400.
+         */
+        roundsParMax: number;
         /**
          * Field size the provider reports, when it reports one; null otherwise.
          */
@@ -10931,9 +11744,9 @@ export type SportEventListResponse = {
          */
         tiersLocked: boolean;
         /**
-         * The recurring tournament (event series) this is one edition of. One edition of a series per Season.
+         * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
          */
-        eventSeriesId: string;
+        slotDefinitionIds: Array<string>;
         /**
          * The Season the event is played in (SportLeagueSeasonDto).
          */
@@ -10943,25 +11756,85 @@ export type SportEventListResponse = {
          */
         championshipYear: number;
         /**
-         * The sport league the event's series belongs to. Read through the series, not stored on the event.
+         * The sport league the event belongs to; its Season is the same league's.
          */
         sportLeagueId: string;
         /**
-         * Who competes: teams or individuals. Read through the series' sport league.
+         * Who competes: teams or individuals. Read through the sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored. Read through the series' sport league.
+         * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
+         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
          */
-        syncScope: 'NONE' | 'SCORES_ONLY';
+        shootout: boolean;
         /**
-         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
-        providerSynced: boolean;
+        isTestData: boolean;
+        /**
+         * The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.
+         */
+        slots: Array<{
+            id: string;
+            /**
+             * The slot definition it plays (SportLeagueSlotDefinitionDto).
+             */
+            slotDefinitionId: string;
+            /**
+             * Its definition's key.
+             */
+            key: string;
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            weekNumber: number | null;
+            /**
+             * Its definition's proper name; null when screens show the word for its kind.
+             */
+            name: string | null;
+            /**
+             * The earliest start of its Games; null until the sync has matched one.
+             */
+            startsAt: string | null;
+            /**
+             * The latest end of its Games; null until the sync has matched one.
+             */
+            endsAt: string | null;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+             */
+            seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+            seriesGames: number;
+            pairing: 'FIXED' | 'RESEEDED';
+            /**
+             * A test slot: QA only, never read or written by the sync.
+             */
+            isTestData: boolean;
+            /**
+             * A test slot's label, unique per Season and definition; null on a synced slot.
+             */
+            label: string | null;
+            /**
+             * Its date window, set as data (#2012); null when it has none.
+             */
+            window: {
+                /**
+                 * ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 */
+                status: 'TENTATIVE' | 'CONFIRMED';
+            } | null;
+        }>;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -11120,21 +11993,34 @@ export type SportEventResponse = {
          */
         id: string;
         /**
-         * Provider-side event identifier used by sync operations. (Admin-only: operational detail no member surface reads.)
+         * The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. (Admin-only: operational detail no member surface reads.)
          */
-        externalId: string;
+        providerMappings: Array<{
+            /**
+             * The provider that has this id for the event.
+             */
+            providerCode: 'BALLDONTLIE';
+            /**
+             * That provider's name.
+             */
+            providerName: string;
+            /**
+             * The provider's own id for the event, as it sends it.
+             */
+            externalId: string;
+        }>;
         /**
-         * Provider that emitted the event, or manual-admin for an admin-authored one. (Admin-only: operational detail no member surface reads.)
-         */
-        providerId: string;
-        /**
-         * That provider's name when it is the one syncing the event's sport league (#1999); null for an admin-authored event. (Admin-only: operational detail no member surface reads.)
+         * The name of the provider syncing the event: its sport league's sync provider, when that provider has an id for it (#1999); null for a test event. (Admin-only: operational detail no member surface reads.)
          */
         providerName: string | null;
         /**
          * Sport the event belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The URL segment of the event's sport, read through its sport league: what a web address names the sport by.
+         */
+        sportUrlSegment: string;
         /**
          * Event name shown in contest and event selectors.
          */
@@ -11167,6 +12053,14 @@ export type SportEventResponse = {
          * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
          */
         roundsPar: number | null;
+        /**
+         * The lowest par per round an update takes; a lower one is refused with 400.
+         */
+        roundsParMin: number;
+        /**
+         * The highest par per round an update takes; a higher one is refused with 400.
+         */
+        roundsParMax: number;
         /**
          * Field size the provider reports, when it reports one; null otherwise.
          */
@@ -11263,9 +12157,9 @@ export type SportEventResponse = {
          */
         tiersLocked: boolean;
         /**
-         * The recurring tournament (event series) this is one edition of. One edition of a series per Season.
+         * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
          */
-        eventSeriesId: string;
+        slotDefinitionIds: Array<string>;
         /**
          * The Season the event is played in (SportLeagueSeasonDto).
          */
@@ -11275,25 +12169,85 @@ export type SportEventResponse = {
          */
         championshipYear: number;
         /**
-         * The sport league the event's series belongs to. Read through the series, not stored on the event.
+         * The sport league the event belongs to; its Season is the same league's.
          */
         sportLeagueId: string;
         /**
-         * Who competes: teams or individuals. Read through the series' sport league.
+         * Who competes: teams or individuals. Read through the sport league.
          */
         participantType: 'INDIVIDUAL' | 'TEAM';
         /**
-         * How the event is scored. Read through the series' sport league.
+         * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
-         * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
+         * Whether a knockout match of its sport still level after extra time goes to a shoot-out, as soccer's does. Read through its sport.
          */
-        syncScope: 'NONE' | 'SCORES_ONLY';
+        shootout: boolean;
         /**
-         * Whether the event's details come from its provider's sync (ADR 0011): its sport league's event sync names a provider and the event is linked to that provider for scores. The provider wins over an edit to such an event's name, venue and dates, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
+         * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
-        providerSynced: boolean;
+        isTestData: boolean;
+        /**
+         * The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.
+         */
+        slots: Array<{
+            id: string;
+            /**
+             * The slot definition it plays (SportLeagueSlotDefinitionDto).
+             */
+            slotDefinitionId: string;
+            /**
+             * Its definition's key.
+             */
+            key: string;
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            weekNumber: number | null;
+            /**
+             * Its definition's proper name; null when screens show the word for its kind.
+             */
+            name: string | null;
+            /**
+             * The earliest start of its Games; null until the sync has matched one.
+             */
+            startsAt: string | null;
+            /**
+             * The latest end of its Games; null until the sync has matched one.
+             */
+            endsAt: string | null;
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * Copied from the definition when the Season was added, so a later format change never rewrites a past Season.
+             */
+            seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
+            seriesGames: number;
+            pairing: 'FIXED' | 'RESEEDED';
+            /**
+             * A test slot: QA only, never read or written by the sync.
+             */
+            isTestData: boolean;
+            /**
+             * A test slot's label, unique per Season and definition; null on a synced slot.
+             */
+            label: string | null;
+            /**
+             * Its date window, set as data (#2012); null when it has none.
+             */
+            window: {
+                /**
+                 * ISO 8601 datetime string.
+                 */
+                startsAt: string;
+                /**
+                 * Exclusive.
+                 */
+                endsAt: string;
+                /**
+                 * TENTATIVE: a best guess, until the sync places a game in it and it becomes CONFIRMED.
+                 */
+                status: 'TENTATIVE' | 'CONFIRMED';
+            } | null;
+        }>;
         /**
          * Whether the lifecycle scheduler may move this event's status. (Admin-only: operational detail no member surface reads.)
          */
@@ -11440,48 +12394,17 @@ export type SportEventResponse = {
 };
 
 /**
- * An admin-authored event. Created DRAFT with its default rounds and tiers, accepting no provider data; commissioners see it once it is released.
+ * A test event, made by hand on a test slot (QA only). Created DRAFT with its league's default round count and tiers, and its slot's dates; commissioners see it once it is released.
  */
 export type CreateSportEventRequest = {
     /**
-     * The sport league the event runs on; it decides the sport. The event's series is found or created in it by name, and the event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.
+     * The test slot the event is played on (SportLeagueSeasonSlotDto): it decides the event's league, Season and dates. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season; 409 SEASON_SLOT_TAKEN when it already has an event.
      */
-    sportLeagueId: string;
+    seasonSlotId: string;
     name: string;
     venue?: string;
     location?: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    startDate: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    endDate?: string;
-    /**
-     * Round count; omitted, the sport's default round count (4 for golf).
-     */
-    rounds?: number;
     autoLifecycleEnabled?: boolean;
-};
-
-/**
- * An event created from a provider event, linked to it for scores (SCORES_ONLY). Created DRAFT; the field is not touched.
- */
-export type CreateSportEventFromProviderEventRequest = {
-    /**
-     * The sport league the event runs on; it decides the sport. The event is in its current Season: 422 SPORT_LEAGUE_HAS_NO_SEASON when it has none; 409 EVENT_EDITION_ALREADY_EXISTS when the series already has an edition in it.
-     */
-    sportLeagueId: string;
-    providerId: string;
-    /**
-     * From a provider catalog browse (listProviderCatalogEvents).
-     */
-    externalId: string;
-    /**
-     * Round count; omitted, the provider schedule decides.
-     */
-    rounds?: number;
 };
 
 /**
@@ -11498,11 +12421,11 @@ export type UpdateSportEventRequest = {
      */
     location?: string | null;
     /**
-     * ISO 8601 datetime string.
+     * 422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots'.
      */
     startDate?: string;
     /**
-     * null clears it.
+     * null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.
      */
     endDate?: string | null;
     rounds?: number;
@@ -11525,17 +12448,6 @@ export type TransitionSportEventRequest = {
      * One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).
      */
     toStatus: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-};
-
-/**
- * Links an event to a provider event for scores.
- */
-export type LinkSportEventScoreSourceRequest = {
-    providerId: string;
-    /**
-     * From a provider catalog browse.
-     */
-    externalId: string;
 };
 
 /**
@@ -12500,8 +13412,11 @@ export type UpdateSportEventParticipantsRequest = {
         isActive?: boolean;
         inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
         ranking?: number | null;
-        oddsToWin?: number | null;
         seedNumber?: number | null;
+        /**
+         * The odds to win, as the feed sends them. Kept on the grid save only for the test-data loader, which writes test odds in the feed's place (#2077).
+         */
+        oddsToWin?: number | null;
         /**
          * A manual price; null clears it.
          */
@@ -12785,7 +13700,6 @@ export type SportEventParticipantUploadRequest = {
         isActive?: boolean;
         inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
         ranking?: number | null;
-        oddsToWin?: number | null;
         seedNumber?: number | null;
     }>;
 };
@@ -12811,7 +13725,6 @@ export type SportEventParticipantUploadPreviewResponse = {
             isActive?: boolean;
             inactiveReason?: 'WITHDRAWN' | 'ELIMINATED' | null;
             ranking?: number | null;
-            oddsToWin?: number | null;
             seedNumber?: number | null;
         };
         /**
@@ -12845,7 +13758,6 @@ export type SportEventParticipantUploadPreviewResponse = {
             isActive: boolean;
             inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
             ranking: number | null;
-            oddsToWin: number | null;
             seedNumber: number | null;
         } | null;
         /**
@@ -12855,7 +13767,6 @@ export type SportEventParticipantUploadPreviewResponse = {
             isActive: boolean;
             inactiveReason: 'WITHDRAWN' | 'ELIMINATED' | null;
             ranking: number | null;
-            oddsToWin: number | null;
             seedNumber: number | null;
         } | null;
         /**
@@ -13521,7 +14432,11 @@ export type ContestDto = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
     }>;
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+    /**
+     * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
+     */
+    sportUrlSegment?: string | null;
     /**
      * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
      */
@@ -13709,7 +14624,7 @@ export type ScoredContestEntryPickDto = {
      */
     pickedAt: string;
     /**
-     * Optional roster slot from the pick row.
+     * Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).
      */
     slot: number | null;
     /**
@@ -13847,7 +14762,7 @@ export type ContestEntryStandingDto = {
          */
         pickedAt: string;
         /**
-         * Optional roster slot from the pick row.
+         * Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).
          */
         slot: number | null;
         /**
@@ -13937,7 +14852,7 @@ export type ContestLeaderboardResponse = {
     /**
      * Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Who competes in the shown event, from its sport league. A client reads the event's definition from the sport and these two.
      */
@@ -14301,7 +15216,7 @@ export type ContestLeaderboardResponse = {
              */
             pickedAt: string;
             /**
-             * Optional roster slot from the pick row.
+             * Deprecated, always null: picks have no slot column (#632, #2042). Kept because a stored leaderboard is served by tasks on older code during a rolling deploy, and a board format may only add fields (rules/service-rules.md, Response Rules).
              */
             slot: number | null;
             /**
@@ -14414,7 +15329,11 @@ export type ContestResponse = {
              */
             scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         }>;
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        /**
+         * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
+         */
+        sportUrlSegment?: string | null;
         /**
          * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
          */
@@ -14511,7 +15430,11 @@ export type ContestListResponse = {
              */
             scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         }>;
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
+        /**
+         * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
+         */
+        sportUrlSegment?: string | null;
         /**
          * Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.
          */
@@ -15627,6 +16550,10 @@ export type GamePicksResponse = {
      */
     tiebreakerValue: number | null;
     /**
+     * The highest tiebreaker a save takes; 0 is the lowest. A higher one is refused with 400.
+     */
+    tiebreakerMax: number;
+    /**
      * Points so far: a bracket's round values and upset bonuses, a pick'em pick's 1 point, or its confidence value, for each correct pick. Null on another team's entry until all its picks are revealed.
      */
     points: number | null;
@@ -15972,6 +16899,10 @@ export type GamePickPreviewResponse = {
      * The game an entry's tiebreaker would guess the total points of: a bracket's final, a pick'em week's last game. Null where there is none.
      */
     tiebreakerMatchId: string | null;
+    /**
+     * The highest tiebreaker an entry's save would take; 0 is the lowest.
+     */
+    tiebreakerMax: number;
     /**
      * The games an entry would pick, in game-number order: cancelled games left out, a bracket's from its starting round.
      */
@@ -16442,10 +17373,6 @@ export type SettingsGroup = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16457,15 +17384,15 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -16484,10 +17411,6 @@ export type SettingsGroup = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16499,6 +17422,10 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
     /**
@@ -16510,10 +17437,6 @@ export type SettingsGroup = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16525,15 +17448,15 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -16552,10 +17475,6 @@ export type SettingsGroup = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -16567,6 +17486,10 @@ export type SettingsGroup = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
 } | {
@@ -17467,10 +18390,6 @@ export type SettingsGroupList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17482,15 +18401,15 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -17509,10 +18428,6 @@ export type SettingsGroupList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17524,6 +18439,10 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         };
         /**
@@ -17535,10 +18454,6 @@ export type SettingsGroupList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17550,15 +18465,15 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -17577,10 +18492,6 @@ export type SettingsGroupList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -17592,6 +18503,10 @@ export type SettingsGroupList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         };
     } | {
@@ -18460,10 +19375,6 @@ export type SettingsGroupUpdateRequest = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -18475,15 +19386,15 @@ export type SettingsGroupUpdateRequest = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -18502,10 +19413,6 @@ export type SettingsGroupUpdateRequest = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -18517,6 +19424,10 @@ export type SettingsGroupUpdateRequest = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
     /**
@@ -18953,10 +19864,6 @@ export type SettingsChange = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -18968,15 +19875,15 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -18995,10 +19902,6 @@ export type SettingsChange = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -19010,6 +19913,10 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     } | null;
     /**
@@ -19021,10 +19928,6 @@ export type SettingsChange = {
          */
         EVENTS: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -19036,15 +19939,15 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
-        };
-        /**
-         * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-         */
-        FIELD: {
             /**
              * Whether the feed should be scheduled automatically.
              */
             enabled: boolean;
+        };
+        /**
+         * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+         */
+        FIELD: {
             /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
@@ -19063,10 +19966,6 @@ export type SettingsChange = {
          */
         SCORES: {
             /**
-             * Whether the feed should be scheduled automatically.
-             */
-            enabled: boolean;
-            /**
              * How often the feed should run, in minutes, for interval-driven orchestration.
              */
             intervalMinutes?: number;
@@ -19078,6 +19977,10 @@ export type SettingsChange = {
              * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
              */
             lookaheadDays?: number;
+            /**
+             * Whether the feed should be scheduled automatically.
+             */
+            enabled: boolean;
         };
     };
 } | {
@@ -19934,10 +20837,6 @@ export type SettingsChangeList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -19949,15 +20848,15 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -19976,10 +20875,6 @@ export type SettingsChangeList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -19991,6 +20886,10 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         } | null;
         /**
@@ -20002,10 +20901,6 @@ export type SettingsChangeList = {
              */
             EVENTS: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -20017,15 +20912,15 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
-            };
-            /**
-             * The FIELD sync: event participants and event-scoped odds before the field locks. Candidate events must be field-available and not field-locked.
-             */
-            FIELD: {
                 /**
                  * Whether the feed should be scheduled automatically.
                  */
                 enabled: boolean;
+            };
+            /**
+             * The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.
+             */
+            FIELD: {
                 /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
@@ -20044,10 +20939,6 @@ export type SettingsChangeList = {
              */
             SCORES: {
                 /**
-                 * Whether the feed should be scheduled automatically.
-                 */
-                enabled: boolean;
-                /**
                  * How often the feed should run, in minutes, for interval-driven orchestration.
                  */
                 intervalMinutes?: number;
@@ -20059,6 +20950,10 @@ export type SettingsChangeList = {
                  * How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).
                  */
                 lookaheadDays?: number;
+                /**
+                 * Whether the feed should be scheduled automatically.
+                 */
+                enabled: boolean;
             };
         };
     } | {
@@ -21177,6 +22072,10 @@ export type SportEventRoundMatchDto = {
      */
     status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
     /**
+     * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+     */
+    isUnplayed: boolean;
+    /**
      * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
      */
     winnerSide: 'HOME' | 'AWAY' | null;
@@ -21201,9 +22100,9 @@ export type SportEventRoundMatchDto = {
      */
     ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
     /**
-     * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+     * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
      */
-    resultSource: 'ADMIN' | 'PROVIDER' | null;
+    resultSource: 'PROVIDER' | null;
     /**
      * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
      */
@@ -21282,6 +22181,10 @@ export type SportEventBracketResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
@@ -21306,9 +22209,9 @@ export type SportEventBracketResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
          */
-        resultSource: 'ADMIN' | 'PROVIDER' | null;
+        resultSource: 'PROVIDER' | null;
         /**
          * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
          */
@@ -21388,6 +22291,10 @@ export type SportEventRoundMatchResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
@@ -21412,9 +22319,9 @@ export type SportEventRoundMatchResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
          */
-        resultSource: 'ADMIN' | 'PROVIDER' | null;
+        resultSource: 'PROVIDER' | null;
         /**
          * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
          */
@@ -21527,16 +22434,6 @@ export type UpdateSportEventRoundMatchRequest = {
 export type FillPlayInSlotRequest = {
     /**
      * The team that won the play-in game: an active participant of the event's sport not yet on the field.
-     */
-    participantId: string;
-};
-
-/**
- * A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row's bracket place, unseeded, last in the event's last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss.
- */
-export type ReplaceWithdrawnParticipantRequest = {
-    /**
-     * Who takes the place: an active participant of the event's sport not yet on the field, such as a tennis lucky loser.
      */
     participantId: string;
 };
@@ -21812,6 +22709,10 @@ export type SquaresBoardResponse = {
          */
         status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
         /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
          * Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.
          */
         winnerSide: 'HOME' | 'AWAY' | null;
@@ -21836,9 +22737,9 @@ export type SquaresBoardResponse = {
          */
         ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
         /**
-         * Who set the result: ADMIN, or PROVIDER for the data feed of the game the match is linked to; null while the match has no result. A provider's later final never overwrites an admin's result.
+         * Who set the result: PROVIDER, the data feed of the game the match is linked to (on a test event, the test-data loader standing in for it); null while the match has no result.
          */
-        resultSource: 'ADMIN' | 'PROVIDER' | null;
+        resultSource: 'PROVIDER' | null;
         /**
          * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
          */
@@ -23163,38 +24064,42 @@ export type ChampionshipYearListResponse = {
 };
 
 /**
- * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+ * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
  */
-export type EventPageEditionDto = {
+export type EventPageNextSlotDto = {
     /**
-     * The edition's sport event: the one Create contest starts on.
+     * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+     */
+    seasonSlotId: string;
+    /**
+     * The sport event that owns the slot: the one Create contest starts on.
      */
     sportEventId: string;
     /**
-     * The edition's name, such as "Conference Championships".
+     * The event's name, such as "Conference Championships".
      */
     name: string;
     /**
-     * The year the edition's Season is named for (SportEventDto.championshipYear).
+     * The year the slot's Season is named for (SportEventDto.championshipYear).
      */
     championshipYear: number;
     /**
-     * When the edition starts. For a NOT_YET offer, when it is expected.
+     * When the event starts. For a NOT_YET offer, when it is expected.
      */
     startDate: string;
     /**
-     * When the edition ends, when known.
+     * When the event ends, when known.
      */
     endDate: string | null;
 };
 
 /**
- * One way to play on an event page: a contest setup on one sport league's series, with that series' next edition. An offer whose series has no edition that can still take the contest is left out.
+ * One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.
  */
 export type EventPageOfferDto = {
     id: string;
     /**
-     * The sport league whose series the offer runs on.
+     * The sport league whose slot the offer runs on.
      */
     sportLeagueId: string;
     /**
@@ -23202,9 +24107,9 @@ export type EventPageOfferDto = {
      */
     sportLeagueName: string;
     /**
-     * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+     * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
      */
-    eventSeriesName: string;
+    sportLeaguePhaseSlotId: string;
     /**
      * The contest setup the offer starts as: Create contest's ?template=.
      */
@@ -23214,17 +24119,50 @@ export type EventPageOfferDto = {
          */
         id: string;
         /**
-         * Sport this template applies to.
-         */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
          */
         sportLeagueId: string;
         /**
-         * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+         * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
          */
-        eventType?: 'KNOCKOUT' | 'WEEK' | null;
+        coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+        /**
+         * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+         */
+        slots: Array<{
+            /**
+             * The slot definition's id (SportLeaguePhaseSlot).
+             */
+            id: string;
+            /**
+             * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The phase the slot is in.
+             */
+            sportLeaguePhaseId: string;
+            /**
+             * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+             */
+            phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+            /**
+             * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+             */
+            matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+        }>;
         /**
          * Contest type that may use the template.
          */
@@ -23698,53 +24636,69 @@ export type EventPageOfferDto = {
      */
     sortOrder: number;
     /**
-     * The offer whose edition heads the page: its dates are the page's. A page has one.
+     * The offer whose next slot heads the page: its dates are the page's. A page has one.
      */
     isPrimary: boolean;
     /**
-     * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+     * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
      */
     state: 'OPEN' | 'NOT_YET';
     /**
-     * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+     * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
      */
-    edition: {
+    nextSlot: {
         /**
-         * The edition's sport event: the one Create contest starts on.
+         * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+         */
+        seasonSlotId: string;
+        /**
+         * The sport event that owns the slot: the one Create contest starts on.
          */
         sportEventId: string;
         /**
-         * The edition's name, such as "Conference Championships".
+         * The event's name, such as "Conference Championships".
          */
         name: string;
         /**
-         * The year the edition's Season is named for (SportEventDto.championshipYear).
+         * The year the slot's Season is named for (SportEventDto.championshipYear).
          */
         championshipYear: number;
         /**
-         * When the edition starts. For a NOT_YET offer, when it is expected.
+         * When the event starts. For a NOT_YET offer, when it is expected.
          */
         startDate: string;
         /**
-         * When the edition ends, when known.
+         * When the event ends, when known.
          */
         endDate: string | null;
     };
 };
 
 /**
- * A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event.
+ * A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event.
  */
 export type EventPageDto = {
     id: string;
     /**
-     * The sport the page belongs to; its URL's first segment is this sport's path segment.
+     * The sport the page belongs to.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+     * The sport's name, such as "Football", as the page titles it (#2107).
      */
-    slug: string;
+    sportName: string;
+    /**
+     * The sport's stored URL segment, such as football: the first segment of the page's web address.
+     */
+    sportUrlSegment: string;
+    /**
+     * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+     */
+    urlSegment: string;
+    /**
+     * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+     */
+    path: string;
     /**
      * Where the page sits among its sport's pages, lower first.
      */
@@ -23757,19 +24711,34 @@ export type EventPageDto = {
      * For a retired page with a successor, the page its URL now goes to; null otherwise.
      */
     redirectTo: {
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+         * The sport the page belongs to.
          */
-        slug: string;
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The sport's name, such as "Football", as the page titles it (#2107).
+         */
+        sportName: string;
+        /**
+         * The sport's stored URL segment, such as football: the first segment of the page's web address.
+         */
+        sportUrlSegment: string;
+        /**
+         * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+         */
+        urlSegment: string;
+        /**
+         * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+         */
+        path: string;
     } | null;
     /**
-     * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
+     * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
      */
     offers: Array<{
         id: string;
         /**
-         * The sport league whose series the offer runs on.
+         * The sport league whose slot the offer runs on.
          */
         sportLeagueId: string;
         /**
@@ -23777,9 +24746,9 @@ export type EventPageDto = {
          */
         sportLeagueName: string;
         /**
-         * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+         * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
          */
-        eventSeriesName: string;
+        sportLeaguePhaseSlotId: string;
         /**
          * The contest setup the offer starts as: Create contest's ?template=.
          */
@@ -23789,17 +24758,50 @@ export type EventPageDto = {
              */
             id: string;
             /**
-             * Sport this template applies to.
-             */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-            /**
              * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
              */
             sportLeagueId: string;
             /**
-             * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+             * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
              */
-            eventType?: 'KNOCKOUT' | 'WEEK' | null;
+            coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+            /**
+             * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+             */
+            slots: Array<{
+                /**
+                 * The slot definition's id (SportLeaguePhaseSlot).
+                 */
+                id: string;
+                /**
+                 * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+                 */
+                key: string;
+                /**
+                 * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+                 */
+                name: string | null;
+                /**
+                 * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                 */
+                slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                /**
+                 * For a WEEK slot, its week; null otherwise.
+                 */
+                weekNumber: number | null;
+                /**
+                 * The phase the slot is in.
+                 */
+                sportLeaguePhaseId: string;
+                /**
+                 * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                 */
+                phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                /**
+                 * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                 */
+                matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+            }>;
             /**
              * Contest type that may use the template.
              */
@@ -24273,35 +25275,39 @@ export type EventPageDto = {
          */
         sortOrder: number;
         /**
-         * The offer whose edition heads the page: its dates are the page's. A page has one.
+         * The offer whose next slot heads the page: its dates are the page's. A page has one.
          */
         isPrimary: boolean;
         /**
-         * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+         * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
          */
         state: 'OPEN' | 'NOT_YET';
         /**
-         * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+         * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
          */
-        edition: {
+        nextSlot: {
             /**
-             * The edition's sport event: the one Create contest starts on.
+             * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+             */
+            seasonSlotId: string;
+            /**
+             * The sport event that owns the slot: the one Create contest starts on.
              */
             sportEventId: string;
             /**
-             * The edition's name, such as "Conference Championships".
+             * The event's name, such as "Conference Championships".
              */
             name: string;
             /**
-             * The year the edition's Season is named for (SportEventDto.championshipYear).
+             * The year the slot's Season is named for (SportEventDto.championshipYear).
              */
             championshipYear: number;
             /**
-             * When the edition starts. For a NOT_YET offer, when it is expected.
+             * When the event starts. For a NOT_YET offer, when it is expected.
              */
             startDate: string;
             /**
-             * When the edition ends, when known.
+             * When the event ends, when known.
              */
             endDate: string | null;
         };
@@ -24313,18 +25319,30 @@ export type EventPageDto = {
  */
 export type EventPageResponse = {
     /**
-     * A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event.
+     * A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event.
      */
     eventPage: {
         id: string;
         /**
-         * The sport the page belongs to; its URL's first segment is this sport's path segment.
+         * The sport the page belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+         * The sport's name, such as "Football", as the page titles it (#2107).
          */
-        slug: string;
+        sportName: string;
+        /**
+         * The sport's stored URL segment, such as football: the first segment of the page's web address.
+         */
+        sportUrlSegment: string;
+        /**
+         * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+         */
+        urlSegment: string;
+        /**
+         * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+         */
+        path: string;
         /**
          * Where the page sits among its sport's pages, lower first.
          */
@@ -24337,19 +25355,34 @@ export type EventPageResponse = {
          * For a retired page with a successor, the page its URL now goes to; null otherwise.
          */
         redirectTo: {
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
-             * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+             * The sport the page belongs to.
              */
-            slug: string;
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * The sport's name, such as "Football", as the page titles it (#2107).
+             */
+            sportName: string;
+            /**
+             * The sport's stored URL segment, such as football: the first segment of the page's web address.
+             */
+            sportUrlSegment: string;
+            /**
+             * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+             */
+            urlSegment: string;
+            /**
+             * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+             */
+            path: string;
         } | null;
         /**
-         * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
+         * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
             /**
-             * The sport league whose series the offer runs on.
+             * The sport league whose slot the offer runs on.
              */
             sportLeagueId: string;
             /**
@@ -24357,9 +25390,9 @@ export type EventPageResponse = {
              */
             sportLeagueName: string;
             /**
-             * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
              */
-            eventSeriesName: string;
+            sportLeaguePhaseSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -24369,17 +25402,50 @@ export type EventPageResponse = {
                  */
                 id: string;
                 /**
-                 * Sport this template applies to.
-                 */
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
                  * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
                 sportLeagueId: string;
                 /**
-                 * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                 * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
                  */
-                eventType?: 'KNOCKOUT' | 'WEEK' | null;
+                coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+                /**
+                 * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+                 */
+                slots: Array<{
+                    /**
+                     * The slot definition's id (SportLeaguePhaseSlot).
+                     */
+                    id: string;
+                    /**
+                     * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+                     */
+                    key: string;
+                    /**
+                     * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+                     */
+                    name: string | null;
+                    /**
+                     * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                     */
+                    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                    /**
+                     * For a WEEK slot, its week; null otherwise.
+                     */
+                    weekNumber: number | null;
+                    /**
+                     * The phase the slot is in.
+                     */
+                    sportLeaguePhaseId: string;
+                    /**
+                     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     */
+                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                    /**
+                     * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                     */
+                    matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+                }>;
                 /**
                  * Contest type that may use the template.
                  */
@@ -24853,35 +25919,39 @@ export type EventPageResponse = {
              */
             sortOrder: number;
             /**
-             * The offer whose edition heads the page: its dates are the page's. A page has one.
+             * The offer whose next slot heads the page: its dates are the page's. A page has one.
              */
             isPrimary: boolean;
             /**
-             * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+             * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
              */
             state: 'OPEN' | 'NOT_YET';
             /**
-             * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+             * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
-            edition: {
+            nextSlot: {
                 /**
-                 * The edition's sport event: the one Create contest starts on.
+                 * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+                 */
+                seasonSlotId: string;
+                /**
+                 * The sport event that owns the slot: the one Create contest starts on.
                  */
                 sportEventId: string;
                 /**
-                 * The edition's name, such as "Conference Championships".
+                 * The event's name, such as "Conference Championships".
                  */
                 name: string;
                 /**
-                 * The year the edition's Season is named for (SportEventDto.championshipYear).
+                 * The year the slot's Season is named for (SportEventDto.championshipYear).
                  */
                 championshipYear: number;
                 /**
-                 * When the edition starts. For a NOT_YET offer, when it is expected.
+                 * When the event starts. For a NOT_YET offer, when it is expected.
                  */
                 startDate: string;
                 /**
-                 * When the edition ends, when known.
+                 * When the event ends, when known.
                  */
                 endDate: string | null;
             };
@@ -24896,9 +25966,9 @@ export type EventPageListQuery = {
     /**
      * Only this sport's pages. Omitted: every sport's.
      */
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+     * true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
      */
     upcoming?: boolean;
 };
@@ -24913,13 +25983,25 @@ export type EventPageListResponse = {
     eventPages: Array<{
         id: string;
         /**
-         * The sport the page belongs to; its URL's first segment is this sport's path segment.
+         * The sport the page belongs to.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+         * The sport's name, such as "Football", as the page titles it (#2107).
          */
-        slug: string;
+        sportName: string;
+        /**
+         * The sport's stored URL segment, such as football: the first segment of the page's web address.
+         */
+        sportUrlSegment: string;
+        /**
+         * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+         */
+        urlSegment: string;
+        /**
+         * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+         */
+        path: string;
         /**
          * Where the page sits among its sport's pages, lower first.
          */
@@ -24932,19 +26014,34 @@ export type EventPageListResponse = {
          * For a retired page with a successor, the page its URL now goes to; null otherwise.
          */
         redirectTo: {
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
-             * The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>.
+             * The sport the page belongs to.
              */
-            slug: string;
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            /**
+             * The sport's name, such as "Football", as the page titles it (#2107).
+             */
+            sportName: string;
+            /**
+             * The sport's stored URL segment, such as football: the first segment of the page's web address.
+             */
+            sportUrlSegment: string;
+            /**
+             * The page's URL segment within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year).
+             */
+            urlSegment: string;
+            /**
+             * The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given.
+             */
+            path: string;
         } | null;
         /**
-         * The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons.
+         * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
             /**
-             * The sport league whose series the offer runs on.
+             * The sport league whose slot the offer runs on.
              */
             sportLeagueId: string;
             /**
@@ -24952,9 +26049,9 @@ export type EventPageListResponse = {
              */
             sportLeagueName: string;
             /**
-             * The series the offer runs on, by name in its sport league, such as "NFL Playoffs".
+             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
              */
-            eventSeriesName: string;
+            sportLeaguePhaseSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -24964,17 +26061,50 @@ export type EventPageListResponse = {
                  */
                 id: string;
                 /**
-                 * Sport this template applies to.
-                 */
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-                /**
                  * Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
                  */
                 sportLeagueId: string;
                 /**
-                 * The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                 * How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
                  */
-                eventType?: 'KNOCKOUT' | 'WEEK' | null;
+                coverageMode: 'ONE_SLOT' | 'ALL_LISTED' | 'FROM_SLOT';
+                /**
+                 * The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.
+                 */
+                slots: Array<{
+                    /**
+                     * The slot definition's id (SportLeaguePhaseSlot).
+                     */
+                    id: string;
+                    /**
+                     * Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+                     */
+                    key: string;
+                    /**
+                     * The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.
+                     */
+                    name: string | null;
+                    /**
+                     * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                     */
+                    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                    /**
+                     * For a WEEK slot, its week; null otherwise.
+                     */
+                    weekNumber: number | null;
+                    /**
+                     * The phase the slot is in.
+                     */
+                    sportLeaguePhaseId: string;
+                    /**
+                     * That phase's kind: PRESEASON, REGULAR or POSTSEASON.
+                     */
+                    phase: 'PRESEASON' | 'REGULAR' | 'POSTSEASON';
+                    /**
+                     * How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                     */
+                    matchFormat: 'HEAD_TO_HEAD' | 'FIELD';
+                }>;
                 /**
                  * Contest type that may use the template.
                  */
@@ -25448,35 +26578,39 @@ export type EventPageListResponse = {
              */
             sortOrder: number;
             /**
-             * The offer whose edition heads the page: its dates are the page's. A page has one.
+             * The offer whose next slot heads the page: its dates are the page's. A page has one.
              */
             isPrimary: boolean;
             /**
-             * OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+             * OPEN: Create contest would take the contest on the next slot's event now. NOT_YET: the event is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
              */
             state: 'OPEN' | 'NOT_YET';
             /**
-             * The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest.
+             * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
-            edition: {
+            nextSlot: {
                 /**
-                 * The edition's sport event: the one Create contest starts on.
+                 * The Season slot the offer is shown with: one of its slot definition's, in the current or a coming Season.
+                 */
+                seasonSlotId: string;
+                /**
+                 * The sport event that owns the slot: the one Create contest starts on.
                  */
                 sportEventId: string;
                 /**
-                 * The edition's name, such as "Conference Championships".
+                 * The event's name, such as "Conference Championships".
                  */
                 name: string;
                 /**
-                 * The year the edition's Season is named for (SportEventDto.championshipYear).
+                 * The year the slot's Season is named for (SportEventDto.championshipYear).
                  */
                 championshipYear: number;
                 /**
-                 * When the edition starts. For a NOT_YET offer, when it is expected.
+                 * When the event starts. For a NOT_YET offer, when it is expected.
                  */
                 startDate: string;
                 /**
-                 * When the edition ends, when known.
+                 * When the event ends, when known.
                  */
                 endDate: string | null;
             };
@@ -27102,6 +28236,10 @@ export type RecordDto = {
      */
     type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON' | 'REPEAT_WINNER' | 'MOST_RUNNER_UPS' | 'MOST_FOURTHS' | 'MOST_LAST_PLACES' | 'LONGEST_DROUGHT';
     /**
+     * True for a Hall of Lame record (MOST_RUNNER_UPS, MOST_FOURTHS, MOST_LAST_PLACES, LONGEST_DROUGHT), which screens list apart from the record book; decided by the API.
+     */
+    isHallOfLame: boolean;
+    /**
      * One value of a record and who holds it.
      */
     best: {
@@ -27195,6 +28333,10 @@ export type RecordListResponse = {
          * MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
          */
         type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON' | 'REPEAT_WINNER' | 'MOST_RUNNER_UPS' | 'MOST_FOURTHS' | 'MOST_LAST_PLACES' | 'LONGEST_DROUGHT';
+        /**
+         * True for a Hall of Lame record (MOST_RUNNER_UPS, MOST_FOURTHS, MOST_LAST_PLACES, LONGEST_DROUGHT), which screens list apart from the record book; decided by the API.
+         */
+        isHallOfLame: boolean;
         /**
          * One value of a record and who holds it.
          */
@@ -27307,14 +28449,17 @@ export type PerpetualTrophyPlateDto = {
  * A perpetual trophy: a contest of one event the league has run in two or more years.
  */
 export type PerpetualTrophyDto = {
-    eventSeriesId: string;
     /**
-     * The event series the contest is run on every year, such as "Masters Tournament".
+     * The trophy's id until perpetual trophies are kept by template (#2024): the first slot definition, in play order, of the slots its contests cover. Two trophies on the same slots differ by selectionType.
      */
-    seriesName: string;
+    trophyId: string;
+    /**
+     * What the trophy is run on, built by the API: its first slot's proper name, such as "Masters", else its newest run's event name. Screens add the way of picking.
+     */
+    name: string;
     sportLeagueName: string;
     /**
-     * How the contest is picked: a series run as two ways of picking is two trophies.
+     * How the contest is picked: the same slots run as two ways of picking is two trophies.
      */
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
     /**
@@ -27348,17 +28493,20 @@ export type PerpetualTrophyDto = {
  */
 export type PerpetualTrophyListResponse = {
     /**
-     * In sports league, series and selection type order.
+     * In sports league, name and selection type order.
      */
     trophies: Array<{
-        eventSeriesId: string;
         /**
-         * The event series the contest is run on every year, such as "Masters Tournament".
+         * The trophy's id until perpetual trophies are kept by template (#2024): the first slot definition, in play order, of the slots its contests cover. Two trophies on the same slots differ by selectionType.
          */
-        seriesName: string;
+        trophyId: string;
+        /**
+         * What the trophy is run on, built by the API: its first slot's proper name, such as "Masters", else its newest run's event name. Screens add the way of picking.
+         */
+        name: string;
         sportLeagueName: string;
         /**
-         * How the contest is picked: a series run as two ways of picking is two trophies.
+         * How the contest is picked: the same slots run as two ways of picking is two trophies.
          */
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
         /**
@@ -27393,10 +28541,6 @@ export type PerpetualTrophyListResponse = {
  */
 export type EventSyncRequest = {
     /**
-     * The provider the event is linked to (its SportEvent.providerId). The sync reads that provider only.
-     */
-    providerId: string;
-    /**
      * Feed types to run for a specific event sync request.
      */
     feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
@@ -27421,7 +28565,7 @@ export type ProviderLeagueDto = {
     /**
      * The sport the league plays.
      */
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Which of the provider's webhook events the league sends for its games.
      */
@@ -27489,10 +28633,6 @@ export type ProviderSettingsDto = {
      */
     isEnabled: boolean;
     /**
-     * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-     */
-    priority: number;
-    /**
      * The provider's own leagues, by code.
      */
     leagues: Array<{
@@ -27511,7 +28651,7 @@ export type ProviderSettingsDto = {
         /**
          * The sport the league plays.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Which of the provider's webhook events the league sends for its games.
          */
@@ -27555,14 +28695,6 @@ export type ProviderSummaryDto = {
      * When one of the provider's events last changed; null when none is known.
      */
     lastEventAt: string | null;
-    /**
-     * Sports the provider's running adapter covers.
-     */
-    sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-    /**
-     * The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.
-     */
-    primaryForSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
      * The provider's events that are scheduled or in progress.
      */
@@ -27632,10 +28764,6 @@ export type ProviderSummaryDto = {
          */
         isEnabled: boolean;
         /**
-         * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-         */
-        priority: number;
-        /**
          * The provider's own leagues, by code.
          */
         leagues: Array<{
@@ -27654,7 +28782,7 @@ export type ProviderSummaryDto = {
             /**
              * The sport the league plays.
              */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
              * Which of the provider's webhook events the league sends for its games.
              */
@@ -27692,10 +28820,6 @@ export type UpdateProviderRequest = {
     webhookRoundPollMinutes?: number;
     hasPlayerStats?: boolean;
     isEnabled?: boolean;
-    /**
-     * 409 PROVIDER_PRIORITY_TAKEN when another provider has it.
-     */
-    priority?: number;
 };
 
 /**
@@ -27751,10 +28875,6 @@ export type ProviderSettingsResponse = {
          */
         isEnabled: boolean;
         /**
-         * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-         */
-        priority: number;
-        /**
          * The provider's own leagues, by code.
          */
         leagues: Array<{
@@ -27773,7 +28893,7 @@ export type ProviderSettingsResponse = {
             /**
              * The sport the league plays.
              */
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
              * Which of the provider's webhook events the league sends for its games.
              */
@@ -27826,7 +28946,7 @@ export type ProviderLeagueResponse = {
         /**
          * The sport the league plays.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Which of the provider's webhook events the league sends for its games.
          */
@@ -27877,19 +28997,6 @@ export type ProviderSettingRangesDto = {
         max: number;
     };
     /**
-     * A provider's priority.
-     */
-    priority: {
-        /**
-         * The smallest value the API takes.
-         */
-        min: number;
-        /**
-         * The largest value the API takes.
-         */
-        max: number;
-    };
-    /**
      * A provider league's quietAfterMinutes and typicalGameMinutes.
      */
     leagueMinutes: {
@@ -27929,14 +29036,6 @@ export type ProviderListResponse = {
          * When one of the provider's events last changed; null when none is known.
          */
         lastEventAt: string | null;
-        /**
-         * Sports the provider's running adapter covers.
-         */
-        sportsCovered: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
-        /**
-         * The covered sports this provider is the default for: catalog browse and new event links start with it. Other providers covering the sport serve only the events linked to them.
-         */
-        primaryForSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * The provider's events that are scheduled or in progress.
          */
@@ -28006,10 +29105,6 @@ export type ProviderListResponse = {
              */
             isEnabled: boolean;
             /**
-             * Which provider serves a sport first when more than one covers it: lower first. One provider per priority. A change takes effect when the server tasks next start.
-             */
-            priority: number;
-            /**
              * The provider's own leagues, by code.
              */
             leagues: Array<{
@@ -28028,7 +29123,7 @@ export type ProviderListResponse = {
                 /**
                  * The sport the league plays.
                  */
-                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+                sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
                 /**
                  * Which of the provider's webhook events the league sends for its games.
                  */
@@ -28079,19 +29174,6 @@ export type ProviderListResponse = {
             max: number;
         };
         /**
-         * A provider's priority.
-         */
-        priority: {
-            /**
-             * The smallest value the API takes.
-             */
-            min: number;
-            /**
-             * The largest value the API takes.
-             */
-            max: number;
-        };
-        /**
          * A provider league's quietAfterMinutes and typicalGameMinutes.
          */
         leagueMinutes: {
@@ -28120,7 +29202,10 @@ export type ProviderSyncRunDto = {
      * That Provider's name.
      */
     providerName: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * The run's sport, its sport league's; null for a run with no sport league.
+     */
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
@@ -28191,7 +29276,10 @@ export type ProviderSyncRunDetailDto = {
      * That Provider's name.
      */
     providerName: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * The run's sport, its sport league's; null for a run with no sport league.
+     */
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
      */
@@ -28285,7 +29373,7 @@ export type ProviderSyncRunDetailDto = {
              * Provider that executed the ingestion job.
              */
             providerId: string;
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
             /**
              * External event id for event-scoped jobs, when applicable.
              */
@@ -28412,7 +29500,10 @@ export type ProviderSyncRunListQuery = {
      * Only the runs of this Provider.
      */
     providerId?: string;
-    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
+     */
+    sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
     /**
      * Earliest submission time to include. Defaults to 6 hours before `to`.
@@ -28438,7 +29529,10 @@ export type ProviderSyncRunListResponse = {
          * That Provider's name.
          */
         providerName: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The run's sport, its sport league's; null for a run with no sport league.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
@@ -28501,7 +29595,7 @@ export type ProviderSyncRunListResponse = {
  * A manual sync submission. The runs execute asynchronously after the request is accepted.
  */
 export type ProviderManualSyncSubmissionResponse = {
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
      * Provider event identifier the submitted runs sync.
      */
@@ -28521,7 +29615,10 @@ export type ProviderManualSyncSubmissionResponse = {
          * That Provider's name.
          */
         providerName: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * The run's sport, its sport league's; null for a run with no sport league.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours.
          */
@@ -28591,94 +29688,6 @@ export type LeagueEventsSyncRequest = {
 };
 
 /**
- * An event as a provider's live catalog reports it — not a persisted SportEvent. Creating a tournament from it, or linking one as its score source, is what persists it.
- */
-export type ProviderEventDto = {
-    /**
-     * The provider's identifier for the event.
-     */
-    externalId: string;
-    providerId: string;
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    name: string;
-    venue: string | null;
-    location: string | null;
-    /**
-     * ISO 8601 datetime string.
-     */
-    startDate: string;
-    /**
-     * ISO 8601 datetime string.
-     */
-    endDate: string | null;
-    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-    rounds: number | null;
-    /**
-     * Field size the provider reports, when it reports one.
-     */
-    participantCount: number | null;
-    /**
-     * Whether the provider has locked the field.
-     */
-    fieldLocked: boolean;
-};
-
-/**
- * Filters over a provider's live catalog.
- */
-export type ProviderCatalogEventListQuery = {
-    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-    /**
-     * Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter.
-     */
-    sportLeagueId?: string;
-    /**
-     * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
-     */
-    from?: string;
-    /**
-     * Only events starting at or before this.
-     */
-    to?: string;
-    search?: string;
-};
-
-/**
- * Live provider catalog browse results — serves both tournament-creation browse and score-source linking.
- */
-export type ProviderCatalogEventListResponse = {
-    events: Array<{
-        /**
-         * The provider's identifier for the event.
-         */
-        externalId: string;
-        providerId: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        name: string;
-        venue: string | null;
-        location: string | null;
-        /**
-         * ISO 8601 datetime string.
-         */
-        startDate: string;
-        /**
-         * ISO 8601 datetime string.
-         */
-        endDate: string | null;
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
-        rounds: number | null;
-        /**
-         * Field size the provider reports, when it reports one.
-         */
-        participantCount: number | null;
-        /**
-         * Whether the provider has locked the field.
-         */
-        fieldLocked: boolean;
-    }>;
-};
-
-/**
  * One background job on the Activity grid.
  */
 export type ActivityJobDto = {
@@ -28686,7 +29695,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS';
+    type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -28815,7 +29824,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -28921,7 +29930,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'ADD_RELEASED_EDITION_TO_CONTEST' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS';
+        type: 'MANUAL_EVENT_SYNC' | 'PROVIDER_EVENT_SYNC' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -29021,9 +30030,9 @@ export type ActivityJobResponse = {
 export type ProviderSyncFindingDto = {
     id: string;
     /**
-     * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+     * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -29038,7 +30047,7 @@ export type ProviderSyncFindingDto = {
     sportLeague: {
         id: string;
         name: string;
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     };
     /**
      * The event it is about; null when its kind names none.
@@ -29055,7 +30064,7 @@ export type ProviderSyncFindingDto = {
         name: string;
     } | null;
     /**
-     * What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.
+     * What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.
      */
     providerValue: string | null;
     /**
@@ -29093,9 +30102,78 @@ export type ProviderSyncFindingDto = {
         displayName: string;
     } | null;
     /**
-     * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
+     * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
      */
-    actions: Array<'MAP_PARTICIPANT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+    actions: Array<'MAP_PARTICIPANT' | 'LINK_SLOT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+};
+
+/**
+ * A slot definition a SLOT_NAME_UNMATCHED finding's tournament can be linked to.
+ */
+export type ProviderSyncFindingSlotChoiceDto = {
+    /**
+     * The slot definition (SportLeagueSlotDefinitionDto.id).
+     */
+    slotDefinitionId: string;
+    /**
+     * Its key in the sport league, such as MASTERS.
+     */
+    key: string;
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * The week's number in its phase; set only on a WEEK slot.
+     */
+    weekNumber: number | null;
+    /**
+     * The league's own name for it (Masters Tournament); null when screens show the word for its kind.
+     */
+    name: string | null;
+    /**
+     * The normalized names that already place a tournament on it, in order.
+     */
+    patterns: Array<string>;
+};
+
+/**
+ * The slots "link to existing" offers.
+ */
+export type ProviderSyncFindingSlotChoiceListResponse = {
+    /**
+     * Every slot definition the finding's sport league matches tournaments to by name through its mapping to the finding's Provider, by key. Never paged.
+     */
+    slots: Array<{
+        /**
+         * The slot definition (SportLeagueSlotDefinitionDto.id).
+         */
+        slotDefinitionId: string;
+        /**
+         * Its key in the sport league, such as MASTERS.
+         */
+        key: string;
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * The week's number in its phase; set only on a WEEK slot.
+         */
+        weekNumber: number | null;
+        /**
+         * The league's own name for it (Masters Tournament); null when screens show the word for its kind.
+         */
+        name: string | null;
+        /**
+         * The normalized names that already place a tournament on it, in order.
+         */
+        patterns: Array<string>;
+    }>;
+};
+
+/**
+ * Adds a SLOT_NAME_UNMATCHED finding's tournament name as a pattern of a slot definition, which resolves it.
+ */
+export type LinkProviderSyncFindingSlotRequest = {
+    /**
+     * One of the slot definitions listProviderSyncFindingSlotChoices offers.
+     */
+    slotDefinitionId: string;
 };
 
 /**
@@ -29105,9 +30183,9 @@ export type ProviderSyncFindingListResponse = {
     findings: Array<{
         id: string;
         /**
-         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -29122,7 +30200,7 @@ export type ProviderSyncFindingListResponse = {
         sportLeague: {
             id: string;
             name: string;
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         };
         /**
          * The event it is about; null when its kind names none.
@@ -29139,7 +30217,7 @@ export type ProviderSyncFindingListResponse = {
             name: string;
         } | null;
         /**
-         * What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.
+         * What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.
          */
         providerValue: string | null;
         /**
@@ -29177,9 +30255,9 @@ export type ProviderSyncFindingListResponse = {
             displayName: string;
         } | null;
         /**
-         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
+         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
          */
-        actions: Array<'MAP_PARTICIPANT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+        actions: Array<'MAP_PARTICIPANT' | 'LINK_SLOT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
     }>;
 };
 
@@ -29193,9 +30271,9 @@ export type ProviderSyncFindingResponse = {
     finding: {
         id: string;
         /**
-         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer.
+         * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_PHASE_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_PHASE_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -29210,7 +30288,7 @@ export type ProviderSyncFindingResponse = {
         sportLeague: {
             id: string;
             name: string;
-            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+            sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         };
         /**
          * The event it is about; null when its kind names none.
@@ -29227,7 +30305,7 @@ export type ProviderSyncFindingResponse = {
             name: string;
         } | null;
         /**
-         * What the feed sent that nothing maps, as the feed sent it (an UNMAPPED_PARTICIPANT's participant id); null when its kind has none.
+         * What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT's participant id as the feed sent it, or a SLOT_NAME_ finding's normalized tournament name; null when its kind has none.
          */
         providerValue: string | null;
         /**
@@ -29265,9 +30343,9 @@ export type ProviderSyncFindingResponse = {
             displayName: string;
         } | null;
         /**
-         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
+         * What a root admin can do with it now, in the order to offer them. An OPEN finding offers its kind's own fix first (MAP_PARTICIPANT, LINK_SLOT), then RESOLVE and WAIVE; a resolved or waived one offers REOPEN.
          */
-        actions: Array<'MAP_PARTICIPANT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
+        actions: Array<'MAP_PARTICIPANT' | 'LINK_SLOT' | 'RESOLVE' | 'WAIVE' | 'REOPEN'>;
     };
 };
 
@@ -30078,9 +31156,9 @@ export type RequestPasswordResetError = RequestPasswordResetErrors[keyof Request
 
 export type RequestPasswordResetResponses = {
     /**
-     * Minimal success response envelope.
+     * The answer to a password reset request, the same whether or not an account matched.
      */
-    202: SuccessResponse;
+    202: PasswordResetRequestedResponse;
 };
 
 export type RequestPasswordResetResponse = RequestPasswordResetResponses[keyof RequestPasswordResetResponses];
@@ -33916,17 +34994,13 @@ export type ListContestConfigTemplatesData = {
     path?: never;
     query?: {
         /**
-         * Only templates for this sport.
-         */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
          * Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
          */
         sportLeagueId?: string;
         /**
-         * Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event's kind for a sport played as matches.
+         * Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds).
          */
-        eventType?: 'KNOCKOUT' | 'WEEK';
+        slotDefinitionIds?: Array<string>;
         /**
          * Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.
          */
@@ -34003,13 +35077,13 @@ export type ListEventsData = {
         /**
          * Only events of this sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
          */
         status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
         /**
-         * Only events of this sport league's series.
+         * Only events of this sport league.
          */
         sportLeagueId?: string;
         /**
@@ -34187,6 +35261,10 @@ export type UpdateEventErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type UpdateEventError = UpdateEventErrors[keyof UpdateEventErrors];
@@ -34199,47 +35277,6 @@ export type UpdateEventResponses = {
 };
 
 export type UpdateEventResponse = UpdateEventResponses[keyof UpdateEventResponses];
-
-export type CreateEventFromProviderEventData = {
-    body: CreateSportEventFromProviderEventRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/events/from-provider-event';
-};
-
-export type CreateEventFromProviderEventErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type CreateEventFromProviderEventError = CreateEventFromProviderEventErrors[keyof CreateEventFromProviderEventErrors];
-
-export type CreateEventFromProviderEventResponses = {
-    /**
-     * One sport event.
-     */
-    201: SportEventResponse;
-};
-
-export type CreateEventFromProviderEventResponse = CreateEventFromProviderEventResponses[keyof CreateEventFromProviderEventResponses];
 
 export type ReleaseEventData = {
     body?: never;
@@ -34322,84 +35359,6 @@ export type TransitionEventResponses = {
 };
 
 export type TransitionEventResponse = TransitionEventResponses[keyof TransitionEventResponses];
-
-export type UnlinkEventScoreSourceData = {
-    body?: never;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/score-source';
-};
-
-export type UnlinkEventScoreSourceErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type UnlinkEventScoreSourceError = UnlinkEventScoreSourceErrors[keyof UnlinkEventScoreSourceErrors];
-
-export type UnlinkEventScoreSourceResponses = {
-    /**
-     * One sport event.
-     */
-    200: SportEventResponse;
-};
-
-export type UnlinkEventScoreSourceResponse = UnlinkEventScoreSourceResponses[keyof UnlinkEventScoreSourceResponses];
-
-export type LinkEventScoreSourceData = {
-    body: LinkSportEventScoreSourceRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/score-source';
-};
-
-export type LinkEventScoreSourceErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type LinkEventScoreSourceError = LinkEventScoreSourceErrors[keyof LinkEventScoreSourceErrors];
-
-export type LinkEventScoreSourceResponses = {
-    /**
-     * One sport event.
-     */
-    200: SportEventResponse;
-};
-
-export type LinkEventScoreSourceResponse = LinkEventScoreSourceResponses[keyof LinkEventScoreSourceResponses];
 
 export type ListEventRoundsData = {
     body?: never;
@@ -34641,6 +35600,10 @@ export type AddEventParticipantsErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type AddEventParticipantsError = AddEventParticipantsErrors[keyof AddEventParticipantsErrors];
@@ -35131,6 +36094,10 @@ export type ApplyEventGolfRoundScoresErrors = {
     /**
      * Standard API error envelope.
      */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
     422: ErrorEnvelope;
 };
 
@@ -35173,6 +36140,10 @@ export type UpdateEventParticipantGolfRoundScoreErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -35259,6 +36230,10 @@ export type ApplyEventRaceResultsErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */
@@ -35406,50 +36381,6 @@ export type UpdateEventBracketMatchResponses = {
 
 export type UpdateEventBracketMatchResponse = UpdateEventBracketMatchResponses[keyof UpdateEventBracketMatchResponses];
 
-export type ClearEventMatchResultData = {
-    body?: never;
-    path: {
-        eventId: string;
-        matchNumber: number;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/result';
-};
-
-export type ClearEventMatchResultErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ClearEventMatchResultError = ClearEventMatchResultErrors[keyof ClearEventMatchResultErrors];
-
-export type ClearEventMatchResultResponses = {
-    /**
-     * An event's bracket.
-     */
-    200: SportEventBracketResponse;
-};
-
-export type ClearEventMatchResultResponse = ClearEventMatchResultResponses[keyof ClearEventMatchResultResponses];
-
 export type RecordEventMatchResultData = {
     body: RecordSportEventRoundMatchResultRequest;
     path: {
@@ -35497,51 +36428,6 @@ export type RecordEventMatchResultResponses = {
 };
 
 export type RecordEventMatchResultResponse = RecordEventMatchResultResponses[keyof RecordEventMatchResultResponses];
-
-export type ClearEventMatchPeriodScoreData = {
-    body?: never;
-    path: {
-        eventId: string;
-        matchNumber: number;
-        periodNumber: number;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/periods/{periodNumber}';
-};
-
-export type ClearEventMatchPeriodScoreErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ClearEventMatchPeriodScoreError = ClearEventMatchPeriodScoreErrors[keyof ClearEventMatchPeriodScoreErrors];
-
-export type ClearEventMatchPeriodScoreResponses = {
-    /**
-     * An event's bracket.
-     */
-    200: SportEventBracketResponse;
-};
-
-export type ClearEventMatchPeriodScoreResponse = ClearEventMatchPeriodScoreResponses[keyof ClearEventMatchPeriodScoreResponses];
 
 export type RecordEventMatchPeriodScoreData = {
     body: RecordSportEventMatchPeriodScoreRequest;
@@ -35635,46 +36521,6 @@ export type CancelEventMatchResponses = {
 };
 
 export type CancelEventMatchResponse = CancelEventMatchResponses[keyof CancelEventMatchResponses];
-
-export type PostponeEventMatchData = {
-    body?: never;
-    path: {
-        eventId: string;
-        matchNumber: number;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/bracket/matches/{matchNumber}/postpone';
-};
-
-export type PostponeEventMatchErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-};
-
-export type PostponeEventMatchError = PostponeEventMatchErrors[keyof PostponeEventMatchErrors];
-
-export type PostponeEventMatchResponses = {
-    /**
-     * An event's bracket.
-     */
-    200: SportEventBracketResponse;
-};
-
-export type PostponeEventMatchResponse = PostponeEventMatchResponses[keyof PostponeEventMatchResponses];
 
 export type ProposeEventRoundMatchupsData = {
     body?: never;
@@ -35816,54 +36662,6 @@ export type SetEventPlayInWinnerResponses = {
 
 export type SetEventPlayInWinnerResponse = SetEventPlayInWinnerResponses[keyof SetEventPlayInWinnerResponses];
 
-export type ReplaceEventParticipantData = {
-    body: ReplaceWithdrawnParticipantRequest;
-    path: {
-        eventId: string;
-        sportEventParticipantId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/{sportEventParticipantId}/replacement';
-};
-
-export type ReplaceEventParticipantErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ReplaceEventParticipantError = ReplaceEventParticipantErrors[keyof ReplaceEventParticipantErrors];
-
-export type ReplaceEventParticipantResponses = {
-    /**
-     * One field row.
-     */
-    200: SportEventParticipantResponse;
-};
-
-export type ReplaceEventParticipantResponse = ReplaceEventParticipantResponses[keyof ReplaceEventParticipantResponses];
-
 export type ListSportsData = {
     body?: never;
     path?: never;
@@ -35887,7 +36685,7 @@ export type ListSportLeaguesData = {
         /**
          * Only sport leagues of this sport.
          */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
          * Only active, or only inactive, sport leagues.
          */
@@ -35913,47 +36711,6 @@ export type ListSportLeaguesResponses = {
 };
 
 export type ListSportLeaguesResponse = ListSportLeaguesResponses[keyof ListSportLeaguesResponses];
-
-export type CreateSportLeagueData = {
-    body: CreateSportLeagueRequest;
-    path?: never;
-    query?: never;
-    url: '/api/v1/sport-leagues/';
-};
-
-export type CreateSportLeagueErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type CreateSportLeagueError = CreateSportLeagueErrors[keyof CreateSportLeagueErrors];
-
-export type CreateSportLeagueResponses = {
-    /**
-     * One sport league.
-     */
-    201: SportLeagueResponse;
-};
-
-export type CreateSportLeagueResponse = CreateSportLeagueResponses[keyof CreateSportLeagueResponses];
 
 export type ListSportLeagueOverviewsData = {
     body?: never;
@@ -36084,6 +36841,97 @@ export type UpdateSportLeagueResponses = {
 };
 
 export type UpdateSportLeagueResponse = UpdateSportLeagueResponses[keyof UpdateSportLeagueResponses];
+
+export type CreateTestSlotData = {
+    body: CreateTestSlotRequest;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/test-slots';
+};
+
+export type CreateTestSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type CreateTestSlotError = CreateTestSlotErrors[keyof CreateTestSlotErrors];
+
+export type CreateTestSlotResponses = {
+    /**
+     * One Season slot.
+     */
+    201: SportLeagueSeasonSlotResponse;
+};
+
+export type CreateTestSlotResponse = CreateTestSlotResponses[keyof CreateTestSlotResponses];
+
+export type DeleteTestSlotData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/test-slots/{seasonSlotId}';
+};
+
+export type DeleteTestSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type DeleteTestSlotError = DeleteTestSlotErrors[keyof DeleteTestSlotErrors];
+
+export type DeleteTestSlotResponses = {
+    /**
+     * Default Response
+     */
+    204: void;
+};
+
+export type DeleteTestSlotResponse = DeleteTestSlotResponses[keyof DeleteTestSlotResponses];
 
 export type ListSportLeagueSyncsData = {
     body?: never;
@@ -36296,7 +37144,12 @@ export type ListSportLeagueParticipantsData = {
     path: {
         sportLeagueId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * True lists only the league's test participants, the ones a test event's field takes; false or omitted lists its roster, which holds no test participant.
+         */
+        testData?: boolean;
+    };
     url: '/api/v1/sport-leagues/{sportLeagueId}/participants';
 };
 
@@ -36844,9 +37697,9 @@ export type ListEventPagesData = {
         /**
          * Only this sport's pages. Omitted: every sport's.
          */
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+         * true: only the pages with a slot coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
          */
         upcoming?: boolean;
     };
@@ -36866,16 +37719,16 @@ export type GetEventPageData = {
     body?: never;
     path: {
         /**
-         * The page's sport.
+         * The page's sport, by the sport's stored URL segment, such as football: the first segment of the page's web address.
          */
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        sportUrlSegment: string;
         /**
-         * The page's stored URL name, such as championship-weekend.
+         * The page's stored URL segment within its sport, such as championship-weekend.
          */
-        pageSlug: string;
+        urlSegment: string;
     };
     query?: never;
-    url: '/api/v1/event-pages/{sport}/{pageSlug}';
+    url: '/api/v1/event-pages/{sportUrlSegment}/{urlSegment}';
 };
 
 export type GetEventPageErrors = {
@@ -36950,6 +37803,18 @@ export type CreateParticipantErrors = {
      * Standard API error envelope.
      */
     403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type CreateParticipantError = CreateParticipantErrors[keyof CreateParticipantErrors];
@@ -37143,6 +38008,10 @@ export type BindParticipantProviderMappingErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
 };
 
 export type BindParticipantProviderMappingError = BindParticipantProviderMappingErrors[keyof BindParticipantProviderMappingErrors];
@@ -37367,9 +38236,9 @@ export type GetIngestionScheduleError = GetIngestionScheduleErrors[keyof GetInge
 
 export type GetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
+     * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
      */
-    200: IngestionScheduleConfig;
+    200: IngestionSchedule;
 };
 
 export type GetIngestionScheduleResponse = GetIngestionScheduleResponses[keyof GetIngestionScheduleResponses];
@@ -37396,9 +38265,9 @@ export type UpdateIngestionScheduleError = UpdateIngestionScheduleErrors[keyof U
 
 export type UpdateIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
+     * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
      */
-    200: IngestionScheduleConfig;
+    200: IngestionSchedule;
 };
 
 export type UpdateIngestionScheduleResponse = UpdateIngestionScheduleResponses[keyof UpdateIngestionScheduleResponses];
@@ -37425,9 +38294,9 @@ export type ResetIngestionScheduleError = ResetIngestionScheduleErrors[keyof Res
 
 export type ResetIngestionScheduleResponses = {
     /**
-     * Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.
+     * The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.
      */
-    200: IngestionScheduleConfig;
+    200: IngestionSchedule;
 };
 
 export type ResetIngestionScheduleResponse = ResetIngestionScheduleResponses[keyof ResetIngestionScheduleResponses];
@@ -37717,7 +38586,10 @@ export type ListProviderSyncRunsData = {
          * Only the runs of this Provider.
          */
         providerId?: string;
-        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
+         */
+        sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         status?: 'SUBMITTED' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
         /**
          * Earliest submission time to include. Defaults to 6 hours before `to`.
@@ -37791,11 +38663,10 @@ export type GetProviderSyncRunResponse = GetProviderSyncRunResponses[keyof GetPr
 export type SubmitEventSyncData = {
     body: EventSyncRequest;
     path: {
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         eventId: string;
     };
     query?: never;
-    url: '/api/v1/ingestion/sports/{sport}/events/{eventId}/sync';
+    url: '/api/v1/ingestion/events/{eventId}/sync';
 };
 
 export type SubmitEventSyncErrors = {
@@ -37870,56 +38741,6 @@ export type SyncLeagueEventsResponses = {
 };
 
 export type SyncLeagueEventsResponse = SyncLeagueEventsResponses[keyof SyncLeagueEventsResponses];
-
-export type ListProviderCatalogEventsData = {
-    body?: never;
-    path: {
-        providerId: string;
-    };
-    query: {
-        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
-        /**
-         * Keeps the events of the provider league that sport league's selected provider mapping names. A league with no selected mapping contributes no filter.
-         */
-        sportLeagueId?: string;
-        /**
-         * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
-         */
-        from?: string;
-        /**
-         * Only events starting at or before this.
-         */
-        to?: string;
-        search?: string;
-    };
-    url: '/api/v1/ingestion/providers/{providerId}/catalog-events';
-};
-
-export type ListProviderCatalogEventsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type ListProviderCatalogEventsError = ListProviderCatalogEventsErrors[keyof ListProviderCatalogEventsErrors];
-
-export type ListProviderCatalogEventsResponses = {
-    /**
-     * Live provider catalog browse results — serves both tournament-creation browse and score-source linking.
-     */
-    200: ProviderCatalogEventListResponse;
-};
-
-export type ListProviderCatalogEventsResponse = ListProviderCatalogEventsResponses[keyof ListProviderCatalogEventsResponses];
 
 export type ListProviderSyncFindingsData = {
     body?: never;
@@ -38103,6 +38924,102 @@ export type MapProviderSyncFindingParticipantResponses = {
 };
 
 export type MapProviderSyncFindingParticipantResponse = MapProviderSyncFindingParticipantResponses[keyof MapProviderSyncFindingParticipantResponses];
+
+export type ListProviderSyncFindingSlotChoicesData = {
+    body?: never;
+    path: {
+        /**
+         * The finding (ProviderSyncFindingDto.id).
+         */
+        findingId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/sync-findings/{findingId}/slot-choices';
+};
+
+export type ListProviderSyncFindingSlotChoicesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ListProviderSyncFindingSlotChoicesError = ListProviderSyncFindingSlotChoicesErrors[keyof ListProviderSyncFindingSlotChoicesErrors];
+
+export type ListProviderSyncFindingSlotChoicesResponses = {
+    /**
+     * The slots "link to existing" offers.
+     */
+    200: ProviderSyncFindingSlotChoiceListResponse;
+};
+
+export type ListProviderSyncFindingSlotChoicesResponse = ListProviderSyncFindingSlotChoicesResponses[keyof ListProviderSyncFindingSlotChoicesResponses];
+
+export type LinkProviderSyncFindingSlotData = {
+    body: LinkProviderSyncFindingSlotRequest;
+    path: {
+        /**
+         * The finding (ProviderSyncFindingDto.id).
+         */
+        findingId: string;
+    };
+    query?: never;
+    url: '/api/v1/ingestion/sync-findings/{findingId}/slot-link';
+};
+
+export type LinkProviderSyncFindingSlotErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type LinkProviderSyncFindingSlotError = LinkProviderSyncFindingSlotErrors[keyof LinkProviderSyncFindingSlotErrors];
+
+export type LinkProviderSyncFindingSlotResponses = {
+    /**
+     * One sync finding.
+     */
+    200: ProviderSyncFindingResponse;
+};
+
+export type LinkProviderSyncFindingSlotResponse = LinkProviderSyncFindingSlotResponses[keyof LinkProviderSyncFindingSlotResponses];
 
 export type ListActivityData = {
     body?: never;

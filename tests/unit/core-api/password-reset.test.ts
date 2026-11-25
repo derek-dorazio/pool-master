@@ -20,7 +20,7 @@ import {
   EmailService,
   renderSystemEmailTemplate,
 } from '../../../packages/core-api/src/modules/email';
-import type { EmailConfig } from '../../../packages/shared/dto';
+import { PASSWORD_RESET_LINK_MINUTES, type EmailConfig } from '../../../packages/shared/dto';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
@@ -120,6 +120,29 @@ describe('SlidingWindowRateLimiter', () => {
     now += 60_000;
 
     expect(limiter.hit('a').allowed).toBe(true);
+  });
+});
+
+describe('SlidingWindowRateLimiter defaults and idle keys', () => {
+  it('counts against a one-minute window on the real clock when given only a limit', () => {
+    const limiter = new SlidingWindowRateLimiter(1);
+
+    expect(limiter.hit('a').allowed).toBe(true);
+    expect(limiter.hit('a').allowed).toBe(false);
+  });
+
+  it('forgets keys with no hit inside the window once a thousand are held, keeping the ones still in it', () => {
+    let now = 0;
+    const limiter = new SlidingWindowRateLimiter(1, 60_000, () => now);
+    for (let key = 0; key < 999; key += 1) limiter.hit(`idle-${String(key)}`);
+    now = 30_000;
+    limiter.hit('recent');
+    now = 61_000;
+
+    limiter.hit('fresh');
+
+    const held = (limiter as unknown as { windows: Map<string, number[]> }).windows;
+    expect([...held.keys()].sort()).toEqual(['fresh', 'recent']);
   });
 });
 
@@ -304,7 +327,7 @@ describe('password reset request handler', () => {
     await handlers.requestPasswordReset(createRequest() as never, reply);
 
     expect(reply.status).toHaveBeenCalledWith(202);
-    expect(reply.send).toHaveBeenCalledWith({ success: true });
+    expect(reply.send).toHaveBeenCalledWith({ success: true, linkValidMinutes: PASSWORD_RESET_LINK_MINUTES });
     expect(order).toEqual(['reply', 'lookup']);
   });
 });

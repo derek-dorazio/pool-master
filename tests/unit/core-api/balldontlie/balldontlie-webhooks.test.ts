@@ -2,20 +2,9 @@ import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieWebhookNotificationSchema } from '@poolmaster/shared/dto';
 import {
   balldontlieQuietAfterMs,
-  balldontlieWebhookEventTypes,
   checkBalldontlieSignature,
   readBalldontlieNotification,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-webhooks';
-import { parseEplScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/epl-mapping';
-import { parseWorldCupScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/fifa-world-cup-mapping';
-import { parseNcaaTournamentScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-mapping';
-import { parseNflScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-mapping';
-import { parseCfpScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-mapping';
-import { NBA_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nba-mapping';
-import { NHL_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
-import { MLB_POSTSEASON } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/mlb-mapping';
-import { WNBA_PLAYOFFS } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/wnba-mapping';
-import { parsePlayoffsScope } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import {
   BALLDONTLIE_WEBHOOK_PAYLOADS as PAYLOADS,
   TEST_BALLDONTLIE_WEBHOOK_SECRET as SECRET,
@@ -23,40 +12,33 @@ import {
 } from '../../../support/balldontlie-webhooks';
 import { BALLDONTLIE_TEST_LEAGUES as LEAGUES } from '../../../support/balldontlie-provider-rows';
 
-const EVENT_TYPES = balldontlieWebhookEventTypes(LEAGUES);
-/** The event id prefix a league's game notifications are routed by. */
-const prefixOf = (code: string): string => {
-  const notification = readBalldontlieNotification({ event_type: `${code}.game.ended`, game: { id: 1 } }, LEAGUES);
-  return notification?.subject === 'GAME' ? notification.eventIdPrefix : '';
-};
-
 const read = (body: object) => readBalldontlieNotification(BalldontlieWebhookNotificationSchema.parse(body), LEAGUES);
 
 describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   it('reads a subscribed NFL game event as that game\'s notification, for the NFL\'s scopes', () => {
     expect(read(PAYLOADS.nflGameEnded)).toEqual({
       providerId: 'balldontlie',
-      sport: Sport.AMERICAN_FOOTBALL,
+      sport: Sport.FOOTBALL,
       notificationType: 'nfl.game.ended',
       phase: 'END',
       subject: 'GAME',
       gameId: '424095',
-      eventIdPrefix: 'nfl-',
+      providerLeagueCode: 'nfl',
     });
     expect(read(PAYLOADS.nflGameStarted)).toMatchObject({ subject: 'GAME', gameId: '424095' });
     expect(read(PAYLOADS.nflGamePeriodEnded)).toMatchObject({ subject: 'GAME', gameId: '424095' });
   });
 
   it('reads a college football game event as a notification for the College Football Playoff\'s scope, not the NFL\'s', () => {
-    expect(read(PAYLOADS.ncaafGameEnded)).toMatchObject({ sport: Sport.AMERICAN_FOOTBALL, eventIdPrefix: 'ncaaf-', gameId: '5041', phase: 'END' });
+    expect(read(PAYLOADS.ncaafGameEnded)).toMatchObject({ sport: Sport.FOOTBALL, providerLeagueCode: 'ncaaf', gameId: '5041', phase: 'END' });
   });
 
   it('reads the NBA\'s, each NCAA tournament\'s, the Premier League\'s and the World Cup\'s game events with their own league\'s event prefix', () => {
-    expect(read(PAYLOADS.nbaGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, eventIdPrefix: 'nba-', gameId: '21707974', phase: 'END' });
-    expect(read(PAYLOADS.ncaabGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, eventIdPrefix: 'ncaab-', gameId: '2798627' });
-    expect(read(PAYLOADS.ncaawGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, eventIdPrefix: 'ncaaw-', gameId: '6100' });
-    expect(read(PAYLOADS.eplGameHalftime)).toMatchObject({ sport: Sport.SOCCER, eventIdPrefix: 'epl-', gameId: '1922' });
-    expect(read(PAYLOADS.worldCupGameEnded)).toMatchObject({ sport: Sport.SOCCER, eventIdPrefix: 'fifa-wc-', gameId: '999' });
+    expect(read(PAYLOADS.nbaGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, providerLeagueCode: 'nba', gameId: '21707974', phase: 'END' });
+    expect(read(PAYLOADS.ncaabGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, providerLeagueCode: 'ncaab', gameId: '2798627' });
+    expect(read(PAYLOADS.ncaawGameEnded)).toMatchObject({ sport: Sport.BASKETBALL, providerLeagueCode: 'ncaaw', gameId: '6100' });
+    expect(read(PAYLOADS.eplGameHalftime)).toMatchObject({ sport: Sport.SOCCER, providerLeagueCode: 'epl', gameId: '1922' });
+    expect(read(PAYLOADS.worldCupGameEnded)).toMatchObject({ sport: Sport.SOCCER, providerLeagueCode: 'worldcup', gameId: '999' });
   });
 
   it('reads golf\'s tournament and round events as the tournament\'s own event, named by its tournament id', () => {
@@ -97,62 +79,30 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
     expect(read({ event_type: 'nfl.game.ended' })).toBeNull();
     expect(read({ event_type: 'pga.tournament.started' })).toBeNull();
   });
-
-  it('subscribes to the coarse game events of every league with a reader and golf\'s four tournament events, never a hole', () => {
-    expect(EVENT_TYPES).toEqual(expect.arrayContaining([
-      'nfl.game.started', 'nfl.game.period_ended', 'nfl.game.ended',
-      'ncaaf.game.started', 'ncaaf.game.period_ended', 'ncaaf.game.ended',
-      'ncaab.game.ended', 'ncaaw.game.ended',
-      'nhl.game.started', 'nhl.game.period_ended', 'nhl.game.ended',
-      'mlb.game.started', 'mlb.game.period_ended', 'mlb.game.ended',
-      'wnba.game.started', 'wnba.game.period_ended', 'wnba.game.ended',
-      'epl.game.started', 'epl.game.halftime', 'epl.game.ended',
-      'worldcup.game.ended',
-      'pga.tournament.started', 'pga.tournament.round_started', 'pga.player.round_completed', 'pga.tournament.ended',
-    ]));
-    expect(EVENT_TYPES).not.toContain('pga.player.hole_completed');
-    expect(EVENT_TYPES.every((type) => read({ event_type: type, game: { id: 1 }, tournament: { id: 1 } }) !== null))
-      .toBe(true);
-  });
-
-  it('names each league\'s events by the prefix its reader\'s event ids really start with', () => {
-    const [nfl, ncaaf, nba, ncaab, ncaaw, nhl, mlb, wnba, epl, worldcup] = ['nfl', 'ncaaf', 'nba', 'ncaab', 'ncaaw', 'nhl', 'mlb', 'wnba', 'epl', 'worldcup']
-      .map((code) => ({ eventIdPrefix: prefixOf(code) }));
-    expect(parsePlayoffsScope(NBA_PLAYOFFS, `${nba.eventIdPrefix}2025-postseason`)).toBe(2025);
-    expect(parseNflScope(`${nfl.eventIdPrefix}2026-week-11`)).not.toBeNull();
-    expect(parseCfpScope(`${ncaaf.eventIdPrefix}2025-cfp`)).toEqual({ season: 2025 });
-    expect(parseNcaaTournamentScope(`${ncaab.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaab');
-    expect(parseNcaaTournamentScope(`${ncaaw.eventIdPrefix}2025-tournament`)?.league.key).toBe('ncaaw');
-    expect(parsePlayoffsScope(NHL_PLAYOFFS, `${nhl.eventIdPrefix}2025-postseason`)).toBe(2025);
-    expect(parsePlayoffsScope(MLB_POSTSEASON, `${mlb.eventIdPrefix}2026-postseason`)).toBe(2026);
-    expect(parsePlayoffsScope(WNBA_PLAYOFFS, `${wnba.eventIdPrefix}2026-postseason`)).toBe(2026);
-    expect(parseEplScope(`${epl.eventIdPrefix}2026-matchweek-11`)).not.toBeNull();
-    expect(parseWorldCupScope(`${worldcup.eventIdPrefix}2026-knockout`)).not.toBeNull();
-  });
 });
 
 describe('how long a BALLDONTLIE event may stay in play with no notification (#1499)', () => {
-  const quietMinutes = (sport: Sport, externalId: string) => balldontlieQuietAfterMs(LEAGUES, sport, externalId) / 60_000;
+  const quietMinutes = (providerLeagueCode: string) => balldontlieQuietAfterMs(LEAGUES, providerLeagueCode) / 60_000;
 
   it('allows each league its longest normal gap between notifications, a period or half plus its break, never as short as one quarter', () => {
-    expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(90);
-    expect(quietMinutes(Sport.AMERICAN_FOOTBALL, 'ncaaf-2025-cfp')).toBe(110);
-    expect(quietMinutes(Sport.BASKETBALL, 'nba-2025-postseason')).toBe(75);
-    expect(quietMinutes(Sport.BASKETBALL, 'ncaab-2026-tournament')).toBe(90);
-    expect(quietMinutes(Sport.BASKETBALL, 'ncaaw-2026-tournament')).toBe(75);
-    expect(quietMinutes(Sport.HOCKEY, 'nhl-2025-postseason')).toBe(90);
-    expect(quietMinutes(Sport.BASEBALL, 'mlb-2026-postseason')).toBe(210);
-    expect(quietMinutes(Sport.BASKETBALL, 'wnba-2026-postseason')).toBe(75);
-    expect(quietMinutes(Sport.SOCCER, 'epl-2026-matchweek-12')).toBe(90);
-    expect(quietMinutes(Sport.SOCCER, 'fifa-wc-2026-knockout')).toBe(150);
+    expect(quietMinutes('nfl')).toBe(90);
+    expect(quietMinutes('ncaaf')).toBe(110);
+    expect(quietMinutes('nba')).toBe(75);
+    expect(quietMinutes('ncaab')).toBe(90);
+    expect(quietMinutes('ncaaw')).toBe(75);
+    expect(quietMinutes('nhl')).toBe(90);
+    expect(quietMinutes('mlb')).toBe(210);
+    expect(quietMinutes('wnba')).toBe(75);
+    expect(quietMinutes('epl')).toBe(90);
+    expect(quietMinutes('worldcup')).toBe(150);
   });
 
   it('allows a golf round six hours, since its first notification after the start is the first group finishing', () => {
-    expect(quietMinutes(Sport.GOLF, '1133')).toBe(360);
+    expect(quietMinutes('pga')).toBe(360);
   });
 
-  it('allows an event no league claims the longest gap of any, so it is never warned about early', () => {
-    expect(quietMinutes(Sport.SOCCER, 'mls-2026-cup')).toBe(360);
+  it('allows an event of a provider league with no row the longest gap of any, so it is never warned about early', () => {
+    expect(quietMinutes('mls')).toBe(360);
   });
 });
 
@@ -225,14 +175,9 @@ describe('BALLDONTLIE webhooks follow its league rows (#1997)', () => {
     expect(readBalldontlieNotification(body, withoutMlb)).toBeNull();
   });
 
-  it('subscribes only to the events of the enabled leagues, by each league\'s event set', () => {
-    expect(balldontlieWebhookEventTypes(withoutMlb)).not.toContain('mlb.game.ended');
-    expect(balldontlieWebhookEventTypes(LEAGUES.filter((league) => league.code === 'epl'))).toEqual(['epl.game.started', 'epl.game.halftime', 'epl.game.ended']);
-  });
-
   it('takes a league\'s quiet window from its row, so an edit on the Providers page changes it', () => {
     const longer = LEAGUES.map((league) => (league.code === 'nfl' ? { ...league, quietAfterMinutes: 120 } : league));
 
-    expect(balldontlieQuietAfterMs(longer, Sport.AMERICAN_FOOTBALL, 'nfl-2026-week-11')).toBe(120 * 60_000);
+    expect(balldontlieQuietAfterMs(longer, 'nfl')).toBe(120 * 60_000);
   });
 });

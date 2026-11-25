@@ -4,7 +4,6 @@
  * module's field refresh (plans/124 §4.4a), so there is one transform, not two.
  */
 import type {
-  ProviderEventDto,
   ProviderLeagueDto,
   ProviderSettingsDto,
   ProviderManualSyncSubmissionResponse,
@@ -17,14 +16,12 @@ import type {
 import {
   PROVIDER_LEAGUE_MINUTES_RANGE,
   PROVIDER_POLL_MINUTES_RANGE,
-  PROVIDER_PRIORITY_RANGE,
   PROVIDER_REQUESTS_PER_MINUTE_RANGE,
   type ProviderLeagueSettings,
   type ProviderSettings,
   type ProviderSyncRun,
   type ProviderSyncRunWithDetails,
 } from '@poolmaster/shared/domain';
-import type { SportEvent as ProviderEvent } from '../modules/ingestion/core/provider-interface';
 import type {
   ProviderManualSyncSubmissionResult,
   ProviderSummary,
@@ -37,7 +34,6 @@ export function toProviderListResponse(providers: readonly ProviderSummary[]): P
     settingRanges: {
       requestsPerMinute: { ...PROVIDER_REQUESTS_PER_MINUTE_RANGE },
       pollMinutes: { ...PROVIDER_POLL_MINUTES_RANGE },
-      priority: { ...PROVIDER_PRIORITY_RANGE },
       leagueMinutes: { ...PROVIDER_LEAGUE_MINUTES_RANGE },
     },
   };
@@ -50,8 +46,6 @@ export function toProviderSummaryDto(provider: ProviderSummary): ProviderSummary
     status: provider.status,
     errorRate: provider.errorRate,
     lastEventAt: provider.lastEventAt?.toISOString() ?? null,
-    sportsCovered: provider.sportsCovered,
-    primaryForSports: provider.primaryForSports,
     activeEventCount: provider.activeEventCount,
     requestsPerMinute: provider.requestsPerMinute,
     webhooksEnabled: provider.webhooksEnabled,
@@ -74,7 +68,6 @@ export function toProviderSettingsDto(provider: ProviderSettings, webhookSecretS
     webhookRoundPollMinutes: provider.webhookRoundPollMinutes,
     hasPlayerStats: provider.hasPlayerStats,
     isEnabled: provider.isEnabled,
-    priority: provider.priority,
     leagues: provider.leagues.map(toProviderLeagueDto),
   };
 }
@@ -133,19 +126,3 @@ export function toProviderManualSyncSubmissionResponse(
   };
 }
 
-export function toProviderEventDto(event: ProviderEvent): ProviderEventDto {
-  return {
-    externalId: event.externalId,
-    providerId: event.providerId,
-    sport: event.sport,
-    name: event.name,
-    venue: event.venue ?? null,
-    location: event.location ?? null,
-    startDate: event.startDate.toISOString(),
-    endDate: event.endDate?.toISOString() ?? null,
-    status: event.status,
-    rounds: event.rounds ?? null,
-    participantCount: event.participantCount ?? null,
-    fieldLocked: event.fieldLocked,
-  };
-}

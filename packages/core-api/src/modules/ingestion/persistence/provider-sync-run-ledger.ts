@@ -211,7 +211,7 @@ export class ProviderSyncRunLedger {
 function completedOutcome(job: IngestionJobRecord, syncRun: ProviderSyncRun): ProviderSyncRunUpdate {
   const failed = job.status === IngestionJobStatus.FAILED;
   const label = syncLabel(syncRun.kind);
-  const target = syncRun.sportEventId ?? job.eventExternalId ?? job.sport;
+  const target = syncRun.sportEventId ?? job.eventExternalId;
   return {
     status: failed ? ProviderSyncRunStatus.FAILED : ProviderSyncRunStatus.COMPLETED,
     summary: failed
@@ -264,10 +264,10 @@ function toSerializableJob(job: IngestionJobRecord): Record<string, unknown> {
     jobType: job.jobType,
     providerId: job.providerId,
     sport: job.sport,
-    ...(job.eventExternalId ? { eventExternalId: job.eventExternalId } : {}),
+    eventExternalId: job.eventExternalId,
     status: job.status,
-    ...(job.startedAt ? { startedAt: job.startedAt.toISOString() } : {}),
-    ...(job.completedAt ? { completedAt: job.completedAt.toISOString() } : {}),
+    startedAt: job.startedAt.toISOString(),
+    completedAt: job.completedAt.toISOString(),
     recordsProcessed: job.recordsProcessed,
     errors: job.errors,
     errorLog: job.errorLog.map((entry) => ({ error: entry.error, at: entry.at.toISOString() })),

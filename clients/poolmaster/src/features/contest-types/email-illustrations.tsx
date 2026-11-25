@@ -1,16 +1,17 @@
-import { SUPPORTED_SPORTS, SelectionType, emailFormatImagePath, sportHeaderImagePath } from '@poolmaster/shared/domain';
+import { SelectionType, emailFormatImagePath } from '@poolmaster/shared/domain';
 import { renderToStaticMarkup } from 'react-dom/server';
 import themeCss from '@/styles/globals.css?raw';
-import { FormatIllustration, SportIllustration } from './illustrations';
+import { FormatIllustration } from './illustrations';
 
 /**
  * The How to Play pictures as system email shows them (`rules/ux-rules.md` §14 *System Email*): email can't
  * show SVG, so `scripts/render-email-images.mjs` draws each one to the file email links to, and a
  * test fails when a picture changed and its file was not drawn again. Not part of the app's
- * bundle: only that script and its test load it.
+ * bundle: only that script and its test load it. A sport's header is its photo, committed under
+ * `public/email/sports/<the sport's URL segment>.jpg` with a source note (#2042): never drawn.
  */
 export interface EmailIllustration {
-  /** Where it is served, from `sportHeaderImagePath` or `emailFormatImagePath`. */
+  /** Where it is served, from `emailFormatImagePath`. */
   path: string;
   width: number;
   height: number;
@@ -28,8 +29,7 @@ function illustrationColours(): string {
 }
 
 /**
- * Every picture email can link to: each sport's scene at an event header's 1200 by 480, which
- * stands in until the sport has a photo, and each way to play's sheet at twice its size.
+ * Every drawn picture email can link to: each way to play's sheet at twice its size.
  */
 export function emailIllustrations(): EmailIllustration[] {
   const colours = illustrationColours();
@@ -40,7 +40,6 @@ export function emailIllustrations(): EmailIllustration[] {
     source: `<style>${colours}</style>${svg}`,
   });
   return [
-    ...SUPPORTED_SPORTS.map((sport) => draw(sportHeaderImagePath(sport), 1200, 480, renderToStaticMarkup(<SportIllustration decorative sport={sport} />))),
     ...Object.values(SelectionType).map((selectionType) => draw(emailFormatImagePath(selectionType), 320, 200, renderToStaticMarkup(<FormatIllustration selectionType={selectionType} />))),
   ];
 }

@@ -5,7 +5,7 @@
  * a CloudWatch metric filter counts and alarms on (`infrastructure/terraform/monitoring.tf`).
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncFindingRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncFindingRepository, SlotNamePatternChoice, SlotNamePatternChoices, SlotNamePatternRepository } from '@poolmaster/shared/db';
 import {
   PROVIDER_SYNC_FINDING_STATUS_ACTIONS,
   ProviderSyncFindingAction,
@@ -23,6 +23,7 @@ import {
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { ParticipantService } from '../../participants/service';
 import { providerByCode } from '../provider-settings-store';
+import type { ResolveMappedParticipantFindingsJobPayload } from './mapped-participant-findings-job';
 
 export class ProviderSyncFindingError extends Error {
   constructor(message: string, readonly code: ApiErrorCode, readonly statusCode: number) {
@@ -44,6 +45,8 @@ export interface ProviderSyncFindingServiceDeps {
   providers: { all(): readonly ProviderSettings[] };
   /** Mapping a participant from a finding goes through the participants' own bind. */
   participants: Pick<ParticipantService, 'findById' | 'bindProviderMapping'>;
+  /** "Link to existing" reads and adds a league's NAME_PATTERN mappings (#2011). */
+  slotNamePatterns: SlotNamePatternRepository;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -71,6 +74,24 @@ export class ProviderSyncFindingService {
       { action: 'ingestion.syncFinding.raised', raised: raises.length, opened: opened.length },
       'Raised sync findings',
     );
+  }
+
+  /**
+   * Findings a sync raises knowing its provider by its source id (the feed's `providerId`, as a
+   * league's selected provider mapping carries it): each is raised against that Provider's row. A
+   * feed with no Provider row (the QA mock feed, until #2039) raises none, and says so.
+   */
+  async raiseOfSource(providerSourceId: string, raises: ReadonlyArray<Omit<ProviderSyncFindingRaise, 'providerId'>>): Promise<void> {
+    if (raises.length === 0) return;
+    const provider = this.providerOfSourceId(providerSourceId);
+    if (provider === undefined) {
+      this.deps.logger?.warn(
+        { action: 'ingestion.syncFinding.withoutProvider', providerId: providerSourceId, kinds: [...new Set(raises.map((raise) => raise.kind))], count: raises.length },
+        'A sync found something to raise, but its feed has no Provider row to raise it for',
+      );
+      return;
+    }
+    await this.raise(raises.map((raise) => ({ ...raise, providerId: provider.id })));
   }
 
   /**
@@ -148,8 +169,10 @@ export class ProviderSyncFindingService {
 
   /**
    * A Provider whose webhooks are switched on while its signing secret is not set: an ERROR on
-   * each league it syncs. Once its secret is set, or its webhooks are off, its findings resolve.
-   * Checked when a worker task starts, since the secret is read from its environment.
+   * each league it syncs. Once its secret is set, or its webhooks are off, its findings resolve;
+   * while it is still missing, a league the Provider no longer syncs has its finding resolved
+   * (#2070). Checked when a worker task starts, since the secret is read from its environment.
+   * One statement per Provider, whatever the number of leagues.
    */
   async checkWebhookSecrets(input: {
     syncedLeagues: readonly Pick<SportLeague, 'id' | 'selectedProviderMapping'>[];
@@ -163,6 +186,9 @@ export class ProviderSyncFindingService {
         await this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, providerId: provider.id }, now);
         continue;
       }
+      const syncedIds = input.syncedLeagues.filter((league) => league.selectedProviderMapping?.providerCode === provider.code).map((league) => league.id);
+      // poolmaster-allow-query-in-loop: once per Provider row, a handful
+      await this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.WEBHOOK_SECRET_MISSING, providerId: provider.id, exceptSportLeagueIds: syncedIds }, now);
       for (const league of input.syncedLeagues) {
         if (league.selectedProviderMapping?.providerCode !== provider.code) continue;
         raises.push({
@@ -218,9 +244,43 @@ export class ProviderSyncFindingService {
     );
   }
 
+  /**
+   * A league's sync against a Provider (named by its source id) succeeded: that league's OPEN
+   * findings of the kind resolve, only those with one of `providerValues` when given, in one
+   * statement. Returns how many did.
+   */
+  async resolveOfSource(providerSourceId: string, input: { kind: ProviderSyncFindingKind; sportLeagueId: string; providerValues?: readonly string[] }): Promise<number> {
+    const provider = this.providerOfSourceId(providerSourceId);
+    if (provider === undefined) return 0;
+    return this.deps.repository.resolveOpen({
+      kind: input.kind,
+      sportLeagueId: input.sportLeagueId,
+      providerId: provider.id,
+      ...(input.providerValues !== undefined && { providerValues: input.providerValues }),
+    }, this.now());
+  }
+
   /** The Provider answered again: its rate-limit findings resolve. Returns how many did. */
   async resolveProviderRateLimited(providerId: string): Promise<number> {
     return this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, providerId }, this.now());
+  }
+
+  /**
+   * Feed ids were mapped to participants (#2069), by any path: their OPEN unmapped participant
+   * findings in the league resolve, in one statement. Returns how many did.
+   */
+  async resolveMappedParticipants(payload: ResolveMappedParticipantFindingsJobPayload): Promise<number> {
+    const resolved = await this.deps.repository.resolveOpen({
+      kind: ProviderSyncFindingKind.UNMAPPED_PARTICIPANT,
+      sportLeagueId: payload.sportLeagueId,
+      providerId: payload.providerId,
+      providerValues: payload.externalIds,
+    }, this.now());
+    this.deps.logger?.info(
+      { action: 'ingestion.syncFinding.mappedParticipantsResolved', sportLeagueId: payload.sportLeagueId, providerId: payload.providerId, mapped: payload.externalIds.length, resolved },
+      'Resolved the unmapped participant findings of newly mapped feed ids',
+    );
+    return resolved;
   }
 
   /** Every finding kept, most recently seen first. Nothing pages it: resolved ones are cleared after 90 days. */
@@ -293,6 +353,62 @@ export class ProviderSyncFindingService {
     return saved;
   }
 
+  /**
+   * The slot definitions an OPEN SLOT_NAME_UNMATCHED finding's tournament can be linked to (#2011):
+   * those its league matches tournaments to by name through its mapping to the finding's Provider,
+   * each with the names that already place tournaments on it. 404 SYNC_FINDING_NOT_FOUND; 409
+   * SYNC_FINDING_ACTION_NOT_OFFERED.
+   */
+  async slotLinkChoices(findingId: string): Promise<SlotNamePatternChoice[]> {
+    const finding = await this.get(findingId);
+    this.assertOffered(finding, ProviderSyncFindingAction.LINK_SLOT);
+    return (await this.patternChoicesOf(finding))?.slots ?? [];
+  }
+
+  /**
+   * "Link to existing" on an OPEN SLOT_NAME_UNMATCHED finding (#2011): adds the tournament's
+   * normalized name as a NAME_PATTERN mapping of the chosen slot definition and resolves the
+   * finding, so the next events sync links the tournament there. 404 SYNC_FINDING_NOT_FOUND or
+   * SLOT_DEFINITION_NOT_FOUND (not one of the definitions offered); 409
+   * SYNC_FINDING_ACTION_NOT_OFFERED, or SLOT_NAME_PATTERN_TAKEN when the name already places a
+   * tournament.
+   */
+  async linkSlot(findingId: string, input: { slotDefinitionId: string; userId: string }): Promise<ProviderSyncFinding> {
+    const finding = await this.get(findingId);
+    this.assertOffered(finding, ProviderSyncFindingAction.LINK_SLOT);
+    const choices = await this.patternChoicesOf(finding);
+    if (choices === null || !choices.slots.some((slot) => slot.slotDefinitionId === input.slotDefinitionId)) {
+      throw new ProviderSyncFindingError(`Slot ${input.slotDefinitionId} is not one ${finding.sportLeague.name} matches tournaments to by name.`, 'SLOT_DEFINITION_NOT_FOUND', 404);
+    }
+    const pattern = this.mappingSourceOf(finding).externalId;
+    const added = await this.deps.slotNamePatterns.addPattern({
+      sportLeagueId: finding.sportLeague.id,
+      sportLeagueProviderMappingId: choices.sportLeagueProviderMappingId,
+      slotDefinitionId: input.slotDefinitionId,
+      pattern,
+    });
+    if (added === 'TAKEN') {
+      throw new ProviderSyncFindingError(`"${pattern}" already places a tournament on a slot of ${finding.sportLeague.name}.`, 'SLOT_NAME_PATTERN_TAKEN', 409);
+    }
+    const saved = await this.deps.repository.setStatus(findingId, {
+      status: ProviderSyncFindingStatus.RESOLVED,
+      waiveNote: null,
+      changedByUserId: input.userId,
+      changedAt: this.now(),
+    });
+    if (saved === null) throw notFound(findingId);
+    this.deps.logger?.info(
+      { action: 'ingestion.syncFinding.slotLinked', findingId, slotDefinitionId: input.slotDefinitionId, pattern, userId: input.userId },
+      'A root admin linked a sync finding\'s tournament name to a slot',
+    );
+    return saved;
+  }
+
+  /** The league's NAME_PATTERN definitions through its mapping to the finding's Provider; null without one. */
+  private async patternChoicesOf(finding: ProviderSyncFinding): Promise<SlotNamePatternChoices | null> {
+    return finding.provider === null ? null : this.deps.slotNamePatterns.findChoices(finding.sportLeague.id, finding.provider.id);
+  }
+
   private assertOffered(finding: ProviderSyncFinding, action: ProviderSyncFindingAction): void {
     if (!providerSyncFindingActions(finding).includes(action)) {
       throw new ProviderSyncFindingError(
@@ -303,7 +419,10 @@ export class ProviderSyncFindingService {
     }
   }
 
-  /** The Provider row a mapping names (#2040), and the value the feed sent. An UNMAPPED_PARTICIPANT finding always has both. */
+  /**
+   * The Provider row a mapping names (#2040), and the value the feed sent. An UNMAPPED_PARTICIPANT
+   * or SLOT_NAME_UNMATCHED finding always has both.
+   */
   private mappingSourceOf(finding: ProviderSyncFinding): { providerId: string; externalId: string } {
     if (finding.provider === null || finding.providerValue === null) {
       throw new Error(`Finding ${finding.id} names no Provider row or feed value to map from`);

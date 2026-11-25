@@ -49,7 +49,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
   const games = new InMemoryGamePicks(world);
   const squares = new InMemorySquares(world, T0, games);
   const league = world.addLeague();
-  const superBowl = world.addSportEvent({ name: 'Super Bowl', startDate: KICKOFF, sport: Sport.AMERICAN_FOOTBALL });
+  const superBowl = world.addSportEvent({ name: 'Super Bowl', startDate: KICKOFF, sport: Sport.FOOTBALL });
   const game = games.addGame(superBowl.id, 1, KICKOFF);
   const contest = world.addContest(league.id, {
     name: 'Office squares',
@@ -299,7 +299,7 @@ describe('SquaresService reading the board', () => {
 
   it('refuses a board whose game is not one of its contest\'s event, as a broken setup', async () => {
     const context = setup();
-    const otherEvent = context.world.addSportEvent({ name: 'Pro Bowl', startDate: KICKOFF, sport: Sport.AMERICAN_FOOTBALL });
+    const otherEvent = context.world.addSportEvent({ name: 'Pro Bowl', startDate: KICKOFF, sport: Sport.FOOTBALL });
     context.updateGame({ sportEventId: otherEvent.id });
     await expectRefused(context.service.getBoard(context.contest.id, context.actor('Alice')), 'SELECTION_CONFIG_INVALID', 400);
   });

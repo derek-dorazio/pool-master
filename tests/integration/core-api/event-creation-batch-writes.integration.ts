@@ -1,12 +1,16 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { recordStatements, statementCounts } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { testSlotId } from '../../support/test-slots';
+import { syncLeagueTo } from '../../support/league-sync';
+import { nameSlotDefinitionFor, syncSlotsFor } from '../../support/sync-slots';
 
 // Creating and importing events against real Postgres (#1253): each writes its events,
 // their series, rounds and default tiers in a fixed number of queries however many events, and
@@ -19,32 +23,49 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-const PROVIDER_ID = 'integration-test';
+/** The provider the tour is synced from, under whose ids its imported events are kept (#2004). */
+const PROVIDER_ID = 'balldontlie';
 const DAY = 24 * 60 * 60 * 1000;
 
-/** A golf tour of its own, with no events, whose current Season is 2087's: a new event goes in it (#2003). */
+/**
+ * A golf tour of its own synced from BALLDONTLIE's PGA TOUR, with no events, whose current Season
+ * is 2087's: a new event goes in it (#2003).
+ */
 async function golfTour() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
+  const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Batch Tour ${randomUUID().slice(0, 8)}` } });
   await withCurrentSeason(prisma, tour.id, 2087);
-  return tour;
+  const sportLeagueProviderMappingId = await syncLeagueTo(prisma, tour.id, 'pga');
+  return { ...tour, sportLeagueProviderMappingId };
+}
+
+/** A synced, template-listed slot in the Season for each provider event, mapped by the event's code (#2005). */
+async function slotsFor(tour: { id: string; sportLeagueProviderMappingId: string }, sportLeagueSeasonId: string, slate: ReadonlyArray<{ providerSlots: ReadonlyArray<{ code: string }> }>): Promise<string[]> {
+  const ids: string[] = [];
+  for (const play of slate.flatMap((event) => event.providerSlots)) {
+    ids.push(...await syncSlotsFor(getPrisma(), { sportLeagueId: tour.id, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, code: play.code, seasonIds: [sportLeagueSeasonId] }));
+  }
+  return ids;
 }
 
 /** `count` provider events a week apart in `year`, each played Thursday to Sunday. */
 function providerSlate(count: number, year: number) {
   return Array.from({ length: count }, (_, index) => {
     const startDate = new Date(Date.UTC(year, 3, 2 + index * 7, 12));
+    const endDate = new Date(startDate.getTime() + 3 * DAY);
+    const externalId = `slate-${randomUUID()}`;
     return {
-      externalId: `slate-${randomUUID()}`,
+      externalId,
       name: `Open ${index + 1}`,
       venue: `Course ${index + 1}`,
       startDate,
-      endDate: new Date(startDate.getTime() + 3 * DAY),
+      endDate,
+      providerSlots: [{ code: externalId, startsAt: startDate, endsAt: endDate }],
     };
   });
 }
@@ -56,25 +77,62 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     for (const [year, size] of [[2087, 2], [2088, 6]] as const) {
       const { sportEvents } = integrationSportEventServices();
       const sportLeagueSeasonId = await fixtureSeasonId(getPrisma(), tour.id, year);
+      const slate = providerSlate(size, year);
+      await slotsFor(tour, sportLeagueSeasonId, slate);
       const { result: { created, skipped }, statements } = await recordStatements(() => sportEvents.importProviderSeason({
-        sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, providerEvents: providerSlate(size, year),
+        sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: slate,
       }));
       expect([created.length, skipped.length]).toEqual([size, 0]);
       counts.push(statementCounts(statements));
     }
 
-    expect(counts[1]).toEqual(counts[0]);
+    // One read of the Season's slots with their mappings and template coverage, the events and
+    // their slots in one insert each, and the slot links and dates in one transaction. Each slot
+    // whose games moved is one update with its own dates: every slot on a Season's first sync, then
+    // only those the provider reschedules.
+    const slotUpdates = (count: ReadonlyArray<readonly [string, number]>) => count.find(([statement]) => statement === 'UPDATE sport_league_season_phase_slots')?.[1];
+    expect([slotUpdates(counts[0]), slotUpdates(counts[1])]).toEqual([2, 6]);
+    const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_phase_slots');
+    expect(others(counts[1])).toEqual(others(counts[0]));
+  });
+
+  it('places any number of tournaments by name in the same number of queries: one read of the league\'s name patterns, one write of the new slots and links, one re-read of the slots (#2011)', async () => {
+    const tour = await golfTour();
+    const counts = [];
+    for (const [year, size] of [[2087, 2], [2088, 6]] as const) {
+      const { sportEvents } = integrationSportEventServices();
+      const sportLeagueSeasonId = await fixtureSeasonId(getPrisma(), tour.id, year);
+      // Each tournament's id names no slot: its name is the only key the feed gives.
+      const slate = providerSlate(size, year).map((event) => ({ ...event, name: `${event.name} ${randomUUID().slice(0, 8)} presented by Sponsor` }));
+      for (const event of slate) {
+        await nameSlotDefinitionFor(getPrisma(), {
+          sportLeagueId: tour.id, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, pattern: event.name.replace(/ presented by Sponsor$/u, '').toLowerCase(), seasonIds: [sportLeagueSeasonId],
+        });
+      }
+      const { result: { created, unplacedNames }, statements } = await recordStatements(() => sportEvents.importProviderSeason({
+        sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: slate,
+      }));
+      expect([created.length, unplacedNames.length]).toEqual([size, 0]);
+      expect(created.every((summary) => summary.slots.length === 1)).toBe(true);
+      counts.push(statementCounts(statements));
+    }
+
+    // Every new slot takes its tournament's dates, one update each; nothing else grows with the slate.
+    const others = (count: ReadonlyArray<readonly [string, number]>) => count.filter(([statement]) => statement !== 'UPDATE sport_league_season_phase_slots');
+    expect(others(counts[1])).toEqual(others(counts[0]));
   });
 
   it('creates each event linked to its provider with the rounds its dates imply and the default tiers, answering what a read gives', async () => {
     const tour = await golfTour();
     const slate = providerSlate(2, 2087);
     const { sportEvents } = integrationSportEventServices();
+    const sportLeagueSeasonId = await fixtureSeasonId(getPrisma(), tour.id, 2087);
+    await slotsFor(tour, sportLeagueSeasonId, slate);
 
-    const { created } = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: slate });
+    const { created } = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: slate });
 
-    expect(created.map(({ event }) => [event.name, event.externalId, event.providerId, event.syncScope, event.status, event.rounds])).toEqual(
-      slate.map((providerEvent) => [providerEvent.name, providerEvent.externalId, PROVIDER_ID, 'SCORES_ONLY', 'DRAFT', 4]),
+    expect(created.map(({ event }) => [event.name, event.providerMappings, event.status, event.rounds])).toEqual(
+      slate.map((providerEvent) => [providerEvent.name, [{ providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId: providerEvent.externalId }], 'DRAFT', 4]),
     );
     for (const summary of created) {
       expect(summary).toEqual(await sportEvents.requireAdminSummary(summary.event.id));
@@ -85,53 +143,60 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
     expect(first).toMatchObject({ tierCount: 6, loadedParticipantCount: 0, adminCounts: { emptyTierLabels: ['Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Tier 5', 'Tier 6'], contestCount: 0 } });
   });
 
-  it('skips an event already linked, a series that has an edition that Season, and a second event of one name, creating the rest', async () => {
+  it('skips an event already linked, and creates a provider event whose name a hand-made event of the Season shares: events are told apart by feed id, never by name', async () => {
     const tour = await golfTour();
-    const [linked, edition, fresh] = providerSlate(3, 2087);
+    const [linked, fresh] = providerSlate(2, 2087);
     const { sportEvents } = integrationSportEventServices();
-    await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: [expectDefined(linked)] });
-    await sportEvents.createEvent({ sportLeagueId: tour.id, name: expectDefined(edition).name, startDate: expectDefined(edition).startDate });
-    const sameName = { ...expectDefined(fresh), externalId: `slate-${randomUUID()}` };
+    const sportLeagueSeasonId = await fixtureSeasonId(getPrisma(), tour.id, 2087);
+    await slotsFor(tour, sportLeagueSeasonId, [expectDefined(linked), expectDefined(fresh)]);
+    await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: [expectDefined(linked)] });
+    await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, expectDefined(fresh).startDate), name: expectDefined(fresh).name });
 
-    const result = await sportEvents.importProviderSeason({
-      sportLeagueId: tour.id, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), tour.id, 2087), providerId: PROVIDER_ID, providerEvents: [expectDefined(linked), expectDefined(edition), expectDefined(fresh), sameName],
-    });
+    const result = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: [expectDefined(linked), expectDefined(fresh)] });
 
-    expect(result.created.map(({ event }) => event.externalId)).toEqual([expectDefined(fresh).externalId]);
-    expect(result.skipped).toEqual([
-      { externalId: expectDefined(linked).externalId, name: expectDefined(linked).name, reason: 'ALREADY_LINKED' },
-      { externalId: expectDefined(edition).externalId, name: expectDefined(edition).name, reason: 'EDITION_EXISTS' },
-      { externalId: sameName.externalId, name: sameName.name, reason: 'EDITION_EXISTS' },
-    ]);
+    expect(result.created.map(({ event }) => event.providerMappings.map((mapping) => mapping.externalId))).toEqual([[expectDefined(fresh).externalId]]);
+    expect(result.skipped).toEqual([{ externalId: expectDefined(linked).externalId, name: expectDefined(linked).name, reason: 'ALREADY_LINKED' }]);
   });
 });
 
 describe('Creating one event (#1253)', () => {
-  it('creates the event with its default rounds and tiers in one insert per table, answering the summary a read of it gives', async () => {
+  it('creates a test event on its test slot with its default rounds and tiers in one insert per table, answering the summary a read of it gives', async () => {
     const tour = await golfTour();
     const { sportEvents } = integrationSportEventServices();
 
+    const seasonSlotId = await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'));
+
     const { result: created, statements } = await recordStatements(
-      () => sportEvents.createEvent({ sportLeagueId: tour.id, name: 'The Batch Classic', startDate: new Date('2087-05-06T12:00:00.000Z') }),
+      () => sportEvents.createEvent({ seasonSlotId, name: 'The Batch Classic' }),
     );
 
     // One insert per table: the default rounds and tiers go in together, not one at a time; and
     // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844).
+    // The tour is synced: its selected mapping, provider league and provider are read with the
+    // league and again with the event read back, beside the event's own provider ids (#2004). The
+    // test slot is read once with its definition and any event on it, and linked in one insert. The
+    // event read back carries the slot definitions it covers (#2010), a second slot read #2089
+    // folds into the summary's. No series is found or created (#2010).
     expect(statementCounts(statements)).toEqual([
-      ['INSERT event_series', 1], ['INSERT sport_event_rounds', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
-      ['SELECT event_series', 2], ['SELECT platform_tier_profiles', 1], ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 1],
+      ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
+      ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
+      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 2], ['SELECT sport_events', 1], ['SELECT sport_league_phase_slots', 2],
+      ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_phase_slots', 2],
+      ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: created.event.id } })).toBe(4);
   });
 
-  it('refuses a second edition of a series in a Season with 409 EVENT_EDITION_ALREADY_EXISTS', async () => {
+  it('creates a second event of the same name in a Season: nothing refuses a name twice, as no event is identified by its name', async () => {
     const tour = await golfTour();
     const { sportEvents } = integrationSportEventServices();
-    await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'The Batch Classic', startDate: new Date('2087-05-06T12:00:00.000Z') });
+    const first = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'The Batch Classic' });
 
-    await expect(sportEvents.createEvent({ sportLeagueId: tour.id, name: 'The Batch Classic', startDate: new Date('2087-05-13T12:00:00.000Z') }))
-      .rejects.toMatchObject({ code: 'EVENT_EDITION_ALREADY_EXISTS', statusCode: 409 });
+    const second = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'The Batch Classic' });
+
+    expect(second.event.id).not.toBe(first.event.id);
+    expect(second.event.sportLeagueSeasonId).toBe(first.event.sportLeagueSeasonId);
   });
 });
 
@@ -141,8 +206,8 @@ describe('Editing an event\'s tiers (#1253)', () => {
   it('saves a tier list in the same number of queries however many tiers stay as they were', async () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
-    const six = await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'Six Tier Open', startDate: new Date('2087-05-06T12:00:00.000Z') });
-    const two = await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'Two Tier Open', startDate: new Date('2087-05-13T12:00:00.000Z') });
+    const six = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'Six Tier Open' });
+    const two = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-13T12:00:00.000Z')), name: 'Two Tier Open' });
     await tiers.replaceTiers({ sportEventId: two.event.id, tiers: [tier(1), tier(2)] });
 
     const counts = [];
@@ -160,7 +225,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
   it('reverses, renames, removes and adds tiers in one save, a new tier taking a removed one\'s number and kept tiers keeping their rows', async () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
-    const created = await sportEvents.createEvent({ sportLeagueId: tour.id, name: 'Shuffle Open', startDate: new Date('2087-05-06T12:00:00.000Z') });
+    const created = await sportEvents.createEvent({ seasonSlotId: await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z')), name: 'Shuffle Open' });
     const before = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id } });
     const idByKey = new Map(before.map((row) => [row.tierKey, row.id]));
 

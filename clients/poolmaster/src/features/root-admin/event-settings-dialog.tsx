@@ -11,7 +11,6 @@ import {
 import {
   Button,
   ConfirmDialog,
-  DateTimeField,
   DetailEditModal,
   formatDateTimeDisplay,
   FormField,
@@ -27,7 +26,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { describeBudgetPricing } from './budget-pricing-format';
-import { buildEventPagePath } from '@/features/event-pages/event-page-paths';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { EventTiersDialog } from './event-tiers-dialog';
 import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
@@ -55,7 +53,6 @@ export function EventSettingsDialog({
   sportLeague: SportLeagueDto | undefined;
 }) {
   const preferences = useDisplayPreferences();
-  const { timeZone } = preferences;
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(event);
   const platformTierProfilesQuery = usePlatformTierProfilesQuery();
   const platformPricingProfilesQuery = usePlatformPricingProfilesQuery();
@@ -64,9 +61,9 @@ export function EventSettingsDialog({
   const [tiersOpen, setTiersOpen] = useState(false);
   const tiersQuery = useSportEventTiersQuery(event.id);
   const fieldQuery = useSportEventFieldQuery(event.id);
-  const current = valuesOf(event, timeZone);
+  const current = valuesOf(event);
 
-  const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema), defaultValues: current, mode: 'onChange' });
+  const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema(event)), defaultValues: current, mode: 'onChange' });
   const dialog = useDetailEditDialog(form, current, onClose);
   const eventKeys = [QueryKeys.rootAdmin.manageSport.event(event.id), QueryKeys.rootAdmin.manageSport.events];
 
@@ -74,7 +71,7 @@ export function EventSettingsDialog({
     mutationFn: async (values: SettingsValues) => {
       const response = await updateEvent({
         path: { eventId: event.id },
-        body: settingsRequestBody(values, current, { providerSynced: event.providerSynced, sendsRoundsPar: scoresUnplayedRoundsAgainstPar, timeZone }),
+        body: settingsRequestBody(values, current, { isTestData: event.isTestData, sendsRoundsPar: scoresUnplayedRoundsAgainstPar }),
       });
       if (!response.data?.event) throwApiError(response.error, 'The event update response is missing data.');
       return response.data.event;
@@ -127,7 +124,12 @@ export function EventSettingsDialog({
     ...(scoresUnplayedRoundsAgainstPar
       ? [{ id: 'par', label: 'Par per round', value: event.roundsPar ?? 'From scores', testId: `${testId}-par` }]
       : []),
-    { id: 'feedId', label: 'Feed id', value: event.providerSynced ? event.externalId : 'None', testId: `${testId}-feed-id` },
+    {
+      id: 'feedId',
+      label: 'Feed ids',
+      value: event.providerMappings.length === 0 ? 'None' : event.providerMappings.map((mapping) => `${mapping.externalId} (${mapping.providerName})`).join(' · '),
+      testId: `${testId}-feed-id`,
+    },
     { id: 'platformTierProfile', label: 'Tier profile', value: platformTierProfileName, testId: `${testId}-tier-profile` },
     {
       id: 'tiers',
@@ -154,12 +156,12 @@ export function EventSettingsDialog({
   ];
 
   const actions: DetailAction[] = [
-    ...(overview?.eventPageSlug == null ? [] : [{
+    ...(overview?.eventPagePath == null ? [] : [{
       id: 'event-page',
       name: 'Event page',
       description: 'The public page that offers this event\'s contests.',
       control: (
-        <LinkButton data-testid={`${testId}-open-event-page`} size="sm" to={buildEventPagePath(event.sport, overview.eventPageSlug)} variant="secondary">
+        <LinkButton data-testid={`${testId}-open-event-page`} size="sm" to={overview.eventPagePath} variant="secondary">
           Open event page ›
         </LinkButton>
       ),
@@ -219,7 +221,7 @@ export function EventSettingsDialog({
         title={dialog.mode === 'view' ? `${event.name} settings` : `${event.name} settings · Edit`}
       >
         <div className="grid gap-4">
-          {event.providerSynced ? null : (
+          {event.isTestData ? (
             <>
               <FormField error={form.formState.errors.name?.message} label="Name">
                 <Input data-testid="root-admin-sport-event-edit-name" {...form.register('name')} />
@@ -227,14 +229,8 @@ export function EventSettingsDialog({
               <FormField label="Venue">
                 <Input data-testid="root-admin-sport-event-edit-venue" {...form.register('venue')} />
               </FormField>
-              <FormField error={form.formState.errors.startDate?.message} label="Starts">
-                <DateTimeField data-testid="root-admin-sport-event-edit-start" {...form.register('startDate')} />
-              </FormField>
-              <FormField label="Ends">
-                <DateTimeField data-testid="root-admin-sport-event-edit-end" {...form.register('endDate')} />
-              </FormField>
             </>
-          )}
+          ) : null}
           <FormField label="Location">
             <Input data-testid="root-admin-sport-event-edit-location" {...form.register('location')} />
           </FormField>

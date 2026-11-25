@@ -4,9 +4,8 @@ import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
   ParticipantScoringDefinitionIdSchema,
-  SUPPORTED_SPORTS,
   SelectionType,
-  type Sport,
+  Sport,
   type SportDefinition,
   type SportNoun,
   UpsetBonusRule,
@@ -93,12 +92,12 @@ export const createContestFormSchema = z.object({
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema,
   selectedTemplateId: z.string(),
   selectionType: z.enum(creatableSelectionTypes),
-  sport: z.custom<Sport>((value) => SUPPORTED_SPORTS.some((sport) => sport === value)),
+  sport: z.enum(Sport),
   sportEventId: z.string().min(1, 'Choose an event for the contest.'),
   /** The game a squares contest is played on (#711); empty for every other format. */
   sportEventRoundMatchId: z.string(),
   upsetBonusMultiplier: z.string(),
-  upsetBonusRule: z.enum([UpsetBonusRule.NONE, UpsetBonusRule.SEED_DIFFERENCE]),
+  upsetBonusRule: z.enum(UpsetBonusRule),
 });
 
 export type CreateContestFormValues = z.infer<typeof createContestFormSchema>;

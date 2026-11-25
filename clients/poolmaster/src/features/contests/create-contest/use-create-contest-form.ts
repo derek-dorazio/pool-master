@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router';
 import {
   type ContestScoringSettings,
-  contestTemplateEventTypeOf,
   eventSportDefinition,
   getSportDefinition,
   PlanCap,
@@ -79,10 +78,10 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   const { scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId, sportEventRoundMatchId } = values;
   const scoringSettingsUi = scoringSettingsUiFor(selectionType, scoringDefinitionId);
   const [isNameEdited, setIsNameEdited] = useState(false);
-  // The sport, sport league and kind of event whose default preset was applied last: their default
-  // is applied when their presets arrive and again on switching back to them; while all three
+  // The sport, sport league and slot definitions whose default preset was applied last: their
+  // default is applied when their presets arrive and again on switching back to them; while they
   // stay, Custom stays Custom.
-  const defaultPresetAppliedFor = useRef<`${Sport}/${string}/${string}` | null>(null);
+  const defaultPresetAppliedFor = useRef<string | null>(null);
 
   const setFormValues = useCallback((next: Partial<CreateContestFormValues>) => {
     for (const [field, value] of Object.entries(next) as Array<[keyof CreateContestFormValues, CreateContestFormValues[keyof CreateContestFormValues]]>) {
@@ -117,6 +116,9 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     () => SUPPORTED_SPORTS.filter((candidate) => (sportLeaguesQuery.data ?? []).some((sportLeague) => sportLeague.sport === candidate && sportLeague.isActive)),
     [sportLeaguesQuery.data],
   );
+  // A template is one sport league's, so its sport is that league's (#2010).
+  // poolmaster-allow-list-lookup: the sport leagues, reference data the sport picker lists anyway
+  const requestedTemplateSport = sportLeaguesQuery.data?.find((sportLeague) => sportLeague.id === requestedTemplate?.sportLeagueId)?.sport ?? null;
 
   const contestEvents = useMemo(
     () => contestEventsFor(eventsQuery.data ?? [], selectionType),
@@ -167,15 +169,20 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
   // The chosen event's sport league: only its own presets are offered, so the presets wait for an
   // event.
   const sportLeagueId = selectedEvent?.sportLeagueId;
-  // A sport played as matches offers a week's templates on a week of games and a knockout's on a
-  // knockout (#802); every other sport's templates suit all its events.
-  const eventType = selectedEvent ? contestTemplateEventTypeOf(selectedEvent) ?? undefined : undefined;
+  // The templates offered on the event are those covering one of its slot definitions (#2010): a
+  // week's on a week of games, a knockout's on a knockout. An event with no slot is offered none.
+  const slotDefinitionIds = selectedEvent?.slotDefinitionIds;
+  // Which presets the default was applied for: the event's sport league and slot definitions.
+  const presetsKey = JSON.stringify([sport, sportLeagueId ?? null, slotDefinitionIds ?? null]);
 
   const templatesQuery = useQuery({
-    queryKey: QueryKeys.contestConfigTemplates.list({ sport, sportLeagueId, eventType, active: true }),
+    // An empty list, never undefined, while no event is chosen: undefined filters would share the
+    // every-active-template key (`useActiveContestTemplatesQuery`) and offer those as presets.
+    queryKey: QueryKeys.contestConfigTemplates.list({ sportLeagueId, slotDefinitionIds: slotDefinitionIds ?? [], active: true }),
     queryFn: async (): Promise<ContestConfigTemplateDto[]> => {
+      if (!slotDefinitionIds?.length) return [];
       const response = await listContestConfigTemplates({
-        query: { sport, sportLeagueId, eventType, active: true },
+        query: { sportLeagueId, slotDefinitionIds, active: true },
       });
       if (!response.data?.templates) {
         throwApiError(response.error, 'Contest template response is missing data.');
@@ -290,17 +297,18 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     }
   }, [firstSquaresGameId, isSquaresGameMissing, setFormValues]);
 
-  // A requested template starts the page on its sport and format, so its events are listed.
+  // A requested template starts the page on its sport and format, so its events are listed. Its
+  // sport is its league's, so the start waits for the sport leagues too.
   useEffect(() => {
-    if (!requestedTemplate || requestedTemplateProgress.current !== 'sport' || !isCreatableSelectionType(requestedTemplate.selectionType)) {
+    if (!requestedTemplate || requestedTemplateSport === null || requestedTemplateProgress.current !== 'sport' || !isCreatableSelectionType(requestedTemplate.selectionType)) {
       return;
     }
     requestedTemplateProgress.current = 'event';
-    if (form.getValues('sport') !== requestedTemplate.sport) {
-      selectSport(requestedTemplate.sport);
+    if (form.getValues('sport') !== requestedTemplateSport) {
+      selectSport(requestedTemplateSport);
     }
     setFormValues({ selectionType: requestedTemplate.selectionType });
-  }, [form, requestedTemplate, selectSport, setFormValues]);
+  }, [form, requestedTemplate, requestedTemplateSport, selectSport, setFormValues]);
 
   // The soonest contest-ready event is chosen to start with, else a knockout under way. Until a
   // requested template is settled, the soonest event that can start it, when it has one.
@@ -327,13 +335,12 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     }
   }, [chooseEvent, requestedEventId, requestedEvents, selectableEvents, sportEventId]);
 
-  // A newly chosen sport, sport league or kind of event starts on its default preset; while all
-  // three stay, Custom stays Custom. A sport league starts on the format its defaults sort first
+  // A newly chosen sport, sport league or event's slot definitions start on their default preset;
+  // while they stay, Custom stays Custom. A sport league starts on the format its defaults sort first
   // (the Formula 1 default is a budget contest, #625; an NFL week a pick'em, #802), unless the
   // sport does not offer it, the event has no prices for it yet, or the event cannot take it (a
   // knockout under way takes only a second-chance bracket or squares).
   useEffect(() => {
-    const presetsKey: `${Sport}/${string}/${string}` = `${sport}/${sportLeagueId ?? ''}/${eventType ?? ''}`;
     if (defaultPresetAppliedFor.current === presetsKey || templatesQuery.data === undefined) {
       return;
     }
@@ -356,14 +363,14 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }
-  }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, selectedEvent, sport, sportDefinition, sportLeagueId, templatesQuery.data]);
+  }, [form, isBudgetUnavailable, presets, presetsKey, selectFormat, selectPreset, selectedEvent, sportDefinition, templatesQuery.data]);
 
   // A requested template is settled once, when the templates of the event it starts on arrive: it
   // is applied over the league's default the effect above may have started on. With no event that
   // can start it, such as a second chance before its tournament, the page keeps that default.
   useEffect(() => {
     if (!requestedTemplate || requestedTemplateProgress.current !== 'event' || templatesQuery.data === undefined
-      || sport !== requestedTemplate.sport || eventsQuery.data === undefined || selectedEvent === null
+      || sport !== requestedTemplateSport || eventsQuery.data === undefined || selectedEvent === null
       || (requestedEvents.length > 0 && !requestedEvents.includes(selectedEvent))
       || !isCreatableSelectionType(requestedTemplate.selectionType)) {
       return;
@@ -373,14 +380,14 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     if (!preset) {
       return;
     }
-    defaultPresetAppliedFor.current = `${sport}/${sportLeagueId ?? ''}/${eventType ?? ''}`;
+    defaultPresetAppliedFor.current = presetsKey;
     setFormValues({
       selectionType: requestedTemplate.selectionType,
       selectedTemplateId: preset.id,
       ...presetValues(preset.configuration),
       ...(requestedStartRound && requestedTemplate.selectionType === SelectionType.BRACKET ? { startsAtRound: requestedStartRound } : {}),
     });
-  }, [eventType, eventsQuery.data, presetValues, presetsFor, requestedEvents, requestedStartRound, requestedTemplate, selectedEvent, setFormValues, sport, sportLeagueId, templatesQuery.data]);
+  }, [eventsQuery.data, presetValues, presetsFor, presetsKey, requestedEvents, requestedStartRound, requestedTemplate, requestedTemplateSport, selectedEvent, setFormValues, sport, templatesQuery.data]);
 
   // A preset the chosen event cannot start, such as a full bracket once the event is under way,
   // gives way to the format's default among the presets it can (#802), or to Custom.

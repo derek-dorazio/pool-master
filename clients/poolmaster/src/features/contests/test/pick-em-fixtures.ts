@@ -1,3 +1,4 @@
+import { MatchStatus } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   ContestEntryDetailResponse,
@@ -112,6 +113,7 @@ export function pickEmWeekFixture(overrides: Partial<GamePicksResponse> = {}): G
     pickedCount: games.filter((each) => each.pick !== null).length,
     gameCount: games.length,
     tiebreakerMatchId: 'match-1',
+    tiebreakerMax: 999,
     tiebreakerValue: null,
     points: 0,
     maxPossiblePoints: games.length,
@@ -126,7 +128,7 @@ export function pickEmContestFixture(overrides: Partial<ContestDto> = {}): Conte
     id: 'contest-1',
     leagueId: 'league-1',
     entriesPerContest: null,
-    sport: 'AMERICAN_FOOTBALL',
+    sport: 'FOOTBALL',
     name: 'Big Dawgs Pick’em',
     status: 'OPEN',
     contestFormat: 'PREDICTION',
@@ -403,6 +405,8 @@ export function week2EventGamesFixture(overrides: Partial<Record<1 | 2 | 3, Part
     homeSpread: null,
     periodScores: [],
     ...overrides[matchNumber],
+    // As the server's mapper reads it from the status.
+    isUnplayed: overrides[matchNumber]?.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides[matchNumber]?.status),
   });
   return [
     eventGame(3, '2099-09-22T00:15:00.000Z', NFL_TEAMS.bears, NFL_TEAMS.packers),

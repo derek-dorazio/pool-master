@@ -18,9 +18,17 @@ specified in [`BACKGROUND-JOBS.md`](BACKGROUND-JOBS.md).
 - **Three syncs, one schedule.** Events (the league's event list), Field (participants and
   games) and Scores (live scores). One ingestion schedule covers every league; webhooks carry
   live scores between scheduled runs.
-- **An event links to a provider by `(provider_id, external_id)`.** For BALLDONTLIE, which has
+- **An event links to a provider by a `sport_event_provider_mappings` row** (#2004): the
+  provider, its id for the event (`external_id`, unique per provider) and the league's provider
+  mapping the event came under. Only the sync writes it; a test event has none. For BALLDONTLIE, which has
   games but no events, the external id is a *scope id* the adapter invents and parses back
   (`nfl-2026-week-12`, `nba-2025-postseason`).
+- **An event covers Season slots by `sport_event_slots` rows** (#2004): each slot at most one
+  event's, in the event's own Season, and an event with slots takes its dates from them. Only a
+  test event and the migration backfill write them until slice 8 makes the sync write them. A
+  test event is one on a labelled **test slot** (`is_test_data`), which the sync never reads or
+  writes; every other event is the sync's, so an event is synced exactly when it covers no test
+  slot (`isTestData` on the event).
 - **A participant links by feed id only**, within its event's sport league. Names are never
   compared. Test data shares a row with the sync by carrying the same feed id.
 - **Each league adds a reader, not a pipeline**: a scope id format, a few vendor reads, and a
@@ -58,13 +66,19 @@ flowchart LR
 
 Each provider is a `Provider` row with its `ProviderLeague` rows (#1997), seeded by migration and
 edited on the root admin's Providers page: base URL, request rate, webhook switch, safety-net
-poll minutes, priority, and per league its webhook event set, `quietAfterMinutes`,
+poll minutes, and per league its webhook event set, `quietAfterMinutes`,
 `typicalGameMinutes` and whether it is read. Each environment's database holds its own values; the
 running tasks read the rows again every minute, so an edit needs no restart.
 `registerConfiguredProviders` (`ingestion/core/provider-bindings.ts`) registers each enabled row's
 adapter at startup, and reads only its enabled leagues. A sport league syncs from the provider
 league its selected `SportLeagueProviderMapping` names; the migration mapped the leagues it could
-match and selected the mapping of each league that was synced before.
+match and selected the mapping of each league that was synced before. The running adapters are
+held in `ProviderRegistry` by Provider code (#2073): `forLeague` resolves a league's provider
+through that selected mapping, and refuses a league with none (422 `SPORT_LEAGUE_NOT_SYNCED`) or
+whose provider is not running (404 `PROVIDER_NOT_FOUND`) rather than fall back to another provider
+of the sport. Providers have no priority: two leagues of one sport may sync from different
+providers. The scheduler runs its loops for the sports that have an active league whose selected
+mapping names a running provider.
 
 Secrets stay out of the database:
 
@@ -90,10 +104,13 @@ registered provider covers is scheduled. Its keys are the sync kinds, `ProviderS
 | Policy | Default | Runs |
 |---|---|---|
 | `EVENTS.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
-| `FIELD.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3) |
+| `FIELD.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3); it has no `enabled` switch and always runs (#2086) |
 | `SCORES.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
 
 Each loop re-reads its interval after every run, so a saved change applies without a restart.
+The schedule read (`GET /api/v1/platform/ingestion-schedule`) answers each kind's policy with
+`runs` and `switchable`, read from whether the policy has an `enabled` switch, so the Providers
+page draws its Sync schedules rows from those fields alone (#2086).
 
 There is no health check loop and no route calls a provider live (#1999). A provider's health on
 the Providers page comes from its own sync runs of the last hour: HEALTHY when none failed, DOWN
@@ -139,8 +156,7 @@ Seeded by migration on `sport_leagues`:
 
 | Column | Why the sync needs it |
 |---|---|
-| `match_keyword` | Must equal the `metadata.tour` the adapter puts on the league's events (`core/league-keyword.ts`, case-insensitive). Required before `event_sync_provider_id` can be set. |
-| `event_sync_provider_id` | Makes the league synced. Refused unless the provider is registered and covers the sport. |
+| `selected_provider_mapping_id` | Makes the league synced: its mapping to one provider league (#1997). The sync keeps the provider's events whose provider league code is that league's, never matching a name. |
 | `round_series_lengths` | Best-of lengths per round for series playoffs (NBA/NHL `[7,7,7,7]`, WNBA `[3,5,7]`, MLB `[3,5,7,7]`). Empty means single games. |
 | `platform_tier_profile_id`, `platform_pricing_profile_id` | The profiles the field's tiers and prices come from (§3). |
 | `auto_release_days_before_start` | The auto-release window (default 7, `null` never). |
@@ -161,14 +177,83 @@ the Event list policy; a root admin's **Sync now**
 or the one Season a **Sync now** names (`sportLeagueSeasonId`), asks the provider for each by its
 own id for that Season, and records one `EVENTS` sync run. A Season the provider has no id for is
 not read; when the last of them lacks one, the job raises one `SEASON_MISSING` ERROR finding per
-league and provider (*Sync findings* below), since only a migration can add it. For each provider event:
+league and provider (*Sync findings* below), since only a migration can add it.
 
-- **New, start in the future**: created as a `DRAFT` `sport_events` row in the Season it was
-  read for, in a find-or-create `event_series`, linked by `(provider_id, external_id)` (unique) with `sync_scope = SCORES_ONLY`.
+**One league per read (#2005).** The provider is asked for the one league its selected mapping's
+provider league code names; there is no read of every league of a sport. A code the provider does
+not read (no enabled league row of the sport has it, or the adapter has no reader for it) reads
+nothing: the job raises one `PROVIDER_LEAGUE_UNKNOWN` ERROR finding per league and provider and
+fails for good until the mapping or the league row is fixed.
+
+**Matching games to Season slots (#2005).** The adapter reduces each provider event's games to
+plays: one per code the provider names their place by (`providerSlots`, each with its games'
+earliest and latest start). A code is the provider's own value, never ours: the season type and
+the vendor's week or round (`REG:5`, `POST:2`, built once in `provider-slot-codes.ts`), or a
+tournament id. The sync matches each code to a Season slot through the slot definition's
+`PROVIDER_CODE` row in `sport_league_phase_slot_provider_mappings` at the league's selected
+provider mapping, so a league's own offsets live in those rows, not in code. Test slots are never
+read. Each matched slot takes its games' dates (an update only when they moved): it starts at its
+first game's start and ends at its last game's start, since the feed sends start times only, never
+an end; no slice yet records a game's end, so this stays until one does. An event that plays slots
+takes its dates from them (`eventDatesFromSlots`), on creation and on every later sync. A code no slot
+maps raises one `SLOT_VALUE_UNMAPPED` INFO finding per league and code; waive it for a code the
+league does not play (the preseason). A page that lists fewer events or games deletes nothing.
+
+**Tournaments matched by name (#2011).** An open phase (golf) has one slot definition per
+recurring tournament, and its Season slots are not created with the Season. A league whose
+selected provider mapping has `NAME_PATTERN` rows places a tournament no code places by its
+normalized name (lower case, any year and anything from "presented by" on
+removed), once, in `placeSlotsByName`, the one place name matching happens. One definition's
+pattern matching creates that definition's Season slot when the events sync loads the season
+schedule (or links the existing one) and records the tournament's code on it
+(`sport_league_season_phase_slot_provider_mappings`); from then on the tournament matches by that code, whatever it is
+called. A name no pattern matches places nothing and raises one `SLOT_NAME_UNMATCHED` INFO finding
+per league and normalized name, whose **Link to existing** action adds the name as another
+pattern of a chosen definition and resolves it (the next sync links the tournament). There is no
+"create new": definitions are set by migration, so a tournament with none waits for its migration.
+A name that matches more than one definition, or a slot another tournament already has, raises one
+`SLOT_NAME_AMBIGUOUS` ERROR finding and links nothing. A name that matches a definition whose phase
+the Season has no phase for gets no slot and raises one `SLOT_SEASON_PHASE_MISSING` ERROR finding,
+so a Season added without its open phase is never skipped in silence.
+
+**Matching by date window (#2012).** A feed that names no place for its games (BALLDONTLIE's
+college football has no round, bowl name or postseason flag) sends each game as a play with a null
+code. Such a game goes to the Season slot whose definition has a `DATE_WINDOW` mapping row and
+whose window (`window_starts_at` inclusive to `window_ends_at` exclusive on the Season slot, kept
+apart from the dates its games give) holds its start; a Season's windows do not overlap. The
+windows are data, loaded by migration each Season. A window is `TENTATIVE` (a best guess while the
+shape is known and the games are not) or `CONFIRMED`. The adapter sends each game's two teams'
+feed ids with it, and only a game between two teams on the event's field (the seeds the admin
+places) is the slot's own: those games give the slot its dates, and the first one in a tentative
+window confirms it. Any game in a window still places the event on its slot, so the event exists
+for its seeds to be placed, but a window holding only other games (a bowl between two unseeded
+schools on the first round's days, or anything before the seeds are placed) takes no dates and
+confirms nothing. Games no window holds are not synced and raise one `GAMES_UNPLACED` INFO finding
+per league and Season, counting only games inside the Season's span, so a waiver covers one
+Season's known bowls and never a later Season's gap (inclusion only: the other bowls share the
+playoff's days). A Season the sync reads with a date-window slot that has no window, or a tentative one,
+raises one `SLOT_DATES_NEEDED` WARNING naming the slots, which resolves once every window is
+confirmed; the Structure tab flags those slots (`needsDates`). An event's field is the seeds placed
+on it: an event playing a date-window slot takes no new team from its feed, and the feed only
+refreshes the rows already there (#1715). Any game placed outside its Season's span raises one
+`SLOT_OUTSIDE_SEASON` WARNING per place and is still written. An event starts at its slots' first
+game, so a season-long slate whose windowed games lie ahead is still created.
+
+For each provider event:
+
+- **New, start in the future, on a slot a contest template lists**: created as a `DRAFT`
+  `sport_events` row in the Season it was read for, on the league (`sport_league_id`), playing its
+  matched slots (`sport_event_slots`, dates from those slots), kept under the provider's id for
+  it: a `sport_event_provider_mappings` row under the league's selected provider mapping, written
+  in the same transaction (ADR 0011).
+- **New, but no slot matched** (`NO_SLOT`), **no active template lists its slot**
+  (`NO_TEMPLATE`), or **its slot already has an event** (`SLOT_TAKEN`): never created. The
+  slot still takes the games' dates.
 - **New, start already passed**: never created (`ALREADY_STARTED`).
-- **Already linked**: kept current (`SportEventService.keepProviderEventsCurrent`) through
-  `updateEvent`, the admin's own edit, so a moved start shifts the rounds and notifies leagues
-  on a released event. A value the provider stops sending is kept.
+- **Already linked**: kept current (`SportEventService.keepProviderEventsCurrent`) through the
+  same update the admin's own edit makes, so a moved start shifts the rounds and notifies leagues
+  on a released event. A value the provider stops sending is kept. It also takes any matched
+  slot no event plays yet, so a playoff event gains each later round as its games arrive.
 
 | Status | Provider may change |
 |---|---|
@@ -177,7 +262,7 @@ league and provider (*Sync findings* below), since only a migration can add it. 
 | `COMPLETED`, `CANCELLED` | nothing |
 
 On a synced event the admin's Edit details shows name, venue and dates read-only
-(`SportEventDto.providerSynced`); location, rounds, field, tiers, prices, release and result entry
+(any event that is not a test event, `SportEventDto.isTestData` false); location, rounds, field, tiers, prices, release and result entry
 stay the admin's. The older admin routes (Create from provider event, Link score source under
 `/api/v1/events`) remain as a fallback for an event the feed lacks; the Year import went with
 event years (#2003).
@@ -217,7 +302,9 @@ A participant the site holds by name with no mapping stays beside the new one: m
 bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`).
 A feed id the live scores name that no participant of the league is mapped to raises an
 `UNMAPPED_PARTICIPANT` sync finding (see *Sync findings* below); its Map participant action binds
-it and resolves the finding. Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
+it and resolves the finding. A mapping made any other way (the participant page's bind, or a later
+roster or field sync creating the participant) resolves it too: each mapping write says
+`PARTICIPANT_PROVIDER_MAPPED`, whose handler queues a `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` job (#2069). Participant ids are the provider's raw feed ids in every league, never prefixed (#2040).
 The mapping's sport league and participant type keep a team and a player with the same raw id
 apart.
 
@@ -275,7 +362,7 @@ never replace a multi-round event's bracket; a draft only takes their kickoffs.
 | Schedule, Event list policy | Events sync per synced league | `SYNC_LEAGUE_EVENTS` |
 | Root admin **Sync now** | Events sync for one league | `SYNC_LEAGUE_EVENTS` |
 | Schedule, participants policy | Field sync | `runConfiguredSportFieldSync` timer, one loop per sport |
-| Schedule, live scores policy | Scores sync of every `IN_PROGRESS`, `SCORES_ONLY` event with a field | `runConfiguredLiveScoreSweep` timer, lock `ingestion:<sport>:live-scores` |
+| Schedule, live scores policy | Scores sync of every `IN_PROGRESS` event its provider has an id for, with a field | `runConfiguredLiveScoreSweep` timer, lock `ingestion:<sport>:live-scores` |
 | Root admin event sync or field refresh | Field or scores for one event | `MANUAL_EVENT_SYNC` |
 | BALLDONTLIE webhook | Scores for the notified events | `PROVIDER_EVENT_SYNC` |
 | Hourly release sweep | Auto-release check | `RELEASE_SPORT_EVENT` |
@@ -305,10 +392,13 @@ provider league's `typicalGameMinutes`). A draft never released is never overdue
 `"{ts}.{raw body}"` (5 minute tolerance; bad or missing → 403), drops unsubscribed leagues and
 event types with a 200, and hands the rest to `ProviderNotificationService.receive`. It queues
 one `PROVIDER_EVENT_SYNC` per in-progress event the notification is about, 60 seconds out, deduped
-on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. The job runs the normal
+on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. A game notification names
+its provider league by its event type (`nfl.game.ended`), and is about the in-progress event
+whose match holds the game, or, while none does, every in-progress event mapped under that
+provider league (#2004); nothing is read off the event's id. The job runs the normal
 scores sync. **The delivery is a trigger, never a record**: nothing in its body is written.
 
-Subscribed types are `balldontlieWebhookEventTypes` of the enabled league rows, by each row's
+Subscribed types are the events `GAME_EVENTS_BY_SET` and `GOLF_EVENT_PHASES` name, by each enabled league row's
 webhook event set: `game.started`, `game.period_ended` (`game.halftime` for soccer, `GAME_HALVES`)
 and `game.ended` for a game league, and the four PGA tournament and round events for
 `GOLF_ROUNDS`.
@@ -339,7 +429,16 @@ column. Each finding names its sport league; its event, Provider row and the fee
   answer, *Rate limit and retries* above), `UNMAPPED_PARTICIPANT` (WARNING, raised by the live
   scores writer; its action is the Map participant page) and `WEBHOOK_SECRET_MISSING` (ERROR,
   raised per synced league when a worker task starts with the Provider's webhooks on and no
-  signing secret; resolved once it is set). Three are checked on an event by each sync that
+  signing secret; resolved once it is set, and on a league the Provider no longer syncs at the next check, #2070),
+  `SEASON_MISSING` (ERROR, *The run* above), `PROVIDER_LEAGUE_UNKNOWN` (ERROR, a mapping's
+  provider league code the provider does not read, *The run* above), `SLOT_VALUE_UNMAPPED`
+  (INFO, a provider code no slot maps, *Matching games to Season slots* above; it has no action,
+  since a mapping is added by migration), `SLOT_NAME_UNMATCHED` (INFO, a tournament name no
+  pattern matches; its action is Link to existing) and `SLOT_NAME_AMBIGUOUS` (ERROR, a name that
+  matches more than one slot) and `SLOT_SEASON_PHASE_MISSING` (ERROR, a matched slot whose phase the
+  Season lacks), all three *Tournaments matched by name* above, and `SLOT_OUTSIDE_SEASON` (WARNING),
+  `GAMES_UNPLACED` (INFO) and `SLOT_DATES_NEEDED` (WARNING, resolved once the Season's windows are
+  confirmed), all three *Matching by date window* above. Three are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
@@ -365,7 +464,7 @@ sequenceDiagram
   A->>A: route by scope id to the league reader
   A-->>S: LiveScoreResult {GOLF | GAME}
   S->>P: onLiveScores(result, providerId)
-  P->>P: Zod-validate; find event by (provider_id, external_id); skip unless IN_PROGRESS
+  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless IN_PROGRESS
   P->>F: the event's scoring family's writer, if it accepts the category
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
@@ -380,9 +479,10 @@ The family is the event's sport league's (`scoringFamilyForEvent`). Finish posit
 **GAME linking.** A single-game round links the game to the one open match between its two
 teams; two candidates link nothing until a later sync. A best-of series links no game: the
 writer counts each final game's winner and records the result once a side has more than half.
-A First Four winner first fills its play-in place. **An admin's result stands**: a different
-provider final is logged, not written; clearing the result hands the match back. A level
-knockout game takes its winner from the shoot-out.
+A First Four winner first fills its play-in place. **The feed is the only writer** (#2074): a
+provider final overwrites whatever the match holds, a result written by hand before included,
+and every result's `resultSource` is `PROVIDER`. A level knockout game takes its winner from the
+shoot-out.
 
 **Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
 `SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as
@@ -393,17 +493,20 @@ jobs. Scores for an event not yet `IN_PROGRESS` are skipped
 
 All files are under `packages/core-api/src/modules/ingestion/adapters/balldontlie/`. Each league
 has a vendored OpenAPI document and fixtures under `tests/fixtures/balldontlie/`. The adapter
-routes by external id; an id no league claims is read as a PGA TOUR tournament.
+keeps only the vendor's league code mapped to the reader for its endpoints; which leagues it
+reads, their sport and their name are the Provider's league rows (#1997). An event's details and
+scores go to the enabled league whose reader knows the id; an id no enabled league knows reads
+nothing (#2005).
 
-| League | Keyword | External id | Participants | Category | Files |
+| League | Vendor code | External id | Participants | Category | Files |
 |---|---|---|---|---|---|
-| PGA TOUR | `PGA TOUR` | vendor tournament id | bare player id | `GOLF` | `pga-*` |
-| NFL | `NFL` | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | raw team id | `GAME` | `nfl-*` |
-| College Football Playoff | `CFP` | `ncaaf-<season>-cfp` | raw team id | `GAME` | `ncaaf-*` |
-| NCAA men / women | `NCAAM` / `NCAAW` | `ncaab-<season>-tournament`, `ncaaw-…` | raw team id | `GAME` | `ncaa-tournament-*` |
-| NBA / NHL / MLB / WNBA playoffs | `NBA` / `NHL` / `MLB` / `WNBA` | `<league>-<season>-postseason` | raw team id | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
-| Premier League | `EPL` | `epl-<season>-matchweek-<n>` | raw team id | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
-| FIFA World Cup | `FIFAWC` | `fifa-wc-<year>-knockout` | raw team id | `GAME` with shoot-outs | `fifa-world-cup-*` |
+| PGA TOUR | `pga` | vendor tournament id | bare player id | `GOLF` | `pga-*` |
+| NFL | `nfl` | `nfl-<season>-week-<n>`, `nfl-<season>-postseason` | raw team id | `GAME` | `nfl-*` |
+| College Football Playoff | `ncaaf` | `ncaaf-<season>-cfp` | raw team id | `GAME` | `ncaaf-*` |
+| NCAA men / women | `ncaab` / `ncaaw` | `ncaab-<season>-tournament`, `ncaaw-…` | raw team id | `GAME` | `ncaa-tournament-*` |
+| NBA / NHL / MLB / WNBA playoffs | `nba` / `nhl` / `mlb` / `wnba` | `<league>-<season>-postseason` | raw team id | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
+| Premier League | `epl` | `epl-<season>-matchweek-<n>` | raw team id | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
+| FIFA World Cup | `worldcup` | `fifa-wc-<year>-knockout` | raw team id | `GAME` with shoot-outs | `fifa-world-cup-*` |
 
 A participant id is the provider's raw feed id, never prefixed (#2040). The same raw id can name a
 team in two leagues, or a team and a player in one: the participant's provider mapping tells them
@@ -413,10 +516,12 @@ link to the `SportEvent` it synced.
 
 League notes that are not obvious from the code:
 
-- **CFP date rule.** College games carry no playoff marker, so the playoff is every game from
-  noon UTC the day after conference championship Saturday through January 31
-  (`CFP_LEAGUE.window`). The window starts after title games because one can pair two playoff
-  teams and would score the wrong match. Swap it for a vendor marker if the paid tier has one.
+- **CFP by date window.** College games carry no playoff marker, so the reader sends each
+  season's games (`seasons[]`) as plays with no code, and the CFP's four rounds are placed by
+  their Season slots' date windows (*Matching by date window* above). Live scores read
+  yesterday, today and tomorrow (`dates[]`). A conference title game can pair two playoff teams,
+  so no window covers title weekend. If the feed ever gains a playoff marker, it wins: map the
+  rounds by `PROVIDER_CODE` instead.
 - **Series playoffs** hand every postseason game over each sync, because the writer counts
   wins from the batch. Readers keep games by the vendor's `postseason` flag for the asked
   season, so every normalizer must read it.
@@ -459,8 +564,8 @@ A new league usually touches only these:
 6. **Migration**: the `provider_league` row (code, sport, webhook event set, `quiet_after_minutes`,
    `typical_game_minutes`) and the sport league's mapping to it; `round_series_lengths` for a
    series league.
-7. **Webhooks**: the league's event id prefix in `balldontlie-webhooks.ts`, or its notifications
-   are dropped.
+7. **Webhooks**: nothing beyond the `provider_league` row: its code is the event type's prefix,
+   and its webhook event set says which notifications it takes.
 8. **Docs**: this page.
 
 A change to `score-publisher.ts`, the schedulers, the writers or the persistence layer changes
@@ -472,6 +577,13 @@ every league, and the PR must say so.
   MLB's `quietAfterMinutes` is 210 in case innings are not notified. Confirm during the paid trial
   (#1500).
 - **CFP feed**: confirm bowl and playoff games are carried and whether a marker exists (#1500).
+- **CFP windows each Season**: a migration adds the next Season's round windows once the schedule
+  is published (2026 and 2027 are loaded; 2027's first round and final are not set yet). The admin
+  dialog to set them is a follow-up to #1924. Golf tournaments match by name (#2011).
+- **CFP read cost**: the events and field syncs each page the whole college season by
+  `seasons[]`, thousands of games, since the vendor marks no playoff game; the field sync reads it
+  only to refresh rows already on the field. Fine on the paid key; on the free key (5 requests a
+  minute) one sync spends several minutes of the shared budget. Revisit with the paid trial (#1500).
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
 - **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
 - **Per-event tier override** from the event ⚙ dialog is in progress.

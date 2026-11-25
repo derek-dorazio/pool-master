@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "scope": {
-    "sport": "AMERICAN_FOOTBALL",
+    "sport": "FOOTBALL",
     "season": 2025,
     "sportLeagues": [
       "NFL"
@@ -244,6 +244,7 @@
       "events": [
         {
           "key": "nfl-2025-week-1",
+          "slotKey": "WEEK_1",
           "name": "NFL Week 1",
           "startDate": "2025-09-04",
           "endDate": "2025-09-08",
@@ -642,6 +643,7 @@
         },
         {
           "key": "nfl-2025-week-2",
+          "slotKey": "WEEK_2",
           "name": "NFL Week 2",
           "startDate": "2025-09-11",
           "endDate": "2025-09-15",
@@ -1040,6 +1042,7 @@
         },
         {
           "key": "nfl-2025-week-3",
+          "slotKey": "WEEK_3",
           "name": "NFL Week 3",
           "startDate": "2025-09-18",
           "endDate": "2025-09-22",

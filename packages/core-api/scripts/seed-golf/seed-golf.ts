@@ -67,14 +67,18 @@ import {
   cancelEventMatch,
   createEvent,
   createParticipant,
+  createTestSlot,
+  getSportLeagueStructure,
   getEventBracket,
   listEventParticipants,
   listEvents,
   listParticipants,
+  listSportLeagueParticipants,
   listPlatformPricingProfiles,
   listProviders,
   listSportLeagues,
   listSportLeagueProviderMappings,
+  listSportLeagueSeasons,
   listSports,
   loadEventBracket,
   proposeEventRoundMatchups,
@@ -383,9 +387,12 @@ class Loader {
    * rule the file names is changed on a league that has another.
    */
   private async ensureLeague(client: Client, league: SportDataLeague): Promise<SportLeagueDto> {
-    const { name, bracketAdvancement } = league;
+    const { name, urlSegment, bracketAdvancement } = league;
     const { sportLeagues } = await must(listSportLeagues({ client, query: { sport: this.sport } }), 'List sport leagues');
-    const existing = sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase());
+    // A file that names the league's stored URL segment finds it by that; an older file, by name.
+    const existing = urlSegment === undefined
+      ? sportLeagues.find((row) => row.name.toLowerCase() === name.toLowerCase())
+      : sportLeagues.find((row) => row.urlSegment === urlSegment);
     if (existing && (existing.participantType !== this.file.scope.participantType || existing.scoringFamily !== this.file.scope.scoringFamily)) {
       // The league on the site is the one home of how it plays (#2001); a file that says otherwise is wrong.
       throw new Error(`${name} on the site plays ${existing.participantType} ${existing.scoringFamily}; the file says ${this.file.scope.participantType} ${this.file.scope.scoringFamily}.`);
@@ -418,17 +425,56 @@ class Loader {
   }
 
   /**
+   * The free test slot a file event is made on (#2004): the current Season's free test slot of the
+   * named slot definition labelled with the event's key, made with the event's shifted dates when
+   * the Season has none (so a load that stopped part way picks its slot up again). Null when the
+   * league has no definition of that key.
+   */
+  private async testSlotFor(client: Client, sportLeagueId: string, event: SportDataEvent, slotKey: string): Promise<string | null> {
+    const { phases } = await must(getSportLeagueStructure({ client, path: { sportLeagueId } }), 'Read the league\'s slot definitions');
+    const definition = phases.flatMap((phase) => phase.slots).find((slot) => slot.key === slotKey);
+    if (definition === undefined) return null;
+    // A file event's key is unique in its file and short enough for a label. Another event of the
+    // same key (a copy under another name) has its own slot, labelled with the next number.
+    const { seasons } = await must(listSportLeagueSeasons({ client, path: { sportLeagueId } }), 'Read the league\'s Seasons');
+    const labelled = (seasons.find((season) => season.isCurrent)?.phases ?? [])
+      .flatMap((phase) => phase.slots)
+      .filter((slot) => slot.isTestData && slot.slotDefinitionId === definition.id && (slot.label === event.key || slot.label?.startsWith(`${event.key} `) === true));
+    const free = labelled.find((slot) => slot.sportEventId === null);
+    if (free) return free.id;
+    const label = labelled.length === 0 ? event.key : `${event.key} ${String(labelled.length + 1)}`;
+    const dates = shiftedEventDates(event, this.offsetDays);
+    const { slot } = await must(createTestSlot({
+      client,
+      path: { sportLeagueId },
+      body: { slotDefinitionId: definition.id, label, startsAt: dates.startDate, endsAt: dates.endDate },
+    }), `Add a test slot for ${event.name}`);
+    return slot.id;
+  }
+
+  /**
    * Each player's participant id (null in a dry run that would create it): the league's participant
    * a provider maps the player's feed id to (#1850), else the league's participant found by exact
    * name, else created in the league at the file's ranking (#1853). A
    * participant belongs to one sport league, so a player is only ever found among the league's
-   * own. A feed id the league has no participant mapped to yet is bound to the player's
-   * participant, so the provider's sync fields that participant rather than creating a second. A
-   * player already in the league keeps the ranking it has.
+   * own. A player made in a provider-synced league carries its sync provider's feed id, written
+   * with it (#2096); one the file gives no such id for is made a test participant, which joins only
+   * the test slots' events this load makes, since the league takes no other participant without
+   * a feed id. Any other feed id the league has
+   * no participant mapped to yet is bound to the player's participant, so the provider's sync fields
+   * that participant rather than creating a second. A player already in the league keeps the
+   * ranking it has.
    */
-  private async ensurePlayers(client: Client, league: SportDataLeague, sportLeagueId: string): Promise<Map<string, string | null>> {
+  private async ensurePlayers(client: Client, league: SportDataLeague, siteLeague: SportLeagueDto): Promise<Map<string, string | null>> {
+    const sportLeagueId = siteLeague.id;
+    const syncProviderCode = siteLeague.selectedProviderMapping?.providerCode ?? null;
     const { participants } = await must(listParticipants({ client, query: { sportLeagueId } }), `List ${league.name} players`);
     const byName = new Map(participants.map((p) => [p.name.toLowerCase(), p.id]));
+    // The league's test participants (#2096), which take no feed id: a re-run finds them by name above.
+    const testIds = new Set((await must(
+      listSportLeagueParticipants({ client, path: { sportLeagueId }, query: { testData: true } }),
+      `List ${league.name} test players`,
+    )).participants.map((p) => p.id));
     const providerIds = await this.providerIdsByCode(client, league);
     const byFeedId = await this.feedIdsOnSite(client, providerIds, sportLeagueId);
 
@@ -441,12 +487,16 @@ class Loader {
         return participantId === undefined ? [] : [participantId];
       });
       let id = mapped.at(0) ?? byName.get(player.name.toLowerCase()) ?? null;
+      // A test participant, made here or by an earlier run, never takes a feed id (#2096).
+      let isTestParticipant = id !== null && testIds.has(id);
       if (new Set(mapped).size > 1) {
         throw new Error(`${league.name}: ${player.name}'s feed ids are mapped to ${new Set(mapped).size} different participants; merge them on the site first.`);
       }
       if (id === null) {
         this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.ADD, name: player.name, detail: `ranked ${player.ranking}` });
         if (this.apply) {
+          const feedId = syncProviderCode === null ? undefined : player.feedIds?.[syncProviderCode];
+          isTestParticipant = syncProviderCode !== null && feedId === undefined;
           const created = await must(createParticipant({
             client,
             body: {
@@ -456,14 +506,18 @@ class Loader {
               name: player.name,
               nationality: player.countryCode,
               ...splitName(player.name),
+              // A synced league takes a player with its sync provider's feed id, or as test data.
+              ...(feedId !== undefined ? { feedId } : { isTestData: isTestParticipant }),
             },
           }), `Create player ${player.name}`);
           id = created.participant.id;
+          // The create mapped the sync provider's feed id with the player.
+          if (feedId !== undefined && syncProviderCode !== null) byFeedId.set(feedKey(syncProviderCode, feedId), id);
         }
       } else {
         this.report({ sportLeague: league.name, subject: LoadSubject.PLAYER, action: LoadAction.SKIP, name: player.name, detail: null });
       }
-      for (const [providerCode, externalId] of feedIds) {
+      for (const [providerCode, externalId] of isTestParticipant ? [] : feedIds) {
         if (!byFeedId.has(feedKey(providerCode, externalId))) binds.push({ participantId: id, player, providerCode, externalId });
       }
       ids.set(player.key, id);
@@ -513,7 +567,7 @@ class Loader {
     const siteLeague = await this.ensureLeague(client, league);
     const sportLeagueId = siteLeague.id;
     const participantIds = this.contents.has(SportDataContent.PLAYERS)
-      ? await this.ensurePlayers(client, league, sportLeagueId)
+      ? await this.ensurePlayers(client, league, siteLeague)
       : new Map<string, string | null>();
 
     const stored = await currentSeasonEvents(client, siteLeague);
@@ -564,7 +618,8 @@ class Loader {
       changes.push(`name ${stored.name} → ${event.name}`);
     }
     // A released test event keeps the dates its own run gave it; only a draft moves to this run's.
-    const compareDates = !this.testSeed || stored.status === SportEventStatus.DRAFT;
+    // An event on a test slot takes its dates from the slot, which an edit cannot move (#2004).
+    const compareDates = stored.slots.length === 0 && (!this.testSeed || stored.status === SportEventStatus.DRAFT);
     // A file that gives the exact start (a post time) moves a start on the same day too.
     const startChanged = event.startsAt === undefined
       ? day(stored.startDate) !== day(dates.startDate)
@@ -703,6 +758,12 @@ class Loader {
         this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'not on the site, and this file does not carry the schedule' });
         return;
       }
+      // A test event is made on a test slot of one of the league's slot definitions (#2004): an
+      // event the league has no slot for could never be synced, so it is not loaded either.
+      if (event.slotKey === undefined) {
+        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: 'names no slot definition, and the league plays only its own slots' });
+        return;
+      }
       this.report({
         ...at,
         subject: LoadSubject.EVENT,
@@ -715,20 +776,28 @@ class Loader {
       }
       if (loadsBracket) this.report({ ...at, subject: LoadSubject.BRACKET, action: LoadAction.ADD, detail: `${matches.length} matches` });
       if (!this.apply) return;
+      const seasonSlotId = await this.testSlotFor(client, input.sportLeagueId, event, event.slotKey);
+      if (seasonSlotId === null) {
+        this.report({ ...at, subject: LoadSubject.EVENT, action: LoadAction.CONFLICT, detail: `the league has no slot definition ${event.slotKey}` });
+        return;
+      }
       const created = await must(createEvent({
         client,
         body: {
-          sportLeagueId: input.sportLeagueId,
+          seasonSlotId,
           name: event.name,
           ...(event.venue ? { venue: event.venue } : {}),
           ...(event.location ? { location: event.location } : {}),
-          ...shiftedEventDates(event, this.offsetDays),
-          rounds: event.rounds,
           autoLifecycleEnabled: false,
         },
       }), `Create ${event.name}`);
-      if (event.roundsPar !== null) {
-        await must(updateEvent({ client, path: { eventId: created.event.id }, body: { roundsPar: event.roundsPar } }), `Set par for ${event.name}`);
+      // The create gives the league's default round count; the file's own count and par are edits.
+      const edits = {
+        ...(created.event.rounds !== event.rounds && { rounds: event.rounds }),
+        ...(event.roundsPar !== null && { roundsPar: event.roundsPar }),
+      };
+      if (Object.keys(edits).length > 0) {
+        await must(updateEvent({ client, path: { eventId: created.event.id }, body: edits }), `Set rounds and par for ${event.name}`);
       }
       if (loadsField) await this.writeField(client, created.event.id, league, event, participantIds, []);
       if (loadsBracket) await this.writeBracket(client, created.event.id, event, participantIds, []);
@@ -896,7 +965,7 @@ class Loader {
     const stored = editable[0];
 
     this.report({ sportLeague: league.name, subject: LoadSubject.SPORT_LEAGUE, action: LoadAction.SKIP, name: league.name, detail: null });
-    const participantIds = await this.ensurePlayers(client, league, sportLeague.id);
+    const participantIds = await this.ensurePlayers(client, league, sportLeague);
     const slate: FieldSource = {
       name: stored.name,
       field: league.players.map((player): SportDataFieldEntry => ({ player: player.key, ranking: player.ranking })),

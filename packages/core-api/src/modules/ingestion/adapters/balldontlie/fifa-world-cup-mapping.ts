@@ -19,8 +19,7 @@
  * gives apart from the match score (`home_score_penalties`); they go on the game for the writer
  * to name the winner by (#1532).
  *
- * Team ids are the provider's own (`participantFeedId`, #2040). Each team carries the league's keyword in `metadata.tour`, so it links by name only to the
- * site's team in the World Cup.
+ * Team ids are the provider's own (`participantFeedId`, #2040), mapped per sport league.
  */
 
 import { MatchSide, Sport } from '@poolmaster/shared/domain';
@@ -31,15 +30,11 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import type { FifaMatch, FifaMatchTeamSource, FifaTeam } from './fifa-world-cup-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 export const FIFA_WC_MATCHES_PATH = '/fifa/worldcup/v1/matches';
 export const FIFA_WC_TEAMS_PATH = '/fifa/worldcup/v1/teams';
 
-/**
- * The tour name events and teams carry in `metadata.tour`, for display; a sport
- * league finds them by their provider league code (#1997).
- */
-export const FIFA_WC_TOUR = 'FIFAWC';
 
 /** One World Cup edition's knockout bracket, by the edition's year. */
 export interface WorldCupScope {
@@ -122,7 +117,10 @@ export function toWorldCupEvent(scope: WorldCupScope, matches: readonly FifaMatc
     ...(rounds !== undefined && { rounds }),
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: FIFA_WC_TOUR, season: scope.season },
+    // A knockout match's code is its stage's place in the vendor's order of the edition's stages.
+    providerSlots: slotPlaysOf(matches.flatMap((match, index) => (match.stage?.order === undefined
+      ? []
+      : [{ code: providerSlotCode(ProviderSeasonType.POSTSEASON, match.stage.order), start: times[index] }]))),
   };
 }
 
@@ -146,7 +144,7 @@ export function toWorldCupTeamParticipant(team: FifaTeam, path: string): Provide
     sport: Sport.SOCCER,
     name: required(team.name, path, `team ${String(id)}`, 'name'),
     active: true,
-    metadata: { tour: FIFA_WC_TOUR, ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}) },
+    metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }
 

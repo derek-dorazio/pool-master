@@ -1,6 +1,6 @@
 import type { APIRequestContext } from '@playwright/test';
 import { expectOk, type AuthHeaders, type Log } from './admin-api';
-import { removeLeague, removeTour, removeUser } from './journey-teardown';
+import { listTestSlots, removeLeague, removeTestSlot, removeUser } from './journey-teardown';
 import {
   E2E_NAME_PREFIX,
   isRunOlderThan,
@@ -14,8 +14,10 @@ import {
  * that is cancelled or times out never reaches it, and leaves its whole set behind. The sweep finds
  * those leftovers by the one test-name marker (`test-marker.ts`) and removes them through the
  * admin API, with the same helpers the teardowns use: leagues (their contests, entries, squads and
- * cups go with them) → events → tours → players → users. Each league is deleted on its own, as
- * the API deletes one tenant at a time; nothing here touches the database.
+ * cups go with them) → test slots (their events, and their fields' test participants no other field holds,
+ * go with them) → players → users. A run plays on its own labelled test slots of seeded sport
+ * leagues (#2004), which stay. Each league is deleted on its own, as the API deletes one tenant
+ * at a time; nothing here touches the database.
  *
  * Only runs older than `minAgeMs` are removed, so a live run is never raced. A failed removal is
  * logged and reported, and the rest still run: one stuck row never keeps the others.
@@ -33,8 +35,8 @@ export interface SweepOptions {
 /** What the sweep removed, by kind, named as the API names each one, and what it could not. */
 export interface SweepReport {
   leagues: string[];
-  events: string[];
-  tours: string[];
+  /** Test slots by label: each slot's event went with it. */
+  testSlots: string[];
   players: string[];
   users: string[];
   /** Runs that matched the marker but were too young to touch. */
@@ -57,7 +59,7 @@ export function assertSweepableBaseUrl(baseUrl: string): void {
 export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeaders, options: SweepOptions): Promise<SweepReport> {
   const { log } = options;
   const now = options.now ?? new Date();
-  const report: SweepReport = { leagues: [], events: [], tours: [], players: [], users: [], skippedRunIds: [], failures: [] };
+  const report: SweepReport = { leagues: [], testSlots: [], players: [], users: [], skippedRunIds: [], failures: [] };
   /** Runs one removal or listing; success lands `name` in `removed`, a failure in the report. */
   const remove = async (what: string, run: () => Promise<void>, removed?: string[], name?: string) => {
     try {
@@ -92,46 +94,26 @@ export async function sweepE2eResidue(api: APIRequestContext, headers: AuthHeade
     }
   });
 
-  await remove('tours (listing)', async () => {
-    const list = await expectOk(api.get('/api/v1/sport-leagues', { headers }), 'list tours');
+  await remove('test slots (listing)', async () => {
+    const list = await expectOk(api.get('/api/v1/sport-leagues', { headers }), 'list sport leagues');
     const { sportLeagues } = (await list.json()) as { sportLeagues: { id: string; name: string }[] };
-    for (const tour of sportLeagues.filter((candidate) => due(runIdOfName(candidate.name)))) {
-      // A tour is refused while it has an event, so its events go first.
-      await remove(`events of tour "${tour.name}" (listing)`, async () => {
-        const events = await expectOk(
-          api.get('/api/v1/events', { headers, params: { sportLeagueId: tour.id } }),
-          `list events of ${tour.name}`,
-        );
-        const { events: rows } = (await events.json()) as { events: { id: string; name: string }[] };
-        for (const event of rows.filter((candidate) => runIdOfName(candidate.name) !== null)) {
-          await remove(`event "${event.name}"`, async () => {
-            await expectOk(api.delete(`/api/v1/events/${event.id}`, { headers }), `delete event ${event.name}`);
-            log(`event "${event.name}" removed`);
-          }, report.events, event.name);
+    for (const sportLeague of sportLeagues) {
+      // A run's events are on its own labelled test slots of a seeded league (#2004); removing a
+      // slot removes its event and the test participants of its field that no other field holds (#2075).
+      await remove(`test slots of "${sportLeague.name}" (listing)`, async () => {
+        for (const slot of await listTestSlots(api, headers, sportLeague.id)) {
+          if (slot.label === null || !due(runIdOfName(slot.label))) continue;
+          const label = slot.label;
+          await remove(`test slot "${label}"`, () => removeTestSlot(api, headers, sportLeague.id, slot.id, label, log), report.testSlots, label);
         }
       });
-      // A tour is refused while it has a participant (#1853), so its players go next.
-      await remove(`players of tour "${tour.name}" (listing)`, async () => {
-        const list = await expectOk(
-          api.get('/api/v1/participants', { headers, params: { sportLeagueId: tour.id } }),
-          `list players of ${tour.name}`,
-        );
-        const { participants } = (await list.json()) as { participants: { id: string; name: string }[] };
-        for (const player of participants) {
-          await remove(`player "${player.name}"`, async () => {
-            await expectOk(api.delete(`/api/v1/participants/${player.id}`, { headers }), `delete player ${player.name}`);
-            log(`player "${player.name}" removed`);
-          }, report.players, player.name);
-        }
-      });
-      await remove(`tour "${tour.name}"`, () => removeTour(api, headers, tour.id, tour.name, log), report.tours, tour.name);
     }
   });
 
   await remove('players (listing)', async () => {
     const list = await expectOk(api.get('/api/v1/participants', { headers, params: { q: E2E_NAME_PREFIX } }), 'search players');
     const { participants } = (await list.json()) as { participants: { id: string; name: string }[] };
-    // A player is refused while an event field holds them, which is why the events went first.
+    // A run's players left after its test slots: test participants made before any slot was.
     for (const player of participants.filter((candidate) => due(runIdOfName(candidate.name)))) {
       await remove(`player "${player.name}"`, async () => {
         await expectOk(api.delete(`/api/v1/participants/${player.id}`, { headers }), `delete player ${player.name}`);
@@ -162,8 +144,7 @@ export function describeSweepReport(report: SweepReport, baseUrl: string): strin
     `## E2E residue removed from ${new URL(baseUrl).hostname}`,
     '',
     ...section('Leagues', report.leagues),
-    ...section('Events', report.events),
-    ...section('Tours', report.tours),
+    ...section('Test slots', report.testSlots),
     ...section('Players', report.players),
     ...section('Users', report.users),
     ...section('Runs too recent to touch', report.skippedRunIds),

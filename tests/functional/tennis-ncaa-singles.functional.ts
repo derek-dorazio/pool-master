@@ -15,6 +15,7 @@ import { buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } f
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
+import { sportRowKeys } from '../support/sport-rows';
 
 // The 2025 NCAA Division I men's and women's singles championships over HTTP (#704 slice 4): the
 // test seed loads each 64-player draw into its NCAA sport league, six rounds named as the NCAA
@@ -33,8 +34,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -42,7 +41,6 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -93,7 +91,7 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.TENNIS },
-      create: { sport: Sport.TENNIS, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.TENNIS, ...sportRowKeys(Sport.TENNIS), tournamentFormat: 'MATCHES' },
       update: {},
     });
   });
@@ -132,7 +130,7 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
 
       const templates = expectDefined((await listContestConfigTemplates({
         client: admin.client,
-        query: { sport: Sport.TENNIS, sportLeagueId: sportLeague.id, active: true },
+        query: { sportLeagueId: sportLeague.id, active: true },
       })).data).templates;
       expect(templates.filter((template) => template.isDefault)).toHaveLength(5);
     }

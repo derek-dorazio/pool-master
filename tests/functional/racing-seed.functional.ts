@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues, TEST_DEFINITION_KEY } from '../support/test-slots';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { listEventParticipants, listEvents, listSportLeagues } from '@poolmaster/shared/generated/hey-api';
@@ -22,7 +23,7 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const leagueIds = [...created.sportLeagueIds];
   if (leagueIds.length) {
-    const series = { eventSeries: { sportLeagueId: { in: leagueIds } } };
+    const series = { sportLeagueId: { in: leagueIds } };
     const where = { sportEvent: series };
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: where } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: where } });
@@ -30,11 +31,10 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where });
     await db.sportEventTier.deleteMany({ where });
     await db.sportEvent.deleteMany({ where: series });
-    await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
   }
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).
   if (leagueIds.length) await db.participant.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
-  if (leagueIds.length) await db.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
+  if (leagueIds.length) await deleteTestSportLeagues(db, leagueIds);
 }
 
 afterAll(async () => {
@@ -52,6 +52,8 @@ function taggedSeed(): SportDataFile {
   league.name = leagueName;
   for (const player of league.players) player.key = `${RUN}-${player.key}`;
   for (const event of league.events) for (const entry of event.field) entry.player = `${RUN}-${entry.player}`;
+  // A league a test adds plays one test definition (TEST_EVENT), not the file's slot keys.
+  for (const event of league.events) event.slotKey = TEST_DEFINITION_KEY;
   return file;
 }
 
@@ -62,7 +64,7 @@ describe('SDK Functional: racing test seed', () => {
     const a = admin.client;
     const file = taggedSeed();
 
-    created.sportLeagueIds.add(await addRunSportLeague(a, Sport.HORSE_RACING, file.sportLeagues[0].name));
+    created.sportLeagueIds.add(await addRunSportLeague(Sport.HORSE_RACING, file.sportLeagues[0].name));
     // Dated from today: release refuses a race that has started.
     await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
 

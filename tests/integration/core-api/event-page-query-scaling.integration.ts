@@ -16,12 +16,12 @@ import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, tear
 import { DAY, get, okBody } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { participantLeagueId } from '../../support/participant-league';
-import { seriesSeasonId } from '../../support/event-edition';
+import { fixtureSeasonId, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 
 // No mocks.
 
 /** The slugs this file's pages take, so they can be told from the seeded ones and removed. */
-const SLUG_PREFIX = 'query-scaling';
+const URL_SEGMENT_PREFIX = 'query-scaling';
 
 // Read once when the app is built: no copy of a page is kept, so each read below reaches the database.
 process.env['PUBLIC_READ_CACHE_TTL_MS'] = '0';
@@ -36,7 +36,7 @@ beforeEach(() => cleanupTestData());
 afterEach(() => removeScalingPages());
 
 function removeScalingPages() {
-  return getPrisma().eventPage.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
+  return getPrisma().eventPage.deleteMany({ where: { urlSegment: { startsWith: URL_SEGMENT_PREFIX } } });
 }
 
 /**
@@ -46,7 +46,7 @@ function removeScalingPages() {
  */
 async function championshipWeekendOffers() {
   const offers = await getPrisma().eventPageOffer.findMany({
-    where: { eventPage: { sport: Sport.AMERICAN_FOOTBALL, slug: 'championship-weekend' } },
+    where: { eventPage: { sport: Sport.FOOTBALL, urlSegment: 'championship-weekend' } },
     include: { template: { select: { selectionType: true } } },
   });
   return [SelectionType.SQUARES, SelectionType.BRACKET].map((selectionType) => {
@@ -65,25 +65,21 @@ async function championshipWeekendOffers() {
 async function seedPage(offers: number, displayOrder: number, first = 0) {
   const prisma = getPrisma();
   const kinds = await championshipWeekendOffers();
-  const football = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.AMERICAN_FOOTBALL } });
+  const football = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.FOOTBALL } });
   const suffix = randomUUID().slice(0, 8);
   const page = await prisma.eventPage.create({
-    data: { sport: Sport.AMERICAN_FOOTBALL, slug: `${SLUG_PREFIX}-${suffix}`, displayOrder },
+    data: { sport: Sport.FOOTBALL, urlSegment: `${URL_SEGMENT_PREFIX}-${suffix}`, displayOrder },
   });
   const startDate = new Date(Date.now() + 30 * DAY);
   for (let sortOrder = 1; sortOrder <= offers; sortOrder += 1) {
     const { sportLeagueId, templateId, bracketStartRound } = kinds[(first + sortOrder - 1) % kinds.length];
     const roundNumber = bracketStartRound ?? 1;
-    const eventSeriesName = `Scaling Weekend ${suffix} ${String(sortOrder)}`;
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: eventSeriesName } });
+    const name = `Scaling Weekend ${suffix} ${String(sortOrder)}`;
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id,
-        sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, startDate.getUTCFullYear()),
-        externalId: `scaling-weekend-${suffix}-${String(sortOrder)}`,
-        providerId: 'integration-test',
-        sport: Sport.AMERICAN_FOOTBALL,
-        name: eventSeriesName,
+        sportLeagueId: sportLeagueId,
+        sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeagueId, startDate.getUTCFullYear()),
+        name,
         startDate,
         status: SportEventStatus.SCHEDULED,
         rounds: roundNumber,
@@ -108,8 +104,11 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
         scheduledDate: startDate,
       },
     });
+    // Each offer shows the next slot of a definition of its own, the event's (#2010).
+    const sportLeaguePhaseSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
+    await putEventInSlot(prisma, event.id, sportLeaguePhaseSlotId);
     await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId, eventSeriesName, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },
+      data: { eventPageId: page.id, sportLeagueId, sportLeaguePhaseSlotId, templateId, bracketStartRound, sortOrder, isPrimary: sortOrder === 1 },
     });
   }
   return page;
@@ -123,17 +122,17 @@ describe('event pages cost the same statements for 2 offers as for 20', () => {
         for (let index = 0; index < pages; index += 1) await seedPage(1, 1000 + index, index);
         return createTestUser();
       },
-      call: (viewer) => get(`/api/v1/event-pages/?sport=${Sport.AMERICAN_FOOTBALL}`, viewer),
+      call: (viewer) => get(`/api/v1/event-pages/?sport=${Sport.FOOTBALL}`, viewer),
       rowsShown: (response) => okBody(response, EventPageListResponseSchema).eventPages
-        .filter((page) => page.slug.startsWith(SLUG_PREFIX) && page.offers.length === 1).length,
+        .filter((page) => page.urlSegment.startsWith(URL_SEGMENT_PREFIX) && page.offers.length === 1).length,
     });
   });
 
   it('GET one event page: the same statements for 2 offers as for 20 (#1316)', async () => {
     await expectConstantQueries({
-      route: 'GET /api/v1/event-pages/{sport}/{pageSlug}',
+      route: 'GET /api/v1/event-pages/{sportUrlSegment}/{urlSegment}',
       seed: async (offers) => ({ page: await seedPage(offers, 1000), viewer: await createTestUser() }),
-      call: ({ page, viewer }) => get(`/api/v1/event-pages/${page.sport}/${page.slug}`, viewer),
+      call: ({ page, viewer }) => get(`/api/v1/event-pages/football/${page.urlSegment}`, viewer),
       rowsShown: (response) => okBody(response, EventPageResponseSchema).eventPage.offers.length,
     });
   });

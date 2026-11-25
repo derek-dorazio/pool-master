@@ -18,7 +18,7 @@ export const enUS = {
       CYCLING: 'Cycling',
       RUNNING: 'Running',
       BASKETBALL: 'Basketball',
-      AMERICAN_FOOTBALL: 'American football',
+      FOOTBALL: 'Football',
       HOCKEY: 'Hockey',
       BASEBALL: 'Baseball',
       SOCCER: 'Soccer',
@@ -78,6 +78,10 @@ export const enUS = {
       IN_PROGRESS: 'In progress',
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
+    },
+    SlotWindowStatus: {
+      TENTATIVE: 'Tentative',
+      CONFIRMED: 'Confirmed',
     },
     SlotProviderMatchType: {
       PROVIDER_CODE: 'Provider code',
@@ -184,9 +188,10 @@ export const enUS = {
       SURVIVOR: 'Survivor',
       SQUARES: 'Squares',
     },
-    ContestTemplateEventType: {
-      KNOCKOUT: { name: 'Playoffs and brackets', short: 'Playoffs' },
-      WEEK: { name: 'A week of games', short: 'Weekly' },
+    TemplateCoverageMode: {
+      ONE_SLOT: 'One of these',
+      ALL_LISTED: 'All of these',
+      FROM_SLOT: 'From one of these on',
     },
     PickEmMode: {
       STRAIGHT_UP: 'Straight up',
@@ -226,10 +231,6 @@ export const enUS = {
       OPEN: 'Open',
       NOT_YET: 'Not yet',
       CLOSED: 'Closed',
-    },
-    SportEventSyncScope: {
-      NONE: 'Manual',
-      SCORES_ONLY: 'Scores synced',
     },
     ProviderSyncRunStatus: {
       SUBMITTED: 'waiting',
@@ -277,9 +278,18 @@ export const enUS = {
       NO_PROVIDER_PARTICIPANTS: 'No field from the provider',
       NO_PROVIDER_LIVE_SCORES: 'No live scores from the provider',
       GAMES_NOT_SYNCED: 'Games not synced',
+      SLOT_VALUE_UNMAPPED: 'Provider code not mapped to a slot',
+      PROVIDER_LEAGUE_UNKNOWN: 'Provider league not read',
+      SLOT_NAME_UNMATCHED: 'Tournament name not matched to a slot',
+      SLOT_NAME_AMBIGUOUS: 'Tournament name matches more than one slot',
+      SLOT_SEASON_PHASE_MISSING: 'Tournament slot has no phase in the season',
+      SLOT_OUTSIDE_SEASON: 'Games outside the Season',
+      GAMES_UNPLACED: 'Games in no slot',
+      SLOT_DATES_NEEDED: 'Slot dates needed',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',
+      LINK_SLOT: 'Link to existing',
       RESOLVE: 'Resolve',
       WAIVE: 'Waive',
       REOPEN: 'Reopen',
@@ -338,7 +348,6 @@ export const enUS = {
       COMPLETED: 'Completed',
     },
     MatchResultSource: {
-      ADMIN: 'Admin',
       PROVIDER: 'Feed',
     },
     ProviderGameState: {
@@ -368,10 +377,6 @@ export const enUS = {
     ContestEntryStatus: {
       DRAFT: 'Not submitted',
       SUBMITTED: 'Submitted',
-    },
-    PrizePayoutType: {
-      FIXED_AMOUNT: 'Fixed amount',
-      PERCENTAGE: 'Percentage',
     },
     LeagueRole: {
       COMMISSIONER: 'Commissioner',
@@ -707,12 +712,12 @@ export const enUS = {
       SETTLE_SPORT_EVENT_CONTESTS: 'Settle contests',
       SETTLE_GAME_CONTESTS: 'Settle game contests',
       REBUILD_LEADERBOARDS: 'Rebuild leaderboards',
-      ADD_RELEASED_EDITION_TO_CONTEST: 'Add to contest',
       SYNC_LEAGUE_EVENTS: 'Event list',
       RELEASE_SPORT_EVENT: 'Release check',
       SYNC_EVENT_GAMES_AND_TIERS: 'Games, tiers and prices',
       ACTIVATE_EVENT_CONTESTS: 'Contests go live',
       FOLLOW_POSTPONED_EVENT_CONTESTS: 'Postponed event contests',
+      RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'Mapped participant findings',
     },
     BackgroundJobKind: {
       SYNC: 'Sync',
@@ -838,8 +843,6 @@ export const enUS = {
     BRACKET_INVALID: 'The bracket cannot be changed this way.',
     BRACKET_MATCH_NOT_FOUND: 'That match is not in the bracket.',
     BRACKET_NOT_RESEEDED: 'This bracket does not reseed: each winner\'s next match is fixed.',
-    BRACKET_PARTICIPANT_ALREADY_PLAYED: 'Their match has started, so a withdrawal is now a walkover.',
-    BRACKET_PLACE_NOT_FIRST_ROUND: 'Their place is not in the first round, so a withdrawal is a walkover.',
     BRACKET_ROUND_ALREADY_PLAYED: 'This round has already been played.',
     BRACKET_ROUND_NOT_FINISHED: 'The round before has not finished yet.',
     CLIENT_LOG_BATCH_TOO_LARGE: 'Too many log entries were sent at once.',
@@ -854,6 +857,9 @@ export const enUS = {
     CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH: 'That contest type is not offered in this league.',
     CONTEST_CONFIG_TEMPLATE_NOT_FOUND: 'That contest type was not found.',
     CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH: 'These settings do not match the contest type.',
+    CONTEST_CONFIG_TEMPLATE_UNKNOWN_SLOT: 'Pick slots from this sport league only.',
+    CONTEST_CONFIG_TEMPLATE_ALL_LISTED_SPANS_EVENTS: 'Covering all of its slots needs one event\'s slots.',
+    CONTEST_CONFIG_TEMPLATE_BRACKET_OUTSIDE_KNOCKOUT: 'A bracket can cover knockout slots only.',
     CONTEST_DELETE_STATUS_INVALID: 'A contest can only be deleted while it is being set up.',
     CONTEST_DRAW_ALREADY_RUN: 'This contest has already been drawn. The draw is final.',
     CONTEST_DRAW_ENTRIES_CHANGED: 'Someone entered or left while the draw was running, so nothing was dealt. Run the draw again.',
@@ -926,7 +932,7 @@ export const enUS = {
     ENTRY_LINEUP_INCOMPLETE: 'Fill every spot before you submit.',
     ENTRY_OVER_BUDGET: 'Your picks cost more than the salary cap. Remove one to get under it, then submit.',
     EVENT_ADMIN_RATE_LIMITED: 'Too many requests. Wait a minute and try again.',
-    EVENT_EDITION_ALREADY_EXISTS: 'This event already exists for that year.',
+    EVENT_DATES_FROM_SLOTS: 'This event\'s dates come from its slots, so they can\'t be changed here.',
     EVENT_HAS_CONTESTS: 'This event has contests, so it cannot be deleted.',
     EVENT_NOT_FOUND: 'Event not found.',
     EVENT_NOT_LINKED: 'This event is not linked to a provider.',
@@ -934,13 +940,10 @@ export const enUS = {
     EVENT_PARTICIPANT_ALREADY_ON_FIELD: 'They are already on the field.',
     EVENT_PARTICIPANT_HAS_PICKS: 'Entries have picked them, so they cannot be removed. Withdraw them instead.',
     EVENT_PARTICIPANT_IN_BRACKET: 'They are in the bracket, so they cannot be removed. Take them out of their match first.',
-    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: 'This is a play-in place: fill it with its winner instead.',
     EVENT_PARTICIPANT_NOT_FOUND: 'They are not on this event\'s field.',
-    EVENT_PARTICIPANT_NOT_IN_BRACKET: 'They have no place in the bracket.',
     EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: 'This is not a play-in place, so it cannot take a play-in winner.',
     EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED: 'Some rows do not name exactly one participant on the field.',
     EVENT_SCORING_FAMILY_MISMATCH: 'This event is not scored this way.',
-    EXTERNAL_EVENT_ALREADY_LINKED: 'Another event is already linked to that provider event.',
     FIELD_HAS_NO_ORDER: 'No one in the field has odds, a seed or a rank, so it cannot be put in tiers or priced.',
     FST_ERR_VALIDATION: 'The request is not valid. Check the details and try again.',
     INTERNAL_ERROR: 'Something went wrong. Please try again.',
@@ -981,7 +984,6 @@ export const enUS = {
     LEAGUE_PLAN_NOT_AVAILABLE: 'That plan is not available yet.',
     LOCALE_UNKNOWN: 'That language and region is not offered.',
     MATCH_ALREADY_PLAYED: 'This match has a result: clear it first.',
-    MATCH_ALREADY_STARTED: 'This match has already started.',
     MATCH_CANCELLED: 'This match was cancelled, so it has no score.',
     MATCH_IN_BRACKET: 'This match is part of a bracket: change its time instead.',
     MATCH_PERIOD_INVALID: 'This game keeps no score for that period.',
@@ -990,6 +992,8 @@ export const enUS = {
     MATCH_SIDES_NOT_SET: 'This match does not have both sides yet.',
     MATCH_SPREAD_LOCKED: 'This match already has picks, so its spread can no longer change.',
     MATCH_SPREAD_REQUIRED: 'This match has been released, so its spread can be changed but not cleared.',
+    PARTICIPANT_FEED_ID_REQUIRED: 'This league’s participants come from its feed. Give the feed’s id for them, or make a test participant.',
+    PARTICIPANT_FEED_ID_TAKEN: 'Another participant of this league already has that feed id.',
     PARTICIPANT_IN_USE: 'This participant is in use, so it cannot be deleted.',
     PARTICIPANT_NOT_FOUND: 'Participant not found.',
     PARTICIPANT_NOT_IN_EVENT: 'They are not in this event\'s field.',
@@ -1023,16 +1027,15 @@ export const enUS = {
     PLATFORM_PRICING_PROFILE_NAME_TAKEN: 'A pricing profile already uses that name.',
     PLATFORM_PRICING_PROFILE_NOT_FOUND: 'Pricing profile not found.',
     PLATFORM_TIER_PROFILE_CODE_TAKEN: 'A tier profile already uses that code.',
-    PLATFORM_TIER_PROFILE_INVALID: 'This tier profile is not valid.',
+    PLATFORM_TIER_PROFILE_INVALID: 'A capped last tier needs the most it takes, and one that takes everyone left has no cap.',
     PLATFORM_TIER_PROFILE_IN_USE: 'This tier profile is in use, so it cannot be deleted.',
     PLATFORM_TIER_PROFILE_NAME_TAKEN: 'A tier profile already uses that name.',
     PLATFORM_TIER_PROFILE_NOT_FOUND: 'Tier profile not found.',
     PROFILE_RATE_LIMITED: 'Too many requests. Wait a minute and try again.',
-    PROVIDER_EVENT_NOT_FOUND: 'The provider has no such event.',
     PROVIDER_LEAGUE_NOT_FOUND: 'Provider league not found.',
     PROVIDER_LEAGUE_REFUSED: 'The provider refused this league.',
+    PROVIDER_LEAGUE_UNKNOWN: 'The provider does not read this league.',
     PROVIDER_NOT_FOUND: 'Provider not found.',
-    PROVIDER_PRIORITY_TAKEN: 'Another provider already has that priority.',
     PROVIDER_SPORT_MISMATCH: 'This provider does not cover this sport.',
     PROVIDER_WEBHOOK_SECRET_MISSING: 'Webhooks can’t be turned on until the provider’s signing secret is set.',
     PROVIDER_WEBHOOK_UNVERIFIED: 'This delivery is not signed by the provider.',
@@ -1046,12 +1049,19 @@ export const enUS = {
     ROUND_SCORE_ROWS_UNRESOLVED: 'Some score rows do not name one participant on the field.',
     ROUND_VALUES_REQUIRED: 'A new round needs both its strokes and its score to par.',
     SEARCH_TERM_REQUIRED: 'Choose a sport league, or type a few more characters.',
+    SEASON_SLOT_NOT_CURRENT: 'That slot is not in the league\'s current Season.',
+    SEASON_SLOT_NOT_FOUND: 'Slot not found.',
+    SEASON_SLOT_NOT_TEST: 'Events can be made by hand only on a test slot.',
+    SEASON_SLOT_TAKEN: 'That slot already has an event.',
     SELECTION_CONFIG_INVALID: 'This contest\'s pick settings are not usable.',
     SELECTION_DEALT_BY_DRAW: 'Picks in this contest are dealt by the commissioner’s draw, so they can’t be chosen.',
     SETTINGS_CONFLICT: 'Someone else changed these settings. Reload and try again.',
     SETTINGS_GROUP_NOT_FOUND: 'Settings not found.',
     SETTINGS_INVALID: 'These settings are not valid.',
     SETTINGS_KEY_MISMATCH: 'These settings do not belong together.',
+    SLOT_DEFINITION_NOT_FOUND: 'That slot is not one of this league\'s.',
+    SLOT_NAME_PATTERN_TAKEN: 'That tournament name already places a tournament on a slot.',
+    SLOT_PHASE_NOT_IN_SEASON: 'This league\'s current Season has no place for that slot yet.',
     SPORT_EVENT_ALREADY_STARTED: 'This event has already started, so it can no longer be released.',
     SPORT_EVENT_BRACKET_LOCKED: 'This event has been released, so its bracket is locked.',
     SPORT_EVENT_FIELD_NOT_LOADED: 'This event\'s field has not loaded yet.',
@@ -1063,15 +1073,14 @@ export const enUS = {
     SPORT_EVENT_NOT_FOUND: 'Event not found.',
     SPORT_EVENT_NOT_READY: 'This event is not ready yet: one of its ready checks no longer passes. Reload it to see which.',
     SPORT_EVENT_NOT_RELEASED: 'This event is not released for contests yet.',
+    SPORT_EVENT_NOT_TEST_DATA: 'Results for this event come only from its data feed. Only a test event takes them by hand.',
     SPORT_EVENT_RELEASE_REQUIRED: 'This event is a draft: release it instead.',
     SPORT_EVENT_SEEDS_LOCKED: 'This event has been released, so its seeds are locked.',
     SPORT_EVENT_START_NOT_PLACEHOLDER: 'This event already has a real start time.',
-    SPORT_EVENT_SYNC_SCOPE_RESTRICTED: 'This event\'s sync cannot be changed that way.',
     SPORT_EVENT_TIERS_LOCKED: 'This event has been released, so its tiers and prices are locked.',
     SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED: 'An event already has its bracket, so how winners advance cannot change.',
     SPORT_LEAGUE_HAS_NO_SEASON: 'This league has no Season yet.',
     SPORT_LEAGUE_IN_USE: 'This league is in use, so it cannot be deleted.',
-    SPORT_LEAGUE_NAME_ALREADY_EXISTS: 'A sport league already uses that name.',
     SPORT_LEAGUE_NOT_BRACKET: 'This league plays no bracket.',
     SPORT_LEAGUE_NOT_FOUND: 'Sport league not found.',
     SPORT_LEAGUE_NOT_SYNCED: 'No provider syncs this league\'s events.',
@@ -1132,6 +1141,10 @@ export const enUS = {
     SYNC_RUN_NOT_FOUND: 'Sync run not found.',
     SYSTEM_EMAIL_NOT_SENT: 'The email was not sent.',
     SYSTEM_EMAIL_RATE_LIMITED: 'Too many emails. Wait a minute and try again.',
+    TEST_PARTICIPANT_FEED_ID: 'A test participant never has a feed id.',
+    TEST_PARTICIPANT_NOT_ON_TEST_SLOT: 'A test participant can only join the field of a test event.',
+    TEST_SLOT_ENDS_BEFORE_START: 'A test slot must end after it starts.',
+    TEST_SLOT_LABEL_TAKEN: 'This Season already has a test slot with that label for that slot.',
     TIER_MISSING: 'A participant has no tier yet.',
     TIER_NOT_FOUND: 'That tier is not in this contest.',
     TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS: 'Removing these tiers leaves participants without one. Choose a tier to move them to.',
@@ -1149,29 +1162,6 @@ export const enUS = {
    * context to extractErrorMessage. Placeholders take the sport's words from the screen.
    */
   errorContext: {
-    BRACKET_INVALID: {
-      bracketAdmin: 'That pairing could not be saved. Each {{participant}} plays one opening {{match}}, and two different {{participants}} meet in a {{match}}.',
-      reseedSave: 'These {{matches}} could not be saved. Each {{participant}} left plays once, against a {{participant}} from its own side of the bracket, and a {{participant}} with a bye keeps its place.',
-      reseedSuggest: 'The {{participants}} left don\'t fit this round\'s {{matches}}. Check the results of the round before.',
-    },
-    BRACKET_MATCH_NOT_FOUND: {
-      bracketAdmin: 'That {{match}} is no longer in the bracket. Refresh the page.',
-    },
-    BRACKET_NOT_RESEEDED: {
-      bracketAdmin: 'This round\'s {{participants}} come from the {{matches}} before it, so it isn\'t reseeded.',
-    },
-    BRACKET_PARTICIPANT_ALREADY_PLAYED: {
-      bracketAdmin: 'That {{participant}}\'s {{match}} has started, so enter the withdrawal as a walkover.',
-    },
-    BRACKET_PLACE_NOT_FIRST_ROUND: {
-      bracketAdmin: 'That {{participant}} skipped the first round, so enter the withdrawal as a walkover.',
-    },
-    BRACKET_ROUND_ALREADY_PLAYED: {
-      bracketAdmin: 'A {{match}} of this round has started, so its {{matches}} can no longer change.',
-    },
-    BRACKET_ROUND_NOT_FINISHED: {
-      bracketAdmin: 'Every {{match}} of the round before needs a result before this round\'s {{matches}} are set.',
-    },
     CONTEST_BRACKET_SINGLE_EVENT: {
       contestSetup: 'A bracket contest covers one tournament, so it can’t take another event.',
     },
@@ -1209,59 +1199,8 @@ export const enUS = {
     CONTEST_SQUARES_SINGLE_EVENT: {
       contestSetup: 'A squares contest is played on one game, so it can’t take another event.',
     },
-    EVENT_EDITION_ALREADY_EXISTS: {
-      createEvent: 'This {{sportLeague}} already has this {{event}} in its current Season.',
-    },
-    EVENT_PARTICIPANT_ALREADY_ON_FIELD: {
-      bracketAdmin: 'That {{participant}} is already in the {{event}}.',
-    },
-    EVENT_PARTICIPANT_IS_PLAY_IN_PLACE: {
-      bracketAdmin: 'That is a {{playIn}} place. Name its {{participant}} there instead.',
-    },
-    EVENT_PARTICIPANT_NOT_IN_BRACKET: {
-      bracketAdmin: 'That {{participant}} no longer has a place in the bracket. Refresh the page.',
-    },
-    EVENT_PARTICIPANT_NOT_PLAY_IN_PLACE: {
-      bracketAdmin: 'That place is not a {{playIn}} place, so its {{participant}} can\'t be replaced.',
-    },
     INTERNAL_ERROR: {
       eventTiers: 'The tiers may have saved, but placing the field in them failed. Save again to finish.',
-    },
-    MATCH_ALREADY_PLAYED: {
-      bracketAdmin: 'This {{match}} has a result. Clear it before cancelling the {{match}}.',
-    },
-    MATCH_ALREADY_STARTED: {
-      bracketAdmin: 'This {{match}} has started, so it can\'t be postponed.',
-    },
-    MATCH_CANCELLED: {
-      bracketAdmin: 'This {{match}} was cancelled, so it has no score.',
-    },
-    MATCH_IN_BRACKET: {
-      bracketAdmin: 'This {{match}} is part of a bracket, which can\'t lose a {{match}}. Change its time instead.',
-    },
-    MATCH_PERIOD_INVALID: {
-      bracketAdmin: 'This {{match}}\'s score at that point can\'t be entered here.',
-    },
-    MATCH_RESULT_INVALID: {
-      bracketAdmin: 'That result could not be saved. The winner\'s score is the higher, a {{tie}} has level scores, and a final score is never below an earlier one.',
-    },
-    MATCH_SIDES_NOT_SET: {
-      bracketAdmin: 'Both {{participants}} in this {{match}} aren\'t known yet. Enter the results of the {{matches}} before it first.',
-    },
-    MATCH_SPREAD_LOCKED: {
-      bracketAdmin: 'This {{match}} already has picks, so its spread can no longer change.',
-    },
-    MATCH_SPREAD_REQUIRED: {
-      bracketAdmin: 'The {{event}} has been released, so this {{match}}\'s spread can be changed but not cleared.',
-    },
-    PARTICIPANT_NOT_FOUND: {
-      bracketAdmin: 'That {{participant}} is no longer active. Pick another.',
-    },
-    PARTICIPANT_NOT_IN_SPORT_LEAGUE: {
-      replaceParticipant: 'That {{participant}} isn\'t on this {{sportLeague}}\'s roster, so they can\'t join this {{event}}. Pick another.',
-    },
-    PLAY_IN_SLOT_ALREADY_PLAYED: {
-      bracketAdmin: 'That place has already played a {{match}}, so its {{participant}} can\'t change.',
     },
     PREDICTION_CLEAR_AFTER_FIRST_KICKOFF: {
       pickEm: 'The week has started, so a pick can be changed to the other {{participant}} but not removed.',
@@ -1301,16 +1240,6 @@ export const enUS = {
     SPORT_EVENT_ALREADY_STARTED: {
       contestSetup: 'This event has already started, so a contest can no longer be made on it.',
       createEvent: 'This {{event}} has already started, so it can’t be added.',
-    },
-    SPORT_EVENT_BRACKET_LOCKED: {
-      bracketAdmin: 'The {{event}} has been released, so its pairings are locked.',
-    },
-    SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED: {
-      bracketAdmin: 'This {{match}}\'s winner is already in its next {{match}}, which has a score. Clear that score first.',
-      bracketAdminNextMatch: 'This {{match}}\'s winner is already in {{match}} {{nextMatchNumber}}, which has a score. Clear {{match}} {{nextMatchNumber}}\'s score first.',
-    },
-    SPORT_EVENT_NOT_RELEASED: {
-      bracketAdmin: 'Release the {{event}} before entering results.',
     },
   },
   word: {
@@ -1490,7 +1419,7 @@ export const enUS = {
       eventStart: 'opening tip-off',
       tie: 'Tie',
     },
-    AMERICAN_FOOTBALL: {
+    FOOTBALL: {
       participant_one: 'team',
       participant_other: 'teams',
       event_one: 'playoffs',

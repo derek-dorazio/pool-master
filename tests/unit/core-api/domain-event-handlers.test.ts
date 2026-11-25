@@ -22,9 +22,8 @@ import {
   withDomainEventTable,
 } from '../../../packages/core-api/src/modules/domain-events/domain-event-table';
 import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
-import { NOBODY_TOLD, NO_TEMPLATE_CONTESTS } from '../../support/domain-events';
+import { NOBODY_TOLD } from '../../support/domain-events';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
-import { mockFn } from '../../support/mock-fn';
 
 const START = new Date('2026-05-02T20:00:00.000Z');
 const SETTLE_AT = new Date('2026-05-04T23:00:00.000Z');
@@ -32,7 +31,7 @@ const SETTLE_AT = new Date('2026-05-04T23:00:00.000Z');
 function statusChanged(from: SportEventStatus, to: SportEventStatus, overrides: Partial<SportEventStatusChanged> = {}): SportEventStatusChanged {
   return {
     type: DomainEventType.SPORT_EVENT_STATUS_CHANGED,
-    sportEvent: { id: 'sport-event-1', startDate: START, eventSeriesId: 'series-1', sportLeagueSeasonId: 'season-2026' },
+    sportEvent: { id: 'sport-event-1', startDate: START },
     from,
     to,
     settleAt: SETTLE_AT,
@@ -70,19 +69,11 @@ function watchedQueue() {
   return queue;
 }
 
-/** Template contests a release joins: one job per contest named. */
-function templateContests(contestIds: readonly string[]) {
-  return {
-    releasedEditionJobs: mockFn<typeof NO_TEMPLATE_CONTESTS.releasedEditionJobs>(async (sportEvent, jobs) => contestIds.map((contestId) =>
-      jobs.request(BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, { contestId, sportEventId: sportEvent.id }))),
-  };
-}
-
 function domainEvents(overrides: Partial<ConstructorParameters<typeof DomainEvents>[0]> = {}) {
   const queue = overrides.queue ?? watchedQueue();
   return {
     queue,
-    events: new DomainEvents({ queue, releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD, ...overrides }),
+    events: new DomainEvents({ queue, sportEventChanged: NOBODY_TOLD, ...overrides }),
   };
 }
 
@@ -111,7 +102,6 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'activate-event-contests',
         'follow-postponed-event-contests',
         'settle-finished-event-contests',
-        'release-into-template-contests',
         'tell-leagues-event-postponed',
         'tell-leagues-event-cancelled',
         'rebuild-event-leaderboards',
@@ -127,6 +117,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'rebuild-moved-contest-leaderboards',
       ],
       SPORT_EVENT_FIELD_SYNCED: ['sync-games-then-tier-field'],
+      PARTICIPANT_PROVIDER_MAPPED: ['resolve-mapped-participant-findings'],
     });
   });
 
@@ -142,7 +133,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
   });
 
   it('queues only job types each handler declares, for every status change the model allows, so the generated table is the truth', async () => {
-    const { events } = domainEvents({ releasedEditionContests: templateContests(['contest-1']), sportEventChanged: recordingSportEventChangedNotice() });
+    const { events } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
     const declared = new Set(DOMAIN_EVENT_HANDLERS.SPORT_EVENT_STATUS_CHANGED.flatMap((handler) => handler.queues));
     const declaredRescheduled = new Set(DOMAIN_EVENT_HANDLERS.SPORT_EVENT_RESCHEDULED.flatMap((handler) => handler.queues));
 
@@ -185,7 +176,7 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
     if (!found) throw new Error(`No handler ${key}`);
     return found;
   };
-  const context = () => ({ queue: watchedQueue(), releasedEditionContests: templateContests(['contest-1', 'contest-2']), sportEventChanged: recordingSportEventChangedNotice() });
+  const context = () => ({ queue: watchedQueue(), sportEventChanged: recordingSportEventChangedNotice() });
 
   it('takes an event\'s contests live by a job when the event starts, and on no other change', async () => {
     const activate = handler('activate-event-contests');
@@ -239,69 +230,6 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
     expect(settle.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS))).toBe(false);
     expect(settle.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED))).toBe(false);
   });
-
-  it('joins a released edition to its template contests on the release alone, DRAFT to SCHEDULED', async () => {
-    const release = handler('release-into-template-contests');
-    const ctx = context();
-
-    expect(release.when?.(statusChanged(SportEventStatus.DRAFT, SportEventStatus.SCHEDULED))).toBe(true);
-    expect(release.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.SCHEDULED))).toBe(false);
-    expect(release.when?.(statusChanged(SportEventStatus.DRAFT, SportEventStatus.CANCELLED))).toBe(false);
-    const jobs = await release.jobs(statusChanged(SportEventStatus.DRAFT, SportEventStatus.SCHEDULED), ctx);
-
-    expect(ctx.releasedEditionContests.releasedEditionJobs).toHaveBeenCalledWith(
-      { id: 'sport-event-1', startDate: START, eventSeriesId: 'series-1', sportLeagueSeasonId: 'season-2026' },
-      ctx.queue,
-    );
-    expect(jobs.map((job) => job.payload)).toEqual([
-      { contestId: 'contest-1', sportEventId: 'sport-event-1' },
-      { contestId: 'contest-2', sportEventId: 'sport-event-1' },
-    ]);
-  });
-
-  it('tells the leagues of a first postponement, leaving out the contests it reopens, and not of a repeated one', async () => {
-    const postponed = handler('tell-leagues-event-postponed');
-    const ctx = context();
-    const event = statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED, { reopeningContestIds: new Set(['contest-live']) });
-
-    expect(postponed.when?.(event)).toBe(true);
-    expect(postponed.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.POSTPONED))).toBe(false);
-    expect(postponed.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS))).toBe(false);
-    expect(await postponed.jobs(event, ctx)).toEqual([eventChangedJob('sport-event-1', 'POSTPONED')]);
-    expect(ctx.sportEventChanged.sportEventChangedJobs).toHaveBeenCalledWith(
-      event.sportEvent,
-      { kind: 'POSTPONED' },
-      { reopening: new Set(['contest-live']) },
-    );
-  });
-
-  it('tells the leagues of a cancellation, from any status it cancels from, and not of a repeated one', async () => {
-    const cancelled = handler('tell-leagues-event-cancelled');
-    const ctx = context();
-    const event = statusChanged(SportEventStatus.IN_PROGRESS, SportEventStatus.CANCELLED);
-
-    for (const from of [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED]) {
-      expect(cancelled.when?.(statusChanged(from, SportEventStatus.CANCELLED))).toBe(true);
-    }
-    expect(cancelled.when?.(statusChanged(SportEventStatus.CANCELLED, SportEventStatus.CANCELLED))).toBe(false);
-    expect(cancelled.when?.(statusChanged(SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED))).toBe(false);
-    expect(await cancelled.jobs(event, ctx)).toEqual([eventChangedJob('sport-event-1', 'CANCELLED')]);
-    expect(ctx.sportEventChanged.sportEventChangedJobs).toHaveBeenCalledWith(event.sportEvent, { kind: 'CANCELLED' });
-  });
-
-  it('rebuilds the event\'s boards on every status change', async () => {
-    const rebuild = handler('rebuild-event-leaderboards');
-
-    expect(rebuild.when).toBeUndefined();
-    expect(await rebuild.jobs(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS), context())).toEqual([{
-      type: BackgroundJobType.REBUILD_LEADERBOARDS,
-      payload: { subject: 'EVENT', id: 'sport-event-1' },
-      sportEventId: 'sport-event-1',
-      runAt: undefined,
-      start: TEST_JOB_START,
-      dedupeKey: 'REBUILD_LEADERBOARDS:EVENT:sport-event-1',
-    }]);
-  });
 });
 
 describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
@@ -317,7 +245,7 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
 
   it('queues one job per event that syncs the provider\'s games, then tiers and prices the field, with the games as their kickoffs\' instants', async () => {
     expect(follow.when?.(fieldSynced(SportEventStatus.DRAFT))).toBe(true);
-    expect(await follow.jobs(fieldSynced(SportEventStatus.DRAFT), { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD })).toEqual([{
+    expect(await follow.jobs(fieldSynced(SportEventStatus.DRAFT), { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD })).toEqual([{
       type: BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS,
       payload: {
         sportEventId: 'sport-event-1',
@@ -339,7 +267,7 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
       bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, isNeutralSite: true, scheduledAt: KICKOFF, advancesTo: null, regionLabel: null }],
     };
 
-    const [job] = await follow.jobs(synced, { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD });
+    const [job] = await follow.jobs(synced, { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD });
 
     expect(job.payload).toEqual({
       sportEventId: 'sport-event-1',
@@ -360,6 +288,25 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
   });
 });
 
+describe('PARTICIPANT_PROVIDER_MAPPED handlers', () => {
+  const [resolve] = DOMAIN_EVENT_HANDLERS.PARTICIPANT_PROVIDER_MAPPED;
+
+  it('queues one job that resolves the unmapped participant findings of every feed id the write mapped', async () => {
+    const mapped = { type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED, sportLeagueId: 'league-1', providerId: 'provider-row-1', externalIds: ['p-1', 'p-2'] } as const;
+
+    expect(resolve.when?.(mapped)).toBe(true);
+    expect(await resolve.jobs(mapped, { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD })).toEqual([expect.objectContaining({
+      type: BackgroundJobType.RESOLVE_MAPPED_PARTICIPANT_FINDINGS,
+      payload: { sportLeagueId: 'league-1', providerId: 'provider-row-1', externalIds: ['p-1', 'p-2'] },
+      sportLeagueId: 'league-1',
+    })]);
+  });
+
+  it('queues nothing for a write that mapped no feed id', () => {
+    expect(resolve.when?.({ type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED, sportLeagueId: 'league-1', providerId: 'provider-row-1', externalIds: [] })).toBe(false);
+  });
+});
+
 describe('SPORT_EVENT_RESCHEDULED handlers', () => {
   const [tell] = DOMAIN_EVENT_HANDLERS.SPORT_EVENT_RESCHEDULED;
 
@@ -367,7 +314,7 @@ describe('SPORT_EVENT_RESCHEDULED handlers', () => {
     const notice = recordingSportEventChangedNotice();
     const event = rescheduled(SportEventStatus.POSTPONED, new Set(['contest-live']));
 
-    expect(await tell.jobs(event, { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: notice }))
+    expect(await tell.jobs(event, { queue: watchedQueue(), sportEventChanged: notice }))
       .toEqual([eventChangedJob('sport-event-1', 'RESCHEDULED')]);
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(
       { id: 'sport-event-1', startDate: START },
@@ -418,7 +365,7 @@ describe('CONTEST_ENTRY_EVENT_STATUS_CHANGED handlers', () => {
   const [rebuild] = DOMAIN_EVENT_HANDLERS.CONTEST_ENTRY_EVENT_STATUS_CHANGED;
 
   it('rebuilds the contest\'s own boards, one job per contest whichever entry moved, for a week submitted or sent back to draft', async () => {
-    const ctx = { queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD };
+    const ctx = { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD };
     const submitted = await rebuild.jobs(weekStatusChanged(ContestEntryStatus.DRAFT, ContestEntryStatus.SUBMITTED), ctx);
     const backToDraft = await rebuild.jobs({ ...weekStatusChanged(ContestEntryStatus.SUBMITTED, ContestEntryStatus.DRAFT), contestEntryEvent: { contestId: 'contest-1', contestEntryId: 'entry-2', sportEventId: 'sport-event-1' } }, ctx);
 
@@ -441,7 +388,7 @@ describe('CONTEST_STATUS_CHANGED handlers', () => {
     if (!found) throw new Error(`No handler ${key}`);
     return found;
   };
-  const context = () => ({ queue: watchedQueue(), releasedEditionContests: NO_TEMPLATE_CONTESTS, sportEventChanged: NOBODY_TOLD });
+  const context = () => ({ queue: watchedQueue(), sportEventChanged: NOBODY_TOLD });
   const told = (event: ContestStatusChanged) => DOMAIN_EVENT_HANDLERS.CONTEST_STATUS_CHANGED
     .filter((candidate) => candidate.when?.(event) ?? true).map((candidate) => candidate.key);
 
@@ -527,7 +474,6 @@ describe('CONTEST_STATUS_CHANGED handlers', () => {
   it('reads nothing: collecting the moves of many contests at once costs no read per contest', async () => {
     const refuse = () => { throw new Error('A contest status handler read through its context'); };
     const noReads: Omit<DomainEventHandlerContext, 'queue'> = {
-      releasedEditionContests: { releasedEditionJobs: refuse },
       sportEventChanged: { sportEventChangedJobs: refuse },
     };
     const { events } = domainEvents(noReads);
@@ -544,11 +490,11 @@ describe('CONTEST_STATUS_CHANGED handlers', () => {
 
 describe('DomainEvents.collect', () => {
   it('collects the jobs of each handler whose `when` takes the event, in map order, and wakes the runner only once told the write committed', async () => {
-    const { queue, events } = domainEvents({ releasedEditionContests: templateContests(['contest-1']) });
+    const { queue, events } = domainEvents();
 
-    const collected = await events.collect(statusChanged(SportEventStatus.DRAFT, SportEventStatus.SCHEDULED));
+    const collected = await events.collect(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS));
 
-    expect(typesOf(collected.jobs)).toEqual([BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, BackgroundJobType.REBUILD_LEADERBOARDS]);
+    expect(typesOf(collected.jobs)).toEqual([BackgroundJobType.ACTIVATE_EVENT_CONTESTS, BackgroundJobType.REBUILD_LEADERBOARDS]);
     expect(queue.queued).not.toHaveBeenCalled();
     collected.queued();
     expect(queue.queued).toHaveBeenCalledTimes(1);
@@ -589,6 +535,14 @@ describe('DomainEvents.collectEach, for a guarded batch write', () => {
     expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 
+  it('hands no jobs for a moved subject it was given no event about', async () => {
+    const { events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
+
+    const batch = await domain.collectEach(events, (event) => event.sportEvent.id);
+
+    expect(batch.jobsFor(['event-c', 'event-a'])).toEqual([eventChangedJob('event-a', 'RESCHEDULED')]);
+  });
+
   it('wakes nothing when the write moved none of its subjects', async () => {
     const { queue, events: domain } = domainEvents({ sportEventChanged: recordingSportEventChangedNotice() });
 
@@ -618,7 +572,6 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `SPORT_EVENT_STATUS_CHANGED` | `activate-event-contests` | `ACTIVATE_EVENT_CONTESTS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `follow-postponed-event-contests` | `FOLLOW_POSTPONED_EVENT_CONTESTS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `settle-finished-event-contests` | `SETTLE_SPORT_EVENT_CONTESTS` |',
-      '| `SPORT_EVENT_STATUS_CHANGED` | `release-into-template-contests` | `ADD_RELEASED_EDITION_TO_CONTEST` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-cancelled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |',
@@ -632,12 +585,13 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-settled` | `CONTEST_SETTLED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `rebuild-moved-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_FIELD_SYNCED` | `sync-games-then-tier-field` | `SYNC_EVENT_GAMES_AND_TIERS` |',
+      '| `PARTICIPANT_PROVIDER_MAPPED` | `resolve-mapped-participant-findings` | `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));
   });
 
   it('says so on purpose for an event type nothing follows', () => {
-    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [] };
+    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [], PARTICIPANT_PROVIDER_MAPPED: [] };
 
     expect(renderDomainEventTable(nothingFollows)).toContain('| `SPORT_EVENT_RESCHEDULED` | none | none |');
   });

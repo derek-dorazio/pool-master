@@ -1,4 +1,4 @@
-import { MatchEnding } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchStatus } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
   LeagueContextResponse,
@@ -15,7 +15,7 @@ export function squaresContestFixture(overrides: Partial<ContestDto> = {}): Cont
     id: 'contest-1',
     leagueId: 'league-1',
     entriesPerContest: null,
-    sport: 'AMERICAN_FOOTBALL',
+    sport: 'FOOTBALL',
     name: 'Super Bowl Squares',
     status: 'OPEN',
     contestFormat: 'SQUARES',
@@ -52,6 +52,8 @@ export function squaresGameFixture(overrides: Partial<SportEventRoundMatchDto> =
     homeSpread: null,
     periodScores: [],
     ...overrides,
+    // As the server's mapper reads it from the status.
+    isUnplayed: overrides.isUnplayed ?? ([undefined, MatchStatus.SCHEDULED, MatchStatus.POSTPONED] as readonly (MatchStatus | undefined)[]).includes(overrides.status),
   };
 }
 

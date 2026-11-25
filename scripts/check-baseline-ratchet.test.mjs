@@ -58,6 +58,25 @@ describe('check-baseline-ratchet (#1619)', () => {
     assert.deepEqual(undeclared([{ key: 'a.tsx', was: 1, now: 4 }], allowed), [{ key: 'a.tsx', was: 1, now: 4 }]);
   });
 
+  it('counts a lowered coverage floor, a lowered exception, a new exception and a lines-for-branches trade as raises, and a raised or deleted exception as none (#2103)', () => {
+    const readFloors = read('scripts/coverage-floors-web.json');
+    const config = (floor, exceptions) => JSON.stringify({ floors: [{ name: 'web', include: 'src/**', ...floor, exceptions }] });
+    const base = config({ lines: 80, branches: 80 }, { 'src/a.ts': { lines: 50, reason: 'x' }, 'src/b.ts': { branches: 60, reason: 'x' } });
+    const worse = config({ lines: 75, branches: 80 }, { 'src/a.ts': { lines: 40, reason: 'x' }, 'src/b.ts': { branches: 60, reason: 'x' }, 'src/c.ts': { lines: 10, reason: 'x' } });
+    assert.deepEqual(findRaises(readFloors(base), readFloors(worse)).map((r) => r.key).sort(), ['web:lines', 'web:src/a.ts:lines', 'web:src/b.ts:lines', 'web:src/c.ts:branches', 'web:src/c.ts:lines']);
+    const traded = config({ lines: 80, branches: 80 }, { 'src/a.ts': { lines: 45, branches: 85, reason: 'x' }, 'src/b.ts': { branches: 60, reason: 'x' } });
+    assert.deepEqual(findRaises(readFloors(base), readFloors(traded)).map((r) => r.key), ['web:src/a.ts:lines']);
+    const better = config({ lines: 80, branches: 80 }, { 'src/a.ts': { lines: 60, reason: 'x' } });
+    assert.deepEqual(findRaises(readFloors(base), readFloors(better)), []);
+  });
+
+  it('counts a new allow pattern in the web shared-import baseline as a raise, so widening the allowlist needs a declaration (#2107)', () => {
+    const readImports = read('scripts/web-shared-imports-baseline.json');
+    const base = JSON.stringify({ $allowed: [{ pattern: '^format', reason: 'r' }], getSportDefinition: 3 });
+    const head = JSON.stringify({ $allowed: [{ pattern: '^format', reason: 'r' }, { pattern: '^get', reason: 'r' }], getSportDefinition: 2 });
+    assert.deepEqual(findRaises(readImports(base), readImports(head)), [{ key: '$allowed:^get', was: 0, now: 1 }]);
+  });
+
   it('refuses a declared raise with no reason', () => {
     const text = JSON.stringify({ raises: [{ file: 'f.json', key: 'a.tsx', now: 2, reason: ' ' }] });
     assert.throws(() => declaredRaises(text, 'f.json'), /needs a reason/);
@@ -65,7 +84,13 @@ describe('check-baseline-ratchet (#1619)', () => {
 
   it('reads every real baseline file without losing an entry', () => {
     for (const { file, read: readBaseline } of BASELINES) {
-      const entries = readBaseline(readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
+      const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+      const entries = readBaseline(text);
+      // The duplicate baseline can shrink to no pair at all; it must still read every pair it lists.
+      if (file === 'scripts/duplicate-baseline.json') {
+        assert.equal(entries.size, (JSON.parse(text).pairs ?? []).length, `${file} lost a pair`);
+        continue;
+      }
       assert.ok(entries.size > 0, `${file} read as empty`);
     }
     const listed = readFileSync(new URL('../eslint-rules/query-states-baseline.mjs', import.meta.url), 'utf8');

@@ -262,6 +262,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/write-coverage-summary.mjs "Service Unit Coverage" "Unit=coverage/service-unit/coverage-summary.json"
 
+      # #2103 -- the per-file floors in scripts/coverage-floors-merged.json judge the unit and
+      # integration runs together, so service-integration-tests downloads this report and merges
+      # it with the four shards'.
+      - name: Upload service unit coverage
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-service-unit
+          path: coverage/service-unit/coverage-final.json
+          if-no-files-found: error
+          retention-days: 7
+
   # #295 -- the integration suite was the one job holding deploy-publish-images (about 5 min,
   # serial against one database), so it runs as shards, each with its own Postgres: two from
   # #295, four since #778, when each of the two had grown to about 7 min.
@@ -352,7 +364,7 @@ jobs:
     name: service-integration-tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [service-integration-test-shards]
+    needs: [service-integration-test-shards, service-unit-tests]
     if: ${{ !cancelled() && needs.service-integration-test-shards.result != 'skipped' }}
     steps:
       - name: Require every shard to pass
@@ -383,6 +395,28 @@ jobs:
 
       - name: Check per-file coverage floors
         run: node scripts/check-coverage-floors.mjs coverage/service-integration-merged/coverage-final.json
+
+      # #2103 -- every backend and shared file at 80% lines and 80% branches, and job code at
+      # 100% / 96%, judged on the unit and integration runs merged: a file counts as covered by
+      # whichever suite proves it. Runs even when the repository floor above fails, so one run
+      # reports both.
+      - name: Download service unit coverage
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-service-unit
+          path: coverage/service-unit
+
+      - name: Merge unit and integration coverage
+        if: ${{ !cancelled() }}
+        run: >-
+          node scripts/merge-service-coverage.mjs --out coverage/service-all-merged
+          coverage/service-unit/coverage-final.json
+          coverage/service-integration-merged/coverage-final.json
+
+      - name: Check per-file coverage floors (unit and integration merged)
+        if: ${{ !cancelled() }}
+        run: node scripts/check-coverage-floors.mjs --config scripts/coverage-floors-merged.json coverage/service-all-merged/coverage-final.json
 
       - name: Upload merged integration coverage
         if: always()
@@ -550,6 +584,12 @@ jobs:
 
       - name: Run PoolMaster unit tests with coverage
         run: npm run test:coverage:poolmaster:unit
+
+      # #2103 -- every web file at 80% lines and 80% branches on its own (the folder and suite
+      # floors above live in vitest.config.ts).
+      - name: Check per-file web coverage floors
+        if: ${{ !cancelled() }}
+        run: node scripts/check-coverage-floors.mjs --config scripts/coverage-floors-web.json --root clients/poolmaster clients/poolmaster/coverage/coverage-final.json
 
       - name: PoolMaster unit coverage summary
         if: always()
@@ -1610,7 +1650,7 @@ jobs:
           npm run build
           grep -q "/${WEB_RELEASE_PREFIX}/" dist/index.html
           test -f dist/version-info.json
-          grep -q 'property="og:image"' dist/play/american-football/championship-weekend/index.html
+          grep -q 'property="og:image"' dist/play/football/championship-weekend/index.html
 
       - name: Deploy PoolMaster webapp to S3 + invalidate CloudFront
         id: deploy-webapp
@@ -1628,7 +1668,7 @@ jobs:
             aws s3 sync clients/poolmaster/dist/email/ "s3://${BUCKET}/email/" --exclude "*.source.md" --cache-control "public, max-age=86400"
             aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
             aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
-            aws s3api head-object --bucket "${BUCKET}" --key "email/sports/american-football.jpg" >/dev/null || { echo "::error::email/ photos missing at the bucket root"; exit 1; }
+            aws s3api head-object --bucket "${BUCKET}" --key "email/sports/football.jpg" >/dev/null || { echo "::error::email/ photos missing at the bucket root"; exit 1; }
             if [ -n "$CF_ID" ]; then
               aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
             fi

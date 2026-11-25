@@ -72,13 +72,8 @@ export function DeleteContestDialog({
       isPending={deleteContestMutation.isPending}
       onCancel={closeDialog}
       onConfirm={() => void deleteContestMutation.mutateAsync().catch(() => undefined)}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          onOpenChange(true);
-          return;
-        }
-        closeDialog();
-      }}
+      // Opened from outside the dialog, so the one change it reports is a close (Escape).
+      onOpenChange={closeDialog}
       open={open}
       pendingLabel="Deleting..."
       testId="contest-delete-dialog"

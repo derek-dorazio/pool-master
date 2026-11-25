@@ -33,6 +33,7 @@ function createLedgerStore() {
         ...rest,
         providerId: TEST_PROVIDER_ROWS[providerCode].id,
         providerName: TEST_PROVIDER_ROWS[providerCode].name,
+        sport: null,
         eventId: null,
         id: `sync-run-${nextId}`,
         createdAt: input.createdAt ?? new Date(),
@@ -105,7 +106,7 @@ function createEventRequest(input: {
 function createJob(input: {
   jobType: IngestionJobRecord['jobType'];
   feed: IngestionFeedType;
-  eventId?: string;
+  eventId: string;
   status?: IngestionJobRecord['status'];
   recordsProcessed: number;
   errors?: number;

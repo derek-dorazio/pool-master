@@ -13,10 +13,11 @@ export const swaggerPlugin = fp(async (fastify) => {
   await fastify.register(swagger, {
     // Publish added schemas under their own $id. Without this, @fastify/swagger
     // names every hoisted component `def-0`, `def-1`, ... and hey-api generates
-    // `Def0`, `Def1` — components exist but are useless as imports (#192).
+    // `Def0`, `Def1` — components exist but are useless as imports (#192). Every shared schema
+    // has an $id, since Fastify's addSchema refuses one without it (schema-components.ts).
     refResolver: {
-      buildLocalReference(json: { $id?: unknown }, _baseUri, _fragment, i) {
-        return typeof json.$id === 'string' && json.$id.length > 0 ? json.$id : `def-${i}`;
+      buildLocalReference(json: { $id?: unknown }) {
+        return String(json.$id);
       },
     },
     openapi: {

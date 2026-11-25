@@ -1,4 +1,6 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
+import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId, testSlotId } from '../../support/test-slots';
+import { syncSlotsFor } from '../../support/sync-slots';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
@@ -9,8 +11,7 @@ import {
   UserResetPasswordResponseSchema,
   ContestConfigTemplateResponseSchema,
   ContestConfigTemplateListResponseSchema,
-  IngestionScheduleConfigSchema,
-  ProviderCatalogEventListResponseSchema,
+  IngestionScheduleSchema,
   CustomerLeagueListResponseSchema,
   LeagueResponseSchema,
   ProviderLeagueResponseSchema,
@@ -29,40 +30,40 @@ import {
   SportEventParticipantUploadPreviewResponseSchema,
   RaceResultPreviewResponseSchema,
   SportEventResponseSchema,
+  SportLeagueSeasonSlotDtoSchema,
   SportLeagueSeasonListResponseSchema,
   ActivityJobResponseSchema,
   ActivityListResponseSchema,
   SportEventRoundListResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
+  SportLeagueResponseSchema,
   SportLeagueRankingUploadPreviewResponseSchema,
   SportLeagueOverviewListResponseSchema,
   SportLeagueSyncListResponseSchema,
   SportLeagueEventOverviewListResponseSchema,
   SportLeagueParticipantOverviewListResponseSchema,
   SportLeagueStructureResponseSchema,
-  SportLeagueResponseSchema,
   SportListResponseSchema,
 } from '@poolmaster/shared/dto';
 import type {
   ContestConfigTemplateListResponse,
   ContestConfigTemplateResponse,
   ErrorEnvelope,
-  IngestionScheduleConfig,
+  IngestionSchedule,
   LeagueResponse,
   ParticipantListResponse,
   ParticipantProviderMappingResponse,
-  ProviderCatalogEventListResponse,
   ProviderListResponse,
   ProviderManualSyncSubmissionResponse,
   ProviderSyncRunDetailDto,
   ProviderSyncRunListResponse,
   SportEventListResponse,
   SportEventResponse,
+  SportLeagueSeasonSlotResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
   SportLeagueListResponse,
-  SportLeagueResponse,
   SuccessResponse,
   UserResetPasswordResponse,
   UserResponse,
@@ -80,10 +81,9 @@ import {
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
 } from '../../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
-import { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import { ProviderSeasonScheduleReader } from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import { activityModule } from '../../../packages/core-api/src/modules/activity/routes';
 import { ActivityService } from '../../../packages/core-api/src/modules/activity/activity-service';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
@@ -108,17 +108,19 @@ import type {
   SportEventDetail,
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-import { freshEventEdition, withCurrentSeason } from '../../support/event-edition';
+import { fixtureTourId, freshEventEdition, mapEventToProvider, withCurrentSeason } from '../../support/event-edition';
 import type { z } from 'zod';
 import { expectDefined } from '../../support/expect-defined';
 import { RecordingLeaderboardRebuilds } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
 import { participantLeagueId } from '../../support/participant-league';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
+import { sportRowKeys } from '../../support/sport-rows';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
-import { Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
+import { insertTestSportLeague } from '../../support/test-sport-league';
 
 // The shared package exports the participant response schema but not its inferred type.
 type ParticipantResponse = z.infer<typeof ParticipantResponseSchema>;
@@ -144,7 +146,11 @@ function emptyLiveScorePersistenceResult() {
 class OperationalContractProvider implements SportDataProvider {
   providerId = 'balldontlie';
   providerName = 'Contract Provider';
-  sportsCovered: Sport[] = ['GOLF'];
+  readonly providerCode = ProviderCode.BALLDONTLIE;
+
+  servesLeague(): boolean {
+    return true;
+  }
 
   async getUpcomingEvents(): Promise<SportEvent[]> {
     return [
@@ -161,7 +167,7 @@ class OperationalContractProvider implements SportDataProvider {
         rounds: 4,
         participantCount: 2,
         fieldLocked: false,
-        metadata: {},
+        providerSlots: [],
       },
     ];
   }
@@ -184,9 +190,7 @@ class OperationalContractProvider implements SportDataProvider {
       rounds: 4,
       participantCount: 2,
       fieldLocked: false,
-      metadata: {
-        releaseRule: '3 days prior at noon',
-      },
+      providerSlots: [],
       participants: [
         {
           externalId: 'golfer-1',
@@ -278,18 +282,12 @@ class TourSlateContractProvider extends OperationalContractProvider {
   }
 
   override async getUpcomingEvents(): Promise<SportEvent[]> {
-    const event = (externalId: string, name: string, providerLeagueCode: string, day: string): SportEvent => ({
-      externalId,
-      providerId: this.providerId,
-      sport: 'GOLF',
-      name,
-      startDate: new Date(`${day}T12:00:00.000Z`),
-      endDate: new Date(`${day.slice(0, 8)}${String(Number(day.slice(8)) + 3).padStart(2, '0')}T23:00:00.000Z`),
-      status: 'SCHEDULED',
-      fieldLocked: false,
-      providerLeagueCode,
-      metadata: {},
-    });
+    const event = (externalId: string, name: string, providerLeagueCode: string, day: string): SportEvent => {
+      const startDate = new Date(`${day}T12:00:00.000Z`);
+      const endDate = new Date(`${day.slice(0, 8)}${String(Number(day.slice(8)) + 3).padStart(2, '0')}T23:00:00.000Z`);
+      // A tournament's code is its own id, which the test league's slots map (#2005).
+      return { externalId, providerId: this.providerId, sport: 'GOLF', name, startDate, endDate, status: 'SCHEDULED', fieldLocked: false, providerSlots: [{ code: externalId, startsAt: startDate, endsAt: endDate }], providerLeagueCode };
+    };
     return [
       event(`${this.tour}-alpha`, `${this.tour} Alpha Open`, 'pga', '2085-03-05'),
       event(`${this.tour}-bravo`, `${this.tour} Bravo Classic`, 'pga', '2085-04-09'),
@@ -298,10 +296,27 @@ class TourSlateContractProvider extends OperationalContractProvider {
   }
 }
 
+/**
+ * A golf event on a tour of its own synced from BALLDONTLIE's PGA TOUR, kept under `externalId`,
+ * BALLDONTLIE's id for it, as the tour's sync leaves it (#2004): what an event sync names by its
+ * own id.
+ */
+async function syncedEvent(externalId: string) {
+  const prisma = getPrisma();
+  const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
+  const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: sport.id, name: `Contract Sync Tour ${randomUUID()}` } });
+  await syncLeagueTo(prisma, tour.id, 'pga');
+  const event = await prisma.sportEvent.create({
+    data: { ...(await freshEventEdition(prisma, { sportLeagueId: tour.id })), name: `Contract Sync ${externalId}`, startDate: new Date('2026-04-10T15:00:00.000Z') },
+  });
+  await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId });
+  return event;
+}
+
 async function buildIngestionApp(provider: SportDataProvider | null): Promise<FastifyInstance> {
   const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   const registry = new ProviderRegistry();
-  if (provider) registry.register('GOLF', provider, 'PRIMARY');
+  if (provider) registry.register(provider);
   const scheduler = new IngestionScheduler(registry, {
     onEventDetail: async () => ({ writeDiagnostics: emptySyncWriteDiagnostics() }),
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
@@ -324,8 +339,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   });
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
-    sports: new PrismaSportRepository(getAppPrisma()),
-    scoreSource: new EventScoreSourceService(getAppPrisma(), registry),
+    seasonSchedule: new ProviderSeasonScheduleReader(getAppPrisma(), registry),
     sportEvents: integrationSportEventServices(getAppPrisma(), providerRows.providers).sportEvents,
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
     jobs: backgroundJobs.queue,
@@ -355,7 +369,7 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     providerSettings: providerRows.settingsService,
   });
   await app.register(activityModule, { prefix: '/api/v1/activity', activity });
-  await app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
+  await app.register(participantsModule, { prefix: '/api/v1/participants', domainEvents: testDomainEvents({ queue: backgroundJobs.queue }) });
   await app.register(eventsModule, {
     prefix: '/api/v1/events',
     eventLifecycleService: integrationEventLifecycle(prisma),
@@ -406,7 +420,6 @@ describe('Contract verification (root admin)', () => {
         kind: 'SCORES',
         trigger: 'SCHEDULE',
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-        sport: 'GOLF',
         status: 'COMPLETED',
         summary: 'Completed event participants sync.',
         detailsJson: { providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: true, rawTruncated: false, raw: [] } },
@@ -496,6 +509,8 @@ describe('Contract verification (root admin)', () => {
     // The completed run was submitted after the failed one but started before it: the list
     // orders by submission, newest first (#1174).
     const submittedAt = Date.now();
+    // A run's sport is its sport league's (#2042).
+    const golfLeagueId = await fixtureTourId(getPrisma());
     await getPrisma().providerSyncRun.createMany({
       data: [
         {
@@ -503,7 +518,7 @@ describe('Contract verification (root admin)', () => {
           trigger: 'SCHEDULE',
           id: '11111111-1111-1111-1111-111111111111',
           providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-          sport: 'GOLF',
+          sportLeagueId: golfLeagueId,
           status: 'COMPLETED',
           startedAt: new Date('2026-04-09T10:00:00.000Z'),
           completedAt: new Date('2026-04-09T10:01:00.000Z'),
@@ -527,7 +542,7 @@ describe('Contract verification (root admin)', () => {
           trigger: 'SCHEDULE',
           id: '22222222-2222-2222-2222-222222222222',
           providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-          sport: 'GOLF',
+          sportLeagueId: golfLeagueId,
           status: 'FAILED',
           startedAt: new Date('2026-04-10T10:00:00.000Z'),
           completedAt: new Date('2026-04-10T10:00:30.000Z'),
@@ -668,9 +683,14 @@ describe('Contract verification (root admin)', () => {
       headers: rootAdmin.headers,
     });
     expect(ingestionReadRes.statusCode).toBe(200);
-    expect(IngestionScheduleConfigSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
+    expect(IngestionScheduleSchema.safeParse(ingestionReadRes.json()).success).toBe(true);
     // One schedule for every sport a running provider covers (#1997): the policies, with no sports list.
-    expect(ingestionReadRes.json<IngestionScheduleConfig>()).not.toHaveProperty('scheduledSports');
+    expect(ingestionReadRes.json<IngestionSchedule>()).not.toHaveProperty('scheduledSports');
+    // Each sync says whether it runs and has a switch (#2086): the field sync has none and always runs.
+    const read = ingestionReadRes.json<IngestionSchedule>();
+    expect(read.FIELD).toEqual(expect.objectContaining({ runs: true, switchable: false }));
+    expect(read.FIELD).not.toHaveProperty('enabled');
+    expect(read.SCORES).toEqual(expect.objectContaining({ enabled: read.SCORES.runs, switchable: true }));
 
     const ingestionUpdateRes = await getApp().inject({
       method: 'PUT',
@@ -683,8 +703,8 @@ describe('Contract verification (root admin)', () => {
       },
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
-    expect(IngestionScheduleConfigSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json<IngestionScheduleConfig>().SCORES.intervalSeconds).toBe(45);
+    expect(IngestionScheduleSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
+    expect(ingestionUpdateRes.json<IngestionSchedule>().SCORES.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
       method: 'GET',
@@ -792,24 +812,15 @@ describe('Contract verification (root admin)', () => {
   });
 
 
-  it('pool-master-rop.68.1.2 root-admin provider operational routes match their DTOs on happy paths', async () => {
+  it('pool-master-rop.68.1.2 root-admin provider operational routes match their DTOs on happy paths, and every retired provider route answers 404', async () => {
     const rootAdmin = await createTestUser({
       displayName: 'Root Admin Provider Ops User',
       isRootAdmin: true,
     });
 
-    const contractEvent = await getPrisma().sportEvent.upsert({
-      where: {
-        providerId_externalId: {
-          providerId: 'balldontlie',
-          externalId: 'event-1',
-        },
-      },
-      create: {
+    const contractEvent = await getPrisma().sportEvent.create({
+      data: {
         ...(await freshEventEdition(getPrisma())),
-        externalId: 'event-1',
-        providerId: 'balldontlie',
-        sport: 'GOLF',
         name: 'Contract Masters',
         venue: 'Contract National',
         location: 'Augusta, GA',
@@ -818,21 +829,9 @@ describe('Contract verification (root admin)', () => {
         status: 'SCHEDULED',
         rounds: 4,
         participantCount: 2,
-        metadata: {},
-      },
-      update: {
-        sport: 'GOLF',
-        name: 'Contract Masters',
-        venue: 'Contract National',
-        location: 'Augusta, GA',
-        startDate: new Date('2026-04-10T15:00:00.000Z'),
-        endDate: new Date('2026-04-14T21:00:00.000Z'),
-        status: 'SCHEDULED',
-        rounds: 4,
-        participantCount: 2,
-        metadata: {},
       },
     });
+    await mapEventToProvider(getPrisma(), contractEvent.id, { providerId: 'balldontlie', externalId: 'event-1' });
 
     await getPrisma().providerSyncRun.upsert({
       where: {
@@ -843,8 +842,9 @@ describe('Contract verification (root admin)', () => {
         trigger: 'SCHEDULE',
         id: '33333333-3333-3333-3333-333333333333',
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-        sport: 'GOLF',
         sportEventId: contractEvent.id,
+        // The event's own league: a run on an event records it (#2042 reads the run's sport there).
+        sportLeagueId: await fixtureTourId(getPrisma()),
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
@@ -853,8 +853,9 @@ describe('Contract verification (root admin)', () => {
       },
       update: {
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-        sport: 'GOLF',
         sportEventId: contractEvent.id,
+        // The event's own league: a run on an event records it (#2042 reads the run's sport there).
+        sportLeagueId: await fixtureTourId(getPrisma()),
         status: 'COMPLETED',
         startedAt: new Date('2026-04-09T10:00:00.000Z'),
         completedAt: new Date('2026-04-09T10:02:00.000Z'),
@@ -907,14 +908,12 @@ describe('Contract verification (root admin)', () => {
         ),
       ).toBe(true);
 
+      const syncTarget = await syncedEvent('contract-sync-event');
       const eventSyncRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
+        url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
-        payload: {
-          providerId: 'balldontlie',
-          feeds: ['EVENTLIVESCORES'],
-        },
+        payload: { feeds: ['EVENTLIVESCORES'] },
       });
       expect(eventSyncRes.statusCode).toBe(202);
       expect(ProviderManualSyncSubmissionResponseSchema.safeParse(eventSyncRes.json()).success).toBe(true);
@@ -931,12 +930,9 @@ describe('Contract verification (root admin)', () => {
       for (const retiredFeed of ['PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS']) {
         const retiredFeedRes = await app.inject({
           method: 'POST',
-          url: '/api/v1/ingestion/sports/GOLF/events/contract-sync-event/sync',
+          url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
           headers: withoutJsonBodyHeaders(rootAdmin.headers),
-          payload: {
-            providerId: 'balldontlie',
-            feeds: [retiredFeed],
-          },
+          payload: { feeds: [retiredFeed] },
         });
         expect(retiredFeedRes.statusCode).toBe(400);
       }
@@ -960,6 +956,18 @@ describe('Contract verification (root admin)', () => {
         payload: { mode: 'DRY_RUN' },
       });
       expect(cleanupRes.statusCode).toBe(404);
+
+      // #2004 — only the sync gives an event its provider id: the catalog browse, the create from
+      // a provider event, the score-source link and unlink, and the sport-scoped event sync are gone.
+      const someId = '00000000-0000-4000-8000-0000000000e1';
+      const retired = await Promise.all([
+        app.inject({ method: 'GET', url: `/api/v1/ingestion/providers/${someId}/catalog-events`, headers: withoutJsonBodyHeaders(rootAdmin.headers) }),
+        app.inject({ method: 'POST', url: '/api/v1/events/from-provider-event', headers: rootAdmin.headers, payload: {} }),
+        app.inject({ method: 'PUT', url: `/api/v1/events/${someId}/score-source`, headers: rootAdmin.headers, payload: {} }),
+        app.inject({ method: 'DELETE', url: `/api/v1/events/${someId}/score-source`, headers: withoutJsonBodyHeaders(rootAdmin.headers) }),
+        app.inject({ method: 'POST', url: `/api/v1/ingestion/sports/GOLF/events/${someId}/sync`, headers: rootAdmin.headers, payload: { feeds: ['EVENTLIVESCORES'] } }),
+      ]);
+      expect(retired.map((res) => res.statusCode)).toEqual([404, 404, 404, 404, 404]);
     } finally {
       await app.close();
     }
@@ -976,14 +984,12 @@ describe('Contract verification (root admin)', () => {
     const app = await buildIngestionApp(new EmptyDiagnosticsProvider());
 
     try {
+      const target = await syncedEvent('empty-diagnostics-event');
       const prepareSyncRes = await app.inject({
         method: 'POST',
-        url: '/api/v1/ingestion/sports/GOLF/events/empty-diagnostics-event/sync',
+        url: `/api/v1/ingestion/events/${target.id}/sync`,
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
-        payload: {
-          providerId: 'balldontlie',
-          feeds: ['EVENTLIVESCORES'],
-        },
+        payload: { feeds: ['EVENTLIVESCORES'] },
       });
       expect(prepareSyncRes.statusCode).toBe(202);
       expect(ProviderManualSyncSubmissionResponseSchema.safeParse(prepareSyncRes.json()).success).toBe(true);
@@ -1073,32 +1079,22 @@ describe('Contract verification (root admin)', () => {
     const app = await buildIngestionApp(new OperationalContractProvider());
 
     try {
-      const missingProviderCatalogRes = await app.inject({
-        method: 'GET',
-        url: '/api/v1/ingestion/providers/missing-provider/catalog-events?sport=GOLF',
-        headers: rootAdmin.headers,
+      // An event sync names the event by its own id (#2004): one no event has is not found, and a
+      // test event, which its provider has no id for, is not linked.
+      const syncOf = (eventId: string) => app.inject({
+        method: 'POST',
+        url: `/api/v1/ingestion/events/${eventId}/sync`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: { feeds: ['EVENTLIVESCORES'] },
       });
-      expect(missingProviderCatalogRes.statusCode).toBe(404);
-      expect(ErrorEnvelopeSchema.safeParse(missingProviderCatalogRes.json()).success).toBe(true);
-      expect(missingProviderCatalogRes.json<ErrorEnvelope>().error.code).toBe('PROVIDER_NOT_FOUND');
-
-      const noProviderApp = await buildIngestionApp(null);
-      try {
-        const missingSportProviderRes = await noProviderApp.inject({
-          method: 'POST',
-          url: '/api/v1/ingestion/sports/GOLF/events/missing-300/sync',
-          headers: withoutJsonBodyHeaders(rootAdmin.headers),
-          payload: {
-            providerId: 'balldontlie',
-            feeds: ['EVENTLIVESCORES'],
-          },
-        });
-        expect(missingSportProviderRes.statusCode).toBe(404);
-        expect(ErrorEnvelopeSchema.safeParse(missingSportProviderRes.json()).success).toBe(true);
-        expect(missingSportProviderRes.json<ErrorEnvelope>().error.code).toBe('SPORT_PROVIDER_NOT_FOUND');
-      } finally {
-        await noProviderApp.close();
-      }
+      const testEvent = await getPrisma().sportEvent.create({
+        data: { ...(await freshEventEdition(getPrisma())), name: 'Contract Test Event', startDate: new Date('2026-04-10T15:00:00.000Z') },
+      });
+      const missingEventRes = await syncOf(randomUUID());
+      const unlinkedEventRes = await syncOf(testEvent.id);
+      expect([missingEventRes.statusCode, unlinkedEventRes.statusCode]).toEqual([404, 409]);
+      expect(ErrorEnvelopeSchema.parse(missingEventRes.json()).error.code).toBe('EVENT_NOT_FOUND');
+      expect(ErrorEnvelopeSchema.parse(unlinkedEventRes.json()).error.code).toBe('EVENT_NOT_LINKED');
 
       const inactivateMissingLeagueRes = await getApp().inject({
         method: 'POST',
@@ -1135,6 +1131,7 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
+        ...sportRowKeys('GOLF'),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1202,6 +1199,7 @@ describe('Contract verification (root admin)', () => {
       where: { sport: 'GOLF' },
       create: {
         sport: 'GOLF',
+        ...sportRowKeys('GOLF'),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
       update: {},
@@ -1214,16 +1212,15 @@ describe('Contract verification (root admin)', () => {
     };
 
     try {
-      // --- createSportLeague (201: { sportLeague }) ----------------------------
-      const leagueRes = await getApp().inject({
+      // --- POST /sport-leagues (404) — removed (#2075): a sport league comes only from a migration ---
+      const removedCreateRes = await getApp().inject({
         method: 'POST',
         url: '/api/v1/sport-leagues',
         headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
+        payload: { ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `Z3L Contract Tour ${stamp}` },
       });
-      expect(leagueRes.statusCode).toBe(201);
-      expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
-      const leagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
+      expect(removedCreateRes.statusCode).toBe(404);
+      const leagueId = (await insertTestSportLeague(getPrisma(), { sport: Sport.GOLF, name: `Z3L Contract Tour ${stamp}`, championshipYear: 2081 })).id;
       created.sportLeagueId = leagueId;
       // A migration adds a league's Seasons and the daily recompute makes one current; the test's own league stands in.
       const currentSeasonId = await withCurrentSeason(getPrisma(), leagueId, 2081);
@@ -1239,6 +1236,11 @@ describe('Contract verification (root admin)', () => {
       expect(
         leagueListRes.json<SportLeagueListResponse>().sportLeagues.some((l) => l.id === leagueId),
       ).toBe(true);
+
+      // --- getSportLeague (200: { sportLeague }) ----------------------------------
+      const leagueRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}`, headers: rootAdmin.headers });
+      expect(leagueRes.statusCode).toBe(200);
+      expect(SportLeagueResponseSchema.safeParse(leagueRes.json()).success).toBe(true);
 
       // --- listSports (200) ------------------------------------------------------
       const sportListRes = await getApp().inject({ method: 'GET', url: '/api/v1/sports', headers: rootAdmin.headers });
@@ -1343,19 +1345,32 @@ describe('Contract verification (root admin)', () => {
       expect(paddedSearchRes.statusCode).toBe(200);
       expect(paddedSearchRes.json<ParticipantListResponse>().participants).toHaveLength(3);
 
+      // --- createTestSlot (201: { slot }) ------------------------------------
+      const testSlotRes = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/sport-leagues/${leagueId}/test-slots`,
+        headers: rootAdmin.headers,
+        payload: {
+          slotDefinitionId: await testSlotDefinitionId(getPrisma(), leagueId, currentSeasonId),
+          label: `Z3L ${stamp}`,
+          startsAt: '2081-07-16T08:00:00.000Z',
+          endsAt: '2081-07-19T20:00:00.000Z',
+        },
+      });
+      expect(testSlotRes.statusCode).toBe(201);
+      // The response is { slot }: the slot validated against its DTO.
+      expect(SportLeagueSeasonSlotDtoSchema.safeParse(testSlotRes.json<{ slot: unknown }>().slot).success).toBe(true);
+
       // --- createEvent (201: { event }) ---------------------------------------
       const tournamentRes = await getApp().inject({
         method: 'POST',
         url: '/api/v1/events',
         headers: rootAdmin.headers,
         payload: {
+          seasonSlotId: testSlotRes.json<SportLeagueSeasonSlotResponse>().slot.id,
           name: `Z3L Contract Open ${stamp}`,
           venue: 'Contract Links',
           location: 'Testshire',
-          startDate: '2081-07-16T08:00:00.000Z',
-          endDate: '2081-07-19T20:00:00.000Z',
-          rounds: 4,
-          sportLeagueId: leagueId,
           autoLifecycleEnabled: false,
         },
       });
@@ -1584,8 +1599,8 @@ describe('Contract verification (root admin)', () => {
       expect(seasonsRes.statusCode).toBe(200);
       const seasons = SportLeagueSeasonListResponseSchema.safeParse(seasonsRes.json());
       expect(seasons.success).toBe(true);
-      // Latest first: the 2081 Season the test made current, then the calendar year's the create began with.
-      expect(seasons.data?.seasons.map((season) => [season.championshipYear, season.isCurrent])).toEqual([[2081, true], [new Date().getUTCFullYear(), false]]);
+      // The league's one Season, the 2081 Season the test made current.
+      expect(seasons.data?.seasons.map((season) => [season.championshipYear, season.isCurrent])).toEqual([[2081, true]]);
     } finally {
       const prisma = getPrisma();
       if (created.eventIds.length) {
@@ -1612,135 +1627,15 @@ describe('Contract verification (root admin)', () => {
           where: { participantId: { in: created.participantIds } },
         });
       }
-      if (created.sportLeagueId) {
-        await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
-      }
       if (created.participantIds.length) {
         await prisma.participant.deleteMany({ where: { id: { in: created.participantIds } } });
       }
       if (created.sportLeagueId) {
-        await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
+        await deleteTestSportLeagues(prisma, [created.sportLeagueId]);
       }
     }
   });
 
-  it('pool-master-cs8: provider-catalog browse and event score-source link/unlink match their DTOs on happy paths', async () => {
-    // plans/124 §8 — a happy-path contract case for the three provider-linked
-    // operations the epic's flagship FAPI scenario left uncovered:
-    // listProviderCatalogEvents, linkEventScoreSource,
-    // unlinkEventScoreSource. Drives one coherent flow through a
-    // dedicated admin app with a registered provider and safeParses every
-    // response against its published schema. Golf admin rows are not covered by
-    // cleanupTestData(), so this test tears down child-first in a finally block.
-    const app = await buildIngestionApp(new OperationalContractProvider());
-    const rootAdmin = await createTestUser({
-      displayName: 'Root Admin Golf Score Source Contract User',
-      isRootAdmin: true,
-    });
-    const stamp = Date.now().toString().slice(-8);
-
-    await getPrisma().sport.upsert({
-      where: { sport: 'GOLF' },
-      create: {
-        sport: 'GOLF',
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
-      },
-      update: {},
-    });
-
-    const created = {
-      sportLeagueId: '',
-      eventIds: [] as string[],
-    };
-
-    try {
-      // --- listProviderCatalogEvents (200) --------------------------------
-      const catalogRes = await app.inject({
-        method: 'GET',
-        url: '/api/v1/ingestion/providers/balldontlie/catalog-events?sport=GOLF&from=2026-04-01T00:00:00.000Z&to=2026-04-30T00:00:00.000Z',
-        headers: rootAdmin.headers,
-      });
-      expect(catalogRes.statusCode).toBe(200);
-      expect(ProviderCatalogEventListResponseSchema.safeParse(catalogRes.json()).success).toBe(true);
-      // #205 — each result is a provider event, provider and sport included.
-      expect(catalogRes.json<ProviderCatalogEventListResponse>().events).toContainEqual(expect.objectContaining({
-        externalId: 'event-1',
-        providerId: 'balldontlie',
-        sport: 'GOLF',
-        venue: 'Contract National',
-      }));
-
-      // --- sport league -> admin-authored event (syncScope NONE) -------------
-      const leagueRes = await getApp().inject({
-        method: 'POST',
-        url: '/api/v1/sport-leagues',
-        headers: rootAdmin.headers,
-        payload: { ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), timeZone: 'UTC', sport: 'GOLF', name: `CS8 Contract Tour ${stamp}` },
-      });
-      expect(leagueRes.statusCode).toBe(201);
-      created.sportLeagueId = leagueRes.json<SportLeagueResponse>().sportLeague.id;
-      await withCurrentSeason(getPrisma(), created.sportLeagueId, 2083);
-
-      const tournamentRes = await getApp().inject({
-        method: 'POST',
-        url: '/api/v1/events',
-        headers: rootAdmin.headers,
-        payload: {
-          name: `CS8 Contract Open ${stamp}`,
-          startDate: '2083-06-16T08:00:00.000Z',
-          endDate: '2083-06-19T20:00:00.000Z',
-          rounds: 4,
-          sportLeagueId: created.sportLeagueId,
-          autoLifecycleEnabled: false,
-        },
-      });
-      expect(tournamentRes.statusCode).toBe(201);
-      const eventId = tournamentRes.json<SportEventResponse>().event.id;
-      created.eventIds.push(eventId);
-      expect(tournamentRes.json<SportEventResponse>().event.syncScope).toBe('NONE');
-
-      // --- linkEventScoreSource (200) ------------------------------------------
-      // A shape test: linkScoreSource checks the provider is registered for the event's
-      // sport, so the link goes through the app that registers the contract provider. It does
-      // not check the provider event exists, so a synthetic externalId links fine.
-      const linkRes = await app.inject({
-        method: 'PUT',
-        url: `/api/v1/events/${eventId}/score-source`,
-        headers: rootAdmin.headers,
-        payload: { providerId: 'balldontlie', externalId: `contract-cs8-${stamp}` },
-      });
-      expect(linkRes.statusCode).toBe(200);
-      expect(SportEventResponseSchema.safeParse(linkRes.json()).success).toBe(true);
-      expect(linkRes.json<SportEventResponse>().event).toMatchObject({
-        syncScope: 'SCORES_ONLY',
-        providerId: 'balldontlie',
-        externalId: `contract-cs8-${stamp}`,
-      });
-
-      // --- unlinkEventScoreSource (200) -----------------------------------------
-      const unlinkRes = await getApp().inject({
-        method: 'DELETE',
-        url: `/api/v1/events/${eventId}/score-source`,
-        headers: withoutJsonBodyHeaders(rootAdmin.headers),
-      });
-      expect(unlinkRes.statusCode).toBe(200);
-      expect(SportEventResponseSchema.safeParse(unlinkRes.json()).success).toBe(true);
-      expect(unlinkRes.json<SportEventResponse>().event.syncScope).toBe('NONE');
-      expect(unlinkRes.json<SportEventResponse>().event.providerId).toBe('manual-admin');
-    } finally {
-      const prisma = getPrisma();
-      if (created.eventIds.length) {
-        await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
-        await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
-        await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
-      }
-      if (created.sportLeagueId) {
-        await prisma.eventSeries.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
-        await prisma.sportLeague.deleteMany({ where: { id: created.sportLeagueId } });
-      }
-      await app.close();
-    }
-  });
   it('syncLeagueEvents queues the league\'s events sync (202), whose job creates the tour\'s events and shows on listActivity with its EVENTS run; a league no provider syncs is refused with 422', async () => {
     const stamp = Date.now().toString().slice(-8);
     const tour = `SNOW${stamp}`;
@@ -1749,13 +1644,16 @@ describe('Contract verification (root admin)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
+    const synced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Tour ${stamp}` } });
     // A migration's league has its Seasons mapped to the provider's, one of them current (#2003).
-    const [seasonId] = await syncSeasonsTo(prisma, synced.id, await syncLeagueTo(prisma, synced.id, 'pga'), [2085]);
-    const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
+    const sportLeagueProviderMappingId = await syncLeagueTo(prisma, synced.id, 'pga');
+    const [seasonId] = await syncSeasonsTo(prisma, synced.id, sportLeagueProviderMappingId, [2085]);
+    // Each tournament plays a slot of the Season a template lists, so the sync creates its event.
+    for (const code of [`${tour}-alpha`, `${tour}-bravo`]) await syncSlotsFor(prisma, { sportLeagueId: synced.id, sportLeagueProviderMappingId, code, seasonIds: [seasonId] });
+    const unsynced = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Sync Now Manual Tour ${stamp}` } });
 
     try {
       const syncRes = await app.inject({
@@ -1798,7 +1696,7 @@ describe('Contract verification (root admin)', () => {
       expect(ProviderSyncRunDetailDtoSchema.parse(runRes.json())).toMatchObject({
         kind: 'EVENTS', trigger: 'ADMIN', sportLeagueId: synced.id, backgroundJobId: queued.id, status: 'COMPLETED',
       });
-      expect(await prisma.sportEvent.count({ where: { eventSeries: { sportLeagueId: synced.id }, sportLeagueSeasonId: seasonId } })).toBe(2);
+      expect(await prisma.sportEvent.count({ where: { sportLeagueId: synced.id, sportLeagueSeasonId: seasonId } })).toBe(2);
 
       const refusedRes = await app.inject({
         method: 'POST',
@@ -1809,13 +1707,13 @@ describe('Contract verification (root admin)', () => {
       expect(refusedRes.statusCode).toBe(422);
       expect(ErrorEnvelopeSchema.parse(refusedRes.json()).error.code).toBe('SPORT_LEAGUE_NOT_SYNCED');
     } finally {
-      const eventIds = (await prisma.sportEvent.findMany({ where: { eventSeries: { sportLeagueId: { in: [synced.id, unsynced.id] } } }, select: { id: true } }))
+      const eventIds = (await prisma.sportEvent.findMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } }, select: { id: true } }))
         .map((event) => event.id);
       await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
       await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
       await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-      await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } } });
-      await prisma.sportLeague.deleteMany({ where: { id: { in: [synced.id, unsynced.id] } } });
+      await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: synced.id } });
+      await deleteTestSportLeagues(prisma, [synced.id, unsynced.id]);
       await app.close();
     }
   });
@@ -1829,26 +1727,25 @@ describe('Contract verification (root admin)', () => {
     const stamp = Date.now().toString().slice(-8);
     const horseRacing = await prisma.sport.upsert({
       where: { sport: 'HORSE_RACING' },
-      create: { sport: 'HORSE_RACING', tournamentFormat: 'RACE' },
+      create: { sport: 'HORSE_RACING', ...sportRowKeys('HORSE_RACING'), tournamentFormat: 'RACE' },
       update: {},
     });
     const golf = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[]) => {
+    const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[], { testEvent = true } = {}) => {
       const event = await prisma.sportEvent.create({
         data: {
           ...(await freshEventEdition(prisma, { sport })),
-          externalId: `race-contract-${sport}-${stamp}`,
-          providerId: 'manual-admin',
-          sport,
           name: `Race Contract ${sport} ${stamp}`,
           startDate: new Date('2026-05-02T22:00:00.000Z'),
           status: 'SCHEDULED',
         },
       });
+      // The admin result routes write only on a test event (#2074).
+      if (testEvent) await linkTestSlot(prisma, event);
       for (const name of names) {
         const participant = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sportId), name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
         await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
@@ -1903,6 +1800,8 @@ describe('Contract verification (root admin)', () => {
     await expectRefusal(await send('POST', golfEvent.id, { isOfficial: false, rows: [finisher('Golfer', 1)] }), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
     await expectRefusal(await send('PUT', golfEvent.id, { isOfficial: false, rows: [finisher('Golfer', 1)] }), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
     await expectRefusal(await send('PUT', '00000000-0000-4000-8000-000000000000', { isOfficial: false, rows: [finisher('Arrow', 1)] }), 404);
+    const fedRace = await createEvent('HORSE_RACING', horseRacing.id, ['Comet'], { testEvent: false });
+    await expectRefusal(await send('PUT', fedRace.id, { isOfficial: false, rows: [finisher('Comet', 1)] }), 409, 'SPORT_EVENT_NOT_TEST_DATA');
     await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [{ ...finisher('Arrow', 0) }] }), 400);
     await expectRefusal(await send('PUT', race.id, { isOfficial: false, rows: [finisher('Arrow', 1)] }, member.headers), 403);
   });
@@ -1923,10 +1822,15 @@ describe('Contract verification (root admin)', () => {
         const listed = ProviderListResponseSchema.parse(listRes.json()).providers.find((summary) => summary.settings?.code === 'BALLDONTLIE');
         expect(listed?.settings).toMatchObject({ id: before.id, name: 'BALLDONTLIE', webhookSecretSet: true });
         expect(listed?.settings?.leagues.map((league) => league.code)).toContain('mlb');
+        // A Provider has no priority (#2073): neither its listed settings nor the page's ranges carry one.
+        const listedBody = listRes.json<{ providers: Array<{ settings: Record<string, unknown> | null }>; settingRanges: Record<string, unknown> }>();
+        expect(listedBody.providers.find((summary) => summary.settings?.['code'] === 'BALLDONTLIE')?.settings).not.toHaveProperty('priority');
+        expect(listedBody.settingRanges).not.toHaveProperty('priority');
 
         const savedRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}`, { requestsPerMinute: 600, webhookPollMinutes: 20 });
         expect(savedRes.statusCode).toBe(200);
         expect(ProviderSettingsResponseSchema.parse(savedRes.json()).provider).toMatchObject({ code: 'BALLDONTLIE', requestsPerMinute: 600, webhookPollMinutes: 20, webhookSecretSet: true });
+        expect(savedRes.json<{ provider: Record<string, unknown> }>().provider).not.toHaveProperty('priority');
 
         const leagueRes = await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: 200, quietAfterMinutes: 120 });
         expect(leagueRes.statusCode).toBe(200);
@@ -1947,5 +1851,47 @@ describe('Contract verification (root admin)', () => {
         await patch(`/api/v1/ingestion/provider-settings/${before.id}/leagues/${mlb.id}`, { typicalGameMinutes: mlb.typicalGameMinutes, quietAfterMinutes: mlb.quietAfterMinutes });
       }
     });
+  });
+
+  it('createParticipant in a synced league answers 201 with a feed id and 409 PARTICIPANT_FEED_ID_REQUIRED without one, and deleteTestSlot answers 204 for a test slot and 422 SEASON_SLOT_NOT_TEST for a synced one', async () => {
+    const prisma = getPrisma();
+    const rootAdmin = await createTestUser({ displayName: 'Root Admin Synced Participants Contract User', isRootAdmin: true });
+    const { id: leagueId } = await insertTestSportLeague(prisma, { sport: Sport.GOLF, name: `Synced Contract Tour ${randomUUID()}` });
+    try {
+      await syncLeagueTo(prisma, leagueId, 'pga');
+      const create = (payload: Record<string, unknown>) => getApp().inject({
+        method: 'POST', url: '/api/v1/participants', headers: rootAdmin.headers, payload: { sportLeagueId: leagueId, participantType: 'INDIVIDUAL', ...payload },
+      });
+
+      const mappedRes = await create({ name: 'Synced Contract Golfer', feedId: `contract-${randomUUID()}` });
+      const testRes = await create({ name: 'Synced Contract Test Golfer', isTestData: true });
+      const unmappedRes = await create({ name: 'Synced Contract Unmapped Golfer' });
+
+      expect(mappedRes.statusCode).toBe(201);
+      expect(ParticipantResponseSchema.safeParse(mappedRes.json()).success).toBe(true);
+      expect(testRes.statusCode).toBe(201);
+      expect(ParticipantResponseSchema.safeParse(testRes.json()).success).toBe(true);
+      expect(unmappedRes.statusCode).toBe(409);
+      expect(ErrorEnvelopeSchema.parse(unmappedRes.json()).error.code).toBe('PARTICIPANT_FEED_ID_REQUIRED');
+
+      const slotId = await testSlotId(prisma, leagueId, new Date('2086-05-01T12:00:00.000Z'));
+      const syncedSlotId = await testSlotId(prisma, leagueId, new Date('2086-06-01T12:00:00.000Z'));
+      await prisma.sportLeagueSeasonPhaseSlot.update({ where: { id: syncedSlotId }, data: { isTestData: false, label: null } });
+      const deleteSlot = (id: string) => getApp().inject({
+        method: 'DELETE', url: `/api/v1/sport-leagues/${leagueId}/test-slots/${id}`, headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+
+      const deletedRes = await deleteSlot(slotId);
+      const refusedRes = await deleteSlot(syncedSlotId);
+
+      expect(deletedRes.statusCode).toBe(204);
+      expect(deletedRes.body).toBe('');
+      expect(refusedRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.parse(refusedRes.json()).error.code).toBe('SEASON_SLOT_NOT_TEST');
+    } finally {
+      await prisma.participantProviderMapping.deleteMany({ where: { sportLeagueId: leagueId } });
+      await prisma.participant.deleteMany({ where: { sportLeagueId: leagueId } });
+      await deleteTestSportLeagues(prisma, [leagueId]);
+    }
   });
 });

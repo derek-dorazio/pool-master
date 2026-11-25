@@ -1,7 +1,7 @@
-import { getSportDefinition, SportEventStatus } from '@poolmaster/shared/domain';
-import { Settings } from 'lucide-react';
+import { enumLabel } from '@poolmaster/shared/display-strings';
+import { AutoReleaseCheckOutcome, SportEventStatus, SportLeagueIssueType } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { Navigate, Outlet, useLocation, useParams } from 'react-router';
+import { Outlet, useLocation, useParams } from 'react-router';
 import {
   Button,
   formatDateDisplay,
@@ -15,9 +15,10 @@ import {
 } from '@/features/shared/ui';
 import type { SportEventDto, SportEventOverviewDto } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
-import { eventPageTabs, type EventPageContext } from './event-page-context';
+import { EVENT_PAGE_TABS, type EventPageContext } from './event-page-context';
 import { EventReleaseChecksDialog } from './event-release-checks-dialog';
 import { EventSettingsDialog } from './event-settings-dialog';
+import { PageSettingsButton } from './page-settings-button';
 import { isSyncedLeague } from './league-page-context';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath, buildSportLeaguePath, SPORTS_PATH } from './manage-navigation';
@@ -58,12 +59,12 @@ export function EventPageLayout() {
 
 /** A Release chip shows only while the event is a draft: held when the last automatic try held it. */
 function releaseChipText(event: Pick<SportEventDto, 'lastAutoReleaseCheck'>): string {
-  return event.lastAutoReleaseCheck?.outcome === 'HELD' ? 'Release held ⤢' : 'Release ⤢';
+  return event.lastAutoReleaseCheck?.outcome === AutoReleaseCheckOutcome.HELD ? 'Release held ⤢' : 'Release ⤢';
 }
 
 /** The header's issue chips, less Release, which the Release chip beside them covers. */
 function headerIssues(overview: SportEventOverviewDto): SportEventOverviewDto['issues'] {
-  return overview.issues.filter((issue) => issue.type !== 'RELEASE');
+  return overview.issues.filter((issue) => issue.type !== SportLeagueIssueType.RELEASE);
 }
 
 function LoadedEventPage({ event }: { event: SportEventDto }) {
@@ -75,7 +76,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [releaseOpen, setReleaseOpen] = useState(false);
   const [openSyncRunId, setOpenSyncRunId] = useState<string | null>(null);
-  const basePath = buildSportEventPath(event.sport, event.id);
+  const basePath = buildSportEventPath(event.sportUrlSegment, event.id);
   const openSegment = pathname.slice(basePath.length + 1).split('/')[0];
   // Held here, not in the Activity tab, so the tab keeps its failed count; it re-reads only while open.
   const activity = useActivity({ sportEventId: event.id }, { poll: openSegment === 'activity' });
@@ -86,16 +87,11 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   // poolmaster-allow-list-lookup: the same few dozen sport leagues, for whether a provider syncs this one
   const leagueOverview = overviewsQuery.data?.find((candidate) => candidate.id === event.sportLeagueId);
   const isSynced = sportLeague === undefined && leagueOverview === undefined
-    ? event.providerSynced
+    ? !event.isTestData
     : isSyncedLeague(sportLeague ?? { selectedProviderMapping: null }, leagueOverview);
   const overview = overviewQuery.data;
 
-  // A synced event has no Tools tab, so its old link lands on Field.
-  if (openSegment === 'tools' && isSynced) {
-    return <Navigate replace to={`${basePath}/field`} />;
-  }
-
-  const items: PageLinkTab[] = eventPageTabs(isSynced).map((tab) => ({
+  const items: PageLinkTab[] = EVENT_PAGE_TABS.map((tab) => ({
     ...(tab.segment === 'activity' && failedCount > 0
       ? { count: failedCount, countHint: 'Jobs that failed in the Activity grid\'s Started window, the past day unless you widen it' }
       : {}),
@@ -112,21 +108,11 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
   return (
     <div className="space-y-6">
       <PageHeader
-        actions={(
-          <Button
-            aria-label={`${event.name} settings`}
-            data-testid="root-admin-event-settings"
-            onClick={() => setSettingsOpen(true)}
-            size="sm"
-            variant="icon"
-          >
-            <Settings aria-hidden size={16} />
-          </Button>
-        )}
+        actions={<PageSettingsButton name={event.name} onClick={() => setSettingsOpen(true)} testId="root-admin-event-settings" />}
         breadcrumbs={[
           { href: SPORTS_PATH, label: 'Sports' },
-          { label: getSportDefinition(event.sport).name },
-          ...(sportLeague === undefined ? [] : [{ href: buildSportLeaguePath(event.sport, sportLeague.id), label: sportLeague.name }]),
+          { label: enumLabel('Sport', event.sport) },
+          ...(sportLeague === undefined ? [] : [{ href: buildSportLeaguePath(event.sportUrlSegment, sportLeague.id), label: sportLeague.name }]),
           { label: event.name },
         ]}
         meta={(
@@ -135,7 +121,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
             {overview === undefined || headerIssues(overview).length === 0 ? null : (
               <SportLeagueIssueChips
                 onOpenSyncRun={setOpenSyncRunId}
-                overview={{ id: event.id, issues: headerIssues(overview), name: event.name, sport: event.sport }}
+                overview={{ id: event.id, issues: headerIssues(overview), name: event.name, sportUrlSegment: event.sportUrlSegment }}
               />
             )}
             {event.status === SportEventStatus.DRAFT ? (
@@ -143,7 +129,7 @@ function LoadedEventPage({ event }: { event: SportEventDto }) {
                 data-testid="root-admin-event-release-chip"
                 onClick={() => setReleaseOpen(true)}
                 size="xs"
-                variant={event.lastAutoReleaseCheck?.outcome === 'HELD' ? 'danger' : 'secondary'}
+                variant={event.lastAutoReleaseCheck?.outcome === AutoReleaseCheckOutcome.HELD ? 'danger' : 'secondary'}
               >
                 {releaseChipText(event)}
               </Button>

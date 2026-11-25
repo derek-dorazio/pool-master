@@ -34,6 +34,13 @@ import noNodeEnvReads from './no-node-env-reads.mjs';
 import noQueryInLoop from './no-query-in-loop.mjs';
 import noPlanBranching from './no-plan-branching.mjs';
 import noSportBranching from './no-sport-branching.mjs';
+import noClockYearOrLeagueTables from './no-clock-year-or-league-tables.mjs';
+import noEnumStringLiterals from './no-enum-string-literals.mjs';
+import noDtoShapedLocalTypes from './no-dto-shaped-local-types.mjs';
+import noLocalEnums from './no-local-enums.mjs';
+import noPositionalPick from './no-positional-pick.mjs';
+import noRawSql from './no-raw-sql.mjs';
+import noNameMatch from './no-name-match.mjs';
 import noArbitraryTypeSizes from './no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from './no-raw-theme-colors.mjs';
 import noUnawaitedSendError from './no-unawaited-send-error.mjs';
@@ -64,6 +71,13 @@ export default {
     'no-plan-branching': noPlanBranching,
     'no-query-in-loop': noQueryInLoop,
     'no-sport-branching': noSportBranching,
+    'no-clock-year-or-league-tables': noClockYearOrLeagueTables,
+    'no-enum-string-literals': noEnumStringLiterals,
+    'no-dto-shaped-local-types': noDtoShapedLocalTypes,
+    'no-local-enums': noLocalEnums,
+    'no-positional-pick': noPositionalPick,
+    'no-raw-sql': noRawSql,
+    'no-name-match': noNameMatch,
     'no-raw-theme-colors': noRawThemeColors,
     'no-arbitrary-type-sizes': noArbitraryTypeSizes,
     'no-unawaited-send-error': noUnawaitedSendError,

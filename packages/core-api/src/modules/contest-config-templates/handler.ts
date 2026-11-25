@@ -8,6 +8,7 @@ import { sendError } from '../../core/error-handler';
 import type { ReadCache } from '../../core/read-cache';
 import {
   ContestConfigTemplateNotFoundError,
+  ContestConfigTemplateCoverageError,
   ContestConfigTemplateRulesMismatchError,
   type ContestConfigTemplateService,
 } from './service';
@@ -28,8 +29,9 @@ export function createContestConfigTemplateHandlers(
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const { sport, sportLeagueId, eventType, active } = request.query;
-    const key = [sport, sportLeagueId, eventType, active].map((filter) => filter ?? '').join(':');
+    const { sportLeagueId, slotDefinitionIds, active } = request.query;
+    // A cache key only, never read back: the definitions in one order, so any order asked hits it.
+    const key = JSON.stringify([sportLeagueId ?? null, slotDefinitionIds === undefined ? null : [...slotDefinitionIds].sort(), active ?? null]);
     const templates = await lists.get(key, new Date(), () => service.listTemplates(request.query));
     return reply.send({ templates });
   }
@@ -54,6 +56,9 @@ export function createContestConfigTemplateHandlers(
       }
       if (error instanceof ContestConfigTemplateRulesMismatchError) {
         return sendError(reply, 422, 'CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH', error.message);
+      }
+      if (error instanceof ContestConfigTemplateCoverageError) {
+        return sendError(reply, 422, error.code, error.message);
       }
 
       throw error;

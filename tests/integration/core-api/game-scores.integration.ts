@@ -17,9 +17,10 @@ import { createRoundRows, createSportEventRow } from '../../support/sport-event-
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { recordStatements, statementCounts } from '../statement-log';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
-import { seriesSeasonId } from '../../support/event-edition';
+import { sportRowKeys } from '../../support/sport-rows';
+import { mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
@@ -44,31 +45,33 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: sportOf },
-    create: { sport: sportOf, tournamentFormat: 'MATCHES' },
+    create: { sport: sportOf, ...sportRowKeys(sportOf), tournamentFormat: 'MATCHES' },
     update: {},
   });
-  const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Division I Men');
+  const leagueName = league ?? (sportOf === Sport.SOCCER ? 'FIFA World Cup' : 'NCAA Men\'s Basketball');
   const sportLeague = await prisma.sportLeague.upsert({
     where: { sportId_name: { sportId: sport.id, name: leagueName } },
-    create: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: leagueName },
+    create: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: leagueName },
     update: {},
   });
-  const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Bracket ${randomUUID()}` } });
   const events = new PrismaSportEventRepository(getAppPrisma());
   const externalId = `scope-${randomUUID()}`;
   const event = await createSportEventRow(events, {
-    eventSeriesId: eventSeries.id,
-    sportLeagueSeasonId: await seriesSeasonId(prisma, eventSeries.id, 2027),
-    externalId,
-    providerId: PROVIDER,
-    sport: sportOf,
+    sportLeagueId: sportLeague.id,
+    sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2027),
     name: 'Final Four',
     startDate: new Date('2027-04-03T22:00:00.000Z'),
     status: 'IN_PROGRESS',
     rounds: 2,
-    syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: false,
   });
+  // Under the league's own provider league, so a seeded league (the NBA) gains no second mapping
+  // that outlives the test.
+  const selected = await prisma.sportLeagueProviderMapping.findFirst({
+    where: { selectedBy: { is: { id: sportLeague.id } } },
+    select: { providerLeague: { select: { code: true } } },
+  });
+  await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, selected?.providerLeague.code ?? (sportOf === Sport.SOCCER ? 'worldcup' : 'ncaab'));
   await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-04-03T22:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-04-05T01:00:00.000Z') },
@@ -223,19 +226,19 @@ describe('game scores from a provider', () => {
     expect((await matches.findBySportEvent(event.id)).at(0)?.updatedAt).toEqual(written.updatedAt);
   });
 
-  it('marks a result the provider wrote as the provider\'s, and leaves alone one an admin has since corrected (#1531)', async () => {
+  it('overwrites a result an admin wrote earlier with the provider\'s final: the feed is the only writer on a synced event', async () => {
     const { event, externalId, teamId, matches } = await linkedBracket();
     const final = { externalGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 };
     await publish(externalId, [final]);
     const fromProvider = (await matches.findBySportEvent(event.id)).at(0);
-    // The admin's correction, as the admin's result route writes it.
-    await getPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 1 }, data: { awayScore: 68, resultSource: MatchResultSource.ADMIN } });
+    // A correction an admin wrote before results came only from the feed; the migration relabelled its source PROVIDER.
+    await getPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 1 }, data: { awayScore: 68, resultSource: MatchResultSource.PROVIDER } });
 
     const again = await publish(externalId, [final]);
 
     expect(fromProvider).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
-    expect(again).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
-    expect((await matches.findBySportEvent(event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 68, resultSource: MatchResultSource.ADMIN });
+    expect(again).toMatchObject({ updatesPersisted: 1 });
+    expect((await matches.findBySportEvent(event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
   });
 
   it('links each game nobody linked to the match its teams play, records the final, and keeps the link for the next sync', async () => {
@@ -327,16 +330,20 @@ describe('game scores from a provider', () => {
     // Pinned: the event's own reads, then one read of the matches, one of the sides, one of the
     // team mappings, and one update per live game, with no result path and no rebuild.
     expect(statementCounts(statements)).toEqual([
-      ['SELECT event_series', 1],
       ['SELECT participant_provider_mappings', 1],
       // The mappings' Provider rows, for their names (#2040): one read for the batch.
       ['SELECT providers', 1],
       ['SELECT sport_event_match_period_scores', 1],
       ['SELECT sport_event_participants', 1],
+      // The event's provider ids and its Season, the event's path to its league (#2004).
+      ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_matches', 1],
       ['SELECT sport_event_rounds', 1],
       ['SELECT sport_events', 1],
+      ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
+      // The event's sport, read through its league (#2042), to pick its scoring family's writer.
+      ['SELECT sports', 1],
       ['UPDATE sport_event_round_matches', 2],
     ]);
     const [first, second] = await matches.findBySportEvent(event.id);
@@ -359,19 +366,23 @@ describe('game scores from a provider', () => {
       ['INSERT background_jobs', 2],
       ['INSERT sport_event_participant_standings', 2],
       ['SELECT contests', 2],
-      ['SELECT event_series', 3],
       ['SELECT participant_provider_mappings', 1],
-      // The mappings' Provider rows, for their names (#2040): one read for the batch.
-      ['SELECT providers', 1],
+      // The mappings' Provider rows, for their names (#2040), in one read for the batch; and each
+      // read of the event names its provider ids' providers (#2004), one more each.
+      ['SELECT providers', 3],
       ['SELECT sport_event_match_period_scores', 3],
       ['SELECT sport_event_participant_golf_standings', 1],
       ['SELECT sport_event_participant_standings', 2],
       ['SELECT sport_event_participants', 1],
+      ['SELECT sport_event_provider_mappings', 3],
       ['SELECT sport_event_round_matches', 3],
       ['SELECT sport_event_rounds', 3],
+      // Each full read of the event names its slot definitions (#2010), where templates are offered.
+      ['SELECT sport_event_slots', 2],
       ['SELECT sport_events', 3],
-      ['SELECT sport_league_seasons', 2],
+      ['SELECT sport_league_seasons', 3],
       ['SELECT sport_leagues', 3],
+      ['SELECT sports', 3],
       ['UPDATE sport_event_round_matches', 4],
     ]);
   });

@@ -5,7 +5,6 @@
  */
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import {
-  toProviderEventDto,
   toProviderManualSyncSubmissionResponse,
   toProviderSummaryDto,
   toProviderSyncRunDetailDto,
@@ -96,7 +95,6 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     status: 'HEALTHY',
     errorRate: 0,
     lastEventAt: AT,
-    sportsCovered: [Sport.GOLF],
     activeEventCount: 2,
     requestsPerMinute: 600,
     webhooksEnabled: true,
@@ -110,13 +108,13 @@ describe('the provider, unmapped participant and provider event mappers', () => 
   });
 
   it('sends a provider\'s stored settings and leagues with whether its webhook secret is set, and none for a provider with no row', () => {
-    const league = { id: 'pl-1', providerId: 'prov-1', code: 'nfl', name: 'NFL', sport: Sport.AMERICAN_FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true };
+    const league = { id: 'pl-1', providerId: 'prov-1', code: 'nfl', name: 'NFL', sport: Sport.FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true };
     const settings = {
       id: 'prov-1', code: 'BALLDONTLIE', name: 'BALLDONTLIE', baseUrl: 'https://api.example.test', requestsPerMinute: 5, webhooksEnabled: true,
-      webhookPollMinutes: 10, webhookRoundPollMinutes: 5, hasPlayerStats: true, isEnabled: true, priority: 1, leagues: [league], webhookSecretSet: false,
+      webhookPollMinutes: 10, webhookRoundPollMinutes: 5, hasPlayerStats: true, isEnabled: true, leagues: [league], webhookSecretSet: false,
     };
     const dto = toProviderSummaryDto({ ...provider, settings } as unknown as Parameters<typeof toProviderSummaryDto>[0]);
-    expect(dto.settings).toEqual({ ...settings, leagues: [{ id: 'pl-1', code: 'nfl', name: 'NFL', sport: Sport.AMERICAN_FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true }] });
+    expect(dto.settings).toEqual({ ...settings, leagues: [{ id: 'pl-1', code: 'nfl', name: 'NFL', sport: Sport.FOOTBALL, webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 30, typicalGameMinutes: 200, isEnabled: true }] });
     expect(toProviderSummaryDto(provider).settings).toBeNull();
   });
 
@@ -129,26 +127,5 @@ describe('the provider, unmapped participant and provider event mappers', () => 
     const details = { warnings: ['late'] } as never;
 
     expect(toProviderSyncRunDetailDto({ ...buildRun(), details })).toEqual(expect.objectContaining({ id: 'run-1', details }));
-  });
-
-  const providerEvent = {
-    externalId: 'x1',
-    providerId: 'p1',
-    sport: Sport.GOLF,
-    name: 'Open',
-    startDate: AT,
-    status: 'SCHEDULED',
-    fieldLocked: false,
-  } as unknown as Parameters<typeof toProviderEventDto>[0];
-
-  it('sends a provider event\'s omitted venue, location, end, rounds and field size as null', () => {
-    expect(toProviderEventDto(providerEvent)).toEqual(expect.objectContaining({
-      venue: null, location: null, endDate: null, rounds: null, participantCount: null, startDate: AT.toISOString(),
-    }));
-  });
-
-  it('sends a provider event\'s venue, location, end, rounds and field size when given', () => {
-    expect(toProviderEventDto({ ...providerEvent, venue: 'Augusta', location: 'GA', endDate: AT, rounds: 4, participantCount: 88 }))
-      .toEqual(expect.objectContaining({ venue: 'Augusta', location: 'GA', endDate: AT.toISOString(), rounds: 4, participantCount: 88 }));
   });
 });

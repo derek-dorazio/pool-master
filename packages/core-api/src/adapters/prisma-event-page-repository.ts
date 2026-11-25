@@ -2,60 +2,66 @@
  * Prisma adapter for the EventPageRepository port (#1007).
  */
 import type { PrismaClient } from '@prisma/client';
-import type { EventPageRepository, EventPageSeries } from '@poolmaster/shared/db';
+import type { EventPageRepository } from '@poolmaster/shared/db';
 import {
-  compareByEnumOrder,
   SportEventStatus,
-  SportOrder,
   type EventPage,
-  type EventPageEdition,
+  type EventPageAddress,
+  type EventPageNextSlot,
   type EventPageOffer,
   type Sport,
   NOT_OVER_SPORT_EVENT_STATUSES,
 } from '@poolmaster/shared/domain';
-import { mapContestConfigTemplate } from './prisma-contest-management-repositories';
+import { mapContestConfigTemplate, TEMPLATE_INCLUDE } from './prisma-contest-management-repositories';
 
-const PAGE_INCLUDE = { redirectTo: { select: { sport: true, slug: true } } } as const;
+/** A page's address reads its sport's stored URL segment (#2042). */
+const ADDRESS_SELECT = { sport: true, urlSegment: true, sportConfig: { select: { urlSegment: true } } } as const;
+const PAGE_INCLUDE = { sportConfig: { select: { urlSegment: true } }, redirectTo: { select: ADDRESS_SELECT } } as const;
 
-function mapEventPage(row: {
-  id: string;
+interface AddressRow {
   sport: Sport;
-  slug: string;
+  urlSegment: string;
+  sportConfig: { urlSegment: string };
+}
+
+function mapAddress(row: AddressRow): EventPageAddress {
+  return { sport: row.sport, sportUrlSegment: row.sportConfig.urlSegment, urlSegment: row.urlSegment };
+}
+
+function mapEventPage(row: AddressRow & {
+  id: string;
   displayOrder: number;
   isActive: boolean;
-  redirectTo: { sport: Sport; slug: string } | null;
+  redirectTo: AddressRow | null;
 }): EventPage {
   return {
     id: row.id,
-    sport: row.sport,
-    slug: row.slug,
+    ...mapAddress(row),
     displayOrder: row.displayOrder,
     isActive: row.isActive,
-    redirectTo: row.redirectTo === null ? null : { sport: row.redirectTo.sport, slug: row.redirectTo.slug },
+    redirectTo: row.redirectTo === null ? null : mapAddress(row.redirectTo),
   };
 }
 
 export class PrismaEventPageRepository implements EventPageRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findBySportSlug(sport: Sport, slug: string): Promise<EventPage | null> {
-    const row = await this.prisma.eventPage.findUnique({
-      where: { sport_slug: { sport, slug } },
+  async findByUrlSegments(sportUrlSegment: string, urlSegment: string): Promise<EventPage | null> {
+    const row = await this.prisma.eventPage.findFirst({
+      where: { urlSegment, sportConfig: { urlSegment: sportUrlSegment } },
       include: PAGE_INCLUDE,
     });
     return row === null ? null : mapEventPage(row);
   }
 
   async findActive(sport?: Sport): Promise<EventPage[]> {
+    // Grouped by sport in the sports' own display order, then each sport's pages in theirs.
     const rows = await this.prisma.eventPage.findMany({
       where: { isActive: true, ...(sport !== undefined && { sport }) },
       include: PAGE_INCLUDE,
-      orderBy: [{ displayOrder: 'asc' }, { slug: 'asc' }],
+      orderBy: [{ sportConfig: { displayOrder: 'asc' } }, { displayOrder: 'asc' }, { urlSegment: 'asc' }],
     });
-    // Grouped by sport in Sport's own order (`SportOrder`), not Postgres's enum declaration
-    // order; the sort is stable, so each sport keeps its pages' display order.
-    const bySportOrder = compareByEnumOrder(SportOrder);
-    return rows.map(mapEventPage).sort((left, right) => bySportOrder(left.sport, right.sport));
+    return rows.map(mapEventPage);
   }
 
   async findOffers(eventPageIds: readonly string[]): Promise<EventPageOffer[]> {
@@ -66,7 +72,7 @@ export class PrismaEventPageRepository implements EventPageRepository {
       // A disabled setup is left out, as Create contest refuses it, and so is a switched-off
       // sport league's offer (#1812), as Create contest offers none of its events.
       where: { eventPageId: { in: [...eventPageIds] }, template: { active: true }, sportLeague: { isActive: true } },
-      include: { template: true, sportLeague: { select: { name: true, displayName: true } } },
+      include: { template: { include: TEMPLATE_INCLUDE }, sportLeague: { select: { name: true, displayName: true } } },
       orderBy: [{ eventPageId: 'asc' }, { sortOrder: 'asc' }],
     });
     return rows.map((row) => ({
@@ -74,7 +80,7 @@ export class PrismaEventPageRepository implements EventPageRepository {
       eventPageId: row.eventPageId,
       sportLeagueId: row.sportLeagueId,
       sportLeagueName: row.sportLeague.displayName ?? row.sportLeague.name,
-      eventSeriesName: row.eventSeriesName,
+      sportLeaguePhaseSlotId: row.sportLeaguePhaseSlotId,
       template: mapContestConfigTemplate(row.template),
       bracketStartRound: row.bracketStartRound,
       sortOrder: row.sortOrder,
@@ -82,30 +88,33 @@ export class PrismaEventPageRepository implements EventPageRepository {
     }));
   }
 
-  async findEditionsNotOver(series: readonly EventPageSeries[]): Promise<EventPageEdition[][]> {
-    if (series.length === 0) return [];
-    const rows = await this.prisma.sportEvent.findMany({
+  async findSlotsNotOver(sportLeaguePhaseSlotIds: readonly string[]): Promise<EventPageNextSlot[][]> {
+    if (sportLeaguePhaseSlotIds.length === 0) return [];
+    // A Season slot is shown through the event that owns it (#2010); one no event owns yet is left out.
+    const rows = await this.prisma.sportEventSlot.findMany({
       where: {
-        eventSeries: { OR: series.map(({ sportLeagueId, eventSeriesName }) => ({ sportLeagueId, name: eventSeriesName })) },
-        status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] },
+        seasonSlot: { sportLeaguePhaseSlotId: { in: [...new Set(sportLeaguePhaseSlotIds)] } },
+        sportEvent: { status: { in: [...NOT_OVER_SPORT_EVENT_STATUSES] } },
       },
       select: {
-        id: true, name: true, sportLeagueSeason: { select: { championshipYear: true } }, startDate: true, endDate: true, status: true,
-        eventSeries: { select: { sportLeagueId: true, name: true } },
+        sportLeagueSeasonPhaseSlotId: true,
+        seasonSlot: { select: { sportLeaguePhaseSlotId: true, season: { select: { championshipYear: true } } } },
+        sportEvent: { select: { id: true, name: true, startDate: true, endDate: true, status: true } },
       },
-      orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
+      orderBy: [{ sportEvent: { startDate: 'asc' } }, { id: 'asc' }],
     });
-    return series.map(({ sportLeagueId, eventSeriesName }) => {
-      const editions = rows.filter((row) => row.eventSeries.sportLeagueId === sportLeagueId && row.eventSeries.name === eventSeriesName);
-      // The edition under way comes first, then the rest soonest first.
-      const underWay = editions.filter((row) => row.status === SportEventStatus.IN_PROGRESS);
-      const rest = editions.filter((row) => row.status !== SportEventStatus.IN_PROGRESS);
+    return sportLeaguePhaseSlotIds.map((definitionId) => {
+      const slots = rows.filter((row) => row.seasonSlot.sportLeaguePhaseSlotId === definitionId);
+      // The slot under way comes first, then the rest soonest first.
+      const underWay = slots.filter((row) => row.sportEvent.status === SportEventStatus.IN_PROGRESS);
+      const rest = slots.filter((row) => row.sportEvent.status !== SportEventStatus.IN_PROGRESS);
       return [...underWay, ...rest].map((row) => ({
-        sportEventId: row.id,
-        name: row.name,
-        championshipYear: row.sportLeagueSeason.championshipYear,
-        startDate: row.startDate,
-        endDate: row.endDate,
+        seasonSlotId: row.sportLeagueSeasonPhaseSlotId,
+        sportEventId: row.sportEvent.id,
+        name: row.sportEvent.name,
+        championshipYear: row.seasonSlot.season.championshipYear,
+        startDate: row.sportEvent.startDate,
+        endDate: row.sportEvent.endDate,
       }));
     });
   }

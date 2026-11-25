@@ -1,4 +1,4 @@
-import { ContestOpening, SelectionType, isTemplateOfferedOn } from '@poolmaster/shared/domain';
+import { ContestOpening, SelectionType } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 
 /** The API's word on whether a contest of this selection type can start on the event now (#1929). */
@@ -32,11 +32,19 @@ export function canEventStartRules(configuration: ContestConfigTemplateDto['conf
     || bracketStartRoundsOf(event).includes(configuration.startsAtRound);
 }
 
+/**
+ * Whether the template is offered on the event (#2010): the event has a Season slot of a slot
+ * definition the template lists, both as the API gives them.
+ */
+function coversEvent(template: Pick<ContestConfigTemplateDto, 'slots'>, event: SportEventDto): boolean {
+  return template.slots.some((slot) => event.slotDefinitionIds.includes(slot.id));
+}
+
 /** The events a contest can be created on from this template (#803), soonest first as given. */
 export function contestEventsForTemplate(
   events: readonly SportEventDto[],
-  template: Pick<ContestConfigTemplateDto, 'sport' | 'sportLeagueId' | 'eventType' | 'selectionType' | 'configuration'>,
+  template: Pick<ContestConfigTemplateDto, 'slots' | 'selectionType' | 'configuration'>,
 ) {
   return contestEventsFor(events, template.selectionType)
-    .filter((event) => isTemplateOfferedOn(template, event) && canEventStartRules(template.configuration, event));
+    .filter((event) => coversEvent(template, event) && canEventStartRules(template.configuration, event));
 }

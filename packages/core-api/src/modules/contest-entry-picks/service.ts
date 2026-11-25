@@ -1,21 +1,11 @@
 /**
- * ContestEntryPickService — service-layer enforcement of the contestFormat
- * denormalization invariant from plans/117 §7.1.
- *
- * Background. The unified ContestEntryPick table denormalizes
- * `Contest.contestFormat` onto each pick row so Postgres partial unique
- * indexes (which can only predicate on local columns) can enforce the
- * per-format pick uniqueness rules. This service is the single insert path
- * that guarantees the denormalized column always matches the parent contest;
- * the selection room goes through `changeEntryPick` (and a draw through
- * `recordDraw`) instead of touching `prisma.contestEntryPick.create` directly.
- *
- * Per plans/117 §7.1: "pick-creation always reads Contest.contestFormat from
- * the parent contest and writes it to the pick row. No insert path bypasses
- * this."
+ * ContestEntryPickService — the single insert path for roster picks: the selection room goes
+ * through `changeEntryPick`, and a draw through `recordDraw`, instead of touching
+ * `prisma.contestEntryPick.create` directly. Each takes the locks its write needs. The pick
+ * table's unique index keeps a participant to one pick per entry (#2042).
  */
 
-import { Prisma, type PrismaClient, type PrismaContestFormat } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import { ContestEntryStatus } from '@poolmaster/shared/domain';
 import type { FastifyBaseLogger } from 'fastify';
 import type {
@@ -38,7 +28,7 @@ export class ContestEntryPickEntryMissingError extends Error {
 
 export class ContestEntryPickContestMissingError extends Error {
   constructor(contestId: string) {
-    super(`Contest ${contestId} not found; cannot resolve contestFormat for pick.`);
+    super(`Contest ${contestId} not found; cannot record its draw.`);
     this.name = 'ContestEntryPickContestMissingError';
   }
 }
@@ -70,9 +60,8 @@ export class ContestEntryPickService {
    * a swap, then settles the entry's status there, in one transaction. The entry's row lock is
    * taken first and its picks and status read under it, so `decide` and `settle` see every
    * change that committed before this one, a submit included (#1300), and none can slip in
-   * between the decision and the write. The added pick takes the parent contest's
-   * `contestFormat` (plans/117 §7.1) and the next place in the contest's pick order; the ROSTER
-   * partial unique index keeps a participant to one pick per entry.
+   * between the decision and the write. The added pick takes the next place in the contest's
+   * pick order; the pick table's unique index keeps a participant to one pick per entry.
    */
   async changeEntryPick(input: EntryPickChangeInput): Promise<EntryChangeResult> {
     const { entryId, sportEventId, at, decide, settle } = input;
@@ -91,7 +80,6 @@ export class ContestEntryPickService {
           data: {
             entryId,
             sportEventParticipantId: write.add.sportEventParticipantId,
-            contestFormat: locked.contestFormat,
             lineupSlot: write.add.lineupSlot,
             pickSequence: contestPickCount + 1,
             isAutoPicked: false,
@@ -149,8 +137,7 @@ export class ContestEntryPickService {
    * The draw row's unique contest key is the guard against two draws racing: the second
    * insert fails, and nothing of it is written. The entries are re-read inside the
    * transaction, so an entry added or removed after the deal was worked out stops the write
-   * instead of leaving an entry with no picks. Picks take the parent contest's
-   * `contestFormat`, as `changeEntryPick` does (plans/117 §7.1). Each pick's `lineupSlot` is its
+   * instead of leaving an entry with no picks. Each pick's `lineupSlot` is its
    * round of the deal, and its `pickSequence` its place in the deal across the contest.
    *
    * Answers with the draw's time, the contest's `drawnAt` and every entry's submit time, so the
@@ -162,7 +149,7 @@ export class ContestEntryPickService {
     const drawnAt = await forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       // Entry writes take the same lock, so the entry set read below cannot change before commit (#644).
       await lockContestRow(tx, contestId);
-      const contest = await tx.contest.findUnique({ where: { id: contestId }, select: { contestFormat: true } });
+      const contest = await tx.contest.findUnique({ where: { id: contestId }, select: { id: true } });
       if (!contest) throw new ContestEntryPickContestMissingError(contestId);
 
       const currentEntries = await tx.contestEntry.findMany({ where: { contestId }, select: { id: true } });
@@ -198,7 +185,6 @@ export class ContestEntryPickService {
           entry.sportEventParticipantIds.map((sportEventParticipantId, round) => ({
             entryId: entry.entryId,
             sportEventParticipantId,
-            contestFormat: contest.contestFormat,
             lineupSlot: round + 1,
             pickSequence: round * entryCount + entryIndex + 1,
             isAutoPicked: true,
@@ -228,7 +214,6 @@ interface LockedEntry extends LockedEntryEvent {
   entryId: string;
   sportEventId: string;
   contestId: string;
-  contestFormat: PrismaContestFormat;
   submittedAt: Date | null;
 }
 
@@ -239,7 +224,6 @@ async function readLockedEntry(tx: Prisma.TransactionClient, entryId: string, sp
     where: { id: entryId },
     select: {
       contestId: true,
-      contest: { select: { contestFormat: true } },
       events: { where: { sportEventId }, select: { status: true, submittedAt: true } },
     },
   });
@@ -249,7 +233,6 @@ async function readLockedEntry(tx: Prisma.TransactionClient, entryId: string, sp
     entryId,
     sportEventId,
     contestId: entry.contestId,
-    contestFormat: entry.contest.contestFormat,
     status: event?.status ?? ContestEntryStatus.DRAFT,
     submittedAt: event?.submittedAt ?? null,
     picks: await readEventPicks(tx, entryId, sportEventId),

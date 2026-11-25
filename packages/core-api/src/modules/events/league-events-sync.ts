@@ -5,9 +5,9 @@
  *
  * For each Season it reads (the league's current Season and every later one, or the one an admin
  * named, #2003), the events of the provider league the league's selected provider mapping names,
- * asked for by the provider's own id for that Season (`EventScoreSourceService.listSeasonEvents`,
+ * asked for by the provider's own id for that Season (`ProviderSeasonScheduleReader.listSeasonEvents`,
  * #1997), become its events in that Season (`SportEventService.importProviderSeason`, the one
- * creation path: series, rounds and default tiers seeded alike, and a re-run skips what is there),
+ * creation path: rounds and default tiers seeded alike, and a re-run skips what is there),
  * and the events already linked keep their provider's name, venue and dates
  * (`SportEventService.keepProviderEventsCurrent`, ADR 0011). Nothing works out a season from
  * today's date: when the league's last Season mapped to its provider has ended and no later one is
@@ -21,12 +21,13 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncRunRepository, SportLeagueRepository, SportLeagueSeasonRepository, SportRepository, SyncableSportLeagueSeason } from '@poolmaster/shared/db';
+import type { ProviderSyncRunRepository, SportLeagueRepository, SportLeagueSeasonRepository, SyncableSportLeagueSeason } from '@poolmaster/shared/db';
 import {
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
   ProviderSyncKind,
   seasonsToSync,
+  playsOutsideSeason,
   ProviderSyncRunStatus,
   JobTrigger,
   type BackgroundJob,
@@ -34,12 +35,13 @@ import {
   type ProviderSyncRun,
   type ProviderSyncRunOutcome,
   type SportLeague,
+  type SportLeagueProviderMapping,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 import { SCHEDULE_START } from '../../core/job-start';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { PermanentBackgroundJobError, type BackgroundJobContext } from '../background-jobs/background-job-runner';
-import { EventScoreSourceError, type EventScoreSourceService } from './event-score-source-service';
+import { ProviderSeasonScheduleError, type ProviderSeasonScheduleReader } from './provider-season-schedule-reader';
 import { SportEventError } from './errors';
 import { syncLeagueEventsJob, type SyncLeagueEventsJobPayload } from './league-events-sync-job';
 import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
@@ -50,15 +52,21 @@ import type { ProviderSeasonImport, SportEventService } from './service';
  * left out of the provider's plan. Anything else, such as the provider being unreachable, is
  * tried again.
  */
-const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT_FOUND', 'SPORT_LEAGUE_NOT_SYNCED', 'PROVIDER_LEAGUE_REFUSED']);
+const PERMANENT_SOURCE_ERRORS = new Set(['PROVIDER_NOT_FOUND', 'SPORT_LEAGUE_NOT_FOUND', 'SPORT_LEAGUE_NOT_SYNCED', 'PROVIDER_LEAGUE_REFUSED', 'PROVIDER_LEAGUE_UNKNOWN']);
+
+/** The finding a tournament its name placed nowhere raises, by why (#2011). */
+const UNPLACED_NAME_KIND: Record<ProviderSeasonImport['unplacedNames'][number]['reason'], ProviderSyncFindingKind> = {
+  UNMATCHED: ProviderSyncFindingKind.SLOT_NAME_UNMATCHED,
+  AMBIGUOUS: ProviderSyncFindingKind.SLOT_NAME_AMBIGUOUS,
+  SEASON_PHASE_MISSING: ProviderSyncFindingKind.SLOT_SEASON_PHASE_MISSING,
+};
 
 export interface LeagueEventsSyncOptions {
   sportLeagues: Pick<SportLeagueRepository, 'findById' | 'findEventSynced'>;
   seasons: Pick<SportLeagueSeasonRepository, 'findForSync'>;
-  sports: Pick<SportRepository, 'findById'>;
-  scoreSource: Pick<EventScoreSourceService, 'listSeasonEvents'>;
+  seasonSchedule: Pick<ProviderSeasonScheduleReader, 'listSeasonEvents'>;
   sportEvents: Pick<SportEventService, 'importProviderSeason' | 'keepProviderEventsCurrent'>;
-  findings: Pick<ProviderSyncFindingService, 'raise'>;
+  findings: Pick<ProviderSyncFindingService, 'raiseOfSource' | 'resolveOfSource'>;
   syncRuns: Pick<ProviderSyncRunRepository, 'create' | 'update' | 'findByBackgroundJobIds'>;
   jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll' | 'enqueueRequestReturning'>;
   logger?: FastifyBaseLogger;
@@ -129,8 +137,6 @@ export class LeagueEventsSync {
     if (!sportLeague) throw new PermanentBackgroundJobError(`Sport league ${payload.sportLeagueId} no longer exists`);
     const selected = sportLeague.selectedProviderMapping;
     if (selected === null) throw new PermanentBackgroundJobError(`No provider syncs ${sportLeague.name}'s events any more`);
-    const sport = (await this.options.sports.findById(sportLeague.sportId))?.sport;
-    if (sport === undefined) throw new PermanentBackgroundJobError(`Sport league ${sportLeague.name} belongs to no known sport`);
     const leagueSeasons = await this.options.seasons.findForSync(sportLeague.id, selected.id);
     const seasons = this.seasonsToRead(sportLeague, leagueSeasons, payload.sportLeagueSeasonId);
     await this.raiseSeasonMissing(sportLeague, selected.providerId, leagueSeasons);
@@ -141,7 +147,6 @@ export class LeagueEventsSync {
     const providerId = selected.providerId;
     const run = await this.options.syncRuns.create({
       providerCode: selected.providerCode,
-      sport,
       kind: ProviderSyncKind.EVENTS,
       trigger: context.trigger,
       sportLeagueId: sportLeague.id,
@@ -160,7 +165,7 @@ export class LeagueEventsSync {
         // A Season's reads can wait on the provider's rate limit, so each later Season starts on a
         // fresh lease; a try whose job another task has claimed stops here.
         if (index > 0 && !await context.renewLease()) throw new Error(`Another try took over ${sportLeague.name}'s events sync`);
-        synced.push(await this.syncSeason(sportLeague.id, providerId, season));
+        synced.push(await this.syncSeason(sportLeague.id, { providerId, sportLeagueProviderMappingId: selected.id }, season));
         // poolmaster-allow-query-in-loop: the run's progress after each Season
         await this.options.syncRuns.update(run.id, {
           status: ProviderSyncRunStatus.IN_PROGRESS,
@@ -173,12 +178,17 @@ export class LeagueEventsSync {
         action: 'events.leagueSync.failed',
         data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, error: errorMessage(error) },
       }, 'A sport league\'s events sync failed');
-      if (error instanceof EventScoreSourceError && PERMANENT_SOURCE_ERRORS.has(error.code)) {
+      if (error instanceof ProviderSeasonScheduleError && error.code === 'PROVIDER_LEAGUE_UNKNOWN') {
+        await this.raiseProviderLeagueUnknown(sportLeague, providerId, selected);
+      }
+      if (error instanceof ProviderSeasonScheduleError && PERMANENT_SOURCE_ERRORS.has(error.code)) {
         throw new PermanentBackgroundJobError(`${error.code}: ${error.message}`, { cause: error });
       }
       throw error;
     }
 
+    // The league's provider league code is read again: an earlier unknown-code finding resolves.
+    await this.options.findings.resolveOfSource(providerId, { kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, sportLeagueId: sportLeague.id });
     const counts = countsOf(synced);
     const read = seasons.length === 0 ? 'no Season, since none is mapped to its provider from the current one on' : seasons.map((season) => season.name).join(' and ');
     await this.options.syncRuns.update(run.id, {
@@ -217,6 +227,22 @@ export class LeagueEventsSync {
   }
 
   /**
+   * One PROVIDER_LEAGUE_UNKNOWN ERROR per league and Provider when the league's selected mapping
+   * names a provider league code the Provider does not read (#2005): nothing was read, and the
+   * job fails for good until the mapping or the league row is fixed.
+   */
+  private async raiseProviderLeagueUnknown(sportLeague: SportLeague, providerId: string, mapping: SportLeagueProviderMapping): Promise<void> {
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN,
+      severity: ProviderSyncFindingSeverity.ERROR,
+      sportLeagueId: sportLeague.id,
+      sportEventId: null,
+      providerValue: mapping.providerLeagueCode,
+      providerValueName: mapping.providerLeagueName,
+    }]);
+  }
+
+  /**
    * One SEASON_MISSING ERROR per league and Provider when the last of its Seasons the provider has
    * an id for has ended: nothing of the next Season syncs until a migration adds it.
    */
@@ -227,22 +253,136 @@ export class LeagueEventsSync {
       action: 'events.leagueSync.seasonMissing',
       data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, lastMappedSeasonId: lastMapped?.id ?? null },
     }, 'A sport league has no Season left to sync from its provider');
-    await this.options.findings.raise([{
+    await this.options.findings.raiseOfSource(providerId, [{
       kind: ProviderSyncFindingKind.SEASON_MISSING,
       severity: ProviderSyncFindingSeverity.ERROR,
       sportLeagueId: sportLeague.id,
       sportEventId: null,
-      providerId,
       providerValue: null,
       providerValueName: null,
     }]);
   }
 
-  private async syncSeason(sportLeagueId: string, providerId: string, season: SyncableSportLeagueSeason & { providerSeasonId: string }): Promise<SeasonSync> {
-    const providerEvents = await this.options.scoreSource.listSeasonEvents(providerId, sportLeagueId, season.providerSeasonId);
-    const imported = await this.options.sportEvents.importProviderSeason({ sportLeagueId, sportLeagueSeasonId: season.id, providerId, providerEvents });
+  /**
+   * One Season: its slate is imported and its linked events kept current, and each code of the
+   * slate no slot mapping includes raises one INFO SLOT_VALUE_UNMAPPED finding per league, Provider
+   * and code (#2005); a tournament its name places nowhere raises SLOT_NAME_UNMATCHED (INFO),
+   * SLOT_NAME_AMBIGUOUS or SLOT_SEASON_PHASE_MISSING (ERROR) per league, Provider and normalized name (#2011).
+   * Games with no code that no slot's window holds, inside the Season's span, raise one INFO
+   * GAMES_UNPLACED per league, Provider and Season, placed games dated outside the Season a WARNING, and date-window slots still needing
+   * dates a WARNING per Season (#2012). The findings' subjects dedupe them across syncs, and a
+   * waived one stays waived.
+   */
+  private async syncSeason(
+    sportLeagueId: string,
+    provider: { providerId: string; sportLeagueProviderMappingId: string },
+    season: SyncableSportLeagueSeason & { providerSeasonId: string },
+  ): Promise<SeasonSync> {
+    const { providerId, sportLeagueProviderMappingId } = provider;
+    const providerEvents = await this.options.seasonSchedule.listSeasonEvents(sportLeagueId, season.providerSeasonId);
+    const imported = await this.options.sportEvents.importProviderSeason({ sportLeagueId, sportLeagueSeasonId: season.id, providerId, sportLeagueProviderMappingId, providerEvents });
+    if (imported.unmatched.length > 0) await this.options.findings.raiseOfSource(providerId, imported.unmatched.map((value) => ({
+      kind: ProviderSyncFindingKind.SLOT_VALUE_UNMAPPED,
+      severity: ProviderSyncFindingSeverity.INFO,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: value.code,
+      providerValueName: value.eventName,
+    })));
+    // A tournament its name places nowhere (#2011): one finding per league, Provider and normalized name.
+    if (imported.unplacedNames.length > 0) await this.options.findings.raiseOfSource(providerId, imported.unplacedNames.map((value) => ({
+      kind: UNPLACED_NAME_KIND[value.reason],
+      severity: value.reason === 'UNMATCHED' ? ProviderSyncFindingSeverity.INFO : ProviderSyncFindingSeverity.ERROR,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: value.normalizedName,
+      providerValueName: value.name,
+    })));
+    await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, imported.placed);
+    await this.raiseGamesUnplaced(sportLeagueId, providerId, season, imported.unplaced);
+    await this.checkSlotDates(sportLeagueId, providerId, season, imported.slotsNeedingDates);
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
+  }
+
+  /**
+   * One WARNING SLOT_OUTSIDE_SEASON per league, Provider and place whose placed games are dated
+   * outside the Season's span (#2012), before it or after it. The games are still written; the
+   * finding's subject dedupes it across syncs. A place found by date window has no code, so its
+   * finding names none.
+   */
+  private async raiseSlotsOutsideSeason(
+    sportLeagueId: string,
+    providerId: string,
+    season: { startsAt: Date; endsAt: Date },
+    placed: ProviderSeasonImport['placed'],
+  ): Promise<void> {
+    const outside = new Map<string | null, string>();
+    for (const play of playsOutsideSeason(placed, season)) {
+      if (!outside.has(play.code)) outside.set(play.code, play.eventName);
+    }
+    if (outside.size === 0) return;
+    await this.options.findings.raiseOfSource(providerId, [...outside].map(([code, eventName]) => ({
+      kind: ProviderSyncFindingKind.SLOT_OUTSIDE_SEASON,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: code,
+      providerValueName: eventName,
+    })));
+  }
+
+  /**
+   * One INFO GAMES_UNPLACED per league, Provider and Season for the games with no code that no
+   * slot's window holds and that are dated inside the Season's span (#2012). A game outside the
+   * span is not this Season's, so waiving the finding covers one Season's known games, never a
+   * later Season's gap. The finding names the events the games are in.
+   */
+  private async raiseGamesUnplaced(
+    sportLeagueId: string,
+    providerId: string,
+    season: { startsAt: Date; endsAt: Date; providerSeasonId: string },
+    unplaced: ProviderSeasonImport['unplaced'],
+  ): Promise<void> {
+    const outside = new Set(playsOutsideSeason(unplaced, season));
+    const inSeason = unplaced.filter((game) => !outside.has(game));
+    if (inSeason.length === 0) return;
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.GAMES_UNPLACED,
+      severity: ProviderSyncFindingSeverity.INFO,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: season.providerSeasonId,
+      providerValueName: [...new Set(inSeason.map((game) => game.eventName))].join(', '),
+    }]);
+  }
+
+  /**
+   * One WARNING SLOT_DATES_NEEDED per league, Provider and Season while slots its provider places
+   * by date window have no window or only a tentative one (#2012, #1924), naming their keys; the
+   * Season's finding resolves once none does. A Season with no slot placed by date window has
+   * nothing to check. The Seasons the sync reads are the open and upcoming ones, so an ended Season
+   * raises none.
+   */
+  private async checkSlotDates(
+    sportLeagueId: string,
+    providerId: string,
+    season: { providerSeasonId: string },
+    slotKeys: readonly string[] | null,
+  ): Promise<void> {
+    if (slotKeys === null) return;
+    if (slotKeys.length === 0) {
+      await this.options.findings.resolveOfSource(providerId, { kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED, sportLeagueId, providerValues: [season.providerSeasonId] });
+      return;
+    }
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: season.providerSeasonId,
+      providerValueName: slotKeys.join(', '),
+    }]);
   }
 
   /** An earlier try of this job that stopped mid-run left its run IN_PROGRESS: it is FAILED as interrupted. */
@@ -283,7 +423,7 @@ export class LeagueEventsSync {
           error: {
             ...(error instanceof Error && { name: error.name }),
             message,
-            ...(error instanceof EventScoreSourceError && { code: error.code }),
+            ...(error instanceof ProviderSeasonScheduleError && { code: error.code }),
           },
         },
       },

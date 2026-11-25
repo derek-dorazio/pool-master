@@ -52,8 +52,9 @@ import {
   Sport,
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-import { freshEventEdition, seriesSeasonId } from '../../support/event-edition';
+import { freshEventEdition, fixtureSeasonId } from '../../support/event-edition';
 import { participantLeagueId, participantLeagueIdForSport } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -301,21 +302,17 @@ describe('Contract verification (web)', () => {
     await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
       update: {},
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     });
     await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
         id: eventId,
-        providerId: 'contract-events-provider',
-        externalId: `contract-event-${eventId}`,
-        sport: Sport.GOLF,
         name: 'Contract Events Major',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
         participantCount: 144,
-        metadata: {},
       },
     });
     await prisma.participant.create({
@@ -372,14 +369,14 @@ describe('Contract verification (web)', () => {
       expect(inProgressRes.statusCode).toBe(200);
       expect(SportEventListResponseSchema.parse(inProgressRes.json()).events.map((item) => item.id)).not.toContain(eventId);
 
-      const { eventSeries } = await prisma.sportEvent.findUniqueOrThrow({
+      const { sportLeagueId } = await prisma.sportEvent.findUniqueOrThrow({
         where: { id: eventId },
-        select: { eventSeries: { select: { sportLeagueId: true } } },
+        select: { sportLeagueId: true },
       });
       // Any signed-in user reads a sport league's Seasons, the pickers' options (#2003).
       const seasonsRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/sport-leagues/${eventSeries.sportLeagueId}/seasons`,
+        url: `/api/v1/sport-leagues/${sportLeagueId}/seasons`,
         headers: viewer.headers,
       });
       expect(seasonsRes.statusCode).toBe(200);
@@ -415,15 +412,11 @@ describe('Contract verification (web)', () => {
       data: {
         ...(await freshEventEdition(prisma)),
         id: eventId,
-        providerId: 'contract-events-provider',
-        externalId: `contract-shallow-event-${eventId}`,
-        sport: Sport.GOLF,
         name: 'Contract Shallow Event',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
         status: 'SCHEDULED',
         participantCount: 144,
-        metadata: {},
       },
     });
 
@@ -575,6 +568,7 @@ describe('Contract verification (web)', () => {
       update: {},
       create: {
         sport: Sport.GOLF,
+        ...sportRowKeys(Sport.GOLF),
         tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
@@ -590,14 +584,10 @@ describe('Contract verification (web)', () => {
 
     // On the PGA TOUR, whose own seeded setups the contest is created from (#1825).
     const pgaTour = await getPrisma().sportLeague.findFirstOrThrow({ where: { name: 'PGA TOUR', sport: { sport: Sport.GOLF } } });
-    const series = await getPrisma().eventSeries.create({ data: { sportLeagueId: pgaTour.id, name: `Contract fixture ${randomUUID()}` } });
     const sportEvent = await getPrisma().sportEvent.create({
       data: {
-        eventSeriesId: series.id,
-        sportLeagueSeasonId: await seriesSeasonId(getPrisma(), series.id, eventTiming.startDate.getUTCFullYear()),
-        externalId: `contract-event-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
-        sport: Sport.GOLF,
+        sportLeagueId: pgaTour.id,
+        sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), pgaTour.id, eventTiming.startDate.getUTCFullYear()),
         name: 'Contract Event',
         startDate: eventTiming.startDate,
         endDate: new Date(eventTiming.startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -869,9 +859,6 @@ describe('Contract verification (web)', () => {
     const event = await getPrisma().sportEvent.create({
       data: {
         ...(await freshEventEdition(getPrisma())),
-        externalId: `contract-room-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: 'Contract Room Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -931,15 +918,12 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma)),
-        externalId: `contract-draw-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
-        sport: Sport.GOLF,
         name: 'Contract Draw Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -1007,15 +991,12 @@ describe('Contract verification (web)', () => {
 
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
       update: {},
     });
     const event = await prisma.sportEvent.create({
       data: {
         ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })),
-        externalId: `contract-pickem-${randomUUID().slice(0, 8)}`,
-        providerId: 'integration-test',
-        sport: Sport.BASKETBALL,
         name: 'Contract Pickem Event',
         startDate: new Date('2099-03-19T16:00:00.000Z'),
         status: 'SCHEDULED',

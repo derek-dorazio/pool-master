@@ -14,9 +14,10 @@ import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/in
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { findUnindexedScans } from '../index-check';
 import { recordStatements } from '../statement-log';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
-import { fixtureSeasonId } from '../../support/event-edition';
+import { sportRowKeys } from '../../support/sport-rows';
+import { fixtureSeasonId, mapEventToProvider } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -33,7 +34,7 @@ const days = (count: number) => new Date(NOW.getTime() + count * DAY_MS);
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   return sport.id;
@@ -42,7 +43,7 @@ async function golfSportId(): Promise<string> {
 /** A golf league; `synced` maps it to BALLDONTLIE's PGA TOUR and selects that mapping. */
 async function sportLeague(name: string, { synced = false }: { synced?: boolean } = {}) {
   const league = await getPrisma().sportLeague.create({
-    data: { timeZone: 'UTC', ...(await leagueProfiles(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}` },
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `${name} ${randomUUID().slice(0, 8)}` },
   });
   if (synced) await syncLeagueTo(getPrisma(), league.id, 'pga');
   return league;
@@ -50,10 +51,9 @@ async function sportLeague(name: string, { synced = false }: { synced?: boolean 
 
 async function event(sportLeagueId: string, { championshipYear, ...input }: { championshipYear: number; startDate: Date; endDate?: Date; status?: 'DRAFT' | 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' }) {
   const prisma = getPrisma();
-  const series = await prisma.eventSeries.create({ data: { sportLeagueId, name: `Series ${randomUUID()}` } });
   const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeagueId, championshipYear);
   return prisma.sportEvent.create({
-    data: { eventSeriesId: series.id, sportLeagueSeasonId, sport: Sport.GOLF, name: `Event ${randomUUID().slice(0, 8)}`, providerId: 'balldontlie', externalId: randomUUID(), ...input },
+    data: { sportLeagueId: sportLeagueId, sportLeagueSeasonId, name: `Event ${randomUUID().slice(0, 8)}`, ...input },
   });
 }
 
@@ -73,7 +73,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const held = await event(tour.id, { championshipYear: 2027, startDate: days(30), status: 'DRAFT' });
     await new PrismaSportEventRepository(getAppPrisma()).recordAutoReleaseCheck(held.id, { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] });
     const run = (kind: 'EVENTS' | 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', createdAt: Date, summary = '') => ({
-      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId: tour.id, status, createdAt, summary,
+      kind, trigger: 'SCHEDULE' as const, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: tour.id, status, createdAt, summary,
     });
     await prisma.providerSyncRun.createMany({
       data: [
@@ -91,7 +91,7 @@ describe('PrismaSportLeagueOverviewReader', () => {
     const { result: facts, statements } = await recordStatements(() => new PrismaSportLeagueOverviewReader(getAppPrisma()).readFacts(NOW));
 
     expect(facts.leagues).toEqual(expect.arrayContaining([
-      { id: tour.id, sport: Sport.GOLF, name: tour.name, syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true },
+      { id: tour.id, sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 5, name: tour.name, syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true },
     ]));
     expect(facts.latestSyncRuns.filter((latest) => latest.sportLeagueId === tour.id).sort((left, right) => left.kind.localeCompare(right.kind))).toEqual([
       expect.objectContaining({ kind: ProviderSyncKind.EVENTS, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.' }),
@@ -158,11 +158,13 @@ describe('ProviderSyncRunLedger with the event repository', () => {
   it('records on a scheduled run the event and sport league its provider event is linked to', async () => {
     const tour = await sportLeague('Ledger Tour');
     const linked = await event(tour.id, { championshipYear: 2027, startDate: days(3) });
+    const externalId = `ledger-${linked.id}`;
+    await mapEventToProvider(getPrisma(), linked.id, { providerId: 'balldontlie', externalId });
     const ledger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
     const normalizedRequest = new SyncOrchestrator({ now: () => NOW }).normalizeRequest({
       source: 'SCHEDULED',
       actor: { type: 'SYSTEM', name: 'scheduler' },
-      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: linked.externalId, feeds: ['EVENTLIVESCORES'] },
+      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: externalId, feeds: ['EVENTLIVESCORES'] },
     });
 
     const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, trigger: JobTrigger.SCHEDULE });

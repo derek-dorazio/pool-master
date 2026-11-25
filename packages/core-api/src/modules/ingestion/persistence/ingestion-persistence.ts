@@ -6,7 +6,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { type Prisma, type PrismaClient } from '@prisma/client';
+import { PrismaSlotProviderMatchType, type Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   ParticipantStatus,
@@ -16,6 +16,7 @@ import {
   SportEventStatus,
   eventPlaysMatches,
   providerSourceIdOf,
+  providerCodeOfSourceId,
   requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
 import type {
@@ -197,15 +198,26 @@ export class IngestionPersistence {
     }
 
     if (unmapped.length > 0) {
+      // Each new participant's mapping is keyed to its Provider row (#2040), read once here.
+      const providerIds = new Map((await this.prisma.provider.findMany({
+        where: { code: { in: [...new Set(unmapped.map((participant) => requireProviderCodeOfSourceId(participant.providerId)))] } },
+        select: { id: true, code: true },
+      })).map((provider) => [provider.code, provider.id]));
+      // Each participant's id is chosen here, so its mapping names it without leaning on the
+      // order the insert returns rows in (rules/domain-model-conventions-rules.md §17).
+      const withIds = unmapped.map((participant) => ({ participant, participantId: randomUUID(), providerRowId: requireProviderId(providerIds, participant.providerId) }));
+      // The new mappings' follow-ups (#2069), one event per Provider, written with them.
+      const externalIdsByProvider = new Map<string, string[]>();
+      for (const { participant, providerRowId } of withIds) {
+        externalIdsByProvider.set(providerRowId, [...(externalIdsByProvider.get(providerRowId) ?? []), participant.externalId]);
+      }
+      const followUps = await Promise.all([...externalIdsByProvider].map(([providerRowId, externalIds]) => this.domainEvents.collect({
+        type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED,
+        sportLeagueId: league.id,
+        providerId: providerRowId,
+        externalIds,
+      })));
       const created = await this.prisma.$transaction(async (tx) => {
-        // Each new participant's mapping is keyed to its Provider row (#2040), read once here.
-        const providerIds = new Map((await tx.provider.findMany({
-          where: { code: { in: [...new Set(unmapped.map((participant) => requireProviderCodeOfSourceId(participant.providerId)))] } },
-          select: { id: true, code: true },
-        })).map((provider) => [provider.code, provider.id]));
-        // Each participant's id is chosen here, so its mapping names it without leaning on the
-        // order the insert returns rows in (rules/domain-model-conventions-rules.md §17).
-        const withIds = unmapped.map((participant) => ({ participant, participantId: randomUUID() }));
         await tx.participant.createMany({
           data: withIds.map(({ participant, participantId }) => ({
             id: participantId,
@@ -215,21 +227,23 @@ export class IngestionPersistence {
           })),
         });
         await tx.participantProviderMapping.createMany({
-          data: withIds.map(({ participant, participantId }) => ({
+          data: withIds.map(({ participant, participantId, providerRowId }) => ({
             participantId,
             sportLeagueId: league.id,
             participantType: league.participantType,
-            providerId: requireProviderId(providerIds, participant.providerId),
+            providerId: providerRowId,
             externalId: participant.externalId,
             lastSeenAt: seenAt,
           })),
         });
+        await insertBackgroundJobs(tx, followUps.flatMap((followUp) => followUp.jobs));
         return withIds.map(({ participant, participantId }) => ({
           providerId: participant.providerId,
           externalId: participant.externalId,
           participantId,
         }));
       });
+      for (const followUp of followUps) followUp.queued();
       for (const mapping of created) participantIdByKey.set(providerKey(mapping), mapping.participantId);
     }
 
@@ -237,16 +251,23 @@ export class IngestionPersistence {
     return { count: latestByKey.size, participantIdByKey };
   }
 
-  /** The sport events linked to these provider events, in one query grouped by provider. */
+  /**
+   * The sport events the provider has these ids for (#2004), in one query grouped by provider, each
+   * with the provider's id for it under that adapter's id, as the feed names it.
+   */
   private async findLinkedEvents(events: readonly SportEvent[]) {
-    const externalIdsByProvider = new Map<string, string[]>();
+    const externalIdsByCode = new Map<ProviderCode, string[]>();
     for (const event of events) {
-      externalIdsByProvider.set(event.providerId, [...(externalIdsByProvider.get(event.providerId) ?? []), event.externalId]);
+      // An adapter id no Provider carries has no events.
+      const code = providerCodeOfSourceId(event.providerId);
+      if (code !== undefined) externalIdsByCode.set(code, [...(externalIdsByCode.get(code) ?? []), event.externalId]);
     }
-    if (externalIdsByProvider.size === 0) return [];
-    return this.prisma.sportEvent.findMany({
-      where: { OR: [...externalIdsByProvider].map(([providerId, externalIds]) => ({ providerId, externalId: { in: externalIds } })) },
+    if (externalIdsByCode.size === 0) return [];
+    const mappings = await this.prisma.sportEventProviderMapping.findMany({
+      where: { OR: [...externalIdsByCode].map(([code, externalIds]) => ({ provider: { code }, externalId: { in: externalIds } })) },
+      select: { externalId: true, provider: { select: { code: true } }, sportEvent: true },
     });
+    return mappings.map(({ externalId, provider, sportEvent }) => ({ ...sportEvent, providerId: providerSourceIdOf(provider.code), externalId }));
   }
 
   /**
@@ -282,19 +303,27 @@ export class IngestionPersistence {
     }, 'Persisting event detail from ingestion');
     const eventResult = await this.persistEventsWithDiagnostics([detail]);
     const eventsPersisted = eventResult.count;
-    const persistedEvent = await this.prisma.sportEvent.findUnique({
-      where: {
-        providerId_externalId: {
-          providerId: detail.providerId,
-          externalId: detail.externalId,
+    // The event the provider has this id for (#2004), and its league through its Season.
+    const providerCode = providerCodeOfSourceId(detail.providerId);
+    const persistedEvent = providerCode === undefined ? null : (await this.prisma.sportEventProviderMapping.findFirst({
+      where: { provider: { code: providerCode }, externalId: detail.externalId },
+      select: {
+        sportEvent: {
+          include: {
+            sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } } },
+            // A slot this provider's games reach by date window (#1715): one is enough to know.
+            slots: {
+              where: { seasonSlot: { definition: { providerMappings: { some: {
+                matchType: PrismaSlotProviderMatchType.DATE_WINDOW,
+                sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } },
+              } } } } },
+              select: { id: true },
+              take: 1,
+            },
+          },
         },
       },
-      include: {
-        eventSeries: {
-          select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true } } },
-        },
-      },
-    });
+    }))?.sportEvent ?? null;
     const detailRows: SyncWriteDetailRow[] = [];
 
     if (!persistedEvent) {
@@ -308,7 +337,7 @@ export class IngestionPersistence {
       };
     }
 
-    const { sportLeague } = persistedEvent.eventSeries;
+    const { sportLeague } = persistedEvent.sportLeagueSeason;
     const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants, {
       id: sportLeague.id,
       participantType: sportLeague.participantType,
@@ -327,7 +356,10 @@ export class IngestionPersistence {
     });
 
     try {
-      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows, followUps);
+      // A date window holds every game in its dates, other schools' too, so its feed names no field:
+      // the field is the one placed on the event, and the feed only refreshes it (#1715).
+      const fieldFromFeed = persistedEvent.slots.length === 0;
+      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, { seedsLocked, fieldFromFeed }, participantIdByKey, detailRows, followUps);
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
       this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
@@ -357,7 +389,8 @@ export class IngestionPersistence {
 
   /**
    * Writes the provider's field onto the event's rows, one row per mapped participant, and
-   * returns how many (#1183). The rows are read in one query; an unchanged row is not
+   * returns how many (#1183). When the feed's teams are not the field (`fieldFromFeed` false: an
+   * event placed by date window, #1715), it only refreshes the rows already on the event. The rows are read in one query; an unchanged row is not
    * written, and the new and changed ones are written in one transaction, with the field sync's
    * follow-up jobs. A field with no row to write still writes those jobs, on their own: the
    * provider's games may have changed when its field did not.
@@ -365,7 +398,7 @@ export class IngestionPersistence {
   private async persistEventField(
     detail: FieldFeed,
     sportEventId: string,
-    seedsLocked: boolean,
+    { seedsLocked, fieldFromFeed }: { seedsLocked: boolean; fieldFromFeed: boolean },
     participantIdByKey: ReadonlyMap<string, string>,
     detailRows: SyncWriteDetailRow[],
     followUps: JobsForWrite,
@@ -381,7 +414,8 @@ export class IngestionPersistence {
       })).map((row) => [row.participantId, row]),
     );
 
-    const plans = [...mapped].map(([participantId, participant]) => {
+    const onField = fieldFromFeed ? [...mapped] : [...mapped].filter(([participantId]) => existingByParticipantId.has(participantId));
+    const plans = onField.map(([participantId, participant]) => {
       const existing = existingByParticipantId.get(participantId);
       const seedNumber = seedsLocked && existing
         ? existing.seedNumber
@@ -457,12 +491,11 @@ type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participa
 
 /** Whether an event's seeds are locked: a released bracket's are (#698), since the upset bonus reads them as they stood at release. */
 function seedsLockedOn(event: {
-  sport: Sport;
   status: SportEventStatus;
-  eventSeries: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily'] } };
+  sportLeagueSeason: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily']; sport: { sport: Sport } } };
 }): boolean {
-  const { sportLeague } = event.eventSeries;
-  return eventPlaysMatches({ sport: event.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
+  const { sportLeague } = event.sportLeagueSeason;
+  return eventPlaysMatches({ sport: sportLeague.sport.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
 }
 
 /** The sport league an event's participants belong to (#1853), and the kind of participant it holds. */
@@ -529,7 +562,6 @@ function resolveDisposition(
 function normalizeSportEventRow(row: {
   externalId: string;
   providerId: string;
-  sport: Sport;
   name: string;
   venue: string | null;
   location: string | null;
@@ -538,12 +570,10 @@ function normalizeSportEventRow(row: {
   status: SportEventStatus;
   rounds: number | null;
   participantCount: number | null;
-  metadata: Prisma.JsonValue;
 }): Record<string, unknown> {
   return {
     externalId: row.externalId,
     providerId: row.providerId,
-    sport: row.sport,
     name: row.name,
     venue: row.venue,
     location: row.location,
@@ -552,7 +582,6 @@ function normalizeSportEventRow(row: {
     status: row.status,
     rounds: row.rounds,
     participantCount: row.participantCount,
-    metadata: jsonClone(row.metadata),
   };
 }
 

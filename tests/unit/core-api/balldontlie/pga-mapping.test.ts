@@ -30,7 +30,7 @@ const resultFor = (results: PgaTournamentResult[], playerId: number) =>
   expectDefined(results.find((result) => result.competitor.player?.id === playerId));
 
 describe('BALLDONTLIE PGA tournament to sport event', () => {
-  it('maps a final tournament with its course, place, dates, rounds and PGA TOUR tour name', () => {
+  it('maps a final tournament with its course, place, dates and rounds', () => {
     expect(toSportEvent(wyndham, 156)).toEqual({
       externalId: '40',
       providerId: 'balldontlie',
@@ -44,7 +44,9 @@ describe('BALLDONTLIE PGA tournament to sport event', () => {
       rounds: 4,
       participantCount: 156,
       fieldLocked: true,
-      metadata: { tour: 'PGA TOUR', season: 2026, formatType: 'STROKE_PLAY' },
+      providerSlots: [
+        { code: '40', startsAt: new Date('2026-08-06T00:00:00.000Z'), endsAt: new Date('2026-08-09T00:00:00.000Z') },
+      ],
     });
   });
 

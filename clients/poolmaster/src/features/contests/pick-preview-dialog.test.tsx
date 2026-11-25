@@ -35,7 +35,7 @@ bindApiMocks({
 const golfer = { one: 'golfer', many: 'golfers' };
 const team = { one: 'team', many: 'teams' };
 const golfEvent = { id: 'event-golf', name: 'The Masters', sport: 'GOLF', sportLeagueId: 'sl-pga', loadedParticipantCount: 90, pricing: null } as const;
-const nflEvent = { id: 'event-nfl', name: 'Week 12', sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'sl-nfl', loadedParticipantCount: 32, pricing: null } as const;
+const nflEvent = { id: 'event-nfl', name: 'Week 12', sport: 'FOOTBALL', sportLeagueId: 'sl-nfl', loadedParticipantCount: 32, pricing: null } as const;
 
 function golferRow(id: string, name: string, selected: readonly string[]) {
   return { sportEventParticipantId: id, participantId: `p-${id}`, participantName: name, seedNumber: null, isAvailable: true, isSelected: selected.includes(id) };
@@ -79,6 +79,7 @@ function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTe
     pickedCount: pickedTeam ? 1 : 0,
     gameCount: 1,
     tiebreakerMatchId: 'match-1',
+    tiebreakerMax: 999,
     games: [{
       sportEventRoundMatchId: 'match-1',
       matchNumber: 1,

@@ -28,8 +28,9 @@ import {
   BackgroundJobRetention,
   BackgroundJobRunner,
 } from '../../../packages/core-api/src/modules/background-jobs';
-import { leagueProfiles } from '../../support/league-profiles';
-import { seriesSeasonId } from '../../support/event-edition';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportRowKeys } from '../../support/sport-rows';
+import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -300,15 +301,14 @@ describe('Activity reads and job results (#1819)', () => {
     const suffix = randomUUID().slice(0, 8);
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `Activity Jobs Open ${suffix}` } });
+    const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs ${suffix}` } });
     const event = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id, sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, 2026), name: `Activity Jobs Open ${suffix}`, sport: Sport.GOLF,
-        providerId: 'integration-background-jobs', externalId: `activity-${suffix}`, startDate: new Date(),
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `Activity Jobs Open ${suffix}`,
+        startDate: new Date(),
       },
     });
     return { sportLeague, event };
@@ -320,8 +320,7 @@ describe('Activity reads and job results (#1819)', () => {
     await prisma.providerSyncRun.deleteMany();
     const leagues = await prisma.sportLeague.findMany({ where: { name: { startsWith: 'Activity Jobs ' } }, select: { id: true } });
     const leagueIds = leagues.map((league) => league.id);
-    await prisma.sportEvent.deleteMany({ where: { eventSeries: { sportLeagueId: { in: leagueIds } } } });
-    await prisma.eventSeries.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
+    await prisma.sportEvent.deleteMany({ where: { sportLeagueId: { in: leagueIds } } });
     await prisma.sportLeague.deleteMany({ where: { id: { in: leagueIds } } });
   });
 
@@ -379,6 +378,49 @@ describe('Activity reads and job results (#1819)', () => {
     await expect(getPrisma().backgroundJob.count()).resolves.toBe(2);
   });
 
+  it('fails loudly rather than answer no job when a worker frees the key between each skipped insert and its read, and another request takes it again', async () => {
+    const plain = repository();
+    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('raced-twice'), dedupeKey: 'raced-twice-key', start: TEST_JOB_START };
+    await plain.enqueueReturning(request);
+    // After each skipped insert a worker claims the waiting job, which frees the key; after each
+    // read that then finds nothing, another request takes the key before this one tries again.
+    const racing = getAppPrisma().$extends({
+      query: {
+        backgroundJob: {
+          async createManyAndReturn({ args, query }) {
+            const written = await query(args);
+            if (written.length === 0) await plain.claimDue({ now: soonAfterQueued(), limit: 1, leaseUntil: new Date(Date.now() + MINUTE) });
+            return written;
+          },
+          async findUnique({ args, query }) {
+            const found = await query(args);
+            if (found === null) await plain.enqueue(request);
+            return found;
+          },
+        },
+      },
+    });
+
+    await expect(new PrismaBackgroundJobRepository(racing as unknown as PrismaClient).enqueueReturning(request))
+      .rejects.toThrow('A MANUAL_EVENT_SYNC job was neither written nor found waiting');
+  });
+
+  it('queues a job to run at the time its request names, not now', async () => {
+    const runAt = new Date(Date.now() + 60 * MINUTE);
+
+    await repository().enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('later'), runAt, start: TEST_JOB_START });
+
+    await expect(getPrisma().backgroundJob.findFirstOrThrow()).resolves.toMatchObject({ runAt });
+    await expect(repository().claimDue({ now: soonAfterQueued(), limit: 5, leaseUntil: new Date(Date.now() + MINUTE) })).resolves.toEqual([]);
+  });
+
+  it('deletes nothing and answers 0 when no finished job is older than the cutoff', async () => {
+    await repository().enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('kept'), start: TEST_JOB_START });
+
+    await expect(repository().deleteBatchCompletedBefore(BackgroundJobStatus.SUCCEEDED, new Date(), 100)).resolves.toBe(0);
+    await expect(getPrisma().backgroundJob.count()).resolves.toBe(1);
+  });
+
   it('keeps a succeeded job\'s changed count and reported result, with no error type', async () => {
     const jobs = repository();
     await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('result'), start: TEST_JOB_START });
@@ -418,10 +460,10 @@ describe('Activity reads and job results (#1819)', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.GOLF },
-      create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
-    const empty = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
+    const empty = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Activity Jobs Empty ${randomUUID().slice(0, 8)}` } });
     const job = await prisma.backgroundJob.create({ data: { type: 'SYNC_LEAGUE_EVENTS', trigger: JobTrigger.SYSTEM, payload: {}, sportLeagueId: empty.id } });
 
     await expect(repository().findActivity({ sportLeagueId: empty.id, createdFrom: new Date(Date.now() - HOUR), createdTo: new Date(Date.now() + HOUR) }))
@@ -432,10 +474,10 @@ describe('Activity reads and job results (#1819)', () => {
     const job = await getPrisma().backgroundJob.create({ data: { type: 'MANUAL_EVENT_SYNC', trigger: JobTrigger.SYSTEM, payload: {} } });
     const runs = new PrismaProviderSyncRunRepository(getAppPrisma());
     const mine = await runs.create({
-      providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
+      providerCode: ProviderCode.BALLDONTLIE, ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
       status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome(),
     });
-    await runs.create({ providerCode: ProviderCode.BALLDONTLIE, sport: Sport.GOLF, ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome() });
+    await runs.create({ providerCode: ProviderCode.BALLDONTLIE, ...SCHEDULED_SCORES_RUN, status: 'COMPLETED', startedAt: null, completedAt: null, ...syncRunOutcome() });
 
     await expect(runs.findByBackgroundJobIds([job.id])).resolves.toEqual([expect.objectContaining({ id: mine.id, backgroundJobId: job.id })]);
     await expect(runs.findByBackgroundJobIds([])).resolves.toEqual([]);

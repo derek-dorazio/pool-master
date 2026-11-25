@@ -10,18 +10,24 @@
  * result with Zod and persists it through the event's scoring family.
  */
 
-import type { MatchSide, ParticipantInactiveReason, Sport } from '@poolmaster/shared/domain';
+import type { MatchSide, ParticipantInactiveReason, ProviderCode, ProviderSlotPlay, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
 // --- Provider Interface ---
 
 export interface SportDataProvider {
+  /** The adapter's id, as its feed's events and sync runs name it (`balldontlie`). */
   providerId: string;
+  /** The Provider row it runs for (#2073): the registry's key. */
+  readonly providerCode: ProviderCode;
   providerName: string;
 
-  /** Which sports this provider covers. */
-  sportsCovered: Sport[];
+  /**
+   * Whether the adapter reads this provider league (its own code, such as `nfl`): one of its
+   * Provider's enabled leagues that it has a reader for, as it was built at startup.
+   */
+  servesLeague(providerLeagueCode: string): boolean;
 
   /**
    * The request rate the adapter holds its calls to, a minute: the provider plan's limit, from its
@@ -30,14 +36,12 @@ export interface SportDataProvider {
   readonly requestsPerMinute?: number;
 
   /**
-   * Fetch events/schedule for a sport. With a `dateRange`, only events starting inside it;
-   * without one, every event the provider has for the sport (#402: the catalog browse no
-   * longer defaults to a window around today). Called on demand by the catalog browse,
-   * score-source linking and the year import; nothing schedules it (#126). Given a
-   * `providerLeagueCode`, a provider that reads its sport league by league reads only that league
-   * (#1797, #1997).
+   * Fetch one league's events/schedule. With a `dateRange`, only events starting inside it;
+   * without one, every event the provider has for the league (#402). Called by the league events
+   * sync for one Season at a time (#2003). The league is the `providerLeagueCode` asked for
+   * (#1797, #1997, #2005).
    */
-  getUpcomingEvents(sport: Sport, dateRange?: DateRange, options?: ProviderEventListOptions): Promise<SportEvent[]>;
+  getUpcomingEvents(sport: Sport, dateRange: DateRange | undefined, options: ProviderEventListOptions): Promise<SportEvent[]>;
 
   /** Fetch details for a specific event. */
   getEventDetails(eventId: string): Promise<SportEventDetail | null>;
@@ -91,21 +95,40 @@ export function supportsProviderPayloadDiagnostics(
 
 // --- Shared types ---
 
-/** What a caller of `getUpcomingEvents` wants from a sport's list (#1797). */
+/** Which league's events a caller of `getUpcomingEvents` wants (#1797, #2005). */
 export interface ProviderEventListOptions {
   /**
-   * The provider's own code for one of its leagues (a ProviderLeague's `code`, #1997), when only
-   * that league's events are wanted. A provider that reads the sport league by league reads only
-   * that league, and throws `ProviderLeagueRefusedError` when the plan refuses it; one that cannot
-   * tell ignores it, and the caller filters by `SportEvent.providerLeagueCode`.
+   * The provider's own code for one of its leagues (a ProviderLeague's `code`, #1997). A provider
+   * that reads league by league reads only that league: it throws `ProviderLeagueUnknownError` when
+   * the code names none of its enabled leagues of the sport, and `ProviderLeagueRefusedError` when
+   * the plan refuses it. One that cannot tell leagues apart ignores it, and the caller filters by
+   * `SportEvent.providerLeagueCode`. There is no read of every league at once (#2005).
    */
-  providerLeagueCode?: string;
+  providerLeagueCode: string;
   /**
    * The provider's own id for one Season (a SportLeagueSeasonProviderMapping's `providerSeasonId`,
    * #2003), when that Season's whole schedule is wanted rather than a date range. A provider that
    * reads by season reads that one; one that does not ignores it.
    */
   providerSeasonId?: string;
+}
+
+/**
+ * A provider was asked for a league it does not read (#2005): the code names none of its enabled
+ * leagues of the sport, so nothing is read. Reading every league instead would hand back another
+ * league's events as this one's.
+ */
+export class ProviderLeagueUnknownError extends Error {
+  /** Activity's Error column (#1861). */
+  readonly jobErrorType = JobErrorType.PROVIDER_ERROR;
+
+  constructor(
+    readonly providerName: string,
+    readonly providerLeagueCode: string,
+  ) {
+    super(`${providerName} reads no enabled league with the code "${providerLeagueCode}" for this sport.`);
+    this.name = 'ProviderLeagueUnknownError';
+  }
 }
 
 /**
@@ -152,17 +175,14 @@ export interface SportEvent {
    * provider that does not read league by league.
    */
   providerLeagueCode?: string;
-  metadata: ProviderEventMetadata;
-}
-
-/**
- * Provider-specific extras on an event. Stored as given; the named keys are the ones
- * something reads back, so a provider that supplies them supplies them with these types.
- */
-export interface ProviderEventMetadata {
-  /** The provider's tour word for the event's league; provider data, stored as given. */
-  tour?: string;
-  [key: string]: unknown;
+  /**
+   * The places the event's games are in, as the provider itself names them (league model slice 8,
+   * #2005): a season type and the provider's own week or round (`REG:5`, `POST:3`), or a
+   * tournament id. Each comes with its games' earliest and latest start. The sync matches each
+   * code to a Season slot through the league's slot provider mappings; a code no mapping includes
+   * is not synced. Empty where the provider names no place (a playoff read by date window).
+   */
+  providerSlots: ProviderSlotPlay[];
 }
 
 export interface SportEventDetail extends SportEvent {
@@ -237,11 +257,6 @@ export interface ProviderParticipant {
  * ones something reads back.
  */
 export interface ProviderParticipantMetadata {
-  /**
-   * The name of the league the participant plays in, for display, when the provider's sport
-   * covers more than one (a college team is a men's or a women's team).
-   */
-  tour?: string;
   seed?: number;
   /**
    * A play-in place (#1728): the participant stands for a First Four pairing until its winner

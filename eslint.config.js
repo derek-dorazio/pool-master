@@ -25,6 +25,46 @@ const BUTTON_STYLE_BASELINE = Object.fromEntries(
   Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/button-style-baseline.json', import.meta.url), 'utf8')))
     .filter(([key]) => !key.startsWith('$')),
 );
+const CLOCK_YEAR_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/clock-year-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
+// #2107: the enum string literals each grandfathered web file may still have, by repo path.
+const ENUM_STRING_LITERAL_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/enum-string-literal-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
+// #2107: the DTO-shaped local types each grandfathered web file may still have, by repo path.
+const DTO_SHAPE_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/dto-shape-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
+// #2114: the domain lookups by name each grandfathered file may still have, by repo path.
+const NAME_MATCH_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/name-match-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
+// #2113: the raw SQL markers each production file may have, by repo path.
+const RAW_SQL_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/raw-sql-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
+// #2115: the positional picks of a domain item each grandfathered file may still have, by repo path.
+const POSITIONAL_PICK_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/positional-pick-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
+// #2107: the local enums each grandfathered web file may still have, by repo path.
+const LOCAL_ENUM_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/local-enum-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
 
 /**
  * Selector sets are hoisted to module scope on purpose.
@@ -574,6 +614,91 @@ export default tseslint.config(
     ],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-sport-branching': 'error' },
+  },
+  {
+    // #1927: no year worked out from a date and no table of facts keyed by league, sport or
+    // Season (rules/domain-model-conventions-rules.md §17). Files that still have one sit on a
+    // shrink-only baseline. The frozen sport registry, the scoring families and the display
+    // strings are exempt; tests build dates and per-sport fixtures freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/domain/sports/**',
+      'packages/core-api/src/modules/scoring-families/**',
+      'packages/shared/display-strings/**',
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      'clients/poolmaster/src/test/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-clock-year-or-league-tables': ['error', { baseline: CLOCK_YEAR_BASELINE }] },
+  },
+  {
+    // #2115: no domain item picked by array position when the model gives it a meaning
+    // (rules/domain-model-conventions-rules.md §17). Files that still have one sit on a
+    // shrink-only baseline; tests and stories index freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      'clients/poolmaster/src/test/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-positional-pick': ['error', { baseline: POSITIONAL_PICK_BASELINE }] },
+  },
+  {
+    // #2113: no raw SQL unless a reviewed marker says what Prisma cannot express
+    // (rules/service-rules.md §5). Markers are counted per file, shrink-only; the Unsafe forms
+    // are never allowed. Tests and scripts may query freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      '**/test/**',
+      '**/__tests__/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-raw-sql': ['error', { baseline: RAW_SQL_BASELINE }] },
+  },
+  {
+    // #2114: no domain row looked up by its name (rules/domain-model-conventions-rules.md §17).
+    // Files that still have one sit on a shrink-only baseline; tests build rows by name freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      '**/test/**',
+      '**/__tests__/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-name-match': ['error', { baseline: NAME_MATCH_BASELINE }] },
+  },
+  {
+    // #2107: the web app names a shared enum member, never its value as a string, in a
+    // comparison, a case label or a literal type (rules/domain-model-conventions-rules.md §17).
+    // Files that still have one sit on a shrink-only baseline; tests and stories write values
+    // freely.
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: ['clients/poolmaster/src/**/test/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/*.stories.tsx'],
+    plugins: { poolmaster },
+    rules: {
+      'poolmaster/no-enum-string-literals': ['error', { baseline: ENUM_STRING_LITERAL_BASELINE }],
+      // #2107: no local copy of a generated hey-api type under another name.
+      'poolmaster/no-dto-shaped-local-types': ['error', { baseline: DTO_SHAPE_BASELINE }],
+      // #2107: no enum of the web app's own.
+      'poolmaster/no-local-enums': ['error', { baseline: LOCAL_ENUM_BASELINE }],
+    },
   },
   {
     // What a league plan allows comes from the plan entitlements service (#944), the one place

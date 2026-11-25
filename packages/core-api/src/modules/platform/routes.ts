@@ -6,6 +6,7 @@
  * operations administer.
  */
 
+import { toIngestionScheduleDto } from '../../mappers/ingestion-schedule.mapper';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { IngestionScheduleConfigPatch } from '@poolmaster/shared/dto/config.dto';
 import type { SettingsGroupUpdateRequest } from '@poolmaster/shared/dto/settings.dto';
@@ -171,16 +172,16 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       tags: ['Platform'],
       summary: 'Get ingestion schedule configuration',
       description:
-        'Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools.',
+        'Returns the global ingestion scheduling configuration used by operational jobs and root-admin system configuration tools, with whether each sync kind runs and whether it has a switch.',
       operationId: 'getIngestionSchedule',
       response: {
-        200: schemaRef('IngestionScheduleConfig'),
+        200: schemaRef('IngestionSchedule'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async () => {
-      return ingestionConfig.getConfig();
+      return toIngestionScheduleDto(await ingestionConfig.getConfig());
     },
   });
 
@@ -192,7 +193,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         'Updates the global feed-aware ingestion scheduling configuration for provider health checks and lifecycle-driven sync cadence.',
       operationId: 'updateIngestionSchedule',
       response: {
-        200: schemaRef('IngestionScheduleConfig'),
+        200: schemaRef('IngestionSchedule'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
@@ -204,7 +205,7 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
       }>,
     ) => {
       const rootAdminUserId = requireAuthUser(request).userId;
-      return ingestionConfig.updateConfig(request.body, rootAdminUserId);
+      return toIngestionScheduleDto(await ingestionConfig.updateConfig(request.body, rootAdminUserId));
     },
   });
 
@@ -216,14 +217,14 @@ export function platformModule(fastify: FastifyInstance, opts: PlatformModuleOpt
         'Resets ingestion scheduling back to the platform defaults.',
       operationId: 'resetIngestionSchedule',
       response: {
-        200: schemaRef('IngestionScheduleConfig'),
+        200: schemaRef('IngestionSchedule'),
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (request: FastifyRequest) => {
       const rootAdminUserId = requireAuthUser(request).userId;
-      return ingestionConfig.resetDefaults(rootAdminUserId);
+      return toIngestionScheduleDto(await ingestionConfig.resetDefaults(rootAdminUserId));
     },
   });
 }

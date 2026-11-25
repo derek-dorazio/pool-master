@@ -31,6 +31,7 @@ export type SharedEnums = {
   SeriesFormat: Enums.SeriesFormat;
   SlotPairing: Enums.SlotPairing;
   SeasonSlotStatus: Enums.SeasonSlotStatus;
+  SlotWindowStatus: Enums.SlotWindowStatus;
   SlotProviderMatchType: Enums.SlotProviderMatchType;
   MatchFormat: Enums.MatchFormat;
   PeriodUnit: Enums.PeriodUnit;
@@ -50,7 +51,7 @@ export type SharedEnums = {
   RaceResultOrderError: Enums.RaceResultOrderError;
   RaceResultChange: Enums.RaceResultChange;
   SelectionType: Enums.SelectionType;
-  ContestTemplateEventType: Enums.ContestTemplateEventType;
+  TemplateCoverageMode: Enums.TemplateCoverageMode;
   PickEmMode: Enums.PickEmMode;
   PickOutcome: Enums.PickOutcome;
   PredictedResult: Enums.PredictedResult;
@@ -58,7 +59,6 @@ export type SharedEnums = {
   SelectionStatus: Enums.SelectionStatus;
   SportEventStatus: Enums.SportEventStatus;
   ContestOpening: Enums.ContestOpening;
-  SportEventSyncScope: Enums.SportEventSyncScope;
   ProviderSyncRunStatus: Enums.ProviderSyncRunStatus;
   ProviderSyncKind: Enums.ProviderSyncKind;
   AutoReleaseCheckOutcome: Enums.AutoReleaseCheckOutcome;
@@ -84,7 +84,6 @@ export type SharedEnums = {
   ParticipantStandingStatus: Enums.ParticipantStandingStatus;
   ContestStatus: Enums.ContestStatus;
   ContestEntryStatus: Enums.ContestEntryStatus;
-  PrizePayoutType: Enums.PrizePayoutType;
   LeagueRole: Enums.LeagueRole;
   LeagueMembershipStatus: Enums.LeagueMembershipStatus;
   LeagueIconKey: Enums.LeagueIconKey;

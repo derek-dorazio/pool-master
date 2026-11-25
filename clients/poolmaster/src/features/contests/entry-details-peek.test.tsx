@@ -111,4 +111,37 @@ describe('EntryDetailsPeek', () => {
     expect(error).toHaveTextContent("We couldn't load this team.");
     expect(within(error).getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
+
+  it('names a lone owner in the singular, and says None for a team with no active owner', async () => {
+    const solo = buildLeagueSquad({
+      id: 'team-solo',
+      name: 'Solo',
+      members: [buildLeagueSquadMember({ id: 'm-4', user: buildCurrentUser({ id: 'u-4', firstName: 'Ana', lastName: 'Ruiz' }) })],
+    });
+    const orphan = buildLeagueSquad({
+      id: 'team-orphan',
+      name: 'Orphan',
+      members: [buildLeagueSquadMember({ id: 'm-5', status: 'INACTIVE', user: buildCurrentUser({ id: 'u-5', firstName: 'Gone', lastName: 'Away' }) })],
+    });
+    getLeagueSquadMock.mockImplementation(getLeagueSquadFrom([solo, orphan]));
+    drawEntries([
+      { entryId: 'entry-1', entryName: 'Solo 1', squadId: 'team-solo' },
+      { entryId: 'entry-2', entryName: 'Orphan 1', squadId: 'team-orphan' },
+    ]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'About Solo 1' }));
+    expect(await screen.findByTestId('peek-entry-1-card')).toHaveTextContent('OwnerAna Ruiz');
+
+    fireEvent.click(screen.getByRole('button', { name: 'About Orphan 1' }));
+    expect(await screen.findByTestId('peek-entry-2-card')).toHaveTextContent('OwnersNone');
+  });
+
+  it('starts an early read on hover that fails quietly, leaving the error for when the card opens', async () => {
+    drawEntries([{ entryId: 'entry-1', entryName: 'Ghost 1', squadId: 'team-gone' }]);
+
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'About Ghost 1' }), { pointerType: 'mouse' });
+
+    await waitFor(() => expect(getLeagueSquadMock).toHaveBeenCalledTimes(1));
+    expect(screen.queryByTestId('peek-entry-1-error')).not.toBeInTheDocument();
+  });
 });

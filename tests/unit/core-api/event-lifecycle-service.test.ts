@@ -16,7 +16,6 @@ import {
   type EventLifecycleContestDeps,
   type FinishedSportEventSettlement,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import type { DomainEventHandlerContext } from '../../../packages/core-api/src/modules/domain-events';
 import { testDomainEvents } from '../../support/domain-events';
 import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications/contest-notices';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
@@ -77,8 +76,8 @@ function startedJobs() {
 
 /**
  * The service under test, its follow-ups collected by the app's handler map over `jobs` (a fresh
- * queue when omitted, for a test about the service's own job-free behaviour), the template contests
- * a release joins, and the leagues told of a change.
+ * queue when omitted, for a test about the service's own job-free behaviour), and the leagues told
+ * of a change.
  */
 function lifecycleService(
   contests: EventLifecycleContestDeps,
@@ -86,10 +85,9 @@ function lifecycleService(
   logger: ReturnType<typeof fakeLogger>,
   jobs?: BackgroundJobQueue,
   settlement?: FinishedSportEventSettlement,
-  releasedEditionContests?: DomainEventHandlerContext['releasedEditionContests'],
   notice?: SportEventChangedNotice,
 ): EventLifecycleService {
-  const domainEvents = testDomainEvents({ queue: jobs ?? startedJobs(), releasedEditionContests, sportEventChanged: notice });
+  const domainEvents = testDomainEvents({ queue: jobs ?? startedJobs(), sportEventChanged: notice });
   return new EventLifecycleService(contests, sportEvents, domainEvents, {
     contestSettlement: settlement ?? NO_SETTLE_JOBS.contestSettlement,
   }, logger);
@@ -167,8 +165,7 @@ function seededEvents(overrides: Partial<SportEvent> = {}) {
   const store = new InMemorySportEvents();
   store.addEvent({
     id: 'sport-event-1',
-    providerId: 'mock-contest-feed',
-    externalId: 'provider-event-1',
+    providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' },
     name: 'Manual Test Golf Tournament',
     startDate: new Date('2026-05-02T20:00:00.000Z'),
     status: SportEventStatus.SCHEDULED,
@@ -244,31 +241,16 @@ describe('EventLifecycleService release guard (#431)', () => {
     expect(start.releasedAt).toBeUndefined();
   });
 
-  /** A template's contests the release of `sport-event-1` joins: one job per contest named. */
-  function releasedEditionContests(contestIds: readonly string[]) {
-    return {
-      releasedEditionJobs: mockFn<DomainEventHandlerContext['releasedEditionContests']['releasedEditionJobs']>(async (sportEvent, jobs) => contestIds.map((contestId) =>
-        jobs.request(BackgroundJobType.ADD_RELEASED_EDITION_TO_CONTEST, { contestId, sportEventId: sportEvent.id }))),
-    };
-  }
-
-  it('writes a released edition\'s template contest jobs with the release itself, and only on release (#714, #1318)', async () => {
+  it('writes each status change\'s jobs with the change itself: the release rebuilds the event\'s boards, the start also takes its contests live', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', name: 'PGA Championship', startDate: new Date('2026-05-14T12:00:00.000Z'), status: SportEventStatus.DRAFT, eventSeriesId: 'event-series-2', sportLeagueSeasonId: 'season-2026' });
+    store.addEvent({ id: 'sport-event-1', name: 'PGA Championship', startDate: new Date('2026-05-14T12:00:00.000Z'), status: SportEventStatus.DRAFT, sportLeagueSeasonId: 'season-2026' });
     const jobs = startedJobs();
-    const contests = releasedEditionContests(['contest-1', 'contest-2']);
-    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, contests);
+    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs);
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true });
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
 
-    expect(contests.releasedEditionJobs).toHaveBeenCalledTimes(1);
-    expect(contests.releasedEditionJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', eventSeriesId: 'event-series-2', sportLeagueSeasonId: 'season-2026' }), jobs);
-    // Each status change also rebuilds the event's boards; the start adds no template contest job,
-    // only the one that takes its contests live.
     expect(store.backgroundJobs.map((job) => job.payload)).toEqual([
-      { contestId: 'contest-1', sportEventId: 'sport-event-1' },
-      { contestId: 'contest-2', sportEventId: 'sport-event-1' },
       { subject: 'EVENT', id: 'sport-event-1' },
       { sportEventId: 'sport-event-1' },
       { subject: 'EVENT', id: 'sport-event-1' },
@@ -276,7 +258,7 @@ describe('EventLifecycleService release guard (#431)', () => {
     expect(jobs.queued).toHaveBeenCalledTimes(2);
   });
 
-  it('writes no template contest job when another caller released the edition first, since that release wrote them', async () => {
+  it('writes no job when another caller released the event first, since that release wrote them', async () => {
     const store = new InMemorySportEvents();
     store.addEvent({ id: 'sport-event-1', name: 'PGA Championship', startDate: new Date('2026-05-14T12:00:00.000Z'), status: SportEventStatus.DRAFT });
     const repo = store.sportEventRepo();
@@ -289,7 +271,7 @@ describe('EventLifecycleService release guard (#431)', () => {
       await repo.transitionStatus(id, { from: SportEventStatus.DRAFT, to: SportEventStatus.SCHEDULED });
       return seen;
     });
-    const service = lifecycleService(contestDeps(), repo, fakeLogger(), jobs, undefined, releasedEditionContests(['contest-1']));
+    const service = lifecycleService(contestDeps(), repo, fakeLogger(), jobs);
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.SCHEDULED, actor: { type: 'ROOT_ADMIN' }, release: true });
 
@@ -723,10 +705,10 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
 
   it('writes the leagues\' postponed-event jobs with the POSTPONED status when the event first goes POSTPONED, and none on a repeated call', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
     const jobs = startedJobs();
-    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, undefined, notice);
+    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, notice);
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
@@ -740,11 +722,11 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
 
   it('writes no postponed-event job when another caller postponed the event first, since that caller\'s move wrote them', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
     const repo = store.sportEventRepo();
     const sportEvents = { ...repo, transitionStatus: mockFn<typeof repo.transitionStatus>(async () => null) };
     const jobs = startedJobs();
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, undefined, changedNotice());
+    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, changedNotice());
 
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, fromStatus: SportEventStatus.SCHEDULED, actor: { type: 'SYSTEM' },
@@ -758,7 +740,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
     notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), undefined, undefined, notice);
+    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), undefined, notice);
 
     await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } }))
       .rejects.toThrow('database unavailable');
@@ -768,9 +750,9 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
 
   it('writes the leagues\' cancelled-event jobs with the CANCELLED status, while the contests are still open, and none on a repeated call', async () => {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerId: 'mock-contest-feed', externalId: 'provider-event-1', name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
+    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
-    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, undefined, notice);
+    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, notice);
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } });
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } });
@@ -784,7 +766,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     const settlement = fakeSettlement();
     const { sportEvents } = seededEvents({ status: SportEventStatus.CANCELLED });
     const notice = changedNotice();
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, undefined, notice);
+    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), settlement, notice);
 
     await service.settleFinishedEventContests({ sportEventId: 'sport-event-1', completedAt: new Date().toISOString() });
 
@@ -795,7 +777,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
   it('tells nothing when an event starts or completes', async () => {
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, notice);
+    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, notice);
 
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.COMPLETED, actor: { type: 'SYSTEM' } });
@@ -810,7 +792,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     const previousStart = new Date('2026-04-25T20:00:00.000Z');
     const moved = { id: 'sport-event-1', startDate: STARTED_EVENT_START };
 
-    const told = await lifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, undefined, notice)
+    const told = await lifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, notice)
       .sportEventRescheduledJobs({ ...moved, status: SportEventStatus.SCHEDULED }, previousStart);
 
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(moved, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set() });
@@ -834,7 +816,7 @@ describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
     const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const notice = changedNotice();
     notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), undefined, undefined, notice);
+    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), undefined, notice);
 
     await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } }))
       .rejects.toThrow('database unavailable');
@@ -1137,7 +1119,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     const deps = liveContests([LIVE, squares]);
     const notice = recordingSportEventChangedNotice();
 
-    const service = lifecycleService(deps, store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, undefined, notice);
+    const service = lifecycleService(deps, store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, notice);
     await service.applySportEventStatusTransition({
       sportEventId: 'sport-event-1',
       toStatus: SportEventStatus.POSTPONED,
@@ -1157,7 +1139,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     const written: unknown[] = [];
     const move = guardedMove(written);
     deps.contests.transitionStatuses = mockFn<ContestRepository['transitionStatuses']>(async () => { throw new Error('database unavailable'); });
-    const service = lifecycleService(deps, sportEvents, fakeLogger(), startedJobs(), undefined, undefined, recordingSportEventChangedNotice());
+    const service = lifecycleService(deps, sportEvents, fakeLogger(), startedJobs(), undefined, recordingSportEventChangedNotice());
 
     // The postponement itself lands: the reopen is its job's.
     await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
@@ -1174,14 +1156,14 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     const newStart = new Date(Date.now() + 7 * 24 * 60 * 60_000);
     const previousStart = new Date('2026-05-02T20:00:00.000Z');
     const notice = recordingSportEventChangedNotice();
-    const postponed = lifecycleService(liveContests([LIVE]), postponedEvents(previousStart), fakeLogger(), startedJobs(), undefined, undefined, notice);
+    const postponed = lifecycleService(liveContests([LIVE]), postponedEvents(previousStart), fakeLogger(), startedJobs(), undefined, notice);
 
     await postponed.sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart, status: SportEventStatus.POSTPONED }, previousStart);
 
     expect(notice.sportEventChangedJobs).toHaveBeenLastCalledWith({ id: 'sport-event-1', startDate: newStart }, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set(['contest-1']) });
 
     const scheduled = seededEvents({ startDate: previousStart });
-    await lifecycleService(liveContests([LIVE]), scheduled.sportEvents, fakeLogger(), startedJobs(), undefined, undefined, notice)
+    await lifecycleService(liveContests([LIVE]), scheduled.sportEvents, fakeLogger(), startedJobs(), undefined, notice)
       .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart, status: SportEventStatus.SCHEDULED }, previousStart);
 
     expect(notice.sportEventChangedJobs).toHaveBeenLastCalledWith({ id: 'sport-event-1', startDate: newStart }, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set() });

@@ -23,12 +23,13 @@ import type {
   ErrorEnvelope,
   LeagueContextResponse,
 } from '@poolmaster/shared/dto';
-import { ContestStatus, Sport, SelectionType} from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { expectDefined } from '../../support/expect-defined';
-import { leagueProfiles } from '../../support/league-profiles';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueId } from '../../support/participant-league';
-import { seriesSeasonId } from '../../support/event-edition';
+import { sportRowKeys } from '../../support/sport-rows';
+import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
@@ -103,7 +104,7 @@ describe('Contest management integration', () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: 'GOLF' },
-      create: { sport: 'GOLF', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      create: { sport: 'GOLF', ...sportRowKeys('GOLF'), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
       update: {},
     });
     sportId = sport.id;
@@ -132,14 +133,10 @@ describe('Contest management integration', () => {
     // template tests create from.
     const pgaTour = await prisma.sportLeague.findFirstOrThrow({ where: { sportId: sport.id, name: 'PGA TOUR' } });
     pgaTourId = pgaTour.id;
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: pgaTour.id, name: `Masters fixture ${randomUUID()}` } });
     const sportEvent = await prisma.sportEvent.create({
       data: {
-        eventSeriesId: series.id,
-        sportLeagueSeasonId: await seriesSeasonId(prisma, series.id, eventTiming.startDate.getUTCFullYear()),
-        externalId: `masters-2026-${randomUUID().slice(0, 8)}`,
-        providerId: 'PGA',
-        sport: Sport.GOLF,
+        sportLeagueId: pgaTour.id,
+        sportLeagueSeasonId: await fixtureSeasonId(prisma, pgaTour.id, eventTiming.startDate.getUTCFullYear()),
         name: 'Masters Tournament 2026',
         startDate: eventTiming.startDate,
         status: 'SCHEDULED',
@@ -485,12 +482,12 @@ describe('Contest management integration', () => {
   it("refuses a contest from another sport league's own template with 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH, and lists that template only for its league", async () => {
     const prisma = getPrisma();
     const otherLeague = await prisma.sportLeague.create({
-      data: { timeZone: 'UTC', ...(await leagueProfiles(prisma)), ...sportPlay(Sport.GOLF), sportId, name: `LPGA-style ${randomUUID().slice(0, 8)}` },
+      data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId, name: `LPGA-style ${randomUUID().slice(0, 8)}` },
     });
     const leagueTemplate = await prisma.contestConfigTemplate.create({
       data: {
-        sport: Sport.GOLF,
         sportLeagueId: otherLeague.id,
+        coverageMode: 'ONE_SLOT',
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
         templateKey: `itest-league-${randomUUID().slice(0, 8)}`,
@@ -518,7 +515,7 @@ describe('Contest management integration', () => {
 
       const event = await prisma.sportEvent.findUniqueOrThrow({
         where: { id: sportEventId },
-        select: { eventSeries: { select: { sportLeagueId: true } } },
+        select: { sportLeagueId: true },
       });
       const listFor = async (sportLeagueId: string) => (await getApp().inject({
         method: 'GET',
@@ -526,7 +523,7 @@ describe('Contest management integration', () => {
         headers: ownerHeaders,
       })).json<ContestConfigTemplateListResponse>().templates.map((template) => template.id);
       expect(await listFor(otherLeague.id)).toContain(leagueTemplate.id);
-      expect(await listFor(event.eventSeries.sportLeagueId)).not.toContain(leagueTemplate.id);
+      expect(await listFor(event.sportLeagueId)).not.toContain(leagueTemplate.id);
     } finally {
       await prisma.contestConfigTemplate.delete({ where: { id: leagueTemplate.id } });
     }

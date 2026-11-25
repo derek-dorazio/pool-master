@@ -13,36 +13,38 @@ import {
   type OverdueRoundFacts,
 } from '@poolmaster/shared/domain';
 
-/** One event to judge, with the series that names its sport league. */
-export type OverdueCandidate = OverdueEventFacts & { eventSeriesId: string };
+/** One event to judge, with its sport league, read through its Season (#2004). */
+export type OverdueCandidate = OverdueEventFacts & { sportLeagueId: string };
 
 /**
- * Every event that may be overdue at `now`, of every series or only of `eventSeriesIds`, and only
- * `eventIds` when given (the Event page's one event, #1889). The judging itself is
+ * Every event that may be overdue at `now`, of every sport league or only of `sportLeagueId`, and
+ * only `eventIds` when given (the Event page's one event, #1889). The judging itself is
  * `overdueExpectedEnd`; this reads what it needs.
  */
 export async function readOverdueCandidates(
   prisma: PrismaClient,
   now: Date,
-  eventSeriesIds?: readonly string[],
+  sportLeagueId?: string,
   eventIds?: readonly string[],
 ): Promise<OverdueCandidate[]> {
   const events = await prisma.sportEvent.findMany({
     where: {
       status: { notIn: [...NEVER_OVERDUE_STATUSES] },
       startDate: { lt: overdueStartCutoff(now) },
-      ...(eventSeriesIds !== undefined && { eventSeriesId: { in: [...eventSeriesIds] } }),
+      ...(sportLeagueId !== undefined && { sportLeagueSeason: { sportLeagueId } }),
       ...(eventIds !== undefined && { id: { in: [...eventIds] } }),
     },
     select: {
-      id: true, name: true, sport: true, status: true, startDate: true, endDate: true, eventSeriesId: true,
+      id: true, name: true, status: true, startDate: true, endDate: true,
+      // The event's league, and its sport, are its Season's (#2004, #2042).
+      sportLeagueSeason: { select: { sportLeagueId: true, sportLeague: { select: { sport: { select: { sport: true } } } } } },
     },
   });
   if (events.length === 0) return [];
 
   const roundEventIds = events.map((event) => event.id);
-  const seriesIds = [...new Set(events.map((event) => event.eventSeriesId))];
-  const [rounds, matchStarts, series, mappings] = await Promise.all([
+  const leagueIds = [...new Set(events.map((event) => event.sportLeagueSeason.sportLeagueId))];
+  const [rounds, matchStarts, mappings] = await Promise.all([
     prisma.sportEventRound.findMany({
       where: { sportEventId: { in: roundEventIds } },
       select: { id: true, sportEventId: true, scheduledDate: true, scheduledEndAt: true },
@@ -52,13 +54,11 @@ export async function readOverdueCandidates(
       where: { sportEventId: { in: roundEventIds }, scheduledDate: { not: null } },
       _max: { scheduledDate: true },
     }),
-    prisma.eventSeries.findMany({ where: { id: { in: seriesIds } }, select: { id: true, sportLeagueId: true } }),
     prisma.providerLeague.findMany({
-      where: { sportLeagues: { some: { selectedBy: { is: { eventSeries: { some: { id: { in: seriesIds } } } } } } } },
+      where: { sportLeagues: { some: { selectedBy: { is: { id: { in: leagueIds } } } } } },
       select: { typicalGameMinutes: true, sportLeagues: { where: { selectedBy: { isNot: null } }, select: { sportLeagueId: true } } },
     }),
   ]);
-  const leagueOfSeries = new Map(series.map((each) => [each.id, each.sportLeagueId]));
   const minutesByLeague = new Map(mappings.flatMap((league) => league.sportLeagues.map((mapping) => [mapping.sportLeagueId, league.typicalGameMinutes] as const)));
   const latestMatchStartByRound = new Map(matchStarts.map((group) => [group.sportEventRoundId, group._max.scheduledDate]));
   const roundsByEvent = new Map<string, OverdueRoundFacts[]>();
@@ -78,12 +78,12 @@ export async function readOverdueCandidates(
     return {
       id: event.id,
       name: event.name,
-      sport: event.sport,
+      sport: event.sportLeagueSeason.sportLeague.sport.sport,
       status: event.status,
       startDate: event.startDate,
       endDate: event.endDate,
-      eventSeriesId: event.eventSeriesId,
-      typicalGameMinutes: minutesByLeague.get(leagueOfSeries.get(event.eventSeriesId) ?? '') ?? null,
+      sportLeagueId: event.sportLeagueSeason.sportLeagueId,
+      typicalGameMinutes: minutesByLeague.get(event.sportLeagueSeason.sportLeagueId) ?? null,
       rounds: scheduled.map((round) => ({ scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt, latestMatchStart: round.latestMatchStart })),
     };
   });

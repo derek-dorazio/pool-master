@@ -1,6 +1,6 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { MatchEnding, MatchStatus, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchStatus, Sport, SportEventStatus, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
@@ -162,6 +162,23 @@ describe('SportEventParticipantService — changing the field', () => {
 
     await expect(service.addParticipants(event.id, [already.id, guest.id])).resolves.toEqual({ added: 1, skipped: 1, total: 2 });
     expect(store.field.map((entry) => entry.participantId)).toEqual([already.id, guest.id]);
+  });
+
+  it('adds a test participant to an event on a test slot (#2096)', async () => {
+    const { store, service, sport, event } = setup();
+    store.slotsByEvent.set(event.id, [{ id: 'slot-test', isTestData: true } as SportLeagueSeasonSlot]);
+    const tester = store.addParticipant(sport.id, 'Test golfer', { isTestData: true });
+
+    await expect(service.addParticipants(event.id, [tester.id])).resolves.toEqual({ added: 1, skipped: 0, total: 1 });
+  });
+
+  it('refuses a test participant on an event the sync keeps with 422 TEST_PARTICIPANT_NOT_ON_TEST_SLOT, adding no one (#2096)', async () => {
+    const { store, service, sport, event } = setup();
+    const real = store.addParticipant(sport.id, 'Real golfer');
+    const tester = store.addParticipant(sport.id, 'Test golfer', { isTestData: true });
+
+    await expect(service.addParticipants(event.id, [real.id, tester.id])).rejects.toMatchObject({ code: 'TEST_PARTICIPANT_NOT_ON_TEST_SLOT', statusCode: 422 });
+    expect(store.field).toEqual([]);
   });
 
   it('saves the grid all or none: a row off this event\'s field is refused with 404 before anything is written', async () => {
@@ -425,29 +442,30 @@ describe('SportEventParticipantService — field upload', () => {
     const { service, event } = fieldWithTwo();
 
     const [changed, same] = await service.previewUpload(event.id, [
-      { externalId: 'ext-ana', oddsToWin: 15 },
+      { externalId: 'ext-ana', ranking: 7 },
       { externalId: 'ext-bo', ranking: 9, seedNumber: 2, isActive: true },
     ]);
 
-    expect(changed).toMatchObject({ change: 'UPDATE', before: { oddsToWin: 12 }, after: { oddsToWin: 15, ranking: 5 } });
+    expect(changed).toMatchObject({ change: 'UPDATE', before: { ranking: 5 }, after: { ranking: 7, seedNumber: 1 } });
     expect(same).toMatchObject({ change: 'UNCHANGED' });
     expect(same.after).toEqual(same.before);
   });
 
   it('leaves an omitted value untouched and clears a value sent as null, in preview and on apply', async () => {
     const { store, service, event, anaEntry } = fieldWithTwo();
-    const row = { externalId: 'ext-ana', oddsToWin: null, isActive: false, inactiveReason: 'WITHDRAWN' as const };
+    const row = { externalId: 'ext-ana', seedNumber: null, isActive: false, inactiveReason: 'WITHDRAWN' as const };
 
     const [preview] = await service.previewUpload(event.id, [row]);
 
-    expect(preview.after).toEqual({ isActive: false, inactiveReason: 'WITHDRAWN', ranking: 5, oddsToWin: null, seedNumber: 1 });
-    expect(anaEntry.oddsToWin).toBe(12);
+    // The upload has no odds column: odds come only from the feed (#2081), so they are not among its values.
+    expect(preview.after).toEqual({ isActive: false, inactiveReason: 'WITHDRAWN', ranking: 5, seedNumber: null });
+    expect(anaEntry.seedNumber).toBe(1);
 
     await service.applyUpload(event.id, [row]);
 
     const stored = store.field.find((entry) => entry.id === anaEntry.id);
-    expect(stored).toMatchObject({ ranking: 5, seedNumber: 1, isActive: false, inactiveReason: 'WITHDRAWN' });
-    expect(stored?.oddsToWin).toBeUndefined();
+    expect(stored).toMatchObject({ ranking: 5, isActive: false, inactiveReason: 'WITHDRAWN', oddsToWin: 12 });
+    expect(stored?.seedNumber).toBeUndefined();
   });
 
   it('applies every changed row and returns the field, without adding a field row or a participant', async () => {

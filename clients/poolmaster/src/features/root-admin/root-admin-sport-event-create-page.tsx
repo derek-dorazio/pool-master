@@ -1,35 +1,27 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { sportVocabulary } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import {
-  Notice,
-  PageHeader,
-  SegmentedControl,
-} from '@/features/shared/ui';
+import { Notice, PageHeader } from '@/features/shared/ui';
 import { SportEventManualCreateForm } from './sport-event-manual-create-form';
-import { SportEventProviderBrowse } from './sport-event-provider-browse';
 import type { SportEventEdition } from './sport-event-edition';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
-import { upperFirst } from '@/lib/upper-first';
-
-type CreateMode = 'manual' | 'provider';
 
 /**
- * plans/124 §6.3 / §4.4a — /manage/sports/:sport/events/new. Owns the create mode toggle and
- * the shared, required tour (the event goes in its current Season, #2003); the
- * two modes themselves (manual form / provider-event browse) are separate components.
+ * plans/124 §6.3 / §4.4a — /manage/sports/:sport/events/new. Owns the required tour; the form
+ * makes a test event on a free test slot of the tour's current Season (#2004). A provider's events
+ * are never created here: sync creates them.
  */
 export function RootAdminSportEventCreatePage() {
   const [searchParams] = useSearchParams();
   const initialSportLeagueId = searchParams.get('sportLeagueId') ?? '';
 
-  const [mode, setMode] = useState<CreateMode>('manual');
   const [selection, setSelection] = useState<Partial<SportEventEdition>>({});
 
-  const { sport, definition } = useManagedSport();
-  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(definition);
-  const sportName = definition.name.toLowerCase();
+  const { sport } = useManagedSport();
+  const { event, sportLeague: sportLeagueNoun } = sportVocabulary(sport);
+  const sportName = enumLabel('Sport', sport).toLowerCase();
   const sportLeaguesQuery = useSportLeaguesQuery(sport);
 
   // A tournament is created on an active tour only.
@@ -70,22 +62,8 @@ export function RootAdminSportEventCreatePage() {
       className="space-y-6"
       data-testid="root-admin-sport-event-create-page"
     >
-      <PageHeader testId="root-admin-sport-event-create-header" title={`New ${event.one}`} />
-      <SegmentedControl
-        aria-label={`${upperFirst(event.one)} creation mode`}
-        onChange={(value) => setMode(value as CreateMode)}
-        options={[
-          { label: 'Build manually', value: 'manual' },
-          { label: 'Browse provider events', value: 'provider' },
-        ]}
-        value={mode}
-      />
-
-      {mode === 'manual' ? (
-        <SportEventManualCreateForm edition={edition} onEditionChange={setSelection} sportLeagues={sportLeagues} />
-      ) : (
-        <SportEventProviderBrowse edition={edition} onEditionChange={setSelection} sportLeagues={sportLeagues} />
-      )}
+      <PageHeader testId="root-admin-sport-event-create-header" title={`New test ${event.one}`} />
+      <SportEventManualCreateForm edition={edition} onEditionChange={setSelection} sportLeagues={sportLeagues} />
     </section>
   );
 }

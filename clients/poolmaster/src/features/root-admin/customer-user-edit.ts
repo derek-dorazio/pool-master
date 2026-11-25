@@ -23,6 +23,7 @@ export type CustomerUserChange = {
 export function customerUserChange(user: CustomerUserDto, values: CustomerUserFormValues): CustomerUserChange {
   const firstName = values.firstName.trim();
   const lastName = values.lastName.trim();
+  // poolmaster-allow-enum-literal: the Role field's own encoding of isRootAdmin; LeagueRole and EmailCategory only share the words
   const isRootAdmin = values.role === 'ROOT_ADMIN';
   return {
     name: firstName === user.firstName && lastName === user.lastName ? null : { firstName, lastName },

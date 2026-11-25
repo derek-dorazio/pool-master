@@ -2,7 +2,7 @@ import { Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { nhlGameListSchema, nhlTeamListSchema, type NhlGame } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-contract';
 import { isNhlFranchise, NHL_PLAYOFFS, toNhlPlayoffGame, toNhlPlayoffTeam } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/nhl-mapping';
-import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoff-bracket';
+import { playoffSeries } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { toPlayoffsEvent } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/series-playoffs';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 
@@ -29,7 +29,7 @@ const florida = rowAt(nhlTeamListSchema.parse(readBalldontlieFixture('nhl', 'tea
 
 describe('NHL playoffs league', () => {
   it('is hockey\'s best-of-seven playoffs, played the year after the season it is numbered by', () => {
-    expect(NHL_PLAYOFFS).toMatchObject({ key: 'nhl', tour: 'NHL', sport: Sport.HOCKEY, playoffYearOffset: 1 });
+    expect(NHL_PLAYOFFS).toMatchObject({ key: 'nhl', sport: Sport.HOCKEY, playoffYearOffset: 1 });
     expect(NHL_PLAYOFFS.rounds.every((round) => round.seriesLength === 7)).toBe(true);
   });
 
@@ -100,6 +100,11 @@ describe('toNhlPlayoffGame', () => {
       .toThrow(new BalldontlieContractError('/nhl/v1/games', ['a team has no id']));
   });
 
+  it('reduces each postseason game to its series\' round as POST codes, the first round POST:1 to the Stanley Cup Final POST:4 (#2005)', () => {
+    const event = toPlayoffsEvent(NHL_PLAYOFFS, 2024, postseason2024.map(toNhlPlayoffGame));
+    expect(event.providerSlots.map((play) => play.code)).toEqual(['POST:1', 'POST:2', 'POST:3', 'POST:4']);
+  });
+
   it('makes a full postseason, sixteen teams to a Stanley Cup Final won four games to two, a completed event of 2025', () => {
     const event = toPlayoffsEvent(NHL_PLAYOFFS, 2024, postseason2024.map(toNhlPlayoffGame));
     expect(event).toMatchObject({
@@ -109,7 +114,6 @@ describe('toNhlPlayoffGame', () => {
       status: 'COMPLETED',
       startDate: new Date('2025-04-19T00:00:00Z'),
       endDate: new Date('2025-06-14T00:00:00Z'),
-      metadata: { tour: 'NHL', season: 2024 },
     });
   });
 });

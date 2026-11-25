@@ -55,6 +55,7 @@ export class PostgresJobLock implements JobLock {
     // A lock this session already holds is not taken again: Postgres counts each repeat take of a
     // session lock, and one release would no longer free it. pg_locks splits a bigint key into
     // classid (high 32 bits) and objid (low 32 bits); CASE fixes the order, which OR would not.
+    // poolmaster-allow-raw-sql: a Postgres advisory lock: Prisma has no advisory-lock API
     const [row] = await this.connection().$queryRaw<Array<{ held: boolean }>>`
       SELECT CASE WHEN EXISTS (
           SELECT 1 FROM pg_locks

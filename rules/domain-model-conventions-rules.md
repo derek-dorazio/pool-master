@@ -228,7 +228,7 @@ A new enum in `packages/shared/domain/enums.ts` states its order beside it, as
 `<Name>Order`: `explicitOrder({...})` giving every value its place, or
 `alphabeticalOrder('<Name>')` when the set has no natural order and its values sort A
 to Z by their display strings, in the reader's language. Every list, grid, picker and sort uses that
-order through `compareByEnumOrder` or `sortByEnumOrder`; no consumer keeps a
+order through `compareByEnumOrder`; no consumer keeps a
 `Record<Enum, number>` rank map of its own. A screen that genuinely needs another
 order (the Home page's current contests, Open before Live) gets a named order beside
 the enum, such as `ContestStatusOrderForHomeCurrent`, with a comment saying where it
@@ -240,6 +240,13 @@ on the column sorts by declaration order. Where that order cannot match (reorder
 a Postgres enum's values is a migration with a type swap), no read orders by the
 column in SQL: the read sorts in code with `compareByEnumOrder`, and the enum is
 listed with its reason in the test's `SORTED_IN_CODE`.
+
+An enum whose every value has a reference row may keep its order on that row instead, as a
+`display_order` column, when the order is a fact an admin or a migration sets rather than one
+the code decides. `Sport` is the one such enum: each `sports` row carries its `displayOrder`
+(and its stored `urlSegment`), the API returns them, and every list of sports, web lists
+included, sorts by them. No `SportOrder` sits beside the enum, and the test's
+`ORDERED_BY_ROW` names it with its reason.
 
 ### Every enum value has its words in the display-string module
 
@@ -818,6 +825,18 @@ by where it sits in an array or by counting.
   `SportLeague` or a league's positions), is fine.
 - Positions shift the moment a provider adds a round, a league adds a play-in or a season is
   shorter; a key does not.
+- **The rule:** never pick a domain item by its position when the model gives it a meaning,
+  such as a slot kind (`FINAL`), a round or game number, a phase, a covered slot or the
+  contest's event. Position is fine only when the order **is** the meaning: iterating, the
+  first item after sorting by a declared field (the earliest by `startsAt`), the one row a
+  nested create wrote, or destructuring a parsed value. Such a read carries
+  `// poolmaster-allow-position: <the order it relies on>` on the line before.
+- **Enforced (#2115):** `poolmaster/no-positional-pick` reports `[n]` with a literal index,
+  `.at(n)` and `[x.length - 1]` on a list named `rounds`, `slots`, `phases`, `events`,
+  `games`, `matches`, `sides`, `seasons`, `regions` or `fieldRows` in production source.
+  Files that still have one sit on a shrink-only count (`eslint-rules/positional-pick-baseline.json`).
+  It cannot see `indexOf(...) + 1`, a counter, or a list under another name; review still
+  owns those.
 
 ### Never build or parse an id string
 
@@ -881,9 +900,9 @@ ids; the mapping points at it.
   `externalId` on a table that is not a `…ProviderMapping`; an id prefix that says which
   provider an id came from; a provider code in a constant or a `Record`; a sync that falls
   back to a default when a provider value is unknown.
-- *Status:* today's schema still holds provider keys on rows (`SportEvent.externalId`,
-  `Participant.externalId`, `SportEventRoundMatch.externalGameId` and others;
-  `SportLeague.matchKeyword` was replaced by `SportLeagueProviderMapping` in #1997). A change that touches one adds no new reader of it; the league model
+- *Status:* today's schema still holds provider keys on rows (`SportEventRoundMatch.externalGameId`
+  and others; `SportLeague.matchKeyword` was replaced by `SportLeagueProviderMapping` in #1997,
+  and `SportEvent.providerId` and `externalId` by `SportEventProviderMapping` in #2004). A change that touches one adds no new reader of it; the league model
   redesign moves them (ADR 0012).
 
 ### Proper names are data, generic words are strings
@@ -926,9 +945,9 @@ phase or slot definitions (`rules/domain-model-concepts.md`). They are never a c
   (`rules/ux-rules.md` §16 *Display Strings*); proper names are name columns on the model.
 - This is the data half of `rules/workflow-rules.md` §1 *One global solution, never one
   sport's*: a league's difference is data any league can carry, never a path one league takes.
-  It extends the sport registry (`rules/architecture-rules.md` §4 *Sport extension*) to
-  leagues and seasons: what one sport shares is in its definition; what one league or season
-  owns is in the model.
+  It replaces the sport registry (`rules/architecture-rules.md` §4 *Sport extension*, where
+  the registry is frozen and shrinking): what one sport, league or season owns is in the
+  model.
 
 ### One computation per fact
 
@@ -996,6 +1015,15 @@ screen renders what it is sent.
   bounds in their Zod schemas. Some of these are imported by the web app today; those imports
   are residue too. A change that touches one moves it to an API field, and no new import or
   constant is added.
+- *Enforced (#2107):* `rules:check:web-shared-imports` lets the web app import from
+  `@poolmaster/shared` and `/domain` only types, enums and the vocabulary patterns its
+  baseline lists with reasons (order lists, formatters, the brand, image paths, sport display
+  words, schemas); every other name sits on a per-name count that only falls. Three lint
+  rules hold the same line on the web's own code, each with a shrink-only per-file baseline:
+  `poolmaster/no-enum-string-literals` (a shared enum value compared, used as a `case` label
+  or written as a literal type), `poolmaster/no-dto-shaped-local-types` (a local type copying
+  a generated one under another name) and `poolmaster/no-local-enums` (an enum of the web
+  app's own).
 
 ### What stays in code
 

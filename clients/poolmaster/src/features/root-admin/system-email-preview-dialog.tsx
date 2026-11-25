@@ -42,9 +42,8 @@ export function SystemEmailPreviewDialog({ email, onClose }: { email: SystemEmai
         ]
         : undefined}
       onCancel={onClose}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
+      // Opened from outside, so the one change the dialog reports is a close.
+      onOpenChange={onClose}
       open
       size="xl"
       testId="root-admin-system-email-preview"

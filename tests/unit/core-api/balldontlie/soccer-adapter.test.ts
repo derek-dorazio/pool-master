@@ -101,7 +101,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2026-11-25T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2026-11-25T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'epl' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status])).toEqual([
         ['epl-2026-matchweek-12', 'Premier League Matchweek 12', 'SCHEDULED'],
@@ -112,13 +112,13 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
       ]);
     });
 
-    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock, and the vendor\'s current World Cup edition', async () => {
+    it('reads no season when neither a usable range nor a Season is named, rather than guessing one from the clock', async () => {
       const harness = setup();
       restore = harness.restore;
 
-      const events = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') });
+      const events = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('1900-01-01T00:00:00Z'), to: new Date('2999-12-31T00:00:00Z') }, { providerLeagueCode: 'epl' });
 
-      expect(events.map((event) => event.externalId)).toEqual(['fifa-wc-2026-knockout']);
+      expect(events).toEqual([]);
       expect(eplRequests(harness.api)).toEqual([]);
     });
 
@@ -126,7 +126,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
       const harness = setup(defaultRoutes, Date.UTC(2027, 5, 30));
       restore = harness.restore;
 
-      await harness.adapter.getUpcomingEvents(Sport.SOCCER, undefined, { providerSeasonId: '2026' });
+      await harness.adapter.getUpcomingEvents(Sport.SOCCER, undefined, { providerLeagueCode: 'epl', providerSeasonId: '2026' });
 
       expect(eplRequests(harness.api).map((line) => /season=(\d+)/.exec(line)?.[1])).toEqual(['2026']);
     });
@@ -139,7 +139,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
 
       const detail = await harness.adapter.getEventDetails('epl-2026-matchweek-11');
 
-      expect(detail).toMatchObject({ externalId: 'epl-2026-matchweek-11', sport: Sport.SOCCER, participantCount: 10, rounds: 1, status: 'IN_PROGRESS', metadata: { tour: 'EPL', season: 2026 } });
+      expect(detail).toMatchObject({ externalId: 'epl-2026-matchweek-11', sport: Sport.SOCCER, participantCount: 10, rounds: 1, status: 'IN_PROGRESS' });
       expect(detail?.participants.slice(0, 2).map((team) => [team.externalId, team.name])).toEqual([
         ['12', 'Manchester City'],
         ['9', 'Fulham'],
@@ -167,8 +167,8 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
     const teams = await harness.adapter.getParticipants(Sport.SOCCER);
 
     expect(teams).toHaveLength(14);
-    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Arsenal', metadata: { tour: 'EPL' } });
-    expect(teams[10]).toMatchObject({ externalId: '9', name: 'Argentina', metadata: { tour: 'FIFAWC' } });
+    expect(teams[0]).toMatchObject({ externalId: '1', name: 'Arsenal', metadata: {} });
+    expect(teams[10]).toMatchObject({ externalId: '9', name: 'Argentina', metadata: {} });
     expect([...requestLine(harness.api)].sort()).toEqual(['/epl/v2/teams?season=2026', '/fifa/worldcup/v1/teams?']);
   });
 
@@ -212,8 +212,8 @@ describe('BalldontlieAdapter (soccer: the FIFA World Cup)', () => {
     const harness = setup();
     restore = harness.restore;
 
-    const inside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2021-01-01T00:00:00Z'), to: new Date('2026-12-31T00:00:00Z') });
-    const outside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2023-01-01T00:00:00Z'), to: new Date('2024-12-31T00:00:00Z') });
+    const inside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2021-01-01T00:00:00Z'), to: new Date('2026-12-31T00:00:00Z') }, { providerLeagueCode: 'worldcup' });
+    const outside = await harness.adapter.getUpcomingEvents(Sport.SOCCER, { from: new Date('2023-01-01T00:00:00Z'), to: new Date('2024-12-31T00:00:00Z') }, { providerLeagueCode: 'worldcup' });
 
     expect(inside.filter((event) => event.externalId.startsWith('fifa-')).map((event) => [event.externalId, event.status])).toEqual([
       ['fifa-wc-2026-knockout', 'IN_PROGRESS'],

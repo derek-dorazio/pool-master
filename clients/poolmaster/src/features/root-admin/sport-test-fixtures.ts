@@ -1,4 +1,4 @@
-import { sportPlay } from '@/test/sport-play';
+import { sportFacts, sportPlay } from '@/test/sport-play';
 import type {
   ParticipantDto,
   PlatformPricingProfileDto,
@@ -11,10 +11,13 @@ import type {
   SportEventTierDto,
   SportLeagueDto,
   SportLeagueProviderMappingDto,
+  SportLeagueSeasonSlotDto,
   ProviderLeagueDto,
   ProviderSettingsDto,
   ProviderSummaryDto,
 } from '@/lib/api';
+import { QueryClient } from '@tanstack/react-query';
+import { QueryKeys } from '@/lib/query-keys';
 
 /** The Standard pricing profile's id, which `sportLeagueFixture` names. */
 export const STANDARD_PLATFORM_PRICING_PROFILE_ID = '00000000-0000-4000-8000-0000000000b2';
@@ -24,13 +27,22 @@ export const STANDARD_PLATFORM_PRICING_PROFILE_ID = '00000000-0000-4000-8000-000
  * Each builder returns a complete, valid object; a test overrides only what it is about.
  */
 
+/** A Season slot; a labelled test slot unless overridden. */
+export function seasonSlotFixture(overrides: Partial<SportLeagueSeasonSlotDto> = {}): SportLeagueSeasonSlotDto {
+  return {
+    id: 'slot-1', slotDefinitionId: 'def-1', key: 'TEST_EVENT', slotKind: 'TOURNAMENT', weekNumber: null, name: null,
+    startsAt: '2026-05-07T12:00:00.000Z', endsAt: '2026-05-10T22:00:00.000Z', status: 'SCHEDULED',
+    seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', isTestData: true, label: 'QA 1', window: null, ...overrides,
+  };
+}
+
 export function sportEventFixture(overrides: Partial<SportEventDto> = {}): SportEventDto {
   return {
     id: 'event-1',
-    externalId: 'manual-event-1',
-    providerId: 'manual-admin',
+    providerMappings: [],
     providerName: null,
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
     name: 'Rolling Weekend Invitational',
     venue: 'Mock Golf Club',
     location: 'Augusta, GA',
@@ -39,6 +51,8 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     endDate: '2026-05-10T22:00:00.000Z',
     rounds: 4,
     roundsPar: null,
+    roundsParMin: 60,
+    roundsParMax: 80,
     participantCount: null,
     loadedParticipantCount: 0,
     pricing: { profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
@@ -52,13 +66,16 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
       { selectionType: 'RANDOM_DRAW', opening: 'NOT_YET', startsAtRounds: [] },
     ],
     tiersLocked: false,
-    eventSeriesId: 'event-series-1',
     sportLeagueSeasonId: 'season-2026',
+    slotDefinitionIds: [],
     championshipYear: 2026,
     sportLeagueId: 'league-1',
     ...sportPlay(overrides.sport ?? 'GOLF'),
-    syncScope: 'NONE',
-    providerSynced: false,
+    // The API answers it from the sport's definition; a test of a shoot-out sets it.
+    shootout: false,
+    // A test event: one made on a test slot (#2004).
+    isTestData: true,
+    slots: [seasonSlotFixture()],
     autoLifecycleEnabled: true,
     tierCount: 6,
     adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
@@ -202,7 +219,6 @@ export function providerSettingsFixture(overrides: Partial<ProviderSettingsDto> 
     webhookRoundPollMinutes: 2,
     hasPlayerStats: false,
     isEnabled: true,
-    priority: 1,
     leagues: [
       providerLeagueFixture(),
       providerLeagueFixture({ id: '00000000-0000-4000-8000-0000000000c2', code: 'mlb', name: 'MLB', sport: 'BASEBALL', webhookEventSet: 'GAME_PERIODS', quietAfterMinutes: 210, typicalGameMinutes: 180 }),
@@ -220,8 +236,6 @@ export function providerSummaryFixture(overrides: Partial<ProviderSummaryDto> = 
     status: 'HEALTHY',
     errorRate: 0.004,
     lastEventAt: null,
-    sportsCovered: ['BASEBALL', 'BASKETBALL', 'GOLF'],
-    primaryForSports: ['BASEBALL', 'BASKETBALL', 'GOLF'],
     activeEventCount: 3,
     requestsPerMinute: 5,
     webhooksEnabled: true,
@@ -246,39 +260,13 @@ export function providerMappingFixture(overrides: Partial<SportLeagueProviderMap
   };
 }
 
-export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): SportLeagueDto {
-  return {
-    id: 'league-1',
-    sportId: 'sport-golf',
-    sport: 'GOLF',
-    name: 'PGA Tour',
-    selectedProviderMapping: null,
-    autoReleaseDaysBeforeStart: 7,
-    platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
-    platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
-    bracketAdvancement: 'FIXED',
-    roundNames: [],
-    matchPeriodLayout: null,
-    squaresFromRound: null,
-    noun: null,
-    displayName: null,
-    ...sportPlay(overrides.sport ?? 'GOLF'),
-    displayOrder: null,
-    currentSeasonId: 'season-2026',
-    timeZone: 'America/New_York',
-    isActive: true,
-    participantCount: 0,
-    sportEventCount: 0,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-    ...overrides,
-  };
-}
 
 /** The golf sport row `listSports` answers with, for pages that resolve the golf sport id. */
 export const GOLF_SPORT_FIXTURE: SportDto = {
   id: 'sport-golf',
   sport: 'GOLF',
+  urlSegment: 'golf',
+  displayOrder: 5,
   tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -317,5 +305,76 @@ export function planGroupFixture(): Extract<SettingsGroup, { key: 'PLAN_CONFIG' 
     updatedBy: null,
     value,
     defaults: value,
+  };
+}
+
+/** Every sport as `listSports` answers, in display order, each with its stored URL segment. */
+export const SPORTS_FIXTURE: SportDto[] = ([
+  ['FOOTBALL', 'football', 'TEAM', 'MATCHES'],
+  ['BASKETBALL', 'basketball', 'TEAM', 'MATCHES'],
+  ['BASEBALL', 'baseball', 'TEAM', 'MATCHES'],
+  ['HOCKEY', 'hockey', 'TEAM', 'MATCHES'],
+  ['SOCCER', 'soccer', 'TEAM', 'MATCHES'],
+  ['GOLF', 'golf', 'INDIVIDUAL', 'STROKE_PLAY_TOURNAMENT'],
+  ['AUTO_RACING', 'auto-racing', 'INDIVIDUAL', 'RACE'],
+  ['TENNIS', 'tennis', 'INDIVIDUAL', 'MATCHES'],
+  ['HORSE_RACING', 'horse-racing', 'INDIVIDUAL', 'RACE'],
+  ['CYCLING', 'cycling', 'INDIVIDUAL', 'RACE'],
+  ['RUNNING', 'running', 'INDIVIDUAL', 'RACE'],
+] as const).map(([sport, urlSegment, participantType, tournamentFormat], displayOrder) => ({
+  ...GOLF_SPORT_FIXTURE,
+  id: `sport-${urlSegment}`,
+  sport,
+  urlSegment,
+  displayOrder,
+  participantType,
+  tournamentFormat,
+}));
+
+/**
+ * A test query client that already holds the platform's sports, as the Manage sport route has
+ * read them before any page under it renders.
+ */
+export function sportsQueryClient(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })): QueryClient {
+  client.setQueryData(QueryKeys.sports.list, SPORTS_FIXTURE);
+  return client;
+}
+
+/**
+ * A sport league as the API sends it. Its sport's URL segment and display order follow its sport
+ * (`SPORTS_FIXTURE`) and its own URL segment its name, unless the test gives them.
+ */
+export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): SportLeagueDto {
+  const sportRow = SPORTS_FIXTURE.find((row) => row.sport === (overrides.sport ?? 'GOLF'));
+  const name = overrides.name ?? 'PGA Tour';
+  return {
+    id: 'league-1',
+    sportId: 'sport-golf',
+    sport: 'GOLF',
+    sportUrlSegment: sportRow?.urlSegment ?? 'golf',
+    sportDisplayOrder: sportRow?.displayOrder ?? 5,
+    urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    name: 'PGA Tour',
+    selectedProviderMapping: null,
+    autoReleaseDaysBeforeStart: 7,
+    platformTierProfileId: '00000000-0000-4000-8000-0000000000a1',
+    platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID,
+    bracketAdvancement: 'FIXED',
+    roundNames: [],
+    matchPeriodLayout: null,
+    squaresFromRound: null,
+    noun: null,
+    displayName: null,
+    ...sportPlay(overrides.sport ?? 'GOLF'),
+    ...sportFacts(overrides.sport ?? 'GOLF'),
+    displayOrder: null,
+    currentSeasonId: 'season-2026',
+    timeZone: 'America/New_York',
+    isActive: true,
+    participantCount: 0,
+    sportEventCount: 0,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
   };
 }

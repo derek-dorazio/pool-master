@@ -3,7 +3,7 @@ import { ChoiceChips } from "./choice-chips";
 
 const SPORTS = [
   { isChosen: false, label: "All sports", to: "?" },
-  { isChosen: false, label: "Football", to: "?sport=american-football" },
+  { isChosen: false, label: "Football", to: "?sport=football" },
   { isChosen: false, label: "Basketball", to: "?sport=basketball" },
   { isChosen: true, label: "Hockey", to: "?sport=hockey" },
   { isChosen: false, label: "Soccer", to: "?sport=soccer" },
@@ -37,8 +37,8 @@ export const Wrapping: Story = {
       { isChosen: false, label: "NHL", to: "?sport=hockey&league=nhl" },
       { isChosen: false, label: "Stanley Cup Final", to: "?sport=hockey&league=nhl&part=stanley-cup-final" },
       { isChosen: false, label: "PWHL", to: "?sport=hockey&league=pwhl" },
-      { isChosen: false, label: "NCAA Men's Hockey", to: "?sport=hockey&league=ncaa-division-i-men" },
-      { isChosen: false, label: "Men's Frozen Four", to: "?sport=hockey&league=ncaa-division-i-men&part=men-s-frozen-four" },
+      { isChosen: false, label: "NCAA Men's Hockey", to: "?sport=hockey&league=ncaamh" },
+      { isChosen: false, label: "Men's Frozen Four", to: "?sport=hockey&league=ncaamh&part=men-s-frozen-four" },
     ],
   },
 };

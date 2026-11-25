@@ -7,11 +7,10 @@ import {
 import type {
   GolfRoundScoreUploadRequest,
   ParticipantDto,
-  SportLeagueRankingUploadRequest,
   SportEventDto,
   SportEventParticipantDto,
 } from '@/lib/api';
-import { type AssertTrue, type ParticipantRoundStatus, type Sport, SportEventStatus, sportVocabulary } from '@poolmaster/shared/domain';
+import { type AssertTrue, type ParticipantRoundStatus } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -34,28 +33,7 @@ type BadgeTone =
   | 'warning';
 
 // #236: the golf screens read the shared SportEvent and its rounds, not golf projections.
-export type SportEventDtoSyncScope = SportEventDto['syncScope'];
 export type SportEventDtoStatus = SportEventDto['status'];
-
-// --- Sync scope (plans/124 §4.4) ---
-
-export function syncScopeLabel(scope: SportEventDtoSyncScope): string {
-  return enumLabel('SportEventSyncScope', scope);
-}
-
-export function syncScopeTone(scope: SportEventDtoSyncScope): BadgeTone {
-  if (scope === 'SCORES_ONLY') return 'info';
-  return 'active';
-}
-
-/**
- * Whether this tournament pulls anything from a provider — gates the Field
- * editor's "Load / Refresh Participant Field" action and the Score-source block
- * (§4.4a). `NONE` is a purely manual tournament.
- */
-export function sportEventHasScoreSync(scope: SportEventDtoSyncScope): boolean {
-  return scope !== 'NONE';
-}
 
 // --- Status (SportEventStatus) ---
 
@@ -70,113 +48,8 @@ export function sportEventStatusTone(status: SportEventDtoStatus): BadgeTone {
   return 'neutral';
 }
 
-// --- Readiness (plans/124 §6.3 tournament list) ---
-//
-// SportEventDto's own `readinessStatus` answers whether contests can be built on the event;
-// this answers where the admin's setup work stands (field, then tiers), from the counts the
-// DTO carries. Kept deliberately small and branch-tested.
-
-export type SportEventReadiness = {
-  label: string;
-  tone: BadgeTone;
-  reasons: string[];
-};
-
-/** A draft's readiness reads the root admin's counts, which only a root admin's read carries (#1198). */
-export function deriveSportEventReadiness(
-  tournament: Pick<SportEventDto, 'sport' | 'status' | 'loadedParticipantCount' | 'tierCount' | 'adminCounts' | 'pricing'>,
-): SportEventReadiness {
-  if (tournament.status === SportEventStatus.COMPLETED) {
-    return { label: 'Completed', tone: 'completed', reasons: [] };
-  }
-  if (tournament.status === SportEventStatus.IN_PROGRESS) {
-    return { label: 'Live', tone: 'live', reasons: [] };
-  }
-  if (tournament.status === SportEventStatus.CANCELLED || tournament.status === SportEventStatus.POSTPONED) {
-    return {
-      label: formatSportEventStatus(tournament.status),
-      tone: 'warning',
-      reasons: [],
-    };
-  }
-  if (tournament.status !== SportEventStatus.DRAFT) {
-    return { label: 'Released', tone: 'success', reasons: [] };
-  }
-  if (tournament.loadedParticipantCount === 0) {
-    return { label: 'Setup', tone: 'neutral', reasons: ['No field loaded'] };
-  }
-  if (tournament.tierCount === 0) {
-    return {
-      label: 'Field pending',
-      tone: 'warning',
-      reasons: ['No tiers defined'],
-    };
-  }
-  // A count of the event's participants, in its sport's words: "4 golfers", "1 horse".
-  const { participant } = sportVocabulary(tournament.sport);
-  const participants = (count: number) => `${count} ${count === 1 ? participant.one : participant.many}`;
-  const counts = tournament.adminCounts;
-  // Unknown is not ready: without the counts the draft's tiers and prices can't be judged.
-  if (counts === null) {
-    return { label: 'Checking readiness', tone: 'neutral', reasons: [] };
-  }
-  if (counts.untieredParticipantCount > 0) {
-    return {
-      label: 'Tiers pending',
-      tone: 'warning',
-      reasons: [`${participants(counts.untieredParticipantCount)} without a tier`],
-    };
-  }
-  if (counts.emptyTierLabels.length > 0) {
-    return {
-      label: 'Tiers pending',
-      tone: 'warning',
-      reasons: counts.emptyTierLabels.map((label) => `${label} has no ${participant.many}`),
-    };
-  }
-  if (!tournament.pricing) {
-    return { label: 'Prices pending', tone: 'warning', reasons: ['No prices assigned'] };
-  }
-  if (counts.unpricedParticipantCount > 0) {
-    return {
-      label: 'Prices pending',
-      tone: 'warning',
-      reasons: [`${participants(counts.unpricedParticipantCount)} without a price`],
-    };
-  }
-  return { label: 'Ready to release', tone: 'info', reasons: [] };
-}
-
-// --- Provider resolution (plans/124 §4.4, #1495) ---
-//
-// listProviderCatalogEvents needs a providerId, resolved from the provider-health list the
-// sync lane already exposes. More than one provider can cover a sport; the one marked primary for it comes first and is the default.
-
-export type SportProviderOption = {
-  providerId: string;
-  providerName: string;
-};
-
-type ProviderCoverage = SportProviderOption & {
-  sportsCovered: readonly string[];
-  primaryForSports: readonly string[];
-};
-
-/** The providers covering the sport, its primary first; empty when none does. */
-export function sportProviderOptions(
-  providers: ReadonlyArray<ProviderCoverage> | undefined,
-  sport: Sport,
-): SportProviderOption[] {
-  const covering = (providers ?? []).filter((provider) => provider.sportsCovered.includes(sport));
-  return [
-    ...covering.filter((provider) => provider.primaryForSports.includes(sport)),
-    ...covering.filter((provider) => !provider.primaryForSports.includes(sport)),
-  ].map(({ providerId, providerName }) => ({ providerId, providerName }));
-}
-
 // --- Player status (Participant.status) ---
 
-type BadgeToneLite = 'active' | 'inactive' | 'warning';
 export type ManagedParticipantStatus = ParticipantDto['status'];
 
 export const PARTICIPANT_STATUSES = [
@@ -195,98 +68,6 @@ type _ParticipantStatusExhaustive =
       : ['unknown golf player status listed', (typeof PARTICIPANT_STATUSES)[number]]
     : ['golf player status missing from PARTICIPANT_STATUSES', ManagedParticipantStatus];
 export type ParticipantStatusesMatchEnum = AssertTrue<_ParticipantStatusExhaustive>;
-
-/** A participant's status in plain words, for badges, rows and options. */
-export function participantStatusLabel(status: ManagedParticipantStatus): string {
-  return enumLabel('ParticipantStatus', status);
-}
-
-export function participantStatusTone(status: ManagedParticipantStatus): BadgeToneLite {
-  if (status === 'ACTIVE') return 'active';
-  if (status === 'SUSPENDED') return 'warning';
-  return 'inactive';
-}
-
-// --- Field editor (plans/124 §6.3 / §4.4a) ---
-
-/**
- * The "Load Participant Field" / "Refresh Participant Field" header action is one
- * endpoint (`refreshEventParticipants`) with a client-computed label:
- * "Load" while the field is still empty, "Refresh" once it has entries (§4.4a).
- */
-export function participantFieldActionLabel(
-  fieldCount: number,
-): 'Load Participant Field' | 'Refresh Participant Field' {
-  return fieldCount === 0
-    ? 'Load Participant Field'
-    : 'Refresh Participant Field';
-}
-
-// --- League roster bulk upload (plans/124 §6.3 Tour Home / §6.4) ---
-//
-// The Tour Home roster editor and the round-scores editor share one
-// paste/upload/preview/apply flow (BulkUploadPanel). Each screen supplies its
-// own row shape + parser config; this is the roster one — `externalId` or
-// `playerName` (or an explicit `participantId`) plus `ranking`.
-
-export type RosterUploadRow =
-  SportLeagueRankingUploadRequest['rows'][number];
-
-export const ROSTER_UPLOAD_HEADERS = [
-  'externalId',
-  'playerName',
-  'ranking',
-] as const;
-
-const rosterUploadRowSchema = z
-  .object({
-    participantId: z.string().trim().min(1).optional(),
-    externalId: z.string().trim().min(1).optional(),
-    playerName: z.string().trim().min(1).optional(),
-    ranking: z.coerce.number().int().positive().optional(),
-  })
-  .refine(
-    (row) =>
-      Boolean(row.participantId) ||
-      Boolean(row.externalId) ||
-      Boolean(row.playerName),
-    { message: 'each row needs a participantId, externalId, or playerName' },
-  );
-
-/**
- * Parse pasted / uploaded league-roster text into `previewSportLeagueRankingUpload`
- * request rows. Throws an `Error` with a user-facing message on malformed input
- * or a row missing every identifier — the panel renders that inline.
- */
-export function parseRosterUpload(
-  text: string,
-  format: BulkUploadFormat,
-): RosterUploadRow[] {
-  // parseDelimitedRecords rejects empty input / a header-only CSV; an empty
-  // JSON array (`[]`) is the only way to reach zero records here.
-  const records = parseDelimitedRecords(text, format);
-  if (records.length === 0) {
-    throw new Error('No rows found.');
-  }
-
-  return records.map((record, index) => {
-    const parsed = rosterUploadRowSchema.safeParse(record);
-    if (!parsed.success) {
-      const issue = parsed.error.issues.at(0);
-      throw new Error(
-        `Row ${index + 1}: ${issue?.message ?? 'is not a valid roster row'}.`,
-      );
-    }
-    const row: RosterUploadRow = {};
-    if (parsed.data.participantId) row.participantId = parsed.data.participantId;
-    if (parsed.data.externalId) row.externalId = parsed.data.externalId;
-    if (parsed.data.playerName) row.playerName = parsed.data.playerName;
-    if (parsed.data.ranking !== undefined) {
-      row.ranking = parsed.data.ranking;
-    }
-    return row;
-  });
-}
 
 // --- Round-score bulk upload (plans/124 §6.3 Round scores / §6.4) ---
 //

@@ -1,5 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { assertNever, type Sport } from '@poolmaster/shared/domain';
+import { assertNever } from '@poolmaster/shared/domain';
 import {
   Button,
   Chip,
@@ -28,7 +28,7 @@ export function SportLeagueIssueChips({
   overview,
 }: {
   onOpenSyncRun: (syncRunId: string) => void;
-  overview: Pick<SportLeagueOverviewDto, 'id' | 'issues' | 'name' | 'sport'>;
+  overview: Pick<SportLeagueOverviewDto, 'id' | 'issues' | 'name' | 'sportUrlSegment'>;
 }) {
   if (overview.issues.length === 0) {
     return <Text tone="muted">—</Text>;
@@ -47,17 +47,17 @@ export function SportLeagueIssueChips({
           testId={`root-admin-sports-issue-${overview.id}-${issue.type}-popover`}
           trigger="cell"
         >
-          <IssueItems issue={issue} onOpenSyncRun={onOpenSyncRun} sport={overview.sport} sportLeagueId={overview.id} />
+          <IssueItems issue={issue} onOpenSyncRun={onOpenSyncRun} sportUrlSegment={overview.sportUrlSegment} sportLeagueId={overview.id} />
         </DetailsPeek>
       ))}
     </span>
   );
 }
 
-function IssueItems({ issue, onOpenSyncRun, sport, sportLeagueId }: {
+function IssueItems({ issue, onOpenSyncRun, sportUrlSegment, sportLeagueId }: {
   issue: SportLeagueIssue;
   onOpenSyncRun: (syncRunId: string) => void;
-  sport: Sport;
+  sportUrlSegment: string;
   sportLeagueId: string;
 }) {
   const displayPreferences = useDisplayPreferences();
@@ -108,7 +108,7 @@ function IssueItems({ issue, onOpenSyncRun, sport, sportLeagueId }: {
               key={item.target.id}
               name={item.label}
               testId={`root-admin-sports-issue-event-${item.target.id}`}
-              to={buildSportEventPath(sport, item.target.id)}
+              to={buildSportEventPath(sportUrlSegment, item.target.id)}
             />
           ))}
         </SectionRows>
@@ -122,7 +122,7 @@ function IssueItems({ issue, onOpenSyncRun, sport, sportLeagueId }: {
               key={item.target.id}
               name={item.label}
               testId={`root-admin-sports-issue-event-${item.target.id}`}
-              to={buildSportEventPath(sport, item.target.id)}
+              to={buildSportEventPath(sportUrlSegment, item.target.id)}
             />
           ))}
         </SectionRows>

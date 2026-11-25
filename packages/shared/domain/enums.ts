@@ -21,27 +21,17 @@ export const Sport = {
   CYCLING: 'CYCLING',
   RUNNING: 'RUNNING',
   BASKETBALL: 'BASKETBALL',
-  AMERICAN_FOOTBALL: 'AMERICAN_FOOTBALL',
+  FOOTBALL: 'FOOTBALL',
   HOCKEY: 'HOCKEY',
   BASEBALL: 'BASEBALL',
   SOCCER: 'SOCCER',
   TENNIS: 'TENNIS',
 } as const;
 export type Sport = (typeof Sport)[keyof typeof Sport];
-/** The most popular first, the ancillary sports (cycling, running) last, wherever sports are listed, grids included. */
-export const SportOrder = explicitOrder<Sport>({
-  [Sport.AMERICAN_FOOTBALL]: 0,
-  [Sport.BASKETBALL]: 1,
-  [Sport.BASEBALL]: 2,
-  [Sport.HOCKEY]: 3,
-  [Sport.SOCCER]: 4,
-  [Sport.GOLF]: 5,
-  [Sport.AUTO_RACING]: 6,
-  [Sport.TENNIS]: 7,
-  [Sport.HORSE_RACING]: 8,
-  [Sport.CYCLING]: 9,
-  [Sport.RUNNING]: 10,
-});
+/**
+ * No order here: each sport's row carries its display order (`Sport.displayOrder`, #2042), and
+ * every list of sports sorts by it as the API returns it.
+ */
 
 export const ParticipantType = {
   INDIVIDUAL: 'INDIVIDUAL',
@@ -216,6 +206,22 @@ export const SeasonSlotStatusOrder = explicitOrder<SeasonSlotStatus>({
   [SeasonSlotStatus.IN_PROGRESS]: 1,
   [SeasonSlotStatus.COMPLETED]: 2,
   [SeasonSlotStatus.CANCELLED]: 3,
+});
+
+/**
+ * Whether a Season slot's date window (#2012) is the schedule's published dates or a best guess,
+ * loaded while the shape is known and the games are not. In the order a window moves through them.
+ */
+export const SlotWindowStatus = {
+  /** A best guess: the sync places games by it, and a finding asks for the published dates. */
+  TENTATIVE: 'TENTATIVE',
+  /** The schedule's published dates. */
+  CONFIRMED: 'CONFIRMED',
+} as const;
+export type SlotWindowStatus = (typeof SlotWindowStatus)[keyof typeof SlotWindowStatus];
+export const SlotWindowStatusOrder = explicitOrder<SlotWindowStatus>({
+  [SlotWindowStatus.TENTATIVE]: 0,
+  [SlotWindowStatus.CONFIRMED]: 1,
 });
 
 /** How a provider's games are matched to a slot definition (#2002, plan §1 and §6), in matching order. */
@@ -533,18 +539,24 @@ export type SelectionType = (typeof SelectionType)[keyof typeof SelectionType];
 export const SelectionTypeOrder = alphabeticalOrder('SelectionType');
 
 /**
- * The kind of event a contest template is offered for (#802), where a sport's events come in more
- * than one kind. Only a sport played as matches has two: a KNOCKOUT (the playoffs, a tournament
- * bracket) and a WEEK of a season's games (an NFL regular-season week). A template with none is
- * offered for every event of its sport. Mirrors `PrismaContestTemplateEventType`.
+ * How a contest made from a template covers the template's slot definitions (#2010, plan §7).
+ * ONE_SLOT: the commissioner picks one of them (tiered, budget, quick pick, squares, a week's
+ * pick'em). ALL_LISTED: every listed slot of one event (a bracket, a whole-playoffs pool).
+ * FROM_SLOT: a starting slot and every later listed slot of its Season (survivor). Mirrors
+ * `PrismaTemplateCoverageMode`.
  */
-export const ContestTemplateEventType = {
-  KNOCKOUT: 'KNOCKOUT',
-  WEEK: 'WEEK',
+export const TemplateCoverageMode = {
+  ONE_SLOT: 'ONE_SLOT',
+  ALL_LISTED: 'ALL_LISTED',
+  FROM_SLOT: 'FROM_SLOT',
 } as const;
-export type ContestTemplateEventType = (typeof ContestTemplateEventType)[keyof typeof ContestTemplateEventType];
-/** No natural order: A to Z by its display strings. */
-export const ContestTemplateEventTypeOrder = alphabeticalOrder('ContestTemplateEventType');
+export type TemplateCoverageMode = (typeof TemplateCoverageMode)[keyof typeof TemplateCoverageMode];
+/** From the narrowest coverage to the widest. */
+export const TemplateCoverageModeOrder = explicitOrder<TemplateCoverageMode>({
+  ONE_SLOT: 0,
+  ALL_LISTED: 1,
+  FROM_SLOT: 2,
+});
 
 /**
  * How a pick'em contest is played (#716). STRAIGHT_UP: pick the winner of every game.
@@ -688,11 +700,6 @@ export function isSportEventStatusFinished(status: SportEventStatus): boolean {
   return FINISHED_SPORT_EVENT_STATUSES.includes(status);
 }
 
-/** Whether the event is not over yet: any status but completed or cancelled. */
-export function isSportEventStatusNotOver(status: SportEventStatus): boolean {
-  return !isSportEventStatusFinished(status);
-}
-
 /**
  * Whether the event is past its contest cutoff: its start time has passed, or its status says it
  * has started or been called off. The server and the web both ask this one question (#117, #431).
@@ -733,23 +740,6 @@ export const ContestOpeningOrder = explicitOrder<ContestOpening>({
   [ContestOpening.OPEN]: 0,
   [ContestOpening.NOT_YET]: 1,
   [ContestOpening.CLOSED]: 2,
-});
-
-/**
- * Whether provider sync may touch a SportEvent — separate from providerId/externalId
- * identity. NONE: unlinked, nothing syncs. SCORES_ONLY: linked to a provider event, so live
- * scores and its field reach it. On a synced sport league the provider also owns its name, venue
- * and dates, never its status, which the lifecycle scheduler moves (ADR 0011).
- */
-export const SportEventSyncScope = {
-  NONE: 'NONE',
-  SCORES_ONLY: 'SCORES_ONLY',
-} as const;
-export type SportEventSyncScope = (typeof SportEventSyncScope)[keyof typeof SportEventSyncScope];
-/** The order the values are declared in. */
-export const SportEventSyncScopeOrder = explicitOrder<SportEventSyncScope>({
-  [SportEventSyncScope.NONE]: 0,
-  [SportEventSyncScope.SCORES_ONLY]: 1,
 });
 
 /** Where one provider sync run is in its lifecycle. */
@@ -933,6 +923,64 @@ export const ProviderSyncFindingKind = {
    * Subject: league, event and Provider; the next field follow-up that writes them resolves it.
    */
   GAMES_NOT_SYNCED: 'GAMES_NOT_SYNCED',
+  /**
+   * The events sync read a code the provider names a game's place by (`REG:5`, `POST:3`, a
+   * tournament id) that none of the league's slot provider mappings includes (#2005): its games are
+   * not synced. INFO, since a preseason week or an all-star game is left out on purpose; waiving it
+   * marks the code as known and excluded, and the sync then leaves it quiet. Subject: league,
+   * Provider and the code.
+   */
+  SLOT_VALUE_UNMAPPED: 'SLOT_VALUE_UNMAPPED',
+  /**
+   * The league's selected provider mapping names a provider league code its Provider does not read
+   * (#2005): no enabled league row of the sport has the code, or the adapter has no reader for it.
+   * Nothing is read, rather than every league of the sport, and the events sync fails until the
+   * mapping or the league row is fixed. ERROR. Subject: league and Provider.
+   */
+  PROVIDER_LEAGUE_UNKNOWN: 'PROVIDER_LEAGUE_UNKNOWN',
+  /**
+   * The events sync read a tournament that no code places and whose normalized name no NAME_PATTERN
+   * mapping of the league matches (#2011): no Season slot is created and it is not synced. INFO,
+   * as for an unmapped code (inclusion only). "Link to existing" adds its name as a pattern of a
+   * slot definition; a tournament with no definition waits for the migration that adds one.
+   * Subject: league, Provider and the normalized name, with the feed's name.
+   */
+  SLOT_NAME_UNMATCHED: 'SLOT_NAME_UNMATCHED',
+  /**
+   * A tournament's normalized name matched the NAME_PATTERN mappings of more than one slot
+   * definition, or of one whose Season slot another tournament is already linked to (#2011): it is
+   * linked to none. ERROR, since a tournament the league plays is missing until the patterns are
+   * fixed. Subject: league, Provider and the normalized name, with the feed's name.
+   */
+  SLOT_NAME_AMBIGUOUS: 'SLOT_NAME_AMBIGUOUS',
+  /**
+   * A tournament's normalized name matched one slot definition, but the Season has no phase for
+   * that definition's phase, so no Season slot could be made and the tournament is not synced
+   * (#2011). ERROR, since a tournament the league plays is missing until the Season's phase is
+   * added. Subject: league, Provider and the normalized name, with the feed's name.
+   */
+  SLOT_SEASON_PHASE_MISSING: 'SLOT_SEASON_PHASE_MISSING',
+  /**
+   * The events sync placed games in a Season slot dated outside the Season's span (#2012): before
+   * it starts or after it ends. The games are still written. WARNING, since the Season row's span
+   * is what to check. Subject: league, Provider and the code.
+   */
+  SLOT_OUTSIDE_SEASON: 'SLOT_OUTSIDE_SEASON',
+  /**
+   * The events sync read games whose feed names no place for them (no round or week) that no
+   * Season slot's date window holds (#2012): they are not synced. INFO, since a feed with no round
+   * marker lists every game of its days (college football's other bowls); inclusion only. Only
+   * games inside the Season's span count. Subject: league, Provider and the provider's id for the
+   * Season.
+   */
+  GAMES_UNPLACED: 'GAMES_UNPLACED',
+  /**
+   * A Season still open or to come has slots its provider places by date window whose window is
+   * missing or still tentative (#2012, #1924): games in them may not be placed. WARNING; it
+   * resolves once every such slot of the Season has a confirmed window. Subject: league, Provider
+   * and the provider's id for the Season.
+   */
+  SLOT_DATES_NEEDED: 'SLOT_DATES_NEEDED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
@@ -941,6 +989,8 @@ export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindi
 export const ProviderSyncFindingAction = {
   /** Map the provider's participant id to a participant of the league (UNMAPPED_PARTICIPANT). */
   MAP_PARTICIPANT: 'MAP_PARTICIPANT',
+  /** Add the tournament's name as a pattern of one of the league's slot definitions (SLOT_NAME_UNMATCHED). */
+  LINK_SLOT: 'LINK_SLOT',
   /** Mark it fixed. */
   RESOLVE: 'RESOLVE',
   /** Accept it as it is, with a note. */
@@ -952,9 +1002,10 @@ export type ProviderSyncFindingAction = (typeof ProviderSyncFindingAction)[keyof
 /** The order the dialog's Actions section lists them in. */
 export const ProviderSyncFindingActionOrder = explicitOrder<ProviderSyncFindingAction>({
   [ProviderSyncFindingAction.MAP_PARTICIPANT]: 0,
-  [ProviderSyncFindingAction.RESOLVE]: 1,
-  [ProviderSyncFindingAction.WAIVE]: 2,
-  [ProviderSyncFindingAction.REOPEN]: 3,
+  [ProviderSyncFindingAction.LINK_SLOT]: 1,
+  [ProviderSyncFindingAction.RESOLVE]: 2,
+  [ProviderSyncFindingAction.WAIVE]: 3,
+  [ProviderSyncFindingAction.REOPEN]: 4,
 });
 
 /** How a sport event is released for contests, on the League page (#1865). */
@@ -1063,11 +1114,6 @@ export const JobTriggerOrder = explicitOrder<JobTrigger>({
 export const PERSON_JOB_TRIGGERS = [JobTrigger.ADMIN, JobTrigger.COMMISSIONER] as const;
 export type PersonJobTrigger = (typeof PERSON_JOB_TRIGGERS)[number];
 
-/** Whether a trigger names the person who started the job. */
-export function isPersonJobTrigger(trigger: JobTrigger): trigger is PersonJobTrigger {
-  return (PERSON_JOB_TRIGGERS as readonly JobTrigger[]).includes(trigger);
-}
-
 /**
  * Why a background job did not do its work (#1861), beside its error message. Set with the error
  * of a failed try (and kept while it waits to be retried, or once FAILED), and on a job that
@@ -1158,11 +1204,11 @@ export const RoundStatusOrder = explicitOrder<RoundStatus>({
 });
 
 /**
- * Who set a match's result (#1496, #1531): an admin, or the provider its game is linked to. A
- * provider's later final never overwrites an admin's result; the sync logs the disagreement.
+ * Who set a match's result (#1496): the provider its game is linked to, the only writer on a
+ * synced event (#2074). A test event's results are written by the test-data loader in its place.
+ * The column moves onto the Game in #2046, which drops it with PROVIDER its only value.
  */
 export const MatchResultSource = {
-  ADMIN: 'ADMIN',
   PROVIDER: 'PROVIDER',
 } as const;
 export type MatchResultSource = (typeof MatchResultSource)[keyof typeof MatchResultSource];
@@ -1309,15 +1355,6 @@ export const ContestEntryStatusOrder = explicitOrder<ContestEntryStatus>({
   [ContestEntryStatus.DRAFT]: 0,
   [ContestEntryStatus.SUBMITTED]: 1,
 });
-
-/** How a prize definition's payout is expressed. */
-export const PrizePayoutType = {
-  FIXED_AMOUNT: 'FIXED_AMOUNT',
-  PERCENTAGE: 'PERCENTAGE',
-} as const;
-export type PrizePayoutType = (typeof PrizePayoutType)[keyof typeof PrizePayoutType];
-/** No natural order: A to Z by its display strings. */
-export const PrizePayoutTypeOrder = alphabeticalOrder('PrizePayoutType');
 
 // --- League ---
 
@@ -1987,8 +2024,6 @@ export const BackgroundJobType = {
   SETTLE_GAME_CONTESTS: 'SETTLE_GAME_CONTESTS',
   /** Rebuilds the stored live leaderboards of one event's contests, or of one contest (#1463). */
   REBUILD_LEADERBOARDS: 'REBUILD_LEADERBOARDS',
-  /** Adds a released edition to one contest made from a template covering its series, a majors pool's major (#1318). */
-  ADD_RELEASED_EDITION_TO_CONTEST: 'ADD_RELEASED_EDITION_TO_CONTEST',
   /** Syncs one sport league's events from the provider that creates them, for one or more years (#1819). */
   SYNC_LEAGUE_EVENTS: 'SYNC_LEAGUE_EVENTS',
   /** Tries one synced DRAFT event's automatic release: every ready check passing releases it, any failing holds it (#1823). */
@@ -1999,6 +2034,8 @@ export const BackgroundJobType = {
   ACTIVATE_EVENT_CONTESTS: 'ACTIVATE_EVENT_CONTESTS',
   /** A postponed event's contests follow its start: reopened while it is ahead, live once it has passed (#1792, #1952). */
   FOLLOW_POSTPONED_EVENT_CONTESTS: 'FOLLOW_POSTPONED_EVENT_CONTESTS',
+  /** Resolves the OPEN unmapped participant findings of feed ids a mapping now names, however it was made (#2069). */
+  RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */

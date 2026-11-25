@@ -20,6 +20,8 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportEventOverviewResponseSchema } from '@poolmaster/shared/dto';
 import { syncLeagueTo } from '../../support/league-sync';
+import { mapEventToProvider, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
+import { linkTestSlot } from '../../support/test-slots';
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, get, okBody, seedEventWithField } from '../list-route-seeds';
 import { expectConstantQueries, measureQueryScaling } from '../query-scaling';
@@ -36,7 +38,8 @@ beforeEach(() => cleanupTestData());
  * its latest run of each kind, whether it is overdue (the event, its rounds and their last match
  * starts), its field and the event page offering its series; then those latest runs and the
  * field's provider mappings; and the league's sync provider, its selected mapping, provider league
- * and provider one read each (#1997). A new read, or one sent per field row, moves it.
+ * and provider one read each (#1997); and the event's provider mappings and their providers, one
+read each (#2004). A new read, or one sent per field row, moves it.
  */
 const OVERVIEW_STATEMENTS = 14;
 
@@ -48,10 +51,10 @@ const OVERVIEW_STATEMENTS = 14;
 async function seedSyncedEvent(golfers: number) {
   const prisma = getPrisma();
   const { event, field } = await seedEventWithField(golfers, { status: SportEventStatus.DRAFT, ownSportLeague: true, startsInDays: 30 });
-  const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId }, select: { sportLeagueId: true } });
+  const { sportLeagueId } = event;
   await prisma.sportLeague.update({ where: { id: sportLeagueId }, data: { autoReleaseDaysBeforeStart: 7 } });
   await syncLeagueTo(prisma, sportLeagueId, 'pga');
-  await prisma.sportEvent.update({ where: { id: event.id }, data: { providerId: 'balldontlie', syncScope: 'SCORES_ONLY' } });
+  await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: `overview-${event.id}` });
   const seenAt = new Date(Date.now() - 60 * 60 * 1000);
   for (const [index, row] of field.entries()) {
     await prisma.sportEventParticipant.update({ where: { id: row.id }, data: { oddsToWin: 10 + index } });
@@ -60,7 +63,7 @@ async function seedSyncedEvent(golfers: number) {
     });
   }
   const failedRun = await prisma.providerSyncRun.create({
-    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sport: Sport.GOLF, sportLeagueId, sportEventId: event.id, status: 'FAILED' },
+    data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId, sportEventId: event.id, status: 'FAILED' },
   });
   return { event, field, seenAt, failedRun, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
@@ -91,8 +94,10 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     expect(overview.fieldFeed.every((row) => row.feedId !== null && row.lastInFeedAt === seenAt.toISOString())).toBe(true);
   });
 
-  it('reads an event no provider syncs as OFF with a manual release, its field in name order and no feed ids', async () => {
+  it('reads a test event, which no provider syncs, as OFF with a manual release, its field in name order and no feed ids', async () => {
     const { event } = await seedEventWithField(2, { status: SportEventStatus.DRAFT });
+    // A test event is one on a test slot (#2004): the sync never reads it, so it is never released on its own.
+    await linkTestSlot(getPrisma(), event);
     const rootAdmin = await createTestUser({ isRootAdmin: true });
 
     const { overview } = okBody(await get(`/api/v1/events/${event.id}/overview`, rootAdmin), SportEventOverviewResponseSchema);
@@ -101,15 +106,17 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     expect(overview.fieldFeed.map((row) => [row.feedId, row.lastInFeedAt])).toEqual([[null, null], [null, null]]);
   });
 
-  it('names the active event page offering the event\'s series, and none once that page is retired', async () => {
+  it('names the active event page offering the event\'s slot definition, and none once that page is retired', async () => {
     const prisma = getPrisma();
     const { event } = await seedEventWithField(1, { status: SportEventStatus.DRAFT });
-    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId }, select: { sportLeagueId: true, name: true } });
+    const urlSegment = `event-overview-${randomUUID().slice(0, 8)}`;
+    // The page offers the definition the event's Season slot plays (#2010).
+    const definitionId = await keyedSlotDefinitionId(prisma, event.sportLeagueId, urlSegment.toUpperCase().replace(/-/g, '_'));
+    await putEventInSlot(prisma, event.id, definitionId);
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ select: { id: true } });
-    const slug = `event-overview-${randomUUID().slice(0, 8)}`;
-    const page = await prisma.eventPage.create({ data: { sport: event.sport, slug, displayOrder: 9000 } });
+    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment, displayOrder: 9000 } });
     await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId: series.sportLeagueId, eventSeriesName: series.name, templateId: template.id, sortOrder: 1, isPrimary: true },
+      data: { eventPageId: page.id, sportLeagueId: event.sportLeagueId, sportLeaguePhaseSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
     });
     const rootAdmin = await createTestUser({ isRootAdmin: true });
 
@@ -118,7 +125,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
       await prisma.eventPage.update({ where: { id: page.id }, data: { isActive: false } });
       const retired = okBody(await get(`/api/v1/events/${event.id}/overview`, rootAdmin), SportEventOverviewResponseSchema);
 
-      expect([offered.overview.eventPageSlug, retired.overview.eventPageSlug]).toEqual([slug, null]);
+      expect([offered.overview.eventPagePath, retired.overview.eventPagePath]).toEqual([`/play/golf/${urlSegment}`, null]);
     } finally {
       await prisma.eventPage.delete({ where: { id: page.id } });
     }
@@ -142,7 +149,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     });
   });
 
-  it('sends exactly 14 statements, the session check included and the league\'s selected mapping, provider league and provider one read each, for a field of 2 and of 20 alike', async () => {
+  it('sends exactly 14 statements, the session check included, the league\'s selected mapping, provider league and provider one read each and the event\'s provider mappings and their providers one read each, for a field of 2 and of 20 alike', async () => {
     const { small, large } = await measureQueryScaling({
       seed: seedSyncedEvent,
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/overview`, rootAdmin),

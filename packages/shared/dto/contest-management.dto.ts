@@ -6,21 +6,22 @@ import {
   ContestRulesWithEntryLimitSchema,
   ContestStatus,
   ContestFormat,
-  ContestTemplateEventType,
   CupWeight,
   extendRules,
   GolfCategoryKey,
   GolfCutRuleType,
+  LeaguePhase,
+  MatchFormat,
   RandomDrawContestRulesSchema,
   PickEmContestRulesSchema,
   SelectionType,
+  SlotKind,
   SurvivorContestRulesSchema,
   SquaresContestRulesSchema,
-  Sport,
+  TemplateCoverageMode,
   TieredContestRulesSchema,
 } from '@poolmaster/shared/domain';
 
-const sportValues = Object.values(Sport) as [Sport, ...Sport[]];
 const selectionTypeValues = Object.values(SelectionType) as [SelectionType, ...SelectionType[]];
 const contestFormatValues = Object.values(ContestFormat) as [
   ContestFormat,
@@ -216,13 +217,24 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
+const ContestTemplateSlotDtoSchema = z.object({
+  id: z.uuid().describe('The slot definition\'s id (SportLeaguePhaseSlot).'),
+  key: z.string().describe('Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.'),
+  name: z.string().nullable().describe('The league\'s proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind.'),
+  slotKind: z.enum(SlotKind).describe('What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.'),
+  weekNumber: z.number().int().nullable().describe('For a WEEK slot, its week; null otherwise.'),
+  sportLeaguePhaseId: z.uuid().describe('The phase the slot is in.'),
+  phase: z.enum(LeaguePhase).describe('That phase\'s kind: PRESEASON, REGULAR or POSTSEASON.'),
+  matchFormat: z.enum(MatchFormat).describe('How the slot\'s games are contested: HEAD_TO_HEAD or FIELD.'),
+}).describe('One slot definition a contest template covers (#2010), with the facts screens show.');
+
 export const ContestConfigTemplateDtoSchema = z.object({
   id: z.uuid().describe('Seeded contest template identifier.'),
-  sport: z.enum(sportValues).describe('Sport this template applies to.'),
   sportLeagueId: z.uuid().describe(
     'Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.',
   ),
-  eventType: z.enum(ContestTemplateEventType).nullable().optional().describe('The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season\'s games), for a sport played as matches. Null: every event of its sport.'),
+  coverageMode: z.enum(TemplateCoverageMode).describe('How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.'),
+  slots: z.array(ContestTemplateSlotDtoSchema).describe('The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them.'),
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
   selectionType: z.enum(selectionTypeValues).describe('How an entry picks in a contest created from this template.'),
   templateKey: z.string().describe('Stable machine key for the template.'),
@@ -237,11 +249,10 @@ export const ContestConfigTemplateDtoSchema = z.object({
 export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSchema>;
 
 export const ListContestConfigTemplatesQuerySchema = z.object({
-  sport: z.enum(sportValues).optional().describe('Only templates for this sport.'),
   sportLeagueId: z.uuid().optional().describe(
     "Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
   ),
-  eventType: z.enum(ContestTemplateEventType).optional().describe('Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event\'s kind for a sport played as matches.'),
+  slotDefinitionIds: z.array(z.uuid()).optional().describe('Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event\'s (SportEventDto.slotDefinitionIds).'),
   active: z.boolean().optional().describe('Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.'),
 }).describe('Filters for listing contest configuration templates. Every filter is optional.');
 export type ListContestConfigTemplatesQuery = z.infer<
@@ -259,9 +270,11 @@ export const UpdateContestConfigTemplateRequestSchema = z.object({
   name: z.string().min(1).max(120).optional().describe('Updated template display name.'),
   description: z.string().min(1).max(500).optional().describe('Updated template description.'),
   sortOrder: z.number().int().min(0).max(1000).optional().describe('Updated sort order for the template within its create-flow group.'),
-  isDefault: z.boolean().optional().describe('Whether this template should be the default choice for future create flows in its scope.'),
+  isDefault: z.boolean().optional().describe('Whether this template should be the default choice for future create flows of its sport league and selection type. Setting it unsets the one that was the default.'),
   active: z.boolean().optional().describe('Whether commissioners can select this template in future create flows.'),
   configuration: ContestConfigurationRequestSchema.optional().describe('Updated persisted configuration payload copied into future contests when this template is selected.'),
+  coverageMode: z.enum(TemplateCoverageMode).optional().describe('How future contests from the template cover its slots (#2010). Refused when the listed slots do not fit it: ALL_LISTED needs one event\'s slots.'),
+  slotDefinitionIds: z.array(z.uuid()).min(1).optional().describe('The slot definitions the template covers from now on, each of its own sport league (#2010). Contests already made keep the slots they copied. A bracket lists only knockout slots.'),
 }).refine((value) => Object.keys(value).length > 0, {
   message: 'At least one contest template property must be provided.',
 }).describe('Contest template update payload. Every field optional; at least one is required.');
@@ -341,6 +354,7 @@ registerSchema('ContestConfigurationRequest', ContestConfigurationRequestSchema)
 registerSchema('EffectiveTierDto', EffectiveTierDtoSchema);
 registerSchema('ContestManagementSportEventDto', ContestManagementSportEventDtoSchema);
 registerSchema('ContestManagementDetailDto', ContestManagementDetailDtoSchema);
+registerSchema('ContestTemplateSlotDto', ContestTemplateSlotDtoSchema);
 registerSchema('ContestConfigTemplateDto', ContestConfigTemplateDtoSchema);
 registerSchema('ContestManagementResponse', ContestManagementResponseSchema);
 registerSchema('ListContestConfigTemplatesQuery', ListContestConfigTemplatesQuerySchema);

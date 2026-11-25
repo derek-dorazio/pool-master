@@ -1,3 +1,5 @@
+import { deleteTestSportLeagues, removeTestDefinition, TEST_DEFINITION_KEY, withTestDefinition } from '../support/test-slots';
+import { withCurrentSeason } from '../support/event-edition';
 import {
   acceptInvitation,
   createContest,
@@ -112,7 +114,7 @@ const SPORTS: readonly SportScenario[] = [
   { sport: Sport.CYCLING, seed: oneEventOf('cycling-2026-test.json', 'UCI WorldTour', 'Tour de France') },
   { sport: Sport.RUNNING, seed: oneEventOf('running-2026-test.json', 'World Marathon Majors (men)', 'Boston Marathon') },
   { sport: Sport.BASKETBALL, seed: oneEventOf('basketball-2025-nba-playoffs-test.json', 'NBA', 'NBA Playoffs') },
-  { sport: Sport.AMERICAN_FOOTBALL, seed: oneEventOf('american-football-2026-nfl-playoffs-test.json', 'NFL', 'NFL Playoffs') },
+  { sport: Sport.FOOTBALL, seed: oneEventOf('american-football-2026-nfl-playoffs-test.json', 'NFL', 'NFL Playoffs') },
   { sport: Sport.HOCKEY, seed: oneEventOf('hockey-2026-nhl-playoffs-test.json', 'NHL', 'Stanley Cup Playoffs') },
   { sport: Sport.BASEBALL, seed: oneEventOf('baseball-2025-mlb-postseason-test.json', 'MLB', 'MLB Postseason') },
   { sport: Sport.SOCCER, seed: oneEventOf('soccer-2022-fifa-world-cup-test.json', 'FIFA World Cup', 'FIFA World Cup') },
@@ -140,8 +142,6 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     const field = { sportEventParticipant: { sportEventId: { in: eventIds } } };
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.contestEntryPick.deleteMany({ where: field });
@@ -156,13 +156,11 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   // Only those no other event's field still holds.
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
   const ownLeagues = await db.sportLeague.findMany({ where: { name: { contains: RUN } }, select: { id: true } });
-  await db.eventSeries.deleteMany({ where: { sportLeagueId: { in: ownLeagues.map((league) => league.id) } } });
-  await db.sportLeague.deleteMany({ where: { id: { in: ownLeagues.map((league) => league.id) } } });
+  await deleteTestSportLeagues(db, ownLeagues.map((league) => league.id));
 }
 
 let admin: RegisteredUserContext;
@@ -172,19 +170,37 @@ beforeAll(async () => {
   await promoteToRootAdmin(admin);
 });
 
+/** Each league's current Season before this suite moved it, put back afterwards. */
+const originalSeasons = new Map<string, string | null>();
+/** The migration leagues this suite gave a test definition. */
+const testDefinitionLeagueIds = new Set<string>();
+
 afterAll(async () => {
   await cleanupFunctionalData();
   await cleanup();
+  const db = getFunctionalPrisma();
+  for (const sportLeagueId of testDefinitionLeagueIds) await removeTestDefinition(db, sportLeagueId);
+  for (const [id, currentSeasonId] of originalSeasons) await db.sportLeague.update({ where: { id }, data: { currentSeasonId } });
   await disconnectFunctionalPrisma();
 });
 
 /** Loads the row's event and answers it with its sport league. */
 async function loadEvent(scenario: SportScenario, tag: string, season: number) {
   const file = scenario.seed(tag, season);
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const [league] = file.sportLeagues;
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: scenario.sport } })).data).sportLeagues
     .find((row) => row.name === league.name), league.name);
+  // A test event goes in its league's current Season (#2004), so the row's year is made current
+  // first; a file event the league has no definition for is played on a test definition.
+  const db = getFunctionalPrisma();
+  if (!originalSeasons.has(sportLeague.id)) originalSeasons.set(sportLeague.id, sportLeague.currentSeasonId);
+  await withCurrentSeason(db, sportLeague.id, season);
+  for (const fileEvent of league.events.filter((each) => each.slotKey === undefined)) {
+    await withTestDefinition(db, sportLeague.id);
+    testDefinitionLeagueIds.add(sportLeague.id);
+    fileEvent.slotKey = TEST_DEFINITION_KEY;
+  }
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
   const event = expectDefined(expectDefined((await listEvents({ client: admin.client, query: { sportLeagueId: sportLeague.id } })).data).events
     .find((row) => row.name === league.events[0].name), league.events[0].name);
   return { sportLeague, event };
@@ -245,7 +261,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
 
       const templates = expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
-        query: { sport, sportLeagueId: sportLeague.id, active: true },
+        query: { sportLeagueId: sportLeague.id, active: true },
       })).data).templates
         .filter((template) => template.contestFormat === ContestFormat.ROSTER)
         .filter((template) => template.selectionType === selectionType)

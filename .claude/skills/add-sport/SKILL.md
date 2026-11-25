@@ -72,9 +72,10 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      straight up or by confidence, optionally against the spread; and `SURVIVOR`, one team a
      week, each team once. The validity matrix allows prediction contests only on events of
      games.
-   - Any sport: a multi-event contest, one contest across many events whose entries submit
-     per event (a golf majors pool, an NFL season of weeks). It is a shape of contest, not a
-     selection type, so the sport adds nothing for it.
+   - Any sport: a contest across several slots of a Season, whose entries submit per event
+     (an NFL pick'em or survivor across weeks). Which slots a template covers is its
+     `ContestConfigTemplateSlot` rows and `coverageMode`, so the sport adds nothing for it; a
+     field pool never spans events (ADR 0014).
    A new selection type is separate work through the selection-engine registry, not part of
    adding a sport.
 4. **Results source.** A new provider follows `rules/architecture-rules.md` §3 *Provider and
@@ -87,8 +88,12 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
 In order:
 
 1. **Enum and reference row.** Add the sport to the `Sport` domain enum and the Prisma enum in
-   one migration, and its `sports` reference row (and any contest templates) in the next one:
-   Postgres refuses a new enum value inside the transaction that adds it
+   one migration, and its `sports` reference row (and any contest templates) in the next one,
+   with its stored `url_segment` (`football`: what every address names the sport by,
+   never built from the code) and its `display_order` (its place wherever sports are listed
+   together, most popular first). Every sport league row gets a `url_segment` too: a short
+   code such as `nfl`, `ncaamb` or `f1` that names the league on its own, never a slug of its
+   full name, and unique across every sport. Postgres refuses a new enum value inside the transaction that adds it
    (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Use the
    `model-change` skill. A sport whose presets differ by sport league seeds those leagues in
    the same reference-data migration, and each template finds its league by sport and name
@@ -121,10 +126,13 @@ In order:
    adds a Season (it raises `SEASON_MISSING` instead) and `currentSeasonId` is never set by hand:
    the nightly recompute sets it. Open the league's Structure tab on the League page and read
    it back.
-2. **Sport definition.** Add its `SportDefinition` to the sport registry: tournament format,
-   default rounds, selection types, scoring definitions and round labels. Who competes and how
-   it is scored go on each of its sport league rows, never on the sport
-   (`rules/architecture-rules.md` §4 *Sport extension*). Run `tsc`; every exhaustive map that lacks the sport now fails. Fix each.
+2. **Sport definition.** The sport registry is frozen (`rules/architecture-rules.md` §4
+   *Sport extension*): a new sport fills in the existing `SportDefinition` fields and adds no
+   field. Its one new definition export is a new entry in `scripts/sport-registry-frozen.json`,
+   declared in `scripts/baseline-raises.json` with the reason "new sport". Anything the sport
+   needs beyond the existing fields is a model column or row the API returns. Who competes and
+   how it is scored go on each of its sport league rows, never on the sport. Run `tsc`; every
+   exhaustive map that lacks the sport now fails. Fix each.
    Its words go in the display strings, not the definition: a `sport.<SPORT>` entry in
    `en-US.ts` for every role it uses (`rules/ux-rules.md` §16 *Display Strings*).
    A sport whose family lands before its scoring may register with no scoring definitions;
@@ -158,8 +166,9 @@ In order:
    with 422 `EVENT_SCORING_FAMILY_MISMATCH`, as golf's score routes do. On the web, the family
    adds its entry to `SCORING_FAMILY_ADMIN_UI` (exhaustive, so the build asks for it): the
    results page's name and body. The Manage event, field, tier, participant and sport league
-   pages are shared by every sport under `/manage/sports/:sport/`, so a new sport needs no new
-   admin pages; its menu entry and URL segment come from the registry
+   pages are shared by every sport under `/manage/sports/<sport URL segment>/`, so a new sport
+   needs no new admin pages; its menu entry comes from the registry and its URL segment from its
+   row
    (`rules/architecture-rules.md` §4 *Sport extension*).
 7. **Contract.** Any new DTO, route or error code goes through the `add-endpoint` skill and
    regenerates the SDK in the same slice.
@@ -172,13 +181,13 @@ In order:
    records. Use the `add-frontend-feature` skill.
    The public How to Play page and each league's Contest types page (the commissioner's menu
    of contest types) read the contest templates and sport leagues, so the sport's leagues and
-   formats appear there once their templates exist. A league whose name is shared with another
-   sport's ("NCAA Division I Men") gets a `display_name` in its migration, so its How to Play
-   chip says the sport, and every league gets a `display_order` there, its place among its
-   sport's leagues (major professional first, then NCAA); a new sport also gets its place in
-   the registry's popularity order. The hand-written parts are the sport's line in
-   `SPORT_BLURBS` and, for a new sport, its picture in the How to Play illustrations (the
-   typecheck asks for it); a new way to play also needs its picture and its guide. Write the
+   formats appear there once their templates exist. A league is named for what it is, the
+   sport included ("NCAA Men's Basketball"), never for its postseason; one whose name cannot
+   say the sport gets a `display_name` in its migration, so its How to Play chip says the sport, and every league gets a `display_order` there, its place among its
+   sport's leagues (major professional first, then NCAA); a new sport's own place comes from
+   its row's `display_order` (step 1), which the web app reads from the API. The hand-written
+   parts are the sport's line in `SPORT_BLURBS` and, for a new sport, its photo named by its URL
+   segment (the `update-pictures` skill); a new way to play also needs its picture and its guide. Write the
    line for a new sport, and rewrite it when a slice adds a sport league or a format to a
    sport already there. Then open both pages and read the sport's section
    (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*, item 12).
@@ -275,13 +284,13 @@ down: a lesson that was true mid-series may not be by the end.
   season from August to May (the Premier League) is two test files, one per year its weeks start
   in, each with the same players and rankings.
 - **A league with no knockout.** A league played only in weeks has no roster presets, since
-  roster formats are played on a knockout, and its week templates are its only defaults.
+  roster formats cover one event, and its week templates are its only defaults.
 - **League presets without their leagues.** A per-league template needs its league row, so the
   league is reference data even though admins normally create leagues
   (`rules/architecture-rules.md` §6 *Reference data goes in a migration*). Every template
   names its sport league, so a setup each league of the sport plays is one row per league with
   the same key, never one row for the whole sport. Give each league its templates and one
-  default per format and kind of event, named and described
+  default per format, the slots each covers (`contest_config_template_slots`), named and described
   as `rules/ux-rules.md` §12 *League Pages and Commissioner Tools* (item 12) says. The template's foreign key then keeps
   those leagues through any test cleanup that empties sport leagues, and a test that counts
   sports or leagues sees them.
@@ -313,9 +322,9 @@ down: a lesson that was true mid-series may not be by the end.
   an empty `round_names` array, never null (the column is not null). A new period layout
   (hockey's three periods) is a Postgres enum value too: add it in the enum migration beside the
   sport, and its squares moment labels where the compiler points.
-- **Scenario rows keyed by league name.** Two sports can share a league name ("NCAA Division I
-  Men" plays basketball and hockey), so a functional suite whose test names or tags come from
-  the league name runs two rows under one name. Key them by event name, or name the sport too.
+- **Scenario rows keyed by league name.** A league name is unique only within its sport, so a
+  functional suite whose test names or tags come from the league name can run two rows under
+  one name. Key them by event name, or name the sport too.
 - **ESPN date ranges.** The ESPN scoreboard refuses `dates=<from>-<to>` with a 400 for most
   leagues; fetch one day per URL, at most 20 URLs a run. Each "Fetch sport sources" run
   replaces the folder the last one wrote, so copy what you need before the next run.
@@ -337,9 +346,10 @@ down: a lesson that was true mid-series may not be by the end.
   games won, so it has no single game for a grid. Leave squares out of such a sport's selection
   types and its period layout off the definition, and add the league to the template checks'
   series leagues, which otherwise expect a squares default (MLB, the NBA, the NHL).
-- **Choosing templates for an event by hand.** Whether a template fits an event (its sport,
-  its league or none, its kind of event or none) is `isTemplateOfferedOn`. A script or screen
-  that filters templates itself drifts from Create contest
+- **Choosing templates for an event by hand.** Which templates fit an event is the template
+  list asked for the event's league and the slot definitions its slots play
+  (`sportLeagueId`, `slotDefinitionIds`). A script or screen that filters templates itself
+  drifts from Create contest
   (`rules/architecture-rules.md` §4 *Sport extension*).
 - **A stale sport line on How to Play.** Adding a league or format to a sport that already has
   one fails no build and no test: the new tiles appear, and the sport's line goes on naming only

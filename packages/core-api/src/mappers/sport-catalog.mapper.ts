@@ -6,6 +6,7 @@
 import {
   SportLeagueIssueType,
   assertNever,
+  getSportDefinition,
   type SportConfig,
   type SportEventOverview,
   type SportLeagueEventOverview,
@@ -14,9 +15,12 @@ import {
   type SportLeagueOverview,
   type SportLeagueParticipantOverview,
   type SportLeagueSeasonDetail,
+  type SportLeagueSeasonSlot,
   type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
+  slotNeedsDates,
+  testEventSlotRefusal,
 } from '@poolmaster/shared/domain';
 import type {
   SportDto,
@@ -28,6 +32,7 @@ import type {
   SportLeagueOverviewDto,
   SportLeagueParticipantOverviewDto,
   SportLeagueSeasonDto,
+  SportLeagueSeasonSlotDto,
   SportLeaguePositionDto,
   SportLeagueStructureResponse,
   SportLeagueSyncDto,
@@ -38,6 +43,8 @@ export function mapSportToDto(sport: SportConfig): SportDto {
   return {
     id: sport.id,
     sport: sport.sport,
+    urlSegment: sport.urlSegment,
+    displayOrder: sport.displayOrder,
     tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
     updatedAt: sport.updatedAt.toISOString(),
@@ -49,7 +56,12 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     id: sportLeague.id,
     sportId: sportLeague.sportId,
     sport: sportLeague.sport,
+    sportUrlSegment: sportLeague.sportUrlSegment,
+    sportDisplayOrder: sportLeague.sportDisplayOrder,
+    sportName: getSportDefinition(sportLeague.sport).name,
+    selectionTypes: [...getSportDefinition(sportLeague.sport).selectionTypes],
     name: sportLeague.name,
+    urlSegment: sportLeague.urlSegment,
     currentSeasonId: sportLeague.currentSeasonId,
     timeZone: sportLeague.timeZone,
     isActive: sportLeague.isActive,
@@ -82,6 +94,8 @@ export function mapSportLeagueOverviewToDto(overview: SportLeagueOverview): Spor
   return {
     id: overview.id,
     sport: overview.sport,
+    sportUrlSegment: overview.sportUrlSegment,
+    sportDisplayOrder: overview.sportDisplayOrder,
     name: overview.name,
     providerId: overview.providerId,
     providerName: overview.providerName,
@@ -147,7 +161,7 @@ export function mapSportEventOverviewToDto(overview: SportEventOverview): SportE
       feedId: row.feedId,
       lastInFeedAt: row.lastInFeedAt?.toISOString() ?? null,
     })),
-    eventPageSlug: overview.eventPageSlug,
+    eventPagePath: overview.eventPagePath,
   };
 }
 
@@ -241,6 +255,17 @@ export function mapSportLeagueStructureToDto(structure: SportLeagueStructure): S
 
 /** One Season with its provider ids, phases and slots (#2003), in the order the domain gave them. */
 export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): SportLeagueSeasonDto {
+  const phases = season.phases.map((phase) => {
+    const slots = phase.slots.map((slot) => ({
+      ...mapSportLeagueSeasonSlotToDto(slot),
+      sportEventId: slot.sportEventId,
+      takesTestEvent: testEventSlotRefusal(slot, season.isCurrent) === null,
+      placedByWindow: slot.placedByWindow,
+      // The one rule (#1924), for the Seasons the sync reads.
+      needsDates: season.readBySync && slotNeedsDates(slot),
+    }));
+    return { id: phase.id, phase: phase.phase, isSynced: phase.isSynced, slots, slotsNeedingDates: slots.filter((slot) => slot.needsDates).length };
+  });
   return {
     id: season.id,
     name: season.name,
@@ -255,26 +280,28 @@ export function mapSportLeagueSeasonToDto(season: SportLeagueSeasonDetail): Spor
       providerLeagueCode: mapping.providerLeagueCode,
       providerSeasonId: mapping.providerSeasonId,
     })),
-    phases: season.phases.map((phase) => ({
-      id: phase.id,
-      phase: phase.phase,
-      isSynced: phase.isSynced,
-      slots: phase.slots.map((slot) => ({
-        id: slot.id,
-        slotDefinitionId: slot.slotDefinitionId,
-        key: slot.key,
-        slotKind: slot.slotKind,
-        weekNumber: slot.weekNumber,
-        name: slot.name,
-        startsAt: slot.startsAt?.toISOString() ?? null,
-        endsAt: slot.endsAt?.toISOString() ?? null,
-        status: slot.status,
-        seriesFormat: slot.seriesFormat,
-        seriesGames: slot.seriesGames,
-        pairing: slot.pairing,
-        isTestData: slot.isTestData,
-        label: slot.label,
-      })),
-    })),
+    phases,
+    slotsNeedingDates: phases.reduce((total, phase) => total + phase.slotsNeedingDates, 0),
+  };
+}
+
+/** One Season slot for the wire: the Structure tab's, an event's Slots tab's and a test slot create's. */
+export function mapSportLeagueSeasonSlotToDto(slot: SportLeagueSeasonSlot): SportLeagueSeasonSlotDto {
+  return {
+    id: slot.id,
+    slotDefinitionId: slot.slotDefinitionId,
+    key: slot.key,
+    slotKind: slot.slotKind,
+    weekNumber: slot.weekNumber,
+    name: slot.name,
+    startsAt: slot.startsAt?.toISOString() ?? null,
+    endsAt: slot.endsAt?.toISOString() ?? null,
+    status: slot.status,
+    seriesFormat: slot.seriesFormat,
+    seriesGames: slot.seriesGames,
+    pairing: slot.pairing,
+    isTestData: slot.isTestData,
+    label: slot.label,
+    window: slot.window === null ? null : { startsAt: slot.window.startsAt.toISOString(), endsAt: slot.window.endsAt.toISOString(), status: slot.window.status },
   };
 }

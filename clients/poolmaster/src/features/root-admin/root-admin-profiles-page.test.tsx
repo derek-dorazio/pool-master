@@ -111,9 +111,14 @@ describe('RootAdminProfilesPage', () => {
     expect(screen.queryByTestId('root-admin-tier-profile-editor-name')).not.toBeInTheDocument();
   });
 
-  it('asks a new tier profile for the most in its last tier only once Capped is chosen, and creates it with that cap', async () => {
+  it('asks a new tier profile for the most in its last tier once Capped is chosen, shows the server\'s refusal of a cap left blank under the cap field alone, and creates it with that cap', async () => {
     seed();
-    mocks.createPlatformTierProfile.mockResolvedValue({ data: { platformTierProfile: platformTierProfile({ id: 'new', code: 'TIERS_5_OF_5_CAPPED', name: '5 of 5, capped', tierCount: 5, tierSize: 5, lastTier: 'CAPPED', lastTierMax: 9, sportLeagueCount: 0 }) } });
+    mocks.createPlatformTierProfile
+      .mockResolvedValueOnce({
+        error: { error: { code: 'PLATFORM_TIER_PROFILE_INVALID', message: 'A capped last tier needs the most it takes.' } },
+        response: { status: 422 },
+      })
+      .mockResolvedValue({ data: { platformTierProfile: platformTierProfile({ id: 'new', code: 'TIERS_5_OF_5_CAPPED', name: '5 of 5, capped', tierCount: 5, tierSize: 5, lastTier: 'CAPPED', lastTierMax: 9, sportLeagueCount: 0 }) } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-tier-profiles-new'));
@@ -128,8 +133,9 @@ describe('RootAdminProfilesPage', () => {
 
     await userEvent.selectOptions(screen.getByTestId('root-admin-tier-profile-editor-last-tier'), 'CAPPED');
     await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-save'));
-    expect(await screen.findByText('A capped last tier needs the most it takes.')).toBeInTheDocument();
-    expect(mocks.createPlatformTierProfile).not.toHaveBeenCalled();
+    expect(await screen.findByText('Enter the most the last tier takes.')).toBeInTheDocument();
+    expect(screen.queryByText('A capped last tier needs the most it takes, and one that takes everyone left has no cap.')).not.toBeInTheDocument();
+    expect(mocks.createPlatformTierProfile).toHaveBeenCalledTimes(1);
 
     await userEvent.type(screen.getByTestId('root-admin-tier-profile-editor-last-tier-max'), '9');
     await userEvent.click(screen.getByTestId('root-admin-tier-profile-editor-save'));

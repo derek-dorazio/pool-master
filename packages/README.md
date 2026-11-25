@@ -88,11 +88,11 @@ the schema is skipped (the leaderboard answers 400
 or none; the score publisher skips and warns on a batch its event's family does not accept.
 Stroke play accepts `GOLF`; head to head accepts `GAME` (#1496), writing a provider's final for
 each match linked to its game (`externalGameId`, on the event's own provider) through
-`MatchResultService`, the admin's result path, with the teams' provider mappings deciding which
+`MatchResultService`, with the teams' provider mappings deciding which
 side won. The sync links a game nobody has linked to the one open match of the event whose two
-teams it is, so nobody links games by hand. Each match records who set its result
-(`resultSource`, #1531): a provider's later final never overwrites an admin's result, and is
-logged instead, and the admin's bracket page names the feed a synced result came from. A live
+teams it is, so nobody links games by hand. The feed is the only writer of a synced
+event's results (#2074): its final overwrites whatever the match held, and the admin's bracket
+page names the feed a result came from. A live
 game's score goes on its match too, read-only (`IN_PROGRESS`, no winner), and comes off again if
 the provider postpones the game; scoring reads only completed matches. The golf round-score
 admin routes refuse an event whose family does not keep golf rounds (422
@@ -132,10 +132,10 @@ API so any drift shows up as the field that broke.
 on their own, so together they can go over the plan's limit; the client then waits out the vendor's
 429 and retries.
 
-Every enabled Provider row with its key is registered, by its `priority`, and nothing else: no
-environment variable picks a provider, and no mock feed runs in any environment (#2039). An event
-syncs from the provider it is linked to, and a root admin picks the provider wherever more than one
-serves a sport. Tests register their own fake through `buildApp({ buildSportDataProviders })`.
+Every enabled Provider row with its key is registered, by its Provider code, and nothing else: no
+environment variable picks a provider, and no mock feed runs in any environment (#2039). A league
+syncs from the provider its selected mapping names, and an event from the provider it is linked to;
+no provider is primary for a sport (#2073). Tests register their own fake through `buildApp({ buildSportDataProviders })`.
 
 **Webhooks (#1498):** BALLDONTLIE posts a signed notification to
 `POST /api/v1/provider-webhooks/balldontlie` when something happens in a game or tournament. The
@@ -146,7 +146,7 @@ sync. The job runs the same live-score sync the scheduler runs, reading current 
 and the sync history shows it as a `WEBHOOK` run. A game no match is linked to yet syncs every
 in-progress event of its league. Notifications for anything else are acknowledged and dropped.
 
-The endpoint subscribes to `balldontlieWebhookEventTypes` in `balldontlie-webhooks.ts`: each
+The endpoint reads the events `GAME_EVENTS_BY_SET` and `GOLF_EVENT_PHASES` in `balldontlie-webhooks.ts` name: each
 enabled league row's game start, period end (a soccer match's halftime) and game end, and golf's
 tournament start, round start, player round completed and tournament end (never each hole). To set
 it up, in the vendor dashboard's Webhooks tab (or its webhook API, which needs All-Access), create
@@ -172,7 +172,7 @@ is the first group finishing. A weather delay or other long stoppage sets off th
 `PROVIDER_WEBHOOK_POLL_SECONDS` and `PROVIDER_WEBHOOK_ROUND_POLL_SECONDS` override the two poll
 paces (`notified-provider-cadence.ts`).
 
-**Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/sports/:sport/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
+**Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 
 ---
 
@@ -183,7 +183,6 @@ paces (`notified-provider-cadence.ts`).
 | `domain/` | `enums.ts`, `types.ts`, `contest-scoring.ts`, `contest-management-types.ts` | Domain interfaces, enum types, and the participant scoring definitions (direction, unit, format) |
 | `domain/sports/` | `registry.ts`, `golf.ts`, `horse-racing.ts` | The sport registry: one `SportDefinition` per sport (scoring family, selection types, default rounds and tier layout, vocabulary, round labels). See `rules/architecture-rules.md` §4 *Sport extension* |
 | `db/` | `ports.ts` | 25+ repository port interfaces (hexagonal architecture) |
-| `utils/` | `id.ts` | `generateId()` via `crypto.randomUUID()` |
 
 ### Key Domain Concepts
 

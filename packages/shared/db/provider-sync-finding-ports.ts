@@ -14,6 +14,10 @@ export interface ProviderSyncFindingResolveFilter {
   sportEventId?: string;
   providerId?: string;
   providerValue?: string;
+  /** Any of these provider values (#2069): the feed ids one mapping write named. */
+  providerValues?: readonly string[];
+  /** Every league but these (#2070): the leagues a Provider no longer syncs. */
+  exceptSportLeagueIds?: readonly string[];
 }
 
 /** A sport league's OPEN findings of one severity, for the Sports page. */

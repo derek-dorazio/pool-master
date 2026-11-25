@@ -347,7 +347,7 @@ export function ContestEntryListPage() {
             <HelpTip
               className="-my-2"
               label={`How ${formatSelectionTypeName(contest.selectionType)} works`}
-              learnMore={{ label: 'How to play', to: buildHowToPlayFormatPath(contest.sport ?? null, contest.selectionType) }}
+              learnMore={{ label: 'How to play', to: buildHowToPlayFormatPath(contest.sportUrlSegment ?? null, contest.selectionType) }}
               testId="contest-how-to-play"
             >
               {`How a ${formatSelectionTypeName(contest.selectionType)} contest is played and scored.`}

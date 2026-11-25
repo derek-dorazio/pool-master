@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { LEAGUE_PLANS, type LeaguePlan } from '@poolmaster/shared/domain';
+import { LeaguePlan } from '@poolmaster/shared/domain';
 import type { CustomerLeagueDto } from '@/lib/api';
 import { PREVIEW_EXTEND_MONTHS } from '@/features/plans/preview-extend-months';
 
 
 export const customerLeagueFormSchema = z.object({
-  plan: z.enum(LEAGUE_PLANS as [LeaguePlan, ...LeaguePlan[]]),
+  plan: z.enum(LeaguePlan),
   // "" keeps the preview's end as it is.
   extendMonths: z.enum(['', ...PREVIEW_EXTEND_MONTHS.map(String)] as [string, ...string[]]),
 });

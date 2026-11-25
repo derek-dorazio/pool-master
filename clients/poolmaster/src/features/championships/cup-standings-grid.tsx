@@ -16,7 +16,7 @@ const MOVEMENT_TONE = {
 const MOVEMENT_COLUMN: ColumnDef<CupStandingRowDto, string | number> = {
   id: 'movement',
   header: 'Move',
-  accessorFn: (row) => row.movement ?? 0,
+  // Neither sorted nor searched, so the column reads nothing of its own: the cell draws the row's movement.
   enableGlobalFilter: false,
   enableSorting: false,
   cell: ({ row }) => {

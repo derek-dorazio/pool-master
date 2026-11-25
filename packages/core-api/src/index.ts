@@ -16,7 +16,7 @@ import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
 import { createFastifyLoggerOptions } from './core/logger';
-import { readTrustProxy } from './core/config';
+import { readListenPort, readTrustProxy } from './core/config';
 import { currentJobStart } from './core/job-start';
 import { readTaskRole, taskRolePlan } from './core/task-role';
 import { PostgresJobLock } from './core/job-lock';
@@ -79,7 +79,6 @@ import {
   PrismaSportEventRoundRepository,
   PrismaBackgroundJobRepository,
   PrismaSportLeagueRepository,
-  PrismaSportRepository,
   PrismaSquaresRepository,
 } from './adapters';
 import { clientLogsModule } from './modules/client-logs/routes';
@@ -102,7 +101,7 @@ import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
 import { releaseSportEventJobHandler } from './modules/events/release-sport-event-job';
 import { syncChangedRows } from './modules/ingestion/core/sync-write-diagnostics';
-import { EventScoreSourceService } from './modules/events/event-score-source-service';
+import { ProviderSeasonScheduleReader } from './modules/events/provider-season-schedule-reader';
 import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
 import { LeagueEventsSync } from './modules/events/league-events-sync';
 import { activityModule } from './modules/activity/routes';
@@ -128,20 +127,22 @@ import { SyncFindingRetention } from './modules/ingestion/findings/sync-finding-
 import { CurrentSeasonRecompute } from './modules/sport-catalog/current-season-recompute';
 import { PrismaSportLeagueSeasonRepository } from './adapters/prisma-sport-league-season-repository';
 import { syncFindingsModule } from './modules/ingestion/findings/routes';
+import { resolveMappedParticipantFindingsJobHandler } from './modules/ingestion/findings/mapped-participant-findings-job';
 import { ProviderRateLimitWatch } from './modules/ingestion/findings/provider-rate-limit-watch';
+import { PrismaSlotNamePatternRepository } from './adapters/prisma-slot-name-pattern-repository';
 import { PrismaProviderSyncFindingRepository } from './adapters/prisma-provider-sync-finding-repository';
 import { ParticipantService } from './modules/participants/service';
 import { registerConfiguredProviders, type SportDataProviderFactory } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
 import { JobLeaderboardRebuilds, leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
-import { createContestManagementService, createReleasedEditionContests } from './modules/contest-management/wiring';
 import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
   createEmailOutbox,
   SnsMessageVerifier,
   readApplicationBaseUrl,
+  readSesEventsTopicArn,
 } from './modules/email';
 import { emailEventsModule } from './modules/email/email-events-routes';
 import { emailUnsubscribeModule } from './modules/email/email-unsubscribe-routes';
@@ -183,21 +184,6 @@ export function buildApp(options: BuildAppOptions = {}) {
     ...(balldontlieWebhookSecret !== undefined && { [ProviderCode.BALLDONTLIE]: balldontlieWebhookSecret }),
   });
   const providers = providerLookupOf(providerSettings, registry);
-  // The one list of problems the sync found (#1999); the sync raises them, Findings lists them.
-  const syncFindingRepository = new PrismaProviderSyncFindingRepository(prisma);
-  const syncFindings = new ProviderSyncFindingService({
-    repository: syncFindingRepository,
-    providers: providerSettings,
-    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), app.log),
-    logger: app.log,
-  });
-  // A Provider that keeps rate limiting raises a finding on each league it syncs (#2038).
-  const providerRateLimits = new ProviderRateLimitWatch({
-    findings: syncFindings,
-    providers: providerSettings,
-    syncedLeagues: () => new PrismaSportLeagueRepository(prisma).findEventSynced(),
-    logger: app.log,
-  });
   const webhookProviderIds = () => providerWebhooks.onProviderIds();
   const runtimeConfigRepository = new PrismaPlatformRuntimeConfigRepository(prisma);
   const appSettings = new AppSettingsService({
@@ -234,16 +220,28 @@ export function buildApp(options: BuildAppOptions = {}) {
   // board is computed from tells this, which queues one rebuild job per event or contest (#1463).
   const leaderboards = new JobLeaderboardRebuilds(backgroundJobs);
   const leaderboardRebuilder = createContestService(prisma, app.log, { planEntitlements });
-  // What follows each change (#1946): built once, with every dependency its handlers need. A
-  // released edition joins its template contests by a job per contest (#1318).
+  // What follows each change (#1946): built once, with every dependency its handlers need.
   const domainEvents = new DomainEvents({
     queue: backgroundJobs,
-    releasedEditionContests: createReleasedEditionContests(prisma, app.log),
     sportEventChanged: contestNotices,
   });
+  // The one list of problems the sync found (#1999); the sync raises them, Findings lists them.
+  const syncFindingRepository = new PrismaProviderSyncFindingRepository(prisma);
+  const syncFindings = new ProviderSyncFindingService({
+    repository: syncFindingRepository,
+    providers: providerSettings,
+    participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), domainEvents, app.log),
+    slotNamePatterns: new PrismaSlotNamePatternRepository(prisma),
+    logger: app.log,
+  });
+  // A Provider that keeps rate limiting raises a finding on each league it syncs (#2038).
+  const providerRateLimits = new ProviderRateLimitWatch({
+    findings: syncFindings,
+    providers: providerSettings,
+    syncedLeagues: () => new PrismaSportLeagueRepository(prisma).findEventSynced(),
+    logger: app.log,
+  });
   const contestSettlement = createContestSettlementService(prisma, app.log, { domainEvents });
-  // Each job that adds a released edition to a template contest is run by contest management.
-  const contestManagement = createContestManagementService(prisma, app.log, planEntitlements, { domainEvents });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     domainEvents,
     logger: app.log,
@@ -388,8 +386,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   const leagueEventsSync = new LeagueEventsSync({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     seasons: new PrismaSportLeagueSeasonRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
-    scoreSource: new EventScoreSourceService(prisma, registry, app.log),
+    seasonSchedule: new ProviderSeasonScheduleReader(prisma, registry),
     sportEvents: sportEventServices.sportEvents,
     findings: syncFindings,
     syncRuns: providerSyncRuns,
@@ -438,12 +435,12 @@ export function buildApp(options: BuildAppOptions = {}) {
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
       SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
       REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
-      ADD_RELEASED_EDITION_TO_CONTEST: (payload) => contestManagement.addReleasedEditionToContest(payload),
       SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
       RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
       SYNC_EVENT_GAMES_AND_TIERS: (payload) => syncedFieldFollowUps.run(payload),
       ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
       FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
+      RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(syncFindings),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,
@@ -502,7 +499,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   app.register(platformTierProfilesModule, { prefix: '/api/v1/tier-profiles', platformTierProfiles: profiles.platformTierProfiles });
   app.register(platformPricingProfilesModule, { prefix: '/api/v1/pricing-profiles', platformPricingProfiles: profiles.platformPricingProfiles });
   app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
-  app.register(participantsModule, { prefix: '/api/v1/participants' });
+  app.register(participantsModule, { prefix: '/api/v1/participants', domainEvents });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService, cdn });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
   app.register(systemEmailModule, { prefix: '/api/v1/platform/emails', systemEmails });
@@ -541,7 +538,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     prefix: '/api/v1/email',
     deliveryEvents,
     verifier: new SnsMessageVerifier(),
-    topicArn: process.env.SES_EVENTS_TOPIC_ARN?.trim() || undefined,
+    topicArn: readSesEventsTopicArn(),
   });
   app.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: emailPreferences });
 
@@ -563,7 +560,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     // place of a stored value; the background refresh then carries other tasks' saves here.
     await appSettings.load();
     appSettings.start();
-    // The provider rows load before any provider is called; a change of enable, priority or the
+    // The provider rows load before any provider is called; a change of enable or the
     // leagues read takes effect when the task next starts, the rest on the next read (#1997).
     await providerSettings.load();
     providerSettings.start();
@@ -643,7 +640,7 @@ export function buildApp(options: BuildAppOptions = {}) {
 
 async function start(): Promise<void> {
   const app = buildApp();
-  const port = Number(process.env.PORT ?? 3000);
+  const port = readListenPort();
 
   try {
     await app.listen({ port, host: '0.0.0.0' });

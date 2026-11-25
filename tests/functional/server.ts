@@ -31,8 +31,8 @@ let smtpSink: SmtpSinkServer | undefined;
 let mailInbox: MailInboxServer | undefined;
 let queryBudgetRecorder: QueryBudgetRecorder | undefined;
 // pool-master-cs8 — the FAPI daemon runs the mock contest feed and registers a test-code fake
-// provider over it (#2039), so provider-linked golf scenarios (catalog browse, score-source link,
-// sync-driven live scores) can be driven end to end through the generated SDK. It is registered
+// provider over it (#2039), so a sync the API queues reaches a provider end to end through the
+// generated SDK. It is registered
 // for GOLF but only ever touched by requests that explicitly hit the provider/sync surface, so it
 // is inert for every other functional test.
 let mockContestFeedProvider: FastifyInstance | undefined;

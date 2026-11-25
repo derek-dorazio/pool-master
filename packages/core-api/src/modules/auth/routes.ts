@@ -116,11 +116,11 @@ export function authModule(fastify: FastifyInstance, opts: MailModuleOptions): v
       tags: ['Auth'],
       summary: 'Email a password reset link',
       description:
-        'Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after 10 minutes, and a newer request cancels it. The answer is 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.',
+        'Public. Looks up the account by email or username and, when one matches, emails it a link that sets a new password. The link works once and expires after `linkValidMinutes`, and a newer request cancels it. The answer is the same 202 whether or not an account matched, so it never tells a caller which emails or usernames have accounts. 429 PASSWORD_RESET_RATE_LIMITED when this address has asked too often in the last minute.',
       operationId: 'requestPasswordReset',
       body: schemaRef('PasswordResetRequest'),
       response: {
-        202: schemaRef('SuccessResponse'),
+        202: schemaRef('PasswordResetRequestedResponse'),
         400: schemaRef('ErrorEnvelope'),
         429: schemaRef('ErrorEnvelope'),
       },

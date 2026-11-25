@@ -1,10 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { explicitOrderValues, findTierLayoutProblem, PlatformTierProfileLastTier, PlatformTierProfileLastTierOrder } from '@poolmaster/shared/domain';
+import { explicitOrderValues, PlatformTierProfileLastTier, PlatformTierProfileLastTierOrder } from '@poolmaster/shared/domain';
 import { PlatformTierProfileWriteRequestSchema } from '@poolmaster/shared/dto';
 import { createPlatformTierProfile, updatePlatformTierProfile, type PlatformTierProfileDto, type PlatformTierProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, Select, useMutationActionWorkflow } from '@/features/shared/ui';
-import { throwApiError } from '@/lib/errors';
+import { hasErrorCode, throwApiError } from '@/lib/errors';
 import { numberFieldErrors } from '@/lib/number-field-errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { clearsSaveError } from './clears-save-error';
@@ -15,17 +15,14 @@ import { enumLabel } from '@poolmaster/shared/display-strings';
 const { shape } = PlatformTierProfileWriteRequestSchema;
 const countRange = (min: number, max: number) => `From ${min} to ${max}.`;
 
+const LAST_TIER_MAX_BLANK = 'Enter the most the last tier takes.';
+
 const tierErrors = numberFieldErrors({
   tierCount: { schema: shape.tierCount, range: countRange, blank: 'Enter how many tiers.', whole: 'Whole numbers only.' },
   tierSize: { schema: shape.tierSize, range: countRange, blank: 'Enter how many go in each tier.', whole: 'Whole numbers only.' },
-  lastTierMax: { schema: shape.lastTierMax.unwrap(), range: countRange, blank: 'Enter the most the last tier takes.', whole: 'Whole numbers only.' },
+  lastTierMax: { schema: shape.lastTierMax.unwrap(), range: countRange, blank: LAST_TIER_MAX_BLANK, whole: 'Whole numbers only.' },
 });
 
-/** The server's own checks, with a capped last tier's most it takes asked for only when Capped. */
-const PlatformTierProfileFormSchema = PlatformTierProfileWriteRequestSchema.superRefine((values, context) => {
-  const problem = findTierLayoutProblem(values);
-  if (problem) context.addIssue({ code: 'custom', path: ['lastTierMax'], message: problem });
-});
 
 const NEW_PROFILE: PlatformTierProfileWriteRequest = { code: '', name: '', tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
 
@@ -43,7 +40,9 @@ function formValuesOf(profile: PlatformTierProfileDto | null): PlatformTierProfi
 export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTierProfileDto>) {
   const { onSaved, profile } = dialog;
   const form = useForm<PlatformTierProfileWriteRequest>({
-    resolver: zodResolver(PlatformTierProfileFormSchema, { error: tierErrors }),
+    // The request's own shape. Whether the layout can be used (a capped last tier needs the most
+    // it takes) is the server's call: its PLATFORM_TIER_PROFILE_INVALID refusal shows under the cap.
+    resolver: zodResolver(PlatformTierProfileWriteRequestSchema, { error: tierErrors }),
     defaultValues: formValuesOf(profile),
   });
   const save = useMutationActionWorkflow({
@@ -64,11 +63,15 @@ export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTie
   const { errors } = form.formState;
   const isCapped = form.watch('lastTier') === PlatformTierProfileLastTier.CAPPED;
   const clearError = clearsSaveError(save);
+  // The save sends a cap only for a capped last tier, so the one layout refusal this form can
+  // meet is a capped last tier left without its most, and it shows under that field.
+  const capRefused = hasErrorCode(save.error, 'PLATFORM_TIER_PROFILE_INVALID');
 
   return (
     <ProfileFormModal
       dialog={dialog}
       errorFallback="We could not save the tier profile."
+      fieldRefusal="PLATFORM_TIER_PROFILE_INVALID"
       form={form}
       formValues={formValuesOf(profile)}
       save={save}
@@ -110,7 +113,7 @@ export function PlatformTierProfileEditor(dialog: ProfileEditorProps<PlatformTie
             </Select>
           </FormField>
           {isCapped ? (
-            <FormField error={errors.lastTierMax?.message} id="tier-profile-last-tier-max" label="Most in the last tier">
+            <FormField error={errors.lastTierMax?.message ?? (capRefused ? LAST_TIER_MAX_BLANK : undefined)} id="tier-profile-last-tier-max" label="Most in the last tier">
               <Input
                 data-testid="root-admin-tier-profile-editor-last-tier-max"
                 id="tier-profile-last-tier-max"

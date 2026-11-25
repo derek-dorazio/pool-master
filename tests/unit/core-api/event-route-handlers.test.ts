@@ -5,14 +5,12 @@
  */
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
-import { Sport, SportEventStatus, SportEventSyncScope, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus, type SportEvent, type SportEventOverview } from '@poolmaster/shared/domain';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import type { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
 import type { SportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import {
-  SportEventSyncScopeError,
   SportProviderNotFoundError,
   type IngestionService,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -28,19 +26,18 @@ const member = authUser('member');
 function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
   return {
     id: EVENT_ID,
-    externalId: 'masters-2026',
-    providerId: 'feed',
+    providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'masters-2026' }],
+    syncProviderId: 'balldontlie',
     sport: 'GOLF',
+    sportUrlSegment: 'golf',
     name: 'The Masters',
     status: 'SCHEDULED',
     startDate: new Date('2999-04-09T12:00:00.000Z'),
     participantCount: 88,
-    metadata: {},
-    eventSeriesId: 'series-1',
+    slotDefinitions: [],
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'pga',
-    syncScope: 'SCORES_ONLY',
     autoLifecycleEnabled: true,
     createdAt: AT,
     updatedAt: AT,
@@ -48,7 +45,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     ...overrides,
   };
 }
-const summary = { event: sportEvent(), loadedParticipantCount: 88, tierCount: 0, adminCounts: null };
+const summary = { event: sportEvent(), loadedParticipantCount: 88, tierCount: 0, adminCounts: null, slots: [] };
 const fieldRow = {
   entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', isActive: true, isPlayInPlace: false, createdAt: AT, updatedAt: AT },
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },
@@ -68,7 +65,7 @@ const EVENT_OVERVIEW: SportEventOverview = {
   tierOrderBasis: 'ODDS',
   tierOrderCoversField: true,
   fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: AT }],
-  eventPageSlug: 'the-masters',
+  eventPagePath: '/play/golf/the-masters',
 };
 const contest = { id: 'c1', name: 'Sentry pick 6', status: 'OPEN', league: { id: 'l1', leagueCode: 'HOOPS', name: 'Office Hoops' }, contestTemplate: null, entryCount: 2, createdAt: AT };
 
@@ -80,8 +77,8 @@ function fakes() {
       requireSummary: fn(summary),
       requireAdminSummary: fn(summary),
       requireEvent: fn(sportEvent()),
+      requireTestEvent: fn(sportEvent()),
       createEvent: fn(summary),
-      createEventFromProviderEvent: fn(summary),
       updateEvent: fn(summary),
       deleteEvent: fn(undefined),
       releaseEvent: fn(summary),
@@ -108,7 +105,7 @@ function fakes() {
     golfScores: { previewRoundScores: fn([]), applyRoundScores: fn(undefined), updateRoundScore: fn(undefined) },
     raceResults: { previewResults: fn({ rows: [], orderErrors: [] }), applyResults: fn(undefined) },
     matchResults: {
-      recordResult: fn([]), clearResult: fn([]), recordPeriodScore: fn([]), clearPeriodScore: fn([]), cancelMatch: fn([]), postponeMatch: fn([]),
+      recordResult: fn([]), recordPeriodScore: fn([]), cancelMatch: fn([]),
     },
     bracket: {
       listBracket: fn([]),
@@ -117,27 +114,20 @@ function fakes() {
       proposeRoundMatchups: fn([{ matchNumber: 1 }]),
       setRoundMatchups: fn([]),
       fillPlayInSlot: fn(undefined),
-      replaceWithdrawn: fn('sep-2'),
     },
   };
   const lifecycle = { applySportEventStatusTransition: fn(undefined) };
-  const scoreSource = {
-    getProviderEventDetail: fn({ externalId: 'x1' }),
-    linkScoreSource: fn(undefined),
-    unlinkScoreSource: fn(undefined),
-  };
   const eventOverviews = { getEventOverview: fn<SportEventOverview | null>(EVENT_OVERVIEW) };
   const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedFeeds: ['EVENTPARTICIPANTS'], submittedAt: AT, syncRuns: [] }) };
   const leaderboards = { eventsChanged: fn(undefined) };
   const handlers = createEventHandlers({
     services: services as unknown as SportEventServices,
     eventLifecycle: lifecycle as unknown as EventLifecycleService,
-    scoreSource: scoreSource as unknown as EventScoreSourceService,
     ingestion: ingestion as unknown as IngestionService,
     leaderboards,
     eventOverviews,
   });
-  return { services, lifecycle, scoreSource, ingestion, leaderboards, eventOverviews, handlers };
+  return { services, lifecycle, ingestion, leaderboards, eventOverviews, handlers };
 }
 const params = { eventId: EVENT_ID };
 
@@ -206,28 +196,13 @@ describe('event reads: drafts and admin counts are a root admin\'s', () => {
 });
 
 describe('event writes', () => {
-  it('creates an event with its dates read from the body, an omitted end as none', async () => {
+  it('creates a test event on the test slot the body names, answering 201', async () => {
     const { services, handlers } = fakes();
 
-    const created = await callHandler(handlers.createEvent, stubRequest({ body: { name: 'Open', startDate: ISO, endDate: ISO } }));
-    await callHandler(handlers.createEvent, stubRequest({ body: { name: 'Open', startDate: ISO } }));
+    const created = await callHandler(handlers.createEvent, stubRequest({ body: { seasonSlotId: 'slot-1', name: 'Open' } }));
 
     expect(created.statusCode).toBe(201);
-    expect(services.sportEvents.createEvent.mock.calls).toEqual([
-      [{ name: 'Open', startDate: AT, endDate: AT }],
-      [{ name: 'Open', startDate: AT, endDate: undefined }],
-    ]);
-  });
-
-  it('creates an event from the provider event the body names, with 201', async () => {
-    const { services, scoreSource, handlers } = fakes();
-    const body = { sportLeagueId: 'pga', providerId: 'feed', externalId: 'x1', rounds: 4 };
-
-    const reply = await callHandler(handlers.createEventFromProviderEvent, stubRequest({ body }));
-
-    expect(scoreSource.getProviderEventDetail).toHaveBeenCalledWith('feed', 'x1');
-    expect(services.sportEvents.createEventFromProviderEvent).toHaveBeenCalledWith({ ...body, providerEvent: { externalId: 'x1' } });
-    expect(reply.statusCode).toBe(201);
+    expect(services.sportEvents.createEvent.mock.calls).toEqual([[{ seasonSlotId: 'slot-1', name: 'Open' }]]);
   });
 
   it('updates an event, telling members unless the body says not to, and clears an end sent as null', async () => {
@@ -251,16 +226,13 @@ describe('event writes', () => {
     expect((await callHandler(handlers.releaseEvent, stubRequest({ params }))).body).toMatchObject({ event: { id: EVENT_ID } });
   });
 
-  it('moves an event\'s status through the lifecycle as the root admin, and links and unlinks its score source, each answering with the event', async () => {
-    const { lifecycle, scoreSource, handlers } = fakes();
+  it('moves an event\'s status through the lifecycle as the root admin, answering with the event', async () => {
+    const { lifecycle, handlers } = fakes();
 
     const moved = await callHandler(handlers.transitionEvent, stubRequest({ params, body: { toStatus: SportEventStatus.IN_PROGRESS } }));
-    await callHandler(handlers.linkScoreSource, stubRequest({ params, body: { providerId: 'feed', externalId: 'x1' } }));
-    const unlinked = await callHandler(handlers.unlinkScoreSource, stubRequest({ params }));
 
     expect(lifecycle.applySportEventStatusTransition).toHaveBeenCalledWith({ sportEventId: EVENT_ID, toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'ROOT_ADMIN' } });
-    expect(scoreSource.linkScoreSource).toHaveBeenCalledWith(EVENT_ID, { providerId: 'feed', externalId: 'x1' });
-    expect([moved.body, unlinked.body]).toEqual([expect.objectContaining({ event: expect.objectContaining({ id: EVENT_ID }) as unknown }), expect.objectContaining({ event: expect.anything() as unknown })]);
+    expect(moved.body).toEqual(expect.objectContaining({ event: expect.objectContaining({ id: EVENT_ID }) as unknown }));
   });
 
 });
@@ -271,13 +243,13 @@ describe('field refresh from the provider', () => {
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
 
-    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'feed', eventId: 'masters-2026', feeds: ['EVENTPARTICIPANTS'] }, 'admin', 'admin@example.test');
+    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'balldontlie', eventId: 'masters-2026', feeds: ['EVENTPARTICIPANTS'] }, 'admin', 'admin@example.test');
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'masters-2026' } });
   });
 
-  it('refuses a field sync for an event with no provider link with 409 EVENT_NOT_LINKED and syncs nothing', async () => {
+  it('refuses a field sync for a test event, which its provider has no id for, with 409 EVENT_NOT_LINKED and syncs nothing', async () => {
     const { services, ingestion, handlers } = fakes();
-    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ syncScope: SportEventSyncScope.NONE }));
+    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ providerMappings: [] }));
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
 
@@ -287,7 +259,6 @@ describe('field refresh from the provider', () => {
 
   it.each<[string, Error, number, string]>([
     ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF', 'mock-provider'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
-    ['a sync scope that leaves the field out with 409 SPORT_EVENT_SYNC_SCOPE_RESTRICTED', new SportEventSyncScopeError(EVENT_ID, 'SCORES_ONLY', ['EVENTPARTICIPANTS']), 409, 'SPORT_EVENT_SYNC_SCOPE_RESTRICTED'],
   ])('answers a field sync refused for %s, with no session read as no actor', async (_label, error, status, code) => {
     const { ingestion, handlers } = fakes();
     ingestion.syncEventData.mockRejectedValueOnce(error);
@@ -358,7 +329,7 @@ describe('the event overview', () => {
         tierOrderBasis: 'ODDS',
         tierOrderCoversField: true,
         fieldFeed: [{ sportEventParticipantId: 'sep1', feedId: 'pga-1', lastInFeedAt: ISO }],
-        eventPageSlug: 'the-masters',
+        eventPagePath: '/play/golf/the-masters',
       },
     });
   });
@@ -486,23 +457,20 @@ describe('bracket', () => {
     expect(edited.body).toMatchObject({ match: { id: 'm1', scheduledDate: null } });
   });
 
-  it('records, clears and cancels results and period scores, each answering with the bracket', async () => {
+  it('records and cancels results and records period scores, each answering with the bracket', async () => {
     const { services, handlers } = fakes();
     const periodParams = { ...matchParams, periodNumber: 2 };
 
     for (const [handler, request] of [
       [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { homeScore: 70, awayScore: 65 } })],
-      [handlers.clearEventMatchResult, stubRequest({ params: matchParams })],
       [handlers.recordEventMatchPeriodScore, stubRequest({ params: periodParams, body: { homeScore: 7, awayScore: 3 } })],
-      [handlers.clearEventMatchPeriodScore, stubRequest({ params: periodParams })],
       [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
-      [handlers.postponeEventMatch, stubRequest({ params: matchParams })],
     ] as const) {
       expect((await callHandler(handler, request)).body).toEqual({ matches: [] });
     }
     expect(services.matchResults.recordPeriodScore).toHaveBeenCalledWith(EVENT_ID, 4, 2, { homeScore: 7, awayScore: 3 });
-    expect(services.matchResults.clearPeriodScore).toHaveBeenCalledWith(EVENT_ID, 4, 2);
-    expect(services.matchResults.postponeMatch).toHaveBeenCalledWith(EVENT_ID, 4);
+    expect(services.matchResults.recordResult).toHaveBeenCalledWith(EVENT_ID, 4, { homeScore: 70, awayScore: 65 });
+    expect(services.matchResults.cancelMatch).toHaveBeenCalledWith(EVENT_ID, 4);
   });
 
   it('proposes and sets a round\'s matchups', async () => {
@@ -517,14 +485,61 @@ describe('bracket', () => {
     expect(set.body).toEqual({ matches: [] });
   });
 
-  it('answers a play-in winner with its slot\'s row, and a withdrawn team\'s replacement with the replacement\'s row', async () => {
+  it('answers a play-in winner with its slot\'s row', async () => {
     const { services, handlers } = fakes();
     const slot = { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' };
 
     await callHandler(handlers.setEventPlayInWinner, stubRequest({ params: slot, body: { participantId: 'p9' } }));
-    await callHandler(handlers.replaceEventParticipant, stubRequest({ params: slot, body: { participantId: 'p9' } }));
 
     expect(services.bracket.fillPlayInSlot).toHaveBeenCalledWith(EVENT_ID, 'sep-1', 'p9');
-    expect(services.field.getEventParticipant.mock.calls).toEqual([[EVENT_ID, 'sep-1'], [EVENT_ID, 'sep-2']]);
+    expect(services.field.getEventParticipant.mock.calls).toEqual([[EVENT_ID, 'sep-1']]);
+  });
+});
+
+describe('admin result writes on a test event only (#2074)', () => {
+  const matchParams = { eventId: EVENT_ID, matchNumber: 4 };
+  const roundParams = { eventId: EVENT_ID, roundNumber: 2 };
+
+  it('refuses every kept result write on an event covering no test slot before it writes anything, and checks the event before each', async () => {
+    const { services, handlers } = fakes();
+    const notTest = new SportEventError('covers no test slot', 'SPORT_EVENT_NOT_TEST_DATA', 409);
+    services.sportEvents.requireTestEvent.mockRejectedValue(notTest);
+
+    const writes = [
+      [handlers.loadEventBracket, stubRequest({ params, body: { matches: [] } })],
+      [handlers.updateEventBracketMatch, stubRequest({ params: matchParams, body: { isNeutralSite: true } })],
+      [handlers.recordEventMatchResult, stubRequest({ params: matchParams, body: { homeScore: 70, awayScore: 65 } })],
+      [handlers.recordEventMatchPeriodScore, stubRequest({ params: { ...matchParams, periodNumber: 2 }, body: { homeScore: 7, awayScore: 3 } })],
+      [handlers.cancelEventMatch, stubRequest({ params: matchParams })],
+      [handlers.setEventRoundMatchups, stubRequest({ params: roundParams, body: { matches: [] } })],
+      [handlers.setEventPlayInWinner, stubRequest({ params: { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' }, body: { participantId: 'p9' } })],
+      [handlers.applyGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } })],
+      [handlers.updateGolfRoundScore, stubRequest({ params: { ...roundParams, sportEventParticipantId: 'sep-1' }, body: { strokes: 70 } })],
+      [handlers.applyRaceResults, stubRequest({ params, body: { rows: [] } })],
+    ] as const;
+    for (const [handler, request] of writes) {
+      await expect(callHandler(handler as never, request)).rejects.toBe(notTest);
+    }
+
+    expect(services.sportEvents.requireTestEvent).toHaveBeenCalledTimes(writes.length);
+    expect(services.sportEvents.requireTestEvent.mock.calls.every(([eventId]) => eventId === EVENT_ID)).toBe(true);
+    for (const write of [
+      services.bracket.loadBracket, services.bracket.updateMatch, services.bracket.setRoundMatchups, services.bracket.fillPlayInSlot,
+      services.matchResults.recordResult, services.matchResults.recordPeriodScore, services.matchResults.cancelMatch,
+      services.golfScores.applyRoundScores, services.golfScores.updateRoundScore, services.raceResults.applyResults,
+    ]) {
+      expect(write).not.toHaveBeenCalled();
+    }
+  });
+
+  it('leaves the previews and the reseed proposal, which write nothing, open on any event', async () => {
+    const { services, handlers } = fakes();
+    services.sportEvents.requireTestEvent.mockRejectedValue(new SportEventError('covers no test slot', 'SPORT_EVENT_NOT_TEST_DATA', 409));
+
+    await callHandler(handlers.previewGolfRoundScores, stubRequest({ params: roundParams, body: { rows: [] } }));
+    await callHandler(handlers.previewRaceResults, stubRequest({ params, body: { rows: [] } }));
+    await callHandler(handlers.proposeEventRoundMatchups, stubRequest({ params: roundParams }));
+
+    expect(services.sportEvents.requireTestEvent).not.toHaveBeenCalled();
   });
 });

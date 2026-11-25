@@ -504,8 +504,8 @@ describe('Championships › Trophy case', () => {
     const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
-      eventSeriesId: '11111111-1111-4111-8111-111111111111',
-      seriesName: 'Super Bowl',
+      trophyId: '11111111-1111-4111-8111-111111111111',
+      name: 'Super Bowl',
       sportLeagueName: 'NFL',
       selectionType: 'SQUARES',
       plates: [
@@ -527,9 +527,9 @@ describe('Championships › Trophy case', () => {
 
   it('tells apart the men\'s and women\'s trophies of a shared series by their sports league', async () => {
     primeViewer([buildRunningCup()]);
-    const draw = (eventSeriesId: string, sportLeagueName: string) => ({
-      eventSeriesId,
-      seriesName: 'US Open',
+    const draw = (trophyId: string, sportLeagueName: string) => ({
+      trophyId,
+      name: 'US Open',
       sportLeagueName,
       selectionType: 'BRACKET',
       plates: [{ year: 2026, contestId: `${sportLeagueName}-2026`, winners: [] }, { year: 2025, contestId: `${sportLeagueName}-2025`, winners: [] }],
@@ -548,8 +548,8 @@ describe('Championships › Trophy case', () => {
   it('shows the perpetual trophies even in a year with no cup on show', async () => {
     primeViewer([NBA_CUP]);
     listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
-      eventSeriesId: '11111111-1111-4111-8111-111111111111',
-      seriesName: 'Masters Tournament',
+      trophyId: '11111111-1111-4111-8111-111111111111',
+      name: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: 'TIERED',
       plates: [{ year: 2025, contestId: 'masters-2025', winners: [] }, { year: 2024, contestId: 'masters-2024', winners: [] }],
@@ -1051,12 +1051,12 @@ describe('Championships › All years', () => {
     const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listRecordsMock.mockResolvedValue(apiSuccess({ records: [
       {
-        type: 'MOST_WINS_IN_A_YEAR',
+        type: 'MOST_WINS_IN_A_YEAR', isHallOfLame: false,
         best: { value: 4, holders: [{ squad: birdies, year: 2025, contestId: null, contestName: null }, { squad: casey, year: 2024, contestId: null, contestName: null }] },
         nextBest: { value: 1, holders: [{ squad: casey, year: 2025, contestId: null, contestName: null }] },
       },
       {
-        type: 'BIGGEST_FIELD_WON',
+        type: 'BIGGEST_FIELD_WON', isHallOfLame: false,
         best: { value: 48, holders: [{ squad: casey, year: 2025, contestId: 'contest-1', contestName: 'Masters Pick 6' }] },
         nextBest: null,
       },
@@ -1074,9 +1074,9 @@ describe('Championships › All years', () => {
     getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
     const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
     listRecordsMock.mockResolvedValue(apiSuccess({ records: [
-      { type: 'MOST_WINS_ALL_TIME', best: { value: 3, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
-      { type: 'MOST_RUNNER_UPS', best: { value: 5, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
-      { type: 'LONGEST_DROUGHT', best: { value: 7, holders: [{ squad: casey, year: 2026, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'MOST_WINS_ALL_TIME', isHallOfLame: false, best: { value: 3, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'MOST_RUNNER_UPS', isHallOfLame: true, best: { value: 5, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'LONGEST_DROUGHT', isHallOfLame: true, best: { value: 7, holders: [{ squad: casey, year: 2026, contestId: null, contestName: null }] }, nextBest: null },
     ] }));
 
     renderChampionships('/league/BIGDAWGS/history');

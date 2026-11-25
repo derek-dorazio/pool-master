@@ -13,6 +13,7 @@ import { SportEventError } from '../../../packages/core-api/src/modules/events/e
 import { createSportEventParticipantService } from '../../../packages/core-api/src/modules/events/wiring';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
+import { sportRowKeys } from '../../support/sport-rows';
 
 // The field upload against real Postgres: it adjusts rankings, odds, seeds and withdrawals
 // of golfers already on an event's field, all or none, through the grid save's write path.
@@ -39,15 +40,12 @@ async function createField(suffix: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
   const event = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `field-upload-${suffix}`,
-      providerId: 'integration-test',
-      sport: 'GOLF',
       name: `Field Upload Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: 'SCHEDULED',
@@ -75,12 +73,12 @@ async function fieldRows(sportEventId: string) {
 }
 
 describe('Field upload — adjusting golfers already on the field', () => {
-  it('applies a mixed upload in one go: an update by each identifier, a withdrawal, a cleared value and an unchanged row', async () => {
+  it('applies a mixed upload in one go: an update by each identifier, a withdrawal, a cleared value and an unchanged row, leaving every odds as it was', async () => {
     const { event, rory, jordan, tommy } = await createField('mixed');
     const service = createSportEventParticipantService(getAppPrisma(), testDomainEvents());
     const rows = [
-      { participantId: rory.participant.id, ranking: 1, oddsToWin: 6.5 },
-      { externalId: jordan.participant.externalId, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, oddsToWin: null },
+      { participantId: rory.participant.id, ranking: 1 },
+      { externalId: jordan.participant.externalId, isActive: false, inactiveReason: ParticipantInactiveReason.WITHDRAWN, ranking: null },
       { playerName: 'tommy fleetwood', ranking: 12 },
     ];
 
@@ -97,8 +95,9 @@ describe('Field upload — adjusting golfers already on the field', () => {
 
     expect(field).toHaveLength(3);
     expect(await fieldRows(event.id)).toEqual([
-      { participantId: rory.participant.id, ranking: 1, oddsToWin: 6.5, seedNumber: 1, isActive: true, inactiveReason: null },
-      { participantId: jordan.participant.id, ranking: 11, oddsToWin: null, seedNumber: 2, isActive: false, inactiveReason: 'WITHDRAWN' },
+      // The upload takes no odds (#2081): odds come from the feed or the grid save.
+      { participantId: rory.participant.id, ranking: 1, oddsToWin: 20, seedNumber: 1, isActive: true, inactiveReason: null },
+      { participantId: jordan.participant.id, ranking: null, oddsToWin: 21, seedNumber: 2, isActive: false, inactiveReason: 'WITHDRAWN' },
       { participantId: tommy.participant.id, ranking: 12, oddsToWin: 22, seedNumber: 3, isActive: true, inactiveReason: null },
     ]);
   });

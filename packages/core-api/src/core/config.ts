@@ -139,6 +139,11 @@ export function readAppEnv(
 // Proxies in front of the app (#856)
 // ---------------------------------------------------------------------------
 
+/** The port the server listens on: `PORT`, or 3000 when it is unset. */
+export function readListenPort(env: { readonly PORT?: string } = process.env): number {
+  return Number(env.PORT ?? 3000);
+}
+
 /** Fastify's `trustProxy` as a function: whether the address `hop` steps back is a trusted proxy. */
 export type TrustProxyFn = (address: string, hop: number) => boolean;
 

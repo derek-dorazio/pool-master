@@ -9,9 +9,7 @@
  * event's externalId, as an NFL week's is.
  *
  * A match names its teams by id alone, so their names come from the season's teams list. Team
- * ids are the provider's own (`participantFeedId`, #2040). Each team
- * carries the league's keyword in `metadata.tour`, so it links by name only to the site's team
- * in the Premier League.
+ * ids are the provider's own (`participantFeedId`, #2040), mapped per sport league.
  *
  * A matchweek forms no bracket, so a drawn final is a result like any other.
  */
@@ -24,15 +22,11 @@ import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted
 import type { SoccerMatch, SoccerTeam } from './soccer-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
+import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
 export const EPL_MATCHES_PATH = '/epl/v2/matches';
 export const EPL_TEAMS_PATH = '/epl/v2/teams';
 
-/**
- * The tour name events and teams carry in `metadata.tour`, for display; a sport
- * league finds them by their provider league code (#1997).
- */
-export const EPL_TOUR = 'EPL';
 
 /** One Premier League matchweek. */
 export interface EplScope {
@@ -78,7 +72,11 @@ export function toEplMatchweekEvent(scope: EplScope, matches: readonly SoccerMat
     rounds: 1,
     participantCount,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    metadata: { tour: EPL_TOUR, season: scope.season },
+    // A league match's code is the vendor's round number: the regular season is all there is.
+    providerSlots: slotPlaysOf(matches.map((match, index) => ({
+      code: providerSlotCode(ProviderSeasonType.REGULAR_SEASON, required(match.round_number, EPL_MATCHES_PATH, matchName(match), 'round_number')),
+      start: times[index],
+    }))),
   };
 }
 
@@ -108,7 +106,7 @@ export function toEplTeamParticipant(team: SoccerTeam): ProviderParticipant {
     sport: Sport.SOCCER,
     name: required(team.name, EPL_TEAMS_PATH, `team ${String(id)}`, 'name'),
     active: true,
-    metadata: { tour: EPL_TOUR, ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}) },
+    metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
   };
 }
 

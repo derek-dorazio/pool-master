@@ -3,6 +3,7 @@ import { DataGrid, PageHeader, QueryState } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildSportLeaguePath } from './manage-navigation';
 import { sportLeagueOverviewColumns } from './sport-league-overview-columns';
+import { sportDisplayOrder } from './sport-display-order';
 import { sportsCountLine } from './sport-league-overview-text';
 import { SportLeagueSettingsDialog } from './sport-league-settings-dialog';
 import { SportsPageTabs } from './sports-page-tabs';
@@ -24,7 +25,8 @@ export function RootAdminSportsPage() {
   const columns = useMemo(() => sportLeagueOverviewColumns({
     onOpenSettings: setSettingsLeagueId,
     onOpenSyncRun: setOpenSyncRunId,
-  }), []);
+    sportOrder: sportDisplayOrder((overviews ?? []).map(({ sport, sportDisplayOrder: displayOrder }) => ({ sport, displayOrder }))),
+  }), [overviews]);
 
   return (
     <section className="space-y-6" data-testid="root-admin-sports-page">
@@ -47,7 +49,7 @@ export function RootAdminSportsPage() {
             emptyMessage="No sport leagues yet."
             filterTestIdPrefix="root-admin-sports-filter"
             getRowId={(overview) => overview.id}
-            getRowLink={(overview) => buildSportLeaguePath(overview.sport, overview.id)}
+            getRowLink={(overview) => buildSportLeaguePath(overview.sportUrlSegment, overview.id)}
             rowTestId={(overview) => `root-admin-sports-row-${overview.id}`}
             tableTestId="root-admin-sports-table"
           />

@@ -15,13 +15,13 @@ import type {
   ContestUpdate,
   DeletedDraftContest,
   PendingDrawReceipts,
-  ReleasedEdition,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport, FINISHED_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
+import { SPORT_EVENT_SPORT_SELECT, sportOfEvent, sportUrlSegmentOfEvent, type SportEventSportRow } from './sport-of';
 
 /**
  * What every contest read joins: its events in sequence order with their sport (#713), its draw
@@ -29,7 +29,7 @@ import { insertBackgroundJobs } from './prisma-background-job-repository';
  */
 const CONTEST_INCLUDE = {
   sportEvents: {
-    select: { sportEventId: true, sportEvent: { select: { sport: true } } },
+    select: { sportEventId: true, sportEvent: { select: SPORT_EVENT_SPORT_SELECT } },
     orderBy: { sequence: 'asc' },
   },
   draw: { select: { drawnAt: true } },
@@ -194,31 +194,6 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]> {
-    const series = await this.prisma.eventSeries.findUnique({
-      where: { id: edition.eventSeriesId },
-      select: { sportLeagueId: true, name: true },
-    });
-    if (!series) {
-      return [];
-    }
-    const rows = await this.prisma.contest.findMany({
-      where: {
-        configuration: { template: { sportLeagueId: series.sportLeagueId, eventSeriesNames: { has: series.name } } },
-        status: { not: ContestStatus.COMPLETED },
-        draw: null,
-        squaresDraw: null,
-        sportEvents: {
-          none: { sportEventId: edition.id },
-          every: { sportEvent: { sportLeagueSeasonId: edition.sportLeagueSeasonId } },
-        },
-      },
-      orderBy: [{ configuration: { createdAt: 'asc' } }, { id: 'asc' }],
-      include: CONTEST_INCLUDE,
-    });
-    return rows.map(mapToContest);
-  }
-
   async findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]> {
     const rows = await this.prisma.contest.findMany({
       where: { status: { in: [...statuses] } },
@@ -349,14 +324,12 @@ export class PrismaContestRepository implements ContestRepository {
     return mapToContest(row);
   }
 
-  async replaceSportEvents(id: string, sportEventIds: readonly string[], options: { replacing?: readonly string[] } = {}): Promise<boolean> {
+  async replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void> {
     // The contest row lock comes first, as every entry write and the draw take it (#644), so an
     // entry created meanwhile is either seen here or created after with the new events.
     return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, id);
       const current = await tx.contestSportEvent.findMany({ where: { contestId: id }, select: { sportEventId: true } });
-      const { replacing } = options;
-      if (replacing && !sameEvents(current.map((row) => row.sportEventId), replacing)) return false;
       const removed = current.map((row) => row.sportEventId).filter((eventId) => !sportEventIds.includes(eventId));
       if (removed.length > 0) {
         await tx.contestEntryPick.deleteMany({
@@ -379,7 +352,6 @@ export class PrismaContestRepository implements ContestRepository {
         data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
         skipDuplicates: true,
       });
-      return true;
     }));
   }
 
@@ -395,7 +367,6 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contestEntryPick.deleteMany({ where: { entry: { contestId: id } } });
       await tx.contestEntry.deleteMany({ where: { contestId: id } });
       await tx.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: id } } });
-      await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId: id } } });
       await tx.contestConfiguration.deleteMany({ where: { contestId: id } });
       await tx.contest.delete({ where: { id } });
     }));
@@ -420,7 +391,6 @@ export class PrismaContestRepository implements ContestRepository {
       await tx.contestEntryPick.deleteMany({ where: { entry: { contestId } } });
       await tx.contestEntry.deleteMany({ where: { contestId } });
       await tx.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId } } });
-      await tx.contestPrizeDefinition.deleteMany({ where: { contestConfiguration: { contestId } } });
       await tx.contestConfiguration.deleteMany({ where: { contestId } });
       await tx.contest.deleteMany({ where: { id: contestId } });
       return drafts;
@@ -439,7 +409,7 @@ function abandonedDraftWhere(lastEventStartedBefore: Date): Prisma.ContestWhereI
 function mapToContest(row: {
   id: string;
   leagueId: string;
-  sportEvents: { sportEventId: string; sportEvent: { sport: Sport } }[];
+  sportEvents: { sportEventId: string; sportEvent: SportEventSportRow }[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
@@ -455,6 +425,7 @@ function mapToContest(row: {
   createdAt: Date;
   updatedAt: Date;
 }): Contest {
+  const firstEvent = row.sportEvents.at(0);
   return {
     id: row.id,
     leagueId: row.leagueId,
@@ -464,7 +435,8 @@ function mapToContest(row: {
     contestFormat: row.contestFormat,
     selectionType: row.selectionType,
     // Every event of a contest shares its sport (#713), so the first one answers for all.
-    sport: row.sportEvents.at(0)?.sportEvent.sport,
+    sport: firstEvent === undefined ? undefined : sportOfEvent(firstEvent.sportEvent),
+    sportUrlSegment: firstEvent === undefined ? undefined : sportUrlSegmentOfEvent(firstEvent.sportEvent),
     openedAt: row.openedAt ?? undefined,
     startsAt: row.startsAt ?? undefined,
     endsAt: row.endsAt ?? undefined,
@@ -484,16 +456,9 @@ async function sportLeagueIdsBySeason(
   leagueId: string,
   seasonYear: number,
 ): Promise<string[]> {
-  const rows = await db.eventSeries.findMany({
-    where: {
-      sportEvents: {
-        some: {
-          contests: {
-            some: { contest: { leagueId, seasonYear } },
-          },
-        },
-      },
-    },
+  // An event names its sport league (#2010), so the league's contests' events give them.
+  const rows = await db.sportEvent.findMany({
+    where: { contests: { some: { contest: { leagueId, seasonYear } } } },
     select: { sportLeagueId: true },
     distinct: ['sportLeagueId'],
   });
@@ -512,6 +477,7 @@ async function seasonWithoutRoom(
   limits: ContestSeasonLimits,
 ): Promise<ContestSeasonFull | null> {
   if (limits.sportLeaguesPerYear === null) return null;
+  // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
   await tx.$queryRaw`SELECT id FROM "leagues" WHERE id = ${leagueId}::uuid FOR UPDATE`;
   const used = await sportLeagueIdsBySeason(tx, leagueId, seasonYear);
   return used.includes(limits.sportLeagueId) || used.length < limits.sportLeaguesPerYear
@@ -528,9 +494,4 @@ function toStatusTransitionData(transition: ContestStatusTransition): Prisma.Con
     ...(transition.startsAt && { startsAt: transition.startsAt }),
     ...(transition.endsAt && { endsAt: transition.endsAt }),
   };
-}
-
-/** Whether two lists name the same events, in any order. */
-function sameEvents(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length && new Set([...left, ...right]).size === left.length;
 }

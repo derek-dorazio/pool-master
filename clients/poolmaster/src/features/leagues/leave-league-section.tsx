@@ -88,11 +88,8 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
         isPending={leaveMutation.isPending}
         onCancel={() => setIsDialogOpen(false)}
         onConfirm={() => leaveMutation.mutate()}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsDialogOpen(false);
-          }
-        }}
+        // Opened by its row's button, so the one change the dialog reports is a close (Escape).
+        onOpenChange={() => setIsDialogOpen(false)}
         open={isDialogOpen}
         pendingLabel="Leaving..."
         testId="league-leave-modal"

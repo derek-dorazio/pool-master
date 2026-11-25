@@ -1,3 +1,4 @@
+import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -6,9 +7,7 @@ import {
   autoAssignEventTiers,
   clearGamePick,
   createContest,
-  createEvent,
   createParticipant,
-  createSportLeague,
   enterContest,
   generateInviteLink,
   getBracketLeaderboard,
@@ -48,7 +47,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventRoundMatchupsResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, sportLeagueProfiles, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -62,7 +61,8 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { createEventLifecycleService } from '../../packages/core-api/src/modules/events/wiring';
 import { PrismaSportEventRepository } from '../../packages/core-api/src/adapters';
 import { NO_SETTLE_JOBS } from '../support/event-settlement';
-import { sportPlay } from '../support/sport-play';
+import { sportRowKeys } from '../support/sport-rows';
+import { insertTestSportLeague } from '../support/test-sport-league';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -87,8 +87,6 @@ async function cleanup(): Promise<void> {
   const db = getFunctionalPrisma();
   const eventIds = [...created.sportEventIds];
   if (eventIds.length) {
-    const seriesIds = (await db.sportEvent.findMany({ where: { id: { in: eventIds } }, select: { eventSeriesId: true } }))
-      .map((event) => event.eventSeriesId);
     await db.contestEntryMatchPrediction.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -98,13 +96,12 @@ async function cleanup(): Promise<void> {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
-    await db.eventSeries.deleteMany({ where: { id: { in: seriesIds } } });
   }
   if (created.participantIds.size) {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
-    await db.sportLeague.deleteMany({ where: { id: { in: [...created.sportLeagueIds] } } });
+    await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
 
@@ -142,22 +139,18 @@ async function releasedKnockout(options: {
   // The migration's reference row, restored in case an earlier suite cleared the sports table.
   await getFunctionalPrisma().sport.upsert({
     where: { sport: Sport.BASKETBALL },
-    create: { sport: Sport.BASKETBALL, tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
     update: {},
   });
   const admin = await buildRegisteredUser({ displayName: `${options.label} Director` });
   await promoteToRootAdmin(admin);
   const a = admin.client;
 
-  const sportLeague = await createSportLeague({
-    client: a,
-    body: { ...(await sportLeagueProfiles(a, Sport.BASKETBALL)), ...sportPlay(Sport.BASKETBALL), timeZone: 'UTC', sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, ...(options.bracketAdvancement && { bracketAdvancement: options.bracketAdvancement }) },
-  });
-  const sportLeagueId = expectDefined(sportLeague.data, JSON.stringify(sportLeague.error)).sportLeague.id;
+  const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.BASKETBALL, name: `${options.label} League ${RUN}`, bracketAdvancement: options.bracketAdvancement });
   created.sportLeagueIds.add(sportLeagueId);
-  const event = await createEvent({
+  const event = await createTestEvent({
     client: a,
-    body: { sportLeagueId: await inCurrentSeason(sportLeagueId, 2099), name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, autoLifecycleEnabled: false },
+    body: { sportLeagueId: sportLeagueId, championshipYear: 2099, name: `${options.label} ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: options.rounds, autoLifecycleEnabled: false },
   });
   const eventId = expectDefined(event.data, JSON.stringify(event.error)).event.id;
   created.sportEventIds.add(eventId);
@@ -173,7 +166,7 @@ async function releasedKnockout(options: {
   expect((await applyEventParticipantUpload({
     client: a,
     path: { eventId },
-    body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed, oddsToWin: 2 + seed * 3 })) },
+    body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed })) },
   })).response?.status).toBe(200);
   expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: options.tierSize } })).response?.status).toBe(200);
   expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
@@ -379,8 +372,8 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
       const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
       expect([result.error, result.response?.status]).toEqual([undefined, 200]);
-      // A result entered on the admin's route is the admin's, which a provider's final never overwrites (#1531).
-      expect(result.data?.matches.find((match) => match.matchNumber === matchNumber)?.resultSource).toBe(MatchResultSource.ADMIN);
+      // A test event's result stands in for the feed's (#2074).
+      expect(result.data?.matches.find((match) => match.matchNumber === matchNumber)?.resultSource).toBe(MatchResultSource.PROVIDER);
     };
     // Round 1: chalk, except 9 beats 8 in game 2.
     for (const [matchNumber, seed] of [[1, 1], [2, 9], [3, 5], [4, 4], [5, 6], [6, 3], [7, 7], [8, 2]]) await win(matchNumber, seed);

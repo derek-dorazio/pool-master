@@ -11,7 +11,6 @@
 import type {
   GolfRoundWrite,
   GolfStandingWrite,
-  EventSeriesRepository,
   ParticipantProviderMappingRepository,
   ProviderMappingScope,
   ParticipantRepository,
@@ -27,6 +26,7 @@ import type {
   SportEventParticipantView,
   SportEventRoundMatchRepository,
   SportEventRepository,
+  SportLeagueSeasonRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,
   SportEventTierDefinition,
@@ -36,10 +36,11 @@ import type {
   SportRepository,
   PlatformPricingProfileRepository,
   PlatformTierProfileRepository,
+  AutoLifecycleCandidate,
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { MatchEnding, BracketAdvancement, findSportRow, isMatchUnplayed, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, Sport, ValuationSource } from '@poolmaster/shared/domain';
+import { MatchEnding, BracketAdvancement, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, isMatchUnplayed, MatchSide, MatchStatus, ParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import { sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -64,7 +65,9 @@ import type {
   BudgetPricingProfile,
   PlatformPricingProfile,
   PlatformTierProfile,
+  SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
+import { sportRowKeys } from './sport-rows';
 
 const T0 = new Date('2026-01-01T00:00:00.000Z');
 
@@ -91,6 +94,12 @@ const UNPLACED_SPORT_LEAGUE_ID = 'sport-league-unplaced';
 export const IN_MEMORY_SEASON_ID = 'season-2026';
 const IN_MEMORY_SEASON_YEAR = 2026;
 
+/** The mapping the sync writes for a provider's event, read with the provider's name. */
+export function providerMappingOf(ref: ProviderEventRef): SportEventProviderMapping {
+  const providerCode = requireProviderCodeOfSourceId(ref.providerId);
+  return { providerCode, providerName: TEST_PROVIDER_ROWS[providerCode].name, externalId: ref.externalId };
+}
+
 export class InMemorySportEvents {
   private sequence = 0;
   sports: SportConfig[] = [];
@@ -100,11 +109,131 @@ export class InMemorySportEvents {
   platformPricingProfiles: PlatformPricingProfile[] = [stamp({ id: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, code: 'STANDARD', name: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 })];
   participants: Participant[] = [];
   mappings: ParticipantProviderMapping[] = [];
-  eventSeriesRows: Array<{ id: string; sportLeagueId: string; name: string; isActive: boolean }> = [];
   events: SportEvent[] = [];
   /** Each event's latest automatic release check (#1847); absent when none is stored. */
   autoReleaseChecks = new Map<string, AutoReleaseCheck>();
   contestsByEvent = new Map<string, number>();
+  /** The Season slots each event covers, as `findSlots` answers them (#2004); a test sets them. */
+  slotsByEvent = new Map<string, SportLeagueSeasonSlot[]>();
+  /** Season slots a test event can be made on (`addTestSlot`), as `seasonRepo().findSlot` reads them. */
+  seasonSlots: Array<SportLeagueSeasonSlot & { sportLeagueId: string; sportLeagueSeasonId: string }> = [];
+
+  /**
+   * A Season slot of the league's current Season (#2004): a test slot unless `isTestData` is
+   * false, starting `startsAt`. Answers its id.
+   */
+  addTestSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, startsAt: Date, overrides: Partial<SportLeagueSeasonSlot & { sportLeagueSeasonId: string }> = {}): string {
+    const id = this.id('season-slot');
+    this.seasonSlots.push({
+      id, slotDefinitionId: 'slot-definition', key: 'TEST_EVENT', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: null,
+      startsAt, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+      isTestData: true, label: id, window: null, sportLeagueId: sportLeague.id, sportLeagueSeasonId: sportLeague.currentSeasonId ?? IN_MEMORY_SEASON_ID,
+      ...overrides,
+    });
+    return id;
+  }
+
+  /** The PROVIDER_CODE value each synced slot's definition is mapped by, as `findSyncSlots` reads it (#2005). */
+  slotProviderCodes = new Map<string, string>();
+  /** The synced slots an active contest template lists (#2005). */
+  templateCoveredSlotIds = new Set<string>();
+  /** The league's NAME_PATTERN mappings, as `findSlotNamePatterns` reads them (#2011). */
+  slotNamePatterns: Array<{ slotDefinitionId: string; pattern: string }> = [];
+  /** The tournament code each Season slot was linked to by name (#2011). */
+  slotLinks = new Map<string, string>();
+  /** The slot definitions a template lists, so a Season slot created by name is covered (#2011). */
+  templateCoveredDefinitionIds = new Set<string>();
+  /** Slot definitions whose phase the Season lacks: a name match on one makes no Season slot (#2011). */
+  definitionsWithoutSeasonPhase = new Set<string>();
+
+  /**
+   * A synced Season slot of the league's current Season (#2005), with no dates yet, mapped by
+   * `providerCode` and listed by a template unless `covered` is false. Answers its id.
+   */
+  addSyncSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, providerCode: string | null, options: { covered?: boolean } = {}): string {
+    const id = this.addTestSlot(sportLeague, new Date(0), { isTestData: false, label: null, startsAt: null });
+    if (providerCode !== null) this.slotProviderCodes.set(id, providerCode);
+    if (options.covered ?? true) this.templateCoveredSlotIds.add(id);
+    return id;
+  }
+
+  /** The synced slots placed by date window, each with its window or none (#2012). */
+  slotWindows = new Map<string, SlotWindow | null>();
+
+  /** A synced slot placed by date window, with `window` or none, listed by a template (#2012). Answers its id. */
+  addWindowSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, key: string, window: SlotWindow | null): string {
+    const id = this.addSyncSlot(sportLeague, null);
+    const slot = this.seasonSlots.find((candidate) => candidate.id === id);
+    if (slot) Object.assign(slot, { key, window });
+    this.slotWindows.set(id, window);
+    return id;
+  }
+
+  /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
+  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
+    const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
+    return {
+      findSyncSlots: async (sportLeagueSeasonId) => this.seasonSlots
+        .filter((slot) => slot.sportLeagueSeasonId === sportLeagueSeasonId && !slot.isTestData)
+        .map((slot) => ({
+          seasonSlotId: slot.id,
+          slotDefinitionId: slot.slotDefinitionId,
+          key: slot.key,
+          providerCode: this.slotProviderCodes.get(slot.id) ?? null,
+          linkedCode: this.slotLinks.get(slot.id) ?? null,
+          coveredByTemplate: this.templateCoveredSlotIds.has(slot.id) || this.templateCoveredDefinitionIds.has(slot.slotDefinitionId),
+          sportEventId: ownerOf(slot.id),
+          startsAt: slot.startsAt,
+          endsAt: slot.endsAt,
+          placedByWindow: this.slotWindows.has(slot.id),
+          window: this.slotWindows.get(slot.id) ?? null,
+        })),
+      findSlotNamePatterns: async () => [...this.slotNamePatterns],
+      linkNameMatchedSlots: async ({ sportLeagueId, sportLeagueSeasonId, links, creates }) => {
+        const taken = new Set(this.slotLinks.values());
+        const link = (seasonSlotId: string, code: string) => {
+          if (this.slotLinks.has(seasonSlotId) || taken.has(code)) return;
+          this.slotLinks.set(seasonSlotId, code);
+          taken.add(code);
+        };
+        for (const each of links) link(each.seasonSlotId, each.code);
+        const phaseMissing: string[] = [];
+        for (const create of creates) {
+          if (this.definitionsWithoutSeasonPhase.has(create.slotDefinitionId)) {
+            phaseMissing.push(create.slotDefinitionId);
+            continue;
+          }
+          const id = this.addTestSlot({ id: sportLeagueId, currentSeasonId: sportLeagueSeasonId }, new Date(0), {
+            isTestData: false, label: null, startsAt: null, slotDefinitionId: create.slotDefinitionId, key: create.slotDefinitionId, sportLeagueSeasonId,
+          });
+          link(id, create.code);
+        }
+        return { phaseMissing };
+      },
+      recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows }) => {
+        for (const slotId of confirmedWindows) {
+          const window = this.slotWindows.get(slotId);
+          if (window) this.slotWindows.set(slotId, { ...window, status: SlotWindowStatus.CONFIRMED });
+        }
+        for (const change of slotDates) {
+          const slot = this.seasonSlots.find((candidate) => candidate.id === change.seasonSlotId);
+          if (slot) Object.assign(slot, { startsAt: change.startsAt, endsAt: change.endsAt });
+        }
+        for (const row of eventSlots) {
+          const slot = this.seasonSlots.find((candidate) => candidate.id === row.seasonSlotId);
+          if (!slot || ownerOf(slot.id) !== null) continue;
+          this.slotsByEvent.set(row.sportEventId, [...(this.slotsByEvent.get(row.sportEventId) ?? []), slot]);
+        }
+      },
+      findSlot: async (id) => {
+        const slot = this.seasonSlots.find((candidate) => candidate.id === id);
+        if (!slot) return null;
+        const owner = [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === id));
+        const { sportLeagueId, sportLeagueSeasonId, ...seasonSlot } = slot;
+        return { slot: seasonSlot, sportLeagueId, sportLeagueSeasonId, sportEventId: owner?.[0] ?? null };
+      },
+    };
+  }
   picksByEntry = new Map<string, number>();
   roundRows: SportEventRound[] = [];
   field: SportEventParticipant[] = [];
@@ -133,14 +262,14 @@ export class InMemorySportEvents {
   // --- Fixtures ---------------------------------------------------------------------
 
   addSport(sport: SportConfig['sport']): SportConfig {
-    const row: SportConfig = stamp({ id: this.id('sport'), sport, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' });
+    const row: SportConfig = stamp({ id: this.id('sport'), sport, ...sportRowKeys(sport), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' });
     this.sports.push(row);
     return row;
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
     const play = sportPlay(this.sports.find((row) => row.id === sportId)?.sport ?? Sport.GOLF);
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, ...play, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, timeZone: 'UTC', isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, timeZone: 'UTC', isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -158,7 +287,7 @@ export class InMemorySportEvents {
     const sportLeagueId = this.sportLeagues.find((league) => league.sportId === sportId)?.id ?? UNPLACED_SPORT_LEAGUE_ID;
     const participant: Participant = stamp({
       id: this.id('participant'), sportLeagueId, name, participantType: 'INDIVIDUAL', status: 'ACTIVE',
-      injuryStatus: { status: 'HEALTHY' }, ranking: null, ...overrides,
+      injuryStatus: { status: 'HEALTHY' }, ranking: null, isTestData: false, ...overrides,
     });
     this.participants.push(participant);
     if (externalId !== undefined) {
@@ -181,21 +310,32 @@ export class InMemorySportEvents {
   }
 
   /**
-   * An event, by default an edition of a series of its own on a placeholder sport league.
-   * Pass `sportLeagueId` (and `eventSeriesId`, `sportLeagueSeasonId`) to place it on a real one;
+   * An event, by default on a placeholder sport league and in no slot.
+   * Pass `sportLeagueId` (and `sportLeagueSeasonId`, `slotDefinitions`) to place it on a real one;
    * its championship year is its Season's.
    */
-  addEvent(overrides: Partial<SportEvent> = {}): SportEvent {
+  addEvent({ providerRef, ...overrides }: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
     const event: SportEvent = stamp({
-      id: this.id('event'), externalId: 'ext', providerId: 'manual-admin', sport: 'GOLF', name: 'Open',
-      eventSeriesId: this.id('event-series'), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
+      id: this.id('event'), providerMappings: providerRef === undefined ? [] : [providerMappingOf(providerRef)], sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
+      slotDefinitions: [], sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
-      metadata: {}, syncScope: 'NONE', autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
+      autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
       championshipYear: 0,
     });
     event.championshipYear = overrides.championshipYear ?? this.seasonYears.get(event.sportLeagueSeasonId) ?? IN_MEMORY_SEASON_YEAR;
     this.events.push(event);
     return event;
+  }
+
+  /** The event's id at the provider with this adapter id, if the provider has one for it. */
+  externalIdAt(sportEventId: string, providerId: string): string | undefined {
+    return this.events.find((row) => row.id === sportEventId)?.providerMappings
+      .find((mapping) => providerSourceIdOf(mapping.providerCode) === providerId)?.externalId;
+  }
+
+  /** The adapter id of the provider the league's selected mapping names, if it has one. */
+  private syncProviderIdOf(sportLeagueId: string): string | undefined {
+    return this.sportLeagues.find((league) => league.id === sportLeagueId)?.selectedProviderMapping?.providerId;
   }
 
   /** Gives an event these rounds, through the round repository's one insert. */
@@ -236,13 +376,7 @@ export class InMemorySportEvents {
         (filters.sportId === undefined || row.sportId === filters.sportId)
         && (filters.isActive === undefined || row.isActive === filters.isActive)
       )),
-      findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       findEventSynced: async () => this.sportLeagues.filter((row) => row.isActive && row.selectedProviderMapping !== null),
-      create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
-        this.sportLeagues.push(created);
-        return created;
-      },
       update: async (id, { syncProviderLeagueId, ...updates }) => {
         const row = this.sportLeagues.find((candidate) => candidate.id === id) as SportLeague;
         Object.assign(row, Object.fromEntries(Object.entries<unknown>(updates).filter(([, value]) => value !== undefined)));
@@ -265,12 +399,13 @@ export class InMemorySportEvents {
         && (query.externalId === undefined || this.mappings.some((mapping) => mapping.participantId === row.id && mapping.externalId === query.externalId))
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
       ))),
-      findBySportLeague: async (sportLeagueId) => this.participants
-        .filter((row) => row.sportLeagueId === sportLeagueId)
+      findBySportLeague: async (sportLeagueId, testData = false) => this.participants
+        .filter((row) => row.sportLeagueId === sportLeagueId && row.isTestData === testData)
         .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity) || left.name.localeCompare(right.name)),
       updateRankings: async () => undefined,
       countBySportLeagues: async (ids) => new Map(ids.map((id) => [id, this.participants.filter((row) => row.sportLeagueId === id).length])),
       create: async () => { throw new Error('not used'); },
+      createWithProviderMapping: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
       deleteUnlessOnAField: async () => { throw new Error('not used'); },
     };
@@ -294,6 +429,7 @@ export class InMemorySportEvents {
         && externalIds.includes(row.externalId) && this.inScope(row.participantId, scope)),
       findByProviderAndSportLeague: async (providerId, sportLeagueId) => this.mappings.filter((row) => row.providerId === providerId
         && row.sportLeagueId === sportLeagueId),
+      findSyncProviderId: async () => { throw new Error('not used'); },
       bind: async (mapping) => {
         const provider = Object.values(TEST_PROVIDER_ROWS).find((candidate) => candidate.id === mapping.providerId);
         if (!provider) return null;
@@ -306,19 +442,6 @@ export class InMemorySportEvents {
     };
   }
 
-  eventSeriesRepo(): EventSeriesRepository {
-    return {
-      findOrCreateMany: async (sportLeagueId, names) => names.map((name) => {
-        let row = this.eventSeriesRows.find((candidate) => candidate.sportLeagueId === sportLeagueId && candidate.name === name);
-        if (!row) {
-          row = { id: this.id('event-series'), sportLeagueId, name, isActive: true };
-          this.eventSeriesRows.push(row);
-        }
-        return stamp(row);
-      }),
-    };
-  }
-
   sportEventRepo(): SportEventRepository {
     const count = (ids: readonly string[], of: (id: string) => number) => new Map(ids.map((id) => [id, of(id)]));
     return {
@@ -326,15 +449,31 @@ export class InMemorySportEvents {
       findByIds: async (ids) => this.events.filter((row) => ids.includes(row.id)),
       findLinks: async (ids) => this.events
         .filter((row) => ids.includes(row.id))
-        .map(({ id, name, sportLeagueId, providerId }) => ({ id, name, sportLeagueId, providerId })),
-      findByProviderRef: async (providerId, externalId) => this.events.find((row) => row.providerId === providerId && row.externalId === externalId) ?? null,
-      findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => row.providerId === providerId && externalIds.includes(row.externalId)),
+        .map(({ id, name, sportLeagueId }) => {
+          const syncProviderId = this.syncProviderIdOf(sportLeagueId);
+          const held = syncProviderId !== undefined && this.externalIdAt(id, syncProviderId) !== undefined;
+          return { id, name, sportLeagueId, providerId: held ? syncProviderId : null };
+        }),
+      findByProviderRef: async (providerId, externalId) => this.events.find((row) => this.externalIdAt(row.id, providerId) === externalId) ?? null,
+      findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => externalIds.includes(this.externalIdAt(row.id, providerId) ?? '')),
+      findFieldFeedIds: async (providerId, sportLeagueId, ids) => {
+        const provider = TEST_PROVIDER_ROWS[requireProviderCodeOfSourceId(providerId)].id;
+        const fields = new Map<string, Set<string>>();
+        for (const row of this.field.filter((entry) => ids.includes(entry.sportEventId) && entry.isActive)) {
+          const field = fields.get(row.sportEventId) ?? new Set<string>();
+          for (const mapping of this.mappings) {
+            if (mapping.participantId === row.participantId && mapping.providerId === provider && mapping.sportLeagueId === sportLeagueId) field.add(mapping.externalId);
+          }
+          fields.set(row.sportEventId, field);
+        }
+        return fields;
+      },
       // No sport filter: every event is golf while Sport has one member.
       findAll: async (filters) => this.events.filter((row) => (
         (filters.statuses === undefined || filters.statuses.includes(row.status))
         && (filters.sportLeagueId === undefined || row.sportLeagueId === filters.sportLeagueId)
         && (filters.sportLeagueSeasonId === undefined || row.sportLeagueSeasonId === filters.sportLeagueSeasonId)
-        && (filters.eventSeriesId === undefined || row.eventSeriesId === filters.eventSeriesId)
+        && (filters.slotDefinitionIds === undefined || row.slotDefinitions.some((definition) => filters.slotDefinitionIds?.includes(definition.id) === true))
         && (filters.q === undefined || row.name.toLowerCase().includes(filters.q.toLowerCase()))
         && (!filters.releasedOnly || row.status !== 'DRAFT')
         // An event's league the store never made (addEvent's default) counts as on.
@@ -343,22 +482,22 @@ export class InMemorySportEvents {
         && (filters.startsBefore === undefined || row.startDate < filters.startsBefore)
       )),
       createMany: async (inputs: readonly SportEventCreate[]) => {
-        // The database's one-edition-per-Season constraint, raised the way Prisma raises it, and
-        // before any row is written: the insert is all or none.
-        const editions = new Set(this.events.map((row) => `${row.eventSeriesId}|${row.sportLeagueSeasonId}`));
-        for (const input of inputs) {
-          const edition = `${input.eventSeriesId}|${input.sportLeagueSeasonId}`;
-          if (editions.has(edition)) {
+        // A Season slot belongs to at most one event: its unique key, raised the same way.
+        const taken = new Set([...this.slotsByEvent.values()].flat().map((slot) => slot.id));
+        for (const slotId of inputs.flatMap((input) => input.seasonSlotIds ?? [])) {
+          if (taken.has(slotId)) {
             throw Object.assign(new Error('Unique constraint failed'), {
               code: 'P2002',
-              meta: { target: ['event_series_id', 'sport_league_season_id'] },
+              meta: { target: ['sport_league_season_id', 'sport_league_season_phase_slot_id'] },
             });
           }
-          editions.add(edition);
+          taken.add(slotId);
         }
-        return inputs.map((input) => {
-          const series = this.eventSeriesRows.find((row) => row.id === input.eventSeriesId);
-          return this.addEvent({ ...input, sportLeagueId: series?.sportLeagueId ?? 'sport-league-unplaced', metadata: {} });
+        return inputs.map(({ seasonSlotIds, ...input }) => {
+          const event = this.addEvent(input);
+          const slots = this.seasonSlots.filter((slot) => seasonSlotIds?.includes(slot.id));
+          if (slots.length > 0) this.slotsByEvent.set(event.id, slots);
+          return event;
         });
       },
       update: async (id, updates: SportEventUpdate, options) => {
@@ -377,6 +516,7 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(transition.jobs ?? []));
         return row;
       },
+      deleteTestSlot: async () => { throw new Error('not used'); },
       delete: async (id) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
         this.field = this.field.filter((row) => row.sportEventId !== id);
@@ -405,12 +545,14 @@ export class InMemorySportEvents {
         .sort((left, right) => left.tierNumber - right.tierNumber)
         .map((tier) => tier.label)])),
       countContests: async (ids) => count(ids, (id) => this.contestsByEvent.get(id) ?? 0),
+      findSlots: async (ids) => new Map(ids.map((id) => [id, [...(this.slotsByEvent.get(id) ?? [])]])),
+      isTestEvent: async (id) => (this.events.some((event) => event.id === id) ? (this.slotsByEvent.get(id) ?? []).some((slot) => slot.isTestData) : null),
       countBySportLeagues: async (ids) => count(ids, (id) => this.events.filter((row) => row.sportLeagueId === id).length),
       sportLeagueHasLoadedBracket: async (sportLeagueId) => this.matchRows.some((match) => (
         this.events.some((event) => event.id === match.sportEventId && event.sportLeagueId === sportLeagueId)
       )),
       summarizeByProviders: async (providerIds) => new Map(providerIds.map((providerId) => {
-        const events = this.events.filter((row) => row.providerId === providerId);
+        const events = this.events.filter((row) => this.externalIdAt(row.id, providerId) !== undefined);
         const changed = events.map((row) => row.updatedAt.getTime());
         return [providerId, {
           activeEventCount: events.filter((row) => row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS').length,
@@ -418,16 +560,18 @@ export class InMemorySportEvents {
         }];
       })),
       findLiveNotifiedEvents: async (query) => this.events
-        .filter((row) => row.providerId === query.providerId && row.sport === query.sport
-          && row.syncScope === 'SCORES_ONLY'
+        .filter((row) => this.externalIdAt(row.id, query.providerId) !== undefined && row.sport === query.sport
           && (row.status === 'IN_PROGRESS' || (query.startedBy !== undefined && row.status === 'SCHEDULED'
             && row.autoLifecycleEnabled && row.startDate <= query.startedBy))
-          && ('externalId' in query ? row.externalId === query.externalId : row.externalId.startsWith(query.externalIdPrefix)))
+          && ('externalId' in query
+            ? this.externalIdAt(row.id, query.providerId) === query.externalId
+            // An event's mapping sits under its league's selected provider mapping, whose provider league names it.
+            : this.sportLeagues.find((league) => league.id === row.sportLeagueId)?.selectedProviderMapping?.providerLeagueCode === query.providerLeagueCode))
         .map((row) => ({
           sportEventId: row.id,
           sport: row.sport,
-          providerId: row.providerId,
-          externalId: row.externalId,
+          providerId: query.providerId,
+          externalId: this.externalIdAt(row.id, query.providerId) as string,
           holdsGame: query.gameId !== undefined
             && this.matchRows.some((match) => match.sportEventId === row.id && match.externalGameId === query.gameId),
           inProgress: row.status === 'IN_PROGRESS',
@@ -443,8 +587,10 @@ export class InMemorySportEvents {
         const league = this.sportLeagues.find((candidate) => candidate.id === row.sportLeagueId);
         if (row.status !== 'DRAFT' || row.startDate <= now || row.startDate > horizon) return [];
         if (!league?.isActive || league.selectedProviderMapping === null || league.autoReleaseDaysBeforeStart === null) return [];
+        // A test event is released by hand only (#2004).
+        if ((this.slotsByEvent.get(row.id) ?? []).some((slot) => slot.isTestData)) return [];
         return [{
-          id: row.id, startDate: row.startDate, providerId: row.providerId, syncScope: row.syncScope,
+          id: row.id, startDate: row.startDate,
           syncProviderId: league.selectedProviderMapping.providerId, autoReleaseDaysBeforeStart: league.autoReleaseDaysBeforeStart,
         }];
       }),
@@ -453,7 +599,7 @@ export class InMemorySportEvents {
         else this.autoReleaseChecks.set(sportEventId, check);
       },
       findAutoReleaseCheck: async (sportEventId) => this.autoReleaseChecks.get(sportEventId) ?? null,
-      findAutoLifecycleCandidates: async () => this.events.filter((row) => (
+      findAutoLifecycleCandidates: async () => this.events.filter((row): row is AutoLifecycleCandidate => (
         row.autoLifecycleEnabled
         && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')
       )),
@@ -569,29 +715,6 @@ export class InMemorySportEvents {
         row.participantId = winnerParticipantId;
         row.isPlayInPlace = false;
         pairing.status = ParticipantStatus.INACTIVE;
-      },
-      replaceWithdrawn: async ({ withdrawnId, matchId, side, replacementParticipantId, valuation }, jobs) => {
-        this.backgroundJobs.push(...(jobs ?? []));
-        const withdrawn = this.field.find((entry) => entry.id === withdrawnId);
-        const match = this.matchRows.find((row) => row.id === matchId);
-        if (!withdrawn || !match) throw new Error('unknown field row or match');
-        withdrawn.isActive = false;
-        withdrawn.inactiveReason = ParticipantInactiveReason.WITHDRAWN;
-        const replacement = this.addToField(withdrawn.sportEventId, replacementParticipantId);
-        if (valuation) {
-          this.valuationRows.push(stamp({
-            id: this.id('valuation'),
-            sportEventParticipantId: replacement.id,
-            sportEventTierId: valuation.sportEventTierId,
-            tierOrderIndex: valuation.tierOrderIndex,
-            tierAssignedSource: valuation.sportEventTierId === null ? null : ValuationSource.MANUAL,
-            price: valuation.price,
-            priceAssignedSource: valuation.price === null ? null : ValuationSource.MANUAL,
-          }));
-        }
-        if (side === MatchSide.HOME) match.homeSportEventParticipantId = replacement.id;
-        else match.awaySportEventParticipantId = replacement.id;
-        return replacement.id;
       },
     };
   }
@@ -923,11 +1046,6 @@ export class InMemorySportEvents {
         this.backgroundJobs.push(...(jobs ?? []));
         const row = requireRow(sportEventRoundMatchId);
         row.periodScores = [...row.periodScores.filter((other) => other.periodNumber !== score.periodNumber), { ...score }];
-      },
-      deletePeriodScore: async (sportEventRoundMatchId, periodNumber, jobs) => {
-        this.backgroundJobs.push(...(jobs ?? []));
-        const row = requireRow(sportEventRoundMatchId);
-        row.periodScores = row.periodScores.filter((other) => other.periodNumber !== periodNumber);
       },
     };
   }

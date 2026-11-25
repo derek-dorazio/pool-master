@@ -5,6 +5,7 @@ import { createSportEventTierService } from '../../../packages/core-api/src/modu
 import { SyncedFieldValuationService } from '../../../packages/core-api/src/modules/events/synced-field-valuation';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { seedEventWithField } from '../list-route-seeds';
+import { mapEventToProvider } from '../../support/event-edition';
 import { expectSameStatementCount } from '../query-scaling';
 import { recordStatements } from '../statement-log';
 import { expectDefined } from '../../support/expect-defined';
@@ -38,7 +39,10 @@ async function syncedEvent(golfers: number, status: SportEventStatus = SportEven
   await getPrisma().sportEventTier.createMany({
     data: [1, 2].map((tierNumber) => ({ sportEventId: event.id, tierKey: `tier-${tierNumber}`, label: `Tier ${tierNumber}`, tierNumber })),
   });
-  return { event, field, ref: { providerId: event.providerId, externalId: event.externalId } };
+  // The provider's id for the event (#2004), which a field sync names it by.
+  const ref = { providerId: 'balldontlie', externalId: `valuation-${event.id}` };
+  await mapEventToProvider(getPrisma(), event.id, ref);
+  return { event, field, ref };
 }
 
 function valuationsOf(sportEventId: string) {

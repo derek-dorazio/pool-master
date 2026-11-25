@@ -34,7 +34,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, ProviderCode, MatchEnding, MatchSide, matchPeriodsOf, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, sportPlaysMatches, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -169,7 +169,13 @@ const MatchSchema = z.object({
 }).strict();
 
 const EventSchema = z.object({
-  key: z.string().min(1),
+  /** Unique in the file; a test event's test slot is labelled with it, so 64 characters at most. */
+  key: z.string().min(1).max(64),
+  /**
+   * The key of the league's slot definition the event plays (#2004): the loader makes a test
+   * event on a test slot of it. An event the league has no definition for is not loaded.
+   */
+  slotKey: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   name: z.string().min(1),
   /** The event's real dates. A test seed moves them forward (shiftedEventDates). */
   startDate: IsoDaySchema,
@@ -195,6 +201,11 @@ const EventSchema = z.object({
 
 const SportLeagueSchema = z.object({
   name: z.string().min(1),
+  /**
+   * The league's stored URL segment (#2042): the loader finds the league by it when given, and a
+   * league not on the site yet is created with it, so a file that adds a league must name one.
+   */
+  urlSegment: z.string().regex(URL_SEGMENT_PATTERN).optional(),
   /** How its brackets fill later rounds; left out keeps the site's (FIXED for a new league). */
   bracketAdvancement: z.enum(BracketAdvancement).optional(),
   players: z.array(PlayerSchema),

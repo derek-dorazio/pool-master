@@ -369,6 +369,7 @@ describe('history mappers', () => {
 
     expect(record).toEqual({
       type: RecordType.MOST_CHAMPIONSHIPS,
+      isHallOfLame: false,
       best: {
         value: 3,
         holders: [
@@ -378,6 +379,14 @@ describe('history mappers', () => {
       },
       nextBest: null,
     });
+  });
+
+  it('tells the screens a Hall of Lame record from a record book one, so they list it apart', () => {
+    const stand = { value: 4, holders: [] };
+
+    expect(toRecordDto({ type: RecordType.MOST_LAST_PLACES, best: stand, nextBest: null }).isHallOfLame).toBe(true);
+    expect(toRecordDto({ type: RecordType.LONGEST_DROUGHT, best: stand, nextBest: null }).isHallOfLame).toBe(true);
+    expect(toRecordDto({ type: RecordType.MOST_WINS_ALL_TIME, best: stand, nextBest: null }).isHallOfLame).toBe(false);
   });
 
   it('shows a record\'s next best when there is one', () => {
@@ -392,14 +401,14 @@ describe('history mappers', () => {
 
   it('shows a perpetual trophy with a plate per year and each plate\'s winners', () => {
     expect(toPerpetualTrophyDto({
-      eventSeriesId: 'masters',
-      seriesName: 'Masters Tournament',
+      trophyId: 'masters',
+      name: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: SelectionType.TIERED,
       plates: [{ year: 2026, contestId: 'masters-2026', winners: [eagles] }, { year: 2025, contestId: 'masters-2025', winners: [] }],
     })).toEqual({
-      eventSeriesId: 'masters',
-      seriesName: 'Masters Tournament',
+      trophyId: 'masters',
+      name: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: SelectionType.TIERED,
       plates: [

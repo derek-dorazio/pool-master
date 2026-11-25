@@ -20,9 +20,11 @@ import {
 import { createGolfScoreService } from '../../../packages/core-api/src/modules/events/wiring';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
-import { fixtureTourId, freshEventEdition } from '../../support/event-edition';
+import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
+import { sportRowKeys } from '../../support/sport-rows';
+import { linkTestSlot } from '../../support/test-slots';
 
 // The admin round-score surface against real Postgres. A golfer's round is a core
 // SportEventParticipantRound plus its golf extension, and their standing is a core
@@ -40,20 +42,22 @@ async function createField(suffix: string) {
   const prisma = getPrisma();
   await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
     update: {},
   });
-  const event = await prisma.sportEvent.create({
+  const created = await prisma.sportEvent.create({
     data: {
       ...(await freshEventEdition(prisma)),
-      externalId: `golf-round-scores-${suffix}`,
-      providerId: 'balldontlie',
-      sport: 'GOLF',
       name: `Round Scores Open ${suffix}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: 'IN_PROGRESS',
     },
   });
+  // The admin score correction writes only on a test event (#2074).
+  await linkTestSlot(prisma, created);
+  // The provider's id for the event, which a live-score sync names it by (#2004).
+  const event = { ...created, externalId: `golf-round-scores-${created.id}` };
+  await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: event.externalId });
   const round1 = await prisma.sportEventRound.create({
     data: { sportEventId: event.id, roundNumber: 1, scheduledDate: new Date('2026-05-07T12:00:00.000Z') },
   });
@@ -338,7 +342,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
   it('a score sync of a 4-round event skips round 5 and holes past 18, so the 72-hole score stands', async () => {
     const { event, rory, jordan } = await createField('beyond-schedule-sync');
     const prisma = getPrisma();
-    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
     await prisma.sportEventRound.createMany({
       data: [2, 3, 4].map((roundNumber) => ({ sportEventId: event.id, roundNumber, scheduledDate: new Date('2026-05-07T12:00:00.000Z') })),
     });
@@ -397,7 +401,7 @@ describe('Golf round scores — a live sync writes only what changed', () => {
   it('a repeated tick leaves every round and standing row untouched, and a changed golfer\'s rows are rewritten while the rest are only re-ranked', async () => {
     const { event, rory, jordan } = await createField('unchanged-sync');
     const prisma = getPrisma();
-    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
     await prisma.participantProviderMapping.createMany({
       data: [
         { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
@@ -483,7 +487,7 @@ describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () 
   it('writes the event\'s rebuild job with the tick\'s last write, the ranks', async () => {
     const { event, rory } = await createField('live-rebuild');
     const prisma = getPrisma();
-    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4, syncScope: 'SCORES_ONLY' } });
+    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
     await prisma.participantProviderMapping.create({ data: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-rory-live', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId } });
 
     await publishLiveScoreUpdate({
