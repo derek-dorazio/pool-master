@@ -29,7 +29,7 @@ import {
   SportEventParticipantUploadPreviewResponseSchema,
   RaceResultPreviewResponseSchema,
   SportEventResponseSchema,
-  SportLeagueSeasonSlotResponseSchema,
+  SportLeagueSeasonSlotDtoSchema,
   SportLeagueSeasonListResponseSchema,
   ActivityJobResponseSchema,
   ActivityListResponseSchema,
@@ -1352,7 +1352,8 @@ describe('Contract verification (root admin)', () => {
         },
       });
       expect(testSlotRes.statusCode).toBe(201);
-      expect(SportLeagueSeasonSlotResponseSchema.safeParse(testSlotRes.json()).success).toBe(true);
+      // The response is { slot }: the slot validated against its DTO.
+      expect(SportLeagueSeasonSlotDtoSchema.safeParse(testSlotRes.json<{ slot: unknown }>().slot).success).toBe(true);
 
       // --- createEvent (201: { event }) ---------------------------------------
       const tournamentRes = await getApp().inject({

@@ -434,7 +434,7 @@ export const SportLeagueSeasonSlotDtoSchema = z.object({
 }).describe('One slot of one Season.');
 export type SportLeagueSeasonSlotDto = z.infer<typeof SportLeagueSeasonSlotDtoSchema>;
 
-export const CreateTestSlotRequestSchema = z.object({
+const CreateTestSlotRequestSchema = z.object({
   slotDefinitionId: z.uuid().describe('The slot definition it plays (SportLeagueSlotDefinitionDto), one of the league\'s: 404 SLOT_DEFINITION_NOT_FOUND otherwise.'),
   label: z.string().trim().min(1).max(64).describe('Tells it apart from the Season\'s other test slots of that definition: 409 TEST_SLOT_LABEL_TAKEN when one already has it.'),
   startsAt: DateTimeSchema.describe('When its test event starts.'),
@@ -442,12 +442,12 @@ export const CreateTestSlotRequestSchema = z.object({
 }).describe('A labelled test slot for the league\'s current Season (QA only): the sync never reads or writes it, and a test event is made on it. 422 SPORT_LEAGUE_HAS_NO_SEASON for a league with no current Season.');
 export type CreateTestSlotRequest = z.infer<typeof CreateTestSlotRequestSchema>;
 
-export const SportLeagueSeasonSlotResponseSchema = z.object({
+const SportLeagueSeasonSlotResponseSchema = z.object({
   slot: SportLeagueSeasonSlotDtoSchema,
 }).describe('One Season slot.');
 export type SportLeagueSeasonSlotResponse = z.infer<typeof SportLeagueSeasonSlotResponseSchema>;
 
-export const SportLeagueSeasonPhaseSlotDtoSchema = SportLeagueSeasonSlotDtoSchema.extend({
+const SportLeagueSeasonPhaseSlotDtoSchema = SportLeagueSeasonSlotDtoSchema.extend({
   sportEventId: z.uuid().nullable().describe('The event covering it; null while it is free, as a test slot is before its test event is made on it.'),
 }).describe('One slot of one Season, as its Season lists it.');
 export type SportLeagueSeasonPhaseSlotDto = z.infer<typeof SportLeagueSeasonPhaseSlotDtoSchema>;
