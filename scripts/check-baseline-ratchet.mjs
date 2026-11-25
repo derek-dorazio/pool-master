@@ -94,6 +94,8 @@ export const BASELINES = [
   { file: 'eslint-rules/dto-shape-baseline.json', read: countsPerFile },
   { file: 'eslint-rules/local-enum-baseline.json', read: countsPerFile },
   { file: 'eslint-rules/positional-pick-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/raw-sql-baseline.json', read: countsPerFile },
+  { file: 'eslint-rules/name-match-baseline.json', read: countsPerFile },
   { file: 'scripts/page-sections-baseline.json', read: countsPerFile },
   { file: 'scripts/retired-names.json', read: countsPerFile },
   { file: 'scripts/sport-registry-frozen.json', read: listedFiles },

@@ -11,5 +11,6 @@ import type { Prisma } from '@prisma/client';
  * a league membership) takes a key-share lock on it, which this does not block.
  */
 export async function lockMemberRow(tx: Prisma.TransactionClient, userId: string): Promise<void> {
+  // poolmaster-allow-raw-sql: a row lock (SELECT … FOR NO KEY UPDATE): Prisma has no row locks
   await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${userId}::uuid FOR NO KEY UPDATE`;
 }

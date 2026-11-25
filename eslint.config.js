@@ -42,6 +42,18 @@ const DTO_SHAPE_BASELINE = Object.fromEntries(
     .filter(([key]) => !key.startsWith('$')),
 );
 
+// #2114: the domain lookups by name each grandfathered file may still have, by repo path.
+const NAME_MATCH_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/name-match-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
+// #2113: the raw SQL markers each production file may have, by repo path.
+const RAW_SQL_BASELINE = Object.fromEntries(
+  Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/raw-sql-baseline.json', import.meta.url), 'utf8')))
+    .filter(([key]) => !key.startsWith('$')),
+);
+
 // #2115: the positional picks of a domain item each grandfathered file may still have, by repo path.
 const POSITIONAL_PICK_BASELINE = Object.fromEntries(
   Object.entries(JSON.parse(readFileSync(new URL('./eslint-rules/positional-pick-baseline.json', import.meta.url), 'utf8')))
@@ -638,6 +650,39 @@ export default tseslint.config(
     ],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-positional-pick': ['error', { baseline: POSITIONAL_PICK_BASELINE }] },
+  },
+  {
+    // #2113: no raw SQL unless a reviewed marker says what Prisma cannot express
+    // (rules/service-rules.md §5). Markers are counted per file, shrink-only; the Unsafe forms
+    // are never allowed. Tests and scripts may query freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      '**/test/**',
+      '**/__tests__/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-raw-sql': ['error', { baseline: RAW_SQL_BASELINE }] },
+  },
+  {
+    // #2114: no domain row looked up by its name (rules/domain-model-conventions-rules.md §17).
+    // Files that still have one sit on a shrink-only baseline; tests build rows by name freely.
+    files: ['packages/core-api/src/**/*.ts', 'packages/shared/**/*.ts', 'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      '**/test/**',
+      '**/__tests__/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/*.stories.tsx',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-name-match': ['error', { baseline: NAME_MATCH_BASELINE }] },
   },
   {
     // #2107: the web app names a shared enum member, never its value as a string, in a

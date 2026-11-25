@@ -1666,6 +1666,7 @@ export class ContestService {
       }
 
       const normalizedName = sanitizedName.toLocaleLowerCase();
+      // poolmaster-allow-name-match: entry names must be unique in a contest: a duplicate check on the new name, not a lookup
       const duplicateEntry = entries.find(
         (entry) => entry.id !== entryId && entry.name.trim().toLocaleLowerCase() === normalizedName,
       );

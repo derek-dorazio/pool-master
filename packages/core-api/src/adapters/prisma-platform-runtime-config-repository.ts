@@ -30,6 +30,7 @@ export class PrismaPlatformRuntimeConfigRepository implements PlatformRuntimeCon
         // Lock the row so the concurrency check, the write and the history's previous value all
         // see the same version. A row that does not exist yet cannot be locked; two first saves
         // racing meet at the unique key instead, handled below.
+        // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
         await tx.$queryRaw`SELECT id FROM "platform_runtime_configs" WHERE "config_key" = ${input.configKey} FOR UPDATE`;
         const current = await tx.platformRuntimeConfig.findUnique({ where: { configKey: input.configKey } });
 

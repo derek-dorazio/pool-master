@@ -477,6 +477,7 @@ async function seasonWithoutRoom(
   limits: ContestSeasonLimits,
 ): Promise<ContestSeasonFull | null> {
   if (limits.sportLeaguesPerYear === null) return null;
+  // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
   await tx.$queryRaw`SELECT id FROM "leagues" WHERE id = ${leagueId}::uuid FOR UPDATE`;
   const used = await sportLeagueIdsBySeason(tx, leagueId, seasonYear);
   return used.includes(limits.sportLeagueId) || used.length < limits.sportLeaguesPerYear

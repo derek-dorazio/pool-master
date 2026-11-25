@@ -159,6 +159,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   }
 
   async findBySportAndName(sportId: string, name: string): Promise<SportLeague | null> {
+    // poolmaster-allow-name-match: the duplicate-name check on create; a league name is unique per sport
     const row = await this.prisma.sportLeague.findUnique({ where: { sportId_name: { sportId, name } }, include: SELECTED_PROVIDER_MAPPING_INCLUDE });
     return row ? toSportLeague(row) : null;
   }
@@ -246,6 +247,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       // a cup, setup, offer or event (each on the sport league) made meanwhile
       // either committed first and is counted below, or waits and then fails once the rows are gone.
       // A cup would otherwise go silently, by its cascade.
+      // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "sport_leagues" WHERE id = ${id}::uuid FOR UPDATE`;
       if (locked.length === 0) return null;
       // Each use is counted where its sport league is: a relation `_count` would group every row of
@@ -260,6 +262,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       if (Object.values(uses).some((count) => count > 0)) return uses;
       // A muted list is checked when set, not a foreign key, and a league saves its whole list
       // back: an id left in it would make that save fail. Prisma cannot remove an array element.
+      // poolmaster-allow-raw-sql: a set-based array update (array_remove across rows): Prisma can't remove one element from an array column in one statement
       await tx.$executeRaw`UPDATE "leagues" SET muted_sport_league_ids = array_remove(muted_sport_league_ids, ${id}::uuid) WHERE ${id}::uuid = ANY(muted_sport_league_ids)`;
       await tx.sportLeague.delete({ where: { id } });
       return uses;

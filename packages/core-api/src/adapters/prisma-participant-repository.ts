@@ -73,6 +73,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     const ids = latest.map((entry) => entry.participantId);
     const ranks = latest.map((entry) => entry.ranking);
     await this.prisma.$transaction(async (tx) => {
+      // poolmaster-allow-raw-sql: a set-based update from unnest arrays: Prisma can't update many rows to different values in one statement
       const updated = await tx.$executeRaw`
         UPDATE "participants" AS participant
         SET "ranking" = ranked.ranking, "updated_at" = now()
@@ -132,6 +133,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     return this.prisma.$transaction(async (tx) => {
       // FOR UPDATE conflicts with the FOR KEY SHARE a field row's insert takes on the participant:
       // one added meanwhile either committed first and is counted, or waits and then fails.
+      // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "participants" WHERE id = ${id}::uuid FOR UPDATE`;
       if (locked.length === 0) return null;
       const fieldEntries = await tx.sportEventParticipant.count({ where: { participantId: id } });
