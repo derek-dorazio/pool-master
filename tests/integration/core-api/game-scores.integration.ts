@@ -66,7 +66,13 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
     rounds: 2,
     autoLifecycleEnabled: false,
   });
-  await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, sportOf === Sport.SOCCER ? 'worldcup' : 'ncaab');
+  // Under the league's own provider league, so a seeded league (the NBA) gains no second mapping
+  // that outlives the test.
+  const selected = await prisma.sportLeagueProviderMapping.findFirst({
+    where: { selectedBy: { is: { id: sportLeague.id } } },
+    select: { providerLeague: { select: { code: true } } },
+  });
+  await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId }, selected?.providerLeague.code ?? (sportOf === Sport.SOCCER ? 'worldcup' : 'ncaab'));
   await createRoundRows(new PrismaSportEventRoundRepository(getAppPrisma()), event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-04-03T22:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-04-05T01:00:00.000Z') },

@@ -93,7 +93,7 @@ describe('events routes', () => {
       expect(events).toContainEqual(
         expect.objectContaining({
           id: eligibleEventId,
-          externalId: `events-eligible-${eligibleEventId}`,
+          providerMappings: [],
           sport: Sport.GOLF,
           readinessStatus: 'CONTEST_ELIGIBLE',
           readinessReasons: [],

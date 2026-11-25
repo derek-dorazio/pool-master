@@ -779,7 +779,9 @@ describe('fixed-length root admin lists cost the same statements every time', ()
         expect(providers.map((summary) => [summary.providerId, summary.rateLimitedJobsLast24h])).toEqual([[provider.providerId, 2], [tennisProvider.providerId, 0]]);
         return providers.length;
       },
-      statements: 10,
+      // The events' links read each event's provider ids, Season, league and its sync provider
+      // (mapping, provider league, provider): one read each for all of them (#2004).
+      statements: 16,
     });
   });
 });
